@@ -399,6 +399,91 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* 4 - flex and grid items carry an automatic `min-width: min-content` floor,
+         and `min-width` beats `max-width`. That floor is why /results/demo/flaws
+         still measured 521px with rules 1-3 applied: the row wrapped and every
+         box was capped at 100%, but each item still refused to go narrower than
+         its widest unbreakable run. Releasing the floor is what actually lets
+         the desktop rows compress into the phone column. `shrink-0` children
+         keep their size regardless - flex-shrink:0 still holds them at basis. */
+  .shotiq-phone-flow .flex > *,
+  .shotiq-phone-flow .grid > * { min-width: 0; }
+
+  /* With the floor gone, a long unbroken token (a filename, a long metric
+     label) would otherwise paint outside its box rather than wrap. */
+  .shotiq-phone-flow { overflow-wrap: break-word; }
+
+  /* 5 - `whitespace-nowrap` pins min-content to max-content, so rule 4's
+         released floor cannot help it: the box is capped at 393pt but the text
+         paints straight through the right edge. That is the whole of the
+         residual overflow on /results/demo/flaws (the page strapline and the
+         coaching-target line), /settings and /dashboard. Inside
+         `.shotiq-keep-cols` the nowrap is load-bearing - it is what keeps the
+         SESSIONS rows on their measured column pitch - so it is left alone. */
+  .shotiq-phone-flow .whitespace-nowrap:not(.shotiq-keep-cols *) { white-space: normal; }
+
+  /* 6 - a card pinned to a desktop height (`h-[106px]`) now has to hold three
+         wrapped lines where it held one, so its content escaped the box and
+         painted over the next section. Every fixed height at or above 90px
+         becomes a floor instead of a cap; smaller ones are icons and controls
+         whose height is their identity and are left exactly as they are. */
+  .shotiq-phone-flow .h-\[90px\],
+  .shotiq-phone-flow .h-\[92px\],
+  .shotiq-phone-flow .h-\[95px\],
+  .shotiq-phone-flow .h-\[96px\],
+  .shotiq-phone-flow .h-\[98px\],
+  .shotiq-phone-flow .h-\[104px\],
+  .shotiq-phone-flow .h-\[106px\],
+  .shotiq-phone-flow .h-\[110px\],
+  .shotiq-phone-flow .h-\[113px\],
+  .shotiq-phone-flow .h-\[116px\],
+  .shotiq-phone-flow .h-\[118px\],
+  .shotiq-phone-flow .h-\[120px\],
+  .shotiq-phone-flow .h-\[122px\],
+  .shotiq-phone-flow .h-\[124px\],
+  .shotiq-phone-flow .h-\[126px\],
+  .shotiq-phone-flow .h-\[128px\],
+  .shotiq-phone-flow .h-\[132px\],
+  .shotiq-phone-flow .h-\[138px\],
+  .shotiq-phone-flow .h-\[140px\],
+  .shotiq-phone-flow .h-\[145px\],
+  .shotiq-phone-flow .h-\[146px\],
+  .shotiq-phone-flow .h-\[148px\],
+  .shotiq-phone-flow .h-\[150px\],
+  .shotiq-phone-flow .h-\[175px\],
+  .shotiq-phone-flow .h-\[178px\],
+  .shotiq-phone-flow .h-\[182px\],
+  .shotiq-phone-flow .h-\[210px\],
+  .shotiq-phone-flow .h-\[218px\],
+  .shotiq-phone-flow .h-\[220px\],
+  .shotiq-phone-flow .h-\[250px\],
+  .shotiq-phone-flow .h-\[260px\],
+  .shotiq-phone-flow .h-\[264px\],
+  .shotiq-phone-flow .h-\[270px\],
+  .shotiq-phone-flow .h-\[280px\],
+  .shotiq-phone-flow .h-\[318px\],
+  .shotiq-phone-flow .h-\[321px\],
+  .shotiq-phone-flow .h-\[335px\],
+  .shotiq-phone-flow .h-\[350px\],
+  .shotiq-phone-flow .h-\[352px\],
+  .shotiq-phone-flow .h-\[355px\],
+  .shotiq-phone-flow .h-\[400px\],
+  .shotiq-phone-flow .h-\[420px\],
+  .shotiq-phone-flow .h-\[428px\],
+  .shotiq-phone-flow .h-\[450px\],
+  .shotiq-phone-flow .h-\[483px\],
+  .shotiq-phone-flow .h-\[500px\],
+  .shotiq-phone-flow .h-\[600px\],
+  .shotiq-phone-flow .h-\[700px\],
+  .shotiq-phone-flow .h-\[835px\] {
+    height: auto;
+  }
+
+  /* Top-level SVG marks (the TrendLine on the elite-shooter detail is 110px
+     wide in a narrower column) are capped like any other box. Their internals
+     are not: those are viewBox-relative and `max-width` there is meaningless. */
+  .shotiq-phone-flow svg:not(svg *) { max-width: 100%; }
+
   /* Media keeps its aspect once its width is capped by rule 2. */
   .shotiq-phone-flow img,
   .shotiq-phone-flow video,

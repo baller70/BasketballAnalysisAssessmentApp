@@ -116,10 +116,10 @@ const STAGES: [string, "upload" | "pose" | "score" | "baseline" | "plan", "done"
 export function AnalysisProcessing({ pct = 64 }: { pct?: number }) {
   return (
     <PhoneScreen testid="screen-ios-analysis-processing" tab="home" pad={16.6}>
-      <PhoneIdentity className="pt-[13px]" />
+      <PhoneIdentity className="pt-[19px]" />
 
-      <PhoneHeading size={34} className="mt-[25px]">ANALYSIS PROCESSING</PhoneHeading>
-      <p className="mt-[11px] text-[11.4px] leading-[14.7px] text-[var(--shotiq-color-graphite)]">
+      <PhoneHeading size={30.3} className="mt-[22px]">ANALYSIS PROCESSING</PhoneHeading>
+      <p className="mt-[9px] text-[10.9px] leading-[14.7px] tracking-[-0.03em] text-[var(--shotiq-color-graphite)]">
         Shot Rail AI is reviewing your mechanics<br />and building your results.
       </p>
 
@@ -134,7 +134,7 @@ export function AnalysisProcessing({ pct = 64 }: { pct?: number }) {
         </div>
         <div className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
           {STAGES.map(([label, kind, state]) => (
-            <div key={label} className="flex items-center gap-[16px] py-[9px]">
+            <div key={label} className="flex items-center gap-[16px] py-[6px]">
               <span className="flex w-[26px] shrink-0 justify-center"
                     style={{ color: state === "queue" ? "var(--shotiq-color-ink)" : BLUE }}>
                 <StageGlyph kind={kind} />
@@ -150,11 +150,11 @@ export function AnalysisProcessing({ pct = 64 }: { pct?: number }) {
         </div>
       </div>
 
-      <PhoneHeading size={18} className="mt-[13px]">LIVE FRAME PREVIEW</PhoneHeading>
+      <PhoneHeading size={18} className="mt-[8px]">LIVE FRAME PREVIEW</PhoneHeading>
       <div className="mt-[4px] flex gap-[12px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/images/canonical/083-hero.png" alt="Frame from the clip being analyzed"
-             className="h-[151px] w-[255px] shrink-0 rounded-[4px] object-cover" />
+             className="h-[145px] w-[255px] shrink-0 rounded-[4px] object-cover" />
         <div className="min-w-0 flex-1 pt-[24px]">
           <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
             FORM SCORE
@@ -170,9 +170,9 @@ export function AnalysisProcessing({ pct = 64 }: { pct?: number }) {
         </div>
       </div>
 
-      <PhaseTrack className="mt-[10px]" figure={41} label={11.5} underline />
+      <PhaseTrack className="mt-[6px]" figure={41} label={11.5} underline />
 
-      <div className="mt-[11px] flex items-start gap-[14px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] py-[12px]">
+      <div className="mt-[7px] flex items-start gap-[14px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] py-[12px]">
         <ClockGlyph size={42} dashed />
         <div className="min-w-0">
           <div className="text-[15.5px] font-medium leading-[17px]" style={{ color: BLUE }}>Keep app open</div>
@@ -352,7 +352,7 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
     <PhoneScreen testid="screen-ios-analysis-error" tab="home" pad={18.4}>
       <PhoneIdentity className="pt-[11px]" />
 
-      <div className="mt-[13px] flex items-start gap-[6px] rounded-[8px] border px-[10px] py-[11px]"
+      <div className="mt-[9px] flex items-start gap-[6px] rounded-[8px] border px-[10px] py-[7px]"
            style={{ borderColor: ORANGE }}>
         <span className="flex w-[100px] shrink-0 justify-center pt-[6px]">
           <svg width="72" height="56" viewBox="0 0 72 56" aria-hidden="true" className="block">
@@ -366,8 +366,8 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
         </span>
         <div className="min-w-0 flex-1">
           <PhoneHeading size={22} style={{ color: ORANGE }}>ANALYSIS ERROR</PhoneHeading>
-          <div className="mt-[8px] text-[14.5px] font-medium leading-[17px]">We couldn&apos;t complete the analysis.</div>
-          <div className="mt-[6px] text-[12px] leading-[14px] text-[var(--shotiq-color-graphite)]">{reason}</div>
+          <div className="mt-[6px] whitespace-nowrap text-[13.8px] font-medium leading-[16px]">We couldn&apos;t complete the analysis.</div>
+          <div className="mt-[4px] text-[12px] leading-[14px] text-[var(--shotiq-color-graphite)]">{reason}</div>
         </div>
       </div>
 
@@ -380,12 +380,12 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
 
       <div className="mt-[9px] flex gap-[8px]">
         <Link href="/results/demo/biomechanics"
-              className="flex h-[44.7px] min-w-0 flex-1 items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13.5px]">
-          <ActionGlyph kind="uploadImage" height={22} />
-          Choose another frame
+              className="flex h-[44.7px] min-w-0 flex-1 items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[12.5px]">
+          <ActionGlyph kind="uploadImage" height={20} />
+          <span className="whitespace-nowrap">Choose another frame</span>
         </Link>
         <Link href="/guide"
-              className="flex h-[44.7px] min-w-0 flex-1 items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13.5px]">
+              className="flex h-[44.7px] min-w-0 flex-1 items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[12.5px]">
           <svg width="19" height="17" viewBox="0 0 19 17" aria-hidden="true" className="shrink-0">
             <path d="M2.4 11V8.5a7.1 7.1 0 0 1 14.2 0V11" fill="none" stroke="#111" strokeWidth="1.4" strokeLinecap="round" />
             <rect x="0.9" y="10" width="4" height="6.1" rx="1.6" fill="none" stroke="#111" strokeWidth="1.4" />

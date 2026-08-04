@@ -26,6 +26,7 @@
  */
 
 import React from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { Settings } from "lucide-react"
 import { ActionGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
@@ -94,7 +95,7 @@ export function PhoneTabBar({ active = "home", initials = "JE" }: { active?: Pho
     <nav
       aria-label="Primary"
       data-testid="phone-tabbar"
-      className="fixed inset-x-0 bottom-0 z-20 mx-auto flex h-[59px] border-t border-[var(--shotiq-color-rule)] bg-[var(--shotiq-color-paper)]"
+      className="fixed inset-x-0 bottom-0 z-20 mx-auto flex h-[61px] border-t border-[var(--shotiq-color-rule)] bg-[var(--shotiq-color-paper)]"
       style={{ maxWidth: PHONE_W }}
     >
       {TABS.map((t) => {
@@ -102,7 +103,7 @@ export function PhoneTabBar({ active = "home", initials = "JE" }: { active?: Pho
         const tint = on ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-ink)"
         return (
           <Link key={t.key} href={t.href} aria-current={on ? "page" : undefined}
-                className="flex flex-1 flex-col items-center pt-[7px]" style={{ color: tint }}>
+                className="flex flex-1 flex-col items-center pt-[8.8px]" style={{ color: tint }}>
             <span className="flex h-[24px] items-center">
               {t.key === "home" && <ActionGlyph kind="analyze" height={24} accent={tint} />}
               {t.key === "capture" && <ActionGlyph kind="nodeGraph" height={17} accent={tint} />}
@@ -110,7 +111,7 @@ export function PhoneTabBar({ active = "home", initials = "JE" }: { active?: Pho
               {t.key === "progress" && <ProgressGlyph height={18} />}
               {t.key === "profile" && <InitialsGlyph initials={initials} height={20} />}
             </span>
-            <span className="mt-[5px] text-[8.5px] leading-[9px]">{t.label}</span>
+            <span className="mt-[4.6px] text-[9px] leading-[9px]">{t.label}</span>
           </Link>
         )
       })}
@@ -118,7 +119,7 @@ export function PhoneTabBar({ active = "home", initials = "JE" }: { active?: Pho
   )
 }
 
-export function PhoneHeader({ back, height = 38 }: { back?: React.ReactNode; height?: number }) {
+export function PhoneHeader({ back, height = 39 }: { back?: React.ReactNode; height?: number }) {
   return (
     <header
       data-testid="phone-header"
@@ -146,7 +147,7 @@ export function PhoneHeader({ back, height = 38 }: { back?: React.ReactNode; hei
  * constant across the set (039 measures 16.1pt, 017 measures 22.1pt).
  */
 export function PhoneScreen({
-  children, tab = "home", pad = 16, header = true, headerH = 38, testid,
+  children, tab = "home", pad = 18, header = true, headerH = 39, testid,
   initials = "JE", tabBar = true,
 }: {
   children: React.ReactNode
@@ -160,10 +161,23 @@ export function PhoneScreen({
   initials?: string
   tabBar?: boolean
 }) {
-  return (
+  /* These screens are mounted into <body>, not into the page they belong to.
+     Several of them live under a route whose layout wraps the page in
+     ShotIQShell, whose phone body carries `.shotiq-phone-flow` — a reflow layer
+     that wraps every flex row, caps every width at 100% and forces
+     `img { height: auto }` so the DESKTOP layouts survive 393pt. Those rules are
+     right for a reflowed desktop screen and wrong for a screen that was drawn at
+     393pt in the first place: they would unpick the measured geometry here. A
+     portal puts this subtree outside that scope, and the fixed overlay covers
+     the shell's own phone chrome so only one top bar and one tab bar are ever
+     visible. */
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => { setMounted(true) }, [])
+
+  const screen = (
     <div
       data-testid={testid}
-      className="shotiq-canonical relative mx-auto flex min-h-[852px] w-full flex-col overflow-hidden bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
+      className="shotiq-canonical fixed inset-0 z-[60] mx-auto flex w-full flex-col overflow-y-auto overflow-x-hidden bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
       style={{ maxWidth: PHONE_W }}
     >
       {header && <PhoneHeader height={headerH} />}
@@ -173,6 +187,8 @@ export function PhoneScreen({
       {tabBar && <PhoneTabBar active={tab} initials={initials} />}
     </div>
   )
+  if (!mounted) return null
+  return createPortal(screen, document.body)
 }
 
 /* -------------------------------------------------------------- identity */
@@ -193,7 +209,7 @@ export function PhoneIdentity({
   return (
     <div className={`flex items-start justify-between ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-display text-[34.4px] leading-[36px]">{name.toUpperCase()}</div>
+        <div className="shotiq-display text-[34.4px] leading-[34px] tracking-[0.05em]">{name.toUpperCase()}</div>
         {/* Cap matches at 11.06; the body face is wider per cap than canonical's,
             so the 117.5pt advance is closed with tracking, not by shrinking the
             cap. */}
@@ -204,15 +220,15 @@ export function PhoneIdentity({
           73.7 and the label ink at 93.5. */}
       <div className="-mt-[3px] flex shrink-0 items-start">
         <div className="w-[86px] text-center">
-          <span className="flex h-[22px] items-center justify-center"><StreakGlyph size={40} /></span>
-          <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[15px]">{streak}</div>
-          <div className="shotiq-microcaps mt-[7px] text-[8.6px] leading-[7px] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+          <span className="flex h-[21px] items-center justify-center"><StreakGlyph size={40} /></span>
+          <div className="shotiq-numeric mt-[4px] text-[19.5px] leading-[15px]">{streak}</div>
+          <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[7px] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
         </div>
         <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px bg-[var(--shotiq-color-rule)]" />
         <div className="w-[62px] text-center">
-          <span className="flex h-[22px] items-center justify-center"><PointsGlyph size={22} /></span>
-          <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[15px]">{points}</div>
-          <div className="shotiq-microcaps mt-[7px] text-[8.6px] leading-[7px] text-[var(--shotiq-color-graphite)]">POINTS</div>
+          <span className="flex h-[21px] items-center justify-center"><PointsGlyph size={22} /></span>
+          <div className="shotiq-numeric mt-[4px] text-[19.5px] leading-[15px]">{points}</div>
+          <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[7px] text-[var(--shotiq-color-graphite)]">POINTS</div>
         </div>
       </div>
     </div>

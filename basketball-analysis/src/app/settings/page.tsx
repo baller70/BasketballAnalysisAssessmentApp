@@ -409,12 +409,13 @@ export default function SettingsPage() {
                 onClick={onToggle} testid={testid} />
   )
 
-  const SelectRow = ({ label, value, options, onChange }: {
+  const SelectRow = ({ label, value, options, onChange, testid }: {
     label: string; value: string; options: [string, string][]; onChange: (v: string) => void
+    testid?: string
   }) => (
     <div className="flex items-center justify-between py-[7px] text-[13px]">
       <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}
+      <select value={value} onChange={(e) => onChange(e.target.value)} data-testid={testid}
               className="h-[32px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[8px] text-[12px] outline-none focus:border-[var(--shotiq-color-ink)]">
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
@@ -1000,7 +1001,7 @@ export default function SettingsPage() {
                   080 standard). Until now the only way to reach the standard
                   one was to hand-edit localStorage (R10 defect H5); this is the
                   switch, and /dashboard?view=… honours it as a deep link. */}
-              <SelectRow label="Dashboard layout" value={dashboardView}
+              <SelectRow label="Dashboard layout" testid="setting-dashboard-layout" value={dashboardView}
                          options={[["professional", "Professional"], ["standard", "Standard"]]}
                          onChange={(v) => setDashboardView(v as DashboardView)} />
               <SelectRow label="Coaching tips frequency" value={notifications.coachingTipsFrequency}

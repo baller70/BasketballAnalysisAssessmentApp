@@ -85,30 +85,30 @@ export function HomeNewPlayer({
 }: { name?: string; sub?: string; streak?: string; points?: string }) {
   return (
     <PhoneScreen testid="screen-ios-home-new-player" tab="home" pad={22}>
-      <PhoneIdentity className="pt-[11px]" name={name} sub={sub} streak={streak} points={points} />
+      <PhoneIdentity className="pt-[9px]" name={name} sub={sub} streak={streak} points={points} />
 
       <Link href="/analyze" data-testid="new-player-analyze"
-            className="mt-[13px] flex h-[46.6px] w-full items-center justify-center gap-[24px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-white">
+            className="mt-[7px] flex h-[46.6px] w-full items-center justify-center gap-[24px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-white">
         <ActionGlyph kind="analyze" height={25} accent="#fff" />
         <span className="text-[16px] font-medium">Analyze your first shot</span>
       </Link>
-      <p className="mt-[7px] text-center text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">
+      <p className="mt-[4px] text-center text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">
         See how your mechanics perform in minutes.
       </p>
 
       {/* --------------------------------------------------- START HERE */}
-      <div className="mt-[8px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] pb-[13px] pt-[10px]">
+      <div className="mt-[5px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] pb-[7px] pt-[8px]">
         <PhoneHeading size={17}>START HERE</PhoneHeading>
-        <div className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
+        <div className="mt-[5px] divide-y divide-[var(--shotiq-color-rule)]">
           {STEPS.map(([title, body, mark, href], i) => (
-            <Link key={title} href={href} className="flex items-center gap-[14px] py-[12px]"
+            <Link key={title} href={href} className="flex items-center gap-[14px] py-[7px]"
                   style={i === 0 ? { paddingTop: 2 } : undefined}>
               <span className="flex w-[43px] shrink-0 justify-center text-[var(--shotiq-color-ink)]">
                 <ActionGlyph kind={mark} height={mark === "uploadVideo" ? 26 : 33} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="shotiq-display block text-[22.9px] leading-[23px]">{title}</span>
-                <span className="mt-[6px] block text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">{body}</span>
+                <span className="mt-[4px] block text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">{body}</span>
               </span>
               {CHEV}
             </Link>
@@ -117,9 +117,9 @@ export function HomeNewPlayer({
       </div>
 
       {/* -------------------------------------------- CAPTURE YOUR SHOT */}
-      <div className="mt-[7px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[9px] pb-[10px] pt-[10px]">
+      <div className="mt-[5px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[9px] pb-[6px] pt-[7px]">
         <PhoneHeading size={17} className="pl-[3px]">CAPTURE YOUR SHOT</PhoneHeading>
-        <div className="mt-[8px] flex gap-[6.5px]">
+        <div className="mt-[6px] flex gap-[6.5px]">
           {TILES.map(([title, body, img, href, frame]) => (
             <Link key={title} href={href} className="min-w-0 flex-1">
               <span className="relative block h-[92px] w-full overflow-hidden rounded-[3px]">
@@ -146,27 +146,27 @@ export function HomeNewPlayer({
                   </span>
                 )}
               </span>
-              <span className="shotiq-display mt-[7px] block text-center text-[13.7px] leading-[14px]">{title}</span>
-              <span className="mt-[6px] block text-center text-[9.5px] leading-[10px] text-[var(--shotiq-color-graphite)]">{body}</span>
+              <span className="shotiq-display mt-[5px] block text-center text-[13.7px] leading-[14px]">{title}</span>
+              <span className="mt-[4px] block text-center text-[9.5px] leading-[10px] text-[var(--shotiq-color-graphite)]">{body}</span>
             </Link>
           ))}
         </div>
       </div>
 
       {/* -------------------------------------------- SETUP CHECKLIST */}
-      <div className="mt-[8px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[11px] pb-[9px] pt-[9px]">
+      <div className="mt-[5px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[11px] pb-[7px] pt-[7px]">
         <div className="flex items-baseline justify-between">
           <PhoneHeading size={17}>SETUP CHECKLIST</PhoneHeading>
           <span className="shotiq-microcaps text-[8.6px] leading-[9px] text-[var(--shotiq-color-graphite)]">0 OF 4 COMPLETE</span>
         </div>
-        <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)] rounded-[6px] border border-[var(--shotiq-color-rule)]">
+        <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)] rounded-[6px] border border-[var(--shotiq-color-rule)]">
           {CHECKS.map(([title, body, glyph]) => (
-            <div key={title} className="flex items-center gap-[11px] px-[9px] py-[7px]">
+            <div key={title} className="flex items-center gap-[11px] px-[9px] py-[3px]">
               <span aria-hidden="true" className="h-[16px] w-[16px] shrink-0 rounded-full border border-[var(--shotiq-color-graphite)]" />
               <span className="flex w-[24px] shrink-0 justify-center">{glyph}</span>
               <span className="min-w-0 flex-1">
                 <span className="shotiq-display block text-[13.5px] leading-[14px]">{title}</span>
-                <span className="mt-[3px] block text-[9.6px] leading-[11px] text-[var(--shotiq-color-graphite)]">{body}</span>
+                <span className="mt-[2px] block text-[9.6px] leading-[11px] text-[var(--shotiq-color-graphite)]">{body}</span>
               </span>
               {CHEV}
             </div>
@@ -175,7 +175,7 @@ export function HomeNewPlayer({
       </div>
 
       {/* ------------------------------------------- YOUR PRIMARY TARGET */}
-      <div className="mt-[6px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] pb-[10px] pt-[9px]">
+      <div className="mt-[4px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] pb-[10px] pt-[9px]">
         <div className="flex items-baseline justify-between">
           <PhoneHeading size={16}>YOUR PRIMARY TARGET</PhoneHeading>
           <Link href="/guide" className="flex items-center gap-[6px] text-[11.5px] text-[var(--shotiq-color-analysisBlue)]">

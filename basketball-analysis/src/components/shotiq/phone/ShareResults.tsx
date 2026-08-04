@@ -36,6 +36,7 @@
  */
 
 import React from "react"
+import { createPortal } from "react-dom"
 import { PhoneHeading, MiniTrend } from "@/components/shotiq/PhoneShell"
 import { PhaseTrack, MechanicGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 
@@ -76,18 +77,25 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
   onShare?: () => void; onSave?: () => void; onCopy?: () => void; onMore?: () => void
 }) {
   const handlers = [onShare, onSave, onCopy, onMore]
-  return (
+  /* Mounted into <body>: this is a sheet over the player card, and the route it
+     opens from sits inside ShotIQShell's `.shotiq-phone-flow` reflow scope,
+     whose rules exist to rescue the DESKTOP layouts at 393pt and would unpick a
+     layout drawn at 393pt to begin with. Canonical 072 carries no top bar and no
+     tab bar, so the overlay covers the shell's phone chrome as well. */
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => { setMounted(true) }, [])
+  const sheet = (
     <div
       data-testid="screen-ios-share-results"
-      className="shotiq-canonical relative mx-auto min-h-[852px] w-full max-w-[393px] overflow-hidden bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
+      className="shotiq-canonical fixed inset-0 z-[60] mx-auto w-full max-w-[393px] overflow-y-auto overflow-x-hidden bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
     >
       <PhoneHeading size={26.8} className="pt-[7px] text-center">SHARE RESULTS</PhoneHeading>
-      <p className="mt-[13px] text-center text-[11.6px] leading-[13px] text-[var(--shotiq-color-graphite)]">
+      <p className="mt-[9px] text-center text-[11.6px] leading-[13px] text-[var(--shotiq-color-graphite)]">
         Preview what others will see. Private data is excluded.
       </p>
 
       {/* ----------------------------------------------------- preview card */}
-      <div className="mx-[13.4px] mt-[15px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[15px] pb-[12px] pt-[12px]">
+      <div className="mx-[13.4px] mt-[11px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[15px] pb-[9px] pt-[10px]">
         <div className="flex items-center">
           <div className="shotiq-wordmark text-[21.5px] leading-none tracking-[0.02em]">
             SHOT<span style={{ color: ORANGE }}>IQ</span>
@@ -111,7 +119,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
           </div>
         </div>
 
-        <div className="mt-[12px] flex items-start border-t border-[var(--shotiq-color-rule)] pt-[15px]">
+        <div className="mt-[10px] flex items-start border-t border-[var(--shotiq-color-rule)] pt-[12px]">
           <div className="min-w-0 flex-1">
             <div className="shotiq-display text-[34.4px] leading-[35px]">JORDAN ELLIS</div>
             <div className="mt-[6px] text-[11.4px] leading-[13px] tracking-[-0.04em] text-[var(--shotiq-color-graphite)]">
@@ -154,14 +162,14 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
         <div className="-mx-[15px] mt-[9px] flex">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/083-hero.png" alt="Analyzed frame with the pose graph traced over it"
-               className="h-[264px] w-[232px] shrink-0 object-cover" />
+               className="h-[252px] w-[232px] shrink-0 object-cover" />
           <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[9px]">
             <div className="shotiq-section-label pt-[6px] text-center text-[10.5px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
               MECHANICS HIGHLIGHTS
             </div>
             <div className="divide-y divide-[var(--shotiq-color-rule)]">
               {HIGHLIGHTS.map(([label, verdict], i) => (
-                <div key={label} className="flex items-center gap-[8px] py-[8px]">
+                <div key={label} className="flex items-center gap-[8px] py-[6px]">
                   <span className="flex w-[36px] shrink-0 justify-center">
                     <MechanicGlyph kind={(["angle", "arc", "wrist", "balance"] as const)[i]} size={30} />
                   </span>
@@ -175,9 +183,9 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
           </div>
         </div>
 
-        <PhaseTrack className="mt-[10px]" figure={27} label={10.5} underline />
+        <PhaseTrack className="mt-[6px]" figure={27} label={10.5} underline />
 
-        <div className="mt-[8px] flex items-center border-t border-[var(--shotiq-color-rule)] pt-[9px]">
+        <div className="mt-[5px] flex items-center border-t border-[var(--shotiq-color-rule)] pt-[7px]">
           {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
             <div key={l} className="min-w-0 flex-1">
               <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
@@ -198,7 +206,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
           </div>
         </div>
 
-        <div className="mt-[9px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[11px]">
+        <div className="mt-[6px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
           <span className="shotiq-microcaps text-[9.6px] leading-[10px] text-[var(--shotiq-color-graphite)]">ANALYZED TODAY AT 8:24 AM</span>
           <span className="shotiq-microcaps text-[9.6px] leading-[10px] text-[var(--shotiq-color-graphite)]">SHOTIQ.COM</span>
         </div>
@@ -228,4 +236,6 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
       </div>
     </div>
   )
+  if (!mounted) return null
+  return createPortal(sheet, document.body)
 }

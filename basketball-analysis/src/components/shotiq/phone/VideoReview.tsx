@@ -64,7 +64,7 @@ export function VideoReview({
     <PhoneScreen testid="screen-ios-video-review" tab="home" pad={20.7} header={false}>
       {/* This screen's header carries no rule in canonical, so it is drawn
           here rather than taken from PhoneHeader. */}
-      <div className="flex h-[47px] items-center">
+      <div className="flex h-[52px] items-center pt-[6px]">
         <Link href="/dashboard" className="shotiq-wordmark text-[17.5px] leading-none tracking-[0.15em]">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </Link>
@@ -88,29 +88,29 @@ export function VideoReview({
             </button>
             <PhoneHeading size={18} className="text-[var(--shotiq-color-graphite)]">AI ANALYSIS</PhoneHeading>
           </div>
-          <PhoneHeading size={38} className="mt-[6px]">VIDEO REVIEW</PhoneHeading>
-          <p className="mt-[8px] text-[12px] leading[14px] text-[var(--shotiq-color-graphite)]">
+          <PhoneHeading size={38} className="mt-[7px]">VIDEO REVIEW</PhoneHeading>
+          <p className="mt-[8px] text-[11.5px] leading-[14px] tracking-[-0.02em] text-[var(--shotiq-color-graphite)]">
             Review your clip and adjust the range<br />before we analyze.
           </p>
         </div>
         <div className="flex shrink-0 items-start pt-[3px]">
           <div className="w-[86px] text-center">
             <StreakGlyph size={40} />
-            <div className="shotiq-numeric mt-[6px] text-[19.5px] leading-[20px]">6</div>
-            <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[9px] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+            <div className="shotiq-numeric mt-[9px] text-[19.5px] leading-[20px]">6</div>
+            <div className="shotiq-microcaps mt-[7px] text-[8.6px] leading-[9px] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
           </div>
           <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[62px] text-center">
             <span className="mx-auto block w-fit"><PointsGlyph size={22} /></span>
-            <div className="shotiq-numeric mt-[6px] text-[19.5px] leading-[20px]">2,840</div>
-            <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[9px] text-[var(--shotiq-color-graphite)]">POINTS</div>
+            <div className="shotiq-numeric mt-[9px] text-[19.5px] leading-[20px]">2,840</div>
+            <div className="shotiq-microcaps mt-[7px] text-[8.6px] leading-[9px] text-[var(--shotiq-color-graphite)]">POINTS</div>
           </div>
         </div>
       </div>
 
       {/* identity stat row */}
       <div className="mt-[10px] flex items-center">
-        <div className="flex min-w-0 flex-1 items-center gap-[9px] text-[12px] leading-[14px]">
+        <div className="flex min-w-0 flex-1 items-center gap-[6px] whitespace-nowrap text-[10.5px] leading-[12px] tracking-[-0.02em]">
           <span className="font-medium">Jordan Ellis</span>
           <span className="text-[var(--shotiq-color-muted)]">•</span>
           <span className="text-[var(--shotiq-color-graphite)]">Right-handed</span>
@@ -120,9 +120,9 @@ export function VideoReview({
         <div className="flex shrink-0 divide-x divide-[var(--shotiq-color-rule)] text-center">
           {([["82", "FORM SCORE", ORANGE], ["24", "SHOTS", undefined], ["15", "MAKES", undefined], ["62.5%", "%", undefined]] as
             [string, string, string | undefined][]).map(([v, l, c]) => (
-            <div key={l} className="px-[9px]">
-              <div className="shotiq-numeric text-[18px] leading[19px]" style={c ? { color: c } : undefined}>{v}</div>
-              <div className="shotiq-microcaps mt-[2px] text-[8.5px] leading-[9px] text-[var(--shotiq-color-graphite)]">{l}</div>
+            <div key={l} className="px-[6px]">
+              <div className="shotiq-numeric text-[16px] leading-[17px]" style={c ? { color: c } : undefined}>{v}</div>
+              <div className="shotiq-microcaps mt-[2px] text-[8px] leading-[9px] text-[var(--shotiq-color-graphite)]">{l}</div>
             </div>
           ))}
         </div>
@@ -134,7 +134,7 @@ export function VideoReview({
           <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
             PRIMARY TARGET
           </div>
-          <div className="mt-[5px] text-[14.5px] font-medium leading-[17px]">Keep elbow stacked through release</div>
+          <div className="mt-[5px] whitespace-nowrap text-[13.2px] font-medium leading-[16px]">Keep elbow stacked through release</div>
         </div>
         <svg width="82" height="32" viewBox="0 0 82 32" aria-hidden="true" className="shrink-0">
           <path d="M3 26 L15 18 L27 24 L40 20 L52 15" fill="none" stroke="#5F646B" strokeWidth="1.6" />
@@ -165,7 +165,7 @@ export function VideoReview({
         </span>
       </div>
 
-      <p className="mt-[11px] text-[10.5px] leading-[12px] text-[var(--shotiq-color-graphite)]">
+      <p className="mt-[9px] text-[10.5px] leading-[12px] text-[var(--shotiq-color-graphite)]">
         Drag the handles to trim your clip
       </p>
 
@@ -205,7 +205,7 @@ export function VideoReview({
       <div className="mt-[10px] flex items-start gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[11px] py-[10px]">
         <div className="min-w-0 flex-1">
           <PhoneHeading size={19}>HOW SHOT DETECTION WORKS</PhoneHeading>
-          <p className="mt-[7px] text-[11.5px] leading-[14px] text-[var(--shotiq-color-graphite)]">
+          <p className="mt-[6px] text-[11px] leading-[13.5px] tracking-[-0.02em] text-[var(--shotiq-color-graphite)]">
             ShotIQ identifies your shooting motion using pose tracking
             and ball flight to isolate each rep. You can review and
             adjust the range if needed.

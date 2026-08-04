@@ -43,15 +43,17 @@ const BENEFITS: [string, string, string][] = [
 // Canonical 078 opens the flow; steps 2-4 follow the iOS onboarding screens
 // this wizard shares a profile with (009 physical profile, 010 experience and
 // body type, 011 shooting profile, 013 review).
-const TITLES = ["WELCOME, {FIRST}", "YOUR MEASUREMENTS", "SHOOTING PREFERENCES", "REVIEW YOUR PROFILE"]
+const TITLES = ["WELCOME, {FIRST}", "YOUR MEASUREMENTS", "SHOOTING PREFERENCES", "YOUR PLAYER BIO", "REVIEW YOUR PROFILE"]
 const SUBTITLES = [
   "Let's measure your baseline so ShotIQ can deliver personalized analysis and training that match your game.",
   "Accurate measurements let the analysis scale angles, release height and arc to your body.",
   "How you shoot decides which mechanics ShotIQ grades you against and which drills it prescribes.",
+  "A short bio for your player card. Write it yourself or let ShotIQ draft one from your profile.",
   "We'll use your profile and shooting data to personalize your coaching experience.",
 ]
-const CARD_HEADINGS = ["TELL US ABOUT YOU", "PHYSICAL PROFILE", "YOUR SHOOTING PROFILE", "PROFILE SUMMARY"]
-const CARD_NOTES = ["All fields required", "Without shoes", "Pick what matches your shot", "You can change any of this later"]
+const CARD_HEADINGS = ["TELL US ABOUT YOU", "PHYSICAL PROFILE", "YOUR SHOOTING PROFILE", "ABOUT YOUR GAME", "PROFILE SUMMARY"]
+const CARD_NOTES = ["All fields required", "Without shoes", "Pick what matches your shot",
+                    "Optional — 160 characters", "You can change any of this later"]
 
 // iOS 010 — the three builds the profile store models.
 const BODY_TYPES: [string, string, "ectomorph" | "mesomorph" | "endomorph"][] = [
@@ -80,7 +82,7 @@ const REVIEW_COLUMNS = (s: Summary): [string, string, number][][] => [
    ["Years playing", s.years, 1], ["Height", s.height, 1], ["Weight", s.weight, 1]],
   [["Age", s.age, 2], ["Wingspan", s.wingspan, 2], ["Body type", s.body, 2],
    ["Athletic ability", s.ability, 3], ["Shooting style", s.style, 3], ["Practice frequency", s.practice, 3],
-   ["Training goal", s.goal, 3]],
+   ["Training goal", s.goal, 3], ["Player bio", s.bio, 4]],
 ]
 
 const GOALS = [
@@ -142,6 +144,7 @@ export default function OnboardingPage() {
     style: STYLES.find(([, , v]) => v === (store.shootingStyle ?? "two_motion"))?.[0] ?? "—",
     practice,
     goal,
+    bio: bio.trim() ? `${bio.trim().slice(0, 22)}${bio.trim().length > 22 ? "…" : ""}` : "Not added",
   }
 
   const finish = async () => {
@@ -168,6 +171,16 @@ export default function OnboardingPage() {
      1440pt wizard keeps the step in its card column, so the phone layout is
      the only thing swapped in below the md breakpoint. */
   const BIO_STEP = STEPS.findIndex(([n]) => n === "Bio") + 1
+  // Phone viewport, tracked live (the phone bio screen is a portal, so CSS
+  // breakpoints on its wrapper do not reach it).
+  const [isPhone, setIsPhone] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const sync = () => setIsPhone(mq.matches)
+    sync()
+    mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
   const enhanceBio = () =>
     setEnhanced(
       `${first} is a ${(store.experienceLevel ?? "advanced")} ${position} who trains to `
@@ -176,7 +189,11 @@ export default function OnboardingPage() {
 
   return (
     <>
-    {step === BIO_STEP && (
+    {/* PhoneScreen portals into document.body, so a `md:hidden` wrapper cannot
+        hide it — at 1440 the phone bio screen painted itself over the desktop
+        wizard and swallowed every click on it. The phone layout is gated on the
+        viewport itself instead. */}
+    {step === BIO_STEP && isPhone && (
       <div className="md:hidden">
         <PlayerBio
           step={BIO_STEP}
@@ -191,7 +208,7 @@ export default function OnboardingPage() {
       </div>
     )}
     <div data-testid="screen-desktop-web-onboarding"
-         className={`flex min-h-full flex-col ${step === BIO_STEP ? "hidden md:flex" : ""}`}>
+         className={`flex min-h-full flex-col ${step === BIO_STEP && isPhone ? "hidden" : ""}`}>
      <div className="flex flex-1">
       {/* Wizard step column. Canonical runs the four steps as a vertical list
           inside the content area — an in-body horizontal tab strip plus a
@@ -200,6 +217,7 @@ export default function OnboardingPage() {
       <div className="flex w-[186px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pb-[22px] pt-[26px]">
         {STEPS.map(([s, Icon], i) => (
           <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
+                  data-testid={`onboarding-tab-${s.toLowerCase()}`}
                   /* Canonical sets the step names in the condensed display
                      face: cap 13 over an 80px advance for MEASUREMENTS. The
                      body face at 13px bold drew cap 10 over 103px — smaller

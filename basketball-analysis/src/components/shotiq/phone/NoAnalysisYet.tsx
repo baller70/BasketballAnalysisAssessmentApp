@@ -44,7 +44,7 @@ function SourceTiles() {
     <div className="flex gap-[6.4px]">
       {SOURCES.map(([label, kind, h, href]) => (
         <Link key={label} href={href}
-              className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-[6px] border border-[var(--shotiq-color-rule)] pb-[7px] pt-[6px]">
+              className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-[6px] border border-[var(--shotiq-color-rule)] pb-[9px] pt-[8px]">
           <span className="flex h-[42px] items-center"><ActionGlyph kind={kind} height={h} /></span>
           <span className="mt-[5px] text-[11.4px] leading-[13px]">{label}</span>
         </Link>
@@ -94,37 +94,37 @@ export function NoAnalysisYet({
 }: { name?: string; sub?: string; streak?: string; points?: string }) {
   return (
     <PhoneScreen testid="screen-ios-no-analysis-yet" tab="home" pad={16.6}>
-      <PhoneIdentity className="pt-[12px]" name={name} sub={sub} streak={streak} points={points} />
+      <PhoneIdentity className="pt-[10px]" name={name} sub={sub} streak={streak} points={points} />
 
       <Link href="/video-analysis" data-testid="empty-analyze-shot"
-            className="mt-[6px] flex h-[45.6px] w-full items-center justify-center gap-[22px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-white">
+            className="mt-[12px] flex h-[45.6px] w-full items-center justify-center gap-[22px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-white">
         <ActionGlyph kind="analyze" height={25} accent="#fff" />
         <span className="text-[16px] font-medium">Analyze a shot</span>
       </Link>
 
       <div className="mt-[10.6px]"><SourceTiles /></div>
 
-      <div className="mt-[13px] flex items-baseline justify-between">
+      <div className="mt-[16px] flex items-baseline justify-between">
         <PhoneHeading size={19}>ANALYSIS HISTORY</PhoneHeading>
         <span className="shotiq-microcaps text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">0 ANALYSES</span>
       </div>
 
-      <div className="mt-[5px] flex justify-center"><EmptyDiagram width={186} /></div>
+      <div className="mt-[3px] -mb-[22px] flex justify-center"><EmptyDiagram width={186} /></div>
 
-      <div className="shotiq-display mt-[15px] text-center text-[27.4px] leading-[28px]">NO ANALYSES YET</div>
-      <p className="mt-[11px] text-center text-[11px] leading-[13.9px] text-[var(--shotiq-color-graphite)]">
+      <div className="shotiq-display mt-[12px] text-center text-[27.4px] leading-[28px]">NO ANALYSES YET</div>
+      <p className="mt-[4px] text-center text-[11px] leading-[13.9px] text-[var(--shotiq-color-graphite)]">
         Upload a shot or record live to get AI-powered<br />breakdowns of your mechanics.
       </p>
 
-      <div className="mt-[8px]"><SourceTiles /></div>
+      <div className="mt-[2px]"><SourceTiles /></div>
 
-      <PhaseTrack className="mt-[13px]" figure={30} label={11.8} underline />
+      <PhaseTrack className="mt-[10px]" figure={30} label={11.8} underline />
 
-      <div className="mt-[9px] border-t border-[var(--shotiq-color-rule)] pt-[11px]">
+      <div className="mt-[3px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <PhoneCoachingTarget />
       </div>
 
-      <div className="mt-[6px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+      <div className="mt-[3px] border-t border-[var(--shotiq-color-rule)] pt-[7px]">
         <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
           LATEST SESSION
         </div>

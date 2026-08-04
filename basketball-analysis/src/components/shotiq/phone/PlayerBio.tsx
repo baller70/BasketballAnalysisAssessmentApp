@@ -71,7 +71,7 @@ export function PlayerBio({
       </div>
 
       {/* ----------------------------------------------------- stat strip */}
-      <div className="mt-[36px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
+      <div className="mt-[14px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
         {([["6", "DAY STREAK", "streak"], ["2,840", "POINTS", "points"],
            ["82", "FORM SCORE", "form"], ["62.5%", "MAKE %", "make"]] as const).map(([v, l, kind]) => (
           <div key={l} className="min-w-0 flex-1 text-center">
@@ -89,8 +89,8 @@ export function PlayerBio({
                 </svg>
               )}
             </span>
-            <div className="shotiq-numeric mt-[6px] text-[24px] leading-[25px]">{v}</div>
-            <div className="shotiq-microcaps mt-[6px] text-[9.5px] leading-[10px] text-[var(--shotiq-color-graphite)]">{l}</div>
+            <div className="shotiq-numeric mt-[5px] text-[24px] leading-[25px]">{v}</div>
+            <div className="shotiq-microcaps mt-[5px] text-[9.5px] leading-[10px] text-[var(--shotiq-color-graphite)]">{l}</div>
           </div>
         ))}
       </div>
@@ -112,7 +112,7 @@ export function PlayerBio({
       />
 
       {/* ------------------------------------------------- enhance with AI */}
-      <div className="mt-[14px] flex items-center gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[10px] py-[10px]">
+      <div className="mt-[12px] flex items-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[9px] py-[8px]">
         <span className="flex w-[52px] shrink-0 justify-center">
           <svg width="44" height="46" viewBox="0 0 44 46" aria-hidden="true" className="block">
             <path d="M9 22 L20 12 L34 8" fill="none" stroke={ORANGE} strokeWidth="2" />
@@ -125,7 +125,7 @@ export function PlayerBio({
         </span>
         <div className="min-w-0 flex-1">
           <PhoneHeading size={19}>ENHANCE WITH AI</PhoneHeading>
-          <p className="mt-[6px] text-[11px] leading-[14px] text-[var(--shotiq-color-graphite)]">
+          <p className="mt-[5px] text-[10.5px] leading-[13px] tracking-[-0.02em] text-[var(--shotiq-color-graphite)]">
             Let ShotIQ AI craft a stronger bio based on<br />your profile and training data.
           </p>
         </div>
@@ -141,11 +141,11 @@ export function PlayerBio({
       </div>
 
       {/* --------------------------------------------- AI-enhanced preview */}
-      <div className="mt-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[10px] pb-[11px] pt-[10px]">
+      <div className="mt-[7px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[10px] pb-[5px] pt-[6px]">
         <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
           AI-ENHANCED PREVIEW
         </div>
-        <div className="mt-[9px] flex items-center gap-[13px]">
+        <div className="mt-[6px] flex items-center gap-[13px]">
           <span aria-hidden="true"
                 className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full border border-dashed border-[var(--shotiq-color-graphite)]">
             <svg width="17" height="19" viewBox="0 0 17 19" aria-hidden="true">
@@ -161,7 +161,7 @@ export function PlayerBio({
 
       {/* ------------------------------------------------------- actions */}
       <button type="button" onClick={onContinue} data-testid="bio-continue"
-              className="mt-[12px] flex h-[36.4px] w-full items-center justify-center rounded-[6px] text-[15px] font-medium text-white"
+              className="mt-[6px] flex h-[36.4px] w-full items-center justify-center rounded-[6px] text-[15px] font-medium text-white"
               style={{ background: "var(--shotiq-color-confirmGreen)" }}>
         Review profile
       </button>

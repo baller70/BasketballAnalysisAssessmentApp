@@ -111,20 +111,20 @@ export function PhotoAccessPrimer({ onChoose, onNotNow }: {
           <PhoneHeading size={40.5} className="mt-[26px] leading-[38.2px]">
             WE NEED ACCESS<br />TO YOUR PHOTOS
           </PhoneHeading>
-          <p className="mt-[10px] text-[11.4px] leading-[15.5px] text-[var(--shotiq-color-graphite)]">
+          <p className="mt-[10px] text-[10.9px] leading-[15.5px] tracking-[-0.025em] text-[var(--shotiq-color-graphite)]">
             ShotIQ analyzes your mechanics using photos
             from your library. You choose what to share—
             nothing is uploaded without your permission.
           </p>
 
-          <PhoneHeading size={16.3} className="mt-[26px]">WHAT WE ACCESS</PhoneHeading>
+          <PhoneHeading size={16.3} className="mt-[20px]">WHAT WE ACCESS</PhoneHeading>
           <div className="mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
             {ITEMS.map(([glyph, title, body]) => (
-              <div key={title} className="flex items-start gap-[12px] py-[10px]">
+              <div key={title} className="flex items-start gap-[12px] py-[7px]">
                 <span className="flex w-[46px] shrink-0 justify-center pt-[2px]">{glyph}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-medium leading-[15px]">{title}</span>
-                  <span className="mt-[4px] block text-[10.5px] leading-[12.5px] text-[var(--shotiq-color-graphite)]">
+                  <span className="mt-[4px] block text-[10px] leading-[12.5px] tracking-[-0.02em] text-[var(--shotiq-color-graphite)]">
                     {body.map((l) => <span key={l} className="block">{l}</span>)}
                   </span>
                 </span>
@@ -159,10 +159,10 @@ export function PhotoAccessPrimer({ onChoose, onNotNow }: {
       </div>
 
       {/* ------------------------------------------------ other ways / CTAs */}
-      <PhoneHeading size={16.3} className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pt-[9px]">
+      <PhoneHeading size={16.3} className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[7px]">
         OTHER WAYS TO ADD PHOTOS
       </PhoneHeading>
-      <Link href="/video-analysis" className="mt-[8px] flex items-center gap-[13px]">
+      <Link href="/video-analysis" className="mt-[5px] flex items-center gap-[13px]">
         <span className="flex w-[56px] shrink-0 justify-center" style={{ color: BLUE }}>
           <ActionGlyph kind="liveCamera" height={26} accent={BLUE} />
         </span>
@@ -178,18 +178,18 @@ export function PhotoAccessPrimer({ onChoose, onNotNow }: {
         </svg>
       </Link>
 
-      <PhoneHeading size={16.3} className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[9px]">
+      <PhoneHeading size={16.3} className="mt-[5px] border-t border-[var(--shotiq-color-rule)] pt-[7px]">
         CHOOSE HOW YOU&apos;D LIKE TO PROCEED
       </PhoneHeading>
 
       <button type="button" onClick={onChoose} data-testid="photo-choose-access"
-              className="mt-[6px] flex h-[29.9px] w-full items-center justify-center gap-[16px] rounded-[4px] text-[14px] font-medium text-white"
+              className="mt-[4px] flex h-[29.9px] w-full items-center justify-center gap-[16px] rounded-[4px] text-[14px] font-medium text-white"
               style={{ background: ORANGE }}>
         <ActionGlyph kind="analyze" height={19} accent="#fff" />
         Choose access
       </button>
       <Link href="/video-analysis" data-testid="photo-use-camera"
-            className="mt-[5px] flex h-[27.6px] w-full items-center justify-center gap-[13px] rounded-[4px] border text-[14px] font-medium"
+            className="mt-[3px] flex h-[27.6px] w-full items-center justify-center gap-[13px] rounded-[4px] border text-[14px] font-medium"
             style={{ borderColor: "#BFD3F5", color: BLUE }}>
         <svg width="19" height="17" viewBox="0 0 19 17" aria-hidden="true">
           <rect x="0.9" y="3.4" width="17.2" height="12.7" rx="1.8" fill="none" stroke={BLUE} strokeWidth="1.4" />
@@ -199,11 +199,11 @@ export function PhotoAccessPrimer({ onChoose, onNotNow }: {
         Use camera instead
       </Link>
       <button type="button" onClick={onNotNow} data-testid="photo-not-now"
-              className="mt-[5px] flex h-[23.5px] w-full items-center justify-center rounded-[4px] border border-[var(--shotiq-color-rule)] text-[14px] text-[var(--shotiq-color-graphite)]">
+              className="mt-[3px] flex h-[23.5px] w-full items-center justify-center rounded-[4px] border border-[var(--shotiq-color-rule)] text-[14px] text-[var(--shotiq-color-graphite)]">
         Not now
       </button>
 
-      <div className="mt-[5px] flex items-center justify-center gap-[9px] text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">
+      <div className="mt-[3px] flex items-center justify-center gap-[9px] text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">
         <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true" className="shrink-0">
           <rect x="1" y="6.4" width="12" height="8.6" rx="1.4" fill="none" stroke="currentColor" strokeWidth="1.3" />
           <path d="M3.6 6.4V4.4a3.4 3.4 0 0 1 6.8 0v2" fill="none" stroke="currentColor" strokeWidth="1.3" />

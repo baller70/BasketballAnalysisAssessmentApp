@@ -118,7 +118,7 @@ export default function PlayerCardPage() {
                   className="flex h-[46px] w-[180px] items-center justify-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[13px] font-bold tracking-[0.04em] text-white">
             <Pencil className="h-[15px] w-[15px]" /> CUSTOMIZE CARD
           </button>
-          <button type="button" onClick={share}
+          <button type="button" onClick={share} data-testid="player-share"
                   className="flex h-[46px] w-[152px] items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px] font-bold tracking-[0.04em]">
             <Share2 className="h-[15px] w-[15px]" /> {shareMsg || "SHARE"}
           </button>
