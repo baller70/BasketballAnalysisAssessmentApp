@@ -91,13 +91,13 @@ export function EliteShootersPhone({
   return (
     <PhoneScreen testid="screen-ios-elite-shooters" tab="home" pad={0} headerH={38}>
       <div style={{ paddingLeft: 16.6, paddingRight: 16.6, paddingBottom: 70 }}>
-        <div className="pt-[13px] shotiq-display text-[39px] leading-[36px] tracking-[0.02em]">ELITE SHOOTERS</div>
-        <div className="mt-[7px] text-[12.6px] leading-[14px]" style={{ color: GRAPHITE }}>
+        <div className="pt-[10px] shotiq-display text-[36px] leading-[33px] tracking-[0.02em]">ELITE SHOOTERS</div>
+        <div className="mt-[6px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>
           Study the world’s best. Compare forms. Elevate your game.
         </div>
 
-        <div className="mt-[10px] flex gap-[8px]">
-          <label className="flex h-[37px] min-w-0 flex-1 items-center gap-[10px] rounded-[6px] bg-white px-[11px]"
+        <div className="mt-[8px] flex gap-[7px]">
+          <label className="flex h-[34px] min-w-0 flex-1 items-center gap-[9px] rounded-[6px] bg-white px-[10px]"
                  style={{ border: `1px solid ${RULE}` }}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="shrink-0"
                  stroke={GRAPHITE} strokeWidth="1.7" strokeLinecap="round">
@@ -109,7 +109,7 @@ export function EliteShootersPhone({
                    className="min-w-0 flex-1 bg-transparent text-[13.6px] outline-none placeholder:text-[var(--shotiq-color-graphite)]" />
           </label>
           <button type="button" onClick={onFilter} data-testid="phone-elite-filter"
-                  className="flex h-[37px] shrink-0 items-center gap-[9px] rounded-[6px] bg-white px-[13px] text-[13.6px]"
+                  className="flex h-[34px] shrink-0 items-center gap-[8px] rounded-[6px] bg-white px-[12px] text-[13px]"
                   style={{ border: `1px solid ${RULE}` }}>
             <svg width="18" height="16" viewBox="0 0 18 16" fill="none" aria-hidden="true"
                  stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
@@ -121,10 +121,10 @@ export function EliteShootersPhone({
           </button>
         </div>
 
-        <div className="mt-[8px] flex gap-[7px]">
+        <div className="mt-[7px] flex gap-[5px]">
           {["All Levels", "All Positions", "All Shot Types", "More Filters"].map((p) => (
             <button key={p} type="button" onClick={onFilter}
-                    className="flex h-[31px] min-w-0 flex-1 items-center justify-center gap-[5px] rounded-[5px] bg-white px-[4px] text-[11.4px]"
+                    className="flex h-[27px] min-w-0 flex-1 items-center justify-center gap-[3px] rounded-[5px] bg-white px-[2px] text-[10px]"
                     style={{ border: `1px solid ${RULE}` }}>
               <span className="truncate">{p}</span>
               <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true" className="shrink-0">
@@ -134,7 +134,7 @@ export function EliteShootersPhone({
           ))}
         </div>
 
-        <div className="mt-[10px] flex items-center">
+        <div className="mt-[8px] flex items-center">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"
                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M4 14 V2 M1.6 4.4 L4 2 L6.4 4.4 M12 2 V14 M9.6 11.6 L12 14 L14.4 11.6" />
@@ -150,39 +150,38 @@ export function EliteShootersPhone({
           </span>
         </div>
 
-        <div className="mt-[9px]">
+        <div className="mt-[7px]">
           {rows.map((r) => (
             <button key={r.slug} type="button" onClick={() => onOpen?.(r.slug)}
                     data-testid={`phone-elite-row-${r.slug}`}
-                    className="mt-[7px] flex w-full gap-[10px] overflow-hidden rounded-[6px] bg-white text-left first:mt-0"
+                    className="mt-[5px] flex w-full gap-[9px] overflow-hidden rounded-[6px] bg-white text-left first:mt-0"
                     style={{ border: `1px solid ${RULE}` }}>
-              <Frame src={r.thumb} w={96} h={100} radius={0} pos="50% 30%" />
-              <span className="min-w-0 flex-1 py-[9px] pr-[10px]">
+              <Frame src={r.thumb} w={80} h={92} radius={0} pos="50% 34%" />
+              <span className="min-w-0 flex-1 py-[5px] pr-[8px]">
                 <span className="flex items-start">
                   <span className="min-w-0 flex-1">
-                    <span className="shotiq-display block text-[19px] leading-[19px] tracking-[0.03em]">{r.name.toUpperCase()}</span>
-                    <span className="mt-[5px] block text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>
+                    <span className="shotiq-display block whitespace-nowrap text-[16.5px] leading-[16px] tracking-[0.03em]">{r.name.toUpperCase()}</span>
+                    <span className="mt-[4px] block whitespace-nowrap text-[10.4px] leading-[11px]" style={{ color: GRAPHITE }}>
                       {r.hand} • {r.pos}
                     </span>
                   </span>
                   <span className="flex shrink-0 text-center">
-                    <span className="w-[52px]">
-                      <Micro size={8}>FG%</Micro>
-                      <span className="shotiq-numeric mt-[4px] block text-[16px] leading-[16px]">{r.fg}</span>
+                    <span className="w-[46px]">
+                      <Micro size={7.4}>FG%</Micro>
+                      <span className="shotiq-numeric mt-[3px] block text-[14px] leading-[14px]">{r.fg}</span>
                     </span>
-                    <span className="w-[42px]" style={{ borderLeft: `1px solid ${RULE}` }}>
-                      <Micro size={8} className="!text-[color:var(--shotiq-color-shotiqOrange)]">WSI</Micro>
-                      <span className="shotiq-numeric mt-[4px] block text-[16px] leading-[16px]" style={{ color: ORANGE }}>{r.wsi}</span>
+                    <span className="w-[36px]" style={{ borderLeft: `1px solid ${RULE}` }}>
+                      <Micro size={7.4} className="!text-[color:var(--shotiq-color-shotiqOrange)]">WSI</Micro>
+                      <span className="shotiq-numeric mt-[3px] block text-[14px] leading-[14px]" style={{ color: ORANGE }}>{r.wsi}</span>
                     </span>
-                    <span className="w-[64px]" style={{ borderLeft: `1px solid ${RULE}` }}>
-                      <Micro size={8}>SIMILARITY</Micro>
-                      <span className="shotiq-numeric mt-[4px] block text-[16px] leading-[16px]" style={{ color: BLUE }}>{r.similarity}</span>
+                    <span className="w-[58px]" style={{ borderLeft: `1px solid ${RULE}` }}>
+                      <Micro size={7.4}>SIMILARITY</Micro>
+                      <span className="shotiq-numeric mt-[3px] block text-[14px] leading-[14px]" style={{ color: BLUE }}>{r.similarity}</span>
                     </span>
                   </span>
                 </span>
-                <span className="mt-[5px] block text-[11.6px] leading-[13px]">{r.style}</span>
-                <span className="mt-[1px] block text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>{r.league}</span>
-                <span className="mt-[6px] flex items-end">
+                <span className="mt-[4px] block text-[10.8px] leading-[12px]">{r.style} <span style={{ color: GRAPHITE }}>• {r.league}</span></span>
+                <span className="mt-[5px] flex items-end">
                   {PHASES.map(([kind, label], i) => {
                     const on = kind === "release"
                     return (
@@ -190,13 +189,13 @@ export function EliteShootersPhone({
                         {i > 0 && (
                           <span aria-hidden="true" className="absolute left-[-50%] top-[44%] h-px w-full" style={{ background: RULE }} />
                         )}
-                        <PoseFigure phase={kind} height={20} active={on} className="relative" />
-                        <span className="shotiq-display relative mt-[3px] text-center leading-none"
-                              style={{ fontSize: 7, color: on ? ORANGE : undefined }}>{label}</span>
+                        <PoseFigure phase={kind} height={19} active={on} className="relative" />
+                        <span className="shotiq-display relative mt-[3px] truncate text-center leading-none"
+                              style={{ fontSize: 6.6, color: on ? ORANGE : undefined }}>{label}</span>
                       </span>
                     )
                   })}
-                  <span className="ml-[8px] flex shrink-0 items-center gap-[4px] text-[12.6px]" style={{ color: ORANGE }}>
+                  <span className="ml-[6px] flex shrink-0 items-center gap-[3px] text-[11.6px]" style={{ color: ORANGE }}>
                     View shooter <Chev size={12} color={ORANGE} />
                   </span>
                 </span>
@@ -205,7 +204,7 @@ export function EliteShootersPhone({
           ))}
         </div>
 
-        <div className="mt-[11px] flex items-center gap-[11px] rounded-[6px] bg-white px-[11px] py-[10px]"
+        <div className="mt-[8px] flex items-center gap-[9px] rounded-[6px] bg-white px-[9px] py-[7px]"
              style={{ border: `1px solid ${RULE}` }}>
           <svg width="42" height="34" viewBox="0 0 42 34" fill="none" aria-hidden="true" className="shrink-0"
                stroke="currentColor" strokeWidth="1.7">
@@ -216,13 +215,13 @@ export function EliteShootersPhone({
             <circle cx="30" cy="16" r="3" fill="#fff" stroke={ORANGE} />
           </svg>
           <span className="min-w-0 flex-1">
-            <span className="block text-[14px] leading-[16px]">Compare your form to any elite shooter.</span>
-            <span className="mt-[4px] block text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>
+            <span className="block text-[13px] leading-[15px]">Compare your form to any elite shooter.</span>
+            <span className="mt-[3px] block text-[11.4px] leading-[13px]" style={{ color: GRAPHITE }}>
               Upload a shot to see your Form Similarity.
             </span>
           </span>
           <button type="button" onClick={onAnalyze} data-testid="phone-elite-analyze"
-                  className="flex h-[38px] shrink-0 items-center gap-[9px] rounded-[5px] px-[14px] text-[14px] font-medium text-white"
+                  className="flex h-[34px] shrink-0 items-center gap-[8px] rounded-[5px] px-[12px] text-[13px] font-medium text-white"
                   style={{ background: ORANGE }}>
             <ActionGlyph kind="analyze" height={17} accent="#fff" /> Analyze shot
           </button>
@@ -282,10 +281,10 @@ export function EliteShooterDetailPhone({
       <div style={{ paddingBottom: 70 }}>
         {/* hero band: identity left, full-bleed still right */}
         <div className="relative">
-          <span className="absolute right-0 top-0 block h-[171px] w-[196px] overflow-hidden">
+          <span className="absolute right-0 top-0 block h-[160px] w-[186px] overflow-hidden">
             <Frame src={hero} w="100%" h="100%" radius={0} pos="42% 24%" />
           </span>
-          <div className="relative pl-[20.7px] pr-[200px] pt-[8px]">
+          <div className="relative pl-[20.7px] pr-[192px] pt-[7px]">
             <Link href="/elite-shooters" className="flex items-center gap-[8px]" data-testid="phone-shooter-back">
               <svg width="13" height="14" viewBox="0 0 13 14" aria-hidden="true">
                 <path d="M9 1 L3 7 L9 13" fill="none" stroke="currentColor" strokeWidth="1.7"
@@ -295,15 +294,15 @@ export function EliteShooterDetailPhone({
                 ELITE SHOOTERS
               </span>
             </Link>
-            <div className="mt-[13px] shotiq-display text-[45px] leading-[42px] tracking-[0.02em]">{name.toUpperCase()}</div>
-            <div className="mt-[9px] text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>{hand} &nbsp;•&nbsp; {pos}</div>
+            <div className="mt-[11px] shotiq-display text-[33px] leading-[32px] tracking-[0.02em]">{name.toUpperCase()}</div>
+            <div className="mt-[7px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{hand} &nbsp;•&nbsp; {pos}</div>
             {(team || era) && (
-              <div className="mt-[5px] text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>
+              <div className="mt-[4px] truncate text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>
                 {team}{team && era ? " • " : ""}{era}
               </div>
             )}
-            <div className="mt-[11px] flex items-start gap-[12px] pt-[10px]" style={{ borderTop: `1px solid ${RULE}` }}>
-              <svg width="46" height="42" viewBox="0 0 46 42" fill="none" aria-hidden="true" className="shrink-0"
+            <div className="mt-[8px] flex items-start gap-[10px] pt-[7px]" style={{ borderTop: `1px solid ${RULE}` }}>
+              <svg width="40" height="37" viewBox="0 0 46 42" fill="none" aria-hidden="true" className="shrink-0"
                    stroke={ORANGE} strokeWidth="2">
                 <path d="M8 8 L34 12 M8 8 L6 30 M6 30 A16 16 0 0 0 34 26" />
                 <circle cx="8" cy="8" r="3.4" fill="#fff" stroke="#000" />
@@ -311,8 +310,8 @@ export function EliteShooterDetailPhone({
                 <circle cx="6" cy="30" r="3.4" fill="#fff" stroke="#000" />
               </svg>
               <div className="min-w-0">
-                <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">ELITE REFERENCE</div>
-                <div className="mt-[6px] text-[12.6px] leading-[15px]" style={{ color: GRAPHITE }}>
+                <div className="shotiq-display text-[20px] leading-[20px] tracking-[0.03em]">ELITE REFERENCE</div>
+                <div className="mt-[5px] text-[11.8px] leading-[13.6px]" style={{ color: GRAPHITE }}>
                   {blurb[0]}<br />{blurb[1]}
                 </div>
               </div>
@@ -321,13 +320,13 @@ export function EliteShooterDetailPhone({
         </div>
 
         {/* five tabs on ONE row */}
-        <div className="mt-[12px] flex" style={{ borderBottom: `1px solid ${RULE}` }}>
+        <div className="mt-[10px] flex" style={{ borderBottom: `1px solid ${RULE}` }}>
           {TABS.map((t) => {
             const on = t === tab
             return (
               <button key={t} type="button" onClick={() => onTab?.(t)}
                       data-testid={`phone-shooter-tab-${t.toLowerCase()}`}
-                      className="relative min-w-0 flex-1 pb-[9px] text-center">
+                      className="relative min-w-0 flex-1 pb-[7px] text-center">
                 <span className="shotiq-display block truncate text-[13.4px] leading-[14px] tracking-[0.04em]"
                       style={{ color: on ? ORANGE : GRAPHITE }}>{t}</span>
                 {on && <span aria-hidden="true" className="absolute inset-x-[12%] bottom-0 h-[2.6px]" style={{ background: ORANGE }} />}
@@ -337,37 +336,37 @@ export function EliteShooterDetailPhone({
         </div>
 
         <div style={{ paddingLeft: 22.6, paddingRight: 22.6 }}>
-          <div className="mt-[13px] flex items-baseline">
+          <div className="mt-[9px] flex items-baseline">
             <SectionHead cap={27}>CAREER SHOOTING SUMMARY</SectionHead>
             <Link href="/results/demo/player" className="ml-auto flex items-center gap-[5px] text-[12.6px]"
                   style={{ color: ORANGE }}>View bio <Chev size={12} color={ORANGE} /></Link>
           </div>
           <div className="mt-[3px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>24 Shots Analyzed</div>
 
-          <div className="mt-[8px] flex items-start gap-[9px]">
-            <div className="flex min-w-0 flex-1 rounded-[6px] bg-white py-[9px]" style={{ border: `1px solid ${RULE}` }}>
+          <div className="mt-[6px] flex items-start gap-[8px]">
+            <div className="flex min-w-0 flex-1 rounded-[6px] bg-white py-[6px]" style={{ border: `1px solid ${RULE}` }}>
               {career.map(([k, v], i) => (
                 <div key={k} className="min-w-0 flex-1 text-center"
                      style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
                   <Micro size={8}>{k}</Micro>
-                  <div className="shotiq-numeric mt-[5px] text-[17px] leading-[17px]">{v}</div>
+                  <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]">{v}</div>
                 </div>
               ))}
             </div>
-            <div className="w-[76px] shrink-0 rounded-[6px] bg-white py-[8px] text-center" style={{ border: `1px solid ${RULE}` }}>
+            <div className="w-[68px] shrink-0 rounded-[6px] bg-white py-[5px] text-center" style={{ border: `1px solid ${RULE}` }}>
               <Micro size={8}>WSI TIER</Micro>
-              <div className="shotiq-numeric mt-[4px] text-[26px] leading-[26px]" style={{ color: ORANGE }}>{tier}</div>
-              <Micro size={8} className="mt-[4px]">{tierLabel}</Micro>
+              <div className="shotiq-numeric mt-[3px] text-[24px] leading-[24px]" style={{ color: ORANGE }}>{tier}</div>
+              <Micro size={7.2} className="mt-[3px] truncate">{tierLabel}</Micro>
             </div>
           </div>
 
-          <div className="mt-[13px] flex items-start gap-[14px]">
-            <div className="w-[76px] shrink-0">
+          <div className="mt-[8px] flex items-start gap-[11px]">
+            <div className="w-[88px] shrink-0">
               <div className="shotiq-section-label leading-[12px] tracking-[0.075em]"
                    style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
-              <div className="shotiq-numeric mt-[3px] text-[42px] leading-[0.82]" style={{ color: ORANGE }}>{score}</div>
-              <div className="shotiq-display mt-[5px] text-[15px] leading-[15px] tracking-[0.04em]" style={{ color: BLUE }}>{verdict}</div>
-              <div className="mt-[4px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>{note}</div>
+              <div className="shotiq-numeric mt-[2px] text-[34px] leading-[0.82]" style={{ color: ORANGE }}>{score}</div>
+              <div className="shotiq-display mt-[4px] text-[14px] leading-[14px] tracking-[0.04em]" style={{ color: BLUE }}>{verdict}</div>
+              <div className="mt-[3px] text-[10.6px] leading-[11.8px]" style={{ color: GRAPHITE }}>{note}</div>
             </div>
             <div className="min-w-0 flex-1 pt-[13px]">
               <span className="relative block h-[11px] overflow-hidden rounded-full" style={{ background: "#E2E3E4" }}>
@@ -384,11 +383,11 @@ export function EliteShooterDetailPhone({
             </div>
           </div>
 
-          <div className="mt-[15px] flex items-baseline" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 12 }}>
+          <div className="mt-[7px] flex items-baseline" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 7 }}>
             <SectionHead cap={22}>SHOT BREAKDOWN (CAREER)</SectionHead>
             <span className="ml-auto text-[11.6px]" style={{ color: GRAPHITE }}>100% = 24 SHOTS</span>
           </div>
-          <div className="mt-[8px] flex">
+          <div className="mt-[6px] flex">
             {breakdown.map(([label, value, count], i) => (
               <div key={label} className="min-w-0 flex-1 px-[5px]"
                    style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
@@ -401,32 +400,32 @@ export function EliteShooterDetailPhone({
                     <circle cx="24" cy="13" r="2.6" stroke={ORANGE} strokeDasharray="0" />
                   </svg>
                 </span>
-                <div className="mt-[4px] truncate text-[11.4px] leading-[13px]">{label}</div>
-                <div className="shotiq-numeric mt-[3px] text-[19px] leading-[19px]">{value}</div>
-                <Micro size={8} className="mt-[3px]">{count}</Micro>
+                <div className="mt-[3px] truncate text-[10.6px] leading-[12px]">{label}</div>
+                <div className="shotiq-numeric mt-[2px] text-[17px] leading-[17px]">{value}</div>
+                <Micro size={7.4} className="mt-[2px]">{count}</Micro>
               </div>
             ))}
           </div>
 
-          <div className="mt-[13px]"><SectionHead cap={21}>MECHANICS SNAPSHOT</SectionHead></div>
-          <div className="mt-[7px] flex">
+          <div className="mt-[7px]"><SectionHead cap={21}>MECHANICS SNAPSHOT</SectionHead></div>
+          <div className="mt-[5px] flex">
             {mechanics.map(([label, value, kind], i) => (
               <div key={label} className="flex min-w-0 flex-1 items-start gap-[3px] px-[3px]"
                    style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
-                <PoseFigure phase={kind} height={26} className="shrink-0" />
+                <PoseFigure phase={kind} height={21} className="shrink-0" />
                 <span className="min-w-0">
-                  <span className="block truncate text-[10.4px] leading-[12px]" style={{ color: GRAPHITE }}>{label}</span>
-                  <span className="shotiq-numeric mt-[3px] block text-[14px] leading-[14px]" style={{ color: GREEN }}>{value}</span>
+                  <span className="block text-[8.6px] leading-[10px]" style={{ color: GRAPHITE }}>{label}</span>
+                  <span className="shotiq-numeric mt-[2px] block text-[13px] leading-[13px]" style={{ color: GREEN }}>{value}</span>
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="mt-[13px] flex gap-[16px]" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 12 }}>
+          <div className="mt-[7px] flex gap-[13px]" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 7 }}>
             <div className="min-w-0 flex-1">
               <SectionHead cap={21}>STRENGTHS</SectionHead>
               {strengths.slice(0, 3).map((s) => (
-                <div key={s} className="mt-[7px] flex items-start gap-[7px] text-[12.4px] leading-[14px]">
+                <div key={s} className="mt-[3px] flex items-start gap-[5px] text-[10.4px] leading-[11.6px]">
                   <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="mt-[1px] shrink-0">
                     <circle cx="7" cy="7" r="6.1" fill="none" stroke={GREEN} strokeWidth="1.3" />
                     <path d="M4.1 7.2 L6.2 9.3 L10 5.2" fill="none" stroke={GREEN} strokeWidth="1.5"
@@ -450,13 +449,13 @@ export function EliteShooterDetailPhone({
             </div>
           </div>
 
-          <div className="mt-[13px]"><SectionHead cap={21}>REFERENCE FORM FRAMES</SectionHead></div>
-          <div className="mt-[7px] flex gap-[5px]">
+          <div className="mt-[7px]"><SectionHead cap={21}>REFERENCE FORM FRAMES</SectionHead></div>
+          <div className="mt-[5px] flex gap-[4px]">
             {frames.map((f, i) => {
               const on = i === 3
               return (
                 <div key={f} className="min-w-0 flex-1">
-                  <Frame src={f} w="100%" h={73} radius={3} pos="50% 34%" />
+                  <Frame src={f} w="100%" h={58} radius={3} pos="50% 34%" />
                   <div className="shotiq-display mt-[5px] truncate text-center leading-none"
                        style={{ fontSize: 7.4, color: on ? ORANGE : undefined }}>{PHASES[i][1]}</div>
                   {on && <span aria-hidden="true" className="mx-auto mt-[3px] block h-[1.6px] w-[70%]" style={{ background: ORANGE }} />}
@@ -465,7 +464,7 @@ export function EliteShooterDetailPhone({
             })}
           </div>
 
-          <div className="mt-[11px] flex gap-[8px]">
+          <div className="mt-[8px] flex gap-[7px]">
             <button type="button" onClick={onCompare} data-testid="phone-shooter-compare"
                     className="flex h-[34px] min-w-0 flex-[1.5] items-center justify-center gap-[10px] rounded-[5px] text-[14.6px] font-medium text-white"
                     style={{ background: ORANGE }}>

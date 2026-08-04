@@ -326,7 +326,10 @@ export default function DashboardPage() {
           {/* 430px was ~30px under canonical's rail and it was the RECENT
               ANALYSES meta line that paid for it ("… Catch & S…"). */}
           <aside className="w-[452px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[20px] pt-[26px]">
-            <SectionLabel>AT A GLANCE</SectionLabel>
+            {/* Canonical sets this one at cap 14 over a 70px advance; the role
+                default drew cap 11 over 59. Raised here only — see SectionLabel. */}
+            <SectionLabel style={{ "--shotiq-label-size": "19px",
+                                   "--shotiq-label-tracking": "0.055em" } as React.CSSProperties}>AT A GLANCE</SectionLabel>
             <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)] px-[6px] py-[16px] text-center">
               {[
                 [hasData ? String(stats!.totalAnalyses) : "0", "TOTAL ANALYSES", "All time", "var(--shotiq-color-ink)"],
@@ -342,7 +345,17 @@ export default function DashboardPage() {
                 // pushing "AVG. FORM SCORE" onto a second row inside the 430px
                 // rail, so the gutters shrank and the tracking came off.
                 <div key={l} className="min-w-0 flex-1 px-[3px]">
-                  <div className="whitespace-nowrap text-[9px] text-[var(--shotiq-color-graphite)]">{l}</div>
+                  {/* Canonical's AT A GLANCE eyebrows are the condensed
+                      micro-caps tier at cap 10 — TOTAL ANALYSES over 63px. The
+                      body face at 9px drew cap 7 over 72px on all four: 30%
+                      short and 14% WIDER at the same time, which is the
+                      signature of the wrong face rather than the wrong size.
+                      Sized and tracked through the role's custom properties,
+                      because a bare utility on this element is discarded. */}
+                  <div className="shotiq-microcaps whitespace-nowrap text-[var(--shotiq-color-graphite)]"
+                       style={{ "--shotiq-microcaps-size": "13px",
+                                "--shotiq-microcaps-tracking": "0.045em",
+                                "--shotiq-microcaps-word-spacing": "0.14em" } as React.CSSProperties}>{l}</div>
                   <div className="shotiq-numeric mt-[4px] text-[37px] leading-[39px]" style={{ color: c }}>{v}</div>
                   <div className="mt-[2px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{sub}</div>
                 </div>
@@ -356,9 +369,13 @@ export default function DashboardPage() {
               <div className="min-w-0 flex-1 pr-[12px]"><Stat value={hasData ? latestShots ?? "—" : "0"} label="SHOTS" /></div>
               <div className="min-w-0 flex-1 px-[12px]"><Stat value={hasData ? latestMakes ?? "—" : "0"} label="MAKES" /></div>
               <div className="min-w-0 flex-1 px-[12px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
-              <div className="min-w-0 flex-[1.35] pl-[12px] text-right">
+              {/* Canonical hands this cell 130 of the card's 394px content (33%)
+                  and keeps "+8.1% vs last session" on one line; at flex-[1.35]
+                  the cell measured 121 of 409 (29.6%) and the caption broke in
+                  two under the sparkline. */}
+              <div className="min-w-0 flex-[1.75] pl-[12px] text-right">
                 <TrendLine points={trend} width={96} height={34} />
-                <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
+                <div className="text-[10px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last session</span></div>
               </div>
             </Card>
 
@@ -376,7 +393,7 @@ export default function DashboardPage() {
                           strokeWidth="1.6" />
                   </svg>
                 </div>
-                <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last 7 days</div>
+                <div className="text-[11px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last 7 days</span></div>
               </div>
               <div className="w-[150px] px-[18px] py-[16px]">
                 <SectionLabel>FORM SCORE</SectionLabel>
@@ -504,12 +521,21 @@ export default function DashboardPage() {
     <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Home" {...shellProps}>
       <div data-testid="screen-desktop-web-home-dashboard" className="px-[34px] pt-[16px]">
-        <div className="flex items-center gap-[24px]">
+        {/* Canonical clears 332px for the title before its first action
+            button; the 196px rail leaves ~110px less here, so the row gap and the
+            buttons' own padding come in to make the room rather than the title
+            wrapping to two lines. Canonical's buttons measure 184-190 wide; at
+            px-[20px]/px-[16px] these land at ~181. */}
+        <div className="flex items-center gap-[16px]">
           {/* min-w-0 so the title block yields first: adding the layout switch
               below the H1 widened this cell enough to wrap every action label
               onto two lines ("Analyze / shot"), which canonical sets on one. */}
           <div className="mr-auto min-w-0">
-            <h1 className="shotiq-display text-[54px] leading-[56px]">TODAY&apos;S SHOT ROOM</h1>
+            {/* Canonical cap 44 over a 332px advance at ink density 0.494;
+                54px measured cap 37 over 285 at 0.491. Density matched, so a
+                pure size error — the largest title miss in the set. The display
+                face carries cap 0.704em, so cap 44 wants 63px. */}
+            <h1 className="shotiq-display whitespace-nowrap text-[63px] leading-[58px]">TODAY&apos;S SHOT ROOM</h1>
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
               {today}
             </p>
@@ -518,14 +544,14 @@ export default function DashboardPage() {
               its own aspect ratio (the film gate is 60x25, the live-camera node
               run 78x27) at a ~34px height — not four 20px square UI glyphs. */}
           <Link href="/analyze" data-testid="cta-analyze-shot"
-                className="flex h-[56px] shrink-0 items-center gap-[12px] whitespace-nowrap rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[26px] text-[15px] font-medium text-white">
+                className="flex h-[56px] shrink-0 items-center gap-[10px] whitespace-nowrap rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[15px] font-medium text-white">
             <ActionGlyph kind="analyze" height={30} accent="#fff" /> Analyze shot
           </Link>
           {([["Upload image", "/upload", "uploadImage", 34],
              ["Upload video", "/upload", "uploadVideo", 25],
              ["Live camera", "/video-analysis", "liveCamera", 27]] as [string, string, ActionKind, number][]).map(([t, href, kind, h]) => (
             <Link key={t} href={href}
-                  className="flex h-[56px] shrink-0 items-center gap-[14px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+                  className="flex h-[56px] shrink-0 items-center gap-[10px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
               <ActionGlyph kind={kind} height={h} /> {t}
             </Link>
           ))}
@@ -569,7 +595,7 @@ export default function DashboardPage() {
                       strokeWidth="1.6" />
               </svg>
             </div>
-            <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last session</div>
+            <div className="text-[11px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last session</span></div>
           </div>
 
           {/* right column */}
@@ -601,7 +627,7 @@ export default function DashboardPage() {
               <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
               <div className="shrink-0 pl-[14px] text-right">
                 <TrendLine points={trend} width={92} height={34} />
-                <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
+                <div className="text-[10px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last session</span></div>
               </div>
             </div>
 

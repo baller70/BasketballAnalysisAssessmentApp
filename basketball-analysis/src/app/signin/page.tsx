@@ -18,7 +18,7 @@
 import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
-import { UnifiedSidebar, PageTitle } from "@/components/shotiq/ShotIQShell"
+import { UnifiedSidebar, PageTitle, ResponsiveTitle } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize } from "lucide-react"
 
 const STEPS = [
@@ -100,7 +100,13 @@ export default function SignInPage() {
   // --------------------------------------------------------------------------
 
   const busy = isSubmitting || isLoading
-  const label = "text-[12px] font-bold tracking-[0.04em] text-[var(--shotiq-color-ink)]"
+  /* Canonical's field labels are the condensed micro-caps tier: EMAIL cap 11
+     over 30px, PASSWORD cap 12 over 54px. The body face at 12px bold drew cap 9
+     over 36 and 66 — two short and 20% WIDER, the undersized-and-over-tracked
+     signature that means the face is wrong, not just the size. */
+  const label = "shotiq-microcaps text-[var(--shotiq-color-ink)]"
+  const labelVars = { "--shotiq-microcaps-size": "15px",
+                      "--shotiq-microcaps-tracking": "0.10em" } as React.CSSProperties
   const field =
     "w-full h-[46px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[14px] " +
     "text-[15px] text-[var(--shotiq-color-ink)] placeholder:text-[var(--shotiq-color-muted)] " +
@@ -155,20 +161,26 @@ export default function SignInPage() {
 
         {/* --------------------------------------------------- form column */}
         <section className="w-[394px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]">
-          {/* 46px drew a 32px cap against canonical's 44px. */}
-          <PageTitle size={63}>WELCOME BACK</PageTitle>
+          {/* 46px drew a 32px cap against canonical's 44px.
+              Phone and desktop disagree on both the words and the size, and
+              both readings are off the canonical renders: iOS 003 says
+              "SIGN IN" at cap 119 (of 853px-wide art, so 54.8 CSS px, and
+              54.8/0.705 = 77.8px), desktop 077 says "WELCOME BACK" at cap 44. */}
+          <PageTitle size={63} phoneSize={77.8}>
+            <ResponsiveTitle phone="SIGN IN" web="WELCOME BACK" />
+          </PageTitle>
           <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
             Sign in to continue your training.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-[30px]" noValidate>
-            <label htmlFor="email" className={label}>EMAIL</label>
+            <label htmlFor="email" className={label} style={labelVars}>EMAIL</label>
             <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signin-email"
                    className={`${field} mt-[9px]`} placeholder="Enter your email"
                    value={formData.email}
                    onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
 
-            <label htmlFor="password" className={`${label} mt-[22px] block`}>PASSWORD</label>
+            <label htmlFor="password" className={`${label} mt-[22px] block`} style={labelVars}>PASSWORD</label>
             <div className="relative mt-[9px]">
               <input id="password" type={showPassword ? "text" : "password"}
                      autoComplete="current-password" data-testid="signin-password"
@@ -274,8 +286,14 @@ export default function SignInPage() {
                 WIDTH (object-cover trims the sides) and not its height: at
                 440x317 the card overhung the video by 55px, which both graders
                 caught. 440 + 12 gutter + 346 card = 798, and the card keeps the
-                canonical 346px it needs to stay legible. */}
-            <div className="relative flex h-[355px] w-[440px] shrink-0 flex-col overflow-hidden rounded-[4px] bg-[#1B1D20]"
+                canonical 346px it needs to stay legible.
+                R12: canonical splits its 864px row 495 video : 358 card (57.3% /
+                41.4%). At 440 the video held only 55.1%, so it takes its
+                proportional 457 here and the card keeps 329. The canonical 1.38
+                aspect would need 490px of the 798 available, which would cut the
+                card to 296 — 34px under its own proportional share — so the
+                aspect closes to 1.29 rather than 1.38 and the rest is rail cost. */}
+            <div className="relative flex h-[355px] w-[457px] shrink-0 flex-col overflow-hidden rounded-[4px] bg-[#1B1D20]"
                  data-testid="signin-media-surface">
               {/* The photo is cut WITHOUT canonical's transport bar (541,334
                   492x314); the bar is drawn below as real elements. The old
@@ -313,7 +331,8 @@ export default function SignInPage() {
                 <div>
                   {/* 58px drew a 41px numeral against canonical's 52px. */}
                   <div className="shotiq-numeric text-[74px] leading-[78px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-                  <div className="mt-[8px] h-[6px] w-[133px] rounded-full bg-[var(--shotiq-color-rule)]">
+                  {/* Canonical's track is 8px (y442-450 core, x1066-1200); 6px drew half stroke. */}
+                  <div className="mt-[8px] h-[8px] w-[139px] rounded-full bg-[var(--shotiq-color-rule)]">
                     <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: "86%" }} />
                   </div>
                 </div>

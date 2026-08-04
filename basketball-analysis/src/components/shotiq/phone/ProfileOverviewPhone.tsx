@@ -145,11 +145,11 @@ export function ProfileOverviewPhone({
   return (
     <PhoneScreen testid="screen-ios-profile" tab="profile" pad={0} headerH={38}>
       <div style={{ paddingLeft: 17.5, paddingRight: 17.5, paddingBottom: 70 }}>
-        <div className="flex items-center gap-[16px] pt-[12px]">
+        <div className="flex items-center gap-[15px] pt-[10px]">
           <span className="relative block shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={avatar} alt="" aria-hidden="true"
-                 className="block h-[102px] w-[102px] rounded-full object-cover"
+                 className="block h-[94px] w-[94px] rounded-full object-cover"
                  style={{ objectPosition: "50% 30%" }} />
             <button type="button" onClick={onEdit} aria-label="Change photo"
                     data-testid="phone-profile-avatar-edit"
@@ -162,46 +162,46 @@ export function ProfileOverviewPhone({
             </button>
           </span>
           <div className="min-w-0">
-            <div className="shotiq-display text-[46px] leading-[42px] tracking-[0.02em]">{name.toUpperCase()}</div>
+            <div className="shotiq-display text-[41px] leading-[38px] tracking-[0.02em]">{name.toUpperCase()}</div>
             <div className="mt-[6px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub}</div>
           </div>
         </div>
 
-        <div className="mt-[11px] flex text-center">
+        <div className="mt-[9px] flex text-center">
           <div className="flex-1">
             <span className="flex h-[22px] items-center justify-center"><ActionGlyph kind="uploadVideo" height={17} /></span>
-            <div className="shotiq-numeric mt-[5px] text-[21px] leading-[21px]">{streak}</div>
-            <Micro className="mt-[5px]" size={8.6}>DAY STREAK</Micro>
+            <div className="shotiq-numeric mt-[4px] text-[20px] leading-[20px]">{streak}</div>
+            <Micro className="mt-[4px]" size={8.2}>DAY STREAK</Micro>
           </div>
           <div className="flex-1" style={{ borderRight: `1px solid ${RULE}` }}>
             <span className="flex h-[22px] items-center justify-center"><ActionGlyph kind="nodeGraph" height={20} /></span>
-            <div className="shotiq-numeric mt-[5px] text-[21px] leading-[21px]">{points}</div>
-            <Micro className="mt-[5px]" size={8.6}>POINTS</Micro>
+            <div className="shotiq-numeric mt-[4px] text-[20px] leading-[20px]">{points}</div>
+            <Micro className="mt-[4px]" size={8.2}>POINTS</Micro>
           </div>
           {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l], i) => (
-            <div key={l} className="flex-1 pt-[27px]" style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
-              <div className="shotiq-numeric text-[21px] leading-[21px]">{v}</div>
-              <Micro className="mt-[5px]" size={8.6}>{l}</Micro>
+            <div key={l} className="flex-1 pt-[24px]" style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
+              <div className="shotiq-numeric text-[20px] leading-[20px]">{v}</div>
+              <Micro className="mt-[4px]" size={8.2}>{l}</Micro>
             </div>
           ))}
         </div>
 
         <button type="button" onClick={onEdit} data-testid="phone-profile-edit"
-                className="mt-[12px] flex h-[35px] w-full items-center justify-center gap-[15px] rounded-[4px] text-[16px] font-medium text-white"
+                className="mt-[10px] flex h-[35px] w-full items-center justify-center gap-[15px] rounded-[4px] text-[16px] font-medium text-white"
                 style={{ background: ORANGE }}>
           <ActionGlyph kind="analyze" height={20} accent="#fff" /> Edit player profile
         </button>
 
-        <div className="mt-[11px] rounded-[7px] bg-white px-[12px] pb-[12px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[9px] rounded-[7px] bg-white px-[11px] pb-[10px] pt-[9px]" style={{ border: `1px solid ${RULE}` }}>
           <SectionHead cap={24}>PHYSICAL PROFILE</SectionHead>
-          <div className="mt-[9px] flex">
+          <div className="mt-[7px] flex">
             {([["height", height, "HEIGHT", ""], ["weight", weight, "WEIGHT", "lbs"], ["wingspan", wingspan, "WINGSPAN", ""]] as const).map(
               ([kind, v, l, unit], i) => (
-                <div key={l} className="flex min-w-0 flex-1 items-center gap-[8px] px-[6px]"
+                <div key={l} className="flex min-w-0 flex-1 items-center gap-[7px] px-[4px]"
                      style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
                   <BodyMark kind={kind} />
                   <span className="min-w-0">
-                    <span className="shotiq-numeric block text-[22px] leading-[22px]">
+                    <span className="shotiq-numeric block text-[21px] leading-[21px]">
                       {v}{unit && <span className="ml-[3px] text-[12px]" style={{ color: GRAPHITE }}>{unit}</span>}
                     </span>
                     <Micro className="mt-[4px]" size={8.4}>{l}</Micro>
@@ -211,27 +211,27 @@ export function ProfileOverviewPhone({
           </div>
         </div>
 
-        <div className="mt-[11px] rounded-[7px] bg-white px-[12px] pb-[12px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[9px] rounded-[7px] bg-white px-[11px] pb-[10px] pt-[9px]" style={{ border: `1px solid ${RULE}` }}>
           <SectionHead cap={24}>SHOOTING PROFILE</SectionHead>
-          <div className="mt-[9px] flex">
+          <div className="mt-[7px] flex">
             {([["releaseHeight", "Release height", releaseHeight], ["releaseAngle", "Release angle", `${releaseAngle}°`],
                ["shotShape", "Shot shape", `${shotShape}°`]] as const).map(([kind, l, v], i) => (
-              <div key={l} className="flex min-w-0 flex-1 items-start gap-[7px] px-[6px]"
+              <div key={l} className="flex min-w-0 flex-1 items-start gap-[5px] px-[3px]"
                    style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
                 <BodyMark kind={kind} />
                 <span className="min-w-0">
-                  <span className="block truncate text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>{l}</span>
-                  <span className="shotiq-numeric mt-[3px] block text-[20px] leading-[20px]">{v}</span>
+                  <span className="block text-[10.4px] leading-[11.6px]" style={{ color: GRAPHITE }}>{l}</span>
+                  <span className="shotiq-numeric mt-[3px] block text-[19px] leading-[19px]">{v}</span>
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mt-[11px] rounded-[7px] bg-white px-[12px] pb-[12px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[9px] rounded-[7px] bg-white px-[11px] pb-[10px] pt-[9px]" style={{ border: `1px solid ${RULE}` }}>
           <SectionHead cap={23}>PLAYER CARD</SectionHead>
-          <div className="mt-[8px] flex items-center gap-[14px]">
-            <span className="relative block h-[85px] w-[135px] shrink-0 overflow-hidden rounded-[6px] bg-[#151515]">
+          <div className="mt-[7px] flex items-center gap-[13px]">
+            <span className="relative block h-[74px] w-[118px] shrink-0 overflow-hidden rounded-[6px] bg-[#151515]">
               <span className="shotiq-wordmark absolute left-[9px] top-[8px] text-[9px] tracking-[0.14em] text-white">
                 SHOT<span style={{ color: ORANGE }}>IQ</span>
               </span>
@@ -248,8 +248,8 @@ export function ProfileOverviewPhone({
               ))}
             </span>
             <div className="min-w-0">
-              <div className="text-[14.6px] leading-[17px]">Share your profile<br />and latest highlights.</div>
-              <Link href="/results/demo/player" className="mt-[8px] flex items-center gap-[7px] text-[14px]"
+              <div className="text-[13.6px] leading-[16px]">Share your profile<br />and latest highlights.</div>
+              <Link href="/results/demo/player" className="mt-[6px] flex items-center gap-[6px] text-[13px]"
                     style={{ color: ORANGE }} data-testid="phone-profile-card">
                 View player card <Chev size={13} color={ORANGE} />
               </Link>
@@ -257,10 +257,10 @@ export function ProfileOverviewPhone({
           </div>
         </div>
 
-        <div className="mt-[11px] rounded-[7px] bg-white px-[12px] pb-[12px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[9px] rounded-[7px] bg-white px-[11px] pb-[10px] pt-[9px]" style={{ border: `1px solid ${RULE}` }}>
           <div className="flex items-baseline">
             <SectionHead cap={22}>ABOUT {name.split(" ")[0].toUpperCase()}</SectionHead>
-            <span className="ml-auto flex items-center gap-[6px] text-[13.4px]" style={{ color: BLUE }}>
+            <span className="ml-auto flex items-center gap-[5px] text-[12.4px]" style={{ color: BLUE }}>
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M6 1 L7.4 4.6 L11 6 L7.4 7.4 L6 11 L4.6 7.4 L1 6 L4.6 4.6 Z" fill={BLUE} />
                 <path d="M12 9 L12.8 11.2 L15 12 L12.8 12.8 L12 15 L11.2 12.8 L9 12 L11.2 11.2 Z" fill={BLUE} />
@@ -268,21 +268,21 @@ export function ProfileOverviewPhone({
               Enhance bio
             </span>
           </div>
-          <div className="mt-[7px] text-[13px] leading-[15.6px]">{bio[0]}<br />{bio[1]}</div>
+          <div className="mt-[6px] text-[12.4px] leading-[14.6px]">{bio[0]}<br />{bio[1]}</div>
         </div>
 
-        <div className="mt-[11px] rounded-[7px] bg-white px-[12px] pb-[12px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[9px] rounded-[7px] bg-white px-[11px] pb-[10px] pt-[9px]" style={{ border: `1px solid ${RULE}` }}>
           <div className="flex items-baseline">
             <SectionHead cap={22}>PROFILE COMPLETION</SectionHead>
-            <span className="shotiq-numeric ml-auto text-[24px] leading-[24px]" style={{ color: ORANGE }}>{completion}%</span>
+            <span className="shotiq-numeric ml-auto text-[22px] leading-[22px]" style={{ color: ORANGE }}>{completion}%</span>
           </div>
           <span className="mt-[7px] block h-[8px] overflow-hidden rounded-full" style={{ background: "#E2E3E4" }}>
             <span className="block h-full rounded-full" style={{ width: `${completion}%`, background: ORANGE }} />
           </span>
-          <div className="mt-[9px] flex">
+          <div className="mt-[7px] flex">
             {([["Profile info", true], ["Physical profile", true], ["Shooting profile", true], ["Bio", false]] as const).map(
               ([l, done]) => (
-                <span key={l} className="flex min-w-0 flex-1 items-center gap-[5px] text-[11.6px] leading-[13px]">
+                <span key={l} className="flex min-w-0 flex-1 items-center gap-[4px] text-[10.6px] leading-[12px]">
                   <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true" className="shrink-0">
                     <circle cx="7.5" cy="7.5" r="6.4" fill="none" stroke={done ? GREEN : ORANGE} strokeWidth="1.3"
                             strokeDasharray={done ? undefined : "2.4 2.2"} />
@@ -295,45 +295,45 @@ export function ProfileOverviewPhone({
           </div>
         </div>
 
-        <div className="mt-[11px] flex gap-[9px]">
-          <div className="min-w-0 flex-1 rounded-[7px] bg-white px-[11px] pb-[11px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[9px] flex gap-[8px]">
+          <div className="min-w-0 flex-1 rounded-[7px] bg-white px-[10px] pb-[9px] pt-[8px]" style={{ border: `1px solid ${RULE}` }}>
             <SectionHead cap={22}>ACCOUNT INFO</SectionHead>
-            <div className="mt-[8px] flex items-start gap-[9px]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0"
+            <div className="mt-[6px] flex items-start gap-[8px]">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0"
                    stroke="currentColor" strokeWidth="1.5">
                 <rect x="2.5" y="4.5" width="19" height="17" rx="2" />
                 <path d="M2.5 9.5 H21.5 M7.5 2.5 V6.5 M16.5 2.5 V6.5" strokeLinecap="round" />
               </svg>
               <span className="min-w-0">
-                <span className="block text-[11.8px] leading-[13px]" style={{ color: GRAPHITE }}>Member since</span>
-                <span className="mt-[3px] block text-[13.4px] leading-[15px]">{memberSince}</span>
+                <span className="block text-[10.8px] leading-[12px]" style={{ color: GRAPHITE }}>Member since</span>
+                <span className="mt-[2px] block text-[12.4px] leading-[14px]">{memberSince}</span>
               </span>
             </div>
-            <div className="mt-[9px] flex items-start gap-[9px] pt-[9px]" style={{ borderTop: `1px dashed ${RULE}` }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0"
+            <div className="mt-[7px] flex items-start gap-[8px] pt-[7px]" style={{ borderTop: `1px dashed ${RULE}` }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0"
                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <circle cx="12" cy="12" r="9.4" />
                 <path d="M8 12 H16 M13 9 L16 12 L13 15" />
               </svg>
               <span className="min-w-0">
-                <span className="block text-[11.8px] leading-[13px]" style={{ color: GRAPHITE }}>Last login</span>
-                <span className="mt-[3px] block text-[13.4px] leading-[15px]">{lastLogin}</span>
+                <span className="block text-[10.8px] leading-[12px]" style={{ color: GRAPHITE }}>Last login</span>
+                <span className="mt-[2px] block text-[12.4px] leading-[14px]">{lastLogin}</span>
               </span>
             </div>
           </div>
 
-          <div className="min-w-0 flex-1 rounded-[7px] bg-white px-[11px] pb-[11px] pt-[10px]" style={{ border: `1px solid ${RULE}` }}>
+          <div className="min-w-0 flex-1 rounded-[7px] bg-white px-[10px] pb-[9px] pt-[8px]" style={{ border: `1px solid ${RULE}` }}>
             <SectionHead cap={22}>RECENT ACTIVITY</SectionHead>
             {activity.map(([title, when]) => (
-              <Link key={title} href="/results/demo/history" className="mt-[8px] flex items-center gap-[8px]">
+              <Link key={title} href="/results/demo/history" className="mt-[6px] flex items-center gap-[7px]">
                 <svg width="26" height="20" viewBox="0 0 26 20" fill="none" aria-hidden="true" className="shrink-0"
                      stroke="currentColor" strokeWidth="1.5">
                   <rect x="1" y="1" width="24" height="18" rx="2" />
                   <path d="M10.5 6 L16 10 L10.5 14 Z" fill="currentColor" stroke="none" />
                 </svg>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12.6px] leading-[14px]">{title}</span>
-                  <span className="mt-[2px] block truncate text-[10.6px] leading-[12px]" style={{ color: GRAPHITE }}>{when}</span>
+                  <span className="block truncate text-[11.6px] leading-[13px]">{title}</span>
+                  <span className="mt-[2px] block truncate text-[9.8px] leading-[11px]" style={{ color: GRAPHITE }}>{when}</span>
                 </span>
                 <Chev size={13} />
               </Link>

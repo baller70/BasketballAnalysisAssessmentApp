@@ -168,7 +168,16 @@ export default function OnboardingPage() {
   const progressStep = Math.min(step + 1, STEPS.length)
   const progressName = STEPS[Math.min(step, STEPS.length - 1)][0]
 
+  /* Canonical's field labels are cap 13 over a 101px advance for DOMINANT HAND
+     and 97px for PLAYING LEVEL. The role's 12px default drew cap 10 over 89 and
+     80 — 23% short. Raising the size alone would carry the advance to ~116, so
+     the tracking comes down with it; both are pinned through custom properties
+     because the role rule is declared after Tailwind's utility layer and would
+     otherwise discard a bare `text-[16px]`/`tracking-[…]` here. */
   const lbl = "flex items-center gap-[4px] shotiq-microcaps text-[var(--shotiq-color-graphite)]"
+  const lblVars = { "--shotiq-microcaps-size": "16px",
+                    "--shotiq-microcaps-tracking": "0.075em",
+                    "--shotiq-microcaps-word-spacing": "0.12em" } as React.CSSProperties
   const box = "h-[46px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[12px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]"
 
   /* Canonical iOS 012 draws the BIO step as its own full phone screen; the
@@ -359,7 +368,7 @@ export default function OnboardingPage() {
           {/* Canonical's field rows sit on a 93px pitch; 84px packed them. */}
           <div className="mt-[26px] grid grid-cols-2 gap-x-[30px] gap-y-[26px]">
             <div>
-              <div className={lbl}>DOMINANT HAND <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>DOMINANT HAND <Info className="h-[10px] w-[10px]" /></div>
               <div className="mt-[6px] flex overflow-hidden rounded-[5px] border border-[var(--shotiq-color-rule)]">
                 {(["left", "right"] as const).map((hnd) => {
                   // Canonical ships this control already answered (Right filled);
@@ -376,7 +385,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <div className={lbl}>PLAYING LEVEL <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>PLAYING LEVEL <Info className="h-[10px] w-[10px]" /></div>
               <div className="relative mt-[6px]">
                 <select value={store.experienceLevel ?? "advanced"}
                         onChange={(e) => store.setExperienceLevel(e.target.value as never)}
@@ -387,7 +396,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <div className={lbl}>POSITION <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>POSITION <Info className="h-[10px] w-[10px]" /></div>
               <div className="relative mt-[6px]">
                 <select value={position} onChange={(e) => setPosition(e.target.value)}
                         className={`${box} w-full appearance-none capitalize`}>
@@ -397,7 +406,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <div className={lbl}>YEARS PLAYING <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>YEARS PLAYING <Info className="h-[10px] w-[10px]" /></div>
               <div className="relative mt-[6px]">
                 <select value={years} onChange={(e) => setYears(e.target.value)} className={`${box} w-full appearance-none`}>
                   {["0–2 years", "3–5 years", "6–9 years", "10+ years"].map((o) => <option key={o}>{o}</option>)}
@@ -406,7 +415,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <div className={lbl}>HEIGHT <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>HEIGHT <Info className="h-[10px] w-[10px]" /></div>
               {/* Canonical draws HEIGHT as ONE control with an internal
                   divider between feet and inches, not two detached boxes with
                   a gap between them. */}
@@ -426,7 +435,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div>
-              <div className={lbl}>WEIGHT <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>WEIGHT <Info className="h-[10px] w-[10px]" /></div>
               <div className={`${box} mt-[6px] flex items-center justify-between`}>
                 <input type="number" value={store.weightLbs ?? 185}
                        onChange={(e) => store.setWeight(+e.target.value || 0)} className="w-[80px] outline-none" />
@@ -438,7 +447,7 @@ export default function OnboardingPage() {
               a 36px node-graph mark and 17px value text, not the same 46px
               select as PLAYING LEVEL. */}
           <div className="mt-[30px]">
-            <div className={lbl}>PRIMARY GOAL (CHOOSE ONE) <Info className="h-[10px] w-[10px]" /></div>
+            <div className={lbl} style={lblVars}>PRIMARY GOAL (CHOOSE ONE) <Info className="h-[10px] w-[10px]" /></div>
             <div className="relative mt-[8px]">
               <div className="flex h-[81px] w-full items-center gap-[18px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[16px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -460,7 +469,7 @@ export default function OnboardingPage() {
           <div data-testid="onboarding-step-measurements" className="mt-[26px]">
             <div className="grid grid-cols-2 gap-x-[30px] gap-y-[26px]">
               <div>
-                <div className={lbl}>AGE <Info className="h-[10px] w-[10px]" /></div>
+                <div className={lbl} style={lblVars}>AGE <Info className="h-[10px] w-[10px]" /></div>
                 <div className={`${box} mt-[6px] flex items-center justify-between`}>
                   <input type="number" value={store.age ?? 24} data-testid="age-years"
                          onChange={(e) => store.setAge(+e.target.value || 0)} className="w-[80px] outline-none" />
@@ -469,7 +478,7 @@ export default function OnboardingPage() {
                 <p className="mt-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">Your current age.</p>
               </div>
               <div>
-                <div className={lbl}>WINGSPAN <Info className="h-[10px] w-[10px]" /></div>
+                <div className={lbl} style={lblVars}>WINGSPAN <Info className="h-[10px] w-[10px]" /></div>
                 {/* Same one-control-two-cells treatment canonical gives HEIGHT. */}
                 <div className={`${box} mt-[6px] flex items-stretch px-0`}>
                   <div className="flex flex-1 items-center justify-between px-[12px]">
@@ -489,7 +498,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div className="mt-[26px]">
-              <div className={lbl}>BODY TYPE <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>BODY TYPE <Info className="h-[10px] w-[10px]" /></div>
               <div className="mt-[8px] grid grid-cols-3 gap-[14px]">
                 {BODY_TYPES.map(([t, d, val]) => {
                   const on = (store.bodyType ?? "mesomorph") === val
@@ -518,7 +527,7 @@ export default function OnboardingPage() {
           {/* ----------------------------------------- step 3: preferences */}
           {step === 3 && (
           <div data-testid="onboarding-step-preferences" className="mt-[26px]">
-            <div className={lbl}>ATHLETIC ABILITY <Info className="h-[10px] w-[10px]" /></div>
+            <div className={lbl} style={lblVars}>ATHLETIC ABILITY <Info className="h-[10px] w-[10px]" /></div>
             <div className="mt-[8px] grid grid-cols-3 gap-[14px]">
               {ABILITIES.map(([t, d, val]) => {
                 const on = (store.athleticAbility ?? 7) === val
@@ -534,7 +543,7 @@ export default function OnboardingPage() {
               })}
             </div>
             <div className="mt-[24px]">
-              <div className={lbl}>SHOOTING STYLE <Info className="h-[10px] w-[10px]" /></div>
+              <div className={lbl} style={lblVars}>SHOOTING STYLE <Info className="h-[10px] w-[10px]" /></div>
               <div className="mt-[8px] grid grid-cols-3 gap-[14px]">
                 {STYLES.map(([t, d, val]) => {
                   const on = (store.shootingStyle ?? "two_motion") === val
@@ -552,7 +561,7 @@ export default function OnboardingPage() {
             </div>
             <div className="mt-[24px] grid grid-cols-2 gap-x-[30px]">
               <div>
-                <div className={lbl}>PRACTICE FREQUENCY <Info className="h-[10px] w-[10px]" /></div>
+                <div className={lbl} style={lblVars}>PRACTICE FREQUENCY <Info className="h-[10px] w-[10px]" /></div>
                 <div className="relative mt-[6px]">
                   <select value={practice} onChange={(e) => setPractice(e.target.value)}
                           data-testid="practice-frequency" className={`${box} w-full appearance-none`}>
@@ -562,7 +571,7 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div>
-                <div className={lbl}>PRIMARY GOAL <Info className="h-[10px] w-[10px]" /></div>
+                <div className={lbl} style={lblVars}>PRIMARY GOAL <Info className="h-[10px] w-[10px]" /></div>
                 <div className="relative mt-[6px]">
                   <select value={goal} onChange={(e) => setGoal(e.target.value)}
                           className={`${box} w-full appearance-none`}>
@@ -578,7 +587,7 @@ export default function OnboardingPage() {
           {/* ------------------------------------------------ step 4: bio */}
           {step === 4 && (
           <div data-testid="onboarding-step-bio" className="mt-[22px]">
-            <div className={lbl}>YOUR BIO <Info className="h-[10px] w-[10px]" /></div>
+            <div className={lbl} style={lblVars}>YOUR BIO <Info className="h-[10px] w-[10px]" /></div>
             <textarea
               data-testid="onboarding-bio-desktop"
               value={bio}
@@ -663,13 +672,31 @@ export default function OnboardingPage() {
 
       {/* why it matters rail — canonical draws the hero and the copy inside one
           bordered container, not loose on the paper. */}
-      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[16px] py-[16px]">
+      {/* Canonical's hero measures 463x309 in a 1189px body; this build's body is
+          1044px once the 196px app sidebar and the 186px step rail are taken, so
+          the proportional target is 463 * 1044/1189 = 407. The rail padding was
+          eating 32px of that, which is why the photo measured 392x261 — the
+          remaining 56px cannot be recovered without taking it from the form
+          column, so it is not taken. */}
+      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[8px] py-[16px]">
         <Card className="overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
-               className="h-[270px] w-full object-cover" width={466} height={322} />
+               className="h-[275px] w-full object-cover" width={466} height={322} />
           <div className="border-t border-[var(--shotiq-color-rule)] px-[18px] py-[16px]">
-            <SectionLabel>WHY IT MATTERS</SectionLabel>
+            {/* A DISPLAY HEADING, not an eyebrow. Canonical draws it at cap 20
+                over a 118px advance, ink density 0.565 — twice the cap of the
+                13px paragraph beneath it. Routed through `.shotiq-section-label`
+                it rendered cap 11 / 81px, i.e. SMALLER than the body copy it
+                labels, which inverted the whole right panel's hierarchy. It is
+                set per site rather than by raising the shared label role: a
+                histogram of every all-caps run across the twenty screens shows
+                this build already carries MORE cap-12+ runs than canonical
+                (199 vs 146), so the role default is not uniformly short.
+                Display face cap is 0.704em, so cap 20 wants 28px, and canonical
+                does not track it — 0.08em at this size would run the advance to
+                ~147 against canonical's 118. */}
+            <div className="shotiq-display text-[28px] leading-[30px] tracking-normal text-[var(--shotiq-color-ink)]">WHY IT MATTERS</div>
             <p className="mt-[8px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">
               Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
             </p>
@@ -705,11 +732,15 @@ export default function OnboardingPage() {
               <PoseFigure phase={p} height={47} active={p === "RELEASE"} />
             </div>
           ))}
+          {/* Canonical's node dot measures 9px across (x130-137 / y853-861 on the
+              SETUP node) with a (93,94,102) core, and the connector is a 2px
+              dashed rule whose cores read 213-217 — this drew a 6px dot on a
+              1px #EBECED rule that was only detectable below luminance 252. */}
           {PHASES.map((p, i) => (
             <div key={`t-${p}`} className="relative flex h-[12px] items-center justify-center">
-              {i > 0 && <span className="absolute right-1/2 top-1/2 w-full border-t border-dotted border-[var(--shotiq-color-rule)]" />}
-              {i < PHASES.length - 1 && <span className="absolute left-1/2 top-1/2 w-full border-t border-dotted border-[var(--shotiq-color-rule)]" />}
-              <span className={`relative h-[6px] w-[6px] rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-graphite)]"}`} />
+              {i > 0 && <span className="absolute right-1/2 top-1/2 w-full border-t-[2px] border-dotted border-[#C9CBCE]" />}
+              {i < PHASES.length - 1 && <span className="absolute left-1/2 top-1/2 w-full border-t-[2px] border-dotted border-[#C9CBCE]" />}
+              <span className={`relative h-[9px] w-[9px] rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-graphite)]"}`} />
             </div>
           ))}
           {PHASES.map((p) => (

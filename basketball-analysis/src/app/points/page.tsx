@@ -99,6 +99,14 @@ function Hex({ earned, size = 84, name, className = "mx-auto" }: {
   )
 }
 
+/* Canonical's KPI eyebrow tier on this screen: cap 10, TOTAL XP over 39px.
+   `.shotiq-microcaps` pins its size and tracking through custom properties —
+   a bare `text-[13px]`/`tracking-[…]` on the element is discarded because the
+   role rule sits after Tailwind's utility layer. */
+const KPI_EYEBROW = { "--shotiq-microcaps-size": "13px",
+                      "--shotiq-microcaps-tracking": "0.05em",
+                      "--shotiq-microcaps-word-spacing": "0.14em" } as React.CSSProperties
+
 export default function AchievementsPointsPage() {
   const points = usePoints()
   // Canonical demo persona baseline (matches the topbar's 2,840) until real
@@ -165,8 +173,14 @@ export default function AchievementsPointsPage() {
                   <text x="13" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--shotiq-color-ink)">JE</text>
                 </svg>
                 <div className="min-w-0">
-                  <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TOTAL XP</div>
-                  <div className="shotiq-numeric whitespace-nowrap text-[27px] leading-[30px]">{totalPoints.toLocaleString()} <span className="text-[12px]">XP</span></div>
+                  {/* Canonical's KPI eyebrows are the condensed micro-caps
+                      tier, cap 10 over a 39px advance for TOTAL XP. The body
+                      face at 9px drew cap 7 over 43px — 30% short and 4px
+                      WIDER, i.e. undersized and over-tracked at once, which is
+                      only possible if the face is wrong. Tracking comes down
+                      with the size or the label runs past canonical's advance. */}
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>TOTAL XP</div>
+                  <div className="shotiq-numeric whitespace-nowrap text-[33px] leading-[36px]">{totalPoints.toLocaleString()} <span className="text-[14px]">XP</span></div>
                 </div>
               </div>
               <div className="mt-[9px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
@@ -177,7 +191,7 @@ export default function AchievementsPointsPage() {
                 two separately. */}
             <Card className="flex w-[392px] divide-x divide-[var(--shotiq-color-rule)] px-[0px] py-[18px]">
               <div className="w-[196px] px-[14px]">
-                <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT TIER</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>CURRENT TIER</div>
                 <div className="mt-[6px] flex items-end justify-between">
                   <div>
                     <div className="flex items-center gap-[4px] text-[22px] font-bold leading-[24px] text-[var(--shotiq-color-analysisBlue)]">
@@ -191,7 +205,7 @@ export default function AchievementsPointsPage() {
                   <div className="h-full w-[92%] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></div>
               </div>
               <div className="w-[196px] px-[14px]">
-                <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BADGES EARNED</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>BADGES EARNED</div>
                 {/* Canonical catalogue spans 36 badges across the seasons; this
                     page ships the first two rows (see Load more). Canonical
                     sets the earned count black and the total in light grey. */}
@@ -207,7 +221,7 @@ export default function AchievementsPointsPage() {
             {/* Canonical runs this card at 190px, the same as TOTAL XP; at 160
                 it was the only card in the row out of proportion with itself. */}
             <Card className="w-[190px] px-[14px] py-[18px]">
-              <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">LONGEST STREAK</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>LONGEST STREAK</div>
               <div className="mt-[6px] flex items-center justify-between">
                 <div>
                   <div className="shotiq-numeric text-[27px] leading-[30px]">6</div>
@@ -223,7 +237,11 @@ export default function AchievementsPointsPage() {
         <nav className="mt-[12px] flex gap-[28px] border-b border-[var(--shotiq-color-rule)]">
           {["BADGES", "CHALLENGES", "POINTS HISTORY"].map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
-                    className={`relative pb-[10px] text-[13px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                    /* Canonical's tab strip is the condensed display face at
+                       cap 14 — CHALLENGES over 69px. The body face at 13px bold
+                       drew cap 10 over 83px: 4 short and 14 wide at once, so it
+                       read as a small over-tracked caption rather than a tab. */
+                    className={`relative shotiq-display pb-[10px] text-[20px] leading-[22px] tracking-[0.06em] ${tab === t ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
               {t}
               {tab === t && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
             </button>
@@ -353,7 +371,10 @@ export default function AchievementsPointsPage() {
           </div>
 
           {/* badge details rail */}
-          <aside className="w-[330px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+          {/* Canonical splits this body 790 grid : 387 rail (2.04:1) inside 1223px;
+              at w-330 the split measured 847 : 314 (2.70:1) in 1198px, so the rail
+              is set to its proportional 379 + 18 padding + 1 border. */}
+          <aside className="w-[398px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
             <SectionLabel>BADGE DETAILS</SectionLabel>
             {/* Hex defaults to mx-auto for the grid cells; left here, or its
                 auto margins push the title out to the panel's right edge. */}
@@ -382,7 +403,9 @@ export default function AchievementsPointsPage() {
               </div>
               <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
             </div>
-            <Card className="mt-[12px] p-[12px]">
+            {/* Canonical fills this sub-panel (249,249,250) against its (253,253,253)
+                paper — a tint, not white; drawn white the panel floated free of the card. */}
+            <Card className="mt-[12px] bg-[#FAFAFA] p-[12px]">
               <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
               <div className="text-[12px]">May 12, 2025 at 8:24 AM</div>
               {/* Canonical runs this row at ~24px — it is the headline of the

@@ -62,7 +62,7 @@ export function MyMedia({ groups, onOpen, onUpload }: {
 
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[30px] leading-[31px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
           <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">

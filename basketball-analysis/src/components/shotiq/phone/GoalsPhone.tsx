@@ -73,7 +73,9 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
 
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <PhoneHeading size={42}>GOALS</PhoneHeading>
+          {/* canonical 063 cap 55 of the 853px art = 25.3 CSS px, /0.705 =
+              35.9px. 42px measured cap 64, 116% of canonical. */}
+          <PhoneHeading size={35.9}>GOALS</PhoneHeading>
           <p className="mt-[6px] text-[10px] leading-[13px]" style={{ color: GRAPHITE }}>
             Track progress. Stay consistent. Build better mechanics.
           </p>

@@ -124,7 +124,10 @@ export default function TrainingHubPage() {
             the right column, where it displaced TODAY'S SNAPSHOT by 230px. */}
         <div className="relative">
           <PageTitle size={64}>TRAINING HUB</PageTitle>
-          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
+          {/* Canonical: ink extent cap 13 over a 423px advance; 14px drew cap
+              14 over 534 (+26%), which is what pushed UP NEXT's meta onto one
+              line. */}
+          <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
             Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
           </p>
           <div className="absolute right-0 top-0 flex w-[492px] shrink-0 gap-[14px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">

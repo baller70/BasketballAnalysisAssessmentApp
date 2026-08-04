@@ -202,26 +202,29 @@ export default function BiomechanicsWorkspacePage() {
             {hasData ? "May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand" : "Run an analysis to populate this workspace."}
           </p>
         </div>
+        {/* Canonical runs this strip 464px wide (FORM SCORE x843 to VS LAST x1307)
+            with its four hairlines at x932/1023/1127/1244; px-[18px] cells drew it
+            354 wide, so every cell is padded to 29 to recover the 110px. */}
         <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
-          <div className="px-[18px] text-center">
+          <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
             <div className="shotiq-numeric text-[45px] leading-[49px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
             <div className="mx-auto h-[4px] w-[46px] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} /></div>
           </div>
-          <div className="px-[18px] text-center">
+          <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
             <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "24" : "0"}</div>
           </div>
-          <div className="px-[18px] text-center">
+          <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
             <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "15" : "0"}</div>
           </div>
-          <div className="px-[18px] text-center">
+          <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
             <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "62.5%" : "—"}</div>
           </div>
-          <div className="px-[18px] text-center">
+          <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST</div>
             <div className={`shotiq-numeric text-[27px] leading-[34px] ${
               delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
@@ -251,7 +254,11 @@ export default function BiomechanicsWorkspacePage() {
       <div className="mt-[6px] flex items-end justify-between">
         {/* Canonical threads a hairline connector track between the phase
             figures rather than letting them float free. */}
-        <div className="flex w-[656px] items-start px-[24px]">
+        {/* Canonical insets this rail INSIDE the frame it labels: the rail runs
+            x160-668 in a video x131-780, i.e. 29px in on the left and 112px in on
+            the right. w-[656px] px-[24px] ran it to x835, past the video's right
+            edge at x812. Scaled to this build's 600px viewer: 27 and 103. */}
+        <div className="flex w-[600px] items-start pl-[27px] pr-[103px]">
           {PHASES.map((p, i) => (
             <React.Fragment key={p}>
               {i > 0 && <span className="mt-[16px] h-px min-w-[16px] flex-1 bg-[var(--shotiq-color-rule)]" />}
@@ -404,7 +411,10 @@ export default function BiomechanicsWorkspacePage() {
                     {/* Canonical pairs the ideal range with the *value*: reading
                         stacks right-aligned under the number, not under the
                         metric name on the far left. */}
-                    <div className="shrink-0 text-right">
+                    {/* Canonical centres the value+ideal block in its own column
+                        and leaves ~47px between it and the status badge (92° ends
+                        x1030, badge starts x1078); right-aligned it left 15px. */}
+                    <div className="w-[104px] shrink-0 text-center">
                       <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? v : "—"}</div>
                       <div className="mt-[1px] text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>

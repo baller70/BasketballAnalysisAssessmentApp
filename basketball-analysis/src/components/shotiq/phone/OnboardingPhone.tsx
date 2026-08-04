@@ -110,13 +110,19 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
                 className="text-[13px]" style={{ color: GRAPHITE }}>Skip</button>} />
 
       <div className="relative px-[18px]">
-        {/* Canonical bleeds the hero to the right edge, x243-363 of 393. */}
-        {/* 078-hero is a 466x322 landscape crop; the phone box is portrait, so
-            `object-cover` alone already crops it hard. Zoom stays at 1 — at 1.5
-            the figure lost its head and feet, and canonical shows the whole
-            player. */}
-        <Shot src="/images/canonical/078-hero.png" zoom={1} position="59% 20%"
-              className="pointer-events-none absolute right-[-18px] top-[36px] h-[306px] w-[152px]" />
+        {/* Canonical does NOT put a photographic panel here. It knocks the whole
+            figure out on paper: measured on canonical/008-onboarding-intro.png
+            the graphic (player + capture brackets + release-angle gauge) spans
+            x 242.8-362.6pt, y 76.5-420.2pt, on white, with no frame edge.
+            078-hero.png is the DESKTOP asset — a 466x322 landscape gym frame
+            with the 78°/92° callouts, which 078-web-onboarding still uses — and
+            cropping it to a portrait box produced an opaque photo panel that
+            overprinted the benefit rows and took this screen's ink to 14.8%
+            against canonical's 8.2%. 008-hero-figure.png is that region re-cut
+            off the canonical render with the paper flood-filled to alpha. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/canonical/008-hero-figure.png" alt="" aria-hidden="true"
+             className="pointer-events-none absolute right-[30px] top-[37px] h-[347px] w-[124px] object-contain" />
 
         <StepMeter step={1} steps={4} w={130} className="relative pt-[13px]" />
         <Eyebrow className="relative mt-[9px]">STEP 1 OF 4</Eyebrow>
@@ -139,7 +145,11 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
                  className="mt-[2px] h-[38px] w-[28px] shrink-0 object-contain" />
-            <div className="min-w-0" style={{ maxWidth: i === 2 ? 260 : 218 }}>
+            {/* Canonical sets these bodies in a column that ends at x207.3pt —
+                it has to, because the knocked-out figure occupies x242.8-362.6
+                right down through this band. At 218/260 the lines ran to 276pt
+                and set under the player's shoes. */}
+            <div className="min-w-0" style={{ maxWidth: 145 }}>
               <div className="shotiq-display text-[12.5px] leading-[13px]">{t}</div>
               <p className="mt-[4px] text-[9.5px] leading-[12.5px]" style={{ color: GRAPHITE }}>{d}</p>
             </div>
@@ -372,7 +382,7 @@ export function ExperienceBodyType({
 
       <div className="flex items-start gap-[10px] px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[30px] leading-[31px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
           <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">

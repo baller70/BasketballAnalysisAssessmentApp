@@ -170,7 +170,9 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
 
       <div className="flex items-start px-[18px] pt-[11px]">
         <div className="min-w-0">
-          <PhoneHeading size={37}>PHOTO REVIEW</PhoneHeading>
+          {/* canonical 023 cap 50 = 23.0 CSS px, /0.705 = 32.7px.
+              37px measured cap 57, 114% of canonical. */}
+          <PhoneHeading size={32.7}>PHOTO REVIEW</PhoneHeading>
           <p className="mt-[6px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
             Adjust crop to include your full body from head to toe.
           </p>
@@ -270,7 +272,7 @@ export function UploadQualityCheck({ src, fileName = "IMG_4521.MOV", onContinue,
 
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[30px] leading-[31px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
           <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">

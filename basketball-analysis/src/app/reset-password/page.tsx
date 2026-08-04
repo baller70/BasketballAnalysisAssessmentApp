@@ -137,7 +137,11 @@ export default function ResetPasswordPage() {
         <span className="shotiq-wordmark block text-center text-[25px] leading-none">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
-        <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">CHOOSE A NEW PASSWORD</h1>
+        {/* Canonical 007 reads "RESET PASSWORD", not "CHOOSE A NEW PASSWORD",
+            over two lines, cap 84 of the 853px art = 38.7 CSS px, so
+            38.7/0.705 = 54.9px. The shipped 40px drew cap 61, 73% of
+            canonical. No desktop canonical exists for this route. */}
+        <h1 className="shotiq-display mt-[26px] text-center text-[54.9px] leading-[57px]">RESET PASSWORD</h1>
         <p className="mt-[10px] text-center text-[14px] text-[var(--shotiq-color-graphite)]">
           Pick something strong you haven&apos;t used before.
         </p>

@@ -172,21 +172,29 @@ export function FormScore({
       {/* metric details table ------------------------------------------------ */}
       <SectionHead cap={22} info className="mt-[6px] px-[22px]">METRIC DETAILS</SectionHead>
       <div className="mt-[3px] px-[22px]">
+        {/* Column x measured on canonical/044 (pt): METRIC 23.5, SCORE 107.3,
+            DETAILS 200.9, IMPACT 334.5 — IMPACT is left-aligned there, not
+            flushed right. */}
         <div className="flex items-end pb-[2px] text-[9.5px]" style={{ color: GRAPHITE }}>
-          <span className="w-[74px] shrink-0">METRIC</span>
-          <span className="w-[32px] shrink-0">SCORE</span>
-          <span className="min-w-0 flex-1 pl-[36px]">DETAILS</span>
-          <span className="w-[42px] shrink-0 text-right">IMPACT</span>
+          <span className="w-[84px] shrink-0">METRIC</span>
+          <span className="w-[94px] shrink-0">SCORE</span>
+          <span className="min-w-0 flex-1">DETAILS</span>
+          <span className="w-[40px] shrink-0">IMPACT</span>
         </div>
         {ROWS.map(([label, n, detail, impact, warn]) => (
           <div key={label} className="flex items-center border-t py-[0px] text-[12px] leading-[14px]" style={{ borderColor: RULE }}>
-            <span className="w-[74px] shrink-0 font-medium">{label}</span>
-            <span className="shotiq-numeric w-[32px] shrink-0 text-[16px] leading-[16px]">{n}</span>
-            <span className="w-[84px] shrink-0 overflow-hidden rounded-full" style={{ height: 5, background: "#E4E5E6" }}>
+            <span className="w-[84px] shrink-0 font-medium">{label}</span>
+            <span className="shotiq-numeric w-[22px] shrink-0 text-[16px] leading-[16px]">{n}</span>
+            {/* Track measured on canonical/044: x281-388px = 49.8pt wide, fill
+                8px = 3.7pt tall, and the fill really is score% of it (84 -> 88px
+                of 108, 86 -> 93, 72 -> 71). Shipping an 84pt track at 5pt tall
+                made every bar ~1.7x too long and 1.4x too thick and took the
+                screen's blue to 4.9‰ against canonical's 3.2‰. */}
+            <span className="w-[50px] shrink-0 overflow-hidden rounded-full" style={{ height: 3.7, background: "#E4E5E6" }}>
               <span className="block h-full rounded-full" style={{ width: `${n}%`, background: warn ? ORANGE : BLUE }} />
             </span>
-            <span className="min-w-0 flex-1 truncate pl-[9px] text-[11px]">{detail}</span>
-            <span className="w-[42px] shrink-0 text-right">{impact}</span>
+            <span className="min-w-0 flex-1 truncate pl-[21px] text-[11px]">{detail}</span>
+            <span className="w-[40px] shrink-0">{impact}</span>
           </div>
         ))}
       </div>

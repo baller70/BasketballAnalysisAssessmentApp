@@ -222,7 +222,13 @@ export default function EliteShootersPage() {
     "Kyrie Irving": "/images/canonical/088-tray-kyrie.png",
   }
 
-  const headCell = "shotiq-display text-[11px] leading-[13px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]"
+  /* Tracked caps eat the word space. Measured on canonical's header row the
+     inter-word gap runs 3px against 1px between letters ("SIMILARITY | TO |
+     YOU" segments at 1133-1175 / 1179-1187 / 1191-1205); in this build every
+     gap in the same string measured 1-2px, so it read as SIMILARITY TOYOU and
+     RELEASE HEIGHT read as RELEASEHEIGHT. The strings were always right — the
+     space needed to be tracked with the letters. */
+  const headCell = "shotiq-display text-[11px] leading-[13px] tracking-[0.04em] [word-spacing:0.22em] text-[var(--shotiq-color-graphite)]"
 
   /* Canonical iOS 052 is a search field, four compact pills and a list of
      shooter rows with photography — not the desktop FILTERS panel stacked on
@@ -236,8 +242,9 @@ export default function EliteShootersPage() {
     pos: r.pos, style: r.keyMatch ? "Catch & Shoot" : "Pull-Up", league: r.level,
     fg: `${r.careerPct.toFixed(1)}%`, wsi: String(r.wsi),
     similarity: r.overall != null ? `${r.overall + 2}%` : "—",
-    thumb: (r.thumb ?? `/images/canonical/088-row-${(i % 6) + 1}.png`)
-      .replace("/images/canonical/", "").replace(".png", ""),
+    // Canonical 052 prints the same gym stills the rest of the phone set uses,
+    // not the desktop table's tray crops.
+    thumb: `086-film-${(i % 5) + 1}`,
   }))
 
   if (isPhone) {
@@ -347,7 +354,11 @@ export default function EliteShootersPage() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="shotiq-display text-[40px] leading-[42px]">ELITE SHOOTERS DATABASE</h1>
-              <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              {/* Canonical: ink extent cap 12 over a 293px advance; this drew
+                  cap 14 over 366 (+25%). The H1 is not the problem — it
+                  measures cap 28 / 274 against canonical's cap 28 / 291 — so
+                  the title:subtitle ratio collapsed from the subtitle end. */}
+              <p className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">
                 Study proven mechanics. Compare profiles. Elevate your game.
               </p>
             </div>

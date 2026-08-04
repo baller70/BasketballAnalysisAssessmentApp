@@ -84,13 +84,18 @@ export default function PlayerCardPage() {
     setTimeout(() => { window.print(); setDownloading(false) }, 60)
   }
 
+  /* The swatch image lives in its own clipping box and the selection badge stands
+     outside it. Previously the button itself carried `overflow-hidden`, which
+     (a) clipped the badge to the tile's bottom edge where canonical hangs it half
+     outside, and (b) left the inline <img> sitting on the button's text baseline,
+     so a ~6px white band showed under every photographic swatch. */
   const styleSwatch = (i: number, cls: string, child?: React.ReactNode) => (
     <button key={i} type="button" aria-label={`Card style ${i + 1}`} aria-pressed={cardStyle === i}
             onClick={() => setCardStyle(i)}
-            className={`relative overflow-hidden rounded-[7px] ${cls} ${cardStyle === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : "ring-1 ring-[var(--shotiq-color-rule)]"}`}>
-      {child}
+            className={`relative rounded-[7px] ${cls} ${cardStyle === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : "ring-1 ring-[var(--shotiq-color-rule)]"}`}>
+      <span className="block h-full w-full overflow-hidden rounded-[7px]">{child}</span>
       {cardStyle === i && (
-        <span className="absolute bottom-[3px] left-1/2 grid h-[16px] w-[16px] -translate-x-1/2 place-items-center rounded-full bg-[var(--shotiq-color-shotiqOrange)]">
+        <span className="absolute bottom-[-8px] left-1/2 grid h-[16px] w-[16px] -translate-x-1/2 place-items-center rounded-full bg-[var(--shotiq-color-shotiqOrange)]">
           <Check className="h-[10px] w-[10px] text-white" strokeWidth={3.2} />
         </span>
       )}
@@ -291,18 +296,18 @@ export default function PlayerCardPage() {
                 <div className="mt-[10px] flex shrink-0 gap-[8px]">
                   {styleSwatch(0, "h-[118px] w-[56px]",
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src="/images/canonical/086-style-1.png" alt="" className="h-full w-full object-cover" />)}
+                    <img src="/images/canonical/086-style-1.png" alt="" className="block h-full w-full object-cover" />)}
                   <div className="grid shrink-0 grid-cols-2 gap-[8px]">
                     {styleSwatch(1, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/images/canonical/086-style-2.png" alt="" className="h-full w-full object-cover" />)}
+                      <img src="/images/canonical/086-style-2.png" alt="" className="block h-full w-full object-cover" />)}
                     {styleSwatch(2, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/images/canonical/086-style-3.png" alt="" className="h-full w-full object-cover" />)}
-                    {styleSwatch(3, "h-[54px] w-[42px] bg-white")}
+                      <img src="/images/canonical/086-style-3.png" alt="" className="block h-full w-full object-cover" />)}
+                    {styleSwatch(3, "h-[54px] w-[42px] bg-white", <span className="block h-full w-full bg-white" />)}
                     {styleSwatch(4, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/images/canonical/086-style-5.png" alt="" className="h-full w-full object-cover" />)}
+                      <img src="/images/canonical/086-style-5.png" alt="" className="block h-full w-full object-cover" />)}
                   </div>
                 </div>
               </div>
@@ -386,7 +391,15 @@ export default function PlayerCardPage() {
                       </span>
                     ) : null}
                   </div>
-                  <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{String(d)}</div>
+                  {/* Canonical greens the NUMBER and leaves the qualifier
+                      neutral — measured on 080's twin, stroke core (13,127,46)
+                      on "+8.1%" against (124,124,126) on "vs last session".
+                      Painting the whole string green reads as one green run and
+                      flattens the emphasis the delta is there to carry. */}
+                  <div className="text-[10px]">
+                    <span className="text-[var(--shotiq-color-confirmGreen)]">{String(d).split(" ")[0]}</span>
+                    <span className="ml-[3px] text-[#84868A]">{String(d).split(" ").slice(1).join(" ")}</span>
+                  </div>
                   {/* Canonical draws these on a grey stroke and alternates the
                       nodes blue (improving) / grey (flat or down). Passing blue
                       as dotFill collapsed the accent onto the same blue and made

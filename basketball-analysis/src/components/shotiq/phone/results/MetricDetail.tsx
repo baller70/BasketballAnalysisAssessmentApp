@@ -107,7 +107,10 @@ export function MetricDetail({
 
       {/* title ------------------------------------------------------------- */}
       <div className="mt-[6px] px-[17px]">
-        <h1 className="shotiq-display text-[35px] leading-[29px] tracking-[0.01em]">{metric}</h1>
+        {/* canonical 045 ELBOW ANGLE cap 66 of the 853px art = 30.4 CSS px,
+            /0.705 = 43.1px. 35px measured cap 54, 82% of canonical - this
+            one was too SMALL, not too large. */}
+        <h1 className="shotiq-display text-[43.1px] leading-[36px] tracking-[0.01em]">{metric}</h1>
         <div className="mt-[4px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand}</div>
       </div>
 

@@ -151,9 +151,13 @@ export default function ComparePage() {
               (y181–522, x808–1401 on the elite panel) with ~10px of internal
               padding. The app ran the three parts loose, so the filmstrip went
               edge-to-edge with no padding and no box. */}
-          <div className="min-w-0 flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] p-[10px]"
+          {/* Canonical bleeds the clip to the card border (image x172-693 inside a
+              card x171-693) and pads only the scrubber and filmstrip beneath it.
+              A uniform p-[10px] left ~10px of white on every side of the clip,
+              which reads as a framed photo rather than a viewer. */}
+          <div className="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--shotiq-color-rule)] pb-[10px]"
                style={{ flexGrow: sideIdx ? 595 : 534, flexBasis: 0 }}>
-            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]"
+            <div className="relative overflow-hidden bg-[#1B1D20]"
                  style={{ aspectRatio: sideIdx ? "595 / 256" : "534 / 256" }}>
               {pristine ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -175,7 +179,7 @@ export default function ComparePage() {
                 </div>
               )}
             </div>
-            <div className="mt-[6px] flex items-center gap-[8px]">
+            <div className="mt-[6px] flex items-center gap-[8px] px-[10px]">
               <Play className="h-[14px] w-[14px]" fill="currentColor" />
               <span className="shotiq-numeric text-[12px]">0.64s</span>
               <div className="relative h-[3px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
@@ -184,11 +188,13 @@ export default function ComparePage() {
               </div>
             </div>
             {pristine ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={sideIdx ? "/images/canonical/087-strip-elite.png" : "/images/canonical/087-strip-you.png"}
-                   alt="" className="mt-[6px] w-full rounded-[3px]" />
+              <div className="mt-[6px] px-[10px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={sideIdx ? "/images/canonical/087-strip-elite.png" : "/images/canonical/087-strip-you.png"}
+                     alt="" className="w-full rounded-[3px]" />
+              </div>
             ) : (
-              <div className="mt-[6px] flex gap-[4px]">
+              <div className="mt-[6px] flex gap-[4px] px-[10px]">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
                 ))}

@@ -322,7 +322,12 @@ export default function MediaLibraryPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="shotiq-display text-[44px] leading-[46px]">MEDIA LIBRARY</h1>
-            <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">Review, manage, and analyze your shooting sessions.</p>
+            {/* Canonical's page subtitle is one step smaller than this build's: ink
+                extent cap 12 over a 238px advance against cap 14 over 310 here
+                (+31%). The H1 above it is NOT short — it measures cap 31 against
+                canonical's 30 — so the 3.7:1 title:subtitle ratio collapsed from
+                the subtitle end alone. */}
+            <p className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Review, manage, and analyze your shooting sessions.</p>
           </div>
           <div className="flex gap-[10px]">
             <div className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">

@@ -154,7 +154,10 @@ export default function AnalysisHistoryPage() {
             <PageTitle size={59}>ANALYSIS HISTORY</PageTitle>
             <p className="mt-[4px] whitespace-nowrap text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
           </div>
-          <div className="flex gap-[18px] pt-[4px]">
+          {/* Canonical stops this toolbar at x1321, 91px short of the body's right
+              margin at 1412; the app ran it flush to 1414. 91 * (1194/1252) = 87
+              in this build's narrower body. */}
+          <div className="flex gap-[18px] pt-[4px] mr-[87px]">
             <div className="relative">
               <button type="button" aria-expanded={menu === "range"}
                       onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
@@ -224,7 +227,10 @@ export default function AnalysisHistoryPage() {
             unruled block, then the trend. A hairline after every cell (four
             rules where canonical draws two, at x=300 and x=664) boxed each
             number separately and destroyed that grouping. */}
-        <div className="flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[4px]">
+        {/* Canonical leaves 40px between the subtitle's last ink row and the
+            strip's first (y160 -> y200); pt-[4px] left 15px and the header read
+            jammed into the metrics. */}
+        <div className="flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[26px]">
           {/* This cell carries the longest label in the strip; an equal share
               broke it onto two lines where canonical keeps it on one. */}
           <div className="min-w-0 flex-[1.45] pr-[16px]">
@@ -351,7 +357,11 @@ export default function AnalysisHistoryPage() {
       </div>
 
       {/* selected session rail */}
-      <aside className="w-[350px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+      {/* Canonical splits its 1252px body 830 table : 384 rail (30.7% to the
+          rail); at w-350 this measured 828 : 332 (27.8%) — the rail absorbed the
+          whole rail-cost deficit on its own. 30.7% of this build's 1194px body is
+          366, so the rail takes 372 and the table drops from 828 to 788. */}
+      <aside className="w-[390px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
         <div className="flex items-center justify-between">
           <SectionLabel>SELECTED SESSION</SectionLabel>
           <button type="button" aria-label="Clear selection" onClick={() => setSel(-1)}

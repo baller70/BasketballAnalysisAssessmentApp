@@ -258,7 +258,13 @@
   font-weight: 400;
   font-size: var(--shotiq-label-size, 15px);
   line-height: var(--shotiq-label-leading, var(--shotiq-label-size, 15px));
-  letter-spacing: 0.08em;
+  /* Tracking is pinned through a custom property for the same reason the size
+     is: this rule sits after Tailwind's utility layer, so a bare
+     `tracking-[Nem]` on the element is silently discarded. Canonical does NOT
+     track every label the same — it holds 0.08em at cap 11 but runs closer to
+     0.05em once a label is set at cap 13-14 — so the sites that raise
+     --shotiq-label-size need to take tracking down with it. Default unchanged. */
+  letter-spacing: var(--shotiq-label-tracking, 0.08em);
   color: var(--shotiq-color-eyebrow);
 }
 
@@ -271,7 +277,13 @@
      Left unpinned it added 4px to the height of every screen in the build — so
      leading tracks the size rather than going free. */
   line-height: var(--shotiq-microcaps-leading, var(--shotiq-microcaps-size, 12px));
-  letter-spacing: 0.148em;
+  letter-spacing: var(--shotiq-microcaps-tracking, 0.148em);
+  /* Positive tracking on caps swallows the word space: measured on canonical
+     088 the inter-word gap runs 3px against 1px between letters, and in the
+     build every gap in "SIMILARITY TO YOU" measured 1-2px, so it read as
+     SIMILARITY TOYOU. Sites that carry a multi-word tracked label open the
+     word space back up through this property; the default is inert. */
+  word-spacing: var(--shotiq-microcaps-word-spacing, normal);
 }
 
 /* Canonical's numerals are the same Medium cut as its headings, not a heavier
@@ -313,6 +325,50 @@
    64 fixed columns the codebase declares today.
    ======================================================================== */
 @media (max-width: 767.98px) {
+  /* PHONE DISPLAY TRACKING.  Phone only - the desktop ramp is not touched.
+     ---------------------------------------------------------------------
+     `.shotiq-display` resolves to Tungsten Medium, and that IS the right face:
+     measured against 13 crop-verified canonical iOS headings at matched cap
+     height, Tungsten Medium draws 96.9% of canonical's glyph width per unit
+     cap - inside canonical's own screen-to-screen spread, where the same string
+     "JORDAN ELLIS" runs 3.77-4.30 glyph/cap across eight screens. The next
+     nearest shipped cut is Tungsten Semibold at 104.8% and 20% heavier ink;
+     every Boxed cut is 133-145%. The pack has nothing in between, so no face
+     swap is available and none is wanted.
+
+     What runs short is the GAP, not the glyphs. Canonical's inter-glyph gap per
+     unit cap measures 0.100-0.148 over those 13 headings, median 0.120. The two
+     space-free strings anchor it unambiguously - no word space can inflate
+     them: 063 GOALS 0.100 and 071 SETTINGS 0.148. Tungsten Medium at default
+     tracking measures 0.098, i.e. 82% of canonical.
+
+     0.0155em is solved, not chosen: rendering all 13 strings at their own
+     canonical cap heights across a tracking sweep puts the median gap/cap at
+     0.0980 (0em), 0.1154 (0.012em), 0.1200 (0.0155em), 0.1207 (0.016em),
+     0.1373 (0.03em). 0.0155em lands the median on canonical's 0.120 exactly.
+
+     This is NOT the tracking a naive advance-ratio implies. Advance per cap
+     only reaches 94.9% of canonical here, and that is correct: the residual is
+     the face's 3% narrower glyphs, which tracking must not be used to paper
+     over. Anything that pushes gap/cap past ~0.15 is letterspacing the face,
+     not correcting it.
+
+     Call sites that already carry measured per-heading tracking are excluded:
+     a bare `letter-spacing` on `.shotiq-display` would beat their Tailwind
+     `tracking-*` utility on source order, because these roles are declared
+     after Tailwind's utility layer. Inline `style={{ letterSpacing }}` wins
+     over this rule on its own. */
+  .shotiq-display:not([class*="tracking-"]) { letter-spacing: 0.0155em; }
+
+  /* The phone half of PageTitle's two measured sizes. `!important` is load
+     bearing: PageTitle sets its size as an inline style, so a stylesheet has no
+     other way to carry the phone value. Only titles that were given an explicit
+     `phoneSize` get the class, so nothing else is touched. */
+  .shotiq-pt-phone {
+    font-size: var(--shotiq-pt-phone) !important;
+    line-height: var(--shotiq-pt-phone-lh) !important;
+  }
+
   /* 1 - desktop column rows wrap into a stack. A row only wraps if its content
          genuinely does not fit, so rows that already fit are unaffected. */
   .shotiq-phone-flow .flex:not(.flex-col):not(.flex-nowrap):not(.flex-col-reverse) {

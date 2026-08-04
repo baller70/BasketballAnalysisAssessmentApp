@@ -53,7 +53,7 @@ function Identity({ score }: { score?: string }) {
   return (
     <div className="flex items-start px-[18px] pt-[13px]">
       <div className="min-w-0">
-        <div className="shotiq-display text-[30px] leading-[31px]">JORDAN ELLIS</div>
+        <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
         <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
       </div>
       <div className="ml-auto flex shrink-0 items-start">
@@ -268,7 +268,9 @@ export function DrillExecution({
 
       <div className="px-[18px]">
         <div className="mt-[12px] flex items-baseline gap-[10px]">
-          <PhoneHeading size={30}>DRILL EXECUTION</PhoneHeading>
+          {/* canonical 060 cap 40 = 18.4 CSS px, /0.705 = 26.1px.
+              30px measured cap 46, 115% of canonical. */}
+          <PhoneHeading size={26.1}>DRILL EXECUTION</PhoneHeading>
           <span className="text-[10px]" style={{ color: GRAPHITE }}>Set {set} of {sets}</span>
           <span className="ml-auto text-right">
             <span className="shotiq-microcaps block" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>TARGET</span>

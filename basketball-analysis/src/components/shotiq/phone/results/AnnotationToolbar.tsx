@@ -85,7 +85,7 @@ export function AnnotationToolbar({
         <StreakPoints streak={streak} points={points} />
       </div>
 
-      <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)] px-[16px]">
+      <div className="mt-[4px] flex divide-x divide-[var(--shotiq-color-rule)] px-[16px]">
         {([[String(score), "FORM SCORE"], [shots, "SHOTS"], [makes, "MAKES"], [pct, "%"]] as [string, string][]).map(([v, l], i) => (
           <div key={l} className={`${i === 0 ? "w-[82px]" : "w-[64px]"} shrink-0 text-center`}>
             <Micro size={8.4}>{l}</Micro>
@@ -95,7 +95,7 @@ export function AnnotationToolbar({
       </div>
 
       {/* primary target -------------------------------------------------- */}
-      <Panel className="mx-[15px] mt-[7px] flex items-center gap-[11px] px-[12px] py-[7px]"
+      <Panel className="mx-[15px] mt-[6px] flex items-center gap-[11px] px-[12px] py-[4px]"
              style={{ background: "var(--shotiq-color-warmCanvas)" }}>
         <MechanicGlyph kind="angle" size={30} accent={ORANGE} />
         <span className="min-w-0">
@@ -116,17 +116,31 @@ export function AnnotationToolbar({
           <path d="M64 44 H76" stroke={ORANGE} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
           <path d="M70 22 V96" stroke={BLUE} strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
           <path d="M36 62 H52" stroke={BLUE} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
+          {/* Canonical fills the knee angle between that dashed baseline and the
+              thigh: a wedge measured at x152.0-202.3pt, y460.7-468.5pt (110x18
+              device px, 890px of ink). It was missing entirely. */}
+          <path d="M38 61.9 L52 61.9 Q 45 59.6 38 61.9 Z" fill={BLUE} />
         </svg>
-        <span className="shotiq-numeric absolute left-[68%] top-[23%] text-[15px]" style={{ color: ORANGE }}>47°</span>
-        <span className="shotiq-numeric absolute left-[36%] top-[57%] text-[15px]" style={{ color: BLUE }}>166°</span>
+        {/* Angle read-outs, measured on canonical/043 inside the canvas box
+            (x15-375pt, y229.4-595.4pt): 47° cap 11.5pt at x263.5-280.6 /
+            y310.1-321.1; 166° cap 15.2pt at x148.8-190.3 / y445.5-460.3. The
+            166° was shipping at cap 11.1 — a third short of canonical. */}
+        <span className="shotiq-numeric absolute left-[68%] top-[22%] text-[16px]" style={{ color: ORANGE }}>47°</span>
+        <span className="shotiq-numeric absolute left-[37%] top-[57%] text-[21px]" style={{ color: BLUE }}>166°</span>
         <span className="absolute left-[9px] top-[9px] flex items-center gap-[6px] rounded-[6px] px-[9px] py-[5px] text-[12px] text-white"
               style={{ background: "rgba(28,28,28,.85)" }}>
           <span className="h-[6px] w-[6px] rounded-full bg-white" />LIVE
         </span>
-        <span className="absolute bottom-[92px] right-[24px] flex items-center gap-[6px] rounded-full px-[13px] py-[6px] text-[14px] text-white"
+        {/* The "Stacked" confirm pill is the single largest blue region on this
+            screen and it was drawn half again too big: measured 94.4 x 33.2pt
+            against canonical's 62.7 x 18.9pt (canonical/043, pill bbox
+            x266.8-329.0pt, y460.3-478.7pt; white label cap 7.4pt over a 47.9pt
+            advance, against 10.6 / 65.0 shipped). That one element carried the
+            screen's blue from canonical's 3.8‰ to 6.2‰. */}
+        <span className="absolute bottom-[117px] right-[49px] flex items-center gap-[4px] rounded-full px-[7px] py-[4px] text-[10px] leading-[11px] text-white"
               style={{ background: BLUE }}>
           Stacked
-          <svg width="11" height="9" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4 L4.8 9 L10 3.4" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
+          <svg width="8" height="7" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4 L4.8 9 L10 3.4" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" /></svg>
         </span>
         <span className="shotiq-numeric absolute bottom-[10px] left-[9px] rounded-[5px] px-[9px] py-[5px] text-[13px] text-white"
               style={{ background: "rgba(28,28,28,.85)" }}>00:01.28</span>

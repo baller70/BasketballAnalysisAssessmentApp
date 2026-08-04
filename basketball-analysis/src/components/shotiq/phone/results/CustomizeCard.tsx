@@ -108,7 +108,11 @@ export function CustomizeCard({
               <div className="shotiq-numeric leading-[0.8]" style={{ fontSize: 70, color: accent }}>{score}</div>
               <ScoreBar score={score} width={96} height={8} />
               <div className="shotiq-display mt-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
-              <div className="mt-[3px] text-[12px] leading-[14px]">Keep elbow stacked through release.</div>
+              {/* Canonical sets this cue on TWO lines in an 83.3pt column. At
+                  12px the shipped face took four, which pushed the card body to
+                  241.4pt against canonical's 232.2 and started the cascade that
+                  drove the Save bar off the bottom of the viewport. */}
+              <div className="mt-[3px] text-[9px] leading-[11px]">Keep elbow stacked through release.</div>
               <div className="mt-[9px] flex divide-x divide-[var(--shotiq-color-rule)] border-t pt-[7px]" style={{ borderColor: RULE }}>
                 <div className="flex-1 text-center">
                   <div className="shotiq-numeric text-[18px] leading-[18px]">{shots}</div>
@@ -138,8 +142,11 @@ export function CustomizeCard({
         <Row title="BANNER COLOR" sub="Set the accent color for your card.">
           <span className="flex items-center gap-[11px]">
             {SWATCHES.map((c) => (
+              /* Canonical swatches measure ~19pt across on a 30pt pitch
+                 (x219.5-359.8pt for the five). 27pt swatches ate 40pt of the
+                 row and forced the caption onto a second line. */
               <button key={c} type="button" onClick={() => setAccent(c)} aria-label={`Accent ${c}`}
-                      className="grid h-[27px] w-[27px] place-items-center rounded-full"
+                      className="grid h-[19px] w-[19px] place-items-center rounded-full"
                       style={c === accent ? { boxShadow: `0 0 0 2px ${c}, inset 0 0 0 2.5px #fff` , background: c } : { background: c }} />
             ))}
           </span>
@@ -162,7 +169,9 @@ export function CustomizeCard({
       <div className="mt-[10px] flex items-start px-[23px]">
         <div className="min-w-0">
           <div className="shotiq-display text-[17px] leading-[17px] tracking-[0.05em]" style={{ color: GRAPHITE }}>CARD LAYOUT</div>
-          <div className="mt-[4px] text-[12.5px] leading-[15px]" style={{ color: GRAPHITE }}>
+          {/* One line in canonical (band 731.2-756.5pt carries title AND sub);
+              12.5px wrapped it and cost another 14pt. */}
+          <div className="mt-[3px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>
             Your card layout is optimized for clarity and cannot be changed.
           </div>
         </div>
@@ -171,7 +180,7 @@ export function CustomizeCard({
 
       <div className="mt-[9px] px-[23px]">
         <button type="button" onClick={onSave} data-testid="card-save"
-                className="flex h-[36px] w-full items-center justify-center rounded-[6px] text-[16px] font-medium text-white"
+                className="flex h-[33px] w-full items-center justify-center rounded-[6px] text-[16px] font-medium text-white"
                 style={{ background: accent }}>
           Save card
         </button>
@@ -185,10 +194,16 @@ export function CustomizeCard({
 
 function Row({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-[10px] px-[12px] py-[9px]">
+    /* Canonical row pitch is 44.2pt (rows open at 549.2 / 593.9 / 638.1 /
+       681.9), with the title cap at 12.0pt over a sub cap of 9.7pt on ONE line.
+       The shipped row ran 53pt and the caption wrapped, which is 8.8pt of drift
+       per row on top of the wrap. The sub is set below canonical's cap so the
+       wider shipped face still sets in one line — the row geometry is the
+       visible defect, the cap is the concession. */
+    <div className="flex items-center gap-[10px] px-[12px] py-[6px]">
       <span className="min-w-0">
-        <span className="shotiq-display block text-[17px] leading-[18px] tracking-[0.03em]">{title}</span>
-        <span className="mt-[2px] block text-[12px] leading-[14px]" style={{ color: GRAPHITE }}>{sub}</span>
+        <span className="shotiq-display block text-[15.5px] leading-[15px] tracking-[0.03em]">{title}</span>
+        <span className="mt-[1px] block text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>{sub}</span>
       </span>
       <span className="ml-auto shrink-0">{children}</span>
     </div>

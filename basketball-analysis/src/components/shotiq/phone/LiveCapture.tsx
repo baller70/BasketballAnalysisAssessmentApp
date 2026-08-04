@@ -532,7 +532,9 @@ function Ready({
 
       <div className="mt-[11px] flex items-start justify-between">
         <div className="min-w-0">
-          <Head cap={26}>CAPTURE READY</Head>
+          {/* canonical 031 draws this at cap 40 of the 853px art = 18.4 CSS
+              px. cap 26 measured 56 against canonical's 40, 140%. */}
+          <Head cap={18.4}>CAPTURE READY</Head>
           <p className="mt-[8px] text-[12px] leading-[14px]" style={{ color: GRAPHITE }}>
             All readiness checks confirmed. You&rsquo;re good to go.
           </p>

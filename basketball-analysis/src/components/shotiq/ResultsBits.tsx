@@ -217,32 +217,44 @@ export function FormScoreCell({
   const numeralSize = numeral ?? size
   // Canonical's track is roughly twice the numeral's width and never wider.
   const barWidth = Math.round(size * 2.3)
-  const barHeight = Math.max(4, Math.round(size / 7))
+  // Canonical draws this track at a near-constant 9-11px at every module scale
+  // (measured: 082 y454-462, 085 y161-169, 083 11px, 096 y314-323). Sizing it
+  // at size/7 drew 5px on 082/085 and 6px on 096 — half stroke — because the
+  // module scale varies 24-56 while canonical's stroke does not.
+  const barHeight = Math.min(11, Math.max(9, Math.round(size * 0.25)))
   const verdictSize = Math.max(11, Math.round(size * 0.33))
   // Canonical's caption is a fixed 12-13px secondary line at every module
   // scale — it does not grow with the numeral. Scaling it off `size` set it at
   // 19px on 079, where it outweighed the "GOOD" verdict above it.
   const captionSize = Math.min(13, Math.max(10, Math.round(size * 0.27)))
 
-  const numeralBlock = (
-    <div style={{ width: layout === "below" ? undefined : barWidth }}>
-      <div className="flex items-end gap-[5px]">
-        <span className="shotiq-numeric text-[var(--shotiq-color-shotiqOrange)]"
-              style={{ fontSize: numeralSize, lineHeight: `${Math.round(numeralSize * 1.08)}px` }}>
-          {score ?? "—"}
+  const numeralRow = (
+    <div className="flex items-end gap-[5px]">
+      <span className="shotiq-numeric text-[var(--shotiq-color-shotiqOrange)]"
+            style={{ fontSize: numeralSize, lineHeight: `${Math.round(numeralSize * 1.08)}px` }}>
+        {score ?? "—"}
+      </span>
+      {suffix != null && (
+        <span className="text-[var(--shotiq-color-muted)]"
+              style={{ fontSize: verdictSize, paddingBottom: Math.round(size * 0.16) }}>
+          {suffix}
         </span>
-        {suffix != null && (
-          <span className="text-[var(--shotiq-color-muted)]"
-                style={{ fontSize: verdictSize, paddingBottom: Math.round(size * 0.16) }}>
-            {suffix}
-          </span>
-        )}
-      </div>
-      <div className="rounded-full bg-[var(--shotiq-color-rule)]"
-           style={{ width: barWidth, height: barHeight }}>
-        <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
-             style={{ width: `${Math.max(0, Math.min(100, score ?? 0))}%` }} />
-      </div>
+      )}
+    </div>
+  )
+
+  const trackBlock = (
+    <div className="rounded-full bg-[var(--shotiq-color-rule)]"
+         style={{ width: barWidth, height: barHeight }}>
+      <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+           style={{ width: `${Math.max(0, Math.min(100, score ?? 0))}%` }} />
+    </div>
+  )
+
+  const numeralBlock = (
+    <div>
+      {numeralRow}
+      {trackBlock}
     </div>
   )
 
@@ -265,9 +277,22 @@ export function FormScoreCell({
     <div className={className}>
       {label != null && <SectionLabel className="text-[var(--shotiq-color-graphite)]">{label}</SectionLabel>}
       {layout === "beside" ? (
-        <div className="mt-[2px] flex items-start gap-[12px]">
-          {numeralBlock}
-          {verdictBlock}
+        /* Canonical runs the numeral and the verdict side by side and puts the
+           track UNDER BOTH, wider than the numeral (081: numeral x1048-1088,
+           track x1048-1147, verdict column x1107-1180). Reserving the track's
+           full width for the numeral column pushed the verdict right and left
+           "Keep building consistency." only ~51px of measure, so it broke to
+           three lines against canonical's two. */
+        <div className="mt-[2px]">
+          <div className="flex items-start gap-[12px]">
+            {numeralRow}
+            {/* Canonical's caption column is a narrow measure that always breaks
+                "Keep building consistency." across two lines — 085 runs it
+                x741-797 against a cell ending x823, 082 x1318-1373, 081
+                x1107-1180. Left uncapped it ran the caption out on one line. */}
+            <div style={{ maxWidth: Math.round(size * 2.1) }}>{verdictBlock}</div>
+          </div>
+          <div className="mt-[4px]">{trackBlock}</div>
         </div>
       ) : (
         <div className="mt-[2px]">

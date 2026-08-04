@@ -541,7 +541,10 @@ export default function DrillExecutionClient() {
 function Stat3({ v, l, c }: { v: string; l: string; c: string }) {
   return (
     <div className="text-center">
-      <div className="shotiq-numeric text-[26px] leading-[30px]" style={{ color: c }}>{v}</div>
+      {/* SHOT TRACKER values: canonical "24" is cap 22 / adv 21 at density
+          0.565; 26px measured cap 18 / adv 17 at 0.559. Densities match, so
+          size only — cap 0.70em puts cap 22 at 32px. */}
+      <div className="shotiq-numeric text-[32px] leading-[36px]" style={{ color: c }}>{v}</div>
       <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{l}</div>
     </div>
   )

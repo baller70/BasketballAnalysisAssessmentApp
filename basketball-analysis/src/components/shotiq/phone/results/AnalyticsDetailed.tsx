@@ -74,7 +74,9 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
       }
     >
       <div className="mt-[6px] px-[15px]">
-        <h1 className="shotiq-display text-[34px] leading-[28px] tracking-[0.015em]">ANALYSIS HISTORY</h1>
+        {/* canonical 067 sets this at cap 39 of the 853px art = 18.0 CSS px,
+            so 18.0/0.705 = 25.5px. 34px measured cap 52, 133% of canonical. */}
+        <h1 className="shotiq-display text-[25.5px] leading-[21px] tracking-[0.015em]">ANALYSIS HISTORY</h1>
         <p className="mt-[4px] text-[12.5px] leading-[13px]" style={{ color: GRAPHITE }}>
           Track your mechanics. See what moves the needle.
         </p>

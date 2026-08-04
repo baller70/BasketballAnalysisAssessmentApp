@@ -38,7 +38,14 @@ function Identity({ tabTint }: { tabTint?: boolean }) {
   return (
     <div className="flex items-start px-[18px] pt-[13px]">
       <div className="min-w-0">
-        <div className="shotiq-display text-[30px] leading-[31px]">JORDAN ELLIS</div>
+        {/* The phone player-name header, shared by six surfaces (training,
+            media, drills, onboarding, drill detail, upload). Its size is set
+            from the MEDIAN of the canonical caps it has to serve, because one
+            component cannot match all of them: 024 cap 54, 054 cap 52, 058 cap
+            51, 055 cap 44 - median 51.5, against the 46 that 30px drew. The
+            outliers stay outliers by design; chasing 055 would push the other
+            three off. 30 * 51.5/46 = 33.6px. */}
+        <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
         <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
       </div>
       <div className="ml-auto flex shrink-0 items-start">

@@ -26,7 +26,7 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   User, Bell, Clock, MonitorSmartphone, SlidersHorizontal,
-  ChevronRight, CheckCircle2, Film, Hexagon,
+  ChevronRight, ChevronDown, CheckCircle2, Film, Hexagon,
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
@@ -612,15 +612,30 @@ export default function SettingsPage() {
                     401–458 / 502–558 / 603–660 / 698–872 with rules at x=480,
                     581 and 682, i.e. ~22px of air either side of each rule.
                     The app ran a 5px gutter and no rules at all. */}
-                <div className="col-span-2 grid grid-cols-[62px_62px_62px_1fr] items-end gap-[16px]">
+                {/* R12: the gutter drops 16 -> 10 to hand the select the width it
+                    needs. Canonical's select is 174 wide in a 471px row (37%);
+                    this row is 346 wide after the 196px app sidebar and the
+                    214px settings rail, so 37% is 128 and the select gets 130.
+                    The remaining ~44px of canonical's value-to-chevron clearance
+                    cannot be recovered without taking it from the three
+                    measurement fields, which already match canonical at 57-62. */}
+                <div className="col-span-2 grid grid-cols-[62px_62px_62px_1fr] items-end gap-[10px]">
                   {([["HEIGHT", "height"], ["WEIGHT", "weight"], ["WINGSPAN", "wingspan"]] as const).map(([l, k]) => (
                     <div key={k} className="relative"><div className={lbl}>{l}</div>
                       <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />
                       <span aria-hidden="true" className="absolute bottom-0 right-[-9px] h-[34px] w-px bg-[#EFEFF0]" /></div>
                   ))}
                   <div><div className={lbl}>SHOOTING PREFERENCE</div>
-                    <select className={`${field} mt-[2px] px-[7px]`} value={form.pref} onChange={(e) => setForm({ ...form, pref: e.target.value })}>
-                      {["Catch & Shoot", "Off the Dribble", "Pull-Up"].map((o) => <option key={o}>{o}</option>)}</select></div>
+                    {/* The native control drew its own arrow hard against the
+                        field edge with the value butted up to it (value ended
+                        x940, chevron x940-948, field x949). Drawn instead as an
+                        appearance-none field with a right-inset chevron and
+                        matching right padding, so the value always clears it. */}
+                    <div className="relative mt-[2px]">
+                      <select className={`${field} appearance-none pl-[7px] pr-[26px]`} value={form.pref} onChange={(e) => setForm({ ...form, pref: e.target.value })}>
+                        {["Catch & Shoot", "Off the Dribble", "Pull-Up"].map((o) => <option key={o}>{o}</option>)}</select>
+                      <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-[9px] top-1/2 h-[13px] w-[13px] -translate-y-1/2 text-[var(--shotiq-color-graphite)]" />
+                    </div></div>
                 </div>
               </div>
             </div>
@@ -643,19 +658,36 @@ export default function SettingsPage() {
               / MAKE % cells do not get any narrower than they already were. */}
           <Card className="flex w-[430px] shrink-0 flex-col p-[18px]">
             <SectionLabel>PERFORMANCE SUMMARY</SectionLabel>
-            <div className="mt-[10px] flex gap-[20px]">
+            {/* Canonical splits this card's 481px content 142 FORM SCORE : 319
+                TARGET (29.5% : 66.3%). w-118 is the proportional FORM SCORE cell
+                for this build's 392px content; the 20px gutter left the target
+                column 254 against its proportional 260, so it drops to 14. */}
+            <div className="mt-[10px] flex gap-[14px]">
               <div className="w-[118px] shrink-0 border-r border-[var(--shotiq-color-rule)] pr-[16px]">
                 <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-                <div className="shotiq-numeric text-[52px] leading-[56px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-                <div className="h-[6px] rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
-                <div className="mt-[6px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
+                {/* Canonical draws this at cap 56 (bbox 51x56 at x922,y246);
+                    52px measured cap 37 with ink density 0.524 against
+                    canonical's 0.538 — the densities match, so this was a size
+                    error, not a weight error. The face carries cap 0.70em, so
+                    cap 56 wants 79px. */}
+                <div className="shotiq-numeric text-[79px] leading-[80px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+                {/* Canonical draws this track 10px tall (y314-323 at x920-1017); 6px was half stroke. */}
+                <div className="h-[10px] rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
+                {/* Canonical's verdict word is the condensed display face at
+                    cap 14 over a 30px advance, ink 0.579. The body face at 13px
+                    bold drew cap 10 over 32px at ink 0.769 — shorter, wider and
+                    heavier, i.e. the wrong face. */}
+                <div className="shotiq-display mt-[6px] text-[20px] leading-[20px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
                 <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">PRIMARY COACHING TARGET</div>
-                <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
-                  <span className="text-[16px] font-semibold">Keep elbow stacked through release</span>
-                  <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+                {/* The chevron is pulled out of the headline's measured width —
+                    canonical sets this on one line and a gutter for the
+                    affordance was enough to break it in two. */}
+                <Link href="/results/demo/goals" className="mt-[2px] flex items-start gap-[4px]">
+                  <span className="min-w-0 flex-1 text-[16px] font-semibold">Keep elbow stacked through release</span>
+                  <ChevronRight className="mt-[4px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
                 </Link>
                 <span className="mt-[6px] inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[1px] text-[9px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
                 <div className="mt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</div>

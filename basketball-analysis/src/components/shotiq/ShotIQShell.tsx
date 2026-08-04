@@ -374,9 +374,18 @@ export function PhaseGlyph({ active = false, size = 30 }: { active?: boolean; si
  * labels it calls graphite are actually orange and green in the render. Taking
  * the name at face value made every eyebrow the lightest end of the spread.
  */
-export function SectionLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function SectionLabel({ children, className = "", style }: {
+  children: React.ReactNode; className?: string; style?: React.CSSProperties
+}) {
+  /* `style` exists so a single site can raise this label to the tier canonical
+     draws it at (`--shotiq-label-size` / `--shotiq-label-tracking`) without
+     moving the shared default. It is deliberately per site: a histogram of
+     every all-caps run across the twenty canonical screens against the build
+     found canonical carries 146 runs above cap 12 and the build carries 199, so
+     the role is NOT uniformly undersized and a global raise would overshoot on
+     more screens than it fixed. */
   return (
-    <div className={`shotiq-section-label ${className}`}>{children}</div>
+    <div className={`shotiq-section-label ${className}`} style={style}>{children}</div>
   )
 }
 
@@ -397,13 +406,51 @@ export function SectionLabel({ children, className = "" }: { children: React.Rea
  * face draws a cap at 0.705em, so `size = canonical cap / 0.705`.
  */
 export function PageTitle({
-  size, children, className = "", ...rest
-}: { size: number } & React.HTMLAttributes<HTMLHeadingElement>) {
+  size, phoneSize, children, className = "", ...rest
+}: { size: number; phoneSize?: number } & React.HTMLAttributes<HTMLHeadingElement>) {
+  // `phoneSize` exists because canonical does not draw one title at one size on
+  // both devices: /signin is cap 44 on desktop 077 and cap 119 on iOS 003, so a
+  // single number cannot serve both. The phone value is applied by a rule in
+  // globals.css's phone block, which carries `!important` for the single reason
+  // that this element's own size is an inline style - the only way a stylesheet
+  // can win. Without `phoneSize` nothing is emitted and the element is exactly
+  // as it was.
+  const vars = phoneSize
+    ? ({ ["--shotiq-pt-phone"]: `${phoneSize}px`,
+         ["--shotiq-pt-phone-lh"]: `${phoneSize + 2}px` } as React.CSSProperties)
+    : null
   return (
-    <h1 {...rest} className={`shotiq-display ${className}`}
-        style={{ fontSize: size, lineHeight: `${size + 2}px`, ...(rest.style ?? {}) }}>
+    <h1 {...rest} className={`shotiq-display ${phoneSize ? "shotiq-pt-phone " : ""}${className}`}
+        style={{ fontSize: size, lineHeight: `${size + 2}px`, ...vars, ...(rest.style ?? {}) }}>
       {children}
     </h1>
+  )
+}
+
+/**
+ * A title that canonical spells differently on phone and on desktop.
+ *
+ * These are not synonyms chosen for variety - both strings are read off the
+ * canonical renders, and they disagree:
+ *
+ *   route        iOS canonical            desktop canonical
+ *   /signin      003 "SIGN IN"            077 "WELCOME BACK"
+ *   /analyze     021 "ANALYZE YOUR SHOT"  081 "UPLOAD & ANALYZE"
+ *   /elite-      052 "ELITE SHOOTERS"     088 "ELITE SHOOTERS DATABASE"
+ *   /profile     070 "JORDAN ELLIS"       096 "PROFILE & ACCOUNT"
+ *
+ * So the phone copy cannot simply replace the desktop copy: doing that would
+ * regress the 20 graded desktop screens. Both are rendered and the breakpoint
+ * picks one, at the same 768px boundary the phone-flow layer uses. This is CSS
+ * only - no viewport hook, so nothing depends on hydration and the server
+ * markup is correct for both.
+ */
+export function ResponsiveTitle({ phone, web }: { phone: string; web: string }) {
+  return (
+    <>
+      <span className="md:hidden">{phone}</span>
+      <span className="hidden md:inline">{web}</span>
+    </>
   )
 }
 

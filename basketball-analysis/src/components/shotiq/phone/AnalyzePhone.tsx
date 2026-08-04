@@ -124,15 +124,15 @@ export function AnalyzeHubPhone({
         {/* ONE row of three, in canonical's order. The round-6 build drew four
             tiles in a 2x2 grid with the order reversed and the descriptions
             dropped. */}
-        <div className="mt-[14px] flex gap-[10px]">
+        <div className="mt-[12px] flex gap-[9px]">
           {TILES.map(([label, glyph, lines, kind]) => (
             <button key={label} type="button" onClick={() => onTile?.(kind)}
                     data-testid={`phone-analyze-${kind}`}
-                    className="flex min-w-0 flex-1 flex-col items-center rounded-[7px] bg-white px-[6px] pb-[13px] pt-[16px]"
+                    className="flex min-w-0 flex-1 flex-col items-center rounded-[7px] bg-white px-[5px] pb-[11px] pt-[13px]"
                     style={{ border: `1px solid ${RULE}` }}>
-              <span className="flex h-[40px] items-center"><ActionGlyph kind={glyph} height={glyph === "uploadVideo" ? 26 : 38} /></span>
-              <span className="mt-[13px] text-[14px] leading-[15px]">{label}</span>
-              <span className="mt-[6px] block text-center text-[11.6px] leading-[13.6px]" style={{ color: GRAPHITE }}>
+              <span className="flex h-[36px] items-center"><ActionGlyph kind={glyph} height={glyph === "uploadVideo" ? 24 : glyph === "liveCamera" ? 26 : 34} /></span>
+              <span className="mt-[11px] text-[13.4px] leading-[14px]">{label}</span>
+              <span className="mt-[5px] block text-center text-[11px] leading-[12.6px]" style={{ color: GRAPHITE }}>
                 {lines[0]}<br />{lines[1]}
               </span>
             </button>
@@ -140,7 +140,7 @@ export function AnalyzeHubPhone({
         </div>
 
         <Link href="/upload/photo-access"
-              className="mt-[12px] flex h-[43px] w-full items-center gap-[12px] rounded-[6px] bg-white px-[14px]"
+              className="mt-[10px] flex h-[40px] w-full items-center gap-[11px] rounded-[6px] bg-white px-[13px]"
               style={{ border: `1px solid ${RULE}` }} data-testid="phone-analyze-guide">
           <svg width="24" height="26" viewBox="0 0 24 26" fill="none" aria-hidden="true" className="shrink-0"
                stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
@@ -148,11 +148,11 @@ export function AnalyzeHubPhone({
             <path d="M15 2 V8 H21" />
             <path d="M7 12 H16 M7 16 H16 M7 20 H13" strokeLinecap="round" />
           </svg>
-          <span className="text-[15px] leading-[16px]">View capture guide</span>
+          <span className="text-[14px] leading-[15px]">View capture guide</span>
           <span className="ml-auto flex"><Chev size={16} /></span>
         </Link>
 
-        <div className="mt-[13px] flex items-baseline">
+        <div className="mt-[11px] flex items-baseline">
           <SectionHead cap={28}>RECENT CAPTURES</SectionHead>
           <Link href="/media" className="ml-auto flex items-center gap-[5px] text-[12.6px] leading-[13px]">
             View all <Chev size={13} />
@@ -163,18 +163,18 @@ export function AnalyzeHubPhone({
           {RECENT.map(([src, len, when, style]) => (
             <div key={src} className="min-w-0 flex-1">
               <span className="relative block">
-                <Frame src={src} w="100%" h={129} radius={4} pos="50% 42%" />
+                <Frame src={src} w="100%" h={126} radius={4} pos="50% 32%" />
                 <span className="shotiq-numeric absolute bottom-[5px] right-[5px] rounded-[3px] bg-black/72 px-[5px] text-[11px] leading-[16px] text-white">
                   {len}
                 </span>
               </span>
-              <div className="mt-[6px] truncate text-[10.4px] leading-[11px]">{when}</div>
-              <div className="mt-[4px] truncate text-[10.4px] leading-[11px]" style={{ color: GRAPHITE }}>{style}</div>
+              <div className="mt-[5px] truncate text-[9px] leading-[10px]">{when}</div>
+              <div className="mt-[3px] truncate text-[9px] leading-[10px]" style={{ color: GRAPHITE }}>{style}</div>
             </div>
           ))}
         </div>
 
-        <div className="mt-[12px] flex items-center gap-[13px] rounded-[7px] bg-white px-[13px] py-[11px]"
+        <div className="mt-[10px] flex items-center gap-[12px] rounded-[7px] bg-white px-[12px] py-[9px]"
              style={{ border: `1px solid ${RULE}` }}>
           <svg width="34" height="30" viewBox="0 0 34 30" fill="none" aria-hidden="true" className="shrink-0"
                stroke={BLUE} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -184,13 +184,13 @@ export function AnalyzeHubPhone({
             <circle cx="24" cy="12" r="2.8" fill="#fff" />
             <circle cx="29" cy="24" r="2.8" fill="#fff" />
           </svg>
-          <span className="min-w-0 flex-1 text-[13.4px] leading-[16px]">
+          <span className="min-w-0 flex-1 text-[12.6px] leading-[14.6px]">
             Film from the side at chest height, showing your full body
             from feet to fingertips with good lighting and a clear background.
           </span>
         </div>
 
-        <div className="mt-[13px]">
+        <div className="mt-[11px]">
           <div className="shotiq-section-label leading-[12px] tracking-[0.075em]"
                style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>YOUR SHOOTING SNAPSHOT</div>
           <div className="mt-[7px] flex items-start">
@@ -214,8 +214,8 @@ export function AnalyzeHubPhone({
           </div>
         </div>
 
-        <div className="mt-[13px] flex items-center gap-[10px]"
-             style={{ borderTop: `1px solid ${RULE}`, paddingTop: 12 }}>
+        <div className="mt-[10px] flex items-center gap-[10px]"
+             style={{ borderTop: `1px solid ${RULE}`, paddingTop: 10 }}>
           <div className="min-w-0 flex-1">
             <div className="shotiq-section-label leading-[11px] tracking-[0.08em]"
                  style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>PRIMARY COACHING TARGET</div>
@@ -283,7 +283,7 @@ export function UploadQueuePhone({
       <div style={{ paddingLeft: 19.8, paddingRight: 19.8, paddingBottom: 70 }}>
         <div className="flex items-start justify-between pt-[13px]">
           <div className="min-w-0">
-            <div className="shotiq-display text-[35px] leading-[33px] tracking-[0.035em]">{name.toUpperCase()}</div>
+            <div className="shotiq-display text-[32px] leading-[30px] tracking-[0.035em]">{name.toUpperCase()}</div>
             <div className="mt-[3px] text-[12.4px] leading-[14.4px]" style={{ color: GRAPHITE }}>{sub}</div>
             <div className="mt-[3px] text-[12.4px] leading-[14.4px]">{target}</div>
           </div>
@@ -302,31 +302,31 @@ export function UploadQueuePhone({
           </div>
         </div>
 
-        <div className="mt-[12px] flex text-center">
+        <div className="mt-[10px] flex text-center">
           {[[String(score), "FORM SCORE"], [shots, "SHOTS"], [makes, "MAKES"], [pct, "SHOOTING %"]].map(([v, l], i) => (
             <div key={l} className="flex-1" style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
-              <div className="shotiq-numeric text-[22px] leading-[23px]">{v}</div>
-              <Micro className="mt-[5px]" size={8.6}>{l}</Micro>
+              <div className="shotiq-numeric text-[20px] leading-[21px]">{v}</div>
+              <Micro className="mt-[4px]" size={8.2}>{l}</Micro>
             </div>
           ))}
         </div>
 
-        <div className="mt-[17px] flex items-start">
+        <div className="mt-[13px] flex items-start">
           <div className="min-w-0 flex-1">
-            <div className="shotiq-display text-[47px] leading-[42px] tracking-[0.02em]">UPLOAD QUEUE</div>
-            <div className="mt-[6px] text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>
+            <div className="shotiq-display text-[42px] leading-[38px] tracking-[0.02em]">UPLOAD QUEUE</div>
+            <div className="mt-[5px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>
               Review, upload, and analyze your shots.
             </div>
           </div>
           <button type="button" onClick={onAdd} data-testid="phone-queue-add"
-                  className="ml-[12px] flex h-[60px] w-[79px] shrink-0 flex-col items-center justify-center gap-[7px] rounded-[6px] bg-white"
+                  className="ml-[12px] flex h-[56px] w-[75px] shrink-0 flex-col items-center justify-center gap-[6px] rounded-[6px] bg-white"
                   style={{ border: `1px solid ${RULE}` }}>
             <ActionGlyph kind="chooseMedia" height={22} />
-            <span className="text-[12.4px] leading-[13px]">Add media</span>
+            <span className="text-[11.6px] leading-[12px]">Add media</span>
           </button>
         </div>
 
-        <div className="mt-[13px] flex items-baseline">
+        <div className="mt-[11px] flex items-baseline">
           <SectionHead cap={29}>QUEUE ({items.length})</SectionHead>
           <span className="ml-auto text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>
             {uploading} uploading • {completed} completed
@@ -334,10 +334,10 @@ export function UploadQueuePhone({
         </div>
 
         {items.map((it) => (
-          <div key={it.id} className="mt-[8px] flex gap-[11px] rounded-[7px] bg-white p-[9px]"
+          <div key={it.id} className="mt-[7px] flex gap-[10px] rounded-[7px] bg-white p-[7px]"
                style={{ border: `1px solid ${RULE}` }}>
             <span className="relative block shrink-0">
-              <Frame src={it.thumb} w={140} h={148} radius={4} pos="50% 42%" />
+              <Frame src={it.thumb} w={132} h={138} radius={4} pos="50% 42%" />
               {it.kind === "image" ? (
                 <span className="absolute left-[6px] top-[6px] grid h-[24px] w-[24px] place-items-center rounded-[4px] bg-white/92">
                   <svg width="14" height="13" viewBox="0 0 14 13" fill="none" aria-hidden="true"
@@ -370,20 +370,20 @@ export function UploadQueuePhone({
                       </svg>
                     </span>
                   )}
-                <span className="text-[15px] font-medium leading-[16px]">{it.kind === "image" ? "Image" : "Video"}</span>
+                <span className="text-[13.6px] font-medium leading-[15px]">{it.kind === "image" ? "Image" : "Video"}</span>
                 <span style={{ color: GRAPHITE }}>•</span>
-                <span className="text-[13.4px] leading-[15px]"
+                <span className="text-[12.4px] leading-[14px]"
                       style={{ color: it.status === "Completed" ? GREEN : BLUE }}>{it.status}</span>
                 <span className="ml-auto tracking-[0.16em]" style={{ color: GRAPHITE }}>•••</span>
               </div>
-              <div className="mt-[7px] text-[12.6px] leading-[14px]" style={{ color: GRAPHITE }}>{it.when}</div>
-              <div className="mt-[7px] text-[13.4px] leading-[15px]">{it.title}</div>
+              <div className="mt-[6px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>{it.when}</div>
+              <div className="mt-[6px] text-[12.4px] leading-[14px]">{it.title}</div>
 
               {it.status === "Completed" ? (
                 <>
-                  <div className="mt-[7px] text-[13px] leading-[14px]" style={{ color: GREEN }}>Ready to analyze</div>
+                  <div className="mt-[6px] text-[12.4px] leading-[13px]" style={{ color: GREEN }}>Ready to analyze</div>
                   <button type="button" onClick={onAnalyze} data-testid="phone-queue-analyze-now"
-                          className="mt-[9px] flex h-[38px] w-full items-center justify-center gap-[10px] rounded-[5px] text-[14.6px]"
+                          className="mt-[8px] flex h-[34px] w-full items-center justify-center gap-[9px] rounded-[5px] text-[13.6px]"
                           style={{ border: `1px solid ${ORANGE}`, color: ORANGE }}>
                     <ActionGlyph kind="analyze" height={17} accent={ORANGE} /> Analyze now
                   </button>
@@ -391,7 +391,7 @@ export function UploadQueuePhone({
               ) : (
                 <>
                   <div className="mt-[7px] flex items-baseline">
-                    <span className="shotiq-numeric text-[26px] leading-[26px]">{it.progress}%</span>
+                    <span className="shotiq-numeric text-[23px] leading-[23px]">{it.progress}%</span>
                     <span className="ml-auto text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>
                       {it.sent} / {it.total}
                     </span>
@@ -414,11 +414,11 @@ export function UploadQueuePhone({
           </div>
         ))}
 
-        <div className="mt-[12px] rounded-[7px] bg-white px-[13px]" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[10px] rounded-[7px] bg-white px-[12px]" style={{ border: `1px solid ${RULE}` }}>
           {([["wifi", "Uploads will continue in the background", "You can close ShotIQ and we’ll finish uploading."],
              ["cloud", "Connection protection", "We’ll automatically resume if your connection drops."]] as const).map(
             ([kind, title, body], i) => (
-              <div key={title} className="flex items-start gap-[13px] py-[12px]"
+              <div key={title} className="flex items-start gap-[12px] py-[9px]"
                    style={i ? { borderTop: `1px solid ${RULE}` } : undefined}>
                 <span className="mt-[2px] shrink-0" style={{ color: kind === "wifi" ? BLUE : GRAPHITE }}>
                   {kind === "wifi" ? (
@@ -437,15 +437,15 @@ export function UploadQueuePhone({
                   )}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[14.6px] font-medium leading-[16px]">{title}</span>
-                  <span className="mt-[4px] block text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{body}</span>
+                  <span className="block text-[13.4px] font-medium leading-[15px]">{title}</span>
+                  <span className="mt-[3px] block text-[11.4px] leading-[13px]" style={{ color: GRAPHITE }}>{body}</span>
                 </span>
               </div>
             ))}
         </div>
 
         <button type="button" onClick={onAnalyze} data-testid="phone-queue-analyze-selected"
-                className="mt-[12px] flex h-[35px] w-full items-center justify-center rounded-[5px] text-[17px] font-medium text-white"
+                className="mt-[10px] flex h-[35px] w-full items-center justify-center rounded-[5px] text-[17px] font-medium text-white"
                 style={{ background: ORANGE }}>
           Analyze selected ({completed})
         </button>

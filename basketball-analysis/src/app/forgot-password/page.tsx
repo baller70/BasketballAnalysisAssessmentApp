@@ -77,7 +77,13 @@ export default function ForgotPasswordPage() {
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
 
-        <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">RESET YOUR PASSWORD</h1>
+        {/* Canonical 006 reads "RESET PASSWORD", not "RESET YOUR PASSWORD", and
+            sets it at cap 88 of the 853px art = 40.5 CSS px, so 40.5/0.705 =
+            57.5px. The shipped 40px drew cap 61, 70% of canonical. There is no
+            desktop canonical for this route, so one size serves both.
+            Canonical draws it in an oblique cut the Wilson X pack does not
+            ship; the words and the size are corrected, the slant cannot be. */}
+        <h1 className="shotiq-display mt-[26px] text-center text-[57.5px] leading-[60px]">RESET PASSWORD</h1>
         <p className="mt-[10px] text-center text-[14px] leading-[20px] text-[var(--shotiq-color-graphite)]">
           Enter your email and we&apos;ll send you a link to get back into your account.
         </p>

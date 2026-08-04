@@ -66,7 +66,7 @@ export function VideoUploadPhone({
         <div className="flex items-start justify-between pt-[14px] pb-[12px]"
              style={{ borderBottom: `1px solid ${RULE}` }}>
           <div className="min-w-0">
-            <div className="shotiq-display text-[33px] leading-[32px] tracking-[0.035em]">{name.toUpperCase()}</div>
+            <div className="shotiq-display text-[31px] leading-[30px] tracking-[0.035em]">{name.toUpperCase()}</div>
             <div className="mt-[3px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{sub}</div>
           </div>
           <div className="flex shrink-0 items-start">
@@ -84,38 +84,38 @@ export function VideoUploadPhone({
           </div>
         </div>
 
-        <div className="mt-[16px] shotiq-display text-[30px] leading-[29px] tracking-[0.025em]">VIDEO UPLOAD</div>
-        <div className="mt-[8px] text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>
+        <div className="mt-[13px] shotiq-display text-[29px] leading-[28px] tracking-[0.025em]">VIDEO UPLOAD</div>
+        <div className="mt-[6px] text-[12.6px] leading-[14px]" style={{ color: GRAPHITE }}>
           Upload a clear video of your shot for AI analysis.
         </div>
 
         {/* The dropzone IS the choose-video control, exactly as canonical draws
             it: one dashed box whose label is the action. */}
         <button type="button" onClick={onChoose} data-testid="phone-choose-video"
-                className="mt-[11px] flex w-full flex-col items-center rounded-[8px] px-[12px] pb-[16px] pt-[21px]"
+                className="mt-[9px] flex w-full flex-col items-center rounded-[8px] px-[12px] pb-[13px] pt-[17px]"
                 style={{ border: `1.4px dashed ${RULE}` }}>
-          <ActionGlyph kind="uploadVideo" height={40} />
-          <span className="mt-[10px] text-[19.5px] leading-[20px]" style={{ color: ORANGE }}>Choose video</span>
-          <span className="mt-[10px] text-[12.4px] leading-[13px]" style={{ color: GRAPHITE }}>MP4 • 3–45 seconds</span>
-          <span className="mt-[8px] text-[12.6px] leading-[13px]" style={{ color: GRAPHITE }}>
+          <ActionGlyph kind="uploadVideo" height={34} />
+          <span className="mt-[9px] text-[18px] leading-[19px]" style={{ color: ORANGE }}>Choose video</span>
+          <span className="mt-[8px] text-[11.8px] leading-[12px]" style={{ color: GRAPHITE }}>MP4 • 3–45 seconds</span>
+          <span className="mt-[7px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>
             Best results in portrait orientation.
           </span>
         </button>
 
-        <div className="mt-[11px] flex gap-[9px]">
+        <div className="mt-[9px] flex gap-[8px]">
           <button type="button" onClick={onRecord} data-testid="phone-record-video"
-                  className="flex min-w-0 flex-1 items-center gap-[11px] rounded-[7px] bg-white px-[11px] py-[11px] text-left"
+                  className="flex min-w-0 flex-1 items-center gap-[9px] rounded-[7px] bg-white px-[9px] py-[9px] text-left"
                   style={{ border: `1px solid ${RULE}` }}>
-            <ActionGlyph kind="analyze" height={26} />
+            <ActionGlyph kind="analyze" height={23} />
             <span className="min-w-0">
-              <span className="block text-[14.6px] leading-[16px]">Record video</span>
-              <span className="mt-[4px] block text-[12.4px] leading-[13px]" style={{ color: GRAPHITE }}>Use your camera</span>
+              <span className="block whitespace-nowrap text-[13.4px] leading-[15px]">Record video</span>
+              <span className="mt-[3px] block whitespace-nowrap text-[11.4px] leading-[12px]" style={{ color: GRAPHITE }}>Use your camera</span>
             </span>
           </button>
           <a href="/upload/photo-access"
-             className="flex min-w-0 flex-1 items-center gap-[10px] rounded-[7px] bg-white px-[11px] py-[11px]"
+             className="flex min-w-0 flex-1 items-center gap-[8px] rounded-[7px] bg-white px-[9px] py-[9px]"
              style={{ border: `1px solid ${RULE}` }} data-testid="phone-filming-tips">
-            <svg width="30" height="26" viewBox="0 0 30 26" fill="none" aria-hidden="true" className="shrink-0"
+            <svg width="26" height="22" viewBox="0 0 30 26" fill="none" aria-hidden="true" className="shrink-0"
                  stroke={BLUE} strokeWidth="1.8" strokeLinecap="round">
               <path d="M3 21 A13 13 0 0 1 27 21" strokeDasharray="3.4 3.4" />
               <circle cx="15" cy="7" r="2.6" fill="#fff" />
@@ -123,25 +123,25 @@ export function VideoUploadPhone({
               <circle cx="4" cy="21" r="2.6" fill="#fff" />
             </svg>
             <span className="min-w-0">
-              <span className="block text-[14.6px] leading-[16px]">View filming tips</span>
-              <span className="mt-[4px] block text-[12.4px] leading-[13.6px]" style={{ color: GRAPHITE }}>
-                Learn the best way to film your shot
+              <span className="block whitespace-nowrap text-[13.4px] leading-[15px]">View filming tips</span>
+              <span className="mt-[3px] block text-[11.4px] leading-[12.6px]" style={{ color: GRAPHITE }}>
+                Learn the best way<br />to film your shot
               </span>
             </span>
             <span className="ml-auto flex"><Chev size={15} /></span>
           </a>
         </div>
 
-        <div className="mt-[13px] shotiq-display text-[25px] leading-[25px] tracking-[0.03em]">FRAMING GUIDE</div>
-        <div className="mt-[6px] text-[12.6px] leading-[14px]" style={{ color: GRAPHITE }}>
+        <div className="mt-[11px] shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">FRAMING GUIDE</div>
+        <div className="mt-[5px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>
           Full body in frame from feet to above release.
         </div>
 
         <div className="mt-[7px] flex gap-[11px]">
-          {([["086-film-3", "GOOD", GREEN, true], ["089-headshot", "TOO CLOSE", RED, false]] as const).map(
+          {([["086-film-3", "GOOD", GREEN, true], ["086-film-1", "TOO CLOSE", RED, false]] as const).map(
             ([src, tag, tone, ok]) => (
               <span key={tag} className="relative block min-w-0 flex-1">
-                <Frame src={src} w="100%" h={151} radius={4} pos="50% 38%" />
+                <Frame src={src} w="100%" h={145} radius={4} pos={ok ? "50% 38%" : "50% 2%"} />
                 <span className="shotiq-display absolute left-[7px] top-[7px] rounded-[3px] px-[7px] text-[13px] leading-[21px] tracking-[0.05em] text-white"
                       style={{ background: tone }}>{tag}</span>
                 <span className="absolute bottom-[-11px] left-1/2 grid h-[26px] w-[26px] -translate-x-1/2 place-items-center rounded-full"
@@ -156,7 +156,7 @@ export function VideoUploadPhone({
             ))}
         </div>
 
-        <div className="mt-[20px] rounded-[7px] px-[12px] pb-[12px] pt-[11px]"
+        <div className="mt-[16px] rounded-[7px] px-[11px] pb-[9px] pt-[8px]"
              style={{ border: `1px solid ${RULE}`, background: "var(--shotiq-color-warmCanvas)" }}>
           <div className="shotiq-section-label leading-[12px] tracking-[0.075em]"
                style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>YOUR PROFILE SUMMARY</div>
@@ -164,28 +164,28 @@ export function VideoUploadPhone({
             {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l], i) => (
               <div key={l} className="min-w-0 flex-1 pr-[8px]"
                    style={i ? { borderLeft: `1px solid ${RULE}`, paddingLeft: 10 } : undefined}>
-                <div className="shotiq-numeric text-[22px] leading-[23px]">{v}</div>
-                <Micro className="mt-[4px]" size={8.6}>{l}</Micro>
+                <div className="shotiq-numeric text-[20px] leading-[21px]">{v}</div>
+                <Micro className="mt-[3px]" size={8.2}>{l}</Micro>
               </div>
             ))}
             <div className="w-[110px] shrink-0 pl-[10px]" style={{ borderLeft: `1px solid ${RULE}` }}>
-              <div className="shotiq-numeric text-[22px] leading-[23px]" style={{ color: ORANGE }}>{score}</div>
-              <Micro className="mt-[4px]" size={8.6}>FORM SCORE</Micro>
+              <div className="shotiq-numeric text-[20px] leading-[21px]" style={{ color: ORANGE }}>{score}</div>
+              <Micro className="mt-[3px]" size={8.2}>FORM SCORE</Micro>
               <ScoreBar score={score} width={100} height={5} />
             </div>
           </div>
-          <div className="mt-[11px] flex items-center gap-[10px]"
-               style={{ borderTop: `1px solid ${RULE}`, paddingTop: 11 }}>
+          <div className="mt-[9px] flex items-center gap-[10px]"
+               style={{ borderTop: `1px solid ${RULE}`, paddingTop: 9 }}>
             <div className="min-w-0 flex-1">
               <div className="shotiq-section-label leading-[11px] tracking-[0.08em]"
                    style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>PRIMARY COACHING TARGET</div>
-              <div className="mt-[6px] truncate text-[16.6px] leading-[18px]">{target}</div>
+              <div className="mt-[5px] truncate text-[16px] leading-[17px]">{target}</div>
             </div>
             <Chev size={16} />
           </div>
         </div>
 
-        <PhaseRail active="RELEASE" figure={30} label={9.6} className="mt-[12px]" />
+        <PhaseRail active="RELEASE" figure={26} label={9} className="mt-[8px]" />
       </div>
     </PhoneScreen>
   )

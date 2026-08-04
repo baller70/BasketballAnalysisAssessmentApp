@@ -158,19 +158,19 @@ export interface SettingsRow {
 function Row({ r }: { r: SettingsRow }) {
   const body = (
     <>
-      <span className="flex w-[38px] shrink-0 justify-start"><RowMark kind={r.key} /></span>
+      <span className="flex w-[31px] shrink-0 justify-start"><RowMark kind={r.key} size={24} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14.6px] leading-[16px]">{r.label}</span>
-        <span className="mt-[4px] block text-[11.8px] leading-[13px]" style={{ color: GRAPHITE }}>{r.desc}</span>
+        <span className="block text-[13.4px] leading-[14px]">{r.label}</span>
+        <span className="mt-[3px] block whitespace-nowrap text-[10.8px] leading-[12px]" style={{ color: GRAPHITE }}>{r.desc}</span>
       </span>
       {r.badge && (
-        <span className="shotiq-display shrink-0 text-[15.7px] leading-[15.7px] tracking-[0.05em]"
+        <span className="shotiq-display shrink-0 text-[14px] leading-[14px] tracking-[0.05em]"
               style={{ color: r.badgeTone === "green" ? GREEN : BLUE }}>{r.badge}</span>
       )}
       <Chev size={15} />
     </>
   )
-  const cls = "flex w-full items-center gap-[10px] px-[14px] py-[13px] text-left"
+  const cls = "flex w-full items-center gap-[8px] px-[11px] py-[11px] text-left"
   if (r.href) return <Link href={r.href} className={cls} data-testid={`phone-settings-${r.key}`}>{body}</Link>
   return (
     <button type="button" onClick={r.onClick} className={cls} data-testid={`phone-settings-${r.key}`}>
@@ -247,30 +247,30 @@ export function SettingsHubPhone({
         </div>
 
         {/* profile card */}
-        <div className="mt-[14px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
-          <div className="flex items-center gap-[14px] px-[12px] py-[12px]">
+        <div className="mt-[12px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
+          <div className="flex items-center gap-[13px] px-[11px] py-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={avatar} alt="" aria-hidden="true"
-                 className="block h-[70px] w-[70px] shrink-0 rounded-full object-cover"
+                 className="block h-[64px] w-[64px] shrink-0 rounded-full object-cover"
                  style={{ objectPosition: "50% 32%" }} />
             <div className="min-w-0">
-              <div className="shotiq-display text-[29px] leading-[28px] tracking-[0.035em]">{name.toUpperCase()}</div>
-              <div className="mt-[4px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
+              <div className="shotiq-display text-[27px] leading-[26px] tracking-[0.035em]">{name.toUpperCase()}</div>
+              <div className="mt-[3px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>
                 {hand} • {level}
               </div>
             </div>
           </div>
-          <div className="flex items-start px-[12px] pb-[12px]" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 11 }}>
-            <div className="w-[80px] shrink-0">
+          <div className="flex items-start px-[11px] pb-[10px]" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 9 }}>
+            <div className="w-[74px] shrink-0">
               <div className="shotiq-section-label leading-[11px] tracking-[0.075em]"
                    style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>FORM SCORE</div>
-              <div className="shotiq-numeric mt-[3px] leading-[0.82] text-[34px]" style={{ color: ORANGE }}>{score}</div>
+              <div className="shotiq-numeric mt-[2px] leading-[0.82] text-[31px]" style={{ color: ORANGE }}>{score}</div>
               <ScoreBar score={score} width={64} height={5.5} />
             </div>
             {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l]) => (
               <div key={l} className="flex-1 pl-[10px]" style={{ borderLeft: `1px solid ${RULE}` }}>
-                <div className="shotiq-numeric text-[21px] leading-[22px]">{v}</div>
-                <Micro className="mt-[4px]" size={8.6}>{l}</Micro>
+                <div className="shotiq-numeric text-[19px] leading-[20px]">{v}</div>
+                <Micro className="mt-[3px]" size={8.2}>{l}</Micro>
               </div>
             ))}
             <div className="w-[92px] shrink-0 pl-[10px]" style={{ borderLeft: `1px solid ${RULE}` }}>
@@ -284,31 +284,31 @@ export function SettingsHubPhone({
               <Micro className="mt-[3px]" size={8}>VS LAST SESSION</Micro>
             </div>
           </div>
-          <Link href="/profile" className="flex items-center gap-[10px] px-[14px] py-[12px]"
+          <Link href="/profile" className="flex items-center gap-[8px] px-[11px] py-[10px]"
                 style={{ borderTop: `1px solid ${RULE}` }} data-testid="phone-settings-edit-profile">
-            <span className="grid h-[26px] w-[27px] shrink-0 place-items-center rounded-[3px]"
+            <span className="grid h-[24px] w-[25px] shrink-0 place-items-center rounded-[3px]"
                   style={{ border: `1.4px dashed ${RULE}` }}>
               <span className="shotiq-display text-[13px] leading-none">JE</span>
             </span>
-            <span className="text-[14.6px] leading-[16px]">Edit profile</span>
+            <span className="text-[13.4px] leading-[15px]">Edit profile</span>
             <span className="ml-auto flex"><Chev size={15} /></span>
           </Link>
         </div>
 
-        <div className="mt-[15px]"><Group rows={groupA} /></div>
-        <div className="mt-[15px]"><Group rows={groupB} /></div>
+        <div className="mt-[12px]"><Group rows={groupA} /></div>
+        <div className="mt-[12px]"><Group rows={groupB} /></div>
 
-        <div className="mt-[15px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[12px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
           <button type="button" onClick={onSignOut} data-testid="phone-settings-signout"
-                  className="flex w-full items-center gap-[10px] px-[14px] py-[14px] text-left">
-            <span className="flex w-[38px] shrink-0 justify-start"><RowMark kind="signout" /></span>
-            <span className="flex-1 text-[14.6px] leading-[16px]">Sign out</span>
+                  className="flex w-full items-center gap-[8px] px-[11px] py-[11px] text-left">
+            <span className="flex w-[31px] shrink-0 justify-start"><RowMark kind="signout" size={24} /></span>
+            <span className="flex-1 text-[13.4px] leading-[15px]">Sign out</span>
             <Chev size={15} />
           </button>
         </div>
 
         {dirty && (
-          <div className="mt-[14px] flex items-center gap-[10px] rounded-[7px] bg-white py-[7px] pl-[10px] pr-[7px]"
+          <div className="mt-[11px] flex items-center gap-[9px] rounded-[7px] bg-white py-[6px] pl-[9px] pr-[6px]"
                style={{ border: `1px solid ${RULE}` }}>
             <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
               <circle cx="12" cy="12" r="10.2" fill="none" stroke={ORANGE} strokeWidth="1.7" />
@@ -317,7 +317,7 @@ export function SettingsHubPhone({
             </svg>
             <span className="min-w-0 flex-1 text-[13px] leading-[15px]">You have unsaved changes</span>
             <button type="button" onClick={onSave} data-testid="phone-settings-save"
-                    className="flex h-[38px] shrink-0 items-center rounded-[5px] px-[20px] text-[14.5px] font-medium text-white"
+                    className="flex h-[34px] shrink-0 items-center rounded-[5px] px-[17px] text-[13.6px] font-medium text-white"
                     style={{ background: ORANGE }}>Save changes</button>
           </div>
         )}
@@ -409,7 +409,7 @@ export function NotificationPrimerPhone({
         </div>
 
         {/* four-cell stat quad */}
-        <div className="mt-[14px] flex text-center">
+        <div className="mt-[12px] flex text-center">
           {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "SHOOTING"], [String(score), "FORM SCORE"]].map(([v, l], i) => (
             <div key={l} className="flex-1" style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <div className="shotiq-numeric text-[22px] leading-[23px]"
@@ -420,32 +420,32 @@ export function NotificationPrimerPhone({
         </div>
 
         {/* primary target */}
-        <div className="mt-[15px] flex items-baseline justify-center gap-[9px]">
+        <div className="mt-[12px] flex items-baseline justify-center gap-[9px]">
           <span className="shotiq-section-label leading-[11px] tracking-[0.075em]"
                 style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>PRIMARY TARGET:</span>
           <span className="text-[13.4px] leading-[15px]">{target}</span>
         </div>
 
         {/* hero */}
-        <div className="mt-[19px]">
-          <div className="shotiq-display leading-[36px] tracking-[0.025em]"
+        <div className="mt-[14px]">
+          <div className="shotiq-display leading-[34px] tracking-[0.025em]"
                style={{ fontSize: capDisplay(61) }}>STAY IN THE LOOP</div>
-          <div className="mt-[9px] text-[13.4px] leading-[16.6px]" style={{ color: GRAPHITE }}>
+          <div className="mt-[7px] text-[13px] leading-[15.4px]" style={{ color: GRAPHITE }}>
             Turn on notifications so you never miss AI analysis<br />
             results, training reminders, or goal milestones.
           </div>
         </div>
 
         {/* three benefits */}
-        <div className="mt-[16px]">
+        <div className="mt-[9px]">
           {BENEFITS.map(([kind, title, lines], i) => (
-            <div key={title} className="flex items-center gap-[16px] py-[13px]"
+            <div key={title} className="flex items-center gap-[14px] py-[8px]"
                  style={i ? { borderTop: `1px solid ${RULE}` } : undefined}>
-              <span className="flex w-[92px] shrink-0 justify-center"><BenefitMark kind={kind} /></span>
-              <span className="min-w-0 flex-1 pl-[16px]" style={{ borderLeft: `1px solid ${RULE}` }}>
-                <span className="shotiq-display block text-[20.5px] leading-[20px] tracking-[0.03em]"
+              <span className="flex w-[86px] shrink-0 justify-center"><BenefitMark kind={kind} /></span>
+              <span className="min-w-0 flex-1 pl-[14px]" style={{ borderLeft: `1px solid ${RULE}` }}>
+                <span className="shotiq-display block text-[19.5px] leading-[19px] tracking-[0.03em]"
                       style={{ color: ORANGE }}>{title}</span>
-                <span className="mt-[6px] block text-[13.2px] leading-[16px]">
+                <span className="mt-[5px] block text-[12.6px] leading-[14.6px]">
                   {lines[0]}<br />{lines[1]}
                 </span>
               </span>
@@ -454,8 +454,8 @@ export function NotificationPrimerPhone({
         </div>
 
         {/* still + form score */}
-        <div className="mt-[13px] flex items-start gap-[16px]">
-          <Frame src="083-hero" w={255} h={193} radius={5} pos="50% 78%" />
+        <div className="mt-[10px] flex items-start gap-[15px]">
+          <Frame src="079-latest-analysis" w={255} h={193} radius={5} pos="50% 88%" />
           <div className="min-w-0 flex-1">
             <div className="shotiq-section-label leading-[12px] tracking-[0.075em]"
                  style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
@@ -468,7 +468,7 @@ export function NotificationPrimerPhone({
 
         {/* actions */}
         <button type="button" onClick={onEnable} data-testid="phone-primer-enable"
-                className="mt-[11px] flex h-[34px] w-full items-center justify-center gap-[13px] rounded-[5px] text-[15px] font-medium text-white"
+                className="mt-[9px] flex h-[34px] w-full items-center justify-center gap-[13px] rounded-[5px] text-[15px] font-medium text-white"
                 style={{ background: GREEN }}>
           <BellGlyph /> Turn on notifications
         </button>

@@ -124,13 +124,13 @@ export function HomeProfessionalPhone({
             ))}
         </div>
 
-        <div className="mt-[16px] flex items-baseline">
+        <div className="mt-[14px] flex items-baseline">
           <SectionHead cap={26}>FORM OVERVIEW</SectionHead>
           <span className="ml-auto text-[12.4px] leading-[13px]" style={{ color: GRAPHITE }}>{when}</span>
         </div>
 
         <div className="mt-[7px] flex items-start gap-[13px]">
-          <Frame src="083-hero" w={255} h={188} radius={4} pos="50% 40%" />
+          <Frame src="079-latest-analysis" w={255} h={188} radius={4} pos="50% 45%" />
           <div className="min-w-0 flex-1">
             <div className="shotiq-section-label leading-[12px] tracking-[0.075em]"
                  style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
@@ -142,7 +142,7 @@ export function HomeProfessionalPhone({
         </div>
 
         {/* phase rail with per-phase values under the captions */}
-        <div className="mt-[9px] flex items-end">
+        <div className="mt-[7px] flex items-end">
           {PHASES.map(([label, kind, value], i) => {
             const on = kind === "release"
             return (
@@ -150,18 +150,18 @@ export function HomeProfessionalPhone({
                 {i > 0 && (
                   <span aria-hidden="true" className="absolute left-[-50%] top-[46%] h-px w-full" style={{ background: RULE }} />
                 )}
-                <PoseFigure phase={kind} height={30} active={on} className="relative" />
-                <span className="shotiq-display relative mt-[6px] text-center text-[9.6px] leading-[10px] tracking-[0.03em]"
+                <PoseFigure phase={kind} height={28} active={on} className="relative" />
+                <span className="shotiq-display relative mt-[5px] text-center text-[9.6px] leading-[10px] tracking-[0.03em]"
                       style={{ color: on ? ORANGE : undefined }}>{label}</span>
-                <span className="shotiq-numeric relative mt-[4px] text-[13px] leading-[13px]"
+                <span className="shotiq-numeric relative mt-[3px] text-[13px] leading-[13px]"
                       style={{ color: on ? ORANGE : undefined }}>{value}</span>
-                {on && <span aria-hidden="true" className="relative mt-[4px] h-[2px] w-[46px]" style={{ background: ORANGE }} />}
+                {on && <span aria-hidden="true" className="relative mt-[3px] h-[2px] w-[46px]" style={{ background: ORANGE }} />}
               </div>
             )
           })}
         </div>
 
-        <div className="mt-[15px] flex items-start" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 13 }}>
+        <div className="mt-[10px] flex items-start" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 9 }}>
           <SectionHead cap={34}>MECHANICS TRENDS</SectionHead>
           <div className="ml-auto text-right">
             <div className="flex items-center justify-end gap-[10px] text-[10.6px] leading[11px]">
@@ -182,15 +182,15 @@ export function HomeProfessionalPhone({
           </div>
         </div>
 
-        <div className="mt-[9px] flex">
+        <div className="mt-[6px] flex">
           {TRENDS.map(([label, kind, value, d, dir], i) => (
             <div key={label} className="min-w-0 flex-1 px-[3px] text-center"
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
-              <span className="flex justify-center"><PoseFigure phase={kind} height={27} /></span>
-              <div className="shotiq-microcaps mt-[6px] leading-[9px]"
+              <span className="flex justify-center"><PoseFigure phase={kind} height={25} /></span>
+              <div className="shotiq-microcaps mt-[4px] leading-[9px]"
                    style={{ fontSize: 7.4, color: GRAPHITE }}>{label}</div>
-              <div className="shotiq-numeric mt-[4px] text-[17px] leading-[17px]">{value}</div>
-              <div className="mt-[3px] flex items-center justify-center gap-[2px] text-[10px] leading-[11px]"
+              <div className="shotiq-numeric mt-[3px] text-[16px] leading-[16px]">{value}</div>
+              <div className="mt-[2px] flex items-center justify-center gap-[2px] text-[10px] leading-[11px]"
                    style={{ color: dir === "down" ? RED : GREEN }}>
                 {d}
                 <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
@@ -202,26 +202,26 @@ export function HomeProfessionalPhone({
           ))}
         </div>
 
-        <div className="mt-[15px] flex items-baseline" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 13 }}>
+        <div className="mt-[10px] flex items-baseline" style={{ borderTop: `1px solid ${RULE}`, paddingTop: 9 }}>
           <SectionHead cap={34}>RECENT SESSIONS</SectionHead>
           <Link href="/results/demo/history" className="ml-auto text-[12.4px] leading-[13px]">View all</Link>
         </div>
 
-        <div className="mt-[8px] flex items-center gap-[11px] rounded-[6px] bg-white p-[8px]"
+        <div className="mt-[6px] flex items-center gap-[10px] rounded-[6px] bg-white p-[6px]"
              style={{ border: `1px solid ${RULE}` }}>
-          <Frame src="079-latest-analysis" w={112} h={82} radius={3} pos="50% 40%" />
+          <Frame src="086-film-3" w={112} h={78} radius={3} pos="50% 40%" />
           <div className="min-w-0 flex-1">
             <div className="text-[12.6px] leading-[13px]">{when}</div>
-            <div className="mt-[5px] flex">
+            <div className="mt-[4px] flex">
               {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l], i) => (
                 <div key={l} className="min-w-0 flex-1 pr-[6px]"
                      style={i ? { borderLeft: `1px solid ${RULE}`, paddingLeft: 8 } : undefined}>
-                  <div className="shotiq-numeric text-[17px] leading-[18px]">{v}</div>
+                  <div className="shotiq-numeric text-[16px] leading-[17px]">{v}</div>
                   <Micro className="mt-[2px]" size={7.6}>{l}</Micro>
                 </div>
               ))}
             </div>
-            <div className="mt-[6px] flex items-end">
+            <div className="mt-[4px] flex items-end">
               {PHASES.map(([label, kind, value], i) => {
                 const on = kind === "release"
                 return (
@@ -229,8 +229,8 @@ export function HomeProfessionalPhone({
                     {i > 0 && (
                       <span aria-hidden="true" className="absolute left-[-50%] top-[46%] h-px w-full" style={{ background: RULE }} />
                     )}
-                    <PoseFigure phase={kind} height={20} active={on} className="relative" />
-                    <span className="shotiq-numeric relative mt-[3px] text-[11px] leading-[11px]"
+                    <PoseFigure phase={kind} height={18} active={on} className="relative" />
+                    <span className="shotiq-numeric relative mt-[2px] text-[11px] leading-[11px]"
                           style={{ color: on ? ORANGE : undefined }}>{value}</span>
                   </div>
                 )
@@ -240,17 +240,17 @@ export function HomeProfessionalPhone({
           <Chev size={16} />
         </div>
 
-        <div className="mt-[9px] flex items-center gap-[10px] rounded-[6px] bg-white px-[11px] py-[9px]"
+        <div className="mt-[7px] flex items-center gap-[10px] rounded-[6px] bg-white px-[11px] py-[7px]"
              style={{ border: `1px solid ${RULE}` }}>
           <div className="min-w-0 flex-1">
             <div className="shotiq-section-label leading-[11px] tracking-[0.08em]"
                  style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>PRIMARY COACHING TARGET</div>
-            <div className="mt-[5px] truncate text-[16.6px] leading-[18px]">{target}</div>
+            <div className="mt-[4px] truncate text-[16.6px] leading-[18px]">{target}</div>
           </div>
           <Chev size={16} />
         </div>
 
-        <div className="mt-[10px] flex items-start">
+        <div className="mt-[8px] flex items-start">
           {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l], i) => (
             <div key={l} className="min-w-0 flex-1 pr-[8px]"
                  style={i ? { borderLeft: `1px solid ${RULE}`, paddingLeft: 10 } : undefined}>
@@ -356,7 +356,7 @@ export function ProfileMenuPhone({
   onMode,
   onClose,
   onSignOut,
-  avatar = "081-player-headshot",
+  avatar = "096-avatar",
 }: {
   name?: string; sub?: string; streak?: string; points?: string
   score?: number; shots?: string; makes?: string; pct?: string; delta?: string
@@ -381,10 +381,10 @@ export function ProfileMenuPhone({
           </button>
         </div>
 
-        <div className="mt-[8px] flex items-center gap-[16px]">
-          <Frame src={avatar} w={103} h={103} radius={52} pos="50% 28%" />
+        <div className="mt-[7px] flex items-center gap-[15px]">
+          <Frame src={avatar} w={100} h={100} radius={50} pos="50% 30%" />
           <div className="min-w-0">
-            <div className="shotiq-display text-[38px] leading-[36px] tracking-[0.035em]">{name.toUpperCase()}</div>
+            <div className="shotiq-display text-[36px] leading-[34px] tracking-[0.035em]">{name.toUpperCase()}</div>
             <div className="mt-[4px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub}</div>
             <Link href="/profile"
                   className="mt-[8px] flex h-[37px] w-[128px] items-center justify-center gap-[9px] rounded-[5px] text-[14px]"
@@ -397,7 +397,7 @@ export function ProfileMenuPhone({
         </div>
 
         {/* four-cell strip */}
-        <div className="mt-[13px] flex text-center">
+        <div className="mt-[11px] flex text-center">
           <div className="flex-1">
             <span className="flex h-[26px] items-center justify-center">
               <ActionGlyph kind="uploadVideo" height={17} />
@@ -430,7 +430,7 @@ export function ProfileMenuPhone({
         </div>
 
         {/* three-cell strip */}
-        <div className="mt-[13px] flex text-center">
+        <div className="mt-[11px] flex text-center">
           {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "ACCURACY"]].map(([v, l], i) => (
             <div key={l} className="flex-1" style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <div className="shotiq-numeric text-[22px] leading-[22px]">{v}</div>
@@ -440,7 +440,7 @@ export function ProfileMenuPhone({
         </div>
 
         {/* dashboard mode */}
-        <div className="mt-[14px] flex items-center gap-[14px] rounded-[7px] px-[12px] py-[12px]"
+        <div className="mt-[12px] flex items-center gap-[13px] rounded-[7px] px-[11px] py-[10px]"
              style={{ border: `1px solid ${RULE}`, background: "var(--shotiq-color-warmCanvas)" }}>
           <MenuMark kind="media" />
           <div className="min-w-0 flex-1">
@@ -464,9 +464,9 @@ export function ProfileMenuPhone({
         </div>
 
         {/* destinations */}
-        <div className="mt-[14px] overflow-hidden rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[12px] overflow-hidden rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
           {MENU.map(([kind, label, desc, href], i) => (
-            <Link key={label} href={href} className="flex items-center gap-[14px] px-[12px] py-[13px]"
+            <Link key={label} href={href} className="flex items-center gap-[13px] px-[11px] py-[11px]"
                   style={i ? { borderTop: `1px solid ${RULE}` } : undefined}>
               <MenuMark kind={kind} />
               <span className="min-w-0 flex-1">
@@ -478,9 +478,9 @@ export function ProfileMenuPhone({
           ))}
         </div>
 
-        <div className="mt-[14px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
+        <div className="mt-[12px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
           <button type="button" onClick={onSignOut} data-testid="phone-menu-signout"
-                  className="flex w-full items-center gap-[14px] px-[12px] py-[13px] text-left">
+                  className="flex w-full items-center gap-[13px] px-[11px] py-[11px] text-left">
             <svg width="44" height="40" viewBox="0 0 44 40" fill="none" aria-hidden="true" className="block"
                  stroke={ORANGE} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 6 H6 V34 H22" />
