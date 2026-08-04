@@ -1565,8 +1565,24 @@ struct ShotTrackerView: View {      // 061
                                     Text("\(shots) OF \(sessionTarget)")
                                         .font(.custom("Tungsten-Semibold", size: 16))
                                 }
-                                ZStack(alignment: .topLeading) {
-                                    MediaSurface(height: 268)
+                                // Canonical 061 shows the last shot's own frame in
+                                // this column; the 061 sidecar declares no photo
+                                // element, so the app had only the dark media
+                                // plate to draw. The frame runs x 28…519,
+                                // y 423…1195 on the 853x1844 canvas.
+                                //
+                                // Cut short at y 1082: canonical bakes its own
+                                // "SHOT 15 / JUST NOW" plate and a fullscreen
+                                // glyph into the bottom of that frame, and the
+                                // plate here has to stay live — it counts the
+                                // shots the reader actually records. Dropping the
+                                // bottom 113 rows of floor keeps one plate on
+                                // screen instead of two. 491x659 is 284pt tall in
+                                // this 211pt column. The plate moves to
+                                // .bottomLeading because that is the corner
+                                // canonical hangs it off.
+                                ZStack(alignment: .bottomLeading) {
+                                    CanonicalPhoto("061-visual-001", height: 284)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("SHOT \(shots)").shotiqBody(10, weight: .bold).kerning(0.4)
                                         Text("JUST NOW").shotiqBody(7).opacity(0.8)

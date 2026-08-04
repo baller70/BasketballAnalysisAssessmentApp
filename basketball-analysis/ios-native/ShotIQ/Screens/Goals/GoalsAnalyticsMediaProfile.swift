@@ -2875,7 +2875,15 @@ struct ShareResultsView: View {     // 072
                                 }
                             }
                             HStack(alignment: .top, spacing: 12) {
-                                PhotoThumb(height: 176).frame(maxWidth: .infinity)
+                                // The share card's frame. PhotoThumb with no photo
+                                // key draws the warm-canvas plate with a glyph in
+                                // it, which is what readers saw here: the 072
+                                // sidecar declares no photo, so nothing was ever
+                                // passed. Canonical prints 510x578 at x 41…551,
+                                // y 592…1170 — 210pt tall in this column, and it
+                                // carries no baked chrome, only the pose skeleton.
+                                PhotoThumb(height: 210, photo: "072-visual-001")
+                                    .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 9) {
                                     Text("MECHANICS HIGHLIGHTS")
                                         .shotiqBody(9, weight: .semibold).kerning(0.5)

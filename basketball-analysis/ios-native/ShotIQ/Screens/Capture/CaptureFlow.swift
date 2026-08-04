@@ -854,22 +854,32 @@ struct UploadQualityCheckView: View { // 024
                         .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
+                    // Canonical 024 prints the clip's own frame here, not a dark
+                    // media plate: x 46…805, y 519…1035 on the 853x1844 canvas
+                    // (759x516, so 240pt tall in the 353pt column). The 024
+                    // sidecar declares no photo at all, which is why this was one
+                    // of the black rectangles — cut from the render instead.
                     ZStack(alignment: .topLeading) {
                         if let image {
                             Image(uiImage: image).resizable().scaledToFill()
-                                .frame(height: 250).frame(maxWidth: .infinity).clipped()
+                                .frame(height: 240).frame(maxWidth: .infinity).clipped()
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                         } else {
-                            MediaSurface(height: 250, duration: "0:04")
+                            CanonicalPhoto("024-visual-001", height: 240, cornerRadius: 8)
                         }
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(image == nil ? "IMG_4521.MOV" : "IMG_4521.JPG").shotiqBody(12, weight: .semibold)
-                            Text(image == nil ? "00:04 • 1080p • 30fps" : "Photo • ready to analyze").shotiqBody(10)
+                        // The filename/format plate and the 00:04 timecode are
+                        // baked into 024-visual-001. The app's copy is only for
+                        // the reader's own still, which carries no plate.
+                        if image != nil {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("IMG_4521.JPG").shotiqBody(12, weight: .semibold)
+                                Text("Photo • ready to analyze").shotiqBody(10)
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
+                            .padding(10)
                         }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
-                        .padding(10)
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
@@ -2121,65 +2131,85 @@ struct LiveRecordingView: View {    // 032
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    // Live camera surface with recording overlays
+                    // Live camera surface with recording overlays.
+                    //
+                    // The 032 sidecar declares no photo element, so this surface
+                    // had no fallback and rendered as a flat dark rectangle
+                    // wherever there is no camera — the single most-reported
+                    // defect on this screen. Canonical prints one 789x795 frame at
+                    // x 31…820, y 324…1119; 353pt of column makes it 356pt tall.
+                    //
+                    // That frame is canonical's *finished* HUD: the CONFIDENCE
+                    // meter, the REC/timecode pill, the SHOTS/MAKES/MAKE % rail
+                    // and the shot-phase strip are all painted into the pixels.
+                    // Every one of them therefore stands down unless a real feed
+                    // is running, or the screen would show two of each.
                     ZStack(alignment: .topLeading) {
-                        captureDark(470)
-                        LiveViewfinder(camera: camera).frame(height: 470)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("CONFIDENCE").shotiqBody(10, weight: .bold).kerning(0.8)
-                                .foregroundStyle(.white)
-                            Text("92%").font(.custom("Tungsten-Semibold", size: 30))
-                                .foregroundStyle(ShotIQColor.confirmGreen)
-                            Capsule().fill(ShotIQColor.confirmGreen).frame(width: 64, height: 4)
+                        captureDark(356)
+                        LiveViewfinder(camera: camera, fallback: "032-visual-001").frame(height: 356)
+                        if camera.isLive {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("CONFIDENCE").shotiqBody(10, weight: .bold).kerning(0.8)
+                                    .foregroundStyle(.white)
+                                Text("92%").font(.custom("Tungsten-Semibold", size: 30))
+                                    .foregroundStyle(ShotIQColor.confirmGreen)
+                                Capsule().fill(ShotIQColor.confirmGreen).frame(width: 64, height: 4)
+                            }
+                            .padding(14)
                         }
-                        .padding(14)
                     }
                     .overlay(alignment: .topTrailing) {
-                        HStack(spacing: 7) {
-                            Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text("REC").shotiqBody(10, weight: .bold).foregroundStyle(.white)
-                                Text(clock).font(.custom("Tungsten-Semibold", size: 20)).foregroundStyle(.white)
+                        if camera.isLive {
+                            HStack(spacing: 7) {
+                                Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text("REC").shotiqBody(10, weight: .bold).foregroundStyle(.white)
+                                    Text(clock).font(.custom("Tungsten-Semibold", size: 20)).foregroundStyle(.white)
+                                }
                             }
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(.black.opacity(0.66), in: RoundedRectangle(cornerRadius: 7))
+                            .padding(12)
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(.black.opacity(0.66), in: RoundedRectangle(cornerRadius: 7))
-                        .padding(12)
                     }
                     .overlay(alignment: .trailing) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("SHOTS").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                Text("24").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
+                        if camera.isLive {
+                            VStack(alignment: .leading, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("SHOTS").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+                                    Text("24").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
+                                }
+                                Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("MAKES").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+                                    Text("15").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
+                                }
+                                Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("MAKE %").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+                                    Text("62.5%").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
+                                }
                             }
-                            Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("MAKES").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                Text("15").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
-                            }
-                            Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text("MAKE %").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                Text("62.5%").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
-                            }
+                            .padding(.trailing, 16)
                         }
-                        .padding(.trailing, 16)
                     }
                     .overlay(alignment: .bottom) {
-                        HStack(alignment: .top) {
-                            ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                                VStack(spacing: 3) {
-                                    Text(p).shotiqBody(8, weight: p == "RELEASE" ? .bold : .regular).kerning(0.4)
-                                        .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : .white.opacity(0.85))
-                                        .lineLimit(1).minimumScaleFactor(0.6)
-                                    if p == "RELEASE" {
-                                        Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 34, height: 2)
+                        if camera.isLive {
+                            HStack(alignment: .top) {
+                                ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
+                                    VStack(spacing: 3) {
+                                        Text(p).shotiqBody(8, weight: p == "RELEASE" ? .bold : .regular).kerning(0.4)
+                                            .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : .white.opacity(0.85))
+                                            .lineLimit(1).minimumScaleFactor(0.6)
+                                        if p == "RELEASE" {
+                                            Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 34, height: 2)
+                                        }
                                     }
+                                    .frame(maxWidth: .infinity)
                                 }
-                                .frame(maxWidth: .infinity)
                             }
+                            .padding(.horizontal, 12).padding(.bottom, 12)
                         }
-                        .padding(.horizontal, 12).padding(.bottom, 12)
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
 
@@ -2315,33 +2345,46 @@ struct LiveFormFeedbackView: View { // 033
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
+                    // Same incomplete contract as 032: the 033 sidecar declares no
+                    // photo, so the viewfinder had no stand-in and this screen
+                    // read as a dark plate. Canonical's frame is 767x799 at
+                    // x 45…812, y 330…1129 — 368pt tall across the 353pt column.
+                    //
+                    // The LIVE pill, the 179° release-angle callout and the whole
+                    // LATEST RESULT / FORM SCORE 82 card are painted into that
+                    // frame, so the app's own pill and card only draw over a real
+                    // feed.
                     ZStack(alignment: .topLeading) {
-                        captureDark(420)
-                        LiveViewfinder(camera: camera).frame(height: 420)
-                        HStack(spacing: 6) {
-                            Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
-                            Text("LIVE").shotiqBody(13, weight: .semibold).foregroundStyle(.white)
+                        captureDark(368)
+                        LiveViewfinder(camera: camera, fallback: "033-visual-001").frame(height: 368)
+                        if camera.isLive {
+                            HStack(spacing: 6) {
+                                Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
+                                Text("LIVE").shotiqBody(13, weight: .semibold).foregroundStyle(.white)
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+                            .padding(12)
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 7)
-                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
-                        .padding(12)
                     }
                     .overlay(alignment: .trailing) {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("LATEST RESULT").shotiqBody(10, weight: .bold).kerning(0.7)
-                                .foregroundStyle(ShotIQColor.graphite)
-                            Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.7)
-                                .foregroundStyle(ShotIQColor.ink)
-                            Text("82").font(.custom("Tungsten-Semibold", size: 58))
-                                .foregroundStyle(ShotIQColor.shotiqOrange)
-                            ScoreBar(pct: 0.82).frame(width: 110)
-                            Text("GOOD").shotiqBody(14, weight: .bold).foregroundStyle(ShotIQColor.analysisBlue)
-                            Text("Keep building consistency.").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                        if camera.isLive {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("LATEST RESULT").shotiqBody(10, weight: .bold).kerning(0.7)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.7)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("82").font(.custom("Tungsten-Semibold", size: 58))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                ScoreBar(pct: 0.82).frame(width: 110)
+                                Text("GOOD").shotiqBody(14, weight: .bold).foregroundStyle(ShotIQColor.analysisBlue)
+                                Text("Keep building consistency.").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(14)
+                            .frame(width: 160, alignment: .leading)
+                            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 10))
+                            .padding(.trailing, 12)
                         }
-                        .padding(14)
-                        .frame(width: 160, alignment: .leading)
-                        .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 10))
-                        .padding(.trailing, 12)
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 
@@ -2475,13 +2518,20 @@ struct ShotDetectedView: View {     // 034
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 16)
                             }
-                            // The just-recorded clip flows straight into review.
+                            // The just-recorded clip flows straight into review;
+                            // with nothing recorded this was a bare dark plate.
+                            // Canonical 034 shows the detected shot's own frame —
+                            // 751x493 at x 51…802, y 464…957, which is 211pt tall
+                            // in this card's 321pt content width. The 034 sidecar
+                            // declares no photo, so it is cut from the render.
+                            // Nothing but the pose skeleton and release arc is
+                            // baked in, and the app draws neither over this slot.
                             if let url = camera.lastVideoURL {
                                 VideoPlayer(player: AVPlayer(url: url))
-                                    .frame(height: 280)
+                                    .frame(height: 211)
                                     .clipShape(RoundedRectangle(cornerRadius: 6))
                             } else {
-                                captureDark(280, radius: 6)
+                                CanonicalPhoto("034-visual-001", height: 211, cornerRadius: 6)
                             }
                             PhaseStrip()
                             HStack(alignment: .top, spacing: 0) {

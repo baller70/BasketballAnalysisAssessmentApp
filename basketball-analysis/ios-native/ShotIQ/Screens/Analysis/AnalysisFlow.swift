@@ -1083,6 +1083,9 @@ struct FrameDetailSkeletonView: View { // 042
     @State private var showBall = false
     @State private var showAngles = false
     private let allPhases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    /// The five frames canonical shows in the scrubber strip, left to right.
+    private let frameThumbs = ["042-frame-001", "042-frame-002", "042-frame-003",
+                               "042-frame-004", "042-frame-005"]
     /// Frame 42 corresponds to the canonical slider position 3.
     private var frameNumber: Int { 39 + Int(frame) }
     var body: some View {
@@ -1200,12 +1203,21 @@ struct FrameDetailSkeletonView: View { // 042
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(frame <= 0)
+                                // Canonical's frame scrubber is five different
+                                // frames of the take, not five dark rectangles.
+                                // The 042 sidecar declares one photo region (the
+                                // hero, already bundled as 042-visual-002) and
+                                // says nothing about this strip, so each thumb is
+                                // cut from the render: the row sits at y 1331…1414
+                                // between the phase strip above and the slider
+                                // below, and the five thumbs are separated by the
+                                // paper gutters at x 271, 367, 470 and 574.
+                                // Canonical's own selection ring is excluded from
+                                // the middle crop — the app draws that ring.
                                 HStack(spacing: 4) {
                                     ForEach(0..<5, id: \.self) { i in
                                         Button { frame = min(9, max(0, frame + Double(i - 2))) } label: {
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                                .frame(height: 52)
+                                            CanonicalPhoto(frameThumbs[i], height: 38, cornerRadius: 4)
                                                 .overlay(RoundedRectangle(cornerRadius: 4)
                                                     .stroke(i == 2 ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
                                         }
@@ -1857,7 +1869,18 @@ struct MetricDetailView: View {     // 045
                             .padding(.top, 2)
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 0) {
-                                ZStack { MediaSurface(height: 300); SkeletonOverlay() }
+                                // Canonical 045 prints a photograph in this column,
+                                // 416x581 at x 37…453, y 449…1030 — 268pt tall for
+                                // the ~192pt column. The 045 sidecar declares no
+                                // photo element at all, so the app had nothing to
+                                // draw and fell back to the dark media plate; that
+                                // plate plus a synthetic skeleton is the grey
+                                // rectangle readers reported.
+                                //
+                                // The pose skeleton and the 91° elbow callout are
+                                // baked into the crop, so SkeletonOverlay goes:
+                                // drawing it as well would stack two skeletons.
+                                CanonicalPhoto("045-visual-001", height: 268)
                                     .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 0) {
                                     Text("MEASURED").shotiqBody(11, weight: .semibold).kerning(0.7)

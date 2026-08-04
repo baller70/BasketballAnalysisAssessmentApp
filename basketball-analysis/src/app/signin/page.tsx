@@ -117,7 +117,7 @@ export default function SignInPage() {
         className="flex h-[57px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[24px]"
         data-testid="region-topbar"
       >
-        <span className="shotiq-wordmark text-[26px] leading-none tracking-[0.02em]">
+        <span className="shotiq-wordmark text-[21px] leading-none tracking-[0.02em]">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
 

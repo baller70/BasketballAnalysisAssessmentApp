@@ -107,7 +107,7 @@ export function ShotIQShell({
         data-testid="region-topbar"
         className="flex h-[65px] shrink-0 items-center border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[18px]"
       >
-        <Link href="/dashboard" className="shotiq-wordmark mr-[64px] text-[26px] leading-none">
+        <Link href="/dashboard" className="shotiq-wordmark mr-[64px] text-[21px] leading-none">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </Link>
 

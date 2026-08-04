@@ -6,7 +6,7 @@ export const metadata = { title: "Terms of Use — ShotIQ" }
 export default function TermsPage() {
   return (
     <div className="shotiq-canonical mx-auto max-w-[760px] bg-[var(--shotiq-color-paper)] px-[32px] py-[48px] text-[var(--shotiq-color-ink)]">
-      <span className="shotiq-wordmark text-[24px]">SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span></span>
+      <span className="shotiq-wordmark text-[20px]">SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span></span>
       <h1 className="shotiq-display mt-[18px] text-[42px] leading-[46px]">TERMS OF USE</h1>
       <div className="mt-[18px] space-y-[14px] text-[14px] leading-[21px] text-[var(--shotiq-color-graphite)]">
         <p>ShotIQ provides AI-assisted basketball shot analysis for training purposes. By creating an account you agree to use the service for personal, non-commercial training and to upload only media you have the right to share.</p>

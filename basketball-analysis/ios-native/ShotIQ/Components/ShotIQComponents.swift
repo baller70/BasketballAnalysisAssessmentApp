@@ -91,7 +91,7 @@ func shotiqTungstenFace(_ weight: Font.Weight) -> String {
 }
 
 extension View {
-    /// Canonical display face: Wilson X Connect "Tungsten Bold", bundled in
+    /// Canonical display face: Wilson X Connect "Tungsten Medium", bundled in
     /// the app via UIAppFonts. The scale factor absorbs any title that would
     /// still overflow its line.
     ///
@@ -102,8 +102,19 @@ extension View {
     /// silently lost its secondary colour. Ink is now the inherited default,
     /// set once at the `CanonicalScreen` root, which every call site's own
     /// `foregroundStyle` can override exactly as its author intended.
+    /// Canonical's display weight is Tungsten MEDIUM, not Bold. Measured by
+    /// rendering each cut at the canonical string's exact cap height and
+    /// comparing ink density against the canonical PNG:
+    ///
+    ///   053 "JORDAN ELLIS"  cap 63  canonical 0.421 | medium 0.433 | bold 0.654
+    ///   053 "CAREER SHOOTING SUMMARY"
+    ///                       cap 28  canonical 0.423 | medium 0.459 | bold 0.662
+    ///
+    /// All four Tungsten cuts share a cap ratio, so the 0.86 multiplier that
+    /// sets cap height is unchanged — only the stroke weight and the advance
+    /// width it drags along change.
     func shotiqDisplay(_ size: CGFloat) -> some View {
-        font(.custom("Tungsten-Bold", size: size * 0.86))
+        font(.custom("Tungsten-Medium", size: size * 0.86))
             .lineLimit(2)
             .minimumScaleFactor(0.5)
     }
@@ -185,7 +196,7 @@ struct SectionLabel: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.custom("Tungsten-Bold", size: ShotIQType.sectionLabel))
+            .font(.custom("Tungsten-Medium", size: ShotIQType.sectionLabel))
             .kerning(ShotIQType.sectionTracking)
             .foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
@@ -199,8 +210,15 @@ struct Wordmark: View {
     var size: CGFloat = 30
     var body: some View {
         HStack(spacing: 0) {
-            Text("SHOT").font(.custom("Tungsten-Black", size: size * 0.9)).foregroundStyle(ShotIQColor.ink)
-            Text("IQ").font(.custom("Tungsten-Black", size: size * 0.9)).foregroundStyle(ShotIQColor.shotiqOrange)
+            // The wordmark is not the display face. Canonical draws SHOTIQ in a
+            // normal-width grotesque: at cap 27 it advances 148px (aspect 5.48)
+            // with ink density 0.436. Tungsten-Black is condensed and much
+            // heavier — 73px at the same cap (aspect 2.70) and ink 0.657, so the
+            // logo read as a narrow black slab. BoxedHeavy carries the same
+            // weight (ink 0.448) at aspect 3.52; the rest of the width is the
+            // letterform difference the rubric scopes out.
+            Text("SHOT").font(.custom("BoxedHeavy", size: size * 0.74)).foregroundStyle(ShotIQColor.ink)
+            Text("IQ").font(.custom("BoxedHeavy", size: size * 0.74)).foregroundStyle(ShotIQColor.shotiqOrange)
         }
         .lineLimit(1)
         .fixedSize()

@@ -199,13 +199,19 @@
 .shotiq-canonical {
   font-family: var(--font-shotiq-inter), "Boxed Medium", system-ui, sans-serif;
 }
-.shotiq-display,
-.shotiq-wordmark {
+.shotiq-display {
   font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Bold", Impact, sans-serif;
   font-weight: 400;
 }
+/* The wordmark is NOT the display face. Canonical draws SHOTIQ in a normal-width
+   grotesque — measured at cap 19 it advances 99px, where Tungsten (condensed)
+   advances 55px for the same cap. It was sharing the display stack, so the logo
+   rendered ~45% too narrow and far too heavy on every screen. Boxed Heavy is the
+   widest cut in the Wilson X pack and takes it to 67px; the remainder is the
+   letterform difference the rubric scopes out. */
 .shotiq-wordmark {
-  font-weight: 400;
+  font-family: var(--font-shotiq-inter), "Boxed Heavy", system-ui, sans-serif;
+  font-weight: 800;
   letter-spacing: 0.02em;
 }
 .shotiq-numeric {

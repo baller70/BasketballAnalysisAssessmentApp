@@ -134,7 +134,7 @@ export default function ResetPasswordPage() {
       className="shotiq-canonical flex min-h-screen items-center justify-center bg-[var(--shotiq-color-paper)] px-6 py-12 text-[var(--shotiq-color-ink)]"
     >
       <div className="w-full max-w-[420px]">
-        <span className="shotiq-wordmark block text-center text-[30px] leading-none">
+        <span className="shotiq-wordmark block text-center text-[25px] leading-none">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
         <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">CHOOSE A NEW PASSWORD</h1>
