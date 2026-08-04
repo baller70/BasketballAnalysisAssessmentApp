@@ -12,6 +12,8 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ArrowLeft, Bookmark, Plus, Search, X } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, MediaSurface } from "@/components/shotiq/ShotIQShell"
+import { DiscoverDrills, MyDrills, type LibraryDrill } from "@/components/shotiq/phone/DrillsPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/PhoneBits"
 
 interface Drill {
   len: string; title: string; level: string; cat: string; desc: string
@@ -40,6 +42,27 @@ const TABS = [
 ] as const
 
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+
+/* Canonical draws a FOUR-FRAME photo strip on every discover row and a portrait
+   still on every my-drills card. Round 6 painted a black video tile in both
+   places, which is why the two tabs measured near-identical (app-vs-app mean
+   absolute difference 3.62). These are the canonical crops the desktop training
+   hub already ships. */
+const cimg = (n: string) => `/images/canonical/${n}.png`
+const PHONE_STRIPS: string[][] = [
+  ["090-lib-1", "090-lib-2", "090-lib-3", "090-lib-4"],
+  ["090-rec-1", "090-rec-2", "090-rec-3", "090-lib-1"],
+  ["090-lib-3", "090-lib-4", "090-rec-1", "090-rec-2"],
+  ["090-lib-2", "090-lib-1", "090-rec-3", "090-lib-4"],
+]
+const PHONE_PORTRAITS = ["094-t1", "094-t2", "094-y1", "094-y2"]
+const PHONE_PHASES = ["RELEASE", "LOAD", "RISE", "FOLLOW-THROUGH"]
+const PHONE_STATS: [string, string, string, string][] = [
+  ["24", "15", "62.5% BEST", "May 10, 2025"],
+  ["18", "11", "61.1% BEST", "May 8, 2025"],
+  ["30", "21", "70.0% BEST", "May 5, 2025"],
+  ["16", "12", "75.0% BEST", "Apr 28, 2025"],
+]
 
 const CATEGORIES = ["Shooting", "Footwork", "Handling", "Scoring", "Form", "Flow"]
 const LEVELS = ["Beginner", "Intermediate", "Advanced"]
@@ -113,6 +136,37 @@ function DrillLibrary() {
   const shown = ALL.filter((d) =>
     (tab === "recommended" ? d.recommended : tab === "saved" ? saved.has(d.title) : true) &&
     (!query.trim() || `${d.title} ${d.cat} ${d.level}`.toLowerCase().includes(query.trim().toLowerCase())))
+
+  /* Canonical draws TWO unrelated phone designs on this route — 056 discover
+     drills (a list with a recommendation card and a four-frame photo strip per
+     row) and 058 my drills (a three-tab surface with portrait cards, a mini
+     phase rail and a four-cell stat row). The existing `?tab=` already selects
+     between them, so both stay reachable exactly as they were. */
+  const isPhone = usePhoneViewport()
+  if (isPhone) {
+    const toLib = (d: Drill, i: number): LibraryDrill => ({
+      id: slug(d.title), title: d.title, desc: d.desc, level: d.level,
+      phase: PHONE_PHASES[i % PHONE_PHASES.length],
+      mins: `${parseInt(d.len, 10) || 8} min`,
+      strip: PHONE_STRIPS[i % PHONE_STRIPS.length].map(cimg),
+      portrait: cimg(PHONE_PORTRAITS[i % PHONE_PORTRAITS.length]),
+      shots: PHONE_STATS[i % 4][0], makes: PHONE_STATS[i % 4][1],
+      acc: PHONE_STATS[i % 4][2], last: PHONE_STATS[i % 4][3],
+    })
+    const list = shown.map(toLib)
+    return (
+      <div className="md:hidden">
+        {tab === "saved"
+          ? <MyDrills drills={list} onAnalyze={() => { window.location.assign("/analyze") }} />
+          : <DiscoverDrills drills={list}
+                            saved={new Set(list.filter((d) => saved.has(d.title)).map((d) => d.id))}
+                            onToggleSave={(id) => {
+                              const hit = list.find((d) => d.id === id)
+                              if (hit) toggleSave(hit.title)
+                            }} />}
+      </div>
+    )
+  }
 
   return (
     <ShotIQShell active="Training">

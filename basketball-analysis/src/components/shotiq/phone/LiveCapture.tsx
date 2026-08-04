@@ -1126,8 +1126,8 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
     setShots((n) => n + 1)
     if (made) setMakes((n) => n + 1)
     void fetch("/api/shot-events", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ made, phase: "release", source: "live-capture" }),
+      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ drillId: "live-capture", result: made ? "make" : "miss", at: new Date().toISOString() }),
     }).catch(() => {})
   }, [])
 

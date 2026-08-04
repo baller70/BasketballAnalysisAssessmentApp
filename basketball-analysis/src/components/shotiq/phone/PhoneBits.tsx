@@ -25,6 +25,50 @@ import Link from "next/link"
 import { Settings } from "lucide-react"
 import { StreakGlyph, PointsGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 
+/**
+ * Is this the phone surface?
+ *
+ * `PhoneScreen` portals into `document.body`, so a `md:hidden` wrapper cannot
+ * hide it — at 1440 a phone screen would paint over the desktop page and
+ * swallow every click on it. Every route that swaps in a phone design gates on
+ * the viewport itself, tracked live so a resize does the right thing.
+ */
+export function usePhoneViewport() {
+  const [isPhone, setIsPhone] = React.useState(false)
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const sync = () => setIsPhone(mq.matches)
+    sync()
+    mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
+  return isPhone
+}
+
+/**
+ * A phone-only sub-surface selector that is BOTH a real user path and a
+ * deterministic one: the flow writes its position into `?step=` with
+ * `history.replaceState`, so every canonical screen has a URL, and reading it
+ * back seeds the flow. `window.location` rather than `useSearchParams`, which
+ * would force these prerendered routes dynamic.
+ */
+export function usePhoneStep<T extends string>(steps: readonly T[], initial: T): [T, (s: T) => void] {
+  const [step, setStep] = React.useState<T>(initial)
+  React.useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("step")
+    if (q && (steps as readonly string[]).includes(q)) setStep(q as T)
+    // `steps` is a module-level literal at every call site.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const go = React.useCallback((s: T) => {
+    setStep(s)
+    const u = new URL(window.location.href)
+    u.searchParams.set("step", s)
+    window.history.replaceState(null, "", u.toString())
+  }, [])
+  return [step, go]
+}
+
 export const RULE = "var(--shotiq-color-rule)"
 export const ORANGE = "var(--shotiq-color-shotiqOrange)"
 export const GREEN = "var(--shotiq-color-confirmGreen)"

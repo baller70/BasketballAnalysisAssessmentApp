@@ -26,6 +26,10 @@ import {
   ShotIQShell, SectionLabel, Card, PageTitle,
 } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
+import {
+  DrillDetail, DrillExecution, ShotTracker, WorkoutComplete,
+} from "@/components/shotiq/phone/DrillDetailPhone"
+import { usePhoneViewport, usePhoneStep } from "@/components/shotiq/phone/PhoneBits"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const SET_SECONDS = 360 // 06:00 per set
@@ -33,6 +37,13 @@ const SET_SECONDS = 360 // 06:00 per set
 const MARK_REAL = 11
 const MARK_SLOTS = 14
 const TOTAL_SETS = 3
+/* Canonical draws FOUR phone designs on this one route — 057 drill detail,
+   060 drill execution, 061 shot tracker and 062 workout completion. Round 6
+   served all four from the desktop execution page (057 rendered the EXECUTION
+   screen, 062 a modal over it). Each surface owns a `?step=`, so a person walks
+   detail -> Start drill -> Begin set -> End workout and the harness can also
+   deep-link any one of them. */
+const PHONE_DRILL_STEPS = ["detail", "execution", "tracker", "complete"] as const
 
 /**
  * Canonical 091 opens mid-set, not empty: 02:24 elapsed into set 1, 24 shots
@@ -147,6 +158,43 @@ export default function DrillExecutionClient() {
     ["Follow through long", "Full extension and soft wrist", "FOCUS", "091-cue-follow"],
     ["Balance & landing", "Stay balanced on landing", "FOCUS", "091-cue-balance"],
   ]
+
+  const isPhone = usePhoneViewport()
+  const [phoneStep, goPhone] = usePhoneStep(PHONE_DRILL_STEPS, "detail")
+  const [phoneSaved, setPhoneSaved] = useState(false)
+  if (isPhone) {
+    const pctText = shots.length ? `${pct.toFixed(1)}%` : "0.0%"
+    // Trailing run of makes — the live streak canonical prints on 061.
+    let streak = 0
+    for (let i = shots.length - 1; i >= 0 && shots[i].made; i--) streak++
+    const step = completed ? "complete" : phoneStep
+    return (
+      <div className="md:hidden">
+        {step === "detail" && (
+          <DrillDetail title={drillName} saved={phoneSaved}
+                       onSave={() => setPhoneSaved((v) => !v)}
+                       onStart={() => goPhone("execution")} />
+        )}
+        {step === "execution" && (
+          <DrillExecution set={setIndex} sets={TOTAL_SETS} makes={makes} shots={shots.length}
+                          pct={pctText} onBegin={() => goPhone("tracker")}
+                          onEnd={() => setCompleted(true)} />
+        )}
+        {step === "tracker" && (
+          <ShotTracker results={shots.map((x) => x.made)} makes={makes} shots={shots.length}
+                       pct={pctText} streak={streak}
+                       onMake={() => mark(true)} onMiss={() => mark(false)} onUndo={undo}
+                       onEnd={() => setCompleted(true)} />
+        )}
+        {step === "complete" && (
+          <WorkoutComplete shots={shots.length} makes={makes} pct={pctText}
+                           onReview={() => { setCompleted(false); goPhone("tracker") }}
+                           onShare={shareProgress}
+                           onRepeat={() => { repeatDrill(); goPhone("execution") }} />
+        )}
+      </div>
+    )
+  }
 
   return (
     <ShotIQShell active="Training">

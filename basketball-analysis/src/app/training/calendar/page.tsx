@@ -10,6 +10,8 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { WorkoutCalendar } from "@/components/shotiq/phone/TrainingPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/PhoneBits"
 
 interface Session { title: string; time: string; len: string; mins: number; focus: string; drill: string; done?: boolean }
 
@@ -43,6 +45,7 @@ export default function TrainingCalendarPage() {
   const [selected, setSelected] = useState("MON")
   const [week, setWeek] = useState(0)
   const [month, setMonth] = useState(4) // May
+  const isPhone = usePhoneViewport()
   const sessions = PLAN[selected]
   const total = weeklySessions
   const done = Object.values(PLAN).flat().filter((s) => s.done).length
@@ -70,6 +73,20 @@ export default function TrainingCalendarPage() {
           {donePct === 100 ? "Completed" : donePct > 0 ? `${donePct}% complete` : "Planned"}
         </div>
       </button>
+    )
+  }
+
+  /* Canonical 059 is a MONTH grid with status rings and a legend, not the
+     desktop week strip. Seven columns is right on any device — what round 6
+     got wrong was that the day headers and the per-day minutes were set in the
+     11px body face, which needs 26px of advance in a 53px column and so broke
+     "MON" to "M / O / N" and "20 min" to "2 / 0 m i n". The phone screen sets
+     both as microcaps that fit the measured column on one line. */
+  if (isPhone) {
+    return (
+      <div className="md:hidden">
+        <WorkoutCalendar onOpen={() => { window.location.assign("/training/drills/wall-elbow-alignment") }} />
+      </div>
     )
   }
 

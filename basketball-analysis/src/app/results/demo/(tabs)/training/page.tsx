@@ -13,6 +13,8 @@ import { CueGlyph, type CueKind } from "@/components/shotiq/Glyphs"
 import {
   useHistory, FormScoreCell, formatDelta, formatMakePct, formatShotsMakes, scoreSeries,
 } from "@/components/shotiq/ResultsBits"
+import { TrainingHome, QuickStart, type PhoneDrill } from "@/components/shotiq/phone/TrainingPhone"
+import { usePhoneViewport, usePhoneStep } from "@/components/shotiq/phone/PhoneBits"
 
 const RECOMMENDED = [
   { len: "05:28", title: "Footwork Into Release", time: "5:30", level: "Advanced", focus: "Footwork", desc: "Build rhythm from the catch into a balanced, stacked release.", img: "/images/canonical/090-rec-1.png" },
@@ -51,6 +53,8 @@ const WEEK: [string, string, boolean][] = [
   ["FRI", "Rest", false], ["SAT", "40 min", false], ["SUN", "Rest", false],
 ]
 
+const PHONE_TRAINING_STEPS = ["home", "quick"] as const
+
 export default function TrainingHubPage() {
   const { hasData, items, score, shots, makes, delta } = useHistory()
   const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-")
@@ -74,6 +78,31 @@ export default function TrainingHubPage() {
   // runs against a much wider RECENT PERFORMANCE panel. Running one 368px rail
   // down the whole page forced RECENT PERFORMANCE to restack every row onto two
   // lines. Two rows, two boundaries.
+  /* Canonical draws TWO phone designs on this route — 054 training home and
+     055 quick start. Round 6 shipped 055 as 054 scrolled to the quick-start
+     card, so the two were the same composition. `?step=quick` is written back
+     into the URL by the "Quick start" button, so the screen is reachable by
+     tapping it and by deep link. */
+  const isPhone = usePhoneViewport()
+  const [phoneStep, goPhone] = usePhoneStep(PHONE_TRAINING_STEPS, "home")
+  if (isPhone) {
+    const phoneDrills: PhoneDrill[] = [
+      { id: "quick-release-builder", title: "Quick Release Builder", note: "Keep elbow stacked through release",
+        mins: "20 min", focus: "Form Focus", level: "Intermediate", img: "/images/canonical/090-lib-1.png" },
+      { id: "wall-elbow-alignment", title: "Elbow Alignment Series", note: "Train a stacked elbow and straight line.",
+        mins: "15 min", focus: "Form Focus", level: "All Levels", img: "/images/canonical/090-lib-2.png" },
+      { id: "free-throw-ladder", title: "Catch & Shoot Flow", note: "Smooth rhythm from catch to follow-through.",
+        mins: "12 min", focus: "Game Speed", level: "All Levels", img: "/images/canonical/090-lib-3.png" },
+    ]
+    return (
+      <div className="md:hidden">
+        {phoneStep === "quick"
+          ? <QuickStart onStart={() => { window.location.assign("/training/drills/wall-elbow-alignment?step=tracker") }} />
+          : <TrainingHome drills={phoneDrills} onQuickStart={() => goPhone("quick")} />}
+      </div>
+    )
+  }
+
   return (
     <div data-testid="screen-desktop-web-training-hub">
     <div className="flex gap-[20px]">

@@ -6,6 +6,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { MyMedia, MediaDetail, type PhoneMedia } from "@/components/shotiq/phone/MediaPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/PhoneBits"
 
 interface MediaItem {
   id: string; title: string; time: string; style: string; score: number | null
@@ -203,6 +205,51 @@ export default function MediaLibraryPage() {
   // (1000,480), (1420,300) and (110,300), all (251,251,251). On pure white
   // every card in the grid loses its tonal separation and has only its 1px
   // border left to sit on.
+  /* Canonical draws TWO phone designs here — 068 my media and 069 media
+     detail — and 069 is a PAGE, not the dimmed sheet the desktop library
+     opens. Round 6 shipped the desktop two-column library for both, whose
+     186px FILTERS column survived at 393pt and painted a full-height rule at
+     185pt on 068, with 069 layered over it as a modal.
+
+     The phone list opens the detail by pushing `?media=<id>`, so every capture
+     has its own URL: reachable by tapping a tile, by the back button, and by
+     the harness without a synthetic click on a 0x0 box (which is how round 6
+     had to reach it). */
+  const isPhone = usePhoneViewport()
+  const [phoneId, setPhoneId] = useState<string | null>(null)
+  useEffect(() => {
+    setPhoneId(new URLSearchParams(window.location.search).get("media"))
+  }, [])
+  const goPhoneMedia = (id: string | null) => {
+    setPhoneId(id)
+    const u = new URL(window.location.href)
+    if (id) u.searchParams.set("media", id)
+    else u.searchParams.delete("media")
+    window.history.replaceState(null, "", u.toString())
+  }
+  if (isPhone) {
+    const toPhone = (m: MediaItem): PhoneMedia => ({
+      id: m.id, title: `${m.title} • ${m.hand}`, time: m.time, len: m.len,
+      score: m.score, status: m.status, img: m.img ?? cimg("094-t1"),
+      live: m.source === "iOS Capture" && m.status === "Not analyzed",
+    })
+    const phoneGroups: [string, string, PhoneMedia[]][] = Object.entries(shown).map(
+      ([day, items]) => [day.split(" · ")[0], DECLARED_COUNT[day] ?? `${items.length} items`, items.map(toPhone)])
+    const flat = Object.values(shown).flat()
+    const open = flat.find((m) => m.id === phoneId)
+    return (
+      <div className="md:hidden">
+        {open ? (
+          <MediaDetail item={toPhone(open)} onBack={() => goPhoneMedia(null)}
+                       frames={["094-t1", "094-t2", "094-t3", "094-t4", "094-t5", "094-t6", "094-y1", "094-y2"].map(cimg)} />
+        ) : (
+          <MyMedia groups={phoneGroups} onOpen={goPhoneMedia}
+                   onUpload={() => { window.location.assign("/upload") }} />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div data-testid="screen-desktop-web-media-library" className="flex h-[835px] bg-[#FBFBFB]">
       {/* ------------------------------------------------------ filters column

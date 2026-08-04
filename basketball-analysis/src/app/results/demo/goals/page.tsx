@@ -13,6 +13,13 @@ import {
   useHistory, StatStrip, formatDelta, formatMakePct, scoreSeries,
 } from "@/components/shotiq/ResultsBits"
 import { csrfFetch } from "@/lib/api/csrfFetch"
+import { GoalsList, CreateGoal, GoalDetail } from "@/components/shotiq/phone/GoalsPhone"
+import { usePhoneViewport, usePhoneStep } from "@/components/shotiq/phone/PhoneBits"
+
+/* Canonical draws THREE phone designs on this route — 063 goals, 064 create
+   goal and 065 goal detail. Round 6 shipped 064 as a two-field MODAL where
+   canonical draws a full form page, and 065 as 063 scrolled 560px. */
+const PHONE_GOAL_STEPS = ["list", "create", "detail"] as const
 
 interface Goal { id: string; title: string; description?: string; progress?: number }
 interface ApiGoal { id: string; name: string; description?: string; currentValue?: number; targetValue?: number }
@@ -47,14 +54,18 @@ export default function GoalsPlanPage() {
 
   // Server-first; if the API declines (e.g. signed-out preview) the change is
   // kept locally so the control still does real, visible work.
-  const createGoal = async () => {
-    if (!form.title.trim()) return
-    let created: Goal = { id: `local-${goals.length + 1}`, title: form.title.trim(), description: form.description, progress: 0 }
+  /* `override` exists for the phone form (064), which submits the name it holds
+     in its own state: calling setForm() then createGoal() in the same tick would
+     have read the PREVIOUS form value and created an empty goal. */
+  const createGoal = async (override?: { title: string; description: string }) => {
+    const src = override ?? form
+    if (!src.title.trim()) return
+    let created: Goal = { id: `local-${goals.length + 1}`, title: src.title.trim(), description: src.description, progress: 0 }
     try {
       const res = await csrfFetch("/api/goals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.title.trim(), description: form.description, targetValue: 100, currentValue: 0, unit: "%" }),
+        body: JSON.stringify({ name: src.title.trim(), description: src.description, targetValue: 100, currentValue: 0, unit: "%" }),
       })
       if (res.ok) {
         const d = await res.json()
@@ -88,6 +99,28 @@ export default function GoalsPlanPage() {
   }
   const completeGoal = () => patchPrimary(
     { completedAt: new Date().toISOString(), currentValue: 100 }, { ...primary, progress: 1 }, "Goal marked complete")
+
+  const isPhone = usePhoneViewport()
+  const [phoneStep, goPhone] = usePhoneStep(PHONE_GOAL_STEPS, "list")
+  if (isPhone) {
+    return (
+      <div className="md:hidden">
+        {phoneStep === "list" && (
+          <GoalsList onCreate={() => goPhone("create")} onOpen={() => goPhone("detail")} />
+        )}
+        {phoneStep === "create" && (
+          <CreateGoal onCancel={() => goPhone("list")}
+                      onCreate={(name) => {
+                        void createGoal({ title: name, description: "" })
+                        goPhone("list")
+                      }} />
+        )}
+        {phoneStep === "detail" && (
+          <GoalDetail onBack={() => goPhone("list")} onLog={logProgress} />
+        )}
+      </div>
+    )
+  }
 
   return (
     <ShotIQShell active="Progress">
@@ -390,7 +423,7 @@ export default function GoalsPlanPage() {
               <button type="button" onClick={() => setModal(null)}
                       className="h-[42px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">Cancel</button>
               <button type="button" disabled={!form.title.trim()}
-                      onClick={modal === "create" ? createGoal : editGoal}
+                      onClick={modal === "create" ? () => void createGoal() : editGoal}
                       className="h-[42px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[18px] text-[13px] font-medium text-white disabled:opacity-40">
                 {modal === "create" ? "Create goal" : "Save changes"}
               </button>
