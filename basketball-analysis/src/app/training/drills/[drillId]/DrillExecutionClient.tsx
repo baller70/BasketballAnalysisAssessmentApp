@@ -298,7 +298,7 @@ export default function DrillExecutionClient() {
           <SectionLabel>SET PROGRESS</SectionLabel>
           <Card className="mt-[8px] flex items-center justify-between px-[20px] py-[18px]" data-testid="set-progress">
             <div className="text-center">
-              <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TIME ELAPSED</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">TIME ELAPSED</div>
               <div className="shotiq-numeric text-[26px]">{mmss(Math.min(elapsed, SET_SECONDS * TOTAL_SETS))}</div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">/ {mmss(SET_SECONDS)}</div>
             </div>
@@ -309,7 +309,7 @@ export default function DrillExecutionClient() {
               </div>
             </Ring>
             <div className="text-center">
-              <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SETS COMPLETED</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">SETS COMPLETED</div>
               <div className="shotiq-numeric text-[30px]">{setsCompleted}</div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">OF {TOTAL_SETS}</div>
             </div>
@@ -366,7 +366,7 @@ export default function DrillExecutionClient() {
                 <path d="M0.5 0.5 L8 4.5 L0.5 8.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
               </svg>
             </div>
-            <div className="mt-[8px] text-center text-[10px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+            <div className="mt-[8px] text-center shotiq-microcaps text-[var(--shotiq-color-graphite)]">
               LAST 24 SHOTS
             </div>
           </Card>
@@ -486,7 +486,7 @@ function Stat3({ v, l, c }: { v: string; l: string; c: string }) {
   return (
     <div className="text-center">
       <div className="shotiq-numeric text-[26px] leading-[30px]" style={{ color: c }}>{v}</div>
-      <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{l}</div>
+      <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{l}</div>
     </div>
   )
 }

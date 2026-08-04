@@ -85,7 +85,7 @@ export default function OnboardingPage() {
   const progressStep = Math.min(step + 1, STEPS.length)
   const progressName = STEPS[Math.min(step, STEPS.length - 1)][0]
 
-  const lbl = "flex items-center gap-[4px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
+  const lbl = "flex items-center gap-[4px] shotiq-microcaps text-[var(--shotiq-color-graphite)]"
   const box = "h-[46px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[12px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]"
 
   return (

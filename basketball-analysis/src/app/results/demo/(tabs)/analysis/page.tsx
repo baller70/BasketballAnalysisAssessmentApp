@@ -227,7 +227,7 @@ export default function AnalysisOverviewPage() {
               )}
             </div>
             <div className="min-w-0 flex-[1.3] pl-[14px] text-right">
-              <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">TREND</div>
               <div className="flex items-center justify-end gap-[8px]">
                 <TrendLine points={trend} width={78} height={28} />
                 <span className={`text-[12px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>

@@ -246,7 +246,7 @@ export default function AnalysisHistoryPage() {
             one. A <table> with divide-y gave 37px rows, a hairline under every
             row, and a square outline (border-radius does not apply to a
             table-row), so the rows are a grid now. */}
-        <div className={`mt-[6px] grid ${COLS} pl-[14px] text-left text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]`}>
+        <div className={`mt-[6px] grid ${COLS} pl-[14px] text-left shotiq-microcaps text-[var(--shotiq-color-graphite)]`}>
           {["DATE / TIME ↓", "FORM SCORE", "MAKE %", "SHOTS / MAKES", "CONFIDENCE", "FOCUS", "MEDIA", ""].map((h) => (
             <div key={h} className="py-[8px]">{h}</div>
           ))}

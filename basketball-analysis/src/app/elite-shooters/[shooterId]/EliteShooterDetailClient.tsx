@@ -257,7 +257,7 @@ export default function EliteShooterDetailClient() {
           </div>
           <table className="mt-[6px] w-full text-[12px]" data-testid="mechanics-table">
             <thead>
-              <tr className="text-left text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+              <tr className="text-left shotiq-microcaps text-[var(--shotiq-color-graphite)]">
                 <th className="py-[2px] font-bold">PHASE</th><th className="font-bold">METRIC</th>
                 <th className="font-bold">{shooter.name.split(" ").pop()?.toUpperCase()}</th>
                 <th className="whitespace-nowrap font-bold">ELITE RANGE</th><th className="font-bold">YOU</th><th className="font-bold">DIFF</th>

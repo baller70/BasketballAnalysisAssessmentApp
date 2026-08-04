@@ -233,6 +233,10 @@
   font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
   font-weight: 400;
   font-size: 12px;
+  /* The condensed face carries a 9px cap in a 12px em, and `normal` leading
+     would put that in a 14.4px line box where the old 10px label sat in 12px.
+     Left unpinned it added 4px to the height of every screen in the build. */
+  line-height: 12px;
   letter-spacing: 0.148em;
 }
 

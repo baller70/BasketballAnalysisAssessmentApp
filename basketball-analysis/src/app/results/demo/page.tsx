@@ -296,7 +296,7 @@ export default function ResultsOverviewPage() {
                [liveScore != null ? String(liveScore) : "—", "FORM SCORE"]] as const).map(([v, l], i) => (
               <div key={l} className={`pr-[16px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[16px]" : ""}`}>
                 <div className="shotiq-numeric text-[27px] leading-[30px]">{v}</div>
-                <div className="mt-[4px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{l}</div>
+                <div className="mt-[4px] shotiq-microcaps text-[var(--shotiq-color-graphite)]">{l}</div>
                 {l === "FORM SCORE" && (
                   <div className="mt-[6px] flex items-center justify-center gap-[6px] text-[12px]">
                     <span className="h-[9px] w-[9px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /> Good
@@ -305,7 +305,7 @@ export default function ResultsOverviewPage() {
               </div>
             ))}
             <div className="ml-auto pt-[2px] text-center">
-              <div className="text-[10px] font-bold tracking-[0.07em]">TREND</div>
+              <div className="shotiq-microcaps">TREND</div>
               <div className="flex items-end gap-[6px]">
                 <TrendLine points={[2.2, 2.0, 2.8, 2.4, 3.4]} width={104} height={40} stroke="var(--shotiq-color-ink)" />
                 <span className={`pb-[4px] text-[12px] font-medium ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</span>

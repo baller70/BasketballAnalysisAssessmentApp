@@ -139,7 +139,7 @@ export default function PlayerCardPage() {
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
                 <div className="text-[11px] font-bold tracking-[0.08em]" style={{ color: accentColor }}>RIGHT-HANDED SHOOTER</div>
                 {on.has("Form score") && (<>
-                  <div className={`mt-[16px] text-[10px] tracking-[0.08em] ${sub}`}>FORM SCORE</div>
+                  <div className={`mt-[16px] shotiq-microcaps ${sub}`}>FORM SCORE</div>
                   <div className="shotiq-numeric text-[54px] leading-[56px]" style={{ color: accentColor }}>{score ?? "—"}</div>
                   <div className={`h-[6px] w-[130px] rounded-full ${dark ? "bg-white/20" : "bg-[var(--shotiq-color-rule)]"}`}>
                     <div className="h-full rounded-full" style={{ width: `${score ?? 0}%`, background: accentColor }} />
@@ -148,7 +148,7 @@ export default function PlayerCardPage() {
                   <div className={`text-[11px] ${dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}>{score != null ? "Keep building consistency." : "Run your first analysis."}</div>
                 </>)}
                 {on.has("Coaching target") && (<>
-                  <div className={`mt-[22px] text-[10px] tracking-[0.08em] ${sub}`}>PRIMARY COACHING TARGET</div>
+                  <div className={`mt-[22px] shotiq-microcaps ${sub}`}>PRIMARY COACHING TARGET</div>
                   <div className="text-[17px] font-semibold leading-[23px]">Keep elbow stacked<br />through release</div>
                 </>)}
                 <TrendLine points={[2, 3, 1.6, 3.4, 2.6, 4]} width={120} height={32}
@@ -245,7 +245,7 @@ export default function PlayerCardPage() {
             <SectionLabel>CUSTOMIZE YOUR CARD</SectionLabel>
             <div className="mt-[12px] flex gap-[16px]">
               <div>
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
                 <div className="mt-[10px] flex shrink-0 gap-[8px]">
                   {styleSwatch(0, "h-[118px] w-[56px]",
                     // eslint-disable-next-line @next/next/no-img-element
@@ -265,7 +265,7 @@ export default function PlayerCardPage() {
                 </div>
               </div>
               <div>
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">ACCENT COLOR</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">ACCENT COLOR</div>
                 <div className="mt-[10px] flex gap-[10px]">
                   {ACCENT_SWATCH.map((c, i) => (
                     <button key={c} type="button" onClick={() => setAccent(i)} aria-label={`accent ${i}`} aria-pressed={accent === i}
@@ -281,7 +281,7 @@ export default function PlayerCardPage() {
                 </div>
               </div>
               <div className="shrink-0">
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
                 {/* Canonical row pitch here is 28.5px; space-y-[5px] gave 23. */}
                 <div className="mt-[6px] space-y-[10px]">
                   {TOGGLES.map((t) => (
@@ -295,7 +295,7 @@ export default function PlayerCardPage() {
                 </div>
               </div>
               <div>
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
                 <div className="mt-[8px] space-y-[10px]">
                   <button type="button" onClick={() => setBgChoice("photo")} aria-pressed={bgChoice === "photo"}
                           className={`relative block w-[132px] rounded-[7px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>

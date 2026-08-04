@@ -117,7 +117,7 @@ export default function ComparePage() {
             <button type="button" onClick={() => setSynced((v) => !v)} aria-pressed={synced}
                     className="flex w-[86px] shrink-0 flex-col items-center gap-[4px] self-center pt-[10px]">
               <RefreshCcw className={`h-[26px] w-[26px] ${synced ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`} strokeWidth={1.6} />
-              <span className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SYNCED</span>
+              <span className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">SYNCED</span>
               <span className="shotiq-numeric text-[13px]">0.64s</span>
               <span className={`grid h-[22px] w-[22px] place-items-center rounded-full ${synced ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-muted)]"}`}>
                 <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.5 L5 9.5 L10 3" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>

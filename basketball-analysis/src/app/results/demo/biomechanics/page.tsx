@@ -212,7 +212,7 @@ export default function BiomechanicsWorkspacePage() {
               {i > 0 && <span className="mt-[16px] h-px min-w-[16px] flex-1 bg-[var(--shotiq-color-rule)]" />}
               <div className="shrink-0 px-[6px] text-center">
                 <PoseFigure phase={p} active={p === "RELEASE"} height={37} className="mx-auto" />
-                <div className={`mt-[4px] pb-[6px] text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                <div className={`mt-[4px] pb-[6px] shotiq-microcaps ${p === "RELEASE" ? "relative font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                   {p}
                   {p === "RELEASE" && <span className="absolute inset-x-[-6px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
                 </div>

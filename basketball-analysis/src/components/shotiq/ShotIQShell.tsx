@@ -177,7 +177,7 @@ export function ShotIQShell({
                     <button key={d.href + d.label} type="button" onClick={() => go(d.href)}
                             className="flex h-[34px] w-full items-center justify-between rounded-[6px] px-[10px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                       <span>{d.label}</span>
-                      <span className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{d.group}</span>
+                      <span className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{d.group}</span>
                     </button>
                   ))}
                 </div>
@@ -586,7 +586,7 @@ export function UnifiedSidebar() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {SIDEBAR_GROUPS.map((g) => (
           <div key={g.heading} className="mb-[4px]">
-            <div className="px-[20px] pb-[2px] text-[10px] font-bold leading-[14px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+            <div className="px-[20px] pb-[2px] shotiq-microcaps text-[var(--shotiq-color-graphite)]">
               {g.heading}
             </div>
             {g.items.map((it) => row(it, "h-[27px]"))}

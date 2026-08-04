@@ -604,7 +604,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
           <div data-testid="analysis-processing"
                className="rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white p-[16px]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">ANALYZING YOUR SHOT</span>
+              <span className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">ANALYZING YOUR SHOT</span>
               <span className="shotiq-numeric text-[13px]">
                 {String(Math.floor(analysisElapsed / 60)).padStart(2, "0")}:{String(analysisElapsed % 60).padStart(2, "0")}
               </span>

@@ -175,7 +175,7 @@ export default function MediaLibraryPage() {
           <SectionLabel>FILTERS</SectionLabel>
           <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
         </div>
-        <div className="mt-[12px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
+        <div className="mt-[12px] shotiq-microcaps text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
         <div className="relative">
           <button type="button" aria-expanded={menu === "range"}
                   onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
@@ -195,7 +195,7 @@ export default function MediaLibraryPage() {
         </div>
         {FILTERS.map(([head, opts]) => (
           <div key={head} className="mt-[14px]">
-            <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{head}</div>
+            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{head}</div>
             {opts.map(([label, n]) => (
               <label key={String(label)} className="mt-[6px] flex items-center gap-[8px] text-[12px]">
                 <input type="checkbox" checked={checked[head] === String(label)}

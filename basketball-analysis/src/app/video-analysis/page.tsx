@@ -391,7 +391,7 @@ export default function LiveCapturePage() {
                 <span className="text-[17px] font-semibold">Keep elbow stacked through release</span>
                 <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
               </div>
-              <div className="mt-[8px] text-[10px] font-bold tracking-[0.06em]">TARGET PROGRESS</div>
+              <div className="mt-[8px] shotiq-microcaps">TARGET PROGRESS</div>
               {/* The bar tracks THIS session against its shot target — 24 of 25
                   logged — while 72% beside it is the standing goal figure. It
                   was drawing the goal figure twice, which left the track 74%

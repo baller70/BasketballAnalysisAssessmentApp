@@ -556,7 +556,7 @@ export default function DashboardPage() {
               {/* Four ruled cells, sized to canonical's column shares. */}
               <div className="flex min-w-0 flex-1 items-center">
                 <div className="min-w-0 flex-[1.13] px-[12px]">
-                  <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
                   <div className="flex items-center gap-[8px]">
                     <span className="shotiq-numeric text-[22px] leading-[26px]">{r.score ?? "—"}</span>
                     <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: bandRow.color }} />
@@ -567,17 +567,17 @@ export default function DashboardPage() {
                 </div>
                 <span aria-hidden="true" className="h-[24px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
                 <div className="min-w-0 flex-1 px-[12px]">
-                  <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">MAKE %</div>
                   <div className="shotiq-numeric text-[22px] leading-[26px]">{r.makePct}</div>
                 </div>
                 <span aria-hidden="true" className="h-[24px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
                 <div className="min-w-0 flex-[1.18] px-[12px]">
-                  <div className="whitespace-nowrap text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                  <div className="whitespace-nowrap shotiq-microcaps text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
                   <div className="shotiq-numeric text-[22px] leading-[26px]">{r.shots} / {r.makes}</div>
                 </div>
                 <span aria-hidden="true" className="h-[24px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
                 <div className="min-w-0 flex-[1.58] px-[12px]">
-                  <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">TREND</div>
                   <div className="flex h-[26px] items-center gap-[6px]">
                     {/* The oldest row has nothing behind it to compare against;
                         an orphan two-point rule would only read as a bug. */}
@@ -587,7 +587,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="w-[122px] shrink-0">
-                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">FOCUS</div>
                 <div className="text-[12px]">{focus}</div>
               </div>
               <MoreVertical className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />

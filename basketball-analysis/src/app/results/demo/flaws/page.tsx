@@ -162,7 +162,7 @@ export default function FlawsPage() {
             <div className="shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/085-frames.png" alt="" className="block" width={587} height={70} />
-              <div className="mt-[3px] text-center text-[10px] font-bold tracking-[0.08em] text-[var(--shotiq-color-shotiqOrange)]"
+              <div className="mt-[3px] text-center shotiq-microcaps text-[var(--shotiq-color-shotiqOrange)]"
                    style={{ paddingRight: "23%" }}>RELEASE</div>
             </div>
             <ChevronRight className="mb-[16px] h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-ink)]" />
