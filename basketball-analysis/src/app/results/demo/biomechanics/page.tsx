@@ -11,6 +11,11 @@ import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/compone
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 import { useShotClip, ClipFrame } from "@/components/shotiq/ShotClip"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { FrameDetail } from "@/components/shotiq/phone/results/FrameDetail"
+import { AnnotationToolbar } from "@/components/shotiq/phone/results/AnnotationToolbar"
+import { MetricDetail } from "@/components/shotiq/phone/results/MetricDetail"
 
 // One bespoke diagram per measured quantity — canonical never repeats a glyph
 // down this list (angle, height ruler, distance tape, lift, ball arc, midline).
@@ -160,12 +165,31 @@ export default function BiomechanicsWorkspacePage() {
     }
     drawing.current = null
   }
+  const isPhone = usePhoneViewport()
+  const phoneRoute = usePhoneRoute("view")
   const clearInk = () => {
     const c = canvasRef.current
     c?.getContext("2d")?.clearRect(0, 0, c.width, c.height)
   }
 
+  /* Three canonical iOS screens live on this route: 042 the frame viewer, 043
+     the annotation surface behind its Annotations overlay card, and 045 the
+     metric detail behind the target row. Each is its own history entry. Both
+     043 and 045 are PAGES in canonical, not modals — they draw no scrim and
+     fill the canvas. The desktop 084 on this route is untouched. */
+  const phoneView = phoneRoute[0]
   return (
+    <>
+    {isPhone && (
+      phoneView === "annotate"
+        ? <AnnotationToolbar score={score ?? 82} onBack={() => phoneRoute[1](null)} onSave={() => phoneRoute[1](null)} />
+        : phoneView === "metric"
+          ? <MetricDetail score={score ?? 82} onBack={() => phoneRoute[1](null)} />
+          : <FrameDetail score={score ?? 82}
+                         onAnnotate={() => phoneRoute[1]("annotate")}
+                         onMetric={() => phoneRoute[1]("metric")} />
+    )}
+    <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Analyze">
     <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[16px] pt-[14px]">
       <div className="flex items-start justify-between">
@@ -523,5 +547,7 @@ export default function BiomechanicsWorkspacePage() {
       })()}
     </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }

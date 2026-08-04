@@ -8,6 +8,10 @@ import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, Che
 import { SectionLabel, Card, Ring, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph, toShotPhase, ActionGlyph } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { EliteMatch } from "@/components/shotiq/phone/results/EliteMatch"
+import { PhotoComparison } from "@/components/shotiq/phone/results/PhotoComparison"
 
 interface Shooter { id: number; name: string; position?: string }
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
@@ -20,6 +24,8 @@ const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["
 
 export default function ComparePage() {
   const { hasData, score } = useHistory()
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
   const [shooters, setShooters] = useState<Shooter[]>([])
   // null = canonical default (Darius Garland reference photography); choosing
   // a shooter switches the right panel to the live DOM viewer.
@@ -40,7 +46,14 @@ export default function ComparePage() {
   // Canonical photography holds while nothing is customized.
   const pristine = elite === null
 
+  /* Canonical iOS 050 (the match summary) and 051 (the frame pair). The graded
+     desktop 087 on this route is untouched. */
   return (
+    <>
+    {isPhone && (view === "frames"
+      ? <PhotoComparison score={score ?? 82} onBack={() => setView(null)} />
+      : <EliteMatch score={score ?? 82} onFrames={() => setView("frames")} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-elite-comparison">
       <div className="flex items-start justify-between gap-[14px]">
         <div>
@@ -333,5 +346,7 @@ export default function ComparePage() {
         </div>
       </Card>
     </div>
+    </div>
+    </>
   )
 }

@@ -20,6 +20,10 @@ import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 import { PlayerBio } from "@/components/shotiq/phone/PlayerBio"
+import {
+  OnboardingIntro, PhysicalProfile, ExperienceBodyType, ShootingProfile,
+  OnboardingReview, PHONE_STEPS, type PhoneStep,
+} from "@/components/shotiq/phone/OnboardingPhone"
 
 // Canonical gives each step its own mark: the athlete, a ruler, preference
 // sliders, a review sheet.
@@ -187,28 +191,97 @@ export default function OnboardingPage() {
       + `${goal.toLowerCase()}. ${practice} in the gym, tracking every rep with ShotIQ.`,
     )
 
+  /* Canonical splits this ONE desktop wizard into SIX phone designs — 008
+     intro, 009 physical profile, 010 experience and body type, 011 shooting
+     profile, 012 bio and 013 review. They answer the same profile store the
+     desktop wizard writes, but they are not the desktop wizard's steps: the
+     phone sequence numbers its five answering steps 1..5 exactly as canonical
+     labels 012 ("4 OF 5") and 013 ("STEP 5 OF 5") do.
+
+     Reachable two ways, so a person and the harness take the same path: the
+     intro's "Build my player profile" walks Continue -> Continue -> …, and
+     every surface owns a `?step=` the flow writes back into the URL, so it is
+     also a deep link. `window.location` rather than `useSearchParams` because
+     this page prerenders and `useSearchParams` would force it dynamic. */
+  const [phoneStep, setPhoneStep] = useState<PhoneStep>("intro")
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("step")
+    if (q && (PHONE_STEPS as readonly string[]).includes(q)) setPhoneStep(q as PhoneStep)
+  }, [])
+  const goPhone = (s: PhoneStep) => {
+    setPhoneStep(s)
+    const u = new URL(window.location.href)
+    u.searchParams.set("step", s)
+    window.history.replaceState(null, "", u.toString())
+  }
+  const phoneSummary: [string, string][] = [
+    ["Shooting Hand", summary.hand], ["Experience Level", summary.level],
+    ["Primary Position", summary.position], ["Height", summary.height],
+    ["Wingspan", summary.wingspan], ["Body Type", summary.body],
+    ["Practice Frequency", practice], ["Training Goal", goal],
+  ]
+
   return (
     <>
     {/* PhoneScreen portals into document.body, so a `md:hidden` wrapper cannot
-        hide it — at 1440 the phone bio screen painted itself over the desktop
+        hide it — at 1440 the phone screens painted themselves over the desktop
         wizard and swallowed every click on it. The phone layout is gated on the
         viewport itself instead. */}
-    {step === BIO_STEP && isPhone && (
+    {isPhone && (
       <div className="md:hidden">
-        <PlayerBio
-          step={BIO_STEP}
-          steps={STEPS.length}
-          bio={bio}
-          onBio={setBio}
-          enhanced={enhanced}
-          onEnhance={enhanceBio}
-          onContinue={() => setStep(STEPS.length)}
-          onBack={() => setStep(BIO_STEP - 1)}
-        />
+        {phoneStep === "intro" && (
+          <OnboardingIntro name={first} onStart={() => goPhone("physical")}
+                           onSkip={() => goPhone("review")} onSignOut={finish} />
+        )}
+        {phoneStep === "physical" && (
+          <PhysicalProfile
+            age={String(store.age ?? 24)}
+            height={`${ft}' ${inch}"`}
+            weight={String(store.weightLbs ?? 190)}
+            wingspan={`${wsFt}' ${wsIn}"`}
+            onAge={(v) => store.setAge(parseInt(v, 10) || 0)}
+            onHeight={(v) => { const m = v.match(/(\d+)\D+(\d+)/); if (m) store.setHeight(+m[1] * 12 + +m[2]) }}
+            onWeight={(v) => store.setWeight(parseInt(v, 10) || 0)}
+            onWingspan={(v) => { const m = v.match(/(\d+)\D+(\d+)/); if (m) store.setWingspan(+m[1] * 12 + +m[2]) }}
+            onNext={() => goPhone("experience")} onBack={() => goPhone("intro")} />
+        )}
+        {phoneStep === "experience" && (
+          <ExperienceBodyType
+            level={(store.experienceLevel ?? "advanced").toUpperCase()}
+            body={BODY_TYPES.find(([, , v]) => v === (store.bodyType ?? "mesomorph"))?.[0] ?? "ATHLETIC"}
+            onLevel={(v) => store.setExperienceLevel(v.toLowerCase() as never)}
+            onBody={(v) => { const b = BODY_TYPES.find(([t]) => t === v); if (b) store.setBodyType(b[2]) }}
+            onNext={() => goPhone("shooting")} onBack={() => goPhone("physical")} />
+        )}
+        {phoneStep === "shooting" && (
+          <ShootingProfile
+            hand={(store.dominantHand ?? "right") === "right" ? "RIGHT-HANDED" : "LEFT-HANDED"}
+            ability={ABILITIES.find(([, , v]) => v === (store.athleticAbility ?? 7))?.[0] ?? "ADVANCED"}
+            style={STYLES.find(([, , v]) => v === (store.shootingStyle ?? "two_motion"))?.[0] ?? "BALANCED"}
+            onHand={(v) => store.setDominantHand(v.startsWith("RIGHT") ? "right" : "left")}
+            onAbility={(v) => { const a = ABILITIES.find(([t]) => t === v); if (a) store.setAthleticAbility(a[2]) }}
+            onStyle={(v) => { const s = STYLES.find(([t]) => t === v); if (s) store.setShootingStyle(s[2]) }}
+            onNext={() => goPhone("bio")} onBack={() => goPhone("experience")} />
+        )}
+        {phoneStep === "bio" && (
+          <PlayerBio
+            step={BIO_STEP}
+            steps={STEPS.length}
+            bio={bio}
+            onBio={setBio}
+            enhanced={enhanced}
+            onEnhance={enhanceBio}
+            onContinue={() => goPhone("review")}
+            onBack={() => goPhone("shooting")}
+          />
+        )}
+        {phoneStep === "review" && (
+          <OnboardingReview summary={phoneSummary} onEdit={goPhone} onFinish={finish} />
+        )}
       </div>
     )}
     <div data-testid="screen-desktop-web-onboarding"
-         className={`flex min-h-full flex-col ${step === BIO_STEP && isPhone ? "hidden" : ""}`}>
+         className={`flex min-h-full flex-col ${isPhone ? "hidden" : ""}`}>
      <div className="flex flex-1">
       {/* Wizard step column. Canonical runs the four steps as a vertical list
           inside the content area — an in-body horizontal tab strip plus a

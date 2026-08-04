@@ -8,6 +8,10 @@ import { ChevronRight, ChevronLeft, ArrowDown } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
 import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { FlawsOverview, FLAWS as PHONE_FLAWS } from "@/components/shotiq/phone/results/FlawsOverview"
+import { FlawDetail } from "@/components/shotiq/phone/results/FlawDetail"
 
 // Every flaw card carries its own pose diagram, with the faulty segment picked
 // out in the alert colour — the ~60px figure canonical prints on each card.
@@ -32,7 +36,24 @@ export default function FlawsPage() {
   const [sel, setSel] = useState(0)
   const [showLower, setShowLower] = useState(false)
   const visible = hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
+  /* Canonical iOS 046 and 047. The detail is addressed by the flaw's own slug,
+     so every flaw in the list has its own surface rather than one shared
+     "detail region" driven by selection state. The graded desktop 085 on this
+     route does not read the parameter. */
+  const isPhone = usePhoneViewport()
+  const [flaw, setFlaw] = usePhoneRoute("flaw")
+  const openFlaw = PHONE_FLAWS.find((f) => f.slug === flaw)
   return (
+    <>
+    {isPhone && (openFlaw
+      ? <FlawDetail
+          score={score ?? 82}
+          title={`${openFlaw.title} AT RELEASE`}
+          desc={openFlaw.desc}
+          confidence={`${openFlaw.confidence} confidence`}
+          onBack={() => setFlaw(null)} />
+      : <FlawsOverview onOpen={setFlaw} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Analyze">
     <div data-testid="screen-desktop-web-flaws-history" className="px-[22px] pt-[14px]">
       {/* Canonical draws the score, session stats and the coaching target as one
@@ -303,5 +324,7 @@ export default function FlawsPage() {
       </div>
     </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }

@@ -12,6 +12,10 @@ import {
   FormScoreCell, formatMakePct,
 } from "@/components/shotiq/ResultsBits"
 import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { ShotBreakdown } from "@/components/shotiq/phone/results/ShotBreakdown"
+import { FormScore } from "@/components/shotiq/phone/results/FormScore"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
@@ -40,7 +44,22 @@ export default function AnalysisOverviewPage() {
   const clip = useShotClip({ frames: 8 })
   const stageRef = React.useRef<HTMLDivElement>(null)
   const full = useFullscreen(stageRef)
+  /* Canonical iOS 041 and 044 are two screens of this one route: the breakdown
+     and the score method behind its FORM SCORE card. `view` is a real history
+     entry, so the back gesture works and the URL is shareable; the desktop 083
+     never reads it. */
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
   return (
+    <>
+    {isPhone && (view === "score"
+      ? <FormScore score={score ?? 82}
+                   shots={shots != null ? String(shots) : "24"}
+                   makes={makes != null ? String(makes) : "15"}
+                   pct={formatMakePct(shots, makes)}
+                   delta={formatDelta(delta)} />
+      : <ShotBreakdown score={score ?? 82} onScore={() => setView("score")} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-analysis-overview">
       <div className="flex items-start justify-between">
         {/* Canonical leads the title with a back affordance and dates the
@@ -304,5 +323,7 @@ export default function AnalysisOverviewPage() {
         </div>
       </Card>
     </div>
+    </div>
+    </>
   )
 }

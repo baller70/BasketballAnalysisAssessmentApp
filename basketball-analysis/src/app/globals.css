@@ -562,4 +562,46 @@
   .shotiq-phone-flow img,
   .shotiq-phone-flow video,
   .shotiq-phone-flow canvas { height: auto; }
+
+  /* 7 - INTERIOR COLUMN DIVIDERS.
+         Canonical draws zero full-height vertical rules on any of the 72 phone
+         screens. Every one measured in round 6 is a desktop multi-column split
+         that never collapsed at 393pt, and neither of the two shapes that
+         produce them is reachable from rule 3's enumerated list:
+
+           A. a fixed-width `shrink-0` side column NARROWER than rule 3's 200px
+              floor. The onboarding step rail (onboarding/page.tsx) and the
+              media filter rail (media/page.tsx) are both `w-[186px] shrink-0
+              border-r`, which is the rule measured at x=402px — 185pt, 47% of
+              the viewport — on 008, 009, 010, 011, 013 and 068. The list below
+              is enumerated from the source, like rule 3's, and covers the same
+              shape on /profile, /settings, /elite-shooters and the training
+              tab. ShotIQShell's own 196px nav is deliberately NOT in it: that
+              one is already `hidden md:flex` and is not a page column.
+
+           B. a `flex-1` sibling carrying `border-l` / `border-r`. It has no
+              width to enumerate, and `flex-1` shrinks to fit instead of
+              wrapping, so rule 1 never fires. This is the rule at 206pt on 019
+              (dashboard/page.tsx) and at 337pt on 046/047
+              (results/demo/flaws/page.tsx), plus ScoreBand's in ResultsBits.
+
+         Both become one full-width row of the stack, and the divider goes with
+         the split that justified it. */
+  .shotiq-phone-flow .w-\[111px\].border-l,
+  .shotiq-phone-flow .w-\[112px\].border-r,
+  .shotiq-phone-flow .w-\[118px\].border-r,
+  .shotiq-phone-flow .w-\[132px\].border-l,
+  .shotiq-phone-flow .w-\[136px\].border-r,
+  .shotiq-phone-flow .w-\[183px\].border-l,
+  .shotiq-phone-flow .w-\[186px\].border-r,
+  .shotiq-phone-flow .w-\[190px\].border-l,
+  .shotiq-phone-flow .w-\[194px\].border-l,
+  .shotiq-phone-flow .min-w-0.flex-1.border-l,
+  .shotiq-phone-flow .min-w-0.flex-1.border-r {
+    width: 100%;
+    flex-basis: 100%;
+    flex-grow: 1;
+    border-left-width: 0;
+    border-right-width: 0;
+  }
 }

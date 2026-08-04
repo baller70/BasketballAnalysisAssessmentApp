@@ -179,7 +179,13 @@ export default function LiveCapturePage() {
     : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
-    <div data-testid="screen-desktop-web-live-capture" className="px-[16px] pb-[8px] pt-[12px]">
+    <>
+    {/* The phone serves the nine canonical live-capture states (iOS 014,
+        028-035) from one flow; the desktop tree below is canonical 082 and is
+        untouched. `LiveCapture` renders nothing above the tablet breakpoint —
+        it portals into <body>, so a `md:hidden` wrapper could not hold it. */}
+    <LiveCapture initial={phoneState} />
+    <div data-testid="screen-desktop-web-live-capture" className="hidden px-[16px] pb-[8px] pt-[12px] md:block">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="shotiq-display flex items-center gap-[14px] text-[53px] leading-[55px]">
@@ -526,5 +532,6 @@ export default function LiveCapturePage() {
         </div>
       )}
     </div>
+    </>
   )
 }

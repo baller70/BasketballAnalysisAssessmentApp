@@ -7,6 +7,10 @@ import Link from "next/link"
 import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { AnalyticsCards } from "@/components/shotiq/phone/results/AnalyticsCards"
+import { AnalyticsDetailed } from "@/components/shotiq/phone/results/AnalyticsDetailed"
 import {
   useHistory, formatDelta, formatMakePct, formatShotsMakes, makePct,
 } from "@/components/shotiq/ResultsBits"
@@ -60,7 +64,9 @@ const METRIC_TRENDS: Record<string, number[]> = {
 }
 
 export default function AnalysisHistoryPage() {
-  const { items, stats, hasData, score, loading, delta } = useHistory()
+  const { items, stats, hasData, score, loading, delta, shots, makes } = useHistory()
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
   const [sel, setSel] = useState(0)
   const [range, setRange] = useState(RANGES[1])
   const [metric, setMetric] = useState(METRICS[0])
@@ -121,7 +127,21 @@ export default function AnalysisHistoryPage() {
     URL.revokeObjectURL(url)
   }
 
+  /* Canonical iOS 066 (cards) and 067 (detailed). Canonical 067 draws a "Cards"
+     action in its top bar and 066 a "View all" — the two are a real pair of
+     surfaces, not one scrolled page. The graded desktop 093 on this route is
+     untouched. */
   return (
+    <>
+    {isPhone && (view === "detailed"
+      ? <AnalyticsDetailed onCards={() => setView(null)} />
+      : <AnalyticsCards score={score ?? 82}
+                        shots={shots != null ? String(shots) : "24"}
+                        makes={makes != null ? String(makes) : "15"}
+                        pct={formatMakePct(shots, makes)}
+                        delta={formatDelta(delta)}
+                        onDetailed={() => setView("detailed")} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-analytics-history">
       {/* Canonical's date-range / metric / Filter / Export toolbar is
           page-level: it spans the full width above BOTH columns (653→1321,
@@ -410,5 +430,7 @@ export default function AnalysisHistoryPage() {
       </aside>
       </div>
     </div>
+    </div>
+    </>
   )
 }

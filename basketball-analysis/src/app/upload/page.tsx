@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback, useEffect } from "react"
+import React, { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAnalysisStore } from "@/stores/analysisStore"
@@ -25,6 +25,11 @@ import {
   type UploadQualityResult,
   type PreUploadValidation,
 } from "@/lib/upload"
+import {
+  PhotoUploadSource, PhotoReviewCrop, UploadQualityCheck,
+} from "@/components/shotiq/phone/UploadPhone"
+
+type PhotoStep = "source" | "review" | "quality"
 
 // ==========================================
 // TYPES
@@ -53,6 +58,37 @@ export default function UploadPage() {
   const [preValidation, setPreValidation] = useState<(PreUploadValidation & { overallValid: boolean }) | null>(null)
   const [qualityResult, setQualityResult] = useState<UploadQualityResult | null>(null)
   const [dragActive, setDragActive] = useState(false)
+
+  /* Canonical draws THREE phone designs on this one route — 022 photo upload
+     source, 023 photo review / crop, 024 upload quality check. Round 6 served
+     all three from the desktop upload page, which is why 022 measured 124.5
+     per mille orange against canonical's 2.0 and 023 rendered the harness's
+     synthetic fixture rather than a photo.
+
+     Reachable two ways, deliberately: a person taps "Choose from library" ->
+     picks a file -> "USE PHOTO", and every surface owns a `?step=` the flow
+     writes back into the URL so it is also a deep link (and so the back button
+     inside the flow works). `window.location` rather than `useSearchParams`,
+     which would force this prerendered route dynamic. */
+  const [isPhone, setIsPhone] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const sync = () => setIsPhone(mq.matches)
+    sync(); mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
+  const [photoStep, setPhotoStep] = useState<PhotoStep>("source")
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("step")
+    if (q === "source" || q === "review" || q === "quality") setPhotoStep(q)
+  }, [])
+  const goPhoto = useCallback((s: PhotoStep) => {
+    setPhotoStep(s)
+    const u = new URL(window.location.href)
+    u.searchParams.set("step", s)
+    window.history.replaceState(null, "", u.toString())
+  }, [])
+  const phoneFileRef = useRef<HTMLInputElement | null>(null)
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -142,6 +178,43 @@ export default function UploadPage() {
     setPreValidation(null)
     setQualityResult(null)
   }, [previewUrls])
+
+  /* --------------------------------------------------- phone surfaces */
+  if (isPhone) {
+    // The still under review is the file the player picked; with none picked
+    // yet (a deep link straight to `?step=review`) it is their most recent
+    // capture, which is what "review your shot" means with an empty picker.
+    const reviewSrc = previewUrls[0] || "/images/canonical/094-t1.png"
+    return (
+      <div className="md:hidden" data-testid="screen-ios-upload-flow">
+        <input ref={phoneFileRef} type="file" accept="image/*,video/*" className="hidden"
+               onChange={(e) => {
+                 if (!e.target.files?.length) return
+                 handleFileSelect(e.target.files)
+                 goPhoto("review")
+               }} />
+        {photoStep === "source" && (
+          <PhotoUploadSource
+            onLibrary={() => phoneFileRef.current?.click()}
+            onCamera={() => router.push("/video-analysis")}
+            onCancel={() => router.push("/analyze")} />
+        )}
+        {photoStep === "review" && (
+          <PhotoReviewCrop src={reviewSrc}
+                           onRetake={() => { handleRetake(); goPhoto("source") }}
+                           onCrop={() => phoneFileRef.current?.click()}
+                           onUse={() => goPhoto("quality")}
+                           onBack={() => goPhoto("source")} />
+        )}
+        {photoStep === "quality" && (
+          <UploadQualityCheck src={reviewSrc}
+                              fileName={files[0]?.name ?? "IMG_4521.MOV"}
+                              onContinue={() => router.push("/results/demo")}
+                              onChoose={() => goPhoto("source")} />
+        )}
+      </div>
+    )
+  }
 
   // If showing education module (only for image mode)
   if (showEducation && files.length === 0 && mode === "image") {

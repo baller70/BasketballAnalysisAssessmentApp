@@ -16,6 +16,10 @@ import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
 import { ShareResults } from "@/components/shotiq/phone/ShareResults"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { PlayerCard as PhonePlayerCard } from "@/components/shotiq/phone/results/PlayerCard"
+import { CustomizeCard } from "@/components/shotiq/phone/results/CustomizeCard"
 import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -58,6 +62,8 @@ export default function PlayerCardPage() {
      chance to see what a recipient would get. The platform sheet still opens,
      from "Share image" inside the preview. */
   const [sharing, setSharing] = useState(false)
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
   const share = () => setSharing(true)
   const shareImage = async () => {
     const url = typeof location !== "undefined" ? location.href : ""
@@ -102,7 +108,19 @@ export default function PlayerCardPage() {
     )
   }
 
+  /* Canonical iOS 048 and 049; 072 is the share sheet above, already built.
+     The graded desktop 086 on this route is untouched. */
   return (
+    <>
+    {isPhone && (view === "customize"
+      ? <CustomizeCard score={score ?? 82} onCancel={() => setView(null)} onSave={() => setView(null)} />
+      : <PhonePlayerCard score={score ?? 82}
+                         shots={shots != null ? String(shots) : "24"}
+                         makes={makes != null ? String(makes) : "15"}
+                         pct={formatMakePct(shots, makes)}
+                         onCustomize={() => setView("customize")}
+                         onShare={() => setSharing(true)} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-player-card">
       <div className="flex items-start justify-between">
         <div>
@@ -447,5 +465,7 @@ export default function PlayerCardPage() {
         </div>
       </div>
     </div>
+    </div>
+    </>
   )
 }

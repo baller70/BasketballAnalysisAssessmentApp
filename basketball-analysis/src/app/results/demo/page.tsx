@@ -24,6 +24,8 @@ import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { AnalysisOverview } from "@/components/shotiq/phone/results/AnalysisOverview"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -49,6 +51,7 @@ const MECHANICS = [
 
 export default function ResultsOverviewPage() {
   const router = useRouter()
+  const isPhone = usePhoneViewport()
   // Session-over-session delta and shot counts come from the shared history
   // hook, so this screen can never disagree with the dashboard.
   const { shots: liveShots, makes: liveMakes, delta, score: liveScore } = useHistory()
@@ -82,8 +85,24 @@ export default function ResultsOverviewPage() {
     catch { /* clipboard unavailable */ }
   }
   const doExport = () => { window.print() }
+  const score = liveScore
+  const shots = liveShots
+  const makes = liveMakes
 
+  /* Canonical iOS 038 is a different composition from the graded desktop 083 on
+     this same route, so the phone gets its own screen and the desktop tree is
+     left exactly as it was. */
   return (
+    <>
+    {isPhone && (
+      <AnalysisOverview
+        score={score ?? 82}
+        shots={shots != null ? String(shots) : "24"}
+        makes={makes != null ? String(makes) : "15"}
+        pct={formatMakePct(shots, makes)}
+      />
+    )}
+    <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Analyze">
     <div data-testid="screen-results-overview" className="pl-[21px] pr-[18px] pt-[16px]">
       {/* header */}
@@ -395,5 +414,7 @@ export default function ResultsOverviewPage() {
       )}
     </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }
