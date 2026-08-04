@@ -118,9 +118,14 @@ extension View {
             .lineLimit(2)
             .minimumScaleFactor(0.5)
     }
-    /// Wilson X numerals (Tungsten Semibold), replacing DIN Condensed.
+    /// Wilson X numerals, replacing DIN Condensed.
+    ///
+    /// Medium, matching the display face — canonical does not set its numerals
+    /// heavier than its headings. Measured at matched cap height against the
+    /// canonical PNGs: 053 "62.5" cap 26 reads ink 0.376 and 052 "48.2%" cap 25
+    /// reads 0.382, against medium 0.407, semibold 0.533 and bold 0.633.
     func shotiqNumeric(_ size: CGFloat = ShotIQType.numeric) -> some View {
-        font(.custom("Tungsten-Semibold", size: size))
+        font(.custom("Tungsten-Medium", size: size))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
@@ -290,7 +295,7 @@ struct HeaderStat: View {
             } else {
                 Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
             }
-            Text(value).font(.custom("Tungsten-Semibold", size: ShotIQType.numeric))
+            Text(value).font(.custom("Tungsten-Medium", size: ShotIQType.numeric))
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).shotiqMicroCaps()
@@ -481,7 +486,7 @@ struct TrendLine: View {
 
                 if let endBadge, let last = coords.last {
                     Text(endBadge)
-                        .font(.custom("Tungsten-Semibold", size: ShotIQType.caption + 2.6))
+                        .font(.custom("Tungsten-Medium", size: ShotIQType.caption + 2.6))
                         .foregroundStyle(stroke)
                         .lineLimit(1).fixedSize()
                         .padding(.horizontal, 4).padding(.vertical, 1)
@@ -572,7 +577,7 @@ struct MediaSurface: View {
             RoundedRectangle(cornerRadius: 4).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
             HStack(spacing: 10) {
                 Image(systemName: "play.fill").font(.system(size: 13)).foregroundStyle(.white)
-                Text("0:00 / \(duration)").font(.custom("Tungsten-Semibold", size: 13)).foregroundStyle(.white)
+                Text("0:00 / \(duration)").font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(.white.opacity(0.35))
@@ -597,7 +602,7 @@ struct StatBlock: View {
     var valueSize: CGFloat = ShotIQType.numeric
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.custom("Tungsten-Semibold", size: valueSize)).foregroundStyle(color)
+            Text(value).font(.custom("Tungsten-Medium", size: valueSize)).foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)

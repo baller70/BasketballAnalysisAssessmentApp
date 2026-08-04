@@ -214,7 +214,14 @@
   font-weight: 800;
   letter-spacing: 0.02em;
 }
+/* Canonical's numerals are the same Medium cut as its headings, not a heavier
+   one. Measured at matched cap height against the canonical PNGs:
+     077 web "62.5%"  cap 19  canonical ink 0.349
+     052 iOS "48.2%"  cap 25  canonical ink 0.382
+     053 iOS "62.5"   cap 26  canonical ink 0.376 | medium 0.407 | semibold 0.533
+   This asked for 600 (semibold) and, before the binding was fixed, resolved all
+   the way up to bold at ink 0.633. */
 .shotiq-numeric {
-  font-family: "ShotIQ Degree", var(--font-shotiq-numeric), "Tungsten Semibold", "DIN Condensed", sans-serif;
-  font-weight: 600;
+  font-family: "ShotIQ Degree", var(--font-shotiq-numeric), "Tungsten Medium", "DIN Condensed", sans-serif;
+  font-weight: 400;
 }

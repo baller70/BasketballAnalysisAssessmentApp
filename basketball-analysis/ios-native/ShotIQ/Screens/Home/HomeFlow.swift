@@ -391,7 +391,7 @@ struct HomeStandardView: View {    // 018
                                 Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text("\(vm.score ?? 82)")
-                                    .font(.custom("Tungsten-Semibold", size: 66))
+                                    .font(.custom("Tungsten-Medium", size: 66))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 ScoreBar(pct: Double(vm.score ?? 82) / 100).frame(width: 96)
@@ -503,7 +503,7 @@ struct HomeProfessionalView: View { // 019
                                 Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text("\(vm.score ?? 82)")
-                                    .font(.custom("Tungsten-Semibold", size: 66))
+                                    .font(.custom("Tungsten-Medium", size: 66))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 ScoreBar(pct: Double(vm.score ?? 82) / 100).frame(width: 96)
@@ -526,7 +526,7 @@ struct HomeProfessionalView: View { // 019
                                 Text(p).shotiqBody(9, weight: p == "RELEASE" ? .bold : .regular).kerning(0.5)
                                     .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
-                                Text(v).font(.custom("Tungsten-Semibold", size: 17))
+                                Text(v).font(.custom("Tungsten-Medium", size: 17))
                                     .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 if p == "RELEASE" {
                                     Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 3)
@@ -561,7 +561,7 @@ struct HomeProfessionalView: View { // 019
                                 Text(label).shotiqBody(8, weight: .medium).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
-                                Text(value).font(.custom("Tungsten-Semibold", size: 22))
+                                Text(value).font(.custom("Tungsten-Medium", size: 22))
                                     .foregroundStyle(ShotIQColor.ink)
                                 HStack(spacing: 2) {
                                     Text(delta).shotiqBody(11, weight: .semibold)
@@ -719,7 +719,7 @@ struct ProfileMenuView: View {      // 020
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 48)
                         VStack(spacing: 3) {
                             Image(systemName: "arrow.up.right").font(.system(size: 15)).foregroundStyle(ShotIQColor.confirmGreen)
-                            Text("+8.1%").font(.custom("Tungsten-Semibold", size: 24))
+                            Text("+8.1%").font(.custom("Tungsten-Medium", size: 24))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                                 .lineLimit(1).minimumScaleFactor(0.7)
                             Text("VS LAST SESSION").shotiqMicroCaps()
@@ -731,19 +731,19 @@ struct ProfileMenuView: View {      // 020
 
                     HStack(spacing: 0) {
                         VStack(spacing: 2) {
-                            Text("24").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("24").font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                             Text("SHOTS").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
                         }.frame(maxWidth: .infinity)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
                         VStack(spacing: 2) {
-                            Text("15").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("15").font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                             Text("MAKES").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
                         }.frame(maxWidth: .infinity)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
                         VStack(spacing: 2) {
-                            Text("62.5%").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("62.5%").font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                             Text("ACCURACY").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
                         }.frame(maxWidth: .infinity)
@@ -878,7 +878,7 @@ struct PointsSystemView: View {
                                 Text("TOTAL POINTS").shotiqBody(10, weight: .medium).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text(totalPoints.map { "\($0)" } ?? "2,840")
-                                    .font(.custom("Tungsten-Semibold", size: 34))
+                                    .font(.custom("Tungsten-Medium", size: 34))
                                     .foregroundStyle(ShotIQColor.ink)
                             }
                             Spacer()

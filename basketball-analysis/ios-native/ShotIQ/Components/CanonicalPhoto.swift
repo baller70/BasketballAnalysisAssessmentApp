@@ -88,7 +88,7 @@ struct CanonicalMediaSurface: View {
             HStack(spacing: 10) {
                 Image(systemName: "play.fill").font(.system(size: 13)).foregroundStyle(.white)
                 Text("0:00 / \(duration)")
-                    .font(.custom("Tungsten-Semibold", size: 13)).foregroundStyle(.white)
+                    .font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(.white.opacity(0.35))
