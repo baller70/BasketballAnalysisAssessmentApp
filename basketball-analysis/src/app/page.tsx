@@ -89,6 +89,29 @@ import { ShotIQMark, ShotArcDiagram, CourtWatermark, MARK, DIAGRAM } from '@/com
  * The previous build used Semibold, which measured +14% stem, +11% ink and a
  * visibly heavier line against canonical in a 2x crop.
  *
+ * Tracking on line 2 is 0.0435em rather than the 0.0429em that zeroed its
+ * advance under the project harness's rasteriser. Chromium hints glyphs unless
+ * it is launched with --font-render-hinting=none, and the two rasterisations
+ * disagree on this line by 3-4 device px of advance. 0.0435em is the point at
+ * which NOTHING gets worse: the unhinted advance stays at 398 against
+ * canonical's 397, the hinted one goes 394 -> 396, and the inter-glyph gap
+ * moves toward canonical's 7.45 in both (6.64 -> 6.82 unhinted, 6.36 -> 6.64
+ * hinted). 0.0448em would zero the hinted advance but push the unhinted one to
+ * 400, trading one error for another. Line 1 is deliberately NOT tightened, for
+ * the reason below.
+ *
+ * Line 1's tracking is NOT tuned to close its advance. Under the hinted
+ * rasteriser it measures 408 against canonical's 403; the whole of that lands
+ * in T, H, D and S, which Tungsten draws 3 device px wider than canonical's
+ * face at matched cap (canonical T 22 H 22; Tungsten 25 25) while drawing E and
+ * L 1-2 narrower. That is letterform. The tracking is already absorbing it:
+ * canonical's inter-glyph gap is 7.36 and this line renders 7.27 hinted /
+ * 6.73 unhinted, i.e. already slightly tight. Pulling 5 more device px out of
+ * 15 gaps takes the hinted gap to 6.91 (-6.1% against canonical, where it is
+ * -1.2% today) and the unhinted advance to 398. That buys a scoped-out
+ * letterform difference by creating a scoped-in spacing one. Measured both
+ * ways, and left.
+ *
  * Sizes AND stroke are per line because canonical sets the two lines
  * differently. The sub-pixel cap height of the I is 58.27 on "SEE THE DETAILS."
  * and 56.28 on "BUILD THE HABIT." — 3.4% apart, which a binary threshold reads
@@ -238,7 +261,7 @@ export default function Home() {
       </div>
       <div
         data-splash="line2"
-        className="shotiq-display absolute inset-x-0 top-[570.53px] text-center leading-[41px] tracking-[0.0429em]"
+        className="shotiq-display absolute inset-x-0 top-[570.53px] text-center leading-[41px] tracking-[0.0435em]"
         style={{ ...DISPLAY_WEIGHT, WebkitTextStrokeWidth: '0.535px', fontSize: '36.36px', wordSpacing: '2.10px', paddingLeft: '1.38px', transform: 'translateY(-0.341px)' }}
       >
         <span className="text-[var(--shotiq-color-shotiqOrange)]">BUILD</span>{" "}
