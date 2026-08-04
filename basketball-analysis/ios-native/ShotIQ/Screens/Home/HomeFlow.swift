@@ -208,7 +208,12 @@ struct HomeNewPlayerView: View {   // 017
                                 }
                                 .buttonStyle(.plain)
                                 NavigationLink { VideoUploadView() } label: {
-                                    captureThumb("UPLOAD VIDEO", "From your library")
+                                    // Canonical prints a filmstrip-framed photo here,
+                                    // the same as its two neighbours. The 017 sidecar
+                                    // declares only two photo regions, so this one had
+                                    // no source and fell back to the dark placeholder —
+                                    // cut from the render at x313-532, y906-1095.
+                                    captureThumb("UPLOAD VIDEO", "From your library", photo: "017-visual-003")
                                 }
                                 .buttonStyle(.plain)
                                 NavigationLink { LiveCameraSetupView() } label: {
