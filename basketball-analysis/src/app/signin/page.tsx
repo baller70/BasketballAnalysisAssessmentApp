@@ -134,12 +134,12 @@ export default function SignInPage() {
           <div className="h-[38px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[112px] text-center">
             <div className="shotiq-numeric text-[19px] leading-[22px]">2,840</div>
-            <div className="text-[10px] font-medium tracking-[0.08em] text-[var(--shotiq-color-graphite)]">POINTS</div>
+            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">POINTS</div>
           </div>
           <div className="h-[38px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[104px] text-center">
             <div className="shotiq-numeric text-[19px] leading-[22px]">6</div>
-            <div className="text-[10px] font-medium tracking-[0.08em] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
           </div>
         </div>
       </header>
@@ -327,7 +327,7 @@ export default function SignInPage() {
                 {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, k]) => (
                   <div key={k} className="flex-1 px-[16px] first:pl-0 last:pr-0">
                     <dd className="shotiq-numeric text-[27px] leading-[30px]">{v}</dd>
-                    <dt className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{k}</dt>
+                    <dt className="shotiq-microcaps mt-[2px] text-[var(--shotiq-color-graphite)]">{k}</dt>
                   </div>
                 ))}
               </dl>

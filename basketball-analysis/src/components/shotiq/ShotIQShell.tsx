@@ -124,7 +124,7 @@ export function ShotIQShell({
             <Film className="h-[22px] w-[22px]" strokeWidth={1.5} />
             <div className="text-left">
               <div className="shotiq-numeric text-[17px] leading-[18px]">{streak}</div>
-              <div className="text-[9px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
             </div>
           </div>
 
@@ -132,7 +132,7 @@ export function ShotIQShell({
             <TrendingUp className="h-[20px] w-[20px]" strokeWidth={1.6} />
             <div className="text-left">
               <div className="shotiq-numeric text-[17px] leading-[18px]">{points}</div>
-              <div className="text-[9px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">POINTS</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">POINTS</div>
             </div>
           </div>
 
@@ -464,7 +464,10 @@ export function Stat({ value, label, valueClass = "text-[24px] leading-[28px]", 
   return (
     <div>
       <div className={`shotiq-numeric ${valueClass}`} style={accent ? { color: accent } : undefined}>{value}</div>
-      <div className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{label}</div>
+      {/* See `.shotiq-microcaps` in globals.css — this was 10px of the body face
+          at 0.07em, which measured cap 7 against canonical's 9 and advance 31
+          against 27, i.e. too small and too wide at the same time. */}
+      <div className="shotiq-microcaps mt-[2px] text-[var(--shotiq-color-graphite)]">{label}</div>
     </div>
   )
 }

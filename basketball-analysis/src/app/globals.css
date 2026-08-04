@@ -214,6 +214,28 @@
   font-weight: 800;
   letter-spacing: 0.02em;
 }
+/* Canonical's all-caps micro-labels ("SHOTS", "MAKE %", "DAY STREAK").
+   The two graders disagreed here and both were right: cap height measured too
+   SMALL while advance width measured too WIDE. That combination is only
+   possible if the face is wrong — the body face is too wide to carry canonical's
+   advance at canonical's cap height, so it had been shrunk until it fitted.
+   Canonical uses the condensed face with generous tracking, which is what iOS
+   already does in `shotiqMicroCaps`. Solved from three strings on 077 at once:
+
+     label     canonical      12px Tungsten Medium   tracking to match
+     SHOTS     cap 9  w 27    cap 9  w 20            0.146em
+     MAKES     cap 9  w 29    cap 9  w 22            0.146em
+     MAKE %    cap 9  w 33    cap 9  w 24            0.150em
+
+   Three independent strings landing on the same tracking is the check that this
+   is the face, not a coincidence of one string. */
+.shotiq-microcaps {
+  font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.148em;
+}
+
 /* Canonical's numerals are the same Medium cut as its headings, not a heavier
    one. Measured at matched cap height against the canonical PNGs:
      077 web "62.5%"  cap 19  canonical ink 0.349
