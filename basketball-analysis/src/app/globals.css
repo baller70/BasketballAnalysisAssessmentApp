@@ -321,8 +321,19 @@
   }
 
   /* 3 - the fixed desktop columns, enumerated from the source (every `w-[Npx]`
-         with N >= 240px). Each becomes one full-width row of the single-column
-         stack rather than a shrunken sliver beside its sibling. */
+         with N >= 200px, i.e. more than half the 393pt phone - canonical never
+         puts two of those side by side). Each becomes one full-width row of the
+         single-column stack rather than a shrunken sliver beside its sibling. */
+  .shotiq-phone-flow .w-\[206px\],
+  .shotiq-phone-flow .w-\[207px\],
+  .shotiq-phone-flow .w-\[208px\],
+  .shotiq-phone-flow .w-\[210px\],
+  .shotiq-phone-flow .w-\[214px\],
+  .shotiq-phone-flow .w-\[220px\],
+  .shotiq-phone-flow .w-\[228px\],
+  .shotiq-phone-flow .w-\[230px\],
+  .shotiq-phone-flow .w-\[232px\],
+  .shotiq-phone-flow .w-\[235px\],
   .shotiq-phone-flow .w-\[242px\],
   .shotiq-phone-flow .w-\[249px\],
   .shotiq-phone-flow .w-\[250px\],
@@ -370,6 +381,69 @@
     flex-grow: 1;
   }
 
+  /* 3b - a desktop column that was taken out of flow to sit in the top-right of
+          the canvas (`absolute right-0 top-0 w-[492px]`, the training hub's
+          coaching panel) cannot be reflowed by any of the rules above, because
+          absolute positioning ignores them: it painted straight over the page
+          title. Only elements carrying BOTH `absolute` and one of the fixed
+          column widths are returned to the flow - badges and media overlays are
+          absolute too, but none of them is 200px wide. */
+  .shotiq-phone-flow .absolute.w-\[206px\],
+  .shotiq-phone-flow .absolute.w-\[207px\],
+  .shotiq-phone-flow .absolute.w-\[208px\],
+  .shotiq-phone-flow .absolute.w-\[210px\],
+  .shotiq-phone-flow .absolute.w-\[214px\],
+  .shotiq-phone-flow .absolute.w-\[220px\],
+  .shotiq-phone-flow .absolute.w-\[228px\],
+  .shotiq-phone-flow .absolute.w-\[230px\],
+  .shotiq-phone-flow .absolute.w-\[232px\],
+  .shotiq-phone-flow .absolute.w-\[235px\],
+  .shotiq-phone-flow .absolute.w-\[242px\],
+  .shotiq-phone-flow .absolute.w-\[249px\],
+  .shotiq-phone-flow .absolute.w-\[250px\],
+  .shotiq-phone-flow .absolute.w-\[255px\],
+  .shotiq-phone-flow .absolute.w-\[260px\],
+  .shotiq-phone-flow .absolute.w-\[262px\],
+  .shotiq-phone-flow .absolute.w-\[268px\],
+  .shotiq-phone-flow .absolute.w-\[274px\],
+  .shotiq-phone-flow .absolute.w-\[275px\],
+  .shotiq-phone-flow .absolute.w-\[281px\],
+  .shotiq-phone-flow .absolute.w-\[292px\],
+  .shotiq-phone-flow .absolute.w-\[293px\],
+  .shotiq-phone-flow .absolute.w-\[300px\],
+  .shotiq-phone-flow .absolute.w-\[306px\],
+  .shotiq-phone-flow .absolute.w-\[318px\],
+  .shotiq-phone-flow .absolute.w-\[330px\],
+  .shotiq-phone-flow .absolute.w-\[350px\],
+  .shotiq-phone-flow .absolute.w-\[374px\],
+  .shotiq-phone-flow .absolute.w-\[376px\],
+  .shotiq-phone-flow .absolute.w-\[380px\],
+  .shotiq-phone-flow .absolute.w-\[384px\],
+  .shotiq-phone-flow .absolute.w-\[392px\],
+  .shotiq-phone-flow .absolute.w-\[394px\],
+  .shotiq-phone-flow .absolute.w-\[399px\],
+  .shotiq-phone-flow .absolute.w-\[404px\],
+  .shotiq-phone-flow .absolute.w-\[420px\],
+  .shotiq-phone-flow .absolute.w-\[430px\],
+  .shotiq-phone-flow .absolute.w-\[440px\],
+  .shotiq-phone-flow .absolute.w-\[448px\],
+  .shotiq-phone-flow .absolute.w-\[452px\],
+  .shotiq-phone-flow .absolute.w-\[464px\],
+  .shotiq-phone-flow .absolute.w-\[486px\],
+  .shotiq-phone-flow .absolute.w-\[492px\],
+  .shotiq-phone-flow .absolute.w-\[500px\],
+  .shotiq-phone-flow .absolute.w-\[520px\],
+  .shotiq-phone-flow .absolute.w-\[523px\],
+  .shotiq-phone-flow .absolute.w-\[543px\],
+  .shotiq-phone-flow .absolute.w-\[550px\],
+  .shotiq-phone-flow .absolute.w-\[600px\],
+  .shotiq-phone-flow .absolute.w-\[620px\],
+  .shotiq-phone-flow .absolute.w-\[656px\],
+  .shotiq-phone-flow .absolute.w-\[660px\] {
+    position: static;
+    inset: auto;
+  }
+
   /* Desktop multi-column grids collapse. Canonical's phone screens are one
      column of full-width cards, or two for the small stat/action tiles. */
   .shotiq-phone-flow .grid-cols-3,
@@ -384,10 +458,10 @@
   /* A calendar month is 7 columns on any device; collapsing it would be wrong. */
   .shotiq-phone-flow .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 
-  /* Arbitrary track lists (`grid-cols-[355fr_380fr_412fr]`, and eight more) are
-     the desktop workspace splits. `fr` carries an automatic `min-content`
-     minimum, so even the fractional ones refuse to compress below the widest
-     word in each track — which is why /settings still measured 574px and
+  /* Arbitrary track lists (`grid-cols-[355fr_380fr_412fr]`, `[62px_62px_62px_1fr]`,
+     and seven more) are the desktop workspace splits. `fr` carries an automatic
+     `min-content` minimum, so even the fractional ones refuse to compress below
+     the widest word in each track - which is why /settings measured 574px and
      /results/demo/goals 616px with every other rule already applied. They
      collapse to the single column canonical draws.
 
