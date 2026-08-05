@@ -211,8 +211,32 @@ export const RUNS: Record<string, Run> = {
                 colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   helpPass: { x: 69.56, top: 1263.08, size: 12.55, weight: 380, scale: 0.900, ls: -0.004,
               colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: 0, ty: 0 },
-  terms: { x: 129.34, top: 1484.20, size: 14.46, weight: 380, scale: 0.900, ls: -0.004,
-           colour: "var(--shotiq-color-ink)", dx: -0.5, dy: 6.0, tx: 0, ty: 0 },
+  /* "I agree to the Terms of Use and Privacy Policy." Band 20.078 -> 10.666,
+     at size 14.46 -> 11.5 and scaleX 0.900 -> 0.95.
+     SOLVED ON THE BAND MEAN, BECAUSE CAP HEIGHT IS NOT A USABLE ESTIMATOR HERE.
+     The cap route looked like it was working and was not: measured on the
+     capital I, the render's cap came out ~12% over canonical at EVERY size
+     tried, which reads like a wrong face. It is not — the probe reports Geist
+     Sans for this run and for the lede, and the lede solved cleanly on the same
+     face. What gave it away is that the I's FOOT sat at exactly 1503.500 in
+     three renders at three different font sizes. A real foot moves with size.
+     Chromium snaps the text baseline to a whole device pixel (the same lattice
+     that makes `ty` useless on the display run), the I sits on that baseline,
+     so only the cap TOP moves and the cap height carries up to a whole pixel of
+     quantisation on a ~19px cap — 5% noise, which is larger than the effect
+     being solved for. The library's `clipped_hi` flag is False here, correctly:
+     nothing is clipped, the estimator is simply quantised. Two crude estimators
+     then disagreed about the size by 3% (11.56 from the terms cap, 11.93 scaled
+     from the lede's), which is the tell that neither should be trusted.
+     Segment counts also refuse to agree — canonical 38, render 27..36 depending
+     on size, because glyphs touch at these widths — so every ratio guarded on
+     equal segmentation rejects the whole sweep.
+     The band mean needs no segmentation and no vertical crossing, and it is the
+     fidelity number in any case.
+     dx 0.5 and 1.5 score identically, as do dy 6.0 and 7.0 — both lattices
+     quantise, so these digits are the rung, not a precision claim. */
+  terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.95, ls: -0.004,
+           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0 },
   createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.90, ls: -0.03,
                colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
