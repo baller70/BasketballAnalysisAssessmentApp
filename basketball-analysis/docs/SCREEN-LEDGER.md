@@ -342,7 +342,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — thirty-four, each learned by getting something wrong
+## Method rules — thirty-five, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -556,6 +556,20 @@ string rolling over at midnight.
     worsens the width. Read the two axes together before calling anything a size
     error; a height gap alone is not evidence.
 
+35. **The scratchpad toolkit had a crossing bug that inflated every extent by
+    ~1 px, and it is invisible in deltas but fatal in ratios.** Its `cross()`
+    placed the trailing edge at `i+1+frac` instead of `i+frac`. A delta between
+    two runs measured the same way cancels it; a RATIO does not.
+    **The display I/N figures in this file are affected.** Recorded as canonical
+    0.3574 / Semibold 0.3590 / Bold 0.4196; re-measured with the corrected
+    library, canonical reads **0.3426** and the shipped Semibold **0.3552**. So
+    Semibold is ~3.7% off rather than the 0.4% recorded, and Bold's ~17% miss
+    still loses by a wide margin — **the shipped decision stands, the precision
+    claim does not.** Do not compare a new I/N against 0.3574.
+    The committed library at `docs/shotiq/measure/` is the corrected one; every
+    number in this file measured before it should be treated as an estimator of
+    unknown calibration until re-run.
+
 ## Standing rulings
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
@@ -622,6 +636,28 @@ that **nothing in CI deploys the live site.**
 
 **Deploy after every screen from now on**, and send Kevin the app-vs-design
 image. Merging to `main` alone changes nothing he can see.
+
+## The measurement library — `docs/shotiq/measure/`
+
+Every builder so far rewrote segmentation, sub-pixel crossings, the area ladder
+and plateau colour reading into a scratchpad that dies with the container. That
+is now a committed package: `image`, `segment`, `crossings`, `ladder`, `fill`,
+`ratios`, `hairline`, `compare`, `capture`, plus `selftest`.
+
+`python3 -m measure.selftest` from `docs/shotiq/` runs **37 checks against
+screen 003's recorded numbers** — whole-screen mean |d| 3.6443, the four Google
+arc plateaus, the baseline split, the OR rule ends, the display cap and stems,
+the rule-32 size ratios — and asserts that an empty window raises and that a
+plateau estimated across the loud "OR" glyphs raises. Run it before trusting a
+measurement on a new screen.
+
+Four numbers do not reproduce exactly and the expectations were NOT moved to fit
+— each is documented in the README with its cause: the baseline split (all-column
+modal estimator against the ledger's two-column stem band), the OR rule lengths
+(the library normalises to canonical's own measured background of green 254, not
+an assumed 255), the display I/N (rule 35 — the old toolkit's bug), and the
+footer/helper size ratio (o-candidate selection). Three are estimator
+differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## Infrastructure notes
 
