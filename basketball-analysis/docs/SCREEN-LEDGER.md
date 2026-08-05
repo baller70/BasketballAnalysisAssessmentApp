@@ -33,8 +33,17 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
 | 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
-| 004 | create-account | IN PROGRESS | — | canonical is the FILLED state; 7 route-map steps added; recipe checkpointed at 826b1aa |
+| 004 | create-account | IN PROGRESS | — | canonical is the FILLED state. Harness was reading a stale scratchpad route map and shooting the EMPTY form with "step fails 0" — fixed at 82a3a7f. display run solved 89.96 → 14.80 (scaleX 0.8539 → 1.0195, stroke 0.33); whole screen 11.457 → 11.112. Remaining bands, worst first: lede 21.19 (solved to 12.77 in-page, not yet baked), terms 20.08, labConfirm 16.45, monogram 13.80, oneacct 12.91 |
 | 005+ | … | not started | — | |
+
+**PAUSED, deliberately, and this is not the screen loop's fault.** Kevin's
+phone was drawing the app clipped off both edges with the type oversized. That
+is an app-wide defect on the surface he actually uses (native `ios-native`,
+not the web tree these 72 rows measure), and it outranks fractions of a pixel
+on `/signup`. Diagnosis, fix and guard are rules 37-38 and commits b77b89f /
+94bf2ae. 004 resumes once the accessibility-size capture confirms or refutes
+the fix — if it refutes it, the real cause is still loose and nothing else
+matters until it is found.
 
 ## 003 — independent verification, before the grade
 
@@ -600,6 +609,36 @@ string rolling over at midnight.
     rather than checking what was actually on the device. When someone reports
     that the output is missing, that is data about the pipeline — treat a user's
     "I don't see it" exactly like a failing measurement.
+
+38. **A capture at one configuration is not evidence about the configurations
+    users run.** Kevin's phone was drawing screens wider than the display,
+    centred and clipped off both edges — wordmark gone under the notch,
+    "Progress" truncated to "Progre..." — while all 74 simulator screenshots
+    came back clean. Both were true. A freshly created simulator boots at the
+    DEFAULT text size, and that is the single configuration in which the defect
+    is invisible.
+
+    The defect: all ~176 type declarations in `ios-native` are
+    `Font.custom(_:size:)`, which scales with the phone's Text Size setting,
+    while everything around it — column widths, paddings, glyph sizes, the 853px
+    canonical geometry — is fixed. Above the default the type grows and its
+    containers do not, rows sum past the viewport, and the screen goes wide and
+    centred (the same end state `CanonicalPhoto.swift` documents for an
+    oversized child). There was not one `fixedSize:`, one `relativeTo:` or one
+    `dynamicTypeSize` clamp in the whole target.
+
+    This is the THIRD instance of one pattern, and the pattern is what matters:
+    the grading account is seeded where Kevin's is empty (rule 36); a phone
+    capture says nothing about the desktop tree at 1512px; and now, every
+    capture ran at one text size. **Each time, the harness sampled the
+    configuration where the bug does not exist and reported a clean bill of
+    health.** Before trusting any sweep, ask what it holds FIXED that a real
+    user varies — account state, viewport, text size, locale, reduce-motion —
+    and either vary it or write down that the sweep says nothing about it.
+    `scripts/simshots-config.sh` now pins the capture at `accessibility-medium`
+    for exactly this reason, and it is re-included in `.gitignore` because the
+    broker clones fresh and an untracked config would silently restore the
+    blind spot.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
