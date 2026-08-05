@@ -45,6 +45,27 @@ const APP = process.env.APP || '/home/user/BasketballAnalysisAssessmentApp/baske
 const SETTLE = Number(process.env.SETTLE || 2600)
 
 const map = JSON.parse(fs.readFileSync(S + '/ios-route-map.json', 'utf8'))
+
+/**
+ * `ONLY=003` (or `ONLY=003,004`) shoots just those screens. The project works
+ * one screen at a time, and a full 72-screen sweep to re-check the single
+ * screen in progress costs minutes per iteration.
+ *
+ * The duplicate and gap checks are the reason this is a filter rather than a
+ * separate script — they are what caught 072 coming back byte-identical to 048.
+ * They still run and still hard-fail, but only across the screens selected, so
+ * a one-screen run cannot detect a collision with a screen it did not shoot.
+ * A filtered run therefore does NOT overwrite IOS-CAPTURE-LATEST.json, which
+ * would otherwise erase the evidence that the full set was once clean, and it
+ * says so in its closing line rather than printing a clean bill of health.
+ */
+const ONLY = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean)
+const wanted = (r) => !ONLY.length || ONLY.some((o) => r.canonical.startsWith(o))
+if (ONLY.length) {
+  const hit = map.screens.filter(wanted).map((r) => r.canonical)
+  if (!hit.length) throw new Error(`ONLY=${ONLY.join(',')} matched no screen`)
+  console.log(`ONLY  ${hit.join(', ')}`)
+}
 const base = 'http://localhost:' + PORT
 fs.mkdirSync(OUT, { recursive: true })
 
@@ -151,7 +172,7 @@ async function shoot(p, row) {
 // --- signed out: 001-007 ----------------------------------------------------
 // A separate context means a separate cookie jar, so nothing this run does in
 // the authenticated context can leak a session into these seven.
-const anonRows = map.screens.filter((r) => r.context === 'anon')
+const anonRows = map.screens.filter((r) => r.context === 'anon' && wanted(r))
 for (const row of anonRows) {
   const anon = await newPage(row.sessionStorage)
   await shoot(anon, row)
@@ -159,24 +180,26 @@ for (const row of anonRows) {
 }
 
 // --- signed in: 008-072 -----------------------------------------------------
-const p = await newPage()
-await p.goto(base + '/signin')
-await p.waitForTimeout(1600)
-await p.fill('[data-testid="signin-email"]', map.credentials.email)
-await p.fill('[data-testid="signin-password"]', map.credentials.password)
-await p.click('[data-testid="signin-submit"]')
-await p.waitForTimeout(4000)
-if (new URL(p.url()).pathname === '/signin') {
-  throw new Error('sign-in did not take — still on /signin. Is Postgres up on 5433?')
-}
-
-for (const row of map.screens.filter((r) => r.context === 'auth')) {
-  await shoot(p, row)
+// Skipped entirely when ONLY selects nothing here, so a one-screen run of an
+// anon screen does not need Postgres up to succeed.
+const authRows = map.screens.filter((r) => r.context === 'auth' && wanted(r))
+if (authRows.length) {
+  const p = await newPage()
+  await p.goto(base + '/signin')
+  await p.waitForTimeout(1600)
+  await p.fill('[data-testid="signin-email"]', map.credentials.email)
+  await p.fill('[data-testid="signin-password"]', map.credentials.password)
+  await p.click('[data-testid="signin-submit"]')
+  await p.waitForTimeout(4000)
+  if (new URL(p.url()).pathname === '/signin') {
+    throw new Error('sign-in did not take — still on /signin. Is Postgres up on 5433?')
+  }
+  for (const row of authRows) await shoot(p, row)
 }
 await b.close()
 
 // --- verification -----------------------------------------------------------
-const expected = map.screens.map((r) => r.canonical + '.png').sort()
+const expected = map.screens.filter(wanted).map((r) => r.canonical + '.png').sort()
 const got = fs.readdirSync(OUT).filter((f) => f.endsWith('.png')).sort()
 const gaps = expected.filter((f) => !got.includes(f))
 
@@ -190,8 +213,10 @@ for (const f of got) {
 
 const wide = Object.entries(meta).filter(([, v]) => v.scrollWidth > 393 || v.innerWidth !== 393)
 
-fs.writeFileSync(S + '/IOS-CAPTURE-LATEST.json', JSON.stringify(
-  { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, failures, meta }, null, 1))
+if (!ONLY.length) {
+  fs.writeFileSync(S + '/IOS-CAPTURE-LATEST.json', JSON.stringify(
+    { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, failures, meta }, null, 1))
+}
 
 console.log(`captured   ${got.length} / ${expected.length}`)
 console.log(`distinct   ${seen.size} md5s`)
@@ -203,4 +228,6 @@ if (dupes.length) {
   throw new Error(`DUPLICATE CAPTURE:\n  ${dupes.join('\n  ')}\n— a redirect ate a screen`)
 }
 if (gaps.length) throw new Error(`MISSING ${gaps.length}: ${gaps.join(', ')}`)
-console.log('\nOK — 72 screens, all hashes distinct.')
+console.log(ONLY.length
+  ? `\nOK — ${got.length} screen(s). NOTE: a filtered run proves nothing about the other ${map.screens.length - got.length}.`
+  : '\nOK — 72 screens, all hashes distinct.')
