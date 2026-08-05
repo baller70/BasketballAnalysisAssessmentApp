@@ -51,31 +51,86 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  * tokens carry the 20 desktop screens that grade B+, so a disagreement on THIS
  * canonical render is overridden inside the phone media query and nowhere else.
  *
- *   role         canonical                                   global token
- *   ink          (2.0, 1.7, 1.5) eroded core k2, n 15,971    #111111
- *                on SIGN IN; (4.3,4.3,4.3) on the Apple
- *                label; (2.1,2.1,2.1) on the email value
- *   plate orange (252.64, 54.89, 0.91) over 18,000 flat px   #FD3701  <- KEPT
- *                — that IS the token, so it is not overridden
- *   text orange  (250.7, 60.4, 7.1) k2 n 796 on the IQ       #FD3701
- *   rule         1.82 device px of (210,212,217) under the   #EBECED
- *                wordmark; field borders (213,213,217);
- *                the two OR hairlines (218,218,222)
- *   green        (12.4, 155.6, 75.6) k2 on the check ring    (no token)
+ * HOW THESE WERE SOLVED. Every one of these roles is set below 30px, where
+ * ledger rule 8 says an eroded stroke core is unobtainable — canonical's
+ * unsharp mask overshoots the core darker and the surround lighter, so the
+ * darkest pixel in a run is NOT the colour. Measured, canonical's body copy
+ * peaks at coverage 0.914 and its field labels at 0.918, which no flat colour
+ * anywhere near this grey can reach.
  *
- * The greys below 30px cannot be cored at all, so they are solved from total
- * ink at matched geometry.
+ * Total ink alone does not pin a colour either: ink is the product of colour
+ * and stroke area, and font-weight moves the area, so (colour, weight) is
+ * degenerate against ink. What breaks the degeneracy is the NORMALISED
+ * coverage CDF — the fraction of a run's ink above each coverage level, scaled
+ * by the count above 0.25. That shape is nearly weight-invariant and it is set
+ * by the colour's ceiling, because a flat colour plateaus every stroke core at
+ * exactly d/255 while canonical's ramps past it.
+ *
+ * The method is calibrated on runs whose colour is KNOWN. Canonical draws
+ * `Continue with Apple`, `Continue with Google` and the email value in pure
+ * black (darkest sample 0,0,0; coverage reaches 1.000). At matched cap and
+ * advance, matching total ink on those three lands their whole ladder at
+ * 0.98-1.13 of canonical — so canonical's rasteriser and this one agree on the
+ * coverage distribution once the colour is right, and any grey whose CDF shape
+ * disagrees has the wrong colour, not the wrong weight.
+ *
+ * Sweeping each role's level and scoring the CDF against canonical over
+ * coverage 0.28-0.95 gives a clean interior minimum in every case (RMS CDF
+ * distance, lower is better):
+ *
+ *   graphite  d 168 .1533 | 177 .1302 | 186 .1035 | 195 .1262 | 204 .1458
+ *   label     d 168 .1691 | 177 .1363 | 186 .0785 | 195 .1062 | 204 .1466
+ *   eyebrow   d 105 .1174 | 112 .0869 | 119 .0954 | 126 .1122 | 133 .1451
+ *   green     d 236 .0872 | 243 .0726 | 249 .0748 | 253 .0781 | 255 .1008
+ *
+ * Hue is fixed separately by the ink-weighted R:G:B ratio of (255 - channel)
+ * over the whole run — a large sample, per rule 8. Canonical's greys read
+ * G/R 0.9890, B/R 0.9335 over 2,407 px of body copy and agree to 0.002 across
+ * five independent runs.
+ *
+ *   role         solved              was          note
+ *   graphite     #454751 (d 186)     #4E525F      body lede, Remember me, the
+ *                                                 account line
+ *   label        #454751 (d 186)     #4A4E5B      EMAIL / PASSWORD. The fit
+ *                                                 lands on the SAME value as
+ *                                                 the body grey from two
+ *                                                 independent runs (187.6 and
+ *                                                 185.4), i.e. canonical sets
+ *                                                 one grey here, not two.
+ *   eyebrow      #8A8B93 (d 117)     #8A8F97      AI ANALYSIS, OR — the level
+ *                                                 barely moved, the hue did
+ *   green        #0D9144 (d 242)     #0C9B4A      the two validation lines and
+ *                                                 the check ring
+ *   orange text  #FD3701             #FA3B06      Forgot password?, Create
+ *                                                 account, the IQ. The CDF fit
+ *                                                 puts green at 54.9 where the
+ *                                                 PLATE's flat orange measures
+ *                                                 54.89 over 18,000 px, so the
+ *                                                 text orange IS the plate
+ *                                                 token and the screen no
+ *                                                 longer disagrees with it at
+ *                                                 all. Distance is identical
+ *                                                 (.0829) for the token and for
+ *                                                 the free fit.
+ *   ink          #000000                          unchanged; verified black by
+ *                                                 the three runs above
+ *
+ * What is NOT reachable, stated with its numbers: canonical's body copy has
+ * 490 px above coverage 0.75 and 1 px above 0.9; at d 186 the ceiling is 0.729
+ * so this render has 0 px above 0.75. That gap is the unsharp mask (rule 9) and
+ * no flat colour closes it — d 200 puts 1,130 px above 0.75 against canonical's
+ * 490 and makes the whole CDF worse (.1145 against .1035).
  */
 const COLOURS = `
   --shotiq-color-ink:#000000;
   --s3-rule:#D2D4D9;
   --s3-field-rule:#D5D5D9;
   --s3-hair:#DADADE;
-  --s3-green:#0C9B4A;
-  --s3-orange-text:#FA3B06;
-  --s3-graphite:#4E525F;
-  --s3-label:#4A4E5B;
-  --s3-eyebrow:#8A8F97;
+  --s3-green:#0D9144;
+  --s3-orange-text:#FD3701;
+  --s3-graphite:#454751;
+  --s3-label:#454751;
+  --s3-eyebrow:#8A8B93;
 `
 
 /* ------------------------------------------------------------ type recipe ---
@@ -127,6 +182,12 @@ export type Run = {
   lead?: number     // line box, canonical px (multi-line runs only)
   width?: number    // canonical px (centred runs)
   bang?: boolean    // !important on size/leading (PageTitle sets them inline)
+  ty?: number       // sub-row vertical nudge, CSS px, applied inside the
+                    // transform. `top` alone lands the run on a TWO-device-px
+                    // lattice; a translateY inside the same transform halves
+                    // that to one device px, which is Skia's floor (it does
+                    // sub-pixel glyph positioning horizontally only). Probed,
+                    // per rule 12, not derived.
   ox?: number       // origin x of the positioned ancestor, canonical px
   oy?: number       // origin y of the positioned ancestor, canonical px
 }
@@ -150,51 +211,55 @@ const EMAIL_DY = 0
 const PASS_DY = 0
 
 export const RUNS: Record<string, Run> = {
-  /* SHOTIQ — Geist 700 at cap 40.67. Canonical advances 226 against Geist's 211
-     at that cap, so scaleX runs slightly OVER 1 here; canonical's wordmark is
-     the one run on this screen that is WIDER than Geist. */
-  wordmark: { x: 44, top: 41.29, size: 25.315, weight: 700, scale: 1.073, ls: 0.0123,
-              colour: "var(--shotiq-color-ink)", dx: 1.6, dy: 13.6 },
-  eyebrow: { x: 51, top: 99.37, size: 12.326, weight: 400, scale: 1.010, ls: 0.1115,
-             colour: "var(--s3-eyebrow)", dx: 1.2, dy: 9.0 },
+  /* SHOTIQ — Geist at cap 44.85. Canonical advances 225.78 against Geist's 214.6
+     at that cap, so scaleX runs slightly OVER 1 here; the wordmark is the one
+     run on this screen that is WIDER than Geist. */
+  wordmark: { x: 44, top: 41.29, size: 25.856, weight: 759, scale: 1.0519, ls: 0.0123,
+              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, ty: -0.0958 },
+  eyebrow: { x: 51, top: 99.37, size: 12.053, weight: 501, scale: 1.0051, ls: 0.1115,
+             colour: "var(--s3-eyebrow)", dx: -0.56, dy: 5.28, ty: 0.7938 },
   /* SIGN IN — Tungsten. Canonical's stem/cap is 16.840/118.857 = 0.1417, where
      Tungsten Medium draws 0.1141 and Semibold 0.1533, so neither cut lands it
      alone. Solving cap, stem and glyph-width sum together against the measured
      response (cap = 1.52f + 2.1705t, stem = s(0.233f + 2.1705t),
-     Sw = s(3.28f + 13.02t) for Semibold) gives f 77.15, t 0.734, s 0.858.
-     The Medium branch of the same solve wants t 2.96 — four times the stroke —
-     and lands ink at 22,136 against canonical's 21,028 (+5.3%), where Semibold
-     lands 21,340 (+1.5%). Semibold ships; the Medium alternative is measured,
-     not asserted. */
-  display: { x: 52, top: 226.77, size: 77.147, weight: 600, scale: 0.860, ls: 0.0547,
+     Sw = s(3.28f + 13.02t) for Semibold) gives f 77.15, t 0.734, s 0.858; the
+     size and scale were then closed on the render itself to f 75.99, s 0.8539,
+     which lands cap 119.985 against canonical's 120.017 and advance 331.92
+     against 331.81. The Medium branch of the same solve wants t 2.96 — four
+     times the stroke — and lands ink at 22,136 against canonical's 21,028
+     (+5.3%), where Semibold lands 20,635 (-2.0%). Semibold ships; the Medium
+     alternative is measured, not asserted. */
+  display: { x: 52, top: 226.77, size: 75.99, weight: 600, scale: 0.8539, ls: 0.0547,
              ws: 7.14, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 4.0, dy: 20.0 },
-  body: { x: 52, top: 382.38, size: 13.455, weight: 500, scale: 0.940, ls: -0.0044,
-          colour: "var(--s3-graphite)", dx: 1.0, dy: 9.4, lead: 38.14 },
-  labelEmail: { x: 53, top: 527.31, size: 12.703, weight: 700, scale: 0.750, ls: 0.0514,
-                colour: "var(--s3-label)", dx: 0.6, dy: 8.8 },
-  helpEmail: { x: 53, top: 699.34, size: 11.710, weight: 500, scale: 0.859, ls: 0.0230,
-               colour: "var(--s3-green)", dx: 0.8, dy: 8.2 },
-  labelPass: { x: 53, top: 779.01, size: 12.688, weight: 700, scale: 0.732, ls: 0.0990,
-               colour: "var(--s3-label)", dx: 0.6, dy: 8.8 },
-  helpPass: { x: 53, top: 946.59, size: 11.618, weight: 500, scale: 0.866, ls: 0.0115,
-              colour: "var(--s3-green)", dx: 0.8, dy: 8.2 },
-  remember: { x: 96, top: 1019.66, size: 12.245, weight: 500, scale: 0.886, ls: -0.0018,
-              colour: "var(--s3-graphite)", dx: 1.0, dy: 8.6 },
-  forgot: { x: 604, top: 1019.71, size: 12.305, weight: 600, scale: 0.852, ls: -0.0072,
-            colour: "var(--s3-orange-text)", dx: 1.2, dy: 8.6 },
-  signinLab: { x: 418, top: 1143.21, size: 16.244, weight: 500, scale: 0.923, ls: -0.0325,
-               colour: "#FFFFFF", dx: 1.2, dy: 11.4, ox: PLATE.x, oy: PLATE.y },
-  or: { x: 412, top: 1280.99, size: 11.505, weight: 700, scale: 0.756, ls: 0.1014,
-        colour: "var(--s3-eyebrow)", dx: 0.6, dy: 8.0 },
-  appleLab: { x: 338, top: 1373.19, size: 15.769, weight: 500, scale: 0.812, ls: -0.0415,
-              colour: "var(--shotiq-color-ink)", dx: 1.2, dy: 11.2, ox: BOX_X, oy: APPLE.y },
-  googLab: { x: 331, top: 1502.42, size: 15.643, weight: 500, scale: 0.822, ls: -0.0410,
-             colour: "var(--shotiq-color-ink)", dx: 1.2, dy: 11.2, ox: BOX_X, oy: GOOGLE.y },
-  acct1: { cx: 419, top: 1654.30, size: 12.550, weight: 500, scale: 0.886, ls: -0.0056,
-           colour: "var(--s3-graphite)", dx: 0, dy: 8.8, width: 500 },
-  acct2: { cx: 426, top: 1708.37, size: 13.590, weight: 500, scale: 0.912, ls: 0.0021,
-           colour: "var(--s3-orange-text)", dx: 0, dy: 9.6, width: 500 },
+             bang: true, dx: 2.55, dy: 30.4, ty: 0.6055 },
+  body: { x: 52, top: 382.38, size: 14.285, weight: 378, scale: 0.9107, ls: -0.0044,
+          colour: "var(--s3-graphite)", dx: -0.86, dy: 6.075, ty: 0.6095, lead: 35.989 },
+  labelEmail: { x: 53, top: 527.31, size: 12.784, weight: 646, scale: 0.7444, ls: 0.0514,
+                colour: "var(--s3-label)", dx: 1.32, dy: 6.13, ty: 0.3096 },
+  helpEmail: { x: 53, top: 699.34, size: 12.548, weight: 401, scale: 0.8149, ls: 0.0230,
+               colour: "var(--s3-green)", dx: 1.74, dy: 5.5, ty: -0.7418 },
+  labelPass: { x: 53, top: 779.01, size: 12.627, weight: 722, scale: 0.7074, ls: 0.0990,
+               colour: "var(--s3-label)", dx: 0.28, dy: 6.61, ty: 0.0862 },
+  helpPass: { x: 53, top: 946.59, size: 12.501, weight: 389, scale: 0.8289, ls: 0.0115,
+              colour: "var(--s3-green)", dx: 1.9, dy: 6.11, ty: 0.0438 },
+  remember: { x: 96, top: 1019.66, size: 12.467, weight: 386, scale: 0.8854, ls: -0.0018,
+              colour: "var(--s3-graphite)", dx: 0.03, dy: 4.4, ty: -0.3709 },
+  forgot: { x: 604, top: 1019.71, size: 13.125, weight: 375, scale: 0.8462, ls: -0.0072,
+            colour: "var(--s3-orange-text)", dx: 0.68, dy: 4.88, ty: -0.6017 },
+  signinLab: { x: 418, top: 1143.21, size: 17.355, weight: 443, scale: 0.8806, ls: -0.0325,
+               colour: "#FFFFFF", dx: 1.16, dy: 8.52, ty: -0.5165, ox: PLATE.x, oy: PLATE.y },
+  or: { x: 412, top: 1280.99, size: 11.538, weight: 700, scale: 0.7141, ls: 0.1014,
+        colour: "var(--s3-eyebrow)", dx: 0.64, dy: 6.29, ty: 0.7855 },
+  appleLab: { x: 338, top: 1373.19, size: 16.810, weight: 440, scale: 0.7918, ls: -0.0415,
+              colour: "var(--shotiq-color-ink)", dx: 0.44, dy: 7.12, ty: 0.0369,
+              ox: BOX_X, oy: APPLE.y },
+  googLab: { x: 331, top: 1502.42, size: 16.753, weight: 438, scale: 0.7957, ls: -0.0410,
+             colour: "var(--shotiq-color-ink)", dx: 0.02, dy: 8.01, ty: -0.3727,
+             ox: BOX_X, oy: GOOGLE.y },
+  acct1: { cx: 417.74, top: 1654.30, size: 12.482, weight: 389, scale: 0.9122, ls: -0.0056,
+           colour: "var(--s3-graphite)", dx: 0, dy: 3.45, ty: -0.7597, width: 500 },
+  acct2: { cx: 427.14, top: 1708.37, size: 13.807, weight: 416, scale: 0.9269, ls: 0.0021,
+           colour: "var(--s3-orange-text)", dx: 0, dy: 7.06, ty: 0.5004, width: 500 },
 }
 
 function runCss(name: string, r: Run) {
@@ -211,7 +276,7 @@ function runCss(name: string, r: Run) {
     `font-size:${r.size}px${r.bang ? " !important" : ""}`,
     `letter-spacing:${r.ls}em`,
     `color:${r.colour}`,
-    `transform:scaleX(${r.scale})`,
+    `transform:scaleX(${r.scale})${r.ty ? ` translateY(${r.ty.toFixed(4)}px)` : ""}`,
     `top:${u(r.top - r.dy - oy)}`,
   ]
   parts.push(`line-height:${r.lead ? u(r.lead) : "normal"}${r.bang ? " !important" : ""}`)
@@ -288,19 +353,21 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
    scale them: the input itself carries the scaleX and divides its width back
    out so the control still spans its field. */
 .s3 [data-s3="valueEmail"]{position:absolute;left:${u(BOX_X)};top:${u(568.58)};
-  height:${u(110.81)};width:${u((800.4 - BOX_X) / 0.858)};
-  transform:scaleX(0.858) translateY(${u(EMAIL_DY)});transform-origin:0 0;
-  font-family:${GEIST};font-weight:400;font-size:14.936px;letter-spacing:0em;
-  line-height:${u(110.81)};padding-left:${u((151 - 1.0 - BOX_X) / 0.858)};
+  height:${u(110.81)};width:${u((800.4 - BOX_X) / 0.8692)};
+  transform:scaleX(0.8692) translateY(2.0245px);transform-origin:0 0;
+  font-family:${GEIST};font-weight:330;font-size:14.918px;letter-spacing:0em;
+  line-height:${u(110.81)};padding-left:${u((151 + 0.73 - BOX_X) / 0.8692)};
   color:var(--shotiq-color-ink);background:transparent;border:0;outline:none;padding-top:0;
   padding-bottom:0;padding-right:0;margin:0}
-/* 16 bullets, pitch 16.33 and diameter 9 canonical px. Chromium masks with
+/* 16 bullets, pitch 16.33 and diameter 9.09 canonical px. Chromium masks with
    U+2022 taken from the element's own font, so the diameter is set by the
    font-size and the pitch by the letter-spacing — two independent knobs, and
-   no scaleX is needed. */
+   no scaleX is needed. At 11.9px/0.352em the previous values drew a 6.09px
+   bullet on a 16.70 pitch: the right rhythm around a disc a third too small,
+   which is why the mask read -57% on ink. */
 .s3 [data-s3="valuePass"]{position:absolute;left:${u(BOX_X)};top:${u(820.67)};
-  height:${u(108.39)};width:${u(680)};transform:translateY(${u(PASS_DY)});
-  font-family:${GEIST};font-weight:400;font-size:11.9px;letter-spacing:0.352em;
+  height:${u(108.39)};width:${u(680)};transform:translateY(-0.1503px);
+  font-family:${GEIST};font-weight:400;font-size:18.859px;letter-spacing:0.10638em;
   line-height:${u(108.39)};padding-left:${u(152 - 1.0 - BOX_X)};
   color:var(--shotiq-color-ink);background:transparent;border:0;outline:none;padding-top:0;
   padding-bottom:0;padding-right:0;margin:0}
@@ -308,17 +375,17 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
   color:var(--shotiq-color-muted);letter-spacing:0em}
 .s3 [data-s3="eye"]{position:absolute;left:${u(729)};top:${u(857)};width:${u(52)};height:${u(41)};
   padding:0;margin:0;transform:none;display:block;color:var(--shotiq-color-ink)}
-.s3 [data-s3="checkbox"]{position:absolute;left:${u(52.4)};top:${u(1015.0)};width:${u(27.4)};
-  height:${u(27.4)};margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;
-  border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(2.5)} var(--s3-label)}
+.s3 [data-s3="checkbox"]{position:absolute;left:${u(53.27)};top:${u(1014.41)};width:${u(28.4)};
+  height:${u(28.51)};margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;
+  border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(2.93)} var(--s3-label)}
 .s3 [data-s3="checkbox"]:checked{background:var(--shotiq-color-shotiqOrange);
   box-shadow:inset 0 0 0 ${u(2.5)} var(--shotiq-color-shotiqOrange)}
-.s3 [data-s3="focus"]{display:block;position:absolute;left:${u(324 - PLATE.x)};top:${u(1124 - PLATE.y)};
-  width:${u(66)};height:${u(66)}}
-.s3 [data-s3="appleMark"]{display:block;position:absolute;left:${u(266 - BOX_X)};
-  top:${u(1362 - APPLE.y)};width:${u(38)};height:${u(47)}}
-.s3 [data-s3="googMark"]{display:block;position:absolute;left:${u(254 - BOX_X)};
-  top:${u(1491 - GOOGLE.y)};width:${u(45)};height:${u(48)}}
+.s3 [data-s3="focus"]{display:block;position:absolute;left:${u(324.79 - PLATE.x)};
+  top:${u(1123.36 - PLATE.y)};width:${u(67.0)};height:${u(67.0)}}
+.s3 [data-s3="appleMark"]{display:block;position:absolute;left:${u(263.95 - BOX_X)};
+  top:${u(1361.4 - APPLE.y)};width:${u(39.14)};height:${u(48.41)}}
+.s3 [data-s3="googMark"]{display:block;position:absolute;left:${u(253.86 - BOX_X)};
+  top:${u(1490.6 - GOOGLE.y)};width:${u(46.8)};height:${u(49.9)}}
 .s3 [data-s3="appleMark"] svg,.s3 [data-s3="googMark"] svg,.s3 [data-s3="focus"] svg{
   width:100%;height:100%;display:block}
 .s3 [data-s3="error"]{position:absolute;left:${u(52)};top:${u(1222)};width:${u(750)};
