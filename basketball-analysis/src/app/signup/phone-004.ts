@@ -169,10 +169,34 @@ export const RUNS: Record<string, Run> = {
   display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
              ws: 3.85, stroke: 0.33, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
              bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: 0 },
-  lede1: { x: 69.24, top: 281.45, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: -0.86, dy: 6.075, tx: 0, ty: 0 },
-  lede2: { x: 68.91, top: 327.77, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: -0.86, dy: 6.075, tx: 0, ty: 0 },
+  /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
+     size, so fitting each on its own would let two different sizes both look
+     locally plausible while the block reads wrong.
+
+     Unlike the display run this IS a size error, and the pairing is what says
+     so: cap height ratio canonical/render came back 0.90 and 0.92 against an
+     advance ratio of 0.964 and 0.971, i.e. BOTH dimensions were over, where the
+     display had an exact height and a short advance. 14.464 -> 13.2 with scaleX
+     0.9027 -> 0.96.
+
+     The cap was read off a flat-topped stem in each line (rule 7): the capital
+     I of "ShotIQ" in line 1 (glyph 14 of 38) and the l of "goals" in line 2
+     (glyph 12 of 27). Whole-line vertical extent is NOT usable here — line 1
+     carries a Q descender and a comma, line 2 carries g and p descenders, so
+     the two lines' full extents are not measuring the same thing and disagreed
+     by 2%. Segment counts are asserted equal between canonical and render
+     before any ratio is taken, so a mis-segmentation cannot masquerade as a
+     size difference.
+
+     dx/dy are per-line and are NOT shared: at the solved size the rendered cap
+     sat 1.770 px low on line 1 and 4.987 px low on line 2. They differ because
+     the recipe's `top` values were originally read off each line's whole-ink
+     top, and line 2's tallest ink is an ascender where line 1's is a capital.
+     Band mean |d| 21.19 -> 12.77. */
+  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
+           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: 0, ty: 0 },
+  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
+           colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
   oneacct: { x: 188.97, top: 444.30, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
              colour: "var(--s4-graphite)", dx: -0.86, dy: 6.075, tx: 0, ty: 0 },
   labFirst: { x: 69.39, top: 564.61, size: 14.30, weight: 700, scale: 0.640, ls: 0.0500,
