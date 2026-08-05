@@ -102,6 +102,15 @@ config/
 # scratchpad copy once. They live in git so that cannot happen again.
 !basketball-analysis/docs/shotiq/canonical/*.png
 !basketball-analysis/docs/shotiq/canonical-desktop/*.png
+# The iOS asset catalog is the app's shipping artwork, not an incidental image.
+# Without this, `git add -A` silently skips a new imageset's PNG while happily
+# committing its Contents.json, so the build gets an asset entry pointing at a
+# file that is not there and the screen falls back to its placeholder. That is
+# exactly what happened to the two recent-capture thumbnails on 026: the commit
+# said the photos were cut and shipped, and the next capture still showed two
+# black rectangles. The existing 003/004 PNGs were force-added by hand, which
+# is why the trap was invisible until someone added a third.
+!basketball-analysis/ios-native/**/Assets.xcassets/**/*.png
 
 # Large dataset directories (use Git LFS or S3 for these)
 training_data/raw_downloads/
