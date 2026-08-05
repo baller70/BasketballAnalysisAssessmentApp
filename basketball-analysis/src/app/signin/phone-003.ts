@@ -240,8 +240,26 @@ export const RUNS: Record<string, Run> = {
   display: { x: 52, top: 226.77, size: 75.99, weight: 600, scale: 0.8539, ls: 0.0547,
              ws: 7.14, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
              bang: true, dx: 3.01, dy: 30.4, tx: -0.5503, ty: 0.6055 },
-  body: { x: 52, top: 382.38, size: 14.285, weight: 378, scale: 0.9107, ls: -0.0044,
-          colour: "var(--s3-graphite)", dx: -0.86, dy: 6.075, tx: -0.0354, ty: 0.6095, lead: 35.989 },
+  /* The two-line lede is ONE run, so its size, scaleX and weight are solved
+     JOINTLY against both lines rather than fitted to line 1 (ledger rule 14).
+     Fitting line 1 alone parked all the error on line 2 — cap -0.628, advance
+     +1.62 and ink +5.1% at once, which is not a one-parameter error.
+     The cause is a face metric, measured: canonical's x-height on both lines is
+     16.02 and 16.03 device px where Geist at the matched ascender-to-descender
+     extent draws 18.18 and 18.23 — 13.5% larger. Line 2, "analyses, and
+     progress.", has no capital at all, so it is almost entirely x-height and
+     carries the whole discrepancy; line 1 has a cap C and four ascenders and
+     hides it.
+     The obvious alternative — size the run so the x-height matches — was
+     measured, not assumed: at 12.58px the x-heights agree and the run collapses
+     to cap -3.14 / -3.90 and ink -11.2% / -7.2%, far worse on every metric.
+     Geist is the only body-weight face in the pack (the rest are Tungsten
+     display and Boxed), so the x-height ratio is not selectable, and the joint
+     fit below is the minimax: cap +0.298 / -0.461, advance -0.31 / +1.50,
+     ink -2.5% / +2.1%. */
+  body: { x: 52, top: 382.38, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
+          colour: "var(--s3-graphite)", dx: -0.86, tx: -0.0358, dy: 6.075, ty: 1.1626,
+          lead: 35.989 },
   labelEmail: { x: 53, top: 527.31, size: 12.784, weight: 646, scale: 0.7444, ls: 0.0514,
                 colour: "var(--s3-label)", dx: 1.68, dy: 6.13, tx: -0.2228, ty: 0.3096 },
   helpEmail: { x: 53, top: 699.34, size: 12.548, weight: 401, scale: 0.8149, ls: 0.0230,
@@ -384,17 +402,20 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
   color:var(--shotiq-color-muted);letter-spacing:0em}
 .s3 [data-s3="eye"]{position:absolute;left:${u(729)};top:${u(857)};width:${u(52)};height:${u(41)};
   padding:0;margin:0;transform:none;display:block;color:var(--shotiq-color-ink)}
-.s3 [data-s3="checkbox"]{position:absolute;left:${u(52.60)};top:${u(1014.76)};width:${u(28.4)};
-  height:${u(27.5)};margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;
-  border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(3.06)} var(--s3-label)}
+.s3 [data-s3="checkbox"]{position:absolute;left:${u(52.60)};top:${u(1015.35)};width:${u(28.4)};
+  height:${u(28.0)};margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;
+  border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(3.06)} var(--s3-label);
+  transform:translate(${u(0.87)},${u(-0.594)})}
 .s3 [data-s3="checkbox"]:checked{background:var(--shotiq-color-shotiqOrange);
   box-shadow:inset 0 0 0 ${u(2.5)} var(--shotiq-color-shotiqOrange)}
 .s3 [data-s3="focus"]{display:block;position:absolute;left:${u(324.44 - PLATE.x)};
-  top:${u(1122.78 - PLATE.y)};width:${u(67.0)};height:${u(67.0)}}
+  top:${u(1122.78 - PLATE.y)};width:${u(67.0)};height:${u(67.0)};
+  transform:translate(${u(0.64)},${u(1.364)})}
 .s3 [data-s3="appleMark"]{display:block;position:absolute;left:${u(263.95 - BOX_X)};
   top:${u(1361.4 - APPLE.y)};width:${u(39.14)};height:${u(48.41)}}
 .s3 [data-s3="googMark"]{display:block;position:absolute;left:${u(255.55 - BOX_X)};
-  top:${u(1492.25 - GOOGLE.y)};width:${u(44.24)};height:${u(47.18)}}
+  top:${u(1492.25 - GOOGLE.y)};width:${u(44.24)};height:${u(47.18)};
+  transform:translate(${u(-1.02)},${u(-0.947)})}
 /* Ink corrections for the two provider marks, scoped HERE rather than in the
    markup: both components are shared DOM and desktop 077 is graded on their
    markup values. Canonical draws the Apple glyph pure black (darkest sample
