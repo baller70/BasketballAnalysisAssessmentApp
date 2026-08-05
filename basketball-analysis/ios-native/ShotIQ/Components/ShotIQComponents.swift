@@ -262,7 +262,21 @@ struct TopBar: View {
         .padding(.horizontal, 20)
         .frame(height: 52)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-        .sheet(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
+        // THE MENU IS A FULL SCREEN IN THE DESIGN, NOT A SHEET.
+        //
+        // Canonical 020 is white from row 0 — no backdrop, no rounded card
+        // inset, no drag handle — and it draws its own X to close, which is the
+        // affordance a full-screen modal needs and a sheet does not. Presented
+        // as a `.sheet`, the card top landed at 207px of 2556 and every screen
+        // reached through the menu lost 69pt off the top and 69pt of height:
+        // 021, 022, 023 and 024 all shot with a black band above them where
+        // canonical has none. Their content then sits ~69pt lower than
+        // canonical everywhere, which no amount of internal layout can correct.
+        //
+        // `fullScreenCover` restores the canonical geometry for all four at
+        // once. The X already calls `dismiss()`, so nothing is lost but the
+        // swipe-down, which canonical never showed.
+        .fullScreenCover(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
     }
 }
 

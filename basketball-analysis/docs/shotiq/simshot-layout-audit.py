@@ -94,6 +94,14 @@ FULL_BLEED = {
     "025",  # photo-comparison — two full-bleed frames
     "030",  # live-camera-setup — camera preview
     "031",  # hoop-calibration — camera preview
+    # 024 elite-shooter-detail — the hero shooter frame is full-bleed RIGHT in
+    # canonical 053 too, and this was very nearly "fixed" on the strength of an
+    # eyeball. Measured: canonical's photo carries colour out to x=852 of 853
+    # (the wall at y=350 reads (13,19,24) and the floor at y=440 reads
+    # (178,143,103) in the final column), occupying the right edge from 62.4pt
+    # to 211.6pt — 17.5% of the screen height. The render does the same over
+    # 19.8%. The edge ink on this screen is the design, not an overflow.
+    "024",
 }
 
 
