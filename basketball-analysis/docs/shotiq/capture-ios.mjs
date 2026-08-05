@@ -145,6 +145,21 @@ async function shoot(p, row) {
         // the visible one — the control the player can actually tap.
         await p.locator(step.selector).filter({ visible: true }).first()
           .click({ timeout: 8000 })
+      } else if (step.action === 'fill') {
+        // Some canonical screens are captured in a FILLED state, not an empty
+        // one. 003-sign-in is: it draws a typed address, a masked password, a
+        // green ring and two validation lines, none of which exist before the
+        // player types. Typing is the real user path to that state and it is
+        // deterministic, so it is a step rather than a rendering default.
+        await p.locator(step.selector).filter({ visible: true }).first()
+          .fill(step.value, { timeout: 8000 })
+      } else if (step.action === 'blur') {
+        // A filled field is still focused, and a focus ring is a state the
+        // canonical render does not show. Blur before the shot.
+        await p.evaluate(() => {
+          const el = document.activeElement
+          if (el instanceof HTMLElement) el.blur()
+        })
       } else if (step.action === 'setInputFiles') {
         await p.setInputFiles(step.selector, path.join(APP, step.file), { timeout: 8000 })
       } else {
