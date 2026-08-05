@@ -1488,7 +1488,17 @@ struct EliteShooterDetailView: View { // 053
                                     .buttonStyle(.plain)
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            // The tab strip is inset FURTHER than the rest of
+                            // the screen, and canonical is consistent about it:
+                            // on 053 the back label sits at 21.65pt, the name at
+                            // 21.19, the meta line at 22.11, CAREER SHOOTING
+                            // SUMMARY at 23.04 and FORM SCORE at 21.65 — but
+                            // OVERVIEW's ink starts at 31.79pt. Tungsten's "O"
+                            // carries a side bearing of a few tenths of a point
+                            // at 13pt, nowhere near the ~10pt difference, so the
+                            // inset is deliberate. At 31 the render's first ink
+                            // lands at ~31.3pt against canonical's 31.79.
+                            .padding(.horizontal, 31)
                         }
                         .padding(.top, 14)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
