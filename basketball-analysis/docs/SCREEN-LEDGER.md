@@ -210,7 +210,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — twenty-two, each learned by getting something wrong
+## Method rules — twenty-three, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -315,6 +315,16 @@ string rolling over at midnight.
     the ones a stem investigation is about. Read the RIGHT stem across the top
     of the glyph and the LEFT stem across the bottom. That reproduces
     canonical's 16.08 / 15.84 to within 0.02.
+
+23. **md5 detects duplicates, NOT regressions.** Re-running the full iOS sweep
+    after the 003 word-spacing change, four screens changed hash — 003 plus
+    021, 041 and 071. Measured, the three extras differ by a **max delta of
+    1 to 3 with ZERO pixels above 8**: rasteriser jitter between identical
+    captures of the same build, not a leak. 003's real change reads 2,376 px
+    above 8 with a max delta of 255. So md5 keeps its actual job — catching a
+    redirect that ate a screen, which is what found 072 == 048 — and regression
+    is judged on a pixel threshold. The desktop side already knew this shape:
+    8 of its 20 are not byte-stable run to run. On iOS it is 3 of 72.
 
 ## Standing rulings
 
