@@ -107,6 +107,45 @@ So the honest count after the sheet fix is: two edge failures the tool can see
 least one squeeze it cannot (028 — addressed by measurement against canonical,
 not by the tool).
 
+#### VERIFIED IN THE BUILT CAPTURE — run 31034064989, target-head 1bbba34
+
+The audit goes **3 failing → 1 failing**, and the mechanism is confirmed by the
+one measurement that can only mean one thing. Same `Wordmark(size: 30)`, same
+code path, inside the sheet:
+
+| screen | before | after | pushed-screen reference |
+|---|---|---|---|
+| 021 profile-menu | 320px | **206px** | 206px |
+| 022 points-system | 320px | **206px** | 206px |
+| 023 elite-shooters | 317px | **201px** | 206px |
+| 024 elite-shooter-detail | 320px | **206px** | 206px |
+
+1.556x → 1.000x. Both of 021's criteria pass, checked separately as the earlier
+partial fix taught: "DASHBOARD MODE" is on ONE line (was "DASHBOA / RD MODE"),
+its caption is on three (was eight one-word lines), **and the segmented control
+still reads "Analysis" / "Training" intact** — it did not collapse. 023's filter
+chips read "All Levels", "All Positions", "All Shot Types" in full where Kevin
+photographed "All Le…", "All Po…", "All Sh…". 026 leaves the failing list: all
+four capture cards now sit inside the screen.
+
+**024 still fails, improved not fixed: right-edge ink 58% → 36% of the height.**
+The shooter photo still bleeds to the screen edge where canonical stops it at
+367pt, and the tab row still runs off. The tab row is the face problem measured
+below, not a size problem.
+
+**And the capture caught a claim that was wrong.** The same run shows 026's
+carousel geometry fixed and two of its four thumbnails still black. The assets
+had been cut and their `Contents.json` committed; the PNGs had not, because
+`.gitignore` carries a blanket `*.png` and `git add -A` skips silently. The
+commit said the photos shipped. They had not. Re-including the asset catalog
+then exposed the real scale: **97 imagesets on disk, 83 PNGs in git** — fourteen
+more live asset references in shipping builds resolving to nothing, each one a
+screen drawing its placeholder instead of its photograph on Kevin's phone. All
+sixteen are committed now.
+
+The lesson is the ledger's own: a claim is what the built capture shows, not
+what the commit says. Nothing but re-reading the pixels would have found this.
+
 Fixed by moving the clamp onto `CanonicalScreen` — the scaffold every canonical
 screen already uses — so it is presentation-independent, plus
 `.modifier(CanonicalTypeScale())` on all ten `.sheet` / `.fullScreenCover`
