@@ -39,6 +39,27 @@
  *     248/255/[74 85]/255/248 — ringing on BOTH sides), so below ~30px an
  *     eroded stroke core is unobtainable and colour is solved from total ink at
  *     matched geometry instead.
+ *
+ * TWO THINGS THIS SCREEN ADDED TO THE METHOD.
+ *
+ * 1. Canonical 003 is the FILLED, VALIDATED state, not the empty form. It draws
+ *    a typed address, sixteen mask bullets, a green ring beside the address and
+ *    two "Looks good." lines — five bands that do not exist until the player
+ *    types. The route map therefore drives 003 with `fill` + `blur` steps; that
+ *    is the real user path and it is deterministic. Capturing the empty form
+ *    measures a different screen, the same class of mistake as capturing
+ *    /signin signed IN (which redirects away entirely).
+ *
+ * 2. Placement quantises on TWO different lattices and both need beating.
+ *    `top` moves a run in steps of ~2 device px and `left` in steps of ~2.17
+ *    (one whole CSS px), so neither alone can land a cap-top or an ink-left
+ *    that falls between. A `translate()` INSIDE the element's own transform
+ *    does better: vertically it halves the step to one device px, which is
+ *    Skia's floor (it positions glyphs at sub-pixel x but snaps y to whole
+ *    device rows), and horizontally it is continuous. Every run therefore
+ *    carries `tx`/`ty` probed against the render. The worst residual left on
+ *    the screen is 0.49 device px of cap-top, i.e. under a quarter of a CSS
+ *    pixel, and it is a lattice residual rather than a modelling error.
  */
 
 /** canonical device px -> CSS px */
@@ -232,7 +253,7 @@ export const RUNS: Record<string, Run> = {
      response (cap = 1.52f + 2.1705t, stem = s(0.233f + 2.1705t),
      Sw = s(3.28f + 13.02t) for Semibold) gives f 77.15, t 0.734, s 0.858; the
      size and scale were then closed on the render itself to f 75.99, s 0.8539,
-     which lands cap 119.985 against canonical's 120.017 and advance 331.92
+     which lands cap 119.985 against canonical's 120.017 and advance 331.65
      against 331.81. The Medium branch of the same solve wants t 2.96 — four
      times the stroke — and lands ink at 22,136 against canonical's 21,028
      (+5.3%), where Semibold lands 20,635 (-2.0%). Semibold ships; the Medium
@@ -407,7 +428,7 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
   border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(3.06)} var(--s3-label);
   transform:translate(${u(0.87)},${u(-0.594)})}
 .s3 [data-s3="checkbox"]:checked{background:var(--shotiq-color-shotiqOrange);
-  box-shadow:inset 0 0 0 ${u(2.5)} var(--shotiq-color-shotiqOrange)}
+  box-shadow:inset 0 0 0 ${u(3.06)} var(--shotiq-color-shotiqOrange)}
 .s3 [data-s3="focus"]{display:block;position:absolute;left:${u(324.44 - PLATE.x)};
   top:${u(1122.78 - PLATE.y)};width:${u(67.0)};height:${u(67.0)};
   transform:translate(${u(0.64)},${u(1.364)})}
