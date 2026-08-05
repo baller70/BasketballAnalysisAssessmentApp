@@ -146,6 +146,35 @@ sixteen are committed now.
 The lesson is the ledger's own: a claim is what the built capture shows, not
 what the commit says. Nothing but re-reading the pixels would have found this.
 
+**THE SIXTEEN ASSETS ARE VERIFIED IN THE BUILT CAPTURE — run 31035797861,
+target-head 86c25e1.** Diffed screen-for-screen against the previous capture at
+1bbba34, measuring the fraction of each screen occupied by the placeholder's
+near-black fill (luma 20–45). Thirteen screens changed materially and on every
+one the placeholder area collapses:
+
+| screen | placeholder before | after |
+|---|---|---|
+| 035 live-form-feedback | 38.9% | **2.2%** |
+| 034 live-recording | 37.6% | **3.3%** |
+| 072 upload-quality-check | 25.4% | **2.1%** |
+| 036 shot-detected | 20.3% | **1.4%** |
+| 058 shot-tracker | 17.4% | **1.4%** |
+| 045 metric-detail | 14.9% | **0.8%** |
+| 049 share-results | 11.7% | **0.7%** |
+| 026 analyze-hub | 6.8% | **1.1%** |
+| 042 frame-detail-skeleton | 6.9% | **5.3%** |
+| 015 home-new-player | 4.5% | **2.4%** |
+
+026's carousel confirms it by eye: four photographs where two were black
+rectangles, all four inside the screen. The artifact also grew 33.4MB → 39.6MB,
+which is what more photography compresses to.
+
+**026's two remaining defects, stated:** the canonical crops carry the design's
+own duration badge baked into their pixels and the app draws its own over the
+same corner, so the pill ghosts — visible on all four cards. And the last two
+captions wrap ("Yesterday •" / "6:42 PM") where canonical sets them on one line
+at the same 85pt card width. Neither is 024, which is the screen in progress.
+
 Fixed by moving the clamp onto `CanonicalScreen` — the scaffold every canonical
 screen already uses — so it is presentation-independent, plus
 `.modifier(CanonicalTypeScale())` on all ten `.sheet` / `.fullScreenCover`
