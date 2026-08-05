@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | GRADED **A-** | **A-** | one defect: the Google mark ships the official brand palette, canonical does not; back with the builder |
+| 003 | sign-in | RE-GRADING | — | all four A- defects closed and verified; desktop baseline updated; fresh grader on verify-003d |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -189,6 +189,35 @@ consistent across BOTH images, so the quantity that matters agrees: split 0.01
 against 0.06, both far inside the 0.4 band. Absolute positions from two
 estimators are not comparable; a difference taken within one estimator is.
 
+### A- defects closed — all four verified independently
+
+| item | canonical | before | after |
+|---|---|---|---|
+| Google red (interior shell) | (240.4, 55.6, 45.0) | worst ch 11.4 | **0.6** |
+| Google yellow | (252.2, 199.8, 15.7) | 11.8 | **0.8** |
+| Google green | (33.6, 164.7, 82.4) | 18.4 | **0.6** |
+| Google blue | (60.4, 135.0, 250.5) | 6.5 | **1.0** |
+| lede L1->L2 baseline delta | 38.255 | 37.323 (-0.932) | **38.323 (+0.068)** |
+| OR centre gap | 69.12 | 71.00 | **69.51** |
+| OR rule lengths | 339.70 / 339.39 | 338.00 / 338.00 | **339.40 / 339.15** |
+| iOS whole screen mean \|d\| | — | 3.6546 | **3.6443** |
+
+**Desktop 077's baseline was deliberately replaced**, md5 now
+`b63899cfcf03f1880373d9b032ce9614`. The Google palette fix lives in shared
+markup because canonical disagrees with the brand palette on BOTH surfaces, so
+077 legitimately changed. It improved: its Google yellow, measured over every
+matching pixel since a 5x7 arc at DSF 1 has no interior to shell, goes from
+(250.9, 189.2, 11.3) to (252.9, 200.9, 21.0) against canonical's
+(251.7, 195.8, 25.2) — worst channel 13.9 -> 4.2. The whole-screen mean barely
+moves (22.5465 -> 22.5467) because 25 pixels are nothing against 1.3M and that
+figure is dominated by the sidebar-versus-top-nav structural difference anyway.
+
+**Two of these needed my estimator fixed before they read true**, which is rule
+25 twice more. An integer-row baseline probe said the lede fix made things
+WORSE (38 -> 39 against canonical 38); sub-pixel says -0.932 -> +0.068. And the
+OR rules returned "no runs" twice before I noticed the plateau was being
+estimated across the loud "OR" glyphs.
+
 ### Grade bands pinned for the next 003 capture
 
 The grader fixed these in advance so the grade cannot drift, and it reclassified
@@ -272,7 +301,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — twenty-nine, each learned by getting something wrong
+## Method rules — thirty, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -438,6 +467,14 @@ string rolling over at midnight.
     (0,0,0), white (254.1) against (255) — all within 2 units, while the Google
     arcs differ by 6-20. A chain that leaves orange, black and white alone did
     not move the arcs.
+
+30. **A threshold computed from a contaminated plateau reports NOTHING, which
+    looks like no data rather than a broken read.** Measuring 003's OR rules,
+    my first two attempts returned "0 runs". The rules are a hairline peaking at
+    only 0.27 coverage while the "OR" glyphs between them peak ~10x higher, so a
+    plateau estimated across the whole row lands the 50% threshold above the
+    entire feature. Estimate the plateau OUTSIDE the loud neighbour. A null from
+    a segmenter is a claim about the segmenter until proven otherwise.
 
 ## Standing rulings
 
