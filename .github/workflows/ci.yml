@@ -30,10 +30,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      # package.json declares `engines: node >=22.0.0`, and the Capacitor CLI
+      # (v8) refuses to run below 22 — the iOS sync step below fails hard on
+      # Node 20. CI had been pinned to a version the project itself declares
+      # unsupported; this aligns them and clears the Node 20 deprecation notice.
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: basketball-analysis/package-lock.json
 
