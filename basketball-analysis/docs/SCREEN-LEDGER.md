@@ -240,31 +240,53 @@ The 020 pill resisted measurement because the label sits inside chrome. Screen
 can be asked without a window problem. Canonical 038 against the native 040
 capture, matching each string to ITSELF rather than normalising per glyph:
 
-| string | canonical advance / cap | native advance / cap (kerning removed) | ratio |
-|---|---|---|---|
-| FLAWS | 19.8 / 7.85 = 2.522 | 38.33 / 10.67 = 3.592 | **1.424** |
-| PLAYER | 23.5 / 7.85 = 2.994 | 42.73 / 10.67 = 4.005 | **1.338** |
-| COMPARE | 29.0 / 7.85 = 3.694 | 54.47 / 10.67 = 5.105 | **1.382** |
+**CORRECTED — the first version of this table used a contaminated cap and its
+ratios (1.34–1.42) were wrong.** The native cap was read as 10.67pt from a
+whole-band scan of 040's tab row. That band is 45px tall for a 13pt font, i.e.
+cap/em = 1.15, which is impossible and should have stopped the measurement on
+the spot (rule: a cap larger than its em proves the window is wrong). The cause:
+**040's ACTIVE tab sits on a different baseline from its inactive ones** —
+"ANALYSIS RESULT" inks rows 409..436 while FLAWS, PLAYER and COMPARE ink
+426..453, 17px lower. The scan was measuring two baselines as one glyph height.
 
-Three different strings, each compared only with itself, agreeing at 1.34–1.42.
-Cap-normalising removes size from the comparison entirely, so what is left is
-width-per-cap — the face. **Canonical sets this role in a condensed grotesque
-and the app sets it in the wide Boxed face.** Shrinking the point size cannot
-fix it: matching the cap alone (13 → 9.56pt) still leaves the seven tabs
-summing to roughly 487pt against a 393pt screen, which is why only four and a
-half of them are visible.
+Per-word, the cap is **9.33pt on both 024 and 040** — consistent, as it must be
+for one role at one size. And the honest comparison is advance per character
+per unit cap, which removes both size and string length:
+
+| | canonical | native | |
+|---|---|---|---|
+| 053 OVERVIEW | 35.94/8 = 4.49 at cap 9.70 → **0.463** | 62.20/8 = 7.775 at cap 9.33 → **0.833** | |
+| 038 FLAWS | 19.8/5 = 3.96 at cap 7.85 → **0.504** | 38.67/5 = 7.734 at cap 9.33 → **0.829** | |
+
+Native is strikingly consistent at **0.83 per cap** across two screens and two
+strings; canonical runs 0.46–0.50. **The app's face advances ~1.73x wider per
+unit cap than canonical's for this all-caps tab role.** That is a face error and
+nothing else — and note the point size is NOT the problem on 024, where the cap
+measures 9.33pt against canonical's 9.70pt, within 4%.
 
 And the obvious substitute is measured to be wrong in the other direction:
 Tungsten is far narrower than a normal grotesque — the wordmark note above
 records Tungsten-Black advancing 73px against the canonical face's 148px at the
-same cap, aspect 2.70 against 5.48. The tab role needs 1/1.38 = 0.72x the
-Boxed width, not ~0.5x. **So neither bundled face matches this role, and the
-next step is to identify a face at the measured width rather than to swap in
-whichever condensed face is already linked.** Nothing has been changed on the
-strength of this yet.
+same cap, aspect 2.70 against 5.48, i.e. ~0.5x. The tab role needs 1/1.73 =
+**0.58x** the Boxed width. Tungsten is close to that and is the first candidate
+worth actually measuring, which the earlier wrong ratio (needing 0.72x) had
+ruled out. The app bundles only two families — Boxed (medium/semibold/heavy)
+and Tungsten (medium/semibold/bold/black) — so this is the only substitution
+available without adding a font.
+
+**STATED RESIDUAL, not forced.** 024's five tabs sum to ~511pt against a 393pt
+screen (67 + 73 + 73 + ~81 + ~73 labels, four 26pt gaps, 40pt padding) where
+canonical 053 fits them in 332.6pt from 31.8pt to 364.4pt with 33.3pt gaps. The
+row is inside a horizontal `ScrollView`, so every tab is reachable; it is not
+clipped-dead. Closing the gap needs the face question SETTLED BY MEASUREMENT —
+render "OVERVIEW" in Tungsten at a cap of 9.70pt and compare its advance with
+canonical's 35.94pt — not by shrinking the point size (which measures correct on
+024) and not by squeezing the gaps (which would break a measured metric to fix
+another).
 
 040 also drops the "ANALYSIS" tab that canonical carries between "ANALYSIS
-RESULT" and "FLAWS" — six tabs against canonical's seven.
+RESULT" and "FLAWS" — six tabs against canonical's seven — and puts its active
+tab on a baseline 17px above its inactive ones, which canonical does not.
 
 ### The pattern behind 020, and why the earlier fix made it worse
 
