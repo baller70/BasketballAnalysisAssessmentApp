@@ -92,15 +92,28 @@ unlike the white-pixel masks tried first, which returned a 35.5pt "cap height"
 inside a 35.5pt pill because they caught the pill edges. That contamination is
 the reason the numbers below stop where they do.
 
-Canonical's "Training" label measures **36.14pt advance at 11.19pt cap** — eight
-characters in 36pt is ~4.5pt per character, which is a CONDENSED face. The app
-sets that label with `shotiqBody`, which is the wide Boxed face. So the control
-may be too wide because it is in the WRONG FACE, not because its size or padding
-is wrong, and those call for different fixes. Do not shrink the font to chase
-the width until the face question is settled: measure the render's "Training"
-advance and cap the same way, and compare cap-normalised advance per character
-against canonical. A face error and a size error look identical in a width
-ratio alone.
+Canonical's "Training" label measures **36.14pt advance** over 8 letters, i.e.
+~4.5pt per letter. The app sets that label with `shotiqBody`, the wide Boxed
+face, so the control may be too wide because it is in the WRONG FACE rather than
+at the wrong size — and those call for different fixes.
+
+**THAT QUESTION IS STILL OPEN, and the first attempt to settle it produced
+garbage that had to be thrown away.** Comparing cap-normalised advance per glyph
+returned a tidy-looking 1.0999, and it was worthless for two reasons, both
+visible in the same output:
+  - canonical segments to **6** glyphs where the render gives **8** for the same
+    8-letter word, because canonical's tighter setting merges pairs. Dividing
+    each advance by its own segment count then compares different things. Use
+    letters (8 in both), never detected segments, for a per-character figure.
+  - the render's cap came back **13.986pt for a 13pt font**. A cap cannot exceed
+    its em size, so that window was catching the pill's rounded border, not the
+    type. The measurement is impossible on its face and was discarded rather
+    than reasoned from.
+
+So the next pass must first find a window that isolates the LABEL from the pill
+chrome — the ~120px-tall window used here is far taller than the text — and
+sanity-check every cap against its font size before any ratio is taken. A cap
+larger than the em is the cheapest available proof that a window is wrong.
 
 ### The pattern behind 020, and why the earlier fix made it worse
 
