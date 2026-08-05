@@ -1146,6 +1146,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
         }
         .sheet(isPresented: $showForgot) {
             NavigationStack { ForgotPasswordView() }
+                .modifier(CanonicalTypeScale())
         }
     }
 }

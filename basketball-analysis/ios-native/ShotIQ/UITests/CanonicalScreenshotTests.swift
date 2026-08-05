@@ -477,6 +477,16 @@ final class CanonicalScreenshotTests: XCTestCase {
         let manifest = """
         ShotIQ canonical screenshot walk
         ================================
+        // Record what the APP actually received, not what the capture script
+        // meant to send. `TEST_RUNNER_SIMSHOTS_EXTRA_ARGS` reaches this process
+        // only when xcodebuild had it in its environment; passed as a trailing
+        // `KEY=value` argument it becomes a build setting and silently vanishes,
+        // which turned one falsification run into a clamped capture wearing an
+        // unclamped label. An arm that claims to change the app configuration is
+        // only readable against this line.
+        extra launch arguments: \(Self.extraLaunchArguments.isEmpty
+            ? "none" : Self.extraLaunchArguments.joined(separator: " "))
+
         screenshots captured: \(Self.captured.count)
 
         \(Self.captured.joined(separator: "\n"))

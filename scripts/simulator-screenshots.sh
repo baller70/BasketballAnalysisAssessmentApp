@@ -293,6 +293,23 @@ step 'Running the canonical screenshot + click-test walk'
 test_deadline="${SIMSHOTS_TEST_DEADLINE:-2400}"
 test_log="${work_dir}/xcodebuild-test.log"
 set +e
+# `TEST_RUNNER_*` HAS TO BE EXPORTED, NOT PASSED AS AN ARGUMENT.
+#
+# xcodebuild forwards variables named `TEST_RUNNER_<NAME>` **from its own
+# environment** into the test runner process as `<NAME>`. A trailing
+# `TEST_RUNNER_FOO=bar` on the command line is not that: xcodebuild parses a
+# bare `KEY=value` argument as a BUILD SETTING OVERRIDE, so it lands in the
+# build settings table and never reaches the runner.
+#
+# That is how the falsification run of 2026-08-05 (broker 31031150095) came
+# back valid-looking and meaningless. The log showed
+# `TEST_RUNNER_SIMSHOTS_EXTRA_ARGS=-uiTestNoTypeClamp` on the xcodebuild line
+# and `target-head.txt` carried the right commit, so both checks rule 41 asks
+# for passed — but the app never saw `-uiTestNoTypeClamp`, and the arm was a
+# clamped capture wearing an unclamped label. It read as "52 of 75 screens
+# byte-identical between the arms, so the clamp does nothing", which is exactly
+# the wrong conclusion: the two arms WERE the same run.
+env "TEST_RUNNER_SIMSHOTS_EXTRA_ARGS=${SIMSHOTS_EXTRA_ARGS:-}" \
 xcodebuild test-without-building \
   -project "$project" \
   -scheme "$scheme" \
@@ -304,7 +321,6 @@ xcodebuild test-without-building \
   -test-timeouts-enabled YES \
   -maximum-test-execution-time-allowance 420 \
   CODE_SIGNING_ALLOWED=NO \
-  TEST_RUNNER_SIMSHOTS_EXTRA_ARGS="${SIMSHOTS_EXTRA_ARGS:-}" \
   >"$test_log" 2>&1 &
 xcodebuild_pid=$!
 

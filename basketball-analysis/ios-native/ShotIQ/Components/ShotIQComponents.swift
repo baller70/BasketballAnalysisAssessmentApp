@@ -262,7 +262,7 @@ struct TopBar: View {
         .padding(.horizontal, 20)
         .frame(height: 52)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-        .sheet(isPresented: $showMenu) { ProfileMenuView() }
+        .sheet(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
     }
 }
 
@@ -651,6 +651,33 @@ struct CanonicalScreen<Content: View>: View {
         // wordmark and gear sit outboard of the island cutout, exactly as the
         // renders show them.
         .ignoresSafeArea(.container, edges: .top)
+        // THE CLAMP HAS TO LIVE HERE, NOT ONLY AT THE APP ROOT.
+        //
+        // `ShotIQApp` applies `CanonicalTypeScale()` to `RootView()` inside the
+        // `WindowGroup`. That covers everything the navigation stack pushes and
+        // nothing a `.sheet` presents: sheet content is hosted in its own
+        // presentation context, seeded from the scene, so an environment value
+        // set on the presenting view does not reach it. Every screen behind a
+        // sheet therefore ran at the phone's real text size while every pushed
+        // screen ran clamped.
+        //
+        // Measured in the r-simshots capture at accessibility-medium: `TopBar`
+        // and `ProfileMenuView` both draw `Wordmark(size: 30)` — the same view,
+        // same parameter — and the lockup came back 207px wide on a pushed
+        // screen (026) and 322px wide inside the profile-menu sheet (021/024),
+        // a factor of 1.556. That is the whole of what Kevin photographed:
+        // "DASHBOARD MODE" broken mid-word to "DASHBOA / RD MODE", "Choose what
+        // you see first when you open ShotIQ." falling into eight one-word
+        // lines, the elite filter chips truncated to "All Le…", and the shooter
+        // photo on 024 bleeding off the right edge. All four of those screens
+        // (021 profile-menu, 022 points-system, 023 elite-shooters, 024
+        // elite-shooter-detail) are reached through that one sheet.
+        //
+        // Clamping on the screen scaffold instead of the app root makes it
+        // presentation-independent: pushed, presented, or covered, a canonical
+        // screen pins its own scale. It is idempotent where the root modifier
+        // already applied.
+        .modifier(CanonicalTypeScale())
         .accessibilityIdentifier(testID)
     }
 }

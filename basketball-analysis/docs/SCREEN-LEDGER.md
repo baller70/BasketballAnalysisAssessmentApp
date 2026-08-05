@@ -53,12 +53,68 @@ PNGs — which nothing had ever done — and fails 8 of 75 screens:
 | 040 analysis-result-overview | ink down the left edge over 74% of the height; tab row truncated |
 | 026 analyze-hub | ink down the right edge over 19% of the height |
 
+**CORRECTION — "captured WITH the clamp active" was true of six of these rows
+and false of two.** The clamp was applied to `RootView()` inside the
+`WindowGroup`. Sheet content is hosted in its own presentation context and does
+not inherit an environment value set on the presenting view, so every screen
+reached through a sheet ran UNCLAMPED at the simulator's accessibility-medium
+size while every pushed screen ran clamped. The table above mixes the two
+populations and reads as one finding.
+
+**How it was measured, and why it is not an inference.** `TopBar` and
+`ProfileMenuView` both draw `Wordmark(size: 30)` — same view, same parameter,
+no branch between them. In the same capture the lockup came back **207px wide
+on pushed screen 026 and 322px wide inside the profile-menu sheet (021, 024),
+a factor of 1.556**. Identical code cannot render at two sizes unless the
+environment differs, and Dynamic Type is the only environment input either one
+reads. Canonical 053 puts the lockup at 17.8% of the screen width; native 026
+measures 17.6% (correct) and native 024 measures 27.3%.
+
+So the rows split:
+
+- **021 profile-menu, 022 points-system, 023 elite-shooters, 024
+  elite-shooter-detail — all four reached through the one profile-menu sheet —
+  were magnified ~1.556×.** That is the whole of what Kevin photographed:
+  "DASHBOARD MODE" broken mid-word to "DASHBOA / RD MODE", "Choose what you see
+  first when you open ShotIQ." falling into eight one-word lines, the elite
+  filter chips truncated to "All Le…", the shooter photo bleeding off the right
+  edge on 024. `EditProfileSheet` is a sheet too and is not a `CanonicalScreen`,
+  which is the "Interme…" / "Advanc…" truncation in his third screenshot.
+- **005, 028, 040, 044, 058, 026 are pushed screens.** The clamp WAS active for
+  those, so they remain genuine defects at the design text size, and the
+  sentence below still holds for them.
+
+Fixed by moving the clamp onto `CanonicalScreen` — the scaffold every canonical
+screen already uses — so it is presentation-independent, plus
+`.modifier(CanonicalTypeScale())` on all ten `.sheet` / `.fullScreenCover`
+bodies for the presented views that are not `CanonicalScreen`s.
+
+**Consequence for 020's open question.** The pill measured "100.7pt against
+canonical's 59.0pt" was measured on 021, inside the magnified sheet:
+100.7 / 1.556 = 64.7pt. Most of that gap was the magnification, not the
+control. Re-measure before changing the pill; and note the Spacer fix at
+f59bae6 was real but could only ever be partial, because the dominant cause was
+never in `HomeFlow`.
+
 **THE CLAMP WAS NECESSARY AND IS NOT SUFFICIENT, and the record should say so.**
-These were captured WITH the Dynamic Type clamp active, so they are not text-size
-artefacts — they are defects at the design text size, and they are exactly what
-Kevin meant by "almost every screen … alignment issues … running off the page".
-Rule 38 explains why no capture had shown them; this table is what was actually
-in the pixels once something looked.
+The six pushed rows are not text-size artefacts — they are defects at the design
+text size, and they are exactly what Kevin meant by "almost every screen …
+alignment issues … running off the page". Rule 38 explains why no capture had
+shown them; this table is what was actually in the pixels once something looked.
+
+**The falsification arm proved nothing, and the reason is worth keeping.** Run
+31031150095 passed both checks rule 41 asks for — `target-head.txt` read
+`ee8fa629`, the valid unclamped commit, and the xcodebuild line carried
+`TEST_RUNNER_SIMSHOTS_EXTRA_ARGS=-uiTestNoTypeClamp`. Its result was that 52 of
+75 screens came back byte-identical to the clamped arm, which reads as "the
+clamp does nothing". It is the wrong conclusion: **xcodebuild forwards
+`TEST_RUNNER_*` from its own ENVIRONMENT, and a trailing `KEY=value` on the
+command line is parsed as a build-setting override instead**, so the app never
+received the argument and the two arms were the same run. The 52 identical
+screens were a tautology. Fixed by exporting the variable
+(`env TEST_RUNNER_… xcodebuild …`), and the walk's manifest now prints the
+launch arguments the app ACTUALLY received, so the next arm can be checked
+against what ran rather than against what the command line intended.
 
 ### The native screens have no local verification loop — plan for it
 
@@ -455,7 +511,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — thirty-six, each learned by getting something wrong
+## Method rules — forty-three, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -809,6 +865,45 @@ string rolling over at midnight.
     pixels: it says which arm actually ran, and it is the difference between an
     experiment and a coin flip. The same file is how a run's provenance
     (repository, ref, content size) gets confirmed at all.
+
+42. **An environment modifier applied at the app root does not reach anything
+    presented in a sheet — so a "global" fix has a hole exactly where the app's
+    modal surfaces are.** `ShotIQApp` put `CanonicalTypeScale()` on `RootView()`
+    inside the `WindowGroup`. Sheet content is hosted in its own presentation
+    context, seeded from the scene rather than from the presenting view, so
+    every screen behind `.sheet` ran at the phone's real text size while every
+    pushed screen ran clamped. Four screens (021, 022, 023, 024) and
+    `EditProfileSheet` are all reached through the one profile-menu sheet, and
+    all of them are the screens Kevin photographed as broken. The fix that
+    survives is to clamp on `CanonicalScreen`, the scaffold every screen already
+    uses, so it holds however the screen is presented.
+
+    The general form: **a cross-cutting fix must live on the thing that is
+    common to the population it claims to cover, not on an ancestor that happens
+    to contain most of it.** `RootView` is the ancestor of most screens;
+    `CanonicalScreen` is what all screens ARE.
+
+    And the tell that found it: the same view (`Wordmark(size: 30)`) with the
+    same parameter, measured on two screens, rendered 207px and 322px wide.
+    **When identical code measures two sizes, stop looking at the code and start
+    looking at the environment it is in.** Two hours were spent before that on
+    the containers around it — the Spacer, the chip widths, the photo frame —
+    all of which were downstream of a scale factor nobody had measured.
+
+43. **Verify that a test-harness switch reached the app, not that the command
+    line carried it.** `TEST_RUNNER_SIMSHOTS_EXTRA_ARGS=…` passed as a trailing
+    argument to `xcodebuild` is a BUILD SETTING OVERRIDE; xcodebuild only
+    forwards `TEST_RUNNER_*` into the runner from its own ENVIRONMENT. The
+    falsification arm therefore ran clamped while its log showed the unclamped
+    flag, and produced "52 of 75 screens byte-identical between the arms" — a
+    tautology that reads exactly like a refutation. It passed both of rule 41's
+    checks, because those checks confirm which COMMIT ran, not which
+    CONFIGURATION.
+
+    So the walk's manifest now prints the launch arguments the app actually
+    received. An arm that claims to change the app's configuration is only
+    readable against that line, and any A/B whose two arms come back identical
+    should be suspected of being one arm run twice before it is believed.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

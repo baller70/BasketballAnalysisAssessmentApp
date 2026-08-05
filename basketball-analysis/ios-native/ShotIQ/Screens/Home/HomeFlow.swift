@@ -52,7 +52,7 @@ struct HomeView: View {
             }
         }
         .task { await vm.load() }
-        .sheet(isPresented: $showMenu) { ProfileMenuView() }
+        .sheet(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
     }
 }
 

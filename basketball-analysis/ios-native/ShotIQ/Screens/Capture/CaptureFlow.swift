@@ -560,6 +560,7 @@ struct PhotoUploadSourceView: View { // 022
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPhotoCaptureView { img in image = img; goReview = true }
+                .modifier(CanonicalTypeScale())
         }
         .navigationDestination(isPresented: $goReview) { PhotoReviewCropView(image: image) }
     }
@@ -794,6 +795,7 @@ struct PhotoReviewCropView: View {  // 023
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPhotoCaptureView { img in image = img }
+                .modifier(CanonicalTypeScale())
         }
     }
 }

@@ -568,6 +568,7 @@ struct CustomizePlayerCardView: View { // 049
             }
             .padding(.horizontal, 24)
             .presentationDetents([.medium, .large])
+            .modifier(CanonicalTypeScale())
         }
         .eliteInfoAlert($layoutInfo)
     }

@@ -844,13 +844,19 @@ struct GoalDetailView: View {       // 065
                 completed = goal.completedAt != nil
             }
         }
+        // `.modifier(CanonicalTypeScale())` on every presented body: sheet
+        // content does not inherit the clamp the app root puts on `RootView`,
+        // and these two bodies are plain VStacks rather than `CanonicalScreen`,
+        // so the scaffold's copy does not reach them either.
         .sheet(isPresented: $showLogProgress) {
             logProgressSheet
                 .presentationDetents([.height(320)])
+                .modifier(CanonicalTypeScale())
         }
         .sheet(isPresented: $showEdit) {
             editGoalSheet
                 .presentationDetents([.medium])
+                .modifier(CanonicalTypeScale())
         }
     }
 
@@ -2284,7 +2290,7 @@ struct ProfileView: View {          // 070
                 }
             }
         }
-        .sheet(isPresented: $showEditProfile) { EditProfileSheet() }
+        .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
         .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
     }
     private func profileStat(_ value: String, _ label: String) -> some View {
@@ -2733,7 +2739,7 @@ struct SettingsHubView: View {      // 071
                 }
             }
         }
-        .sheet(isPresented: $showEditProfile) { EditProfileSheet() }
+        .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
     }
     private func settingsStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
