@@ -79,22 +79,27 @@ function AppleMark() {
  *  by 6 to 20 and in different directions per channel (green's R is -19 while
  *  red's R is +6), which no single chain effect produces.
  *
- *  It is corrected HERE, in shared markup, rather than in PHONE_CSS — the
- *  opposite of the fill/stroke corrections below it — because canonical
- *  DESKTOP 077 disagrees with the official palette in the SAME direction:
- *  measured there, green R 32.7 against official 52, yellow G 193.8 against
- *  188, blue B 251.2 against 244. Both canonical surfaces want the same
- *  change, so making it shared moves 077 toward canonical, not away. The phone
- *  values are the ones used because that measurement is far better
- *  conditioned: a 47px mark with 19-52 px in the d[3,4) shell, against a 24px
- *  mark with 4-23 px at d[2,3) on desktop. */
+ *  Canonical DESKTOP 077 disagrees with the official palette in the same
+ *  direction — measured there, green R 32.7 against official 52, yellow G
+ *  193.8 against 188, blue B 251.2 against 244 — so the shared markup is
+ *  arguably wrong on both surfaces. It is NOT corrected here, because the
+ *  desktop guard does not support it. 077's own mark is 16x16 and sits 88 px
+ *  from canonical's 21x19 one, so no pixel metric there can see a colour
+ *  change: whole-image mean |d| went 22.5465 -> 22.5467 and mark-against-mark,
+ *  aligned on their own bounding boxes, 59.03 -> 59.30 — both marginally WORSE,
+ *  both dominated by that size-and-position mismatch, while the per-arc plateau
+ *  distance improved 45.1 -> 38.0. With the pixel guard unmet the correction is
+ *  scoped to the phone (see PHONE_CSS), where the mark is 47px and the shell
+ *  carries 19-52 px. These `data-arc` hooks are what the phone overrides; an
+ *  attribute renders nothing, so desktop 077 stays byte-identical to its
+ *  graded baseline. Promote the four fills here when 077 gets its own pass. */
 function GoogleMark() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
-      <path fill="#3C86FA" stroke="#3C86FA" strokeWidth="0" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.5h12.1c-.2 1.9-1.6 4.8-4.5 6.8l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7Z"/>
-      <path fill="#21A552" stroke="#21A552" strokeWidth="0" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.02-6.7 5.2-.1.3C7.9 41 15.4 46 24 46Z"/>
-      <path fill="#FDC80F" stroke="#FDC80F" strokeWidth="0" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4 0-1.5.3-3 .7-4.4v-.3l-6.8-5.3-.2.1A22 22 0 0 0 2 24c0 3.5.9 6.9 2.5 9.9l7-5.5Z"/>
-      <path fill="#F0372D" stroke="#F0372D" strokeWidth="0" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.4 1 7.9 6 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1Z"/>
+      <path data-arc="blue" fill="#4285F4" stroke="#4285F4" strokeWidth="0" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.5h12.1c-.2 1.9-1.6 4.8-4.5 6.8l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7Z"/>
+      <path data-arc="green" fill="#34A853" stroke="#34A853" strokeWidth="0" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.02-6.7 5.2-.1.3C7.9 41 15.4 46 24 46Z"/>
+      <path data-arc="yellow" fill="#FBBC05" stroke="#FBBC05" strokeWidth="0" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4 0-1.5.3-3 .7-4.4v-.3l-6.8-5.3-.2.1A22 22 0 0 0 2 24c0 3.5.9 6.9 2.5 9.9l7-5.5Z"/>
+      <path data-arc="red" fill="#EA4335" stroke="#EA4335" strokeWidth="0" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.4 1 7.9 6 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1Z"/>
     </svg>
   )
 }
