@@ -24,6 +24,15 @@ which no check enforced:
      at length in Components/CanonicalPhoto.swift). Screens that are legitimately
      full-bleed are listed in FULL_BLEED and excluded by name, not by threshold.
 
+  KNOWN BLIND SPOT, do not read a pass here as "this screen is clean". The
+  line detector works on FULL-WIDTH row bands, so it cannot see a squeeze in
+  one column of a side-by-side pair: the neighbouring column's long line makes
+  the band wide, and the narrow one never registers. Screen 028's right-hand
+  card breaks "View filming tips" over three lines and its caption over four —
+  measured against canonical 026 at 86.00pt for a string canonical sets in
+  63.12pt — and this audit reports 028 as passing. Two-column rows still need
+  reading against their canonical by eye.
+
   2. SQUEEZED COLUMNS — a stack of consecutive short lines, i.e. text wrapping
      one or two words per line. This is what "DASHBOARD MODE" breaking into
      "DASH / BOAR / D / MODE" looks like to a measurement, and it is the single
@@ -137,18 +146,36 @@ def audit_screen(path: str, edge_tol: int, narrow_frac: float, min_run: int,
         (y0, y1) for y0, y1 in row_bands(tbody)
         if H * 0.004 < (y1 - y0) < H * 0.028
     ]
+    # A RUN OF SHORT LINES ONLY MEANS A SQUEEZED COLUMN IF THE LINES ARE
+    # ACTUALLY STACKED.
+    #
+    # The original counter incremented on any short line that followed another
+    # short line, however far apart they sat. Screen 005 (create-account) is
+    # five section labels — FIRST NAME, LAST NAME, EMAIL, PASSWORD, CONFIRM
+    # PASSWORD — each legitimately short, each separated from the next by an
+    # empty input field that contributes no ink. It failed the audit with
+    # "5 consecutive short lines, narrowest 67px" while the screen is, checked
+    # against canonical 004, entirely correct. Acting on that would have meant
+    # "fixing" a screen with nothing wrong with it.
+    #
+    # Wrapped text is tightly stacked: a 12pt line inks ~30px with a ~14px gap.
+    # Form labels are a field apart — 100px and more. So a gap wider than 1.4x
+    # the line's own height starts a new run rather than extending the old one.
     longest = run = 0
     narrowest = W
+    prev_y1 = None
     for y0, y1 in lines:
         seg = tbody[y0:y1 + 1]
         nz = np.nonzero(seg.sum(axis=0))[0]
         width = int(nz[-1] - nz[0]) if len(nz) else 0
         if width < W * narrow_frac:
-            run += 1
+            stacked = prev_y1 is not None and (y0 - prev_y1) <= max(8.0, 1.4 * (y1 - y0))
+            run = run + 1 if (run and stacked) else 1
             longest = max(longest, run)
             narrowest = min(narrowest, width)
         else:
             run = 0
+        prev_y1 = y1
 
     full_bleed = name[:3] in FULL_BLEED
     clipped = (not full_bleed) and (

@@ -81,8 +81,31 @@ So the rows split:
   edge on 024. `EditProfileSheet` is a sheet too and is not a `CanonicalScreen`,
   which is the "Interme…" / "Advanc…" truncation in his third screenshot.
 - **005, 028, 040, 044, 058, 026 are pushed screens.** The clamp WAS active for
-  those, so they remain genuine defects at the design text size, and the
-  sentence below still holds for them.
+  those, so whatever is wrong with them is wrong at the design text size.
+
+**And then four of those six turned out not to be defects at all, which is the
+audit's fault rather than the app's.** Reading each capture against its
+canonical instead of trusting the tool:
+
+- **005 create-account is CORRECT.** Its "5 consecutive short lines, narrowest
+  67px" are the five section labels — FIRST NAME, LAST NAME, EMAIL, PASSWORD,
+  CONFIRM PASSWORD — each legitimately short and each separated from the next
+  by an empty input field that inks nothing. The run counter incremented across
+  a hundred-pixel gap. Fixed: a gap wider than 1.4x a line's own height now
+  starts a new run rather than extending the old one, because wrapped text is
+  tightly stacked and form labels are a field apart. 005, 044 and 058 leave the
+  failing list on that alone; nothing was changed in the app for them.
+- **028 video-upload IS a real squeeze and the tool now MISSES it.** Its
+  right-hand card breaks "View filming tips" over three lines and its caption
+  over four. The tool cannot see it because it measures full-width row bands,
+  and the neighbouring card's long line makes every band wide. **A pass from
+  this audit is not evidence that a two-column row is clean** — that limitation
+  is now written at the top of the script.
+
+So the honest count after the sheet fix is: two edge failures the tool can see
+(024, 026 — both addressed), one squeeze it can see (021 — addressed), and at
+least one squeeze it cannot (028 — addressed by measurement against canonical,
+not by the tool).
 
 Fixed by moving the clamp onto `CanonicalScreen` — the scaffold every canonical
 screen already uses — so it is presentation-independent, plus
