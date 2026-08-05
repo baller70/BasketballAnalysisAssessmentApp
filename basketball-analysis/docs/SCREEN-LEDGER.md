@@ -202,15 +202,29 @@ estimators are not comparable; a difference taken within one estimator is.
 | OR rule lengths | 339.70 / 339.39 | 338.00 / 338.00 | **339.40 / 339.15** |
 | iOS whole screen mean \|d\| | — | 3.6546 | **3.6443** |
 
-**Desktop 077's baseline was deliberately replaced**, md5 now
-`b63899cfcf03f1880373d9b032ce9614`. The Google palette fix lives in shared
-markup because canonical disagrees with the brand palette on BOTH surfaces, so
-077 legitimately changed. It improved: its Google yellow, measured over every
-matching pixel since a 5x7 arc at DSF 1 has no interior to shell, goes from
-(250.9, 189.2, 11.3) to (252.9, 200.9, 21.0) against canonical's
-(251.7, 195.8, 25.2) — worst channel 13.9 -> 4.2. The whole-screen mean barely
-moves (22.5465 -> 22.5467) because 25 pixels are nothing against 1.3M and that
-figure is dominated by the sidebar-versus-top-nav structural difference anyway.
+By region: lede 9.204 -> 9.022, OR 1.796 -> 1.784, Google mark 9.133 -> 8.305.
+
+**Desktop 077's baseline was NOT changed after all, and my replacing it was a
+mistake I had to undo.** I told the builder to put the palette fix in shared
+markup because canonical disagrees with the official palette on both surfaces,
+and pre-emptively swapped the baseline. The builder measured the gate I had
+attached — "confirm 077 improves" — and it failed: whole-image mean |d| 22.5465
+-> 22.5467, mark-against-mark aligned on their own bboxes 59.03 -> 59.30, both
+marginally worse. Only the per-arc plateau distance improved, 45.1 -> 38.0.
+
+The gate is blind here and the builder said so: 077's own Google mark is 16x16
+sitting 88 px from canonical's 21x19, so a pixel metric there compares our mark
+against canonical's button interior and cannot score colour at all. It is very
+likely the shared change would be right. **It stays out anyway** — 077 is not
+the screen in progress, and "the metric cannot see it, trust me" is not a
+standard worth starting to accept, least of all when it favours the change I
+asked for. Inert `data-arc` hooks and the full analysis sit in `page.tsx`; it is
+a four-line promotion when 077 gets its pass, by which time its mark will be the
+right size and place for the guard to see the result.
+
+Baseline restored to `69b2184b0f0e7553108d23c2aae71071` and confirmed against a
+fresh capture. I caught it only because the builder's report said 0 differing
+pixels where mine had said the baseline moved.
 
 **Two of these needed my estimator fixed before they read true**, which is rule
 25 twice more. An integer-row baseline probe said the lede fix made things
@@ -301,7 +315,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — thirty, each learned by getting something wrong
+## Method rules — thirty-one, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -475,6 +489,13 @@ string rolling over at midnight.
     plateau estimated across the whole row lands the 50% threshold above the
     entire feature. Estimate the plateau OUTSIDE the loud neighbour. A null from
     a segmenter is a claim about the segmenter until proven otherwise.
+
+31. **Do not replace a baseline before the change that justifies it has passed
+    its own guard.** I swapped the desktop baseline in the same cycle I asked
+    for a shared-markup change, the change failed its gate and was reverted, and
+    the baseline sat wrong until the builder's report contradicted mine. A
+    baseline is only as good as the last measurement that confirmed it — update
+    it after the guard passes, never in anticipation.
 
 ## Standing rulings
 
