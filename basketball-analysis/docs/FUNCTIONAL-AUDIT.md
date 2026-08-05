@@ -102,3 +102,43 @@ upload feature works or not.
 seeded shooters, and a sign-in-able account. Re-runnable, because this container
 has reclaimed both `/var/lib/postgresql/*` and `basketball-analysis/.next`
 mid-session — the environment is not durable, so recreation has to be cheap.
+
+---
+
+## 4. Web sweep — 25 sidebar routes, signed in
+
+Ran against a production build with a real session. Per route: HTTP status,
+broken images, dead buttons, console errors.
+
+**Good news, measured rather than assumed:**
+
+- **All 25 sidebar routes return HTTP 200.** No dead tabs.
+- **Zero broken images across the whole app** — 287 `<img>` elements, every one
+  resolved. "All the pictures" is clean.
+
+Three routes I first reported as 404 were **my** wrong paths, not the app's:
+Goals is `/results/demo/goals`, Achievements is `/points`, Help points at
+`/guide`. Checked against `ShotIQShell`'s nav table and re-run before reporting.
+
+**Two real defects:**
+
+### 4a. `/api/media` has no GET, so the Media library can never show your uploads
+
+`src/app/api/media/route.ts` exports **`DELETE` only**. `src/app/media/page.tsx:120`
+does `fetch("/api/media")` — a GET — which returns **405 Method Not Allowed**.
+The call is wrapped in `.catch(() => {})`, so the failure is silent and the page
+falls back to its hardcoded demo groups.
+
+This is the same complaint as the upload one, one layer down: Media *advertises*
+your captured content and structurally cannot show it. It also breaks the
+iOS→web direction directly — an iOS upload lands in `media_uploads`, and the web
+Media page has no endpoint to read it back.
+
+### 4b. Dashboard "Why this matters" is a dead control
+
+`src/app/dashboard/page.tsx:273` — `<button type="button">` with an `Info` icon
+and **no `onClick`**. It looks like an explain-this affordance and does nothing.
+
+Both are additive fixes (a GET handler; a handler for the button) — neither
+requires removing anything. Not made yet: 4a is a backend change with auth
+scoping, and backend changes should be asked for rather than assumed.
