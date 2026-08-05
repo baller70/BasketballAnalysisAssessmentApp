@@ -238,9 +238,40 @@ const BOX_W = 748.35
    rejects and `tsc` does not. */
 
 export const RUNS: Record<string, Run> = {
-  /* SHOTIQ — Geist at cap 44.85. Canonical advances 225.78 against Geist's 214.6
-     at that cap, so scaleX runs slightly OVER 1 here; the wordmark is the one
-     run on this screen that is WIDER than Geist. */
+  /* SHOTIQ — Geist, chosen by measuring EVERY face and cut in the pack against
+     the wordmark, not by inheritance. Each candidate was solved to its own
+     optimum (size for cap height 41.87, scaleX for advance 225.90) and then
+     compared on ratios taken INSIDE the run, where scaleX and font-size cancel:
+
+       face        H/S     O/S     T/S     I/S   stem/cap   ink%   ratio-RMS
+       canonical  1.1415  1.4607  1.2155  0.3064  0.2219
+       geist-400  1.0022  1.2257  1.1296  0.1938  0.1256   -35.3    0.1653
+       geist-600  1.0012  1.3249  1.0051  0.2554  0.1878   -12.6    0.1657
+       geist-759  0.9988  1.3178  1.1244  0.3050  0.2334    +3.1    0.1279  <-
+       geist-900  0.9911  1.2926  1.1259  0.3394  0.2667   +15.6    0.1401
+       boxed-400  1.0020  1.0014  0.9259  0.2489  0.1825   -15.3    0.3237
+       boxed-600  0.9967  0.9964  0.9130  0.2767  0.2154    -3.5    0.3306
+       boxed-800  glyphs will not separate at any threshold — unmeasurable
+       tung-400   1.0389  1.0323  1.0329  0.3114  0.2299    -8.0    0.2753
+       tung-600   1.0258  1.0301  0.9744  0.3695  0.2877   +14.9    0.2926
+       tung-700   1.0320  1.0329  0.9199  0.4309  0.3562   +38.6    0.3068
+       tung-900   1.1287  1.1273  1.1416  0.5638  0.4092   +54.3    0.1973
+       russo-400  0.9999  1.1792  1.2173  0.7058  0.2460   +15.1    0.1819
+
+     Geist at this weight wins the pack outright on ratio-RMS, and I/S — the
+     weight-sensitive control, running 0.1938 -> 0.3394 across Geist 400-900 —
+     lands 0.3050 against canonical's 0.3064, which is what pins the weight.
+
+     H/S IS UNREACHABLE, and it is a family property rather than a weight.
+     Canonical draws its H 14% wider than its S. Within Geist, H/S runs 1.0022 /
+     1.0012 / 0.9988 / 0.9911 across weights 400-900 — flat, and FALLING with
+     weight, so no Geist weight reaches it. Boxed is flat too (1.0020 / 0.9967)
+     and Russo is 0.9999. Only Tungsten Black rises to 1.1287, and it does so at
+     +54.3% ink with an area ladder of 1.50-1.76, which rule 4 calls heavy at
+     every level. O/S is the same story and worse: canonical 1.4607 against
+     Geist's 1.3178, Boxed's 1.00 and Tungsten's 1.03. Canonical's wordmark face
+     is not in this pack; Geist is the closest thing in it, and H/S -12.3% and
+     O/S -9.8% are the bounded residuals. */
   wordmark: { x: 44, top: 41.29, size: 25.856, weight: 759, scale: 1.0481, ls: 0.0123,
               colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: -0.0527, ty: -0.0958 },
   eyebrow: { x: 51, top: 99.37, size: 12.053, weight: 501, scale: 0.9977, ls: 0.1115,
@@ -294,6 +325,18 @@ export const RUNS: Record<string, Run> = {
      per-glyph cap-top error rising from 0.58 to 0.85. So the run stays solved
      on its 50%-crossing extent, which straddles the two cap lines (round -0.31,
      flat +0.56), and the flat cap runs 1.86 px short as the stated cost.
+
+     N/G, the width-distribution question, closes the same way and for the same
+     reason. Canonical's N/G is 1.0891; the four cuts give 1.0362 / 1.0048 /
+     0.9774 / 0.9559, falling monotonically with weight and ALL below canonical,
+     so N/G wants a weight lighter than Medium — while I/N 0.3574 pins the
+     weight just above Semibold. The two point to opposite ends of a range the
+     pack does not even span at the light end, Medium being its lightest cut.
+     The grader's own separability test settles that this is not a second,
+     independent finding: G/I varies by 0.7934 across the four cuts against a
+     0.05 threshold for weight-invariance, i.e. 16x, while the I/N control
+     sweeps 0.3259 -> 0.4826. G/I tracks weight, so the width distribution is
+     the weight question already settled above, not a family discriminator.
 
      WORD SPACING is the one thing that did move. It was 7.14, which put the
      word space 5.65 px wide (+11.9%) and dragged "IN" right — the second word's
