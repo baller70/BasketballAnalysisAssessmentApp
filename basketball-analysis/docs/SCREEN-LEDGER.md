@@ -546,6 +546,39 @@ Doing this on 003 separated two effects that a single diff would have blamed on
 the screen in progress: 86,798 pixels moved since the last Aug 4 capture, of
 which only 163 were the screen's own work.
 
+## HOW THIS ACTUALLY REACHES KEVIN — the step that was missing all along
+
+Kevin could not see any of the work, and the reason was not the branch. It was
+that **nothing in CI deploys the live site.**
+
+- The iOS app is a Capacitor shell whose `capacitor.config.ts` sets
+  `server.url = https://shotiq.194-146-12-139.sslip.io`. **It loads the live web
+  app.** No Xcode build, no TestFlight and no App Store update is needed for a
+  screen change to reach the phone — the user force-quits and reopens.
+- That host is a Contabo VPS. The app runs under **pm2 as `shotiq`**, cwd
+  `/opt/shotiq/basketball-analysis`, `next start --port 3060`.
+- The checkout at `/opt/shotiq` tracks `main` and **must be pulled by hand**.
+  It was sitting on PR #52 while `main` had reached #54.
+- Reach it with the exec bridge: POST to `$KC_FULL_BRIDGE_URL` with
+  `Authorization: Bearer $KC_FULL_BRIDGE_TOKEN` and `{"command": "..."}`.
+  Playwright cannot reach the host from this container (the browser bypasses
+  the egress proxy and the connection resets); `curl` can.
+
+**Deploy sequence — build BEFORE restart so a failure cannot take the app down:**
+
+1. `cd /opt/shotiq && git checkout -- basketball-analysis/yarn.lock && git pull --ff-only origin main`
+   (that lockfile is always dirty on the server; discard it)
+2. Check whether deps changed between the server's old SHA and the new one. If
+   not, skip install — the repo declares pnpm, so `yarn install` refuses.
+3. `cd basketball-analysis && NODE_ENV=production NODE_OPTIONS=--max-old-space-size=4096 npx next build`
+4. Only on exit 0: `pm2 restart shotiq --update-env`
+5. Verify from outside: `curl -s https://shotiq.194-146-12-139.sslip.io/signin`
+   and grep for a marker the new code has and the old does not — `data-s3=`
+   worked here, reading 0 before and 5+ after.
+
+**Deploy after every screen from now on**, and send Kevin the app-vs-design
+image. Merging to `main` alone changes nothing he can see.
+
 ## Infrastructure notes
 
 - **The ledger-first rule has now prevented acting on wrong state twice in one
