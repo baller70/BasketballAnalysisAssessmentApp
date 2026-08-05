@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | RE-GRADING | — | all four A- defects closed and verified; desktop baseline updated; fresh grader on verify-003d |
+| 003 | sign-in | RE-GRADING | — | all four A- defects closed and verified; palette scoped to phone, desktop baseline UNCHANGED and confirmed from two capture paths; fresh grader on the shipping capture 834c8b18 |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
