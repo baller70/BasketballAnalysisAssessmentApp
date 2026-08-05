@@ -140,9 +140,35 @@ const FIELDS: Record<string, [number, number]> = {
 export const RUNS: Record<string, Run> = {
   wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0456, ls: 0.0123,
               colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 0 },
-  display: { x: 69.04, top: 161.59, size: 49.63, weight: 600, scale: 0.8539, ls: 0.0547,
-             ws: 3.85, stroke: 0.479, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 3.01, dy: 30.4, tx: 0, ty: 0 },
+  /* CREATE ACCOUNT. The size was right and the WIDTH was not, which is the one
+     pairing rule 32 says to read together before calling anything a size error:
+     cap height canonical/render came back 1.0009 — exact — while the advance
+     came back 1.1928. Same face (Tungsten Semibold 600 confirmed *loaded*, not
+     a fallback: `document.fonts` reports `__tungstenDisplay|600|loaded`, and a
+     fallback would have faked this same signature), so the whole 19.28% is
+     horizontal scale: 0.8539 x 1.192767 = 1.018524. The twelve inter-glyph
+     gaps agree with the whole-run advance (ratios 1.13..1.26 about a 1.192
+     mean, the spread being integer segmentation on 24-40px glyphs), which is
+     what rules out a letter-spacing-only or word-spacing-only cause.
+     dx and dy are re-solved rather than scaled: measured from the element's own
+     box origin, the cap sat 19.841 canonical px below the box top (not the
+     30.4 assumed) and the left bearing was 0.6725, which scales with scaleX to
+     0.8022. x and top are canonical's own sub-pixel ink edges.
+     scale 1.0195 and stroke 0.33 are the settled values: from 1.018524 the band
+     mean fell 15.669 -> 14.801, and the surface is flat within 0.07 across
+     sc 1.019..1.020 x stroke 0.28..0.43, so the remaining digits are noise.
+     THE VERTICAL RESIDUAL IS UNREACHABLE, and it is the bulk of what is left.
+     Chromium positions text sub-pixel HORIZONTALLY but snaps the baseline to a
+     whole DEVICE pixel vertically, so `ty` and `top` both quantise: ty=-0.1094
+     produced a byte-identical screenshot, ty=-0.2189 jumped the full -1.0 px,
+     and moving the box -0.4608 scored identically while +0.4608 scored 19.75
+     against 15.67. Both rungs were measured; this is the better one. The run
+     therefore sits +0.475 (cap top) / +0.403 (foot) canonical px low and cannot
+     be placed closer. Do not "fix" it — the two lattices are why `tx`/`ty` are
+     inside the transform, and vertically there is nothing between the rungs. */
+  display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
+             ws: 3.85, stroke: 0.33, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: 0 },
   lede1: { x: 69.24, top: 281.45, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
            colour: "var(--s4-graphite)", dx: -0.86, dy: 6.075, tx: 0, ty: 0 },
   lede2: { x: 68.91, top: 327.77, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
