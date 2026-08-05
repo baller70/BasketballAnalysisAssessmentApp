@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | IN PROGRESS | — | builder work checkpointed at ed032eb (page.tsx, Marks003.tsx, phone-003.ts) |
+| 003 | sign-in | IN PROGRESS | — | checkpointed at ed032eb and 2fd4d6c; type within ±0.35 capTop / ±0.19 cap / ±2% ink on all but 4 runs; desktop-077 guard run and clean except a 163px mark leak relayed to the builder |
 | 004+ | … | not started | — | |
 
 ## Method rules — thirteen, each learned by getting something wrong
@@ -77,6 +77,24 @@ iOS 001 -> 072, then desktop 077 -> 096.
     crossbar/cap ~ 0.64 — a 3.05x disagreement, invariant under scaleX and scaleY.
     The alternative cut was measured and shown worse. That is what "unreachable"
     must look like, not "I tried and it did not work".
+14. **Solve related runs jointly, not one at a time.** Two runs sharing a token
+    trade error back and forth indefinitely when tuned separately. On 003 body1
+    and remember sat at -5.0% and +5.2% ink through several rounds of
+    single-run tuning and closed as soon as they were solved together.
+15. **Cap-top deltas that share a sign are ONE container offset.** On 003 five
+    unrelated runs at three sizes read -3.32, -4.20, -3.35, -2.67 and -2.02:
+    nothing positive. A per-run type error scatters around zero. Fixing that
+    with five compensating leading tweaks lands the cap tops and leaves every
+    inter-band gap wrong, and a grader measures gaps. After the container fix
+    the same runs read +0.22, +0.28, -0.31, -0.32 and +0.33.
+16. **A media query scopes CSS; it does not scope an SVG attribute.** 003's
+    phone CSS lives in `@media (max-width: 767.98px)` and is genuinely
+    desktop-neutral — but two ink corrections were made as markup attributes on
+    `AppleMark` and `GoogleMark`, which are shared components, and they painted
+    at every viewport. Route the correction through the media query instead: set
+    `fill` on the path from inside it, and for a stroke keep `stroke="<colour>"`
+    permanently with `stroke-width="0"` in the markup and raise the width only
+    inside the query — a zero-width stroke paints nothing.
 
 Also: **check the ASSET, not just the CSS** (002 drew an entirely different
 photograph at the right size and position), and **a large desktop-guard diff is
@@ -94,8 +112,41 @@ string rolling over at midnight.
   them and breaking another metric.
 - Do not commit a tree that fails `tsc` or a screen that breaks its size invariant.
 
+## The desktop regression guard — how to run it properly
+
+A screen that shares a route with a desktop screen needs a real before/after,
+not a diff against whatever capture happens to be lying around. `/signin` draws
+both iOS 003 and desktop 077, so 003 was guarded like this:
+
+1. `git worktree add --detach <dir> <commit-before-this-screen>` and symlink
+   `node_modules` into it. This gives a true "before" without touching the
+   builder's working tree while it is still running.
+2. Build both trees into their own `NEXT_DIST_DIR`, serve on their own ports.
+3. Capture with a **bare `chromium.launch()`** — `capture-web.mjs` uses no
+   flags, and every desktop grade on record was made in that rasteriser. Using
+   `--font-render-hinting=none` here (correct for iOS) shifts text and swamps
+   the diff. The two harnesses genuinely disagree, so never compare across them.
+4. Capture `/signin` **signed out** in its own context, and assert the URL did
+   not redirect.
+5. Compare BOTH captures to canonical, not just to each other. "Changed" and
+   "regressed" are different findings and only the second one matters.
+
+Doing this on 003 separated two effects that a single diff would have blamed on
+the screen in progress: 86,798 pixels moved since the last Aug 4 capture, of
+which only 163 were the screen's own work.
+
 ## Infrastructure notes
 
+- **The canonical sets are in git** at `docs/shotiq/canonical` (iOS 001-072) and
+  `docs/shotiq/canonical-desktop` (077-096), with `.gitignore` negations because
+  `*.png` is blanket-ignored. Use those, not the scratchpad copies. The builder
+  brief template is at `docs/shotiq/SCREEN-BRIEF-TEMPLATE.md`; `BRIEF-002.md`
+  was lost in the rollback.
+- **The PR #53 merge cost desktop 077 fidelity**, before any 003 work. Against
+  canonical it went from mean |d| 21.465 / 281,859 px over 8 (Aug 4) to
+  22.547 / 291,046 at `daa0d1a`. That is the phone-shell work. 077 gets its own
+  pass in the desktop sequence; it is recorded here so it is not later
+  misattributed to whatever screen happens to be in progress.
 - **PR #53 is MERGED** (`daa0d1a`). Follow-up work restarts the branch from
   `origin/main`, which is what recovered from the rollback.
 - CI needs Node 22 (package.json declares `engines: >=22`), runs the Capacitor
