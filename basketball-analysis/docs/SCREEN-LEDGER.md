@@ -44,7 +44,7 @@ PNGs — which nothing had ever done — and fails 8 of 75 screens:
 
 | screen | defect, measured |
 |---|---|
-| 021 profile-menu | **13 consecutive short lines, narrowest 23px of 1178** — "DASHBOARD MODE" wraps as DASH / BOAR / D / MODE. **FIX WRITTEN, NOT YET VERIFIED** (f59bae6) |
+| 021 profile-menu | was 13 short lines / narrowest 23px. **f59bae6 VERIFIED, PARTIAL: now 8 lines / narrowest 76px.** The Spacer was a real cause and not the only one. Second criterion PASSED — the segmented control did NOT collapse back into "Analy sis"/"Traini ng". Remaining cause MEASURED: the control is **100.7pt wide against canonical's 59.0pt** (orange pill, clean column-run estimator), so it still eats the label column. See the note below before changing it |
 | 005 create-account | 5 consecutive short lines, narrowest 67px |
 | 058 shot-tracker | 5 consecutive short lines, narrowest 134px |
 | 028 video-upload | 4 consecutive short lines, narrowest 65px |
@@ -78,6 +78,29 @@ Consequences to respect:
   expensive part, not the screen.
 - A cold run rebuilds DerivedData from scratch. Firing against a non-`main` ref
   costs the full build every time.
+
+#### 020's remaining cause — measure the FACE before changing the size
+
+Verified on run 31024863200 (main @ 1aa6d4e, accessibility-medium): removing the
+Spacer took 021 from 13 consecutive short lines / narrowest 23px to 8 / 76px,
+and "DASHBOARD MODE" from four fragments to two. It did NOT clear the audit, so
+the fix is recorded as PARTIAL rather than done.
+
+What is solidly measured: the "Analysis" pill is **100.7pt** wide in the render
+against **59.0pt** in canonical, from orange column runs — a clean estimator,
+unlike the white-pixel masks tried first, which returned a 35.5pt "cap height"
+inside a 35.5pt pill because they caught the pill edges. That contamination is
+the reason the numbers below stop where they do.
+
+Canonical's "Training" label measures **36.14pt advance at 11.19pt cap** — eight
+characters in 36pt is ~4.5pt per character, which is a CONDENSED face. The app
+sets that label with `shotiqBody`, which is the wide Boxed face. So the control
+may be too wide because it is in the WRONG FACE, not because its size or padding
+is wrong, and those call for different fixes. Do not shrink the font to chase
+the width until the face question is settled: measure the render's "Training"
+advance and cap the same way, and compare cap-normalised advance per character
+against canonical. A face error and a size error look identical in a width
+ratio alone.
 
 ### The pattern behind 020, and why the earlier fix made it worse
 
