@@ -533,6 +533,15 @@ which only 163 were the screen's own work.
 
 ## Infrastructure notes
 
+- **The ledger-first rule has now prevented acting on wrong state twice in one
+  hour.** Scheduled wakeups that embed a state snapshot go stale the moment the
+  work moves, and two consecutive ones asserted that the desktop baseline had
+  been replaced with `b63899cf...` and that the Google palette lived in shared
+  markup. Both were reverted within the cycle; the true baseline is
+  `69b2184b0f0e7553108d23c2aae71071`. A cycle that trusted the prompt over this
+  file would have treated the correct baseline as a regression and "fixed" it
+  back. **Read this file first, every time, and let it win.**
+
 - **The canonical sets are in git** at `docs/shotiq/canonical` (iOS 001-072) and
   `docs/shotiq/canonical-desktop` (077-096), with `.gitignore` negations because
   `*.png` is blanket-ignored. Use those, not the scratchpad copies. The builder
