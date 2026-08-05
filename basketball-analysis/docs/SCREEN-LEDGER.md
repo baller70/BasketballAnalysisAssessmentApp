@@ -76,6 +76,30 @@ displacement, which were canonical's unsharp halo bridging bands the render
 keeps separate. Sweeping the threshold (rule 6) collapsed the worst case to
 1 device px. Rule 6 is not optional.
 
+## The desktop regression baseline — 20 screens, rebuilt
+
+`$SCRATCH/verify-desktop` now holds all 20 desktop screens captured from the
+current build, with per-screen numbers in `BASELINE.json`. It replaces
+`grade-web-r9`, which predates the PR #53 merge and therefore reports a
+regression on every screen the merge touched. The capture asserts what it always
+did: 20 distinct hashes, no overflow, one rail each.
+
+**These numbers are a REGRESSION baseline, not a fidelity score.** They run from
+18.058 (096) to 54.195 (094), mean 31.287, where iOS 003 sits at 3.772 — and
+that gap is mostly structural, not quality. Canonical puts navigation in a top
+bar so its content starts at x=0; this app puts it in a 196px sidebar by
+standing ruling, which displaces every screen horizontally. No amount of type
+work closes that, and a large absolute mean here means nothing on its own.
+Compare a screen only against its own earlier capture.
+
+Byte-identity is the stronger test where it is available. Desktop 077 came back
+md5 `69b2184b0f0e7553108d23c2aae71071`, identical to the pre-003 baseline — the
+capture harness's own duplicate check flagged it, which is a better proof that
+003 changed nothing on desktop than any pixel threshold.
+
+Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
+087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
+
 ## Method rules — seventeen, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
