@@ -280,7 +280,7 @@ export const RUNS: Record<string, Run> = {
      worse in either direction. These are four discrete OTFs, not a variable
      font, so there is nothing in between to try. Canonical's N carries thicker
      verticals relative to its I than any Tungsten cut, and the residual N stem
-     of -1.28 device px (-7.9%) is exactly that: bounded, and closed.
+     of -1.25 device px (-7.8%) is exactly that: bounded, and closed.
 
      A SECOND FACE RESIDUAL sets what this fit optimises. Canonical's round
      glyphs overshoot the flat cap by +0.114 device px; every Tungsten cut
@@ -305,8 +305,14 @@ export const RUNS: Record<string, Run> = {
      8.55 / 7.57 / 7.36 / 7.55 / 8.32 / 10.37. 5.90 is the minimum of both the
      pixel error and the placement error. Closing the word space the rest of the
      way costs block width, because canonical's letterforms are collectively
-     4.77 px wider than Tungsten's at this cap and the gaps have to absorb the
-     difference — which is the same face mismatch, seen from the other side. */
+     4.35 px wider than Tungsten's at this cap and the gaps have to absorb the
+     difference — which is the same face mismatch, seen from the other side.
+     What this costs, stated: block width goes from -0.16 to -2.32 device px
+     (-0.7%). It is bought with word space +5.65 -> +3.29, glyph-position max
+     error 3.80 -> 1.45, display-band mean |d| 8.55 -> 7.36 and whole-screen
+     mean |d| 3.772 -> 3.679, and the area ladder still straddles 1.0
+     (.980-1.011). Block width and word space cannot both be right here: the
+     letterforms are collectively narrow and one of the two has to absorb it. */
   display: { x: 52, top: 226.77, size: 75.99, weight: 600, scale: 0.8539, ls: 0.0547,
              ws: 5.90, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
              bang: true, dx: 3.01, dy: 30.4, tx: -0.5503, ty: 0.6055 },
