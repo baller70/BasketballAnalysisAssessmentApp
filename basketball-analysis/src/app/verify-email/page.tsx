@@ -60,7 +60,7 @@ function VerifyEmailBody() {
 
   return (
     <div className="w-full max-w-[440px]">
-      <span className="shotiq-wordmark block text-center text-[30px] leading-none">
+      <span className="shotiq-wordmark block text-center text-[25px] leading-none">
         SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
       </span>
       <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">VERIFY YOUR EMAIL</h1>

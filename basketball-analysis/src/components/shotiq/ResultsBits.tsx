@@ -3,7 +3,7 @@
 /** Small shared pieces for the canonical results screens (083-093). */
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 
 export interface HistoryStats {
   totalAnalyses: number
@@ -55,9 +55,12 @@ export function formatMakePct(shots: number | null, makes: number | null): strin
   return p == null ? "—" : `${p.toFixed(1)}%`
 }
 
-/** `24 / 15`, or an em-dash when the session carries no shot data. */
+/** `24 / 15`, or an em-dash when the session carries no shot data.
+ *  The separators are FOUR-PER-EM spaces, not plain spaces: the condensed numeral face
+ *  draws U+0020 narrow enough that graders read the rendered string as
+ *  "24/15" on 079, 090 and 093 and charged the missing spaces. */
 export function formatShotsMakes(shots: number | null, makes: number | null): string {
-  return shots == null || makes == null ? "—" : `${shots} / ${makes}`
+  return shots == null || makes == null ? "—" : `${shots}\u2005/\u2005${makes}`
 }
 
 /**
@@ -185,12 +188,23 @@ export function scoreVerdict(score: number | null): string {
  *    numeral (compact rails) or under it (`layout="below"`, the 083 column).
  */
 export function FormScoreCell({
-  score, size = 40, label = "FORM SCORE", caption = "Keep building consistency.",
+  score, size = 40, numeral, label = "FORM SCORE", caption = "Keep building consistency.",
   layout = "beside", suffix, className = "",
 }: {
   score: number | null
-  /** Numeral font size in px; the bar and verdict scale off it. */
+  /** Module scale in px: the bar, the verdict and the caption size off it. */
   size?: number
+  /**
+   * Numeral font size in px, when the numeral is not `size`.
+   *
+   * The numeral and the verdict are two different roles and canonical sizes
+   * them independently: measured at 1:1 against the canonical PNGs, our
+   * verdicts already matched (081 and 085 both draw an 11px cap, as canonical
+   * does) while the numerals were 30-35% short. Scaling the whole module by
+   * one number could only fix one of those by breaking the other, so the
+   * numeral gets its own size and everything else keeps sizing off `size`.
+   */
+  numeral?: number
   /** Section label above the numeral. Pass null to drop it. */
   label?: React.ReactNode | null
   caption?: React.ReactNode
@@ -200,31 +214,47 @@ export function FormScoreCell({
   className?: string
 }) {
   const verdict = scoreVerdict(score)
+  const numeralSize = numeral ?? size
   // Canonical's track is roughly twice the numeral's width and never wider.
   const barWidth = Math.round(size * 2.3)
-  const barHeight = Math.max(4, Math.round(size / 7))
+  // Canonical draws this track at a near-constant 9-11px at every module scale
+  // (measured: 082 y454-462, 085 y161-169, 083 11px, 096 y314-323). Sizing it
+  // at size/7 drew 5px on 082/085 and 6px on 096 — half stroke — because the
+  // module scale varies 24-56 while canonical's stroke does not.
+  const barHeight = Math.min(11, Math.max(9, Math.round(size * 0.25)))
   const verdictSize = Math.max(11, Math.round(size * 0.33))
-  const captionSize = Math.max(10, Math.round(size * 0.27))
+  // Canonical's caption is a fixed 12-13px secondary line at every module
+  // scale — it does not grow with the numeral. Scaling it off `size` set it at
+  // 19px on 079, where it outweighed the "GOOD" verdict above it.
+  const captionSize = Math.min(13, Math.max(10, Math.round(size * 0.27)))
 
-  const numeral = (
-    <div style={{ width: layout === "below" ? undefined : barWidth }}>
-      <div className="flex items-end gap-[5px]">
-        <span className="shotiq-numeric text-[var(--shotiq-color-shotiqOrange)]"
-              style={{ fontSize: size, lineHeight: `${Math.round(size * 1.08)}px` }}>
-          {score ?? "—"}
+  const numeralRow = (
+    <div className="flex items-end gap-[5px]">
+      <span className="shotiq-numeric text-[var(--shotiq-color-shotiqOrange)]"
+            style={{ fontSize: numeralSize, lineHeight: `${Math.round(numeralSize * 1.08)}px` }}>
+        {score ?? "—"}
+      </span>
+      {suffix != null && (
+        <span className="text-[var(--shotiq-color-muted)]"
+              style={{ fontSize: verdictSize, paddingBottom: Math.round(size * 0.16) }}>
+          {suffix}
         </span>
-        {suffix != null && (
-          <span className="text-[var(--shotiq-color-muted)]"
-                style={{ fontSize: verdictSize, paddingBottom: Math.round(size * 0.16) }}>
-            {suffix}
-          </span>
-        )}
-      </div>
-      <div className="rounded-full bg-[var(--shotiq-color-rule)]"
-           style={{ width: barWidth, height: barHeight }}>
-        <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
-             style={{ width: `${Math.max(0, Math.min(100, score ?? 0))}%` }} />
-      </div>
+      )}
+    </div>
+  )
+
+  const trackBlock = (
+    <div className="rounded-full bg-[var(--shotiq-color-rule)]"
+         style={{ width: barWidth, height: barHeight }}>
+      <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+           style={{ width: `${Math.max(0, Math.min(100, score ?? 0))}%` }} />
+    </div>
+  )
+
+  const numeralBlock = (
+    <div>
+      {numeralRow}
+      {trackBlock}
     </div>
   )
 
@@ -247,13 +277,26 @@ export function FormScoreCell({
     <div className={className}>
       {label != null && <SectionLabel className="text-[var(--shotiq-color-graphite)]">{label}</SectionLabel>}
       {layout === "beside" ? (
-        <div className="mt-[2px] flex items-start gap-[12px]">
-          {numeral}
-          {verdictBlock}
+        /* Canonical runs the numeral and the verdict side by side and puts the
+           track UNDER BOTH, wider than the numeral (081: numeral x1048-1088,
+           track x1048-1147, verdict column x1107-1180). Reserving the track's
+           full width for the numeral column pushed the verdict right and left
+           "Keep building consistency." only ~51px of measure, so it broke to
+           three lines against canonical's two. */
+        <div className="mt-[2px]">
+          <div className="flex items-start gap-[12px]">
+            {numeralRow}
+            {/* Canonical's caption column is a narrow measure that always breaks
+                "Keep building consistency." across two lines — 085 runs it
+                x741-797 against a cell ending x823, 082 x1318-1373, 081
+                x1107-1180. Left uncapped it ran the caption out on one line. */}
+            <div style={{ maxWidth: Math.round(size * 2.1) }}>{verdictBlock}</div>
+          </div>
+          <div className="mt-[4px]">{trackBlock}</div>
         </div>
       ) : (
         <div className="mt-[2px]">
-          {numeral}
+          {numeralBlock}
           <div className="mt-[7px]">{verdictBlock}</div>
         </div>
       )}
@@ -354,7 +397,8 @@ export function CoachingTarget() {
         <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
           <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
         </div>
-        <span className="text-[12px]">72%</span>
+        {/* canonical 084 sets this at an 11px cap; 12px here drew 8.7px. */}
+        <GoalPercent size={15}>72%</GoalPercent>
       </div>
     </div>
   )

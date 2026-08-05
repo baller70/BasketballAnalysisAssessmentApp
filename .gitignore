@@ -70,6 +70,8 @@ config/
 !scripts/simulator-screenshots.sh
 !scripts/simshots-pick-device.py
 !scripts/simshots-export-attachments.py
+!scripts/imagegen/
+!scripts/imagegen/**
 
 # ShotIQ product specifications and automated tests are source-controlled.
 !basketball-analysis/docs/
@@ -139,3 +141,10 @@ ship-shotiq.sh
 # Agent scratch build dirs (never commit — an 80-408MB cache broke a push before)
 .next-*/
 basketball-analysis/.next-*/
+
+# transient agent scratch scripts (graders/builders write these into the project
+# dir so `playwright` resolves from node_modules; they are never source)
+basketball-analysis/_*.mjs
+basketball-analysis/snap*.mjs
+basketball-analysis/cw.mjs
+basketball-analysis/ci.mjs

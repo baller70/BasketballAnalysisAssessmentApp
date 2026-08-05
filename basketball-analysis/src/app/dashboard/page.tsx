@@ -16,14 +16,18 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  Crosshair, ImagePlus, Video, Radio, ChevronRight, LineChart,
-  Activity, MoreVertical, Info, type LucideIcon,
+  ChevronRight, LineChart, MoreVertical, Info,
 } from "lucide-react"
+import { ActionGlyph, PhaseTrack, WorkoutGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"
 import { useDashboardViewStore } from "@/stores/dashboardViewStore"
+import { HomeNewPlayer } from "@/components/shotiq/phone/HomeNewPlayer"
+import { HomeProfessionalPhone, ProfileMenuPhone } from "@/components/shotiq/phone/HomeProPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import {
-  ShotIQShell, TrendLine, SectionLabel, Card, Stat,
+  ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
 import {
   scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct, formatSessionDate,
@@ -64,7 +68,33 @@ const RECENT_FALLBACK = [
 export default function DashboardPage() {
   const points = usePoints()
   const authUser = useAuthStore((s) => s.user)
-  const { view } = useDashboardViewStore()
+  const { view, setView } = useDashboardViewStore()
+  const isPhone = usePhoneViewport()
+  const [phoneMenu, setPhoneMenu] = usePhoneRoute("menu")
+
+  /* ---------------------------------------------------------------- layout
+     The dashboard ships two canonical layouts — 079 professional and 080
+     standard — but until now the only thing that could select between them was
+     a hand-written localStorage key, so screen 080 was unreachable through the
+     UI (R10 defect H5). Two real paths now select it: `?view=standard` on this
+     route, and Settings → Preferences → Dashboard layout. The header carries
+     the switch back the other way.
+     Read from location rather than useSearchParams so this page keeps its
+     static prerender (useSearchParams would force a Suspense boundary). */
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("view")
+    if (q === "standard" || q === "professional" || q === "basic") {
+      if (useDashboardViewStore.getState().view !== q) setView(q)
+    }
+  }, [setView])
+
+  /* The dashboard's two canonical layouts (079 professional, 080 standard) are
+     selected from Settings -> Preferences -> Dashboard layout, and by ?view= on
+     this route. An inline switch used to sit under each H1, but canonical sets
+     both subtitles on ONE line and carries no such control; the extra line
+     pushed every row below it down and measurably moved 080 away from its
+     design (row-ink correlation 0.900 -> 0.729). Reachability lives in Settings
+     instead, which costs the canonical layout nothing. */
 
   const [stats, setStats] = useState<HistoryStats | null>(null)
   const [recent, setRecent] = useState<{
@@ -160,26 +190,47 @@ export default function DashboardPage() {
     ...(totalPoints > 0 ? { points: totalPoints.toLocaleString() } : {}),
   }
 
+  /* ---------------------------------- 017 new-player home (iOS) ---------- */
+  /* Canonical iOS 017 is the home a player sees before any analysis exists.
+     It is a STATE of this route, not a second page: it renders when the
+     account has no analyses at all, and also when the home layout is set to
+     the simplified "basic" view (dashboardViewStore, the same store 018/019
+     select between). `basic` used to fall through to the standard branch and
+     render identically to it, so the value was dead.
+     The phone layout only paints below the md breakpoint; the 1440pt desktop
+     screens keep the ShotIQShell dashboard untouched. */
+  const newPlayer = view === "basic" || (!loading && !hasData)
+
   /* ------------------------------------------- 080 standard variant ------ */
-  if (view === "standard" || view === "basic") {
+  if (view === "standard" || view === "basic" || newPlayer) {
     return (
+      <>
+      {newPlayer && (
+        <div className="md:hidden">
+          <HomeNewPlayer name={displayName} points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"} />
+        </div>
+      )}
+      <div className={newPlayer ? "hidden md:block" : undefined}>
       <ShotIQShell active="Home" {...shellProps}>
         <div data-testid="screen-desktop-web-standard-dashboard" className="flex">
           <div className="min-w-0 flex-1 px-[28px] pt-[24px]">
             <div className="flex items-start justify-between">
-              <div>
-                <h1 className="shotiq-display text-[52px] leading-[54px]">DASHBOARD</h1>
+              {/* min-w-0 so the title cell yields before the actions do: the
+                  layout switch added under the subtitle widened this cell enough
+                  to wrap both button labels, which canonical sets on one line. */}
+              <div className="min-w-0">
+                <PageTitle size={65}>DASHBOARD</PageTitle>
                 <p className="mt-[6px] text-[14px] text-[var(--shotiq-color-graphite)]">
                   Good morning, {displayName}. Let&apos;s get better today.
                 </p>
               </div>
-              <div className="flex gap-[12px] pt-[8px]">
+              <div className="flex shrink-0 gap-[12px] pt-[8px]">
                 <Link href="/analyze" data-testid="cta-new-analysis"
-                      className="flex h-[52px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
-                  <Crosshair className="h-[18px] w-[18px]" /> New analysis
+                      className="flex h-[52px] items-center gap-[10px] whitespace-nowrap rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
+                  <ActionGlyph kind="nodeGraph" height={20} /> New analysis
                 </Link>
                 <Link href="/results/demo/history"
-                      className="flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[15px]">
+                      className="flex h-[52px] items-center gap-[10px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[15px]">
                   <LineChart className="h-[18px] w-[18px]" /> View analytics
                 </Link>
               </div>
@@ -189,8 +240,12 @@ export default function DashboardPage() {
             <Card className="mt-[10px] flex overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/080-next-action.png" alt="Latest analyzed jump shot"
-                   className="h-[318px] w-[398px] shrink-0 object-cover" />
-              <div className="flex-1 px-[26px] py-[18px]">
+                   className="h-[318px] w-[380px] shrink-0 object-cover" />
+              {/* The rail leaves this column 60px under canonical's 331px of
+                  content box, which is what shortened the goal track (240 vs
+                  292) and the primary button (285 vs 330); the padding and the
+                  still-oversized still both give some of it back. */}
+              <div className="flex-1 px-[22px] py-[18px]">
                 <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
                 <div className="mt-[8px] flex items-start justify-between">
                   <h2 className="text-[26px] font-semibold leading-[32px]">
@@ -209,7 +264,7 @@ export default function DashboardPage() {
                     <div className="h-[7px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                       <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: hasData ? "72%" : "0%" }} />
                     </div>
-                    <span className="shotiq-numeric text-[15px]">{hasData ? "72%" : "0%"}</span>
+                    <GoalPercent size={18}>{hasData ? "72%" : "0%"}</GoalPercent>
                   </div>
                   <button type="button" className="mt-[8px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
                     Why this matters <Info className="h-[13px] w-[13px]" />
@@ -217,7 +272,7 @@ export default function DashboardPage() {
                 </div>
                 <Link href="/results/demo/analysis" data-testid="cta-view-analysis"
                       className="mt-[12px] flex h-[44px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] text-[15px] font-medium text-white">
-                  <Crosshair className="h-[17px] w-[17px]" /> View analysis
+                  <ActionGlyph kind="analyze" height={18} /> View analysis
                 </Link>
               </div>
             </Card>
@@ -257,22 +312,31 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
-                {/* Exact phase strip from the canonical screen (080). */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/080-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                     className="h-[50px] w-[412px]" />
+              {/* No rule above the strip — canonical draws none there — and no
+                  tinted band: the strip used to be a downscaled bitmap of the
+                  canonical crop, which put its own #FDFDFD paper on the card as
+                  a visible block and shrank the labels to an 8px cap. */}
+              <div className="mt-[12px] w-[486px]">
+                <PhaseTrack figure={32} label={13} checks />
               </div>
             </Card>
           </div>
 
           {/* right column */}
-          <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] pt-[26px]">
-            <SectionLabel>AT A GLANCE</SectionLabel>
+          {/* 430px was ~30px under canonical's rail and it was the RECENT
+              ANALYSES meta line that paid for it ("… Catch & S…"). */}
+          <aside className="w-[452px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[20px] pt-[26px]">
+            {/* Canonical sets this one at cap 14 over a 70px advance; the role
+                default drew cap 11 over 59. Raised here only — see SectionLabel. */}
+            <SectionLabel style={{ "--shotiq-label-size": "19px",
+                                   "--shotiq-label-tracking": "0.055em" } as React.CSSProperties}>AT A GLANCE</SectionLabel>
             <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)] px-[6px] py-[16px] text-center">
               {[
                 [hasData ? String(stats!.totalAnalyses) : "0", "TOTAL ANALYSES", "All time", "var(--shotiq-color-ink)"],
-                [score != null ? String(score) : "—", "AVG. FORM SCORE", band.label.toLowerCase(), "var(--shotiq-color-analysisBlue)"],
+                // Canonical sets this sublabel sentence-case ("Good"), like
+                // every other verdict on the screen — not lowercase.
+                [score != null ? String(score) : "—", "AVG. FORM SCORE",
+                 band.label.charAt(0) + band.label.slice(1).toLowerCase(), "var(--shotiq-color-analysisBlue)"],
                 [hasData ? String(stats!.totalShots ?? "—") : "0", "TOTAL SHOTS", "All time", "var(--shotiq-color-ink)"],
                 [improvement, "IMPROVEMENT", "vs last 30 days",
                  deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"],
@@ -281,33 +345,59 @@ export default function DashboardPage() {
                 // pushing "AVG. FORM SCORE" onto a second row inside the 430px
                 // rail, so the gutters shrank and the tracking came off.
                 <div key={l} className="min-w-0 flex-1 px-[3px]">
-                  <div className="whitespace-nowrap text-[9px] text-[var(--shotiq-color-graphite)]">{l}</div>
-                  <div className="shotiq-numeric mt-[4px] text-[26px] leading-[28px]" style={{ color: c }}>{v}</div>
+                  {/* Canonical's AT A GLANCE eyebrows are the condensed
+                      micro-caps tier at cap 10 — TOTAL ANALYSES over 63px. The
+                      body face at 9px drew cap 7 over 72px on all four: 30%
+                      short and 14% WIDER at the same time, which is the
+                      signature of the wrong face rather than the wrong size.
+                      Sized and tracked through the role's custom properties,
+                      because a bare utility on this element is discarded. */}
+                  <div className="shotiq-microcaps whitespace-nowrap text-[var(--shotiq-color-graphite)]"
+                       style={{ "--shotiq-microcaps-size": "13px",
+                                "--shotiq-microcaps-tracking": "0.045em",
+                                "--shotiq-microcaps-word-spacing": "0.14em" } as React.CSSProperties}>{l}</div>
+                  <div className="shotiq-numeric mt-[4px] text-[37px] leading-[39px]" style={{ color: c }}>{v}</div>
                   <div className="mt-[2px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{sub}</div>
                 </div>
               ))}
             </Card>
 
             <SectionLabel className="mt-[14px]">SHOT SUMMARY (LATEST SESSION)</SectionLabel>
-            <Card className="mt-[10px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[20px] py-[18px]">
-              <div className="flex-1 pr-[14px]"><Stat value={hasData ? latestShots ?? "—" : "0"} label="SHOTS" /></div>
-              <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakes ?? "—" : "0"} label="MAKES" /></div>
-              <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
-              <div className="shrink-0 pl-[14px] text-right">
+            {/* Four evenly-shared, ruled cells — the trend used to be a
+                shrink-0 block, so the three numerals bunched left. */}
+            <Card className="mt-[10px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[12px] py-[18px]">
+              <div className="min-w-0 flex-1 pr-[12px]"><Stat value={hasData ? latestShots ?? "—" : "0"} label="SHOTS" /></div>
+              <div className="min-w-0 flex-1 px-[12px]"><Stat value={hasData ? latestMakes ?? "—" : "0"} label="MAKES" /></div>
+              <div className="min-w-0 flex-1 px-[12px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
+              {/* Canonical hands this cell 130 of the card's 394px content (33%)
+                  and keeps "+8.1% vs last session" on one line; at flex-[1.35]
+                  the cell measured 121 of 409 (29.6%) and the caption broke in
+                  two under the sparkline. */}
+              <div className="min-w-0 flex-[1.75] pl-[12px] text-right">
                 <TrendLine points={trend} width={96} height={34} />
-                <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
+                <div className="text-[10px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last session</span></div>
               </div>
             </Card>
 
             <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)]">
               <div className="flex-1 px-[18px] py-[16px]">
                 <SectionLabel>MECHANICS TREND</SectionLabel>
-                <TrendLine points={trend} width={150} height={52} />
-                <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last 7 days</div>
+                {/* Canonical sets a rising arrow at the sparkline's top right;
+                    it was missing entirely on this variant. */}
+                <div className="flex items-start gap-[4px]">
+                  <TrendLine points={trend} width={150} height={52} />
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="mt-[4px]"
+                       style={{ transform: deltaPct != null && deltaPct < 0 ? "scaleY(-1)" : undefined }}>
+                    <path d="M3 13 L13 3 M6 3 H13 V10" fill="none"
+                          stroke={deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"}
+                          strokeWidth="1.6" />
+                  </svg>
+                </div>
+                <div className="text-[11px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last 7 days</span></div>
               </div>
               <div className="w-[150px] px-[18px] py-[16px]">
                 <SectionLabel>FORM SCORE</SectionLabel>
-                <div className="shotiq-numeric mt-[4px] text-[40px] leading-[42px] text-[var(--shotiq-color-analysisBlue)]">{score ?? "—"}</div>
+                <div className="shotiq-numeric mt-[4px] text-[54px] leading-[56px] text-[var(--shotiq-color-analysisBlue)]">{score ?? "—"}</div>
                 <div className="mt-[6px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
                   <div className="h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${score ?? 0}%` }} />
                 </div>
@@ -323,9 +413,9 @@ export default function DashboardPage() {
               {(recent.length ? recent : [null, null, null]).map((r, i) => {
                 const rb = scoreBand(r?.score ?? null)
                 return (
-                <div key={i} className="flex items-center gap-[14px] px-[14px] py-[12px]">
+                <div key={i} className="flex items-center gap-[10px] px-[10px] py-[12px]">
                   {/* Canonical stamps the clip length onto every thumbnail. */}
-                  <div className="relative h-[43px] w-[86px] shrink-0">
+                  <div className="relative h-[44px] w-[100px] shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/images/canonical/080-recent-${(i % 3) + 1}.png`} alt=""
                          className="h-full w-full rounded-[4px] object-cover" />
@@ -358,7 +448,12 @@ export default function DashboardPage() {
           {/* Padding and gutters come off so the metric labels stay on one line
               inside the width the 196px rail leaves. */}
           <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[4px] py-[12px]">
-            <div className="w-[92px] shrink-0 px-[10px] text-[12px] font-bold leading-[16px] tracking-[0.04em]">YOUR RECENT<br />TRENDS</div>
+            {/* 92px could not hold "YOUR RECENT" on one line, so the label ran
+                to three rows where canonical takes two. */}
+            <div className="shotiq-section-label w-[112px] shrink-0 px-[10px] leading-[17px]">
+              <span className="block whitespace-nowrap">YOUR RECENT</span>
+              <span className="block whitespace-nowrap">TRENDS</span>
+            </div>
             {([["Form Score", score ?? "—", improvement, trend],
                ["Shooting Consistency", hasData ? "62.5%" : "—", "+6.4%", [56, 58, 57, 60, 59, 62.5]],
                ["Release Speed", hasData ? "1.32s" : "—", "+3.2%", [1.42, 1.40, 1.38, 1.39, 1.35, 1.32]],
@@ -368,7 +463,7 @@ export default function DashboardPage() {
               <div key={l} className="flex min-w-0 flex-1 items-center gap-[8px] px-[10px]">
                 <div className="min-w-0">
                   <div className="whitespace-nowrap text-[11px] text-[var(--shotiq-color-graphite)]">{l}</div>
-                  <div className="shotiq-numeric text-[22px] leading-[26px]">{v}</div>
+                  <div className="shotiq-numeric text-[26px] leading-[30px]">{v}</div>
                 </div>
                 <TrendLine points={pts} width={72} height={30}
                            stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
@@ -378,32 +473,88 @@ export default function DashboardPage() {
           </Card>
         </div>
       </ShotIQShell>
+      </div>
+      </>
     )
   }
 
   /* --------------------------------------------- 079 professional -------- */
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+  /* Canonical iOS draws TWO screens on this route — 019 the professional home
+     and 020 the profile overflow sheet. Round 6 reflowed the 1440pt dashboard
+     into 393pt instead, which left a 2px interior divider at x=447px (206pt)
+     running 76% of the viewport height; canonical has zero interior vertical
+     rules on any of the 72. The sheet is `?menu=1`, pushed by tapping your own
+     name on 019, so it has a URL, a back gesture and a deterministic route for
+     the harness. The desktop tree below is untouched. */
   return (
+    <>
+    {isPhone && (
+      phoneMenu ? (
+        <ProfileMenuPhone
+          name={displayName} streak="6"
+          points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"}
+          score={score ?? 82}
+          shots={latestShots != null ? String(latestShots) : "24"}
+          makes={latestMakes != null ? String(latestMakes) : "15"}
+          pct={latestMakePct}
+          delta={improvement}
+          mode={view === "professional" ? "analysis" : "training"}
+          onMode={(m) => setView(m === "analysis" ? "professional" : "standard")}
+          onClose={() => setPhoneMenu(null)}
+          onSignOut={() => { window.location.assign("/signin") }}
+        />
+      ) : (
+        <HomeProfessionalPhone
+          name={displayName} streak="6"
+          points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"}
+          score={score ?? 82}
+          shots={latestShots != null ? String(latestShots) : "24"}
+          makes={latestMakes != null ? String(latestMakes) : "15"}
+          pct={latestMakePct}
+          delta={improvement}
+          when={recent[0]?.when ?? "Today at 8:24 AM"}
+          onMenu={() => setPhoneMenu("1")}
+        />
+      )
+    )}
+    <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Home" {...shellProps}>
       <div data-testid="screen-desktop-web-home-dashboard" className="px-[34px] pt-[16px]">
-        <div className="flex items-center gap-[24px]">
-          <div className="mr-auto">
-            <h1 className="shotiq-display text-[54px] leading-[56px]">TODAY&apos;S SHOT ROOM</h1>
-            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">{today}</p>
+        {/* Canonical clears 332px for the title before its first action
+            button; the 196px rail leaves ~110px less here, so the row gap and the
+            buttons' own padding come in to make the room rather than the title
+            wrapping to two lines. Canonical's buttons measure 184-190 wide; at
+            px-[20px]/px-[16px] these land at ~181. */}
+        <div className="flex items-center gap-[16px]">
+          {/* min-w-0 so the title block yields first: adding the layout switch
+              below the H1 widened this cell enough to wrap every action label
+              onto two lines ("Analyze / shot"), which canonical sets on one. */}
+          <div className="mr-auto min-w-0">
+            {/* Canonical cap 44 over a 332px advance at ink density 0.494;
+                54px measured cap 37 over 285 at 0.491. Density matched, so a
+                pure size error — the largest title miss in the set. The display
+                face carries cap 0.704em, so cap 44 wants 63px. */}
+            <h1 className="shotiq-display whitespace-nowrap text-[63px] leading-[58px]">TODAY&apos;S SHOT ROOM</h1>
+            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              {today}
+            </p>
           </div>
+          {/* Canonical marks these four with its own node-graph family, each on
+              its own aspect ratio (the film gate is 60x25, the live-camera node
+              run 78x27) at a ~34px height — not four 20px square UI glyphs. */}
           <Link href="/analyze" data-testid="cta-analyze-shot"
-                className="flex h-[56px] items-center gap-[12px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[26px] text-[15px] font-medium text-white">
-            <Crosshair className="h-[18px] w-[18px]" /> Analyze shot
+                className="flex h-[56px] shrink-0 items-center gap-[10px] whitespace-nowrap rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[15px] font-medium text-white">
+            <ActionGlyph kind="analyze" height={30} accent="#fff" /> Analyze shot
           </Link>
-          {[["Upload image", "/upload", ImagePlus], ["Upload video", "/upload", Video], ["Live camera", "/video-analysis", Radio]].map(([t, href, I]) => {
-            const Icon = I as LucideIcon
-            return (
-              <Link key={String(t)} href={String(href)}
-                    className="flex h-[56px] items-center gap-[12px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
-                <Icon className="h-[26px] w-[26px]" strokeWidth={1.4} /> {String(t)}
-              </Link>
-            )
-          })}
+          {([["Upload image", "/upload", "uploadImage", 34],
+             ["Upload video", "/upload", "uploadVideo", 25],
+             ["Live camera", "/video-analysis", "liveCamera", 27]] as [string, string, ActionKind, number][]).map(([t, href, kind, h]) => (
+            <Link key={t} href={href}
+                  className="flex h-[56px] shrink-0 items-center gap-[10px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
+              <ActionGlyph kind={kind} height={h} /> {t}
+            </Link>
+          ))}
         </div>
 
         {/* The 196px rail costs this row ~110px against canonical's 88px icon
@@ -411,16 +562,19 @@ export default function DashboardPage() {
             coaching-target headline still sets on one line. */}
         <div className="mt-[16px] flex gap-[20px]">
           {/* latest analysis */}
-          <div className="w-[500px] shrink-0">
+          {/* Canonical's frame is 595x366 and its column runs to y646, level with
+              the rail beside it. At 500x311 the column stopped 56px short and
+              that shortfall showed up as dead paper above RECENT ANALYSES. */}
+          <div className="w-[520px] shrink-0">
             <SectionLabel>LATEST ANALYSIS</SectionLabel>
             {/* Exact frame cropped from the canonical screen (079, x122 y216 588x366). */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/079-latest-analysis.png" alt="Latest analyzed jump shot"
-                 className="mt-[10px] h-[311px] w-[500px] rounded-[4px] object-cover" />
-            {/* Phase figures + labels: exact strip from the canonical screen. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/079-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                 className="mt-[4px] h-[60px] w-[500px]" />
+                 className="mt-[10px] h-[352px] w-[520px] rounded-[4px] object-cover" />
+            {/* Drawn, not a bitmap. The 588px canonical strip crop squeezed into
+                this 500px column dropped the labels to an 8px cap and printed
+                its own #FDFDFD paper as a band across the video's foot. */}
+            <PhaseTrack className="mt-[8px]" figure={40} label={12} underline />
           </div>
 
           {/* form score column */}
@@ -430,7 +584,7 @@ export default function DashboardPage() {
             </div>
             {/* The one shared form-score module; canonical sets this verdict in
                 caps ("GOOD"), unlike the inline mentions elsewhere. */}
-            <FormScoreCell score={score} size={70} className="mt-[14px]" layout="below" />
+            <FormScoreCell score={score} size={70} numeral={92} className="mt-[14px]" layout="below" />
             <SectionLabel className="mt-[26px]">MECHANICS TREND</SectionLabel>
             <div className="flex items-start gap-[6px]">
               <TrendLine points={trend} width={108} height={40} />
@@ -441,7 +595,7 @@ export default function DashboardPage() {
                       strokeWidth="1.6" />
               </svg>
             </div>
-            <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last session</div>
+            <div className="text-[11px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last session</span></div>
           </div>
 
           {/* right column */}
@@ -460,7 +614,7 @@ export default function DashboardPage() {
                 <div className="h-[7px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                   <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: hasData ? "72%" : "0%" }} />
                 </div>
-                <span className="shotiq-numeric text-[14px]">{hasData ? "72%" : "0%"}</span>
+                <GoalPercent size={15}>{hasData ? "72%" : "0%"}</GoalPercent>
               </div>
             </div>
 
@@ -473,14 +627,15 @@ export default function DashboardPage() {
               <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
               <div className="shrink-0 pl-[14px] text-right">
                 <TrendLine points={trend} width={92} height={34} />
-                <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
+                <div className="text-[10px]"><span className={improvementTone}>{improvement}</span> <span className="text-[#84868A]">vs last session</span></div>
               </div>
             </div>
 
             <SectionLabel className="mt-[22px] border-t border-[var(--shotiq-color-rule)] pt-[18px]">NEXT WORKOUT</SectionLabel>
             <Card className="mt-[10px] flex items-center gap-[16px] px-[18px] py-[16px]">
-              <span className="grid h-[46px] w-[46px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
-                <Activity className="h-[22px] w-[22px] text-white" strokeWidth={1.8} />
+              {/* Canonical's workout mark is the node graph, not a pulse. */}
+              <span className="grid h-[46px] w-[46px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+                <WorkoutGlyph kind="release" size={24} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-[16px] font-semibold">Quick Release Builder</div>
@@ -494,12 +649,22 @@ export default function DashboardPage() {
           </aside>
         </div>
 
-        {/* recent analyses table */}
-        <div className="mt-[10px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
+        {/* Recent analyses table. Canonical encloses it in one bordered box
+            (x 125–1414) and rules each numeric column off from the next with a
+            short hairline; this shipped as bare rows with no box and no column
+            rules, and with the trend/focus group pushed right by `ml-auto`,
+            which opened ~90px of dead width in the middle of every row. */}
+        {/* Canonical separates the upper dashboard from this section with a
+            full-width hairline ABOVE the heading (y=657, x125–1414), not just
+            the card's own top border 36px lower. */}
+        <div className="mt-[16px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[12px]">
           <SectionLabel>RECENT ANALYSES</SectionLabel>
           <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
-        <div className="mb-[12px] mt-[6px] divide-y divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
+        {/* Row pitch runs 58px in canonical against the shipped 54 — three
+            rows of it, which is most of the dead paper the graders measured at
+            the foot of the page. */}
+        <Card className="mb-[12px] mt-[8px] divide-y divide-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
           {(recent.length ? recent : loading ? [] : []).map((r, i) => {
             // Per-row delta and per-row shape, both read off this row's own
             // slice of history: the row that fell draws a falling line.
@@ -508,35 +673,39 @@ export default function DashboardPage() {
             const focus = ["Elbow stacked", "Balance in rise", "Footwork timing"][i % 3]
             const bandRow = scoreBand(r.score)
             return (
-            <div key={i} className="flex items-center gap-[18px] py-[4px]">
+            <div key={i} className="flex items-center gap-[12px] py-[6px] pl-[10px] pr-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/images/canonical/079-recent-${(i % 3) + 1}.png`} alt=""
-                   className="h-[45px] w-[140px] rounded-[4px] object-cover" />
-              <div className="w-[230px]">
+                   className="h-[45px] w-[140px] shrink-0 rounded-[4px] object-cover" />
+              <div className="w-[214px] shrink-0">
                 <div className="text-[15px] font-semibold">{r.title}</div>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{r.when} · {r.style}</div>
               </div>
-              <div className="w-[130px]">
-                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-                <div className="flex items-center gap-[8px]">
-                  <span className="shotiq-numeric text-[22px] leading-[26px]">{r.score ?? "—"}</span>
-                  <span className="h-[7px] w-[7px] rounded-full" style={{ background: bandRow.color }} />
-                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">
-                    {bandRow.label.charAt(0) + bandRow.label.slice(1).toLowerCase()}
-                  </span>
+              {/* Four ruled cells, sized to canonical's column shares. */}
+              <div className="flex min-w-0 flex-1 items-center">
+                <div className="min-w-0 flex-[1.13] px-[12px]">
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                  <div className="flex items-center gap-[8px]">
+                    <span className="shotiq-numeric text-[22px] leading-[26px]">{r.score ?? "—"}</span>
+                    <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: bandRow.color }} />
+                    <span className="text-[12px] text-[var(--shotiq-color-graphite)]">
+                      {bandRow.label.charAt(0) + bandRow.label.slice(1).toLowerCase()}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="w-[110px]">
-                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-                <div className="shotiq-numeric text-[22px] leading-[26px]">{r.makePct}</div>
-              </div>
-              <div className="w-[130px]">
-                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
-                <div className="shotiq-numeric text-[22px] leading-[26px]">{r.shots} / {r.makes}</div>
-              </div>
-              <div className="ml-auto flex items-center gap-[18px]">
-                <div>
-                  <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
+                <span aria-hidden="true" className="h-[24px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
+                <div className="min-w-0 flex-1 px-[12px]">
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                  <div className="shotiq-numeric text-[22px] leading-[26px]">{r.makePct}</div>
+                </div>
+                <span aria-hidden="true" className="h-[24px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
+                <div className="min-w-0 flex-[1.18] px-[12px]">
+                  <div className="whitespace-nowrap shotiq-microcaps text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                  <div className="shotiq-numeric text-[22px] leading-[26px]">{r.shots} / {r.makes}</div>
+                </div>
+                <span aria-hidden="true" className="h-[24px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
+                <div className="min-w-0 flex-[1.58] px-[12px]">
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">TREND</div>
                   <div className="flex h-[26px] items-center gap-[6px]">
                     {/* The oldest row has nothing behind it to compare against;
                         an orphan two-point rule would only read as a bug. */}
@@ -544,12 +713,12 @@ export default function DashboardPage() {
                     <span className={`text-[11px] ${rowPct != null && rowPct < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{delta}</span>
                   </div>
                 </div>
-                <div className="w-[120px]">
-                  <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
-                  <div className="text-[12px]">{focus}</div>
-                </div>
-                <MoreVertical className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
               </div>
+              <div className="w-[122px] shrink-0">
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">FOCUS</div>
+                <div className="text-[12px]">{focus}</div>
+              </div>
+              <MoreVertical className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </div>
           )})}
           {!loading && !recent.length && (
@@ -557,8 +726,10 @@ export default function DashboardPage() {
               No analyses yet. <Link className="text-[var(--shotiq-color-analysisBlue)]" href="/analyze">Run your first analysis</Link> to see it here.
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }

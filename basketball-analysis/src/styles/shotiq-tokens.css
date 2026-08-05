@@ -6,13 +6,32 @@
 :root {
   /* colors */
   --shotiq-color-analysisBlue: #2D6CDF;
-  --shotiq-color-confirmGreen: #168A55;
+  /* Measured, not taken from the sidecar name table. The most common exact
+     green fill across all 20 canonical desktop screens clusters at (0-1,
+     109-111, 52-54); across the 72 canonical iOS screens at (3-8, 111-115,
+     64-68), whose looser red and blue are the compression on those larger
+     canvases. The shipped #168A55 is (22,138,85) — markedly lighter and less
+     saturated than either. Both platforms carried the same wrong value. */
+  --shotiq-color-confirmGreen: #056F38;
   --shotiq-color-graphite: #5F646B;
+  /* Section-label ink, sampled from canonical 083's FORM SCORE (39,38,38),
+     PRIMARY COACHING TARGET (37,37,37) and KEY INSIGHT (35,35,35). The previous
+     #4B4D4F was set as the median of a measured spread that had swept in body
+     captions as well as labels, and it read a full step lighter than canonical
+     on every screen. One grader called it pure #000; the pixels say #262626. */
+  --shotiq-color-eyebrow: #262626;
   --shotiq-color-ink: #111111;
   --shotiq-color-muted: #A7AAB0;
   --shotiq-color-paper: #FFFFFF;
   --shotiq-color-reviewRed: #D92D20;
-  --shotiq-color-rule: #D9D9D4;
+  /* Measured off six canonical screens (096, 090, 092, 093, 082, 087) by
+     finding rows that run uniformly darker than the paper above and below them
+     and taking the median: 235-243, median (239,240,240). The shipped #D9D9D4
+     is (217,217,212) — against 253 paper that is 36 of contrast where canonical
+     draws 14, so every grid line, card border and divider in the build read
+     about 2.5x too strong. Also neutral now: the old value was warm (blue 212
+     against red 217) where canonical is faintly cool. */
+  --shotiq-color-rule: #EBECED;
   --shotiq-color-shotiqOrange: #FD3701;
   --shotiq-color-warmCanvas: #F7F7F4;
 

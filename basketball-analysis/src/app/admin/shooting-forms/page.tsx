@@ -596,7 +596,10 @@ export default function ShootingFormsAdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    /* min-h-full, not min-h-screen: this screen now renders inside ShotIQShell
+       (see ./layout.tsx), where 100vh would push the page past the 900px
+       canvas by the height of the topbar. */
+    <div className="min-h-full bg-[#0a0a0a] text-white">
       {/* Header */}
       <header className="bg-gradient-to-r from-[#1a1a2e] to-[#16213e] border-b border-orange-500/20">
         <div className="max-w-7xl mx-auto px-4 py-4">

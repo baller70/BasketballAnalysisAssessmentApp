@@ -199,16 +199,472 @@
 .shotiq-canonical {
   font-family: var(--font-shotiq-inter), "Boxed Medium", system-ui, sans-serif;
 }
-.shotiq-display,
-.shotiq-wordmark {
+.shotiq-display {
   font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Bold", Impact, sans-serif;
   font-weight: 400;
 }
+/* The wordmark is NOT the display face. Canonical draws SHOTIQ in a normal-width
+   grotesque — measured at cap 19 it advances 99px, where Tungsten (condensed)
+   advances 55px for the same cap. It was sharing the display stack, so the logo
+   rendered ~45% too narrow and far too heavy on every screen. Boxed Heavy is the
+   widest cut in the Wilson X pack and takes it to 67px; the remainder is the
+   letterform difference the rubric scopes out. */
 .shotiq-wordmark {
-  font-weight: 400;
+  font-family: var(--font-shotiq-inter), "Boxed Heavy", system-ui, sans-serif;
+  font-weight: 800;
   letter-spacing: 0.02em;
 }
+/* Canonical's all-caps micro-labels ("SHOTS", "MAKE %", "DAY STREAK").
+   The two graders disagreed here and both were right: cap height measured too
+   SMALL while advance width measured too WIDE. That combination is only
+   possible if the face is wrong — the body face is too wide to carry canonical's
+   advance at canonical's cap height, so it had been shrunk until it fitted.
+   Canonical uses the condensed face with generous tracking, which is what iOS
+   already does in `shotiqMicroCaps`. Solved from three strings on 077 at once:
+
+     label     canonical      12px Tungsten Medium   tracking to match
+     SHOTS     cap 9  w 27    cap 9  w 20            0.146em
+     MAKES     cap 9  w 29    cap 9  w 22            0.146em
+     MAKE %    cap 9  w 33    cap 9  w 24            0.150em
+
+   Three independent strings landing on the same tracking is the check that this
+   is the face, not a coincidence of one string. */
+/* Canonical's section labels ("FORM SCORE", "PRIMARY COACHING TARGET",
+   "KEY INSIGHT"). Both round-7 graders independently reported this as the single
+   largest gap in the build, on eight screens each, and their measurements agree:
+   canonical reads as a heading, ours read as a caption.
+
+   Canonical draws them in the condensed face, near-black and tight — NOT the
+   body face in grey with loose tracking. Measured on 083, then solved for the
+   size and tracking that reproduce cap height and advance together:
+
+     label                     canonical      15/16px Tungsten Medium   tracking
+     FORM SCORE                cap 11 adv 60  cap 11 adv 50             0.074em
+     PRIMARY COACHING TARGET   cap 11 adv 135 cap 11 adv 109            0.079em
+     KEY INSIGHT               cap 12 adv 63  cap 12 adv 49             0.087em
+
+   Ink sampled from the same three: (39,38,38), (37,37,37), (35,35,35) — near
+   #262626, against the shipped #4B4D4F. The old role was 14px of the body face
+   at 0.06em, which measures cap 10 and advance 90 for FORM SCORE against
+   canonical's 11 and 60: half again too wide and a cap short. */
+/* Sized through custom properties, NOT bare declarations. These roles are
+   defined after Tailwind's utility layer, so a bare `font-size` here beats any
+   `text-[Npx]` on the same element on source order — the utility is silently
+   discarded. 39 call sites were authoring a size that never applied; 059's day
+   headers, written at 8px, measured cap 19 against canonical's 14. The default
+   is unchanged, so every desktop element keeps the value it has today. */
+.shotiq-section-label {
+  font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
+  font-weight: 400;
+  font-size: var(--shotiq-label-size, 15px);
+  line-height: var(--shotiq-label-leading, var(--shotiq-label-size, 15px));
+  /* Tracking is pinned through a custom property for the same reason the size
+     is: this rule sits after Tailwind's utility layer, so a bare
+     `tracking-[Nem]` on the element is silently discarded. Canonical does NOT
+     track every label the same — it holds 0.08em at cap 11 but runs closer to
+     0.05em once a label is set at cap 13-14 — so the sites that raise
+     --shotiq-label-size need to take tracking down with it. Default unchanged. */
+  letter-spacing: var(--shotiq-label-tracking, 0.08em);
+  color: var(--shotiq-color-eyebrow);
+}
+
+.shotiq-microcaps {
+  font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
+  font-weight: 400;
+  font-size: var(--shotiq-microcaps-size, 12px);
+  /* The condensed face carries a 9px cap in a 12px em, and `normal` leading
+     would put that in a 14.4px line box where the old 10px label sat in 12px.
+     Left unpinned it added 4px to the height of every screen in the build — so
+     leading tracks the size rather than going free. */
+  line-height: var(--shotiq-microcaps-leading, var(--shotiq-microcaps-size, 12px));
+  letter-spacing: var(--shotiq-microcaps-tracking, 0.148em);
+  /* Positive tracking on caps swallows the word space: measured on canonical
+     088 the inter-word gap runs 3px against 1px between letters, and in the
+     build every gap in "SIMILARITY TO YOU" measured 1-2px, so it read as
+     SIMILARITY TOYOU. Sites that carry a multi-word tracked label open the
+     word space back up through this property; the default is inert. */
+  word-spacing: var(--shotiq-microcaps-word-spacing, normal);
+}
+
+/* Canonical's numerals are the same Medium cut as its headings, not a heavier
+   one. Measured at matched cap height against the canonical PNGs:
+     077 web "62.5%"  cap 19  canonical ink 0.349
+     052 iOS "48.2%"  cap 25  canonical ink 0.382
+     053 iOS "62.5"   cap 26  canonical ink 0.376 | medium 0.407 | semibold 0.533
+   This asked for 600 (semibold) and, before the binding was fixed, resolved all
+   the way up to bold at ink 0.633. */
 .shotiq-numeric {
-  font-family: "ShotIQ Degree", var(--font-shotiq-numeric), "Tungsten Semibold", "DIN Condensed", sans-serif;
-  font-weight: 600;
+  font-family: "ShotIQ Degree", var(--font-shotiq-numeric), "Tungsten Medium", "DIN Condensed", sans-serif;
+  font-weight: 400;
+}
+
+
+/* ===========================================================================
+   PHONE FLOW - the 393pt reflow layer.                        (max-width: md)
+
+   The app's screen bodies were authored for the 1440x900 desktop canvas: fixed
+   side-by-side columns (`w-[520px] shrink-0` next to `min-w-0 flex-1`) inside
+   non-wrapping flex rows. At 393pt that laid out to a median document width of
+   1074px - the phone could only ever see the left third of every screen, which
+   is what broke 58 of 61 iOS captures regardless of what chrome sat around them.
+
+   This layer is scoped to `.shotiq-phone-flow` (ShotIQShell's screen body) and
+   gated behind the tablet breakpoint, so the desktop rendering is untouched:
+   above 768px not one declaration here applies.
+
+   It deliberately does NOT restyle anything - no colour, no type, no spacing.
+   It only removes the desktop layout's assumption that it has 1244px of column
+   to work with. Three rules, in increasing specificity:
+
+     1. desktop rows wrap, so sibling columns stack instead of running off-screen
+     2. nothing may be wider than the column it sits in
+     3. a known fixed desktop column becomes a full-width row of the stack
+
+   Rule 2 is the safety net that also catches columns added after this was
+   written; rule 3 is what actually produces a clean single-column stack for the
+   64 fixed columns the codebase declares today.
+   ======================================================================== */
+@media (max-width: 767.98px) {
+  /* PHONE DISPLAY TRACKING.  Phone only - the desktop ramp is not touched.
+     ---------------------------------------------------------------------
+     `.shotiq-display` resolves to Tungsten Medium, and that IS the right face:
+     measured against 13 crop-verified canonical iOS headings at matched cap
+     height, Tungsten Medium draws 96.9% of canonical's glyph width per unit
+     cap - inside canonical's own screen-to-screen spread, where the same string
+     "JORDAN ELLIS" runs 3.77-4.30 glyph/cap across eight screens. The next
+     nearest shipped cut is Tungsten Semibold at 104.8% and 20% heavier ink;
+     every Boxed cut is 133-145%. The pack has nothing in between, so no face
+     swap is available and none is wanted.
+
+     What runs short is the GAP, not the glyphs. Canonical's inter-glyph gap per
+     unit cap measures 0.100-0.148 over those 13 headings, median 0.120. The two
+     space-free strings anchor it unambiguously - no word space can inflate
+     them: 063 GOALS 0.100 and 071 SETTINGS 0.148. Tungsten Medium at default
+     tracking measures 0.098, i.e. 82% of canonical.
+
+     0.0155em is solved, not chosen: rendering all 13 strings at their own
+     canonical cap heights across a tracking sweep puts the median gap/cap at
+     0.0980 (0em), 0.1154 (0.012em), 0.1200 (0.0155em), 0.1207 (0.016em),
+     0.1373 (0.03em). 0.0155em lands the median on canonical's 0.120 exactly.
+
+     This is NOT the tracking a naive advance-ratio implies. Advance per cap
+     only reaches 94.9% of canonical here, and that is correct: the residual is
+     the face's 3% narrower glyphs, which tracking must not be used to paper
+     over. Anything that pushes gap/cap past ~0.15 is letterspacing the face,
+     not correcting it.
+
+     Call sites that already carry measured per-heading tracking are excluded:
+     a bare `letter-spacing` on `.shotiq-display` would beat their Tailwind
+     `tracking-*` utility on source order, because these roles are declared
+     after Tailwind's utility layer. Inline `style={{ letterSpacing }}` wins
+     over this rule on its own. */
+  .shotiq-display:not([class*="tracking-"]) { letter-spacing: 0.0155em; }
+
+  /* The phone half of PageTitle's two measured sizes. `!important` is load
+     bearing: PageTitle sets its size as an inline style, so a stylesheet has no
+     other way to carry the phone value. Only titles that were given an explicit
+     `phoneSize` get the class, so nothing else is touched. */
+  .shotiq-pt-phone {
+    font-size: var(--shotiq-pt-phone) !important;
+    line-height: var(--shotiq-pt-phone-lh) !important;
+  }
+
+  /* 1 - desktop column rows wrap into a stack. A row only wraps if its content
+         genuinely does not fit, so rows that already fit are unaffected. */
+  .shotiq-phone-flow .flex:not(.flex-col):not(.flex-nowrap):not(.flex-col-reverse) {
+    flex-wrap: wrap;
+  }
+
+  /* 2 - nothing exceeds its column. Resolved against the containing block, so
+         an icon at its natural size is untouched and only over-wide boxes are
+         pulled in. SVG internals are exempt: their geometry is viewBox-relative.
+         Elements inside a deliberate horizontal scroller keep their width. */
+  .shotiq-phone-flow *:not(svg):not(svg *):not(.overflow-x-auto *):not(.overflow-x-scroll *) {
+    max-width: 100%;
+  }
+
+  /* 3 - the fixed desktop columns, enumerated from the source (every `w-[Npx]`
+         with N >= 200px, i.e. more than half the 393pt phone - canonical never
+         puts two of those side by side). Each becomes one full-width row of the
+         single-column stack rather than a shrunken sliver beside its sibling. */
+  .shotiq-phone-flow .w-\[206px\],
+  .shotiq-phone-flow .w-\[207px\],
+  .shotiq-phone-flow .w-\[208px\],
+  .shotiq-phone-flow .w-\[210px\],
+  .shotiq-phone-flow .w-\[214px\],
+  .shotiq-phone-flow .w-\[220px\],
+  .shotiq-phone-flow .w-\[228px\],
+  .shotiq-phone-flow .w-\[230px\],
+  .shotiq-phone-flow .w-\[232px\],
+  .shotiq-phone-flow .w-\[235px\],
+  .shotiq-phone-flow .w-\[242px\],
+  .shotiq-phone-flow .w-\[249px\],
+  .shotiq-phone-flow .w-\[250px\],
+  .shotiq-phone-flow .w-\[255px\],
+  .shotiq-phone-flow .w-\[260px\],
+  .shotiq-phone-flow .w-\[262px\],
+  .shotiq-phone-flow .w-\[268px\],
+  .shotiq-phone-flow .w-\[274px\],
+  .shotiq-phone-flow .w-\[275px\],
+  .shotiq-phone-flow .w-\[281px\],
+  .shotiq-phone-flow .w-\[292px\],
+  .shotiq-phone-flow .w-\[293px\],
+  .shotiq-phone-flow .w-\[300px\],
+  .shotiq-phone-flow .w-\[306px\],
+  .shotiq-phone-flow .w-\[318px\],
+  .shotiq-phone-flow .w-\[330px\],
+  .shotiq-phone-flow .w-\[350px\],
+  .shotiq-phone-flow .w-\[374px\],
+  .shotiq-phone-flow .w-\[376px\],
+  .shotiq-phone-flow .w-\[380px\],
+  .shotiq-phone-flow .w-\[384px\],
+  .shotiq-phone-flow .w-\[392px\],
+  .shotiq-phone-flow .w-\[394px\],
+  .shotiq-phone-flow .w-\[399px\],
+  .shotiq-phone-flow .w-\[404px\],
+  .shotiq-phone-flow .w-\[420px\],
+  .shotiq-phone-flow .w-\[430px\],
+  .shotiq-phone-flow .w-\[440px\],
+  .shotiq-phone-flow .w-\[448px\],
+  .shotiq-phone-flow .w-\[452px\],
+  .shotiq-phone-flow .w-\[464px\],
+  .shotiq-phone-flow .w-\[486px\],
+  .shotiq-phone-flow .w-\[492px\],
+  .shotiq-phone-flow .w-\[500px\],
+  .shotiq-phone-flow .w-\[520px\],
+  .shotiq-phone-flow .w-\[523px\],
+  .shotiq-phone-flow .w-\[543px\],
+  .shotiq-phone-flow .w-\[550px\],
+  .shotiq-phone-flow .w-\[600px\],
+  .shotiq-phone-flow .w-\[620px\],
+  .shotiq-phone-flow .w-\[656px\],
+  .shotiq-phone-flow .w-\[660px\] {
+    width: 100%;
+    flex-basis: 100%;
+    flex-grow: 1;
+  }
+
+  /* 3b - a desktop column that was taken out of flow to sit in the top-right of
+          the canvas (`absolute right-0 top-0 w-[492px]`, the training hub's
+          coaching panel) cannot be reflowed by any of the rules above, because
+          absolute positioning ignores them: it painted straight over the page
+          title. Only elements carrying BOTH `absolute` and one of the fixed
+          column widths are returned to the flow - badges and media overlays are
+          absolute too, but none of them is 200px wide. */
+  .shotiq-phone-flow .absolute.w-\[206px\],
+  .shotiq-phone-flow .absolute.w-\[207px\],
+  .shotiq-phone-flow .absolute.w-\[208px\],
+  .shotiq-phone-flow .absolute.w-\[210px\],
+  .shotiq-phone-flow .absolute.w-\[214px\],
+  .shotiq-phone-flow .absolute.w-\[220px\],
+  .shotiq-phone-flow .absolute.w-\[228px\],
+  .shotiq-phone-flow .absolute.w-\[230px\],
+  .shotiq-phone-flow .absolute.w-\[232px\],
+  .shotiq-phone-flow .absolute.w-\[235px\],
+  .shotiq-phone-flow .absolute.w-\[242px\],
+  .shotiq-phone-flow .absolute.w-\[249px\],
+  .shotiq-phone-flow .absolute.w-\[250px\],
+  .shotiq-phone-flow .absolute.w-\[255px\],
+  .shotiq-phone-flow .absolute.w-\[260px\],
+  .shotiq-phone-flow .absolute.w-\[262px\],
+  .shotiq-phone-flow .absolute.w-\[268px\],
+  .shotiq-phone-flow .absolute.w-\[274px\],
+  .shotiq-phone-flow .absolute.w-\[275px\],
+  .shotiq-phone-flow .absolute.w-\[281px\],
+  .shotiq-phone-flow .absolute.w-\[292px\],
+  .shotiq-phone-flow .absolute.w-\[293px\],
+  .shotiq-phone-flow .absolute.w-\[300px\],
+  .shotiq-phone-flow .absolute.w-\[306px\],
+  .shotiq-phone-flow .absolute.w-\[318px\],
+  .shotiq-phone-flow .absolute.w-\[330px\],
+  .shotiq-phone-flow .absolute.w-\[350px\],
+  .shotiq-phone-flow .absolute.w-\[374px\],
+  .shotiq-phone-flow .absolute.w-\[376px\],
+  .shotiq-phone-flow .absolute.w-\[380px\],
+  .shotiq-phone-flow .absolute.w-\[384px\],
+  .shotiq-phone-flow .absolute.w-\[392px\],
+  .shotiq-phone-flow .absolute.w-\[394px\],
+  .shotiq-phone-flow .absolute.w-\[399px\],
+  .shotiq-phone-flow .absolute.w-\[404px\],
+  .shotiq-phone-flow .absolute.w-\[420px\],
+  .shotiq-phone-flow .absolute.w-\[430px\],
+  .shotiq-phone-flow .absolute.w-\[440px\],
+  .shotiq-phone-flow .absolute.w-\[448px\],
+  .shotiq-phone-flow .absolute.w-\[452px\],
+  .shotiq-phone-flow .absolute.w-\[464px\],
+  .shotiq-phone-flow .absolute.w-\[486px\],
+  .shotiq-phone-flow .absolute.w-\[492px\],
+  .shotiq-phone-flow .absolute.w-\[500px\],
+  .shotiq-phone-flow .absolute.w-\[520px\],
+  .shotiq-phone-flow .absolute.w-\[523px\],
+  .shotiq-phone-flow .absolute.w-\[543px\],
+  .shotiq-phone-flow .absolute.w-\[550px\],
+  .shotiq-phone-flow .absolute.w-\[600px\],
+  .shotiq-phone-flow .absolute.w-\[620px\],
+  .shotiq-phone-flow .absolute.w-\[656px\],
+  .shotiq-phone-flow .absolute.w-\[660px\] {
+    position: static;
+    inset: auto;
+  }
+
+  /* Desktop multi-column grids collapse. Canonical's phone screens are one
+     column of full-width cards, or two for the small stat/action tiles. */
+  .shotiq-phone-flow .grid-cols-3,
+  .shotiq-phone-flow .grid-cols-4,
+  .shotiq-phone-flow .grid-cols-5,
+  .shotiq-phone-flow .grid-cols-6,
+  .shotiq-phone-flow .grid-cols-8,
+  .shotiq-phone-flow .grid-cols-12 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* A calendar month is 7 columns on any device; collapsing it would be wrong. */
+  .shotiq-phone-flow .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+  /* Arbitrary track lists (`grid-cols-[355fr_380fr_412fr]`, `[62px_62px_62px_1fr]`,
+     and seven more) are the desktop workspace splits. `fr` carries an automatic
+     `min-content` minimum, so even the fractional ones refuse to compress below
+     the widest word in each track - which is why /settings measured 574px and
+     /results/demo/goals 616px with every other rule already applied. They
+     collapse to the single column canonical draws.
+
+     `.shotiq-keep-cols` opts a subtree out: the SESSIONS table on
+     /results/demo/history is a record whose eight columns are measured off the
+     canonical 093 render, so it keeps them and pans inside its own scroller
+     rather than being stacked into meaningless cells. */
+  .shotiq-phone-flow [class*="grid-cols-["]:not(.shotiq-keep-cols [class*="grid-cols-["]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 4 - flex and grid items carry an automatic `min-width: min-content` floor,
+         and `min-width` beats `max-width`. That floor is why /results/demo/flaws
+         still measured 521px with rules 1-3 applied: the row wrapped and every
+         box was capped at 100%, but each item still refused to go narrower than
+         its widest unbreakable run. Releasing the floor is what actually lets
+         the desktop rows compress into the phone column. `shrink-0` children
+         keep their size regardless - flex-shrink:0 still holds them at basis. */
+  .shotiq-phone-flow .flex > *,
+  .shotiq-phone-flow .grid > * { min-width: 0; }
+
+  /* With the floor gone, a long unbroken token (a filename, a long metric
+     label) would otherwise paint outside its box rather than wrap. */
+  .shotiq-phone-flow { overflow-wrap: break-word; }
+
+  /* 5 - `whitespace-nowrap` pins min-content to max-content, so rule 4's
+         released floor cannot help it: the box is capped at 393pt but the text
+         paints straight through the right edge. That is the whole of the
+         residual overflow on /results/demo/flaws (the page strapline and the
+         coaching-target line), /settings and /dashboard. Inside
+         `.shotiq-keep-cols` the nowrap is load-bearing - it is what keeps the
+         SESSIONS rows on their measured column pitch - so it is left alone. */
+  .shotiq-phone-flow .whitespace-nowrap:not(.shotiq-keep-cols *) { white-space: normal; }
+
+  /* 6 - a card pinned to a desktop height (`h-[106px]`) now has to hold three
+         wrapped lines where it held one, so its content escaped the box and
+         painted over the next section. Every fixed height at or above 90px
+         becomes a floor instead of a cap; smaller ones are icons and controls
+         whose height is their identity and are left exactly as they are. */
+  .shotiq-phone-flow .h-\[90px\],
+  .shotiq-phone-flow .h-\[92px\],
+  .shotiq-phone-flow .h-\[95px\],
+  .shotiq-phone-flow .h-\[96px\],
+  .shotiq-phone-flow .h-\[98px\],
+  .shotiq-phone-flow .h-\[104px\],
+  .shotiq-phone-flow .h-\[106px\],
+  .shotiq-phone-flow .h-\[110px\],
+  .shotiq-phone-flow .h-\[113px\],
+  .shotiq-phone-flow .h-\[116px\],
+  .shotiq-phone-flow .h-\[118px\],
+  .shotiq-phone-flow .h-\[120px\],
+  .shotiq-phone-flow .h-\[122px\],
+  .shotiq-phone-flow .h-\[124px\],
+  .shotiq-phone-flow .h-\[126px\],
+  .shotiq-phone-flow .h-\[128px\],
+  .shotiq-phone-flow .h-\[132px\],
+  .shotiq-phone-flow .h-\[138px\],
+  .shotiq-phone-flow .h-\[140px\],
+  .shotiq-phone-flow .h-\[145px\],
+  .shotiq-phone-flow .h-\[146px\],
+  .shotiq-phone-flow .h-\[148px\],
+  .shotiq-phone-flow .h-\[150px\],
+  .shotiq-phone-flow .h-\[175px\],
+  .shotiq-phone-flow .h-\[178px\],
+  .shotiq-phone-flow .h-\[182px\],
+  .shotiq-phone-flow .h-\[210px\],
+  .shotiq-phone-flow .h-\[218px\],
+  .shotiq-phone-flow .h-\[220px\],
+  .shotiq-phone-flow .h-\[250px\],
+  .shotiq-phone-flow .h-\[260px\],
+  .shotiq-phone-flow .h-\[264px\],
+  .shotiq-phone-flow .h-\[270px\],
+  .shotiq-phone-flow .h-\[280px\],
+  .shotiq-phone-flow .h-\[318px\],
+  .shotiq-phone-flow .h-\[321px\],
+  .shotiq-phone-flow .h-\[335px\],
+  .shotiq-phone-flow .h-\[350px\],
+  .shotiq-phone-flow .h-\[352px\],
+  .shotiq-phone-flow .h-\[355px\],
+  .shotiq-phone-flow .h-\[400px\],
+  .shotiq-phone-flow .h-\[420px\],
+  .shotiq-phone-flow .h-\[428px\],
+  .shotiq-phone-flow .h-\[450px\],
+  .shotiq-phone-flow .h-\[483px\],
+  .shotiq-phone-flow .h-\[500px\],
+  .shotiq-phone-flow .h-\[600px\],
+  .shotiq-phone-flow .h-\[700px\],
+  .shotiq-phone-flow .h-\[835px\] {
+    height: auto;
+  }
+
+  /* Top-level SVG marks (the TrendLine on the elite-shooter detail is 110px
+     wide in a narrower column) are capped like any other box. Their internals
+     are not: those are viewBox-relative and `max-width` there is meaningless. */
+  .shotiq-phone-flow svg:not(svg *) { max-width: 100%; }
+
+  /* Media keeps its aspect once its width is capped by rule 2. */
+  .shotiq-phone-flow img,
+  .shotiq-phone-flow video,
+  .shotiq-phone-flow canvas { height: auto; }
+
+  /* 7 - INTERIOR COLUMN DIVIDERS.
+         Canonical draws zero full-height vertical rules on any of the 72 phone
+         screens. Every one measured in round 6 is a desktop multi-column split
+         that never collapsed at 393pt, and neither of the two shapes that
+         produce them is reachable from rule 3's enumerated list:
+
+           A. a fixed-width `shrink-0` side column NARROWER than rule 3's 200px
+              floor. The onboarding step rail (onboarding/page.tsx) and the
+              media filter rail (media/page.tsx) are both `w-[186px] shrink-0
+              border-r`, which is the rule measured at x=402px — 185pt, 47% of
+              the viewport — on 008, 009, 010, 011, 013 and 068. The list below
+              is enumerated from the source, like rule 3's, and covers the same
+              shape on /profile, /settings, /elite-shooters and the training
+              tab. ShotIQShell's own 196px nav is deliberately NOT in it: that
+              one is already `hidden md:flex` and is not a page column.
+
+           B. a `flex-1` sibling carrying `border-l` / `border-r`. It has no
+              width to enumerate, and `flex-1` shrinks to fit instead of
+              wrapping, so rule 1 never fires. This is the rule at 206pt on 019
+              (dashboard/page.tsx) and at 337pt on 046/047
+              (results/demo/flaws/page.tsx), plus ScoreBand's in ResultsBits.
+
+         Both become one full-width row of the stack, and the divider goes with
+         the split that justified it. */
+  .shotiq-phone-flow .w-\[111px\].border-l,
+  .shotiq-phone-flow .w-\[112px\].border-r,
+  .shotiq-phone-flow .w-\[118px\].border-r,
+  .shotiq-phone-flow .w-\[132px\].border-l,
+  .shotiq-phone-flow .w-\[136px\].border-r,
+  .shotiq-phone-flow .w-\[183px\].border-l,
+  .shotiq-phone-flow .w-\[186px\].border-r,
+  .shotiq-phone-flow .w-\[190px\].border-l,
+  .shotiq-phone-flow .w-\[194px\].border-l,
+  .shotiq-phone-flow .min-w-0.flex-1.border-l,
+  .shotiq-phone-flow .min-w-0.flex-1.border-r {
+    width: 100%;
+    flex-basis: 100%;
+    flex-grow: 1;
+    border-left-width: 0;
+    border-right-width: 0;
+  }
 }

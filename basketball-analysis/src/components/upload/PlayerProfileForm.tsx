@@ -64,12 +64,15 @@ export function PlayerProfileForm() {
 
   const inputClass = "w-full bg-white border border-[var(--shotiq-color-rule)] rounded-[6px] px-3 py-2 text-black placeholder:text-[var(--shotiq-color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--shotiq-color-shotiqOrange)]"
   const selectClass = "w-full bg-white border border-[var(--shotiq-color-rule)] rounded-[6px] px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-[var(--shotiq-color-shotiqOrange)]"
-  const labelClass = "text-[#E5E5E5] text-sm font-medium"
+  // #E5E5E5 is all but invisible on the white card this form sits on — it was
+  // a leftover from the dark-slate build. Field labels use the app's own label
+  // role (graphite, tracked caps), so "Position *" is actually readable.
+  const labelClass = "block text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]"
 
   return (
     <div className="space-y-6">
       {/* Row 1: Name, Email, Age */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className={labelClass}>Name *</label>
           <input
@@ -107,7 +110,7 @@ export function PlayerProfileForm() {
       </div>
 
       {/* Row 2: Position, Skill Level, Body Type */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className={labelClass}>Position *</label>
           <select
@@ -152,7 +155,7 @@ export function PlayerProfileForm() {
       </div>
 
       {/* Row 3: Height, Weight */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className={labelClass}>Height</label>
           <input

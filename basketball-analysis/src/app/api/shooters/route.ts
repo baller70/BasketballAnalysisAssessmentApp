@@ -43,8 +43,12 @@ import {
  *   dbId: number | null,        // Prisma Shooter.id when persisted, else null
  *   name, team, league, era, tier, position,
  *   height, weight, wingspan, bodyType,        // inches / lbs
- *   careerPct: number | null,                  // career 3PT%
+ *   careerPct: number | null,                  // career 3PT% (legacy field name)
  *   careerFreeThrowPct: number,
+ *   careerFieldGoalPct: number | null,         // 0-100, DB-only (catalog has none)
+ *   careerThreePct: number | null,             // 0-100, same value as careerPct
+ *   careerEfgPct: number | null,               // 0-100, computed from box-score totals
+ *   careerTsPct: number | null,                // 0-100, computed from box-score totals
  *   achievements: string | null,
  *   keyTraits: string[],
  *   shootingStyle: string,
@@ -97,11 +101,63 @@ interface ApiShooter extends Omit<EliteShooter, "biomechanicsEstimated"> {
   biomechanicsSource: "tier-estimated" | "measured"
   approvedFormImages: string[]
   excludedFormImages: string[]
+  careerFieldGoalPct: number | null
+  careerThreePct: number | null
+  careerEfgPct: number | null
+  careerTsPct: number | null
+  careerThreeMade: number | null
+  careerThreeAttempts: number | null
 }
 
 const norm = (s: string) => s.trim().toLowerCase()
 const num = (v: unknown): number | null =>
   v === null || v === undefined ? null : Number(v)
+
+/**
+ * Career shooting rates, all on a 0-100 scale.
+ *
+ * The static catalog carries only 3PT% (under the legacy name `careerPct`) and
+ * FT%. FG%, eFG% and TS% need box-score totals, so they are computed from the
+ * shooter's persisted `shooting_stats` rows and returned as null when those rows
+ * are absent — a shooter served from the static fallback reports null for the
+ * three, and the UI renders an em dash rather than a made-up number.
+ *
+ *   eFG% = (FGM + 0.5 * 3PM) / FGA
+ *   TS%  = PTS / (2 * (FGA + 0.44 * FTA)),  PTS = 2 * FGM + 3PM + FTM
+ */
+function careerRates(cat: EliteShooter, db: DbShooter | undefined) {
+  const totals = (db?.stats ?? []).reduce(
+    (a, s) => ({
+      fga: a.fga + (s.fgAttempts ?? 0),
+      fgm: a.fgm + (s.fgMade ?? 0),
+      tpm: a.tpm + (s.threePtMade ?? 0),
+      tpa: a.tpa + (s.threePtAttempts ?? 0),
+      fta: a.fta + (s.ftAttempts ?? 0),
+      ftm: a.ftm + (s.ftMade ?? 0),
+    }),
+    { fga: 0, fgm: 0, tpm: 0, tpa: 0, fta: 0, ftm: 0 }
+  )
+
+  const efg =
+    totals.fga > 0 ? ((totals.fgm + 0.5 * totals.tpm) / totals.fga) * 100 : null
+
+  const tsDenominator = 2 * (totals.fga + 0.44 * totals.fta)
+  const ts =
+    tsDenominator > 0
+      ? ((2 * totals.fgm + totals.tpm + totals.ftm) / tsDenominator) * 100
+      : null
+
+  const fgFromTotals = totals.fga > 0 ? (totals.fgm / totals.fga) * 100 : null
+
+  return {
+    careerFieldGoalPct: num(db?.careerFgPercentage) ?? fgFromTotals,
+    careerThreePct: num(db?.career3ptPercentage) ?? cat.careerPct ?? null,
+    careerEfgPct: efg,
+    careerTsPct: ts,
+    careerThreeMade: totals.tpm > 0 ? totals.tpm : null,
+    careerThreeAttempts: totals.tpa > 0 ? totals.tpa : null,
+  }
+}
 
 /** Map a catalog shooter + (optional) DB record into the public API shape. */
 function toApiShooter(
@@ -150,6 +206,7 @@ function toApiShooter(
     biomechanicsSource: estimated ? "tier-estimated" : "measured",
     approvedFormImages,
     excludedFormImages,
+    ...careerRates(cat, db),
   }
 }
 
@@ -157,7 +214,7 @@ type DbShooter = Awaited<ReturnType<typeof loadDbShooters>>[number]
 
 async function loadDbShooters() {
   return prisma.shooter.findMany({
-    include: { biomechanics: true, images: true },
+    include: { biomechanics: true, images: true, stats: true },
   })
 }
 

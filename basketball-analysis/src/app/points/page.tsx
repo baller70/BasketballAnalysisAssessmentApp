@@ -3,8 +3,9 @@
 /** /points — canonical 095-web-achievements-points, using the points context. */
 
 import React, { useState } from "react"
-import { ChevronDown, Check, Lock } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import Link from "next/link"
+import { ChevronDown, Check, Lock, ArrowUpDown, X } from "lucide-react"
+import { SectionLabel, Card, TrendLine, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
 
@@ -62,18 +63,33 @@ const BADGE_GLYPH: Record<string, string> = {
   "CLUTCH PERFORMER": "clutch-performer",
 }
 
-function Hex({ earned, size = 84, name }: { earned: boolean; size?: number; name?: string }) {
+/** Badge-tile headline: the condensed display face at cap 14 (see the call
+ *  site). Set inline because `.shotiq-section-label` is declared after the
+ *  Tailwind utility layer, so a `text-[19px]` utility loses the cascade to the
+ *  role's own 15px — and the role's defaults are owned elsewhere this round. */
+const BADGE_TITLE: React.CSSProperties = {
+  fontFamily: '"ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif',
+  fontWeight: 400,
+  fontSize: "19px",
+  lineHeight: "19px",
+  letterSpacing: "0.04em",
+  color: "var(--shotiq-color-ink)",
+}
+
+function Hex({ earned, size = 84, name, className = "mx-auto" }: {
+  earned: boolean; size?: number; name?: string; className?: string
+}) {
   const slug = name ? BADGE_GLYPH[name] : undefined
   if (slug) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={`/images/canonical/095-badge-${slug}.png`} alt=""
-           className="mx-auto object-contain" style={{ width: size, height: size * 1.1 }} />
+           className={`object-contain ${className}`} style={{ width: size, height: size * 1.1 }} />
     )
   }
   const c = earned ? "var(--shotiq-color-ink)" : "var(--shotiq-color-muted)"
   return (
-    <svg width={size} height={size * 1.1} viewBox="0 0 52 58" aria-hidden="true">
+    <svg width={size} height={size * 1.1} viewBox="0 0 52 58" aria-hidden="true" className={className}>
       <polygon points="26,2 49,15 49,43 26,56 3,43 3,15" fill="none" stroke={c} strokeWidth="2" />
       <g stroke={earned ? "var(--shotiq-color-shotiqOrange)" : c} strokeWidth="1.6" fill="none">
         <circle cx="24" cy="18" r="3" /><path d="M24 21 L22 30 L18 38 M22 30 L27 36 M24 22 L31 19" />
@@ -82,6 +98,14 @@ function Hex({ earned, size = 84, name }: { earned: boolean; size?: number; name
     </svg>
   )
 }
+
+/* Canonical's KPI eyebrow tier on this screen: cap 10, TOTAL XP over 39px.
+   `.shotiq-microcaps` pins its size and tracking through custom properties —
+   a bare `text-[13px]`/`tracking-[…]` on the element is discarded because the
+   role rule sits after Tailwind's utility layer. */
+const KPI_EYEBROW = { "--shotiq-microcaps-size": "13px",
+                      "--shotiq-microcaps-tracking": "0.05em",
+                      "--shotiq-microcaps-word-spacing": "0.14em" } as React.CSSProperties
 
 export default function AchievementsPointsPage() {
   const points = usePoints()
@@ -111,58 +135,93 @@ export default function AchievementsPointsPage() {
   if (order === "A–Z") sorted.sort((x, y) => x.b[0].localeCompare(y.b[0]))
   if (order === "XP") sorted.sort((x, y) => parseInt(y.b[3].replace(/\D/g, "") || "0") - parseInt(x.b[3].replace(/\D/g, "") || "0"))
   const selBadge = pool[sel] ?? pool[0]
+  // The rail's primary CTA used to only setTab("BADGES") (already BADGES) and
+  // scrollIntoView on a page that is exactly 900px tall and does not scroll, so
+  // it moved nothing at all (R10 defect H6). It now opens the achievement
+  // itself — the badge, how it is earned, progress and the reward — and still
+  // brings the badge grid and the matching tile into view behind the sheet.
+  const [achievement, setAchievement] = useState(false)
   const viewAchievement = () => {
     setTab("BADGES")
     document.getElementById(`badge-${sel}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+    setAchievement(true)
   }
+  React.useEffect(() => {
+    if (!achievement) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setAchievement(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [achievement])
 
   return (
     <div data-testid="screen-desktop-web-achievements-points" className="flex">
       <div className="min-w-0 flex-1 px-[24px] py-[18px]">
         <div className="flex items-start justify-between gap-[16px]">
           <div>
-            <h1 className="shotiq-display text-[46px] leading-[48px]">ACHIEVEMENTS &amp; POINTS</h1>
+            <PageTitle size={55}>ACHIEVEMENTS &amp; POINTS</PageTitle>
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">Track your progress. Earn badges. Build your edge.</p>
           </div>
           <div className="flex gap-[12px]">
-            <Card className="w-[190px] px-[14px] py-[13px]">
-              <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TOTAL XP</div>
-              <div className="mt-[6px] flex items-center gap-[8px]">
-                <svg width="26" height="29" viewBox="0 0 26 29" aria-hidden="true">
-                  <polygon points="13,1 25,7.75 25,21.25 13,28 1,21.25 1,7.75" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth="1.6" />
+            {/* Canonical seats the avatar hexagon beside a stacked
+                label/value pair and gives the XP track its own full-width row;
+                the label used to sit alone on line 1 with the hexagon, the
+                value and the bar all crammed onto line 2. */}
+            <Card className="w-[190px] px-[14px] py-[18px]">
+              <div className="flex items-center gap-[9px]">
+                <svg width="38" height="42" viewBox="0 0 26 29" aria-hidden="true" className="shrink-0">
+                  <polygon points="13,1 25,7.75 25,21.25 13,28 1,21.25 1,7.75" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth="1.4" />
                   <text x="13" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--shotiq-color-ink)">JE</text>
                 </svg>
-                <div className="shotiq-numeric text-[29px] leading-[32px]">{totalPoints.toLocaleString()} <span className="text-[12px]">XP</span></div>
-              </div>
-              <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full w-[80%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
-              <div className="mt-[3px] text-[9px] text-[var(--shotiq-color-graphite)]">Next tier at 3,500 XP</div>
-            </Card>
-            <Card className="w-[190px] px-[14px] py-[13px]">
-              <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT TIER</div>
-              <div className="mt-[6px] flex items-end justify-between">
-                <div>
-                  <div className="text-[22px] font-bold leading-[24px] text-[var(--shotiq-color-analysisBlue)]">LEVEL 7</div>
-                  <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Technician</div>
+                <div className="min-w-0">
+                  {/* Canonical's KPI eyebrows are the condensed micro-caps
+                      tier, cap 10 over a 39px advance for TOTAL XP. The body
+                      face at 9px drew cap 7 over 43px — 30% short and 4px
+                      WIDER, i.e. undersized and over-tracked at once, which is
+                      only possible if the face is wrong. Tracking comes down
+                      with the size or the label runs past canonical's advance. */}
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>TOTAL XP</div>
+                  <div className="shotiq-numeric whitespace-nowrap text-[33px] leading-[36px]">{totalPoints.toLocaleString()} <span className="text-[14px]">XP</span></div>
                 </div>
-                <TrendLine points={[2, 3, 2.4, 3.4, 4]} width={54} height={28} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
               </div>
-              <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full w-[65%] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></div>
+              <div className="mt-[9px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
+                <div className="h-full w-[80%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
+              <div className="mt-[5px] text-[9px] text-[var(--shotiq-color-graphite)]">Next tier at 3,500 XP</div>
             </Card>
-            <Card className="w-[190px] px-[14px] py-[13px]">
-              <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BADGES EARNED</div>
-              {/* Canonical catalogue spans 36 badges across the seasons; this
-                  page ships the first two rows (see Load more). */}
-              <div className="mt-[6px] flex items-baseline justify-between">
-                <span className="shotiq-numeric text-[27px] leading-[30px]">{earned + 14} / 36</span>
-                <span className="text-[12px] text-[var(--shotiq-color-graphite)]">50%</span>
+            {/* One card, one internal divider — canonical does not box these
+                two separately. */}
+            <Card className="flex w-[392px] divide-x divide-[var(--shotiq-color-rule)] px-[0px] py-[18px]">
+              <div className="w-[196px] px-[14px]">
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>CURRENT TIER</div>
+                <div className="mt-[6px] flex items-end justify-between">
+                  <div>
+                    <div className="flex items-center gap-[4px] text-[22px] font-bold leading-[24px] text-[var(--shotiq-color-analysisBlue)]">
+                      <ArrowUpDown className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-ink)]" strokeWidth={2} />LEVEL 7
+                    </div>
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Technician</div>
+                  </div>
+                  <TrendLine points={[2, 3, 2.4, 3.4, 4]} width={54} height={28} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
+                </div>
+                <div className="mt-[8px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className="h-full w-[92%] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></div>
               </div>
-              <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full w-[50%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
+              <div className="w-[196px] px-[14px]">
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>BADGES EARNED</div>
+                {/* Canonical catalogue spans 36 badges across the seasons; this
+                    page ships the first two rows (see Load more). Canonical
+                    sets the earned count black and the total in light grey. */}
+                <div className="mt-[6px] flex items-baseline justify-between">
+                  <span className="shotiq-numeric text-[27px] leading-[30px]">{earned + 14}
+                    <span className="ml-[5px] text-[21px] text-[var(--shotiq-color-graphite)]">/ 36</span></span>
+                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">50%</span>
+                </div>
+                <div className="mt-[8px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className="h-full w-[50%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
+              </div>
             </Card>
-            <Card className="w-[160px] px-[14px] py-[13px]">
-              <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">LONGEST STREAK</div>
+            {/* Canonical runs this card at 190px, the same as TOTAL XP; at 160
+                it was the only card in the row out of proportion with itself. */}
+            <Card className="w-[190px] px-[14px] py-[18px]">
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>LONGEST STREAK</div>
               <div className="mt-[6px] flex items-center justify-between">
                 <div>
                   <div className="shotiq-numeric text-[27px] leading-[30px]">6</div>
@@ -178,7 +237,11 @@ export default function AchievementsPointsPage() {
         <nav className="mt-[12px] flex gap-[28px] border-b border-[var(--shotiq-color-rule)]">
           {["BADGES", "CHALLENGES", "POINTS HISTORY"].map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
-                    className={`relative pb-[10px] text-[13px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                    /* Canonical's tab strip is the condensed display face at
+                       cap 14 — CHALLENGES over 69px. The body face at 13px bold
+                       drew cap 10 over 83px: 4 short and 14 wide at once, so it
+                       read as a small over-tracked caption rather than a tab. */
+                    className={`relative shotiq-display pb-[10px] text-[20px] leading-[22px] tracking-[0.06em] ${tab === t ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
               {t}
               {tab === t && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
             </button>
@@ -234,15 +297,31 @@ export default function AchievementsPointsPage() {
               </div>
             </div>
             <SectionLabel className="mt-[12px]">{`ALL BADGES (${earned + 14} / 36)`}</SectionLabel>
-            <div className="mt-[8px] grid grid-cols-5 gap-[12px]">
+            <div className="mt-[8px] grid grid-cols-5 gap-[14px]">
               {sorted.map(({ b: [t, d, e, xp], i }) => (
                 <button key={t} type="button" id={`badge-${i}`} onClick={() => setSel(i)} aria-pressed={sel === i}
-                        className={`relative rounded-[8px] border p-[12px] text-center ${sel === i ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                        className={`relative flex h-[210px] flex-col rounded-[8px] border p-[12px] text-center ${sel === i ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
                   {e && <span className="absolute right-[8px] top-[8px] grid h-[16px] w-[16px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[10px] w-[10px] text-white" /></span>}
-                  <div><Hex earned={e} name={t} /></div>
-                  <div className="mt-[4px] text-[11px] font-bold tracking-[0.03em]">{t}</div>
-                  <div className="mt-[2px] text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">{d}</div>
-                  <div className={`mt-[6px] text-[10px] font-bold ${e ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                  {/* Canonical's card is 211px tall around a 99px hexagon and
+                      leaves ~17px between the caption and the EARNED/XP line.
+                      A 222px card around a 90px hex left 40px of void in every
+                      earned tile — ten of them on screen at once. */}
+                  <div><Hex earned={e} name={t} size={95} /></div>
+                  {/* The badge NAME is the tile's headline. Measured on
+                      canonical 095: "STACKED RELEASE" is cap 14 over an
+                      advance of 96, against the shipped cap 8 / advance 98 —
+                      the app was setting the title SMALLER than its own
+                      caption on all ten tiles. cap 14 at advance 96 is only
+                      reachable in the condensed face (6.9 advance-units per
+                      cap; the body face runs 12.3), which puts it at 19px on
+                      the section-label ramp with the same 0.08em tracking. */}
+                  <div className="mt-[4px]" style={BADGE_TITLE}>{t}</div>
+                  {/* Fixed card height + a floored footer: canonical lands every
+                      XP/EARNED line on one baseline across the row, which a
+                      description that wraps to one line on some cards and two
+                      on others otherwise breaks. */}
+                  <div className="mt-[3px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                  <div className={`mt-auto pt-[6px] text-[10px] font-bold ${e ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                     {e ? "EARNED" : <span className="flex items-center justify-center gap-[4px]"><Lock className="h-[9px] w-[9px]" /> {xp}</span>}
                   </div>
                 </button>
@@ -292,10 +371,15 @@ export default function AchievementsPointsPage() {
           </div>
 
           {/* badge details rail */}
-          <aside className="w-[330px] shrink-0">
+          {/* Canonical splits this body 790 grid : 387 rail (2.04:1) inside 1223px;
+              at w-330 the split measured 847 : 314 (2.70:1) in 1198px, so the rail
+              is set to its proportional 379 + 18 padding + 1 border. */}
+          <aside className="w-[398px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
             <SectionLabel>BADGE DETAILS</SectionLabel>
+            {/* Hex defaults to mx-auto for the grid cells; left here, or its
+                auto margins push the title out to the panel's right edge. */}
             <div className="mt-[8px] flex items-center gap-[14px]">
-              <Hex earned={selBadge[2]} size={92} name={selBadge[0]} />
+              <Hex earned={selBadge[2]} size={92} name={selBadge[0]} className="shrink-0" />
               <div>
                 <div className="text-[17px] font-bold tracking-[0.02em]">{selBadge[0]}</div>
                 <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">Technique</div>
@@ -319,15 +403,17 @@ export default function AchievementsPointsPage() {
               </div>
               <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
             </div>
-            <Card className="mt-[12px] p-[12px]">
-              <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
+            {/* Canonical fills this sub-panel (249,249,250) against its (253,253,253)
+                paper — a tint, not white; drawn white the panel floated free of the card. */}
+            <Card className="mt-[12px] bg-[#FAFAFA] p-[12px]">
+              <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
               <div className="text-[12px]">May 12, 2025 at 8:24 AM</div>
               {/* Canonical runs this row at ~24px — it is the headline of the
                   badge panel, not a footnote. */}
               <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)] text-center">
-                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[26px] leading-[30px]" /></div>
-                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[26px] leading-[30px]" /></div>
-                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[31px] leading-[35px]" /></div>
                 <div className="flex-1 pl-[10px]"><div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-analysisBlue)]">82</div>
                   <div className="mt-[2px] whitespace-nowrap text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
               </div>
@@ -339,7 +425,7 @@ export default function AchievementsPointsPage() {
                   <polygon points="13,1 25,7.75 25,21.25 13,28 1,21.25 1,7.75" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth="1.6" />
                   <text x="13" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--shotiq-color-ink)">JE</text>
                 </svg>
-                <div><div className="text-[13px] font-bold">+250 XP</div><div className="text-[10px] text-[var(--shotiq-color-graphite)]">Points earned</div></div>
+                <div><div className="text-[13px] font-bold">+250 XP</div><div className="whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">Points earned</div></div>
               </div>
               <div className="flex items-center gap-[8px] border-l border-[var(--shotiq-color-rule)] pl-[14px]">
                 <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
@@ -355,6 +441,53 @@ export default function AchievementsPointsPage() {
           </aside>
         </div>
       </div>
+
+      {/* Achievement sheet — what "View achievement" opens. */}
+      {achievement && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-6"
+             onClick={() => setAchievement(false)}>
+          <Card data-testid="achievement-detail" className="w-full max-w-[440px] p-[22px]"
+                role="dialog" aria-modal="true" aria-label={`${selBadge[0]} achievement`}
+                onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <SectionLabel>ACHIEVEMENT</SectionLabel>
+              <button type="button" onClick={() => setAchievement(false)} aria-label="Close"
+                      data-testid="achievement-detail-close"
+                      className="grid h-[30px] w-[30px] place-items-center rounded-[5px] border border-[var(--shotiq-color-rule)]">
+                <X className="h-[14px] w-[14px]" />
+              </button>
+            </div>
+            <div className="mt-[10px] flex items-center gap-[16px]">
+              <Hex earned={selBadge[2]} size={96} name={selBadge[0]} className="shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[20px] font-bold leading-[24px]">{selBadge[0]}</div>
+                <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">{selBadge[4]}</div>
+                <span className={`mt-[6px] inline-block rounded-[4px] border px-[8px] py-[2px] text-[10px] font-bold ${
+                  selBadge[2]
+                    ? "border-[var(--shotiq-color-confirmGreen)] text-[var(--shotiq-color-confirmGreen)]"
+                    : "border-[var(--shotiq-color-graphite)] text-[var(--shotiq-color-graphite)]"}`}>
+                  {selBadge[2] ? "EARNED" : `LOCKED · ${selBadge[3]}`}
+                </span>
+              </div>
+            </div>
+            <p className="mt-[12px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">{selBadge[1]}</p>
+            <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+              <SectionLabel>YOUR PROGRESS</SectionLabel>
+              <div className="mt-[6px] flex items-center gap-[10px]">
+                <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: selBadge[2] ? "100%" : "40%" }} />
+                </div>
+                <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
+              </div>
+            </div>
+            <Link href="/results/demo/training" data-testid="achievement-train"
+                  className="mt-[16px] flex h-[42px] items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+              {selBadge[2] ? "Keep the streak going ↗" : "Train toward this badge ↗"}
+            </Link>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

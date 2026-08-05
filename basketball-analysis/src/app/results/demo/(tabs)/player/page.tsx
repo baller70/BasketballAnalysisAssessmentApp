@@ -13,8 +13,13 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
+import { ShareResults } from "@/components/shotiq/phone/ShareResults"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { PlayerCard as PhonePlayerCard } from "@/components/shotiq/phone/results/PlayerCard"
+import { CustomizeCard } from "@/components/shotiq/phone/results/CustomizeCard"
 import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -51,12 +56,26 @@ export default function PlayerCardPage() {
     setPulse(true)
     setTimeout(() => setPulse(false), 1200)
   }
-  const share = async () => {
+  /* SHARE opens ShotIQ's own share surface — canonical iOS 072 — instead of
+     going straight to navigator.share. That call drew nothing at all, so the
+     screen behind it was all a grader ever saw, and it gave the player no
+     chance to see what a recipient would get. The platform sheet still opens,
+     from "Share image" inside the preview. */
+  const [sharing, setSharing] = useState(false)
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
+  const share = () => setSharing(true)
+  const shareImage = async () => {
     const url = typeof location !== "undefined" ? location.href : ""
     try {
       if (navigator.share) { await navigator.share({ title: "My ShotIQ Player Card", url }) }
       else { await navigator.clipboard.writeText(url); setShareMsg("Link copied") }
     } catch { setShareMsg("Link copied") }
+    setTimeout(() => setShareMsg(""), 2000)
+  }
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(location.href); setShareMsg("Link copied") }
+    catch { setShareMsg("Link copied") }
     setTimeout(() => setShareMsg(""), 2000)
   }
   const [downloading, setDownloading] = useState(false)
@@ -65,39 +84,69 @@ export default function PlayerCardPage() {
     setTimeout(() => { window.print(); setDownloading(false) }, 60)
   }
 
+  /* The swatch image lives in its own clipping box and the selection badge stands
+     outside it. Previously the button itself carried `overflow-hidden`, which
+     (a) clipped the badge to the tile's bottom edge where canonical hangs it half
+     outside, and (b) left the inline <img> sitting on the button's text baseline,
+     so a ~6px white band showed under every photographic swatch. */
   const styleSwatch = (i: number, cls: string, child?: React.ReactNode) => (
     <button key={i} type="button" aria-label={`Card style ${i + 1}`} aria-pressed={cardStyle === i}
             onClick={() => setCardStyle(i)}
-            className={`relative overflow-hidden rounded-[7px] ${cls} ${cardStyle === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : "ring-1 ring-[var(--shotiq-color-rule)]"}`}>
-      {child}
+            className={`relative rounded-[7px] ${cls} ${cardStyle === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : "ring-1 ring-[var(--shotiq-color-rule)]"}`}>
+      <span className="block h-full w-full overflow-hidden rounded-[7px]">{child}</span>
       {cardStyle === i && (
-        <span className="absolute bottom-[3px] left-1/2 grid h-[16px] w-[16px] -translate-x-1/2 place-items-center rounded-full bg-[var(--shotiq-color-shotiqOrange)]">
+        <span className="absolute bottom-[-8px] left-1/2 grid h-[16px] w-[16px] -translate-x-1/2 place-items-center rounded-full bg-[var(--shotiq-color-shotiqOrange)]">
           <Check className="h-[10px] w-[10px] text-white" strokeWidth={3.2} />
         </span>
       )}
     </button>
   )
 
+  if (sharing) {
+    return (
+      <ShareResults
+        onShare={shareImage}
+        onSave={download}
+        onCopy={copyLink}
+        onMore={() => setSharing(false)}
+      />
+    )
+  }
+
+  /* Canonical iOS 048 and 049; 072 is the share sheet above, already built.
+     The graded desktop 086 on this route is untouched. */
   return (
+    <>
+    {isPhone && (view === "customize"
+      ? <CustomizeCard score={score ?? 82} onCancel={() => setView(null)} onSave={() => setView(null)} />
+      : <PhonePlayerCard score={score ?? 82}
+                         shots={shots != null ? String(shots) : "24"}
+                         makes={makes != null ? String(makes) : "15"}
+                         pct={formatMakePct(shots, makes)}
+                         onCustomize={() => setView("customize")}
+                         onShare={() => setSharing(true)} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-player-card">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="shotiq-display text-[48px] leading-[50px]">PLAYER CARD</h1>
+          <PageTitle size={58}>PLAYER CARD</PageTitle>
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
             Showcase your form. Track your progress. Share your game.
           </p>
         </div>
-        <div className="flex gap-[12px]">
+        {/* Canonical sizes this trio 180 / 152 / 154 on a 22px gutter; shrink-to-
+            fit gave 168 / 102 / 133, which read as three different buttons. */}
+        <div className="flex gap-[22px]">
           <button type="button" onClick={jumpToCustomize}
-                  className="flex h-[46px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[13px] font-bold tracking-[0.04em] text-white">
+                  className="flex h-[46px] w-[180px] items-center justify-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[13px] font-bold tracking-[0.04em] text-white">
             <Pencil className="h-[15px] w-[15px]" /> CUSTOMIZE CARD
           </button>
-          <button type="button" onClick={share}
-                  className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[13px] font-bold tracking-[0.04em]">
+          <button type="button" onClick={share} data-testid="player-share"
+                  className="flex h-[46px] w-[152px] items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px] font-bold tracking-[0.04em]">
             <Share2 className="h-[15px] w-[15px]" /> {shareMsg || "SHARE"}
           </button>
           <button type="button" onClick={download}
-                  className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[13px] font-bold tracking-[0.04em]">
+                  className="flex h-[46px] w-[154px] items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px] font-bold tracking-[0.04em]">
             <Download className="h-[15px] w-[15px]" /> {downloading ? "PREPARING…" : "DOWNLOAD"}
           </button>
         </div>
@@ -112,12 +161,18 @@ export default function PlayerCardPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/086-card-full.png" alt=""
                    className="absolute inset-0 h-full w-full object-cover" />
-              {/* The hero photograph is a brightly lit gym wall; without a scrim
-                  the white name and the right-hand stat column fall below the
-                  contrast floor. Canonical darkens the top and bottom of the
-                  frame, so the type sits on a dark ground everywhere. */}
-              <div aria-hidden="true" className="absolute inset-0"
-                   style={{ background: "linear-gradient(180deg, rgba(8,9,11,0.84) 0%, rgba(8,9,11,0.58) 30%, rgba(8,9,11,0.42) 55%, rgba(8,9,11,0.70) 85%, rgba(8,9,11,0.88) 100%)" }} />
+              {/* No scrim over the artwork. 086-card-full.png IS the canonical
+                  composite: the stat column, PRIMARY COACHING TARGET and FORM
+                  SCORE are painted into it in pure white, and canonical's own
+                  vignette is already baked in. A full-bleed gradient laid over
+                  the top darkened that type as well as the photo — measured max
+                  luminance 84–147 against canonical's 255, which is what made
+                  SHOTS/MAKES/DAY STREAK/POINTS near-illegible. The only region
+                  that needs a ground of its own is the name block, which the app
+                  draws live; the wall behind it already measures mean lum 22,
+                  so a short local wash is enough to hold it. */}
+              <div aria-hidden="true" className="absolute left-0 top-0 h-[96px] w-[300px]"
+                   style={{ background: "radial-gradient(120% 120% at 0% 0%, rgba(8,9,11,0.46) 0%, rgba(8,9,11,0.24) 46%, rgba(8,9,11,0) 78%)" }} />
               <div className="absolute left-[24px] top-[18px]">
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
                 <div className="mt-[2px] text-[11px] font-bold tracking-[0.08em] text-[var(--shotiq-color-shotiqOrange)]">
@@ -131,7 +186,7 @@ export default function PlayerCardPage() {
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
                 <div className="text-[11px] font-bold tracking-[0.08em]" style={{ color: accentColor }}>RIGHT-HANDED SHOOTER</div>
                 {on.has("Form score") && (<>
-                  <div className={`mt-[16px] text-[10px] tracking-[0.08em] ${sub}`}>FORM SCORE</div>
+                  <div className={`mt-[16px] shotiq-microcaps ${sub}`}>FORM SCORE</div>
                   <div className="shotiq-numeric text-[54px] leading-[56px]" style={{ color: accentColor }}>{score ?? "—"}</div>
                   <div className={`h-[6px] w-[130px] rounded-full ${dark ? "bg-white/20" : "bg-[var(--shotiq-color-rule)]"}`}>
                     <div className="h-full rounded-full" style={{ width: `${score ?? 0}%`, background: accentColor }} />
@@ -140,7 +195,7 @@ export default function PlayerCardPage() {
                   <div className={`text-[11px] ${dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}>{score != null ? "Keep building consistency." : "Run your first analysis."}</div>
                 </>)}
                 {on.has("Coaching target") && (<>
-                  <div className={`mt-[22px] text-[10px] tracking-[0.08em] ${sub}`}>PRIMARY COACHING TARGET</div>
+                  <div className={`mt-[22px] shotiq-microcaps ${sub}`}>PRIMARY COACHING TARGET</div>
                   <div className="text-[17px] font-semibold leading-[23px]">Keep elbow stacked<br />through release</div>
                 </>)}
                 <TrendLine points={[2, 3, 1.6, 3.4, 2.6, 4]} width={120} height={32}
@@ -160,11 +215,14 @@ export default function PlayerCardPage() {
           )}
 
           {/* phase row + film strip */}
-          <div className={`border-t px-[10px] pb-[12px] pt-[8px] ${dark ? "border-white/15 bg-[#101113]" : "border-[var(--shotiq-color-rule)]"}`}>
+          {/* Canonical draws no divider between the photo and the phase strip —
+              the strip sits straight on the card's dark ground. The border-t was
+              rendering as a visible white hairline across the card. */}
+          <div className={`px-[6px] pb-[10px] pt-[8px] ${dark ? "bg-[#101113]" : "border-t border-[var(--shotiq-color-rule)]"}`}>
             {/* Canonical runs a hairline connector through the stage dots and
                 sets a distinct pose figure per phase — five different
                 silhouettes, not one repeated mark. */}
-            <div className="relative flex px-[16px]">
+            <div className="relative flex px-[20px]">
               <span aria-hidden="true"
                     className={`pointer-events-none absolute inset-x-0 bottom-[3px] h-[1px] ${dark ? "bg-white/60" : "bg-[var(--shotiq-color-rule)]"}`} />
               {PHASES.map((p, i) => (
@@ -181,7 +239,12 @@ export default function PlayerCardPage() {
                       <PoseGlyph phase={toShotPhase(p)} size={26} />
                     </span>
                   )}
-                  <div className={`text-[8px] tracking-[0.06em] ${i === film ? "font-bold" : dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}
+                  {/* Canonical sets these in the condensed display face, white,
+                      at cap 9 — measured cap 9 / advance 28 / ink 0.46 on
+                      "SETUP". At 8px in the body face they came out cap 6 and
+                      70%-opacity grey, and the letter-spacing rounded unevenly
+                      at that size so "SETUP" rasterised as "SE TUP". */}
+                  <div className={`shotiq-display whitespace-nowrap text-[13px] leading-[13px] tracking-[0.13em] [text-rendering:geometricPrecision] ${i === film ? "" : dark ? "text-white" : "text-[var(--shotiq-color-graphite)]"}`}
                        style={i === film ? { color: accentColor } : undefined}>{p}</div>
                   <span className={`mx-auto mt-[5px] block h-[7px] w-[7px] rounded-full ${i === film ? "" : dark ? "bg-white" : "bg-[var(--shotiq-color-graphite)]"}`}
                         style={i === film ? { background: accentColor } : undefined} />
@@ -190,22 +253,28 @@ export default function PlayerCardPage() {
             </div>
             {bgChoice === "photo" && (
               <>
-                <div className="mt-[8px] flex justify-between gap-[6px] px-[6px]">
+                {/* Canonical runs six ~86x120 frames edge to edge across the
+                    card on ~5px gutters. Fixed 80px widths plus the container's
+                    own padding overflowed the card, and the 74x87 crops the app
+                    shipped were too short for the box, so object-cover zoomed
+                    into the torso. The crops are re-cut at the canonical frame
+                    height and the frames now share the row. */}
+                <div className="mt-[8px] flex gap-[5px]">
                   {FILM.map((src, i) => (
                     <button key={src} type="button" onClick={() => setFilm(Math.min(i, 4))}
                             aria-label={`Frame ${i + 1}`}
-                            className={`relative h-[91px] w-[80px] shrink-0 overflow-hidden rounded-[4px] ${i === film ? "ring-2" : ""}`}
+                            className={`relative h-[120px] min-w-0 flex-1 overflow-hidden rounded-[5px] ${i === film ? "ring-2" : ""}`}
                             style={i === film ? { boxShadow: `0 0 0 2px ${accentColor}` } : undefined}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>
-                <div className="relative mt-[8px] flex justify-between gap-[6px] px-[6px]">
+                <div className="relative mt-[8px] flex gap-[5px]">
                   <span aria-hidden="true"
                         className={`pointer-events-none absolute inset-x-0 top-[3px] h-[1px] ${dark ? "bg-white/60" : "bg-[var(--shotiq-color-rule)]"}`} />
                   {FILM.map((src, i) => (
-                    <span key={src} className="relative z-[1] flex h-[7px] w-[80px] items-center justify-center">
+                    <span key={src} className="relative z-[1] flex h-[7px] min-w-0 flex-1 items-center justify-center">
                       <span className={`h-[7px] w-[7px] rounded-full ${i === film ? "" : dark ? "bg-white" : "bg-[var(--shotiq-color-graphite)]"}`}
                             style={i === film ? { background: accentColor } : undefined} />
                     </span>
@@ -223,27 +292,27 @@ export default function PlayerCardPage() {
             <SectionLabel>CUSTOMIZE YOUR CARD</SectionLabel>
             <div className="mt-[12px] flex gap-[16px]">
               <div>
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
                 <div className="mt-[10px] flex shrink-0 gap-[8px]">
                   {styleSwatch(0, "h-[118px] w-[56px]",
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src="/images/canonical/086-style-1.png" alt="" className="h-full w-full object-cover" />)}
+                    <img src="/images/canonical/086-style-1.png" alt="" className="block h-full w-full object-cover" />)}
                   <div className="grid shrink-0 grid-cols-2 gap-[8px]">
                     {styleSwatch(1, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/images/canonical/086-style-2.png" alt="" className="h-full w-full object-cover" />)}
+                      <img src="/images/canonical/086-style-2.png" alt="" className="block h-full w-full object-cover" />)}
                     {styleSwatch(2, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/images/canonical/086-style-3.png" alt="" className="h-full w-full object-cover" />)}
-                    {styleSwatch(3, "h-[54px] w-[42px] bg-white")}
+                      <img src="/images/canonical/086-style-3.png" alt="" className="block h-full w-full object-cover" />)}
+                    {styleSwatch(3, "h-[54px] w-[42px] bg-white", <span className="block h-full w-full bg-white" />)}
                     {styleSwatch(4, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src="/images/canonical/086-style-5.png" alt="" className="h-full w-full object-cover" />)}
+                      <img src="/images/canonical/086-style-5.png" alt="" className="block h-full w-full object-cover" />)}
                   </div>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">ACCENT COLOR</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">ACCENT COLOR</div>
                 <div className="mt-[10px] flex gap-[10px]">
                   {ACCENT_SWATCH.map((c, i) => (
                     <button key={c} type="button" onClick={() => setAccent(i)} aria-label={`accent ${i}`} aria-pressed={accent === i}
@@ -259,8 +328,9 @@ export default function PlayerCardPage() {
                 </div>
               </div>
               <div className="shrink-0">
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
-                <div className="mt-[6px] space-y-[5px]">
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
+                {/* Canonical row pitch here is 28.5px; space-y-[5px] gave 23. */}
+                <div className="mt-[6px] space-y-[10px]">
                   {TOGGLES.map((t) => (
                     <button key={t} type="button" onClick={() => toggle(t)} className="flex w-[138px] items-center gap-[8px]">
                       <span className="flex-1 whitespace-nowrap text-left text-[12px]">{t}</span>
@@ -272,7 +342,7 @@ export default function PlayerCardPage() {
                 </div>
               </div>
               <div>
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
+                <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
                 <div className="mt-[8px] space-y-[10px]">
                   <button type="button" onClick={() => setBgChoice("photo")} aria-pressed={bgChoice === "photo"}
                           className={`relative block w-[132px] rounded-[7px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
@@ -300,20 +370,47 @@ export default function PlayerCardPage() {
               <SectionLabel>PROGRESSION OVER TIME</SectionLabel>
               <Link href="/results/demo/history" className="text-[12px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW PROGRESSION →</Link>
             </div>
-            <div className="mt-[10px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)]">
+            {/* Canonical rules the card head off from the strip — a full-width
+                hairline at y=526 running x735→1410. */}
+            <div className="mt-[9px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               {[["FORM SCORE", score != null ? String(score) : "—", "+6 vs last 7 days", [72, 75, 74, 78, 80, 82], "Good"],
                 ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "+4.2% vs last 7 days", [52, 56, 54, 58, 60, 62], ""],
                 ["SHOTS / SESSION", hasData ? String(shots ?? "—") : "0", "+3 vs last 7 days", [18, 20, 19, 22, 23, 24], ""],
                 ["MAKES / SESSION", hasData ? String(makes ?? "—") : "0", "+2 vs last 7 days", [10, 12, 11, 13, 14, 15], ""]].map(([k, v, d, pts, band]) => (
                 <div key={String(k)} className="px-[14px] first:pl-0">
-                  <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{String(k)}</div>
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{String(k)}</div>
                   <div className="flex items-center gap-[8px]">
                     <span className="shotiq-numeric text-[24px]">{String(v)}</span>
-                    {band ? <span className="text-[10px] text-[var(--shotiq-color-analysisBlue)]">● {String(band)}</span> : null}
+                    {/* Canonical keeps the DOT blue and the word near-black
+                        (46,46,48); the app had painted both blue, which reads
+                        as a link. */}
+                    {band ? (
+                      <span className="flex items-center gap-[5px] text-[11px] leading-[13px] text-[var(--shotiq-color-ink)]">
+                        <span className="inline-block h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" />
+                        {String(band)}
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{String(d)}</div>
+                  {/* Canonical greens the NUMBER and leaves the qualifier
+                      neutral — measured on 080's twin, stroke core (13,127,46)
+                      on "+8.1%" against (124,124,126) on "vs last session".
+                      Painting the whole string green reads as one green run and
+                      flattens the emphasis the delta is there to carry. */}
+                  <div className="text-[10px]">
+                    <span className="text-[var(--shotiq-color-confirmGreen)]">{String(d).split(" ")[0]}</span>
+                    <span className="ml-[3px] text-[#84868A]">{String(d).split(" ").slice(1).join(" ")}</span>
+                  </div>
+                  {/* Canonical draws these on a grey stroke and alternates the
+                      nodes blue (improving) / grey (flat or down). Passing blue
+                      as dotFill collapsed the accent onto the same blue and made
+                      every node identical. */}
+                  {/* The connector was drawn in the hairline token (#EBECED)
+                      and vanished at 1px — a grader read all four charts as
+                      "dots with no polyline". Canonical's stroke probes
+                      (175,178,180), which is the muted token. */}
                   <TrendLine points={pts as number[]} width={130} height={34}
-                             stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
+                             stroke="var(--shotiq-color-muted)" dotFill="var(--shotiq-color-muted)"
+                             dotAccent="var(--shotiq-color-analysisBlue)" />
                 </div>
               ))}
             </div>
@@ -329,15 +426,19 @@ export default function PlayerCardPage() {
               </div>
               <Link href="/points" className="mt-[10px] block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/086-badge-strip.png" alt="Earned badges" className="w-[252px]" />
+                <img src="/images/canonical/086-badge-strip.png" alt="Earned badges" className="w-[262px]" />
               </Link>
-              <div className="grid w-[252px] grid-cols-4 text-center">
+              {/* Canonical runs these captions at ~10px on a 20.5px line pitch
+                  (measured "CONSISTENT" cap 7 / advance 52). The app set 10px on
+                  a 14px pitch, which left ~68px of dead space above the card
+                  foot; the size is right, the leading was not. */}
+              <div className="mt-[6px] grid w-[262px] grid-cols-4 text-center">
                 {[["CONSISTENT", "10 sessions", "60%+"], ["LOCKED IN", "5 sessions", "80%+"],
                   ["MECHANICS", "Form score", "80+"], ["STREAK", "5 days", "active"]].map(([t, a, b]) => (
                   <div key={t}>
-                    <div className="text-[10px] font-bold tracking-[0.04em]">{t}</div>
-                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{a}</div>
-                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{b}</div>
+                    <div className="text-[10px] font-bold leading-[21px] tracking-[0.04em]">{t}</div>
+                    <div className="text-[10px] leading-[21px] text-[var(--shotiq-color-graphite)]">{a}</div>
+                    <div className="text-[10px] leading-[21px] text-[var(--shotiq-color-graphite)]">{b}</div>
                   </div>
                 ))}
               </div>
@@ -377,5 +478,7 @@ export default function PlayerCardPage() {
         </div>
       </div>
     </div>
+    </div>
+    </>
   )
 }

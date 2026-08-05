@@ -13,9 +13,20 @@ import { useAuthStore } from "@/stores/authStore"
 import {
   useHistory, FormScoreCell, StatStrip, TrendDelta, formatMakePct, scoreSeries,
 } from "@/components/shotiq/ResultsBits"
+import { ProfileOverviewPhone } from "@/components/shotiq/phone/ProfileOverviewPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 
 export default function ProfileAccountPage() {
   const { user } = useAuthStore()
+  /* Canonical iOS 070 is the profile OVERVIEW — avatar hero, five-cell stat
+     strip, the orange "Edit player profile" CTA, then PHYSICAL PROFILE /
+     SHOOTING PROFILE / PLAYER CARD / ABOUT / PROFILE COMPLETION / ACCOUNT INFO
+     / RECENT ACTIVITY. Round 6 rendered the desktop edit FORM at 393pt, whose
+     select values were truncated by their own chevrons ("Advance\u2304"). The
+     form is now one tap away at ?view=edit, pushed by the CTA. */
+  const isPhone = usePhoneViewport()
+  const [phoneView, setPhoneView] = usePhoneRoute("view")
   // Score, shot counts and the session-over-session delta all come from the one
   // shared history hook.
   const { items, score, shots, makes, delta } = useHistory()
@@ -108,6 +119,21 @@ export default function ProfileAccountPage() {
   const lbl = "text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
 
   return (
+    <>
+    {isPhone && phoneView !== "edit" && (
+      <ProfileOverviewPhone
+        name={form.name || user?.displayName || "Jordan Ellis"}
+        sub={`${form.hand}-handed \u2022 ${form.level}`}
+        shots={shots != null ? String(shots) : "24"}
+        makes={makes != null ? String(makes) : "15"}
+        pct={formatMakePct(shots, makes)}
+        height={form.height} weight={form.weight.replace(/[^0-9]/g, "") || "185"}
+        wingspan={form.wingspan}
+        avatar={avatar ?? "/images/canonical/096-avatar.png"}
+        onEdit={() => setPhoneView("edit")}
+      />
+    )}
+    <div className={isPhone && phoneView !== "edit" ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-profile-settings" className="flex">
       <div className="min-w-0 flex-1 px-[24px] pb-[12px] pt-[16px]">
         <h1 className="shotiq-display text-[46px] leading-[48px]">PROFILE &amp; ACCOUNT</h1>
@@ -276,5 +302,7 @@ export default function ProfileAccountPage() {
         </Card>
       </div>
     </div>
+    </div>
+    </>
   )
 }

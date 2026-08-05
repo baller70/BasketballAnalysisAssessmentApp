@@ -91,7 +91,7 @@ func shotiqTungstenFace(_ weight: Font.Weight) -> String {
 }
 
 extension View {
-    /// Canonical display face: Wilson X Connect "Tungsten Bold", bundled in
+    /// Canonical display face: Wilson X Connect "Tungsten Medium", bundled in
     /// the app via UIAppFonts. The scale factor absorbs any title that would
     /// still overflow its line.
     ///
@@ -102,14 +102,30 @@ extension View {
     /// silently lost its secondary colour. Ink is now the inherited default,
     /// set once at the `CanonicalScreen` root, which every call site's own
     /// `foregroundStyle` can override exactly as its author intended.
+    /// Canonical's display weight is Tungsten MEDIUM, not Bold. Measured by
+    /// rendering each cut at the canonical string's exact cap height and
+    /// comparing ink density against the canonical PNG:
+    ///
+    ///   053 "JORDAN ELLIS"  cap 63  canonical 0.421 | medium 0.433 | bold 0.654
+    ///   053 "CAREER SHOOTING SUMMARY"
+    ///                       cap 28  canonical 0.423 | medium 0.459 | bold 0.662
+    ///
+    /// All four Tungsten cuts share a cap ratio, so the 0.86 multiplier that
+    /// sets cap height is unchanged — only the stroke weight and the advance
+    /// width it drags along change.
     func shotiqDisplay(_ size: CGFloat) -> some View {
-        font(.custom("Tungsten-Bold", size: size * 0.86))
+        font(.custom("Tungsten-Medium", size: size * 0.86))
             .lineLimit(2)
             .minimumScaleFactor(0.5)
     }
-    /// Wilson X numerals (Tungsten Semibold), replacing DIN Condensed.
+    /// Wilson X numerals, replacing DIN Condensed.
+    ///
+    /// Medium, matching the display face — canonical does not set its numerals
+    /// heavier than its headings. Measured at matched cap height against the
+    /// canonical PNGs: 053 "62.5" cap 26 reads ink 0.376 and 052 "48.2%" cap 25
+    /// reads 0.382, against medium 0.407, semibold 0.533 and bold 0.633.
     func shotiqNumeric(_ size: CGFloat = ShotIQType.numeric) -> some View {
-        font(.custom("Tungsten-Semibold", size: size))
+        font(.custom("Tungsten-Medium", size: size))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
@@ -185,7 +201,7 @@ struct SectionLabel: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.custom("Tungsten-Bold", size: ShotIQType.sectionLabel))
+            .font(.custom("Tungsten-Medium", size: ShotIQType.sectionLabel))
             .kerning(ShotIQType.sectionTracking)
             .foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
@@ -199,8 +215,15 @@ struct Wordmark: View {
     var size: CGFloat = 30
     var body: some View {
         HStack(spacing: 0) {
-            Text("SHOT").font(.custom("Tungsten-Black", size: size * 0.9)).foregroundStyle(ShotIQColor.ink)
-            Text("IQ").font(.custom("Tungsten-Black", size: size * 0.9)).foregroundStyle(ShotIQColor.shotiqOrange)
+            // The wordmark is not the display face. Canonical draws SHOTIQ in a
+            // normal-width grotesque: at cap 27 it advances 148px (aspect 5.48)
+            // with ink density 0.436. Tungsten-Black is condensed and much
+            // heavier — 73px at the same cap (aspect 2.70) and ink 0.657, so the
+            // logo read as a narrow black slab. BoxedHeavy carries the same
+            // weight (ink 0.448) at aspect 3.52; the rest of the width is the
+            // letterform difference the rubric scopes out.
+            Text("SHOT").font(.custom("BoxedHeavy", size: size * 0.74)).foregroundStyle(ShotIQColor.ink)
+            Text("IQ").font(.custom("BoxedHeavy", size: size * 0.74)).foregroundStyle(ShotIQColor.shotiqOrange)
         }
         .lineLimit(1)
         .fixedSize()
@@ -227,7 +250,14 @@ struct TopBar: View {
                 Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Settings")
+            // "Menu", not "Settings": this gear opens the profile menu (021),
+            // while the profile screen has its own "Settings" row that opens the
+            // settings hub (071). Both were called "Settings", so a search for
+            // that name hit this header button first on every screen — which is
+            // why tapping Settings on the profile screen opened the menu instead
+            // and read as a dead tap. It also meant VoiceOver announced two
+            // different destinations under one name.
+            .accessibilityLabel("Menu")
         }
         .padding(.horizontal, 20)
         .frame(height: 52)
@@ -265,7 +295,7 @@ struct HeaderStat: View {
             } else {
                 Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
             }
-            Text(value).font(.custom("Tungsten-Semibold", size: ShotIQType.numeric))
+            Text(value).font(.custom("Tungsten-Medium", size: ShotIQType.numeric))
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).shotiqMicroCaps()
@@ -456,7 +486,7 @@ struct TrendLine: View {
 
                 if let endBadge, let last = coords.last {
                     Text(endBadge)
-                        .font(.custom("Tungsten-Semibold", size: ShotIQType.caption + 2.6))
+                        .font(.custom("Tungsten-Medium", size: ShotIQType.caption + 2.6))
                         .foregroundStyle(stroke)
                         .lineLimit(1).fixedSize()
                         .padding(.horizontal, 4).padding(.vertical, 1)
@@ -547,7 +577,7 @@ struct MediaSurface: View {
             RoundedRectangle(cornerRadius: 4).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
             HStack(spacing: 10) {
                 Image(systemName: "play.fill").font(.system(size: 13)).foregroundStyle(.white)
-                Text("0:00 / \(duration)").font(.custom("Tungsten-Semibold", size: 13)).foregroundStyle(.white)
+                Text("0:00 / \(duration)").font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(.white.opacity(0.35))
@@ -572,7 +602,7 @@ struct StatBlock: View {
     var valueSize: CGFloat = ShotIQType.numeric
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.custom("Tungsten-Semibold", size: valueSize)).foregroundStyle(color)
+            Text(value).font(.custom("Tungsten-Medium", size: valueSize)).foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)

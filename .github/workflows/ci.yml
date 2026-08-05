@@ -30,10 +30,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      # package.json declares `engines: node >=22.0.0`, and the Capacitor CLI
+      # (v8) refuses to run below 22 — the iOS sync step below fails hard on
+      # Node 20. CI had been pinned to a version the project itself declares
+      # unsupported; this aligns them and clears the Node 20 deprecation notice.
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: basketball-analysis/package-lock.json
 
@@ -48,6 +52,19 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # The iOS handoff gate in tests/scripts/buildCapacitorScript.test.ts asserts
+      # against the SYNCED Capacitor project (ios/App/App/capacitor.config.json
+      # and its bundled offline bootstrap). Those files are generated, not
+      # tracked, so on a fresh CI checkout they do not exist and the gate can
+      # never pass. Generate them first — this is what a developer's local tree
+      # already has, which is why the test passes locally and failed only here.
+      - name: Sync Capacitor iOS project (generates the artifacts the handoff gate checks)
+        # NODE_ENV must be production: capacitor.config.ts emits
+        # `loggingBehavior: 'debug'` under development, and the handoff gate
+        # asserts it is 'none'. The gate checks a production property, so the
+        # artifacts have to be generated in production mode.
+        run: NODE_ENV=production npm run cap:build:ios
 
       - name: Test
         run: npm test -- --run

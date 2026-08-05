@@ -166,7 +166,7 @@ private struct StatRow: View {
         HStack(spacing: 0) {
             ForEach(Array(stats.enumerated()), id: \.offset) { i, s in
                 VStack(spacing: 2) {
-                    Text(s.0).font(.custom("Tungsten-Semibold", size: 26)).foregroundStyle(s.2)
+                    Text(s.0).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(s.2)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Text(s.1).shotiqBody(10, weight: .medium).kerning(0.6)
                         .foregroundStyle(ShotIQColor.graphite)
@@ -358,7 +358,7 @@ private struct MeasurementRow: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Decrease \(label.lowercased())")
-                    Text(value).font(.custom("Tungsten-Semibold", size: 36))
+                    Text(value).font(.custom("Tungsten-Medium", size: 36))
                         .foregroundStyle(ShotIQColor.ink)
                         .lineLimit(1).minimumScaleFactor(0.6)
                     Button(action: onPlus) {
@@ -518,7 +518,7 @@ struct OnboardingIntroView: View {
                             VStack(spacing: 3) {
                                 Image(systemName: "scope").font(.system(size: 17))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
-                                Text("82").font(.custom("Tungsten-Semibold", size: 24))
+                                Text("82").font(.custom("Tungsten-Medium", size: 24))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 Text("FORM SCORE").shotiqBody(9, weight: .medium).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -722,17 +722,19 @@ struct ExperienceBodyTypeView: View {
                             .shotiqBody(16).foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
 
                         QuestionLabel(text: "WHAT BEST DESCRIBES YOUR EXPERIENCE?").padding(.top, 24)
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
-                                ForEach(experienceOptions, id: \.0) { value, label, caption, icon in
-                                    OptionCard(icon: icon, label: label, caption: caption,
-                                               selected: m.experience == value) {
-                                        m.experience = value
-                                    }
-                                    .frame(width: 112)
+                        // Canonical prints all five tiers across the 353pt content
+                        // width, roughly 64pt each. Pinning them to 112pt inside a
+                        // horizontal ScrollView showed three and hid ELITE and
+                        // PROFESSIONAL behind a swipe with no affordance — two
+                        // choices a user could not see, on a required question.
+                        HStack(alignment: .top, spacing: 6) {
+                            ForEach(experienceOptions, id: \.0) { value, label, caption, icon in
+                                OptionCard(icon: icon, label: label, caption: caption,
+                                           selected: m.experience == value) {
+                                    m.experience = value
                                 }
+                                .frame(maxWidth: .infinity)
                             }
-                            .padding(.vertical, 2)
                         }
                         .padding(.top, 12)
 
@@ -873,11 +875,20 @@ struct ShootingProfileView: View {
                         .padding(.top, 12)
 
                         sectionHeader("SHOOTING STYLE", "Pick the style that best matches your shot.")
+                        // All three canonical style frames are bundled; the middle
+                        // one was the only card still falling back to the grey
+                        // `figure.basketball` placeholder. Note that canonical
+                        // shows BALANCED selected, so 011-visual-001 carries the
+                        // orange check in its own top-right corner. StyleCard's
+                        // live selection mark sits under the photo, not on it, so
+                        // nothing is drawn twice — but the baked mark does not
+                        // move if the player picks another style.
                         HStack(alignment: .top, spacing: 10) {
                             StyleCard(label: "COMPACT", caption: "Quick, efficient release",
                                       photoKey: "011-visual-004",
                                       selected: m.styleArc == "Compact") { m.styleArc = "Compact" }
                             StyleCard(label: "BALANCED", caption: "Versatile all-around approach",
+                                      photoKey: "011-visual-001",
                                       selected: m.styleArc == "Balanced") { m.styleArc = "Balanced" }
                             StyleCard(label: "HIGH ARC", caption: "Higher release, maximum arc",
                                       photoKey: "011-visual-003",
@@ -1028,7 +1039,7 @@ struct PlayerBioView: View {
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
                             Text("\(m.bio.count) / 160")
-                                .font(.custom("Tungsten-Semibold", size: 20))
+                                .font(.custom("Tungsten-Medium", size: 20))
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                         .padding(.top, 18)
@@ -1197,13 +1208,17 @@ struct OnboardingReviewView: View {
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 16)
 
                         HStack(alignment: .top, spacing: 14) {
-                            ZStack {
-                                Circle().fill(ShotIQColor.warmCanvas)
-                                Text(shotiqInitials(app.user))
-                                    .shotiqCondensed(24, weight: .heavy)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                            }
-                            .frame(width: 74, height: 74)
+                            // Canonical prints the player's headshot here, not
+                            // initials. Its sidecar declares no photo region for
+                            // this screen, so the crop pipeline had no source and
+                            // the app fell back to a monogram — the photograph is
+                            // in the render regardless, and is now cut from it.
+                            // If the asset were ever missing, CanonicalPhoto paints
+                            // its dark surface rather than a monogram, so the crop
+                            // is bundled alongside this change, not assumed.
+                            CanonicalPhoto("013-avatar", width: 74, height: 74,
+                                           cornerRadius: 37)
+                                .overlay(Circle().stroke(ShotIQColor.rule, lineWidth: 1))
                             VStack(alignment: .leading, spacing: 4) {
                                 Text((app.user?.displayName ?? "Player").uppercased())
                                     .shotiqCondensed(26, weight: .heavy)
@@ -1245,7 +1260,7 @@ struct OnboardingReviewView: View {
                                     Image(systemName: "arrow.up.right")
                                         .font(.system(size: 15))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("+8.1%").font(.custom("Tungsten-Semibold", size: 24))
+                                    Text("+8.1%").font(.custom("Tungsten-Medium", size: 24))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                     Text("VS LAST SESSION")
                                         .shotiqBody(9, weight: .medium).kerning(0.6)
@@ -1813,7 +1828,7 @@ struct NotificationPermissionPrimerView: View {
                                     .shotiqBody(12, weight: .bold).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("82")
-                                    .font(.custom("Tungsten-Semibold", size: 62))
+                                    .font(.custom("Tungsten-Medium", size: 62))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 ScoreBar(pct: 0.82)
                                 Text("GOOD")

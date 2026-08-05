@@ -4,13 +4,18 @@
 
 import React from "react"
 import Link from "next/link"
-import { ArrowLeft, ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Maximize2 } from "lucide-react"
 import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 import {
   useHistory, CoachingTarget, scoreSeries, sessionDelta, formatDelta,
   FormScoreCell, formatMakePct,
 } from "@/components/shotiq/ResultsBits"
+import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { ShotBreakdown } from "@/components/shotiq/phone/results/ShotBreakdown"
+import { FormScore } from "@/components/shotiq/phone/results/FormScore"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
@@ -34,8 +39,27 @@ export default function AnalysisOverviewPage() {
   // Canonical opens on analysis 3 of 24 with film frame 4 scrubbed in; the two
   // are independent (analysis counter vs. frame scrubber).
   const [shot, setShot] = React.useState(3)
-  const [frame, setFrame] = React.useState(4)
+  // One real clock behind the play button, the progress bar, the filmstrip and
+  // the readout — `frame` used to be state that only fed aria-pressed.
+  const clip = useShotClip({ frames: 8 })
+  const stageRef = React.useRef<HTMLDivElement>(null)
+  const full = useFullscreen(stageRef)
+  /* Canonical iOS 041 and 044 are two screens of this one route: the breakdown
+     and the score method behind its FORM SCORE card. `view` is a real history
+     entry, so the back gesture works and the URL is shareable; the desktop 083
+     never reads it. */
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
   return (
+    <>
+    {isPhone && (view === "score"
+      ? <FormScore score={score ?? 82}
+                   shots={shots != null ? String(shots) : "24"}
+                   makes={makes != null ? String(makes) : "15"}
+                   pct={formatMakePct(shots, makes)}
+                   delta={formatDelta(delta)} />
+      : <ShotBreakdown score={score ?? 82} onScore={() => setView("score")} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-analysis-overview">
       <div className="flex items-start justify-between">
         {/* Canonical leads the title with a back affordance and dates the
@@ -77,20 +101,34 @@ export default function AnalysisOverviewPage() {
         <div className="w-[520px] shrink-0">
           {/* Canonical release frame with the pose overlay and the 172° call-out;
               the scrub line rides the padding box so it can never clip out. */}
-          <div className="relative overflow-hidden rounded-[4px] bg-[#1B1D20]" style={{ height: 322 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-hero.png"
-                 alt="Analyzed release frame with pose skeleton and a 172 degree elbow call-out"
-                 className="absolute inset-0 h-full w-full object-cover" width={573} height={369} />
-            <span className="absolute inset-x-[10px] bottom-[8px] h-[3px] rounded-full bg-white/40">
-              <span className="absolute inset-y-0 left-0 w-[52%] rounded-full bg-white" />
-              <span className="absolute -top-[4px] left-[52%] h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-white" />
-            </span>
+          <div ref={stageRef} className="relative overflow-hidden rounded-[4px] bg-[#1B1D20]" style={{ height: 322 }}>
+            <ClipFrame still="/images/canonical/083-hero.png"
+                       stillAlt="Analyzed release frame with pose skeleton and a 172 degree elbow call-out"
+                       stillFrame={4} strip="/images/canonical/083-filmstrip.png"
+                       frames={8} frame={clip.frame}
+                       className="absolute inset-0 h-full w-full object-cover" />
+            {/* Scrub track: drag-free seeking by click, head driven by position. */}
+            <button type="button" data-testid="clip-track" aria-label="Seek"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect()
+                      clip.seek(((e.clientX - r.left) / r.width) * clip.duration)
+                    }}
+                    className="absolute inset-x-[10px] bottom-[4px] h-[12px]">
+              <span className="absolute inset-x-0 top-[5px] h-[3px] rounded-full bg-white/40">
+                <span className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${clip.pct * 100}%` }} />
+              </span>
+              <span data-testid="clip-head"
+                    className="absolute top-[1px] h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-white"
+                    style={{ left: `${clip.pct * 100}%` }} />
+            </button>
           </div>
           <div className="mt-[8px] flex items-center gap-[10px]">
-            <button type="button" aria-label="Play"
+            <button type="button" aria-label={clip.playing ? "Pause" : "Play"} aria-pressed={clip.playing}
+                    onClick={clip.toggle} data-testid="clip-play"
                     className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">
-              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+              {clip.playing
+                ? <Pause className="h-[14px] w-[14px]" fill="currentColor" />
+                : <Play className="h-[14px] w-[14px]" fill="currentColor" />}
             </button>
             <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -99,21 +137,30 @@ export default function AnalysisOverviewPage() {
               <div className="absolute inset-0 flex">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <button key={i} type="button" aria-label={`Jump to segment ${i + 1}`}
-                          aria-pressed={i === (frame - 1) % 8} onClick={() => setFrame(i + 1)}
-                          className="flex-1" />
+                          data-testid={`clip-seek-${i}`}
+                          aria-pressed={i === clip.frame} onClick={() => clip.seekFrame(i)}
+                          className={`flex-1 ${i === clip.frame ? "ring-2 ring-inset ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
                 ))}
               </div>
             </div>
-            <span className="shotiq-numeric shrink-0 text-[13px]">0:07 / 0:24</span>
-            <Maximize2 className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            <span className="shotiq-numeric shrink-0 text-[13px]" data-testid="clip-readout">
+              {clock(clip.time)} / {clock(clip.duration)}
+            </span>
+            {/* Was a bare icon — not a button, so it could not be clicked or
+                focused. It is the fullscreen control for the surface above. */}
+            <button type="button" aria-label="Fullscreen" aria-pressed={full.isFull}
+                    onClick={full.toggle} data-testid="clip-fullscreen" className="shrink-0">
+              <Maximize2 className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+            </button>
           </div>
           {/* Canonical runs a connector track with a stage dot between each pair
               of phase figures; the dots either side of the current phase are
               picked out in orange. */}
           <div className="mt-[14px] flex items-start">
             {PHASES.map(([p, t], i) => {
-              const active = p === "RELEASE"
-              const reached = active || PHASES[i - 1]?.[0] === "RELEASE"
+              const current = phaseAt(clip.time)
+              const active = p === current
+              const reached = active || PHASES[i - 1]?.[0] === current
               return (
                 <React.Fragment key={p}>
                   {i > 0 && (
@@ -227,7 +274,7 @@ export default function AnalysisOverviewPage() {
               )}
             </div>
             <div className="min-w-0 flex-[1.3] pl-[14px] text-right">
-              <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">TREND</div>
               <div className="flex items-center justify-end gap-[8px]">
                 <TrendLine points={trend} width={78} height={28} />
                 <span className={`text-[12px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
@@ -276,5 +323,7 @@ export default function AnalysisOverviewPage() {
         </div>
       </Card>
     </div>
+    </div>
+    </>
   )
 }

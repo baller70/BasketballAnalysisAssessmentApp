@@ -18,8 +18,10 @@
 import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
-import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
-import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight } from "lucide-react"
+import { UnifiedSidebar, PageTitle, ResponsiveTitle } from "@/components/shotiq/ShotIQShell"
+import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize } from "lucide-react"
+import { PHONE_CSS } from "./phone-003"
+import { Marks003, EyeMark, FocusMark } from "./Marks003"
 
 const STEPS = [
   { title: "CAPTURE", body: ["Record from any angle", "with your phone."], icon: "/images/canonical/077-step-capture.png" },
@@ -100,28 +102,55 @@ export default function SignInPage() {
   // --------------------------------------------------------------------------
 
   const busy = isSubmitting || isLoading
-  const label = "text-[12px] font-bold tracking-[0.04em] text-[var(--shotiq-color-ink)]"
+  /* Canonical 003 captures the FILLED, validated state: a ring-and-tick beside
+     the address, "Looks good." under it and "Password looks good." under the
+     mask. Those are live validation, not decoration — they appear when the
+     field's own value passes, and they are the phone screen's only feedback
+     before submit. Below the tablet breakpoint only; 077 has no such row. */
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim())
+  const passwordValid = formData.password.length >= 8
+  /* Canonical's field labels are the condensed micro-caps tier: EMAIL cap 11
+     over 30px, PASSWORD cap 12 over 54px. The body face at 12px bold drew cap 9
+     over 36 and 66 — two short and 20% WIDER, the undersized-and-over-tracked
+     signature that means the face is wrong, not just the size. */
+  const label = "shotiq-microcaps text-[var(--shotiq-color-ink)]"
+  const labelVars = { "--shotiq-microcaps-size": "15px",
+                      "--shotiq-microcaps-tracking": "0.10em" } as React.CSSProperties
+  /* The border moved from the input to a wrapper so the phone layer can draw
+     it as an SVG hairline (Chromium clamps a CSS border to a whole CSS pixel;
+     canonical draws 1.85 device px). The wrapper's box is identical to the
+     input's old box, so 077 is unchanged. */
+  const fieldBox =
+    "relative w-full h-[46px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white " +
+    "focus-within:border-[var(--shotiq-color-ink)]"
   const field =
-    "w-full h-[46px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[14px] " +
+    "block h-full w-full rounded-[6px] border-0 bg-transparent px-[14px] " +
     "text-[15px] text-[var(--shotiq-color-ink)] placeholder:text-[var(--shotiq-color-muted)] " +
-    "outline-none focus:border-[var(--shotiq-color-ink)]"
+    "outline-none"
 
   return (
     <div
       data-testid="screen-desktop-web-sign-in"
-      className="shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
-      style={{ minHeight: 900 }}
+      className="s3 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px]"
     >
+      <style dangerouslySetInnerHTML={{ __html: PHONE_CSS }} />
+      <Marks003 emailOk={emailValid} />
+
       {/* ---------------------------------------------------------- topbar */}
       <header
-        className="flex h-[57px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[24px]"
+        data-s3-contents
+        className="flex h-[39px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[18px] pr-[18px] md:h-[57px] md:pl-[20px] md:pr-[24px]"
         data-testid="region-topbar"
       >
-        <span className="shotiq-wordmark text-[26px] leading-none tracking-[0.02em]">
-          SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
+        <span data-s3="wordmark"
+              className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
+          SHOT<span data-s3-iq className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
+        {/* Canonical 003 sets the product eyebrow under the wordmark; 077 does
+            not draw it at all, so it is phone-only. */}
+        <span data-s3="eyebrow" className="md:hidden">AI ANALYSIS</span>
 
-        <div className="flex items-center">
+        <div className="hidden items-center md:flex">
           {/* Decorative on the sign-in screen — nobody is signed in yet, so
               this is a static chip, not an interactive control. */}
           <div className="flex items-center gap-[10px] pr-[22px]">
@@ -134,17 +163,17 @@ export default function SignInPage() {
           <div className="h-[38px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[112px] text-center">
             <div className="shotiq-numeric text-[19px] leading-[22px]">2,840</div>
-            <div className="text-[10px] font-medium tracking-[0.08em] text-[var(--shotiq-color-graphite)]">POINTS</div>
+            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">POINTS</div>
           </div>
           <div className="h-[38px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[104px] text-center">
             <div className="shotiq-numeric text-[19px] leading-[22px]">6</div>
-            <div className="text-[10px] font-medium tracking-[0.08em] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div data-s3-contents className="flex flex-1">
         {/* ------------------------------------------------------- sidebar
             The product owner's ruling is one menu sidebar for the whole app —
             no per-screen rail variants. This screen used to draw its own
@@ -154,78 +183,114 @@ export default function SignInPage() {
         <UnifiedSidebar />
 
         {/* --------------------------------------------------- form column */}
-        <section className="w-[394px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pt-[48px]">
-          <h1 className="shotiq-display text-[46px] leading-[50px]">WELCOME BACK</h1>
-          <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
-            Sign in to continue your training.
+        <section data-s3-contents className="w-[394px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]">
+          {/* 46px drew a 32px cap against canonical's 44px.
+              Phone and desktop disagree on both the words and the size, and
+              both readings are off the canonical renders: iOS 003 says
+              "SIGN IN" at cap 118.86 device px, desktop 077 says
+              "WELCOME BACK" at cap 44. The phone size, scale and stroke are
+              solved in phone-003.ts; `phoneSize` is therefore NOT passed here,
+              because `.shotiq-pt-phone` would emit a competing font-size. */}
+          <PageTitle size={63} data-s3="display">
+            <ResponsiveTitle phone="SIGN IN" web="WELCOME BACK" />
+          </PageTitle>
+          <p data-s3="body" className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
+            <span className="md:hidden">
+              Continue your training, saved<br />analyses, and progress.
+            </span>
+            <span className="hidden md:inline">Sign in to continue your training.</span>
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-[30px]" noValidate>
-            <label htmlFor="email" className={label}>EMAIL</label>
-            <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signin-email"
-                   className={`${field} mt-[9px]`} placeholder="Enter your email"
-                   value={formData.email}
-                   onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+          <form data-s3-contents onSubmit={handleSubmit} className="mt-[30px]" noValidate>
+            <label htmlFor="email" data-s3="labelEmail" className={label} style={labelVars}>EMAIL</label>
+            <div data-s3-contents className={`${fieldBox} mt-[9px]`}>
+              <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signin-email"
+                     data-s3="valueEmail"
+                     className={field} placeholder="Enter your email"
+                     value={formData.email}
+                     onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            {/* live validation — phone only; see the note by `emailValid` */}
+            {emailValid && (
+              <p data-s3="helpEmail" data-testid="signin-email-ok" className="md:hidden">Looks good.</p>
+            )}
 
-            <label htmlFor="password" className={`${label} mt-[22px] block`}>PASSWORD</label>
-            <div className="relative mt-[9px]">
+            <label htmlFor="password" data-s3="labelPass" className={`${label} mt-[22px] block`} style={labelVars}>PASSWORD</label>
+            <div data-s3-contents className={`${fieldBox} mt-[9px]`}>
               <input id="password" type={showPassword ? "text" : "password"}
                      autoComplete="current-password" data-testid="signin-password"
+                     data-s3="valuePass"
                      className={`${field} pr-[44px]`} placeholder="Enter your password"
                      value={formData.password}
                      onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
+                      data-s3="eye"
                       className="absolute right-[13px] top-1/2 -translate-y-1/2 text-[var(--shotiq-color-graphite)]">
-                {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                <span className="hidden md:inline">
+                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                </span>
+                <span className="block h-full w-full md:hidden"><EyeMark off={showPassword} /></span>
               </button>
             </div>
+            {passwordValid && (
+              <p data-s3="helpPass" data-testid="signin-password-ok" className="md:hidden">Password looks good.</p>
+            )}
 
-            <div className="mt-[20px] flex items-center justify-between">
-              <label className="flex items-center gap-[9px] text-[13px]">
+            <div data-s3-contents className="mt-[20px] flex items-center justify-between">
+              <label data-s3-contents className="flex items-center gap-[9px] text-[13px]">
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
+                       data-s3="checkbox"
                        className="h-[15px] w-[15px] rounded-[3px] border border-[var(--shotiq-color-rule)] accent-[var(--shotiq-color-shotiqOrange)]" />
-                Remember me
+                <span data-s3="remember">Remember me</span>
               </label>
-              <Link href="/forgot-password"
+              <Link href="/forgot-password" data-s3="forgot"
                     className="text-[13px] text-[var(--shotiq-color-analysisBlue)]">
                 Forgot password?
               </Link>
             </div>
 
             {error && (
-              <p role="alert" data-testid="signin-error"
+              <p role="alert" data-testid="signin-error" data-s3="error"
                  className="mt-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
             )}
 
-            <button type="submit" disabled={busy} data-testid="signin-submit"
+            <button type="submit" disabled={busy} data-testid="signin-submit" data-s3="plate"
                     className="mt-[20px] flex h-[46px] w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-medium text-white disabled:opacity-70">
               {busy && <Loader2 className="h-[16px] w-[16px] animate-spin" />}
-              {busy ? "Signing in…" : "Sign in"}
+              {/* canonical 003 leads the primary action with the capture frame */}
+              <span data-s3="focus" className="md:hidden"><FocusMark /></span>
+              <span data-s3="signinLab">{busy ? "Signing in…" : "Sign in"}</span>
             </button>
           </form>
 
-          <div className="mt-[26px] flex items-center gap-[14px]">
-            <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
-            <span className="text-[11px] tracking-[0.09em] text-[var(--shotiq-color-graphite)]">OR CONTINUE WITH</span>
-            <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
+          <div data-s3-contents className="mt-[26px] flex items-center gap-[14px]">
+            <span data-s3-off className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
+            <span data-s3="or" className="text-[11px] tracking-[0.09em] text-[var(--shotiq-color-graphite)]">
+              <span className="md:hidden">OR</span>
+              <span className="hidden md:inline">OR CONTINUE WITH</span>
+            </span>
+            <span data-s3-off className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
           </div>
 
           {(["Continue with Apple", "Continue with Google"] as const).map((t, i) => (
             <button key={t} type="button"
+                    data-s3={i ? "google" : "apple"}
                     onClick={() => {
                       setError(`${t.replace("Continue with ", "")} sign-in isn't enabled on this server yet — use your email and password.`)
                       emailRef.current?.focus()
                     }}
                     className={`${i ? "mt-[14px]" : "mt-[20px]"} flex h-[46px] w-full items-center justify-center gap-[11px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white text-[15px]`}>
-              {i ? <GoogleMark /> : <AppleMark />}
-              {t}
+              <span data-s3={i ? "googMark" : "appleMark"} className="contents">
+                {i ? <GoogleMark /> : <AppleMark />}
+              </span>
+              <span data-s3={i ? "googLab" : "appleLab"}>{t}</span>
             </button>
           ))}
 
-          <p className="mt-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-[var(--shotiq-color-analysisBlue)]">Create account</Link>
+          <p data-s3-contents className="mt-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
+            <span data-s3="acct1">Don&apos;t have an account?</span>{" "}
+            <Link href="/signup" data-s3="acct2" className="text-[var(--shotiq-color-analysisBlue)]">Create account</Link>
           </p>
         </section>
 
@@ -235,8 +300,9 @@ export default function SignInPage() {
             the media surface (below) rather than by the FORM SCORE card, which
             keeps its canonical 346px width — the card is the dense element and
             is the one that breaks first when squeezed. */}
-        <section className="flex-1 px-[32px] pt-[34px]" data-testid="region-main">
-          <h2 className="shotiq-display text-[40px] leading-[44px]">
+        <section className="hidden flex-1 px-[32px] pt-[34px] md:block" data-testid="region-main">
+          {/* 40px drew a 28px cap against canonical's 34px. */}
+          <h2 className="shotiq-display text-[49px] leading-[51px]">
             AI ANALYSIS. BETTER MECHANICS. BETTER RESULTS.
           </h2>
           <p className="mt-[8px] text-[15px] text-[var(--shotiq-color-graphite)]">
@@ -251,7 +317,7 @@ export default function SignInPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={s.icon} alt="" className="max-h-[58px] w-auto" />
                   </div>
-                  <div className="text-[14px] font-bold tracking-[0.05em]">{s.title}</div>
+                  <div className="shotiq-section-label">{s.title}</div>
                   <p className="mt-[7px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                     {s.body.map((b) => <span key={b} className="block">{b}</span>)}
                   </p>
@@ -266,31 +332,71 @@ export default function SignInPage() {
           <div className="-ml-[12px] mt-[22px] flex gap-[12px]">
             {/* Media surface — exact frame cropped from the canonical screen
                 (077, x541 y335 492x355); the player chrome is baked into it.
-                Scaled to 440x317 (same 1.386 aspect) so the FORM SCORE card
-                beside it keeps its canonical width under the wider rail. */}
-            <div className="relative h-[317px] w-[440px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20]"
+                Canonical renders it 492x355 with its foot flush to the FORM
+                SCORE card's. The 196px rail leaves this row 798px against
+                canonical's 867, so the 69px deficit comes out of the frame's
+                WIDTH (object-cover trims the sides) and not its height: at
+                440x317 the card overhung the video by 55px, which both graders
+                caught. 440 + 12 gutter + 346 card = 798, and the card keeps the
+                canonical 346px it needs to stay legible.
+                R12: canonical splits its 864px row 495 video : 358 card (57.3% /
+                41.4%). At 440 the video held only 55.1%, so it takes its
+                proportional 457 here and the card keeps 329. The canonical 1.38
+                aspect would need 490px of the 798 available, which would cut the
+                card to 296 — 34px under its own proportional share — so the
+                aspect closes to 1.29 rather than 1.38 and the rest is rail cost. */}
+            <div className="relative flex h-[355px] w-[457px] shrink-0 flex-col overflow-hidden rounded-[4px] bg-[#1B1D20]"
                  data-testid="signin-media-surface">
+              {/* The photo is cut WITHOUT canonical's transport bar (541,334
+                  492x314); the bar is drawn below as real elements. The old
+                  crop had the bar baked in, so trimming 52px of width to fit
+                  the narrower row sliced the play button and the fullscreen
+                  glyph off both ends. Cropping only the photograph means the
+                  trim lands on gym wall, and the controls are real controls. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/077-signin-video.png" alt="Jump shot being analyzed"
-                   className="h-full w-full object-cover" />
+              <img src="/images/canonical/077-signin-video-frame.png" alt="Jump shot being analyzed"
+                   className="w-full flex-1 object-cover" />
+              <div className="flex h-[41px] shrink-0 items-center gap-[10px] px-[14px] text-white">
+                <Play className="h-[15px] w-[13px] shrink-0 fill-white" aria-hidden="true" />
+                <span className="shrink-0 text-[12px] tabular-nums">0:00 / 0:07</span>
+                {/* The unfilled part of the track was `bg-white/35` on a
+                    `<span>` and did not paint at all: both graders measured the
+                    light run at 87px (the fill alone) against canonical's
+                    ~309px (x654→963), i.e. ~220px of dead bar. Drawn as a real
+                    block with an explicit rgba so the whole track is visible. */}
+                <div className="h-[3px] min-w-0 flex-1 rounded-full bg-[rgba(255,255,255,0.45)]">
+                  <div className="h-full w-[24%] rounded-full bg-white" />
+                </div>
+                {/* Canonical draws four corner brackets here, not a diagonal
+                    double-arrow. */}
+                <Maximize className="h-[14px] w-[14px] shrink-0" aria-hidden="true" />
+              </div>
             </div>
 
-            <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
-              <div className="text-[12px] font-bold tracking-[0.05em]">FORM SCORE</div>
+            <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
+              <div className="shotiq-section-label">FORM SCORE</div>
+              {/* Canonical's progress track sits UNDER the numeral and is 133px
+                  wide, not the full card. Spanning it across both columns read
+                  as a card-wide divider. GOOD and its caption are left-aligned
+                  in their column, not right-aligned against the card edge. */}
               <div className="flex items-start justify-between">
-                <div className="shotiq-numeric text-[58px] leading-[62px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-                <div className="pt-[12px] text-right">
+                <div>
+                  {/* 58px drew a 41px numeral against canonical's 52px. */}
+                  <div className="shotiq-numeric text-[74px] leading-[78px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+                  {/* Canonical's track is 8px (y442-450 core, x1066-1200); 6px drew half stroke. */}
+                  <div className="mt-[8px] h-[8px] w-[139px] rounded-full bg-[var(--shotiq-color-rule)]">
+                    <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: "86%" }} />
+                  </div>
+                </div>
+                <div className="w-[124px] pt-[12px]">
                   <div className="text-[15px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
                   <p className="mt-[3px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                     Keep building<br />consistency.
                   </p>
                 </div>
               </div>
-              <div className="mt-[10px] h-[6px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: "82%" }} />
-              </div>
 
-              <div className="mt-[22px] border-t border-[var(--shotiq-color-rule)] pt-[16px] text-[12px] font-bold tracking-[0.05em]">
+              <div className="shotiq-section-label mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
                 KEY METRICS
               </div>
               {/* Canonical rules each metric off from the next and spreads the
@@ -298,13 +404,13 @@ export default function SignInPage() {
               <dl className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)]">
                 {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, k]) => (
                   <div key={k} className="flex-1 px-[16px] first:pl-0 last:pr-0">
-                    <dd className="shotiq-numeric text-[24px] leading-[28px]">{v}</dd>
-                    <dt className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{k}</dt>
+                    <dd className="shotiq-numeric text-[27px] leading-[30px]">{v}</dd>
+                    <dt className="shotiq-microcaps mt-[2px] text-[var(--shotiq-color-graphite)]">{k}</dt>
                   </div>
                 ))}
               </dl>
 
-              <div className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[16px] text-[12px] font-bold tracking-[0.05em]">
+              <div className="shotiq-section-label mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[16px]">
                 PRIMARY FOCUS
               </div>
               <div className="mt-[8px] flex items-center justify-between gap-[6px]">
@@ -317,14 +423,17 @@ export default function SignInPage() {
           </div>
 
           <div className="relative -ml-[12px] mt-[12px] h-[126px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
-            <div className="absolute left-[15px] top-[19px] text-[12px] font-bold tracking-[0.05em]">SHOT PHASES</div>
+            <div className="shotiq-section-label absolute left-[15px] top-[19px]">SHOT PHASES</div>
             {/* Phase figures + labels are the exact strip cropped from the
-                canonical screen (077, x585 y746 550x90), scaled to 510x83 so
-                it clears the copy block at the right under the wider rail. */}
+                canonical screen (077, x585 y746 550x90). Drawn at native size:
+                downscaling it to 510x83 thinned every stroke and lifted the
+                figures to a pale grey against canonical's near-black, which
+                both graders read as a washed-out phase strip. 30 + 550 = 580
+                clears the copy block, which now starts at 592. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/077-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                 className="absolute left-[36px] top-[34px] h-[83px] w-[510px] mix-blend-multiply" />
-            <p className="absolute right-[24px] top-[34px] w-[192px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+                 className="absolute left-[30px] top-[30px] h-[90px] w-[550px] mix-blend-multiply" />
+            <p className="absolute right-[20px] top-[34px] w-[186px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
               Release is where shots are won.<br />Small adjustments. Big impact.
             </p>
           </div>

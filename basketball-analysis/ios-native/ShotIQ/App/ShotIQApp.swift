@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit // PhotoReviewCropView's initialiser takes a UIImage?
 
 // Native SwiftUI ShotIQ app — MVVM, async/await, canonical white interface.
 // Screen inventory: 72 canonical screens (ios.splash … ios.share-results); every
@@ -58,9 +59,38 @@ enum UITestHooks {
         return args[i + 1]
     }
 
+    /// `-uiTestStage <slug>` roots the app at one of the seven canonical screens
+    /// whose *state* the harness cannot manufacture offline. Each slug is the
+    /// screen's canonical slug, so the argument and the screenshot name match:
+    ///
+    /// | slug                     | screen | what normally gates it              |
+    /// |--------------------------|--------|-------------------------------------|
+    /// | `verify-email`           | 005    | a real network account sign-up       |
+    /// | `reset-password`         | 007    | a reset token from an emailed link   |
+    /// | `photo-review-crop`      | 023    | a photo picked from the library      |
+    /// | `upload-quality-check`   | 024    | a picked photo/video to inspect      |
+    /// | `video-review`           | 027    | a video picked from the library      |
+    /// | `analysis-taking-longer` | 037    | analysis slower than the watchdog    |
+    /// | `analysis-error`         | 040    | an analyze/upload round trip failing |
+    ///
+    /// The two auth slugs root `AuthFlowView` (canonical 005/007 have no tab
+    /// bar); the other five root the current tab inside `MainTabView`, which is
+    /// why they keep the tab bar the canonical renders show. Like every hook
+    /// here this reads `ProcessInfo.processInfo.arguments`, so a SpringBoard
+    /// launch always sees `nil` and every branch guarded by it is dead code in a
+    /// shipped build.
+    static var stage: String? {
+        guard let i = args.firstIndex(of: "-uiTestStage"), args.indices.contains(i + 1) else { return nil }
+        return args[i + 1]
+    }
+
+    /// The five `stage` slugs that are rendered inside the signed-in tab shell.
+    static let mainShellStages = ["photo-review-crop", "upload-quality-check", "video-review",
+                                  "analysis-taking-longer", "analysis-error"]
+
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
-        bypassAuth || startOnboarding || demoData || holdSplash || homeVariant != nil
+        bypassAuth || startOnboarding || demoData || holdSplash || homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",
@@ -78,6 +108,13 @@ final class AppState: ObservableObject {
     @Published var tab: RootTab = .home
 
     func boot() async {
+        // Test-only: the two auth stages (005 verify-email, 007 reset-password)
+        // live inside the signed-out stack, so hand straight to it rather than
+        // waiting out the splash hold. See UITestHooks.stage.
+        if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
+            phase = .welcome
+            return
+        }
         // Test-only: jump past splash + sign-in so the screenshot harness can
         // walk the signed-in app without credentials or a network round trip.
         if UITestHooks.bypassAuth || UITestHooks.startOnboarding {
@@ -134,15 +171,46 @@ struct RootView: View {
 /// every secondary screen in its flow.
 struct MainTabView: View {
     @EnvironmentObject var app: AppState
+
+    /// Test-only: true when `-uiTestStage` names one of the five canonical
+    /// screens that live inside this shell but can only be reached from a photo
+    /// or video the harness cannot pick (023/024/027) or from an analysis that
+    /// runs long or fails (037/040). Always false in a shipped build, because
+    /// `UITestHooks.stage` is nil unless a launch argument set it.
+    private var isStaged: Bool {
+        guard let stage = UITestHooks.stage else { return false }
+        return UITestHooks.mainShellStages.contains(stage)
+    }
+
+    /// The staged screen, rooted in its own stack so its pushes still work. The
+    /// tab bar below it is untouched, which is what canonical 023/024/027/037/040
+    /// show. `image: nil` and the no-argument initialisers are the exact states
+    /// those renders depict: the canonical review frame, the canonical clip.
+    @ViewBuilder private var stagedRoot: some View {
+        switch UITestHooks.stage ?? "" {
+        case "photo-review-crop": PhotoReviewCropView(image: nil)
+        case "upload-quality-check": UploadQualityCheckView()
+        case "video-review": VideoReviewView()
+        case "analysis-taking-longer": AnalysisTakingLongerView()
+        // "analysis-error" is the only slug left; a `default` arm keeps the
+        // ViewBuilder's conditional chain one branch shorter.
+        default: AnalysisErrorView()
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Group {
-                switch app.tab {
-                case .home: NavigationStack { HomeView() }
-                case .analyze: NavigationStack { AnalyzeHubView() }
-                case .training: NavigationStack { TrainingHomeView() }
-                case .progress: NavigationStack { AnalyticsCardsView() }
-                case .profile: NavigationStack { ProfileView() }
+                if isStaged {
+                    NavigationStack { stagedRoot }
+                } else {
+                    switch app.tab {
+                    case .home: NavigationStack { HomeView() }
+                    case .analyze: NavigationStack { AnalyzeHubView() }
+                    case .training: NavigationStack { TrainingHomeView() }
+                    case .progress: NavigationStack { AnalyticsCardsView() }
+                    case .profile: NavigationStack { ProfileView() }
+                    }
                 }
             }
             .frame(maxHeight: .infinity)

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   historyUpsert: vi.fn(),
   txFindMany: vi.fn(),
   historyUpdate: vi.fn(),
+  shotEventFindMany: vi.fn(),
 }))
 
 vi.mock('@/lib/auth/currentUser', () => ({
@@ -23,6 +24,11 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     analysisHistory: { findMany: mocks.findMany, deleteMany: mocks.deleteMany },
     userAnalysis: { findFirst: mocks.analysisFindFirst },
+    // The GET route tallies shots/makes per capture session from ShotEvent
+    // (added when 093's MAKE % stopped rendering as em-dashes). Without this
+    // mock the call throws, the route's catch returns an error shape, and the
+    // history assertions fail with an unhelpful "cannot read '0' of undefined".
+    shotEvent: { findMany: mocks.shotEventFindMany },
     $transaction: mocks.transaction,
   },
 }))
@@ -52,6 +58,7 @@ describe('analysis history sync API', () => {
     mocks.resolveProfileId.mockResolvedValue({ profileId: 'profile-1' })
     mocks.validateCsrf.mockReturnValue(null)
     mocks.analysisFindFirst.mockResolvedValue({ id: 'analysis-1' })
+    mocks.shotEventFindMany.mockResolvedValue([])
     mocks.transaction.mockImplementation(async (callback: (client: typeof tx) => unknown) => callback(tx))
     mocks.historyUpsert.mockResolvedValue({ id: 'history-1' })
     mocks.txFindMany.mockResolvedValue([{ id: 'history-1', overallScore: 0 }])

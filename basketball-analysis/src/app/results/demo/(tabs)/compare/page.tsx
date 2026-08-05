@@ -4,15 +4,19 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users, Layers } from "lucide-react"
-import { SectionLabel, Card, Ring, Stat } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure, WorkoutGlyph, toShotPhase } from "@/components/shotiq/Glyphs"
+import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users } from "lucide-react"
+import { SectionLabel, Card, Ring, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
+import { PoseFigure, WorkoutGlyph, toShotPhase, ActionGlyph } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { EliteMatch } from "@/components/shotiq/phone/results/EliteMatch"
+import { PhotoComparison } from "@/components/shotiq/phone/results/PhotoComparison"
 
 interface Shooter { id: number; name: string; position?: string }
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const DIFFS: [string, string, string, string][] = [
-  ["Release Angle", "52°", "56°", "-4°"], ["Release Height", "7'1\"", "7'4\"", "-3\""],
+  ["Release Angle", "52°", "56°", "-4°"], ["Release Height", "7′1″", "7′4″", "-3″"],
   ["Release Time", "0.64s", "0.62s", "+0.02s"], ["Elbow Angle at Release", "92°", "78°", "+14°"],
   ["Wrist Flexion", "21°", "28°", "-7°"], ["Shot Arc", "Medium", "High", "—"], ["Balance at Release", "Good", "Great", "—"],
 ]
@@ -20,6 +24,8 @@ const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["
 
 export default function ComparePage() {
   const { hasData, score } = useHistory()
+  const isPhone = usePhoneViewport()
+  const [view, setView] = usePhoneRoute("view")
   const [shooters, setShooters] = useState<Shooter[]>([])
   // null = canonical default (Darius Garland reference photography); choosing
   // a shooter switches the right panel to the live DOM viewer.
@@ -40,27 +46,40 @@ export default function ComparePage() {
   // Canonical photography holds while nothing is customized.
   const pristine = elite === null
 
+  /* Canonical iOS 050 (the match summary) and 051 (the frame pair). The graded
+     desktop 087 on this route is untouched. */
   return (
+    <>
+    {isPhone && (view === "frames"
+      ? <PhotoComparison score={score ?? 82} onBack={() => setView(null)} />
+      : <EliteMatch score={score ?? 82} onFrames={() => setView("frames")} />)}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-elite-comparison">
       <div className="flex items-start justify-between gap-[14px]">
         <div>
-          <h1 className="shotiq-display text-[42px] leading-[44px]">ELITE COMPARISON</h1>
-          <p className="mt-[2px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
+          <PageTitle size={48}>ELITE COMPARISON</PageTitle>
+          {/* Canonical sets the subtitle at cap 12 and leaves 10px under the
+              title; 14px on a +8px gap read as a detached second line. */}
+          <p className="-mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
         </div>
         <div className="flex gap-[10px] pt-[4px]">
           {([["shooters", elite ? `Shooter: ${elite.name}` : "Choose shooters"],
              ["overlays", "Overlay skeletons"],
              ["phase", phase.charAt(0) + phase.slice(1).toLowerCase()]] as const).map(([key, label]) => (
             <div key={key} className="relative">
+              {/* Canonical sizes these three to 166 / 189 / 175px; the phase
+                  select was collapsing to its content at 122px. */}
               <button type="button" aria-expanded={menu === key}
+                      style={{ minWidth: key === "phase" ? 175 : key === "overlays" ? 189 : 166 }}
                       onClick={() => setMenu((m) => (m === key ? null : key))}
                       className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
                 {/* Canonical marks each control: shooters, skeleton overlays, the
                     selected phase pose. */}
                 {key === "shooters" && <Users className="h-[15px] w-[15px]" strokeWidth={1.6} />}
-                {key === "overlays" && <Layers className="h-[15px] w-[15px]" strokeWidth={1.6} />}
+                {/* Canonical marks this with a dotted node cloud, not a layers stack. */}
+                {key === "overlays" && <ActionGlyph kind="skeletonDots" height={18} />}
                 {key === "phase" && <PoseFigure phase={toShotPhase(phase)} height={20} className="shrink-0" />}
-                {label} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+                {label} <ChevronDown className="ml-auto h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </button>
               {menu === key && (
                 <div className="absolute right-0 top-[46px] z-30 w-[230px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -96,7 +115,10 @@ export default function ComparePage() {
         </div>
       </div>
       <div className="mt-[6px] flex items-center justify-between">
-        <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">‹ Back to analyses</Link>
+        {/* Canonical draws a chevron here, not a literal guillemet character. */}
+        <Link href="/results/demo/history" className="flex items-center gap-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
+          <ChevronLeft className="h-[13px] w-[13px]" strokeWidth={1.8} /> Back to analyses
+        </Link>
         <button type="button" onClick={() => setSaved((v) => !v)} aria-pressed={saved}
                 className={`flex items-center gap-[6px] text-[12px] ${saved ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
           <Bookmark className="h-[13px] w-[13px]" fill={saved ? "currentColor" : "none"} />
@@ -105,14 +127,16 @@ export default function ComparePage() {
       </div>
 
       {/* dual viewers */}
-      <div className="mt-[8px] flex items-start gap-[14px]">
+      {/* mt-2, not mt-8: the cap-matched title above is 6px taller and the screen
+          has to stay on the 900px canvas. */}
+      <div className="mt-[2px] flex items-start gap-[14px]">
         {(["YOU", "ELITE REFERENCE"] as const).map((side, sideIdx) => (
           <React.Fragment key={side}>
           {sideIdx === 1 && (
             <button type="button" onClick={() => setSynced((v) => !v)} aria-pressed={synced}
                     className="flex w-[86px] shrink-0 flex-col items-center gap-[4px] self-center pt-[10px]">
               <RefreshCcw className={`h-[26px] w-[26px] ${synced ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`} strokeWidth={1.6} />
-              <span className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SYNCED</span>
+              <span className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">SYNCED</span>
               <span className="shotiq-numeric text-[13px]">0.64s</span>
               <span className={`grid h-[22px] w-[22px] place-items-center rounded-full ${synced ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-muted)]"}`}>
                 <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.5 L5 9.5 L10 3" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -123,8 +147,17 @@ export default function ComparePage() {
               left edge, so each viewer keeps its crop's aspect ratio and the
               pair shares width proportionally — cover-cropping the elite panel
               sheared "ELITE REFERENCE / Darius Garland" off its left edge. */}
-          <div className="min-w-0 flex-1" style={{ flexGrow: sideIdx ? 595 : 534, flexBasis: 0 }}>
-            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]"
+          {/* Canonical wraps video + scrubber + filmstrip in one bordered card
+              (y181–522, x808–1401 on the elite panel) with ~10px of internal
+              padding. The app ran the three parts loose, so the filmstrip went
+              edge-to-edge with no padding and no box. */}
+          {/* Canonical bleeds the clip to the card border (image x172-693 inside a
+              card x171-693) and pads only the scrubber and filmstrip beneath it.
+              A uniform p-[10px] left ~10px of white on every side of the clip,
+              which reads as a framed photo rather than a viewer. */}
+          <div className="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--shotiq-color-rule)] pb-[10px]"
+               style={{ flexGrow: sideIdx ? 595 : 534, flexBasis: 0 }}>
+            <div className="relative overflow-hidden bg-[#1B1D20]"
                  style={{ aspectRatio: sideIdx ? "595 / 256" : "534 / 256" }}>
               {pristine ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -137,7 +170,7 @@ export default function ComparePage() {
                   <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
                     {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
                   </div>
-                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
+                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7′4″" : "7′1″"], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
                     <div key={k} className="mt-[6px]">
                       <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
                       <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
@@ -146,7 +179,7 @@ export default function ComparePage() {
                 </div>
               )}
             </div>
-            <div className="mt-[6px] flex items-center gap-[8px]">
+            <div className="mt-[6px] flex items-center gap-[8px] px-[10px]">
               <Play className="h-[14px] w-[14px]" fill="currentColor" />
               <span className="shotiq-numeric text-[12px]">0.64s</span>
               <div className="relative h-[3px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
@@ -155,11 +188,13 @@ export default function ComparePage() {
               </div>
             </div>
             {pristine ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={sideIdx ? "/images/canonical/087-strip-elite.png" : "/images/canonical/087-strip-you.png"}
-                   alt="" className="mt-[6px] w-full rounded-[3px]" />
+              <div className="mt-[6px] px-[10px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={sideIdx ? "/images/canonical/087-strip-elite.png" : "/images/canonical/087-strip-you.png"}
+                     alt="" className="w-full rounded-[3px]" />
+              </div>
             ) : (
-              <div className="mt-[6px] flex gap-[4px]">
+              <div className="mt-[6px] flex gap-[4px] px-[10px]">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
                 ))}
@@ -171,7 +206,7 @@ export default function ComparePage() {
       </div>
 
       {/* phase selector */}
-      <div className="mt-[6px] flex items-center gap-[16px]">
+      <div className="mt-[4px] flex items-center gap-[16px]">
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
           <div key={side} className="flex flex-1 items-center gap-[6px] px-[10px]">
@@ -186,7 +221,7 @@ export default function ComparePage() {
                 <button type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="shrink-0 text-center">
                   <PoseFigure phase={p} active={p === phase} height={42}
                               tone={side ? "elite" : "light"} className="mx-auto" />
-                  <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                  <div className={`shotiq-display text-[11px] leading-[12px] tracking-[0.06em] ${p === phase ? (side ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 </button>
               </React.Fragment>
             ))}
@@ -197,14 +232,22 @@ export default function ComparePage() {
         ))}
       </div>
 
-      {/* analysis band — canonical draws these four panels inside one bordered
-          container split by vertical hairlines. */}
-      <Card className="mt-[8px] flex">
-        <div className="w-[250px] shrink-0 px-[18px] py-[8px]">
+      {/* Analysis band. Canonical groups these four panels as TWO containers:
+          FORM SCORE stands alone (x 172–424) and KEY DIFFERENCES / WHY THE
+          DIFFERENCE MATTERS / TOP MATCHES share the second (441–1401) with
+          internal hairlines at 805 and 1133. This shipped as a single card
+          holding all four. */}
+      <div className="mt-[6px] flex gap-[16px]">
+        <Card className="w-[242px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
-            <Ring pct={(score ?? 0) / 100} size={80}>
-              <div className="text-center"><span className="shotiq-numeric text-[26px]">{score ?? "—"}</span><span className="block text-[9px] text-[var(--shotiq-color-graphite)]">/100</span></div>
+            {/* Canonical draws a fine 7px ring on a 95px outer diameter; 9px on 90
+                made the gauge read as a heavy donut (ink density .379 vs .286). */}
+            <Ring pct={(score ?? 0) / 100} size={95} stroke={6.5}>
+              <div className="text-center">
+                <span className="shotiq-numeric text-[39px] leading-[38px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</span>
+                <span className="block text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">/100</span>
+              </div>
             </Ring>
             <div>
               <div className="text-[14px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
@@ -213,32 +256,41 @@ export default function ComparePage() {
           </div>
           {/* Stat row: hairline-divided and evenly distributed across the
               panel, as canonical sets it. */}
-          <div className="mt-[12px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-center">
+          {/* Canonical draws no rule between the donut and this strip. */}
+          <div className="mt-[10px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)] pt-[6px] text-center">
             <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
           </div>
-        </div>
+        </Card>
 
-        <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
+        <Card className="flex min-w-0 flex-1">
+        <div className="min-w-0 flex-1 px-[18px] py-[8px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
-          <table className="mt-[6px] w-full text-[12px]">
-            <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
-              <th className="py-[4px] font-bold">METRIC</th><th className="font-bold">YOU</th><th className="font-bold">ELITE</th><th className="font-bold">DIFFERENCE</th></tr></thead>
-            <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
+          {/* Canonical's row pitch here is 19.3px over seven rows; the app was
+              running 21.8 (+13%), which added 17px to the panel. */}
+          <table className="mt-[6px] w-full text-[12px] leading-[17px]">
+            {/* Canonical rules none of these seven rows off, and centres YOU /
+                ELITE / DIFFERENCE under their own headers. */}
+            <thead><tr className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+              <th className="py-[4px] text-left font-bold">METRIC</th>
+              <th className="w-[56px] text-center font-bold">YOU</th>
+              <th className="w-[56px] text-center font-bold">ELITE</th>
+              <th className="w-[66px] text-center font-bold">DIFFERENCE</th></tr></thead>
+            <tbody>
               {DIFFS.map(([m, you, el, d]) => (
                 <tr key={m}>
-                  <td className="py-[2px] pr-[8px]">{m}</td>
-                  <td className="pr-[8px] font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
-                  <td className="pr-[8px] font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
-                  <td>{d}</td>
+                  <td className="whitespace-nowrap py-[1px] pr-[8px]">{m}</td>
+                  <td className="text-center font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
+                  <td className="text-center font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
+                  <td className="text-center">{d}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="w-[292px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
+        <div className="w-[306px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[16px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {([["Slightly lower release angle reduces margin for error on longer shots.", "087-insight-1"],
@@ -255,14 +307,14 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="w-[238px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[8px]">
+        <div className="w-[268px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[8px]">
           <SectionLabel>TOP MATCHES</SectionLabel>
           {/* Label, bar and percentage each own a column, so the figure never
               lands on top of the end of its own bar. */}
           <div className="mt-[10px] space-y-[10px]">
             {MATCH.map(([p, v]) => (
               <div key={p} className="flex items-center gap-[8px]">
-                <span className={`w-[98px] shrink-0 whitespace-nowrap text-[10px] font-bold tracking-[0.02em] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
+                <span className={`w-[86px] shrink-0 whitespace-nowrap text-[10px] font-bold tracking-[0] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
                 <span className="h-[4px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                   <span className={`block h-full rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
                 </span>
@@ -271,10 +323,11 @@ export default function ComparePage() {
             ))}
           </div>
         </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* footer band — one container, internal hairline, per canonical */}
-      <Card className="mb-[4px] mt-[4px] flex">
+      <Card className="mb-[2px] mt-[2px] flex">
         <div className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/087-focus-mark.png" alt="" aria-hidden="true"
@@ -284,7 +337,9 @@ export default function ComparePage() {
             <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>
           </div>
         </div>
-        <div className="flex w-[420px] shrink-0 items-center gap-[14px] border-l border-[var(--shotiq-color-rule)] px-[20px] py-[10px]">
+        {/* Canonical splits this band 57:43, not 65:35 — NEXT BEST WORKOUT was
+            ~95px narrower than its share. */}
+        <div className="flex w-[43%] shrink-0 items-center gap-[14px] border-l border-[var(--shotiq-color-rule)] px-[20px] py-[10px]">
           <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
             <WorkoutGlyph kind="release" size={22} />
           </span>
@@ -297,5 +352,7 @@ export default function ComparePage() {
         </div>
       </Card>
     </div>
+    </div>
+    </>
   )
 }

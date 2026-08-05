@@ -88,11 +88,11 @@ fileprivate struct FormScorePanel: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("FORM SCORE").shotiqBody(12, weight: .semibold).kerning(0.8)
                 .foregroundStyle(ShotIQColor.graphite)
-            Text("82").font(.custom("Tungsten-Semibold", size: numeralSize))
+            Text("82").font(.custom("Tungsten-Medium", size: numeralSize))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
                 .lineLimit(1)
             ScoreBar(pct: 0.82).frame(width: barWidth)
-            Text("GOOD").font(.custom("Tungsten-Semibold", size: 18))
+            Text("GOOD").font(.custom("Tungsten-Medium", size: 18))
                 .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 6)
             Text(caption).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                 .fixedSize(horizontal: false, vertical: true)
@@ -131,13 +131,13 @@ struct AnalysisProcessingView: View { // 036
                                 .padding(.top, 4)
                             ShotIQCard {
                                 VStack(alignment: .leading, spacing: 0) {
-                                    Text("PROCESSING VIDEO").font(.custom("Tungsten-Semibold", size: 19))
+                                    Text("PROCESSING VIDEO").font(.custom("Tungsten-Medium", size: 19))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("1080p • 24s • 30fps").shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                                     HStack(spacing: 12) {
                                         ScoreBar(pct: pct, color: ShotIQColor.analysisBlue)
-                                        Text("\(Int(pct * 100))%").font(.custom("Tungsten-Semibold", size: 22))
+                                        Text("\(Int(pct * 100))%").font(.custom("Tungsten-Medium", size: 22))
                                             .foregroundStyle(ShotIQColor.analysisBlue)
                                     }
                                     .padding(.top, 14)
@@ -475,7 +475,7 @@ struct AnalysisResultOverviewView: View { // 038
                                         VStack(spacing: 4) {
                                             Ring(pct: 0.88, color: ShotIQColor.analysisBlue, lineWidth: 7)
                                                 .frame(width: 74, height: 74)
-                                                .overlay(Text("88%").font(.custom("Tungsten-Semibold", size: 24)))
+                                                .overlay(Text("88%").font(.custom("Tungsten-Medium", size: 24)))
                                             Text("OVERALL MATCH").shotiqBody(9, weight: .semibold).kerning(0.5)
                                                 .foregroundStyle(ShotIQColor.graphite)
                                         }
@@ -531,7 +531,7 @@ struct AnalysisResultOverviewView: View { // 038
     }
     private func miniStat(_ v: String, _ l: String) -> some View {
         VStack(spacing: 2) {
-            Text(v).font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.ink)
+            Text(v).font(.custom("Tungsten-Medium", size: 22)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(l).shotiqBody(8, weight: .medium).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -549,7 +549,7 @@ struct AnalysisResultOverviewView: View { // 038
                         Text(label).shotiqBody(8, weight: .semibold).kerning(0.4)
                             .foregroundStyle(ShotIQColor.graphite)
                             .lineLimit(1).minimumScaleFactor(0.6)
-                        Text(value).font(.custom("Tungsten-Semibold", size: 26)).foregroundStyle(ShotIQColor.ink)
+                        Text(value).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(ShotIQColor.ink)
                         Text(verdict).shotiqBody(9, weight: .bold).kerning(0.4)
                             .foregroundStyle(excellent ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
                     }
@@ -620,8 +620,11 @@ struct SkeletonOverlay: View {
                     if deg > 180 { deg = 360 - deg }
                     ctx.stroke(Path(ellipseIn: CGRect(x: b.x - 12, y: b.y - 12, width: 24, height: 24)),
                                with: .color(ShotIQColor.shotiqOrange.opacity(0.7)), lineWidth: 1.5)
+                    // Canvas text must stay a `Text`: GraphicsContext.draw has no
+                    // overload for `some View`, so the brand face is applied with
+                    // `.font(_:)` (Text -> Text) rather than the shotiq* helpers.
                     ctx.draw(Text("\(Int(deg))°")
-                        .shotiqBody(11, weight: .bold)
+                        .font(.custom(shotiqBoxedFace(.bold), size: 11))
                         .foregroundColor(ShotIQColor.shotiqOrange),
                              at: CGPoint(x: b.x + 20, y: b.y - 14))
                 }
@@ -742,7 +745,7 @@ struct AnalysisErrorView: View {    // 040
                                 }
                                 .frame(width: 56)
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("ANALYSIS ERROR").font(.custom("Tungsten-Semibold", size: 24))
+                                    Text("ANALYSIS ERROR").font(.custom("Tungsten-Medium", size: 24))
                                         .foregroundStyle(ShotIQColor.reviewRed)
                                     Text("We couldn't complete the analysis.")
                                         .shotiqBody(16, weight: .semibold).foregroundStyle(ShotIQColor.ink)
@@ -924,7 +927,7 @@ struct ShotBreakdownView: View {    // 041
                                         // its own digits — "8" over "2" on 041.
                                         // The numeral is now unbreakable and the
                                         // bar is the elastic half of the row.
-                                        Text("82").font(.custom("Tungsten-Semibold", size: 62))
+                                        Text("82").font(.custom("Tungsten-Medium", size: 62))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                             .lineLimit(1)
                                             .fixedSize(horizontal: true, vertical: false)
@@ -933,7 +936,7 @@ struct ShotBreakdownView: View {    // 041
                                 }
                                 Spacer()
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("GOOD").font(.custom("Tungsten-Semibold", size: 20))
+                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 20))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("Keep building\nconsistency.").shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -989,7 +992,7 @@ struct ShotBreakdownView: View {    // 041
                                     VStack(spacing: 4) {
                                         ReleaseHandGlyph(size: 44)
                                             .foregroundStyle(ShotIQColor.ink)
-                                        Text("161°").font(.custom("Tungsten-Semibold", size: 20))
+                                        Text("161°").font(.custom("Tungsten-Medium", size: 20))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         Text("Release\nAngle").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                                             .multilineTextAlignment(.center)
@@ -1035,9 +1038,9 @@ struct ShotBreakdownView: View {    // 041
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value).font(.custom("Tungsten-Semibold", size: 26)).foregroundStyle(ShotIQColor.ink)
+                Text(value).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(ShotIQColor.ink)
                 if let unit {
-                    Text(unit).font(.custom("Tungsten-Semibold", size: 14)).foregroundStyle(ShotIQColor.ink)
+                    Text(unit).font(.custom("Tungsten-Medium", size: 14)).foregroundStyle(ShotIQColor.ink)
                 }
             }
             Text("GOOD").shotiqBody(9, weight: .bold).kerning(0.4)
@@ -1080,6 +1083,9 @@ struct FrameDetailSkeletonView: View { // 042
     @State private var showBall = false
     @State private var showAngles = false
     private let allPhases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    /// The five frames canonical shows in the scrubber strip, left to right.
+    private let frameThumbs = ["042-frame-001", "042-frame-002", "042-frame-003",
+                               "042-frame-004", "042-frame-005"]
     /// Frame 42 corresponds to the canonical slider position 3.
     private var frameNumber: Int { 39 + Int(frame) }
     var body: some View {
@@ -1114,9 +1120,31 @@ struct FrameDetailSkeletonView: View { // 042
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
+                            // The canonical frame, not a black rectangle. 042's
+                            // sidecar bundles one crop for this panel and it is the
+                            // *finished* panel: 767x689 at y 333 on the 853x1844
+                            // canvas — 353x317pt, which is exactly the width this
+                            // column offers, so it lands with no crop at all — and
+                            // it already carries the pose skeleton, the 168° elbow
+                            // callout, the phase and FPS chips, the CONFIDENCE card
+                            // and the transport row burned into the pixels.
+                            //
+                            // So the app draws none of those a second time: the
+                            // skeleton, the confidence card and the FPS chip are
+                            // gone, `MediaSurface`'s own scrubber is gone (that is
+                            // why this is a plain CanonicalPhoto), and the phase
+                            // Menu is kept only as a transparent hit target sitting
+                            // on its own printed chip, so the control still works
+                            // without stamping a second chip over the first.
                             ZStack(alignment: .topLeading) {
-                                ZStack {
-                                    MediaSurface(height: 400)
+                                CanonicalPhoto("042-visual-002", height: 317, cornerRadius: 4)
+                                // The live Canvas only comes out for something the
+                                // printed frame does not already show — joint
+                                // points, the ball marker, or the angle arcs behind
+                                // "Show joint angles". Left unconditional it drew a
+                                // second white stick figure a few points off the
+                                // baked one.
+                                if showJoints || showBall || showAngles {
                                     SkeletonOverlay(showBones: showSkeleton, showJoints: showJoints,
                                                     showBall: showBall, showAngles: showAngles)
                                 }
@@ -1133,38 +1161,12 @@ struct FrameDetailSkeletonView: View { // 042
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 12).padding(.vertical, 8)
                                         .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
+                                        .opacity(0)
                                     }
+                                    .accessibilityLabel("Shot phase, \(phase), frame \(frameNumber)")
                                     Spacer()
-                                    Text("120 FPS").shotiqBody(12, weight: .bold).kerning(0.5)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 12).padding(.vertical, 8)
-                                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
                                 }
                                 .padding(10)
-                            }
-                            .overlay(alignment: .trailing) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("CONFIDENCE").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    HStack(spacing: 6) {
-                                        Text("98%").font(.custom("Tungsten-Semibold", size: 18))
-                                            .foregroundStyle(ShotIQColor.analysisBlue)
-                                        Capsule().fill(ShotIQColor.analysisBlue).frame(width: 40, height: 3)
-                                    }
-                                    Rectangle().fill(.white.opacity(0.25)).frame(height: 1)
-                                    Text("KEYPOINTS").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    Text("17/17").font(.custom("Tungsten-Semibold", size: 18))
-                                        .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Rectangle().fill(.white.opacity(0.25)).frame(height: 1)
-                                    Text("TRACKING").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    Text("EXCELLENT").font(.custom("Tungsten-Semibold", size: 16))
-                                        .foregroundStyle(ShotIQColor.confirmGreen)
-                                }
-                                .padding(12)
-                                .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
-                                .padding(.trailing, 12)
                             }
                             .padding(.top, 14)
                             HStack(spacing: 10) {
@@ -1201,12 +1203,21 @@ struct FrameDetailSkeletonView: View { // 042
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(frame <= 0)
+                                // Canonical's frame scrubber is five different
+                                // frames of the take, not five dark rectangles.
+                                // The 042 sidecar declares one photo region (the
+                                // hero, already bundled as 042-visual-002) and
+                                // says nothing about this strip, so each thumb is
+                                // cut from the render: the row sits at y 1331…1414
+                                // between the phase strip above and the slider
+                                // below, and the five thumbs are separated by the
+                                // paper gutters at x 271, 367, 470 and 574.
+                                // Canonical's own selection ring is excluded from
+                                // the middle crop — the app draws that ring.
                                 HStack(spacing: 4) {
                                     ForEach(0..<5, id: \.self) { i in
                                         Button { frame = min(9, max(0, frame + Double(i - 2))) } label: {
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                                .frame(height: 52)
+                                            CanonicalPhoto(frameThumbs[i], height: 38, cornerRadius: 4)
                                                 .overlay(RoundedRectangle(cornerRadius: 4)
                                                     .stroke(i == 2 ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
                                         }
@@ -1236,11 +1247,11 @@ struct FrameDetailSkeletonView: View { // 042
                                     Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     HStack(spacing: 6) {
-                                        Text("82").font(.custom("Tungsten-Semibold", size: 30))
+                                        Text("82").font(.custom("Tungsten-Medium", size: 30))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         ScoreBar(pct: 0.82).frame(width: 34)
                                     }
-                                    Text("GOOD").font(.custom("Tungsten-Semibold", size: 13))
+                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 13))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
@@ -1391,7 +1402,7 @@ struct AnnotationToolbarView: View { // 043
                             }
                             .overlay(alignment: .bottomLeading) {
                                 Text(String(format: "00:%05.2f", frameTime))
-                                    .font(.custom("Tungsten-Semibold", size: 15)).foregroundStyle(.white)
+                                    .font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(.white)
                                     .padding(.horizontal, 12).padding(.vertical, 7)
                                     .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
                                     .padding(12)
@@ -1530,10 +1541,10 @@ struct AnnotationToolbarView: View { // 043
             p.addLine(to: last)
             ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 2.5, dash: [6, 4]))
             let deg = abs(atan2(last.y - first.y, last.x - first.x)) * 180 / .pi
-            ctx.draw(Text("\(Int(deg))°").shotiqBody(12, weight: .bold).foregroundColor(color),
+            ctx.draw(Text("\(Int(deg))°").font(.custom(shotiqBoxedFace(.bold), size: 12)).foregroundColor(color),
                      at: CGPoint(x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 - 12))
         default: // Label
-            ctx.draw(Text("NOTE").shotiqBody(11, weight: .bold).foregroundColor(.white),
+            ctx.draw(Text("NOTE").font(.custom(shotiqBoxedFace(.bold), size: 11)).foregroundColor(.white),
                      at: last)
             ctx.stroke(Path(roundedRect: CGRect(x: last.x - 24, y: last.y - 12, width: 48, height: 24), cornerRadius: 5),
                        with: .color(color), lineWidth: 1.5)
@@ -1546,7 +1557,7 @@ struct AnnotationToolbarView: View { // 043
             // to "MAKE" / "%" on 043.
             Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)
-            Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1604,10 +1615,10 @@ struct FormScoreView: View {        // 044
                             }
                             .padding(.top, 18)
                             HStack(alignment: .top, spacing: 14) {
-                                Text("82").font(.custom("Tungsten-Semibold", size: 76))
+                                Text("82").font(.custom("Tungsten-Medium", size: 76))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("GOOD").font(.custom("Tungsten-Semibold", size: 19))
+                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 19))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("Keep building\nconsistency.").shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1652,7 +1663,7 @@ struct FormScoreView: View {        // 044
                                                           accent: verdict == "NEEDS WORK"
                                                               ? ShotIQColor.reviewRed : ShotIQColor.shotiqOrange)
                                                 .foregroundStyle(ShotIQColor.ink)
-                                            Text("\(Int(v * 100))").font(.custom("Tungsten-Semibold", size: 30))
+                                            Text("\(Int(v * 100))").font(.custom("Tungsten-Medium", size: 30))
                                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                                             Text(verdict).shotiqBody(8, weight: .bold).kerning(0.3)
                                                 .foregroundStyle(verdict == "NEEDS WORK" ? ShotIQColor.reviewRed : ShotIQColor.analysisBlue)
@@ -1675,7 +1686,7 @@ struct FormScoreView: View {        // 044
                             }
                             .padding(.top, 22)
                             HStack(alignment: .center, spacing: 14) {
-                                Text("76%").font(.custom("Tungsten-Semibold", size: 44))
+                                Text("76%").font(.custom("Tungsten-Medium", size: 44))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                 Text("MODERATE").shotiqBody(12, weight: .bold).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.analysisBlue)
@@ -1701,7 +1712,7 @@ struct FormScoreView: View {        // 044
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("IMPACT").shotiqBody(10, weight: .semibold).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("+11%").font(.custom("Tungsten-Semibold", size: 30))
+                                    Text("+11%").font(.custom("Tungsten-Medium", size: 30))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     Text("Consistency").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -1729,7 +1740,7 @@ struct FormScoreView: View {        // 044
                                     HStack {
                                         Text(m).shotiqBody(13).frame(maxWidth: .infinity, alignment: .leading)
                                         HStack(spacing: 6) {
-                                            Text("\(Int(v * 100))").font(.custom("Tungsten-Semibold", size: 17))
+                                            Text("\(Int(v * 100))").font(.custom("Tungsten-Medium", size: 17))
                                                 .foregroundStyle(ShotIQColor.ink)
                                             ScoreBar(pct: v, color: v < 0.75 ? ShotIQColor.shotiqOrange : ShotIQColor.analysisBlue)
                                                 .frame(width: 74)
@@ -1845,7 +1856,7 @@ struct MetricDetailView: View {     // 045
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Semibold", size: 28))
+                                    Text("82").font(.custom("Tungsten-Medium", size: 28))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     ScoreBar(pct: 0.82).frame(width: 74)
                                 }
@@ -1858,12 +1869,23 @@ struct MetricDetailView: View {     // 045
                             .padding(.top, 2)
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 0) {
-                                ZStack { MediaSurface(height: 300); SkeletonOverlay() }
+                                // Canonical 045 prints a photograph in this column,
+                                // 416x581 at x 37…453, y 449…1030 — 268pt tall for
+                                // the ~192pt column. The 045 sidecar declares no
+                                // photo element at all, so the app had nothing to
+                                // draw and fell back to the dark media plate; that
+                                // plate plus a synthetic skeleton is the grey
+                                // rectangle readers reported.
+                                //
+                                // The pose skeleton and the 91° elbow callout are
+                                // baked into the crop, so SkeletonOverlay goes:
+                                // drawing it as well would stack two skeletons.
+                                CanonicalPhoto("045-visual-001", height: 268)
                                     .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 0) {
                                     Text("MEASURED").shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("\(Int(value * 100))°").font(.custom("Tungsten-Semibold", size: 54))
+                                    Text("\(Int(value * 100))°").font(.custom("Tungsten-Medium", size: 54))
                                         .foregroundStyle(ShotIQColor.ink)
                                     Text(metric.uppercased()).shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1871,7 +1893,7 @@ struct MetricDetailView: View {     // 045
                                     Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.vertical, 12)
                                     Text("ELITE RANGE").shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("85° — 95°").font(.custom("Tungsten-Semibold", size: 30))
+                                    Text("85° — 95°").font(.custom("Tungsten-Medium", size: 30))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                     ZStack(alignment: .leading) {
                                         Capsule().fill(ShotIQColor.rule).frame(height: 3)
@@ -1891,9 +1913,9 @@ struct MetricDetailView: View {     // 045
                                     Text("CONFIDENCE").shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     HStack(spacing: 8) {
-                                        Text("HIGH").font(.custom("Tungsten-Semibold", size: 20))
+                                        Text("HIGH").font(.custom("Tungsten-Medium", size: 20))
                                             .foregroundStyle(ShotIQColor.analysisBlue)
-                                        Text("92%").font(.custom("Tungsten-Semibold", size: 20))
+                                        Text("92%").font(.custom("Tungsten-Medium", size: 20))
                                             .foregroundStyle(ShotIQColor.analysisBlue)
                                         TrendLine(points: [40, 52, 48, 66, 74, 88], stroke: ShotIQColor.analysisBlue)
                                             .frame(width: 60, height: 24)
@@ -2170,7 +2192,7 @@ struct FlawsOverviewView: View {    // 046
                     Text("CONFIDENCE").shotiqBody(9, weight: .semibold).kerning(0.5)
                         .foregroundStyle(ShotIQColor.graphite)
                     HStack(spacing: 8) {
-                        Text(confidence).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                        Text(confidence).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                         TrendLine(points: [40, 55, 48, 62, 58, 74], stroke: tint).frame(width: 54, height: 20)
                     }
                     // Only the second flaw card has a canonical crop; the others keep
@@ -2260,7 +2282,7 @@ struct FlawDetailView: View {       // 047
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("FORM SCORE").shotiqBody(10, weight: .semibold).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Semibold", size: 40))
+                                    Text("82").font(.custom("Tungsten-Medium", size: 40))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     ScoreBar(pct: 0.82).frame(width: 76)
                                 }
@@ -2442,7 +2464,7 @@ struct FlawDetailView: View {       // 047
             Text(label).shotiqBody(10, weight: .bold).kerning(0.5).foregroundStyle(tint)
             AngleWedgeGlyph(degrees: degrees, size: 34, accent: tint)
                 .foregroundStyle(ShotIQColor.ink)
-            Text(value).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(tint)
+            Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(tint)
         }
     }
     private func targetCheck(_ label: String) -> some View {

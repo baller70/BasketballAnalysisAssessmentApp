@@ -8,8 +8,14 @@ import SwiftUI
 public enum ShotIQColor {
     /// #2D6CDF
     public static let analysisBlue = Color(red: 0.176471, green: 0.423529, blue: 0.874510)
-    /// #168A55
-    public static let confirmGreen = Color(red: 0.086275, green: 0.541176, blue: 0.333333)
+    /// #056F38
+    ///
+    /// Measured rather than taken from the sidecar name table. The most common
+    /// exact green fill across the 72 canonical iOS screens clusters at
+    /// (3-8, 111-115, 64-68), and across the 20 canonical desktop screens at
+    /// (0-1, 109-111, 52-54). The shipped #168A55 is (22,138,85) — markedly
+    /// lighter and less saturated than either, on both platforms.
+    public static let confirmGreen = Color(red: 0.019608, green: 0.435294, blue: 0.219608)
     /// #5F646B
     public static let graphite = Color(red: 0.372549, green: 0.392157, blue: 0.419608)
     /// #111111
@@ -20,8 +26,17 @@ public enum ShotIQColor {
     public static let paper = Color(red: 1.000000, green: 1.000000, blue: 1.000000)
     /// #D92D20
     public static let reviewRed = Color(red: 0.850980, green: 0.176471, blue: 0.125490)
-    /// #D9D9D4
-    public static let rule = Color(red: 0.850980, green: 0.850980, blue: 0.831373)
+    /// #EBECED
+    ///
+    /// Measured across 28 canonical iOS screens by finding rows that run
+    /// uniformly darker than the paper both above and below them: median
+    /// (238,239,240), 10th-90th percentile 234-242. The shipped #D9D9D4 was
+    /// (217,217,212) — 36 of contrast against white paper where canonical draws
+    /// 15, so every divider, card border and stat rule in the app read about
+    /// 2.5x too heavy. It was also warm (blue 212 against red 217) where
+    /// canonical is faintly cool. The web build carried the identical wrong
+    /// value and takes the same correction.
+    public static let rule = Color(red: 0.921569, green: 0.925490, blue: 0.929412)
     /// #FD3701
     public static let shotiqOrange = Color(red: 0.992157, green: 0.215686, blue: 0.003922)
     /// #F7F7F4

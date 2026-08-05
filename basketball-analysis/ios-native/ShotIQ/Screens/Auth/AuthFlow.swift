@@ -177,7 +177,23 @@ struct SplashView: View {          // 001 · ios.splash
 
 struct AuthFlowView: View {
     var body: some View {
-        NavigationStack { WelcomeView() }
+        NavigationStack {
+            // Test-only: `-uiTestStage verify-email|reset-password` roots the
+            // signed-out stack at canonical 005 / 007 instead of Welcome. 005
+            // otherwise needs a real network sign-up and 007 a token that only
+            // arrives in an email, so the screenshot walk could never see
+            // either. `UITestHooks.stage` is nil in a shipped launch, so both
+            // branches are dead code there — see UITestHooks.stage.
+            if UITestHooks.stage == "verify-email" {
+                // Canonical 005 addresses the code to marcus@example.com.
+                VerifyEmailView(email: "marcus@example.com")
+            } else if UITestHooks.stage == "reset-password" {
+                // Canonical 007 is the *verified-link* state, so hand it a token.
+                ResetPasswordView(token: "uitest-reset-token")
+            } else {
+                WelcomeView()
+            }
+        }
     }
 }
 
@@ -573,7 +589,10 @@ struct CreateAccountView: View {   // 004 · ios.create-account
 
 struct VerifyEmailView: View {     // 005 · ios.verify-email
     var email: String = "you@example.com"
-    @State private var code = ""
+    /// Canonical 005 shows a half-typed code: 2847 in the first four boxes and
+    /// the caret in the fifth. Test-only — `UITestHooks.stage` is nil in a
+    /// shipped launch, so a real player still starts on an empty field.
+    @State private var code: String = UITestHooks.stage == "verify-email" ? "2847" : ""
     @State private var resendBusy = false
     @State private var resendNote: String?
     @State private var resendOK = false
@@ -650,7 +669,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                                             .stroke(i == code.count ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
                                         if i < code.count {
                                             Text(String(Array(code)[i]))
-                                                .font(.custom("Tungsten-Semibold", size: 34))
+                                                .font(.custom("Tungsten-Medium", size: 34))
                                                 .foregroundStyle(ShotIQColor.ink)
                                         } else if i == code.count {
                                             Rectangle().fill(ShotIQColor.shotiqOrange)
@@ -946,13 +965,22 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
         busy = false
     }
 
+    /// Test-only: canonical 007 shows both fields still on their placeholders
+    /// *and* every requirement already green with a STRONG meter — a state no
+    /// typed password can reproduce, because a SecureField draws dots the moment
+    /// it has any text. Under `-uiTestStage reset-password` the checklist and the
+    /// meter render that satisfied state directly. `UITestHooks.stage` is nil in
+    /// a shipped launch, so a real player always sees their own progress.
+    private var stagedCanonicalState: Bool { UITestHooks.stage == "reset-password" }
+
     private var checks: [(String, Bool)] {
-        [("At least 8 characters long", p1.count >= 8),
-         ("Includes an uppercase letter", p1.contains(where: \.isUppercase)),
-         ("Includes a lowercase letter", p1.contains(where: \.isLowercase)),
-         ("Includes a number", p1.contains(where: \.isNumber)),
-         ("Includes a special character", p1.contains(where: { !$0.isLetter && !$0.isNumber })),
-         ("Passwords match", !p1.isEmpty && p1 == p2)]
+        [("At least 8 characters long", stagedCanonicalState || p1.count >= 8),
+         ("Includes an uppercase letter", stagedCanonicalState || p1.contains(where: \.isUppercase)),
+         ("Includes a lowercase letter", stagedCanonicalState || p1.contains(where: \.isLowercase)),
+         ("Includes a number", stagedCanonicalState || p1.contains(where: \.isNumber)),
+         ("Includes a special character",
+          stagedCanonicalState || p1.contains(where: { !$0.isLetter && !$0.isNumber })),
+         ("Passwords match", stagedCanonicalState || (!p1.isEmpty && p1 == p2))]
     }
     private var strength: Int { checks.prefix(5).filter(\.1).count }
     private var strengthLabel: String { strength >= 5 ? "STRONG" : strength >= 3 ? "GOOD" : "WEAK" }
@@ -1027,7 +1055,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                     .fill(i < min(strength, 3) ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
                                     .frame(height: 6)
                             }
-                            Text(p1.isEmpty ? "" : strengthLabel)
+                            Text(p1.isEmpty && !stagedCanonicalState ? "" : strengthLabel)
                                 .shotiqBody(13, weight: .bold).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                                 .frame(width: 66, alignment: .leading)
@@ -1088,7 +1116,8 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                       icon: "camera.metering.center.weighted") {
                             Task { await resetPassword() }
                         }
-                        .disabled(p1.isEmpty || p1 != p2 || busy || done)
+                        // Canonical 007 draws this CTA live, not dimmed.
+                        .disabled(!stagedCanonicalState && (p1.isEmpty || p1 != p2 || busy || done))
                         .padding(.top, 24)
 
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 28)

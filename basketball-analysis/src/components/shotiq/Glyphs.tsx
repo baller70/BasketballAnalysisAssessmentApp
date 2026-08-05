@@ -420,7 +420,7 @@ export function FlawFigure({
 
 /* -------------------------------------------------- node cue diagrams */
 
-export type CueKind = "peak" | "apex" | "shoulders" | "extension" | "base" | "tree"
+export type CueKind = "peak" | "apex" | "shoulders" | "extension" | "base" | "tree" | "saved"
 
 /**
  * Node-and-link cue diagram: canonical's dominant motif on coaching cards.
@@ -442,10 +442,13 @@ export function CueGlyph({
           {node(16.5, 19, true)}{node(20.5, 16.5, true)}
         </>
       )}
+      {/* An even four-node zigzag with the accent on the third node, as
+          canonical draws the Discover mark on 090. The old path put two long
+          segments against two short ones and bunched the last three nodes. */}
       {kind === "apex" && (
         <>
-          <path d="M5 19.5 L10.5 7 L16 11 L20 8.5" strokeDasharray="0" />
-          {node(5, 19.5, true)}{node(10.5, 7, true)}{node(16, 11)}{node(20, 8.5)}
+          <path d="M4.5 18 L10 6.5 L15 15 L20.5 5.5" />
+          {node(4.5, 18)}{node(10, 6.5)}{node(15, 15, true)}{node(20.5, 5.5)}
         </>
       )}
       {kind === "shoulders" && (
@@ -466,6 +469,17 @@ export function CueGlyph({
         <>
           <path d="M12 4.5 V12 M12 12 L7 20 M12 12 L17 20 M6.5 9.5 H17.5" />
           {node(12, 4.5)}{node(7, 20, true)}{node(17, 20, true)}
+        </>
+      )}
+      {/* Canonical's "My drills" mark on 090: a closed five-node link — two
+          shoulders, a dropped centre node and a base bar. It was borrowing the
+          open "apex" zigzag, which is the Discover mark. */}
+      {kind === "saved" && (
+        <>
+          <path d="M4.5 5.5 L12 12.5 L19.5 5.5" />
+          <path d="M4.5 5.5 V18.5 H19.5 V5.5" />
+          {node(4.5, 5.5)}{node(19.5, 5.5)}{node(12, 12.5, true)}
+          {node(4.5, 18.5)}{node(19.5, 18.5)}
         </>
       )}
       {kind === "tree" && (
@@ -646,5 +660,241 @@ export function ReadinessGlyph({
         </>
       )}
     </Svg>
+  )
+}
+
+/* ------------------------------------------------- primary-action marks */
+
+export type ActionKind =
+  | "analyze" | "uploadImage" | "uploadVideo" | "liveCamera"
+  | "chooseMedia" | "nodeGraph" | "nodeClimb" | "skeletonDots"
+
+/**
+ * The four marks canonical puts on the primary actions (079 header, 081 media
+ * tiles, 080/081 submit buttons).
+ *
+ * These are NOT square: measured off canonical 079 the upload-image bracket is
+ * 48x36, the film-gate 60x25 and the live-camera node run 78x27. Every generic
+ * icon set draws them on a 24x24 grid, which is why the shipped row read as
+ * four small square glyphs where canonical draws four wide diagrams. Each kind
+ * therefore carries its own intrinsic box and is scaled by HEIGHT, so the
+ * aspect ratio survives.
+ */
+const ACTION_BOX: Record<ActionKind, [number, number]> = {
+  analyze: [34, 34],
+  uploadImage: [48, 36],
+  uploadVideo: [60, 26],
+  liveCamera: [80, 30],
+  chooseMedia: [34, 46],
+  nodeGraph: [32, 22],
+  // Canonical's "Create goal" mark on 092: four OPEN nodes climbing right,
+  // not a filled trend polyline.
+  nodeClimb: [34, 30],
+  // Canonical's "Overlay skeletons" mark on 087: a dotted node cloud, not a
+  // stacked-layers icon.
+  skeletonDots: [30, 28],
+}
+
+export function ActionGlyph({
+  kind, height = 34, className = "", accent = ORANGE, title,
+}: { kind: ActionKind; height?: number } & GlyphProps) {
+  const [bw, bh] = ACTION_BOX[kind]
+  const width = Math.round((height * bw) / bh)
+  // Keep the drawn stroke ~1.7 device px whatever height the caller asks for.
+  const sw = 1.7 * (bh / height)
+  const paper = "var(--shotiq-color-paper)"
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${bw} ${bh}`}
+         className={`block max-w-none ${className}`}
+         fill="none" stroke="currentColor" strokeWidth={sw}
+         strokeLinecap="round" strokeLinejoin="round"
+         role={title ? "img" : undefined} aria-hidden={title ? undefined : "true"}
+         aria-label={title}>
+      {kind === "analyze" && (
+        <>
+          <path d="M2.5 11 V5 A2.5 2.5 0 0 1 5 2.5 H11 M23 2.5 H29 A2.5 2.5 0 0 1 31.5 5 V11 M31.5 23 V29 A2.5 2.5 0 0 1 29 31.5 H23 M11 31.5 H5 A2.5 2.5 0 0 1 2.5 29 V23" />
+          <circle cx="17" cy="17" r="4.4" fill="currentColor" stroke="none" />
+        </>
+      )}
+      {kind === "uploadImage" && (
+        <>
+          <path d="M1.5 11 V1.5 H11 M37 1.5 H46.5 V11 M46.5 25 V34.5 H37 M11 34.5 H1.5 V25" />
+          <path d="M14.8 14.5 L26.6 20.8 L36 14.5" />
+          <path d="M14.8 17.5 V26.3" strokeDasharray="1.6 2" />
+          {[[14.8, 14.5], [26.6, 20.8], [36, 14.5], [14.8, 29.3]].map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="2.9" fill={paper} stroke={accent} strokeWidth={sw * 1.25} />
+          ))}
+        </>
+      )}
+      {kind === "uploadVideo" && (
+        <>
+          <rect x="1.2" y="2" width="57.6" height="21.6" />
+          <path d="M20.4 2 V23.6 M39.6 2 V23.6" />
+          <path d="M10.8 9.6 V16 M30 9.6 V16 M49.2 9.6 V16" strokeWidth={sw * 1.5} />
+          <path d="M39.6 0.8 V25.2" stroke={accent} strokeWidth={sw * 1.2} />
+          <circle cx="39.6" cy="6.4" r="2.9" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
+        </>
+      )}
+      {kind === "liveCamera" && (
+        <>
+          <path d="M4.6 15 L13.3 22.5 L24.6 6 L39.6 22.5 L57.7 5.6 L63.3 24.4 L76.4 14.4" />
+          {[[4.6, 15], [13.3, 22.5], [24.6, 6], [57.7, 5.6], [63.3, 24.4], [76.4, 14.4]].map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="2.7" fill={paper} stroke="currentColor" />
+          ))}
+          <circle cx="39.6" cy="22.5" r="5.4" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
+        </>
+      )}
+      {kind === "chooseMedia" && (
+        <>
+          <path d="M2 2 H21 L31.5 12.5 V44 H2 Z" />
+          <path d="M21 2 V12.5 H31.5" />
+          <path d="M16.8 44 V18" />
+          <path d="M8.4 26.4 L16.8 18 L25.2 26.4" />
+        </>
+      )}
+      {kind === "nodeClimb" && (
+        <>
+          <path d="M5.5 25 L12 18.5 L17.5 22 L27 7.5" />
+          <circle cx="5.5" cy="25" r="3.4" fill={paper} />
+          <circle cx="12" cy="18.5" r="3.4" fill={paper} />
+          <circle cx="17.5" cy="22" r="3.4" fill={paper} />
+          <circle cx="27" cy="7.5" r="4.2" fill={paper} />
+        </>
+      )}
+      {kind === "skeletonDots" && (
+        <>
+          {[[7, 5], [15, 3.5], [22.5, 6], [4.5, 12], [11.5, 11], [19, 12.5], [25.5, 11],
+            [7.5, 19], [15, 18], [22, 20], [11, 25.5], [19.5, 25]].map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill="currentColor" stroke="none" />
+          ))}
+          <path d="M7 5 L15 3.5 M11.5 11 L19 12.5 M7.5 19 L15 18 L22 20" strokeDasharray="1.4 2" />
+        </>
+      )}
+      {kind === "nodeGraph" && (
+        <>
+          <path d="M9.9 16.4 L23.4 5.6" />
+          <circle cx="3.4" cy="12.6" r="3" />
+          <circle cx="9.9" cy="16.4" r="3" />
+          <circle cx="23.4" cy="5.6" r="3.9" />
+          <path d="M26 8.6 L27.6 11.6" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/* ---------------------------------------------------------- phase track */
+
+const TRACK_PHASES: { key: ShotPhase; label: string }[] = [
+  { key: "setup", label: "SETUP" }, { key: "load", label: "LOAD" },
+  { key: "rise", label: "RISE" }, { key: "release", label: "RELEASE" },
+  { key: "follow", label: "FOLLOW-THROUGH" },
+]
+
+/**
+ * The five-phase timeline as canonical draws it: canonical pose crops on plain
+ * white, a hairline connector between them, and the label set in the condensed
+ * display face directly under each figure.
+ *
+ * 079 and 080 used to paste a downscaled bitmap of the whole strip, which put
+ * the crop's own #FDFDFD paper on the page as a visible band and shrank the
+ * labels to an 8px cap. Measured against canonical the labels are a 9px cap on
+ * 079/080 and 11px on 083 — always in the condensed face, never the body face,
+ * which is why matching the cap in the body face made them 50% too wide.
+ */
+export function PhaseTrack({
+  active = "RELEASE", figure = 30, label = 13, checks = false,
+  underline = false, className = "",
+}: {
+  active?: string
+  /** Pose height in CSS px. */
+  figure?: number
+  /** Label font size in px (condensed face). */
+  label?: number
+  /** Draw canonical's green completion tick on every phase before the active one (080). */
+  checks?: boolean
+  /** Rule the active label, as 079 does. */
+  underline?: boolean
+  className?: string
+}) {
+  const activeIdx = TRACK_PHASES.findIndex((p) => p.label === active)
+  return (
+    <div className={`flex items-start ${className}`}>
+      {TRACK_PHASES.map((p, i) => {
+        const on = i === activeIdx
+        return (
+          <React.Fragment key={p.key}>
+            {i > 0 && (
+              <span className="flex min-w-0 flex-1 items-center gap-[8px] px-[8px]"
+                    style={{ height: figure }} aria-hidden="true">
+                {checks && i - 1 < activeIdx && (
+                  <span className="grid h-[15px] w-[15px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
+                    <svg width="9" height="9" viewBox="0 0 12 12">
+                      <path d="M2.4 6.4 L4.9 9 L9.6 3.4" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                )}
+                <span className="h-px min-w-[8px] flex-1 bg-[var(--shotiq-color-rule)]" />
+              </span>
+            )}
+            <span className="shrink-0 text-center">
+              <PoseFigure phase={p.key} active={on} height={figure} className="mx-auto" />
+              <span className="shotiq-display mt-[3px] block whitespace-nowrap leading-[1.05]"
+                    style={{
+                      fontSize: label,
+                      letterSpacing: "0.05em",
+                      color: on ? ORANGE : "var(--shotiq-color-graphite)",
+                    }}>
+                {p.label}
+              </span>
+              {underline && on && (
+                <span aria-hidden="true" className="mx-auto mt-[2px] block h-[2px] w-full bg-[var(--shotiq-color-shotiqOrange)]" />
+              )}
+            </span>
+          </React.Fragment>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * The two marks in the topbar stat cluster, drawn to canonical's own geometry.
+ *
+ * Measured on canonical 079: the streak mark is a 47x18 film strip with sprocket
+ * runs top and bottom and three frame divisions; the points mark is a 23x26
+ * hexagon with an orange centre node on a short spoke. The build was shipping
+ * lucide's `Film` (a rounded rectangle with two dots, 22x22) and `TrendingUp`
+ * (a bare arrow, 30x10) — both graders named the pair, since it sits on all
+ * twenty screens.
+ */
+export function StreakGlyph({ size = 47 }: { size?: number }) {
+  const h = size * 18 / 47
+  return (
+    <svg width={size} height={h} viewBox="0 0 47 18" fill="none" aria-hidden="true" className="shrink-0">
+      <rect x="0.9" y="0.9" width="45.2" height="16.2" rx="1.4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M0.9 4.6h45.2M0.9 13.4h45.2" stroke="currentColor" strokeWidth="1.4" />
+      {[5.2, 9.4, 13.6, 17.8, 22, 26.2, 30.4, 34.6, 38.8, 43].map((x) => (
+        <g key={x}>
+          <rect x={x - 1.1} y="1.7" width="2.2" height="2.2" fill="currentColor" />
+          <rect x={x - 1.1} y="14.1" width="2.2" height="2.2" fill="currentColor" />
+        </g>
+      ))}
+      <path d="M12.6 4.6v8.8M23.5 4.6v8.8M34.4 4.6v8.8" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  )
+}
+
+export function PointsGlyph({ size = 26 }: { size?: number }) {
+  const w = size * 23 / 26
+  return (
+    <svg width={w} height={size} viewBox="0 0 23 26" fill="none" aria-hidden="true" className="shrink-0">
+      <path d="M11.5 1.4 21.1 7v11.9l-9.6 5.6-9.6-5.6V7z" stroke="currentColor" strokeWidth="1.5" />
+      {[[11.5, 1.4], [21.1, 7], [21.1, 18.9], [11.5, 24.5], [1.9, 18.9], [1.9, 7]].map(([cx, cy]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.5" fill="#fff" stroke="currentColor" strokeWidth="1.3" />
+      ))}
+      <path d="M11.5 13 16 9.6" stroke="var(--shotiq-color-shotiqOrange)" strokeWidth="1.4" />
+      <circle cx="11.5" cy="13" r="2.4" fill="var(--shotiq-color-shotiqOrange)" />
+    </svg>
   )
 }

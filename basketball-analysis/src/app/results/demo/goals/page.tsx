@@ -5,14 +5,21 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  Pencil, MoreVertical, Check, ChevronRight, X,
+  Pencil, MoreVertical, MoreHorizontal, Check, CircleCheck, ChevronRight, X,
 } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
-import { WorkoutGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
+import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
+import { WorkoutGlyph, type WorkoutKind, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
   useHistory, StatStrip, formatDelta, formatMakePct, scoreSeries,
 } from "@/components/shotiq/ResultsBits"
 import { csrfFetch } from "@/lib/api/csrfFetch"
+import { GoalsList, CreateGoal, GoalDetail } from "@/components/shotiq/phone/GoalsPhone"
+import { usePhoneViewport, usePhoneStep } from "@/components/shotiq/phone/PhoneBits"
+
+/* Canonical draws THREE phone designs on this route — 063 goals, 064 create
+   goal and 065 goal detail. Round 6 shipped 064 as a two-field MODAL where
+   canonical draws a full form page, and 065 as 063 scrolled 560px. */
+const PHONE_GOAL_STEPS = ["list", "create", "detail"] as const
 
 interface Goal { id: string; title: string; description?: string; progress?: number }
 interface ApiGoal { id: string; name: string; description?: string; currentValue?: number; targetValue?: number }
@@ -47,14 +54,18 @@ export default function GoalsPlanPage() {
 
   // Server-first; if the API declines (e.g. signed-out preview) the change is
   // kept locally so the control still does real, visible work.
-  const createGoal = async () => {
-    if (!form.title.trim()) return
-    let created: Goal = { id: `local-${goals.length + 1}`, title: form.title.trim(), description: form.description, progress: 0 }
+  /* `override` exists for the phone form (064), which submits the name it holds
+     in its own state: calling setForm() then createGoal() in the same tick would
+     have read the PREVIOUS form value and created an empty goal. */
+  const createGoal = async (override?: { title: string; description: string }) => {
+    const src = override ?? form
+    if (!src.title.trim()) return
+    let created: Goal = { id: `local-${goals.length + 1}`, title: src.title.trim(), description: src.description, progress: 0 }
     try {
       const res = await csrfFetch("/api/goals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.title.trim(), description: form.description, targetValue: 100, currentValue: 0, unit: "%" }),
+        body: JSON.stringify({ name: src.title.trim(), description: src.description, targetValue: 100, currentValue: 0, unit: "%" }),
       })
       if (res.ok) {
         const d = await res.json()
@@ -89,38 +100,70 @@ export default function GoalsPlanPage() {
   const completeGoal = () => patchPrimary(
     { completedAt: new Date().toISOString(), currentValue: 100 }, { ...primary, progress: 1 }, "Goal marked complete")
 
+  const isPhone = usePhoneViewport()
+  const [phoneStep, goPhone] = usePhoneStep(PHONE_GOAL_STEPS, "list")
+  if (isPhone) {
+    return (
+      <div className="md:hidden">
+        {phoneStep === "list" && (
+          <GoalsList onCreate={() => goPhone("create")} onOpen={() => goPhone("detail")} />
+        )}
+        {phoneStep === "create" && (
+          <CreateGoal onCancel={() => goPhone("list")}
+                      onCreate={(name) => {
+                        void createGoal({ title: name, description: "" })
+                        goPhone("list")
+                      }} />
+        )}
+        {phoneStep === "detail" && (
+          <GoalDetail onBack={() => goPhone("list")} onLog={logProgress} />
+        )}
+      </div>
+    )
+  }
+
   return (
     <ShotIQShell active="Progress">
-    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] py-[18px]">
+    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] pb-[10px] pt-[14px]">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="shotiq-display text-[44px] leading-[46px]">GOALS &amp; PLAN</h1>
+          <PageTitle size={52}>GOALS &amp; PLAN</PageTitle>
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">Stay focused. Track progress. Build better mechanics.</p>
         </div>
         <div className="flex items-center gap-[12px]">
           {notice && <span className="text-[12px] font-medium text-[var(--shotiq-color-confirmGreen)]">{notice}</span>}
           <button type="button" onClick={() => { setForm({ title: "", description: "" }); setModal("create") }}
                   className="flex h-[48px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[22px] text-[14px] font-medium text-white">
-            <TrendLine points={[2, 4, 3, 5]} width={26} height={16} stroke="#fff" dotFill="#fff" /> Create goal
+            <ActionGlyph kind="nodeClimb" height={22} /> Create goal
           </button>
           <button type="button" onClick={logProgress}
                   className="flex h-[48px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
-            <TrendLine points={[2, 3, 4]} width={26} height={16} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" /> Log progress
+            <ActionGlyph kind="nodeGraph" height={20} /> Log progress
           </button>
         </div>
       </div>
 
-      <div className="mt-[8px] grid grid-cols-3 gap-[16px]">
+      {/* Canonical does not run three equal thirds here: the primary-goal card
+          is the widest of the three (417 / 404 / 383). Equal thirds broke the
+          goal title onto two lines and "VS LAST SESSION" onto two. */}
+      <div className="mt-[8px] grid grid-cols-[1.12fr_0.97fr_0.91fr] gap-[16px]">
         {/* primary goal */}
-        <Card className="p-[16px]">
-          <div className="text-[11px] font-bold tracking-[0.06em] text-[var(--shotiq-color-confirmGreen)]">PRIMARY GOAL</div>
+        <Card className="flex flex-col p-[16px]">
+          {/* The role owns `color`, and it is declared after the utility layer, so a
+              `text-[…]` class loses the cascade to it — canonical draws this one
+              eyebrow green (2,75,4), so the colour has to come in as a style. */}
+          <div className="shotiq-section-label" style={{ color: "var(--shotiq-color-confirmGreen)" }}>PRIMARY GOAL</div>
           <h2 className="mt-[6px] text-[22px] font-semibold leading-[28px]">{primary.title}</h2>
-          <div className="mt-[8px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
+          {/* Canonical spends this card's height on its own blocks — 27px
+              between the title and the ACTIVE row, 27 to the description, 25 to
+              the bar. The tight 8/10/8 rhythm finished the content 109px early
+              and dumped the difference into one dead gap above the button. */}
+          <div className="mt-[18px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
             <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE</span>
             Started May 10, 2025 · Target date Jun 10, 2025 <Pencil className="h-[12px] w-[12px]" />
           </div>
-          <p className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
-          <div className="mt-[8px] flex items-center gap-[10px]">
+          <p className="mt-[20px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
+          <div className="mt-[16px] flex items-center gap-[10px]">
             <div className="h-[7px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: `${pct}%` }} />
             </div>
@@ -128,8 +171,10 @@ export default function GoalsPlanPage() {
           </div>
           {/* Hairline-ruled and evenly distributed, as canonical sets it — the
               cells used to sit in a left-clustered gap row with no rules. */}
-          <StatStrip className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]"
-                     valueClass="text-[20px] leading-[22px]"
+          {/* pr keeps the trend cell off the card border — canonical leaves ~31px */}
+          <StatStrip className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pr-[16px] pt-[16px]"
+                     cellClass="text-center whitespace-nowrap"
+                     valueClass="text-[24px] leading-[26px]"
                      cells={[
                        { value: hasData ? shots ?? "—" : "0", label: "SHOTS" },
                        { value: hasData ? makes ?? "—" : "0", label: "MAKES" },
@@ -138,10 +183,14 @@ export default function GoalsPlanPage() {
                          accent: delta != null && delta < 0
                            ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)" },
                      ]} />
-          <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">PROGRESS TREND</SectionLabel>
+          {/* The card used to stack every block at the top and leave ~180px of
+              white above its floor; the two lower sections now take that slack
+              the way canonical spends it. */}
+          <div className="mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[16px]">
+          <SectionLabel>PROGRESS TREND</SectionLabel>
           <div className="flex items-center gap-[12px]">
-            <div>
-              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={50} />
+            <div className="min-w-0 flex-1">
+              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={268} height={116} />
               <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
                 {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
                 <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
@@ -149,26 +198,38 @@ export default function GoalsPlanPage() {
             </div>
             <div className="text-right">
               <div className={`text-[16px] font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</div>
-              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
+              <div className="whitespace-nowrap text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
             </div>
           </div>
-          <SectionLabel className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">KEY MECHANIC FOCUS</SectionLabel>
-          <div className="mt-[6px] flex items-center gap-[12px]">
+          </div>
+          {/* Canonical leaves ~50px between the trend's x-axis labels and this
+              heading and draws NO rule there; a full-width divider plus two
+              justify-center flex children spread the gap to ~136px. */}
+          <div className="mt-[42px]">
+          <SectionLabel>KEY MECHANIC FOCUS</SectionLabel>
+          <div className="mt-[10px] flex items-stretch gap-[12px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
-                 className="block h-[62px] w-auto max-w-none shrink-0" />
-            <div className="flex-1">
+                 className="block h-[98px] w-auto max-w-none shrink-0 self-center" />
+            <div className="flex-1 self-center">
               <div className="text-[14px] font-semibold">Elbow vertical at release</div>
               <p className="text-[11px] text-[var(--shotiq-color-graphite)]">Maintain a stacked arm position to improve consistency and accuracy.</p>
             </div>
-            <div className="text-right">
-              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">IMPACT</div>
-              <div className="text-[13px] font-bold text-[var(--shotiq-color-confirmGreen)]">High</div>
-              <div className="mt-[3px] text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">CONFIDENCE</div>
-              <div className="shotiq-numeric text-[13px]">7/10</div>
+            {/* Canonical rules this pair off with a hairline at x=490 and
+                centres the four lines in the column on a 21 / 32 / 21 rhythm;
+                the app ran them right-aligned against the card border on a
+                14 / 22 / 14 stack — 35% denser and with no divider at all.
+                "7/10" is a display value there (cap 12–14, near-black), not the
+                caption-sized numeral this used to set. */}
+            <div className="flex w-[86px] shrink-0 flex-col justify-center border-l border-[var(--shotiq-color-rule)] pl-[14px] text-center">
+              <div className="text-[9px] leading-[10px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">IMPACT</div>
+              <div className="mt-[10px] text-[15px] font-bold leading-[17px] text-[var(--shotiq-color-confirmGreen)]">High</div>
+              <div className="mt-[15px] text-[9px] leading-[10px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">CONFIDENCE</div>
+              <div className="mt-[8px] shotiq-numeric text-[17px] leading-[19px] text-[var(--shotiq-color-ink)]">7/10</div>
             </div>
           </div>
-          <div className="mt-[8px] flex gap-[10px]">
+          </div>
+          <div className="mt-auto flex gap-[10px] pt-[10px]">
             <button type="button"
                     onClick={() => { setForm({ title: primary.title, description: primary.description ?? "" }); setModal("edit") }}
                     className="flex h-[42px] flex-1 items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">
@@ -178,7 +239,7 @@ export default function GoalsPlanPage() {
               <button type="button" aria-label="More" aria-expanded={menuOpen}
                       onClick={() => setMenuOpen((v) => !v)}
                       className="grid h-[42px] w-[46px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)]">
-                <MoreVertical className="h-[14px] w-[14px]" />
+                <MoreHorizontal className="h-[14px] w-[14px]" />
               </button>
               {menuOpen && (
                 <div className="absolute bottom-[48px] right-0 z-30 w-[190px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -207,7 +268,7 @@ export default function GoalsPlanPage() {
                       className="flex items-center gap-[12px] py-[9px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/images/canonical/092-thumb-${img}.png`} alt=""
-                       className="h-[93px] w-[104px] shrink-0 rounded-[4px] object-cover" width={104} height={93} />
+                       className="h-[95px] w-[148px] shrink-0 rounded-[4px] object-cover" width={148} height={95} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -225,7 +286,7 @@ export default function GoalsPlanPage() {
           <Card className="p-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>SCHEDULED WORKOUTS</SectionLabel>
-              <Link href="/results/demo/training" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View all</Link>
+              <Link href="/results/demo/training" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
               {([["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency", "release"],
@@ -237,10 +298,14 @@ export default function GoalsPlanPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
-                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                    {/* canonical breaks the meta after the focus, then dates it
+                        on its own line; one concatenated string wrapped
+                        mid-phrase */}
+                    <div className="text-[10px] leading-[14px] text-[var(--shotiq-color-graphite)]">{d.split(" · ").slice(0, 2).join(" · ")}</div>
+                    <div className="text-[10px] leading-[14px] text-[var(--shotiq-color-graphite)]">{d.split(" · ").slice(2).join(" · ")}</div>
                   </div>
-                  <div className="w-[90px] shrink-0 text-right">
-                    <div className="text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
+                  <div className="w-[84px] shrink-0">
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Focus</div>
                     <div className="text-[10px] leading-[13px]">{f}</div>
                   </div>
                   <button type="button" aria-label={`Options for ${t}`}
@@ -273,17 +338,26 @@ export default function GoalsPlanPage() {
           <Card className="p-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>MILESTONES</SectionLabel>
-              <Link href="/points" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View all</Link>
+              <Link href="/points" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</Link>
             </div>
-            <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-              {[["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done"],
-                ["3 Sessions Logged", "Achieved May 11, 2025", "3/3", "done"],
-                ["75+ Form Score Average", "In progress", hasData ? "78" : "—", "active"],
-                ["10 Consecutive Sessions", "0 / 10", "0/10", "open"],
-                ["65% Make Percentage", "In progress", "62.5%", "open"]].map(([t, d, v, st]) => (
-                <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
-                  <span className={`grid h-[24px] w-[24px] place-items-center rounded-full ${st === "done" ? "bg-[var(--shotiq-color-confirmGreen)] text-white" : st === "active" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-2 border-[var(--shotiq-color-rule)]"}`}>
-                    {st === "done" && <Check className="h-[13px] w-[13px]" />}
+            {/* Canonical threads a single vertical timeline stem between the
+                check circles and draws no horizontal rule at all; this used to
+                be a plain divided list, which read as a table rather than a
+                progression. The stem runs first-circle centre to last. */}
+            <div className="relative mt-[6px]">
+              <span aria-hidden="true"
+                    className="absolute bottom-[33px] left-[13px] top-[33px] w-[1px] bg-[var(--shotiq-color-rule)]" />
+              {[["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done", "+8.1%"],
+                ["3 Sessions Logged", "Achieved May 11, 2025", "3/3", "done", ""],
+                ["75+ Form Score Average", "In progress", hasData ? "78" : "—", "active", ""],
+                ["10 Consecutive Sessions", "0 / 10", "0/10", "open", ""],
+                ["65% Make Percentage", "In progress", "62.5%", "open", ""]].map(([t, d, v, st, sub]) => (
+                <div key={String(t)} className="relative flex h-[66px] items-center gap-[12px]">
+                  {/* the stem runs behind these, so each mark carries its own
+                      opaque fill — one shared bg-paper utility here loses the
+                      cascade to the green fill and blanks the done marks */}
+                  <span className={`z-10 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full ${st === "done" ? "bg-[var(--shotiq-color-confirmGreen)] text-white" : st === "active" ? "border-2 border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-paper)]" : "border-2 border-[var(--shotiq-color-graphite)] bg-[var(--shotiq-color-paper)]"}`}>
+                    {st === "done" && <Check className="h-[14px] w-[14px]" strokeWidth={3} />}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] font-semibold">{t}</div>
@@ -292,6 +366,8 @@ export default function GoalsPlanPage() {
                   <span className="w-[52px] shrink-0 text-right">
                     <span className={`shotiq-numeric block text-[18px] leading-[21px] tabular-nums ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
                     {st === "active" && <span className="block text-[9px] text-[var(--shotiq-color-graphite)]">Current</span>}
+                    {/* canonical carries the delta under the headline value */}
+                    {sub && <span className="block text-[11px] text-[var(--shotiq-color-confirmGreen)]">{sub}</span>}
                   </span>
                 </div>
               ))}
@@ -303,22 +379,22 @@ export default function GoalsPlanPage() {
               Define what you want to improve and we&apos;ll help track your progress.
             </p>
             <div className="mt-[10px] flex gap-[14px]">
-              <div className="grid h-[86px] w-[86px] shrink-0 place-items-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
+              <div className="grid h-[104px] w-[104px] shrink-0 place-items-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/092-create-goal.png" alt="" aria-hidden="true"
-                     className="block h-[52px] w-auto max-w-none" />
+                     className="block h-[62px] w-auto max-w-none" />
               </div>
-              <ul className="space-y-[8px] text-[12px]">
+              <ul className="space-y-[12px] text-[12px]">
                 {["Focus on the right mechanics", "Track progress with AI analysis", "Stay accountable and improve"].map((t) => (
                   <li key={t} className="flex items-center gap-[8px]">
-                    <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" /> {t}
+                    <CircleCheck className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" strokeWidth={1.6} /> {t}
                   </li>
                 ))}
               </ul>
             </div>
             <button type="button" onClick={() => { setForm({ title: "", description: "" }); setModal("create") }}
-                    className="mt-[12px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
-              <TrendLine points={[2, 4, 3, 5]} width={26} height={16} stroke="#fff" dotFill="#fff" /> Create goal
+                    className="mt-[16px] flex h-[52px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+              <ActionGlyph kind="nodeClimb" height={22} /> Create goal
             </button>
           </Card>
         </div>
@@ -347,7 +423,7 @@ export default function GoalsPlanPage() {
               <button type="button" onClick={() => setModal(null)}
                       className="h-[42px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">Cancel</button>
               <button type="button" disabled={!form.title.trim()}
-                      onClick={modal === "create" ? createGoal : editGoal}
+                      onClick={modal === "create" ? () => void createGoal() : editGoal}
                       className="h-[42px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[18px] text-[13px] font-medium text-white disabled:opacity-40">
                 {modal === "create" ? "Create goal" : "Save changes"}
               </button>

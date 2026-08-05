@@ -16,18 +16,22 @@ import React, { useCallback, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  Image as ImageIcon, Film, Upload, FolderUp, ChevronRight, HelpCircle,
-  ArrowLeft, Crosshair, ScanLine,
+  Image as ImageIcon, Upload, ChevronRight, HelpCircle, ArrowLeft,
 } from "lucide-react"
+import { ActionGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { enqueueVideoUpload, uploadQueueStorage } from "@/lib/upload/uploadQueue"
 import {
-  ShotIQShell, TrendLine, SectionLabel, Card, Stat,
+  ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
 import {
   useHistory, scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct,
 } from "@/components/shotiq/ResultsBits"
+import { NoAnalysisYet } from "@/components/shotiq/phone/NoAnalysisYet"
+import { AnalyzeHubPhone, UploadQueuePhone } from "@/components/shotiq/phone/AnalyzePhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 
 const ACCEPT = ".mp4,.mov,.hevc,.jpg,.jpeg,.png"
 const isVideo = (f: File) => /video|\.mp4$|\.mov$|\.hevc$/i.test(`${f.type} ${f.name}`)
@@ -50,7 +54,23 @@ const FILMING: [string, string, string][] = [
 
 export default function AnalyzeWorkspacePage() {
   const router = useRouter()
-  const { items, score, shots, makes } = useHistory()
+  const { items, score, shots, makes, loading: historyLoading } = useHistory()
+  // Read off location rather than useSearchParams so the route keeps its
+  // static prerender (useSearchParams forces a Suspense boundary).
+  const [forceEmpty, setForceEmpty] = useState(false)
+  React.useEffect(() => {
+    setForceEmpty(new URLSearchParams(window.location.search).get("state") === "empty")
+  }, [])
+  const emptyHistory = forceEmpty || (!historyLoading && items.length === 0)
+  /* Canonical iOS draws THREE screens on this route: 039 (empty history, below),
+     021 the analyze hub and 025 the upload queue. Round 6 served the reflowed
+     desktop workspace for the last two — a 2x2 tile grid in reverse order and,
+     for 025, the EMPTY upload state, which is why its orange fell 36.1 permille
+     to 1.6 and its green to zero. `?view=queue` is the queue, pushed by the
+     hub's own "Upload image" tile. The 1440pt desktop screen 081 never reads
+     the key. */
+  const isPhone = usePhoneViewport()
+  const [phoneView, setPhoneView] = usePhoneRoute("view")
   const trend = scoreSeries(items, 6)
   const delta = sessionDelta(items)
   const { uploadedFile, uploadedImageBase64 } = useAnalysisStore()
@@ -60,6 +80,7 @@ export default function AnalyzeWorkspacePage() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState("")
   const [analysisImage, setAnalysisImage] = useState<File | null>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
 
   const addFiles = useCallback((list: FileList | null) => {
     if (!list) return
@@ -78,7 +99,19 @@ export default function AnalyzeWorkspacePage() {
     n >= 1e9 ? `${(n / 1e9).toFixed(2)} GB` : n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : n >= 1e3 ? `${(n / 1e3).toFixed(0)} KB` : `${n} B`
 
   const analyzeSelected = async () => {
-    if (!files.length || busy) return
+    if (busy) return
+    // Canonical paints this button at full strength with an empty queue, and
+    // dimming it made the primary action read as broken — but leaving it
+    // `disabled` meant every click on the app's primary CTA was swallowed in
+    // silence (R10 defect M7). It stays live and says what it needs instead:
+    // the message, and the drop zone lit and scrolled into view.
+    if (!files.length) {
+      setNotice("Choose media first — drag a clip in, or use Choose media.")
+      setDragOver(true)
+      dropRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      setTimeout(() => setDragOver(false), 2200)
+      return
+    }
     setBusy(true)
     try {
       const sessionId = `analyze-${Date.now()}`
@@ -121,11 +154,50 @@ export default function AnalyzeWorkspacePage() {
   }
 
   return (
+    <>
+    {/* ---------------------------- 039 no-analysis-yet (iOS) --------------
+        Canonical iOS 039 is this hub with an empty analysis history. It is a
+        STATE of this route, not a page of its own: it paints whenever
+        /api/analysis-history comes back with nothing, which is what a
+        just-onboarded account sees. `?state=empty` selects the same branch
+        so the state stays reachable on a seeded account that already has
+        history (the grading account always does). Phone layout only — the
+        1440pt desktop screen 081 is untouched. */}
+    {emptyHistory && (
+      <div className="md:hidden"><NoAnalysisYet /></div>
+    )}
+    {isPhone && !emptyHistory && (
+      phoneView === "queue" ? (
+        <UploadQueuePhone
+          score={score ?? 82}
+          shots={shots != null ? String(shots) : "24"}
+          makes={makes != null ? String(makes) : "15"}
+          pct={formatMakePct(shots, makes)}
+          onAdd={() => { if (inputRef.current) { inputRef.current.accept = ACCEPT; inputRef.current.click() } }}
+          onAnalyze={() => router.push("/video-analysis")}
+          onRemoveCompleted={() => setFiles([])}
+          onBack={() => setPhoneView(null)}
+        />
+      ) : (
+        <AnalyzeHubPhone
+          shots={shots != null ? String(shots) : "24"}
+          makes={makes != null ? String(makes) : "15"}
+          pct={formatMakePct(shots, makes)}
+          delta={formatDelta(delta)}
+          onTile={(kind) => {
+            if (kind === "live") router.push("/video-analysis")
+            else if (kind === "video") router.push("/video-analysis/upload")
+            else setPhoneView("queue")
+          }}
+        />
+      )
+    )}
+    <div className={emptyHistory ? "hidden md:block" : (isPhone ? "hidden" : undefined)}>
     <ShotIQShell active="Analyze">
       <div data-testid="screen-desktop-web-analyze-workspace" className="flex min-h-full flex-col px-[28px] pt-[16px]">
         <div className="flex">
           <div className="min-w-0 flex-1 pr-[26px]">
-            <h1 className="shotiq-display text-[50px] leading-[52px]">UPLOAD &amp; ANALYZE</h1>
+            <PageTitle size={58}>UPLOAD &amp; ANALYZE</PageTitle>
             <p className="mt-[6px] text-[14px] text-[var(--shotiq-color-graphite)]">
               Add your footage to get AI-powered shooting analysis.
             </p>
@@ -135,29 +207,34 @@ export default function AnalyzeWorkspacePage() {
               <button type="button" data-testid="choose-media"
                       onClick={() => { if (inputRef.current) { inputRef.current.accept = ACCEPT; inputRef.current.click() } }}
                       className="flex h-[116px] flex-col items-center justify-center gap-[10px] rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]">
-                <FolderUp className="h-[34px] w-[34px]" strokeWidth={1.4} />
+                {/* Canonical's mark here is a document with an up arrow, not a
+                    folder; the tile marks also run ~40px, not 28-34px. */}
+                <ActionGlyph kind="chooseMedia" height={42} />
                 <span className="text-[14px] font-medium">Choose media</span>
               </button>
-              {[["Upload image", ImageIcon, () => {
+              {([["Upload image", null, 34, () => {
                   if (inputRef.current) { inputRef.current.accept = "image/*"; inputRef.current.click() }
                 }],
-                ["Upload video", Film, () => {
+                ["Upload video", "uploadVideo", 26, () => {
                   if (inputRef.current) { inputRef.current.accept = "video/*"; inputRef.current.click() }
                 }],
-                ["Live camera", ScanLine, () => router.push("/video-analysis")]].map(([t, I, fn]) => {
-                const Icon = I as typeof ImageIcon
-                return (
-                  <button key={String(t)} type="button" onClick={fn as () => void}
-                          className="flex h-[116px] flex-col items-center justify-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
-                    <Icon className="h-[32px] w-[32px]" strokeWidth={1.3} />
-                    <span className="text-[14px]">{String(t)}</span>
-                  </button>
-                )
-              })}
+                ["Live camera", "liveCamera", 28, () => router.push("/video-analysis")]] as
+                [string, ActionKind | null, number, () => void][]).map(([t, kind, h, fn]) => (
+                <button key={t} type="button" onClick={fn}
+                        className="flex h-[124px] flex-col items-center justify-center gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
+                  {/* Canonical draws the video tile as a film gate with a red
+                      centre marker and the camera tile as the node run, not a
+                      filmstrip grid and a focus bracket. */}
+                  {kind ? <ActionGlyph kind={kind} height={h} />
+                        : <ImageIcon className="h-[38px] w-[38px]" strokeWidth={1.3} />}
+                  <span className="text-[14px]">{t}</span>
+                </button>
+              ))}
             </div>
 
             {/* drop zone */}
             <div
+              ref={dropRef}
               data-testid="drop-zone"
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
@@ -202,19 +279,21 @@ export default function AnalyzeWorkspacePage() {
                 {/* The one shared form-score module (see FormScoreCell): the bar
                     used to stretch the whole cell instead of sitting under the
                     numeral. */}
-                <FormScoreCell score={score} size={44} className="flex-1 pr-[14px]" />
+                <FormScoreCell score={score} size={44} numeral={62} className="flex-1 pr-[14px]" />
                 <div className="flex-1 pl-[14px]">
                   <SectionLabel>PRIMARY TARGET</SectionLabel>
-                  <div className="mt-[4px] flex items-start justify-between">
+                  {/* The chevron is centred on the two-line title, as canonical
+                      sets it — `items-start` parked it inline with line 1. */}
+                  <div className="mt-[4px] flex items-center justify-between">
                     <p className="text-[14px] font-semibold leading-[19px]">Keep elbow stacked<br />through release</p>
-                    <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+                    <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
                   </div>
                   <span className="mt-[8px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
                   <div className="mt-[8px] flex items-center gap-[8px]">
                     <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                       <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
                     </div>
-                    <span className="text-[11px]">72%</span>
+                    <GoalPercent size={12}>72%</GoalPercent>
                   </div>
                 </div>
               </div>
@@ -223,9 +302,9 @@ export default function AnalyzeWorkspacePage() {
                 {/* Hairline-ruled and spread across the card, as canonical draws
                     it; the trend plots the real score history. */}
                 <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
-                  <div className="flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
-                  <div className="flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
-                  <div className="flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[24px] leading-[28px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[24px] leading-[28px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[24px] leading-[28px]" /></div>
                   <div className="shrink-0 pl-[12px] text-right">
                     <TrendLine points={trend} width={84} height={30} />
                     <div className={`text-[10px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
@@ -241,14 +320,17 @@ export default function AnalyzeWorkspacePage() {
         {/* Queue and checks are one bordered container split by an internal
             hairline — canonical never gutters these two apart. */}
         <div className="mt-[12px] flex gap-[16px]">
-          <Card className="flex w-[600px] shrink-0 divide-x divide-[var(--shotiq-color-rule)]">
-            <div className="w-[318px] shrink-0 px-[18px] py-[16px]">
+          <Card className="flex w-[660px] shrink-0 divide-x divide-[var(--shotiq-color-rule)]">
+            {/* Canonical gives the queue 375px so its empty state is a 342x186
+                box with ~58px of paper each side of the caption; at 318px the
+                box shrank to 281x135 and the caption ran to the dashes. */}
+            <div className="w-[376px] shrink-0 px-[18px] py-[16px]">
               <SectionLabel>UPLOAD QUEUE ({files.length})</SectionLabel>
               <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
                 Files you add will appear here. You can add more or start analysis.
               </p>
               {files.length === 0 ? (
-                <div className="mt-[14px] flex h-[150px] flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
+                <div className="mt-[14px] flex h-[182px] flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
                   <TrendLine points={[3, 1.6, 2.4, 4]} width={70} height={30}
                              stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
                   <div className="mt-[8px] text-[15px] font-semibold">No media added yet</div>
@@ -257,7 +339,7 @@ export default function AnalyzeWorkspacePage() {
                   </div>
                 </div>
               ) : (
-                <ul className="mt-[14px] max-h-[150px] divide-y divide-[var(--shotiq-color-rule)] overflow-auto" data-testid="upload-queue-list">
+                <ul className="mt-[14px] max-h-[182px] divide-y divide-[var(--shotiq-color-rule)] overflow-auto" data-testid="upload-queue-list">
                   {files.map((f, i) => (
                     <li key={`${f.name}-${i}`} className="flex items-center justify-between py-[8px] text-[13px]">
                       <span className="truncate pr-[10px]">{f.name}</span>
@@ -273,7 +355,8 @@ export default function AnalyzeWorkspacePage() {
               <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">We&apos;ll run these checks before analysis.</p>
               <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
                 {CHECKS.map(([t, d, kind]) => (
-                  <li key={t} className="flex items-center gap-[12px] py-[8px]">
+                  // Canonical's row pitch here is 48px; the app was at 53 (+10%).
+                  <li key={t} className="flex items-center gap-[12px] py-[6px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/images/canonical/${kind}.png`} alt="" aria-hidden="true"
                          className="block h-[26px] w-[38px] max-w-none shrink-0 object-contain" />
@@ -326,13 +409,17 @@ export default function AnalyzeWorkspacePage() {
           </p>
           {/* Canonical paints this button at full strength with an empty queue —
               dimming it to 60% made the primary action read as broken. */}
-          <button type="button" onClick={analyzeSelected} disabled={!files.length || busy}
+          {/* No aria-disabled with an empty queue: the control is genuinely
+              live — it answers with what it needs. */}
+          <button type="button" onClick={analyzeSelected} disabled={busy}
                   data-testid="analyze-selected"
                   className="flex h-[54px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[30px] text-[15px] font-medium text-white disabled:cursor-not-allowed">
-            <Crosshair className="h-[17px] w-[17px]" /> {busy ? "Queueing…" : "Analyze selected"}
+            <ActionGlyph kind="nodeGraph" height={18} accent="#fff" /> {busy ? "Queueing…" : "Analyze selected"}
           </button>
         </div>
       </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }

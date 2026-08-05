@@ -81,8 +81,17 @@ struct EliteShooterDTO: Codable, Identifiable {
     var position: String
     var height: Int
     var weight: Int
+    // Every rate below is 0-100, matching /api/shooters. `careerPct` is the
+    // legacy name for 3PT%; the four that follow were added so 053 can show the
+    // canonical FG% / 3P% / FT% / eFG% / TS% row. FG%, eFG% and TS% are null for
+    // any shooter the server serves from the static catalog — they need
+    // box-score totals — and every display site renders those as an em dash.
     var careerPct: Double?
     var careerFreeThrowPct: Double
+    var careerFieldGoalPct: Double?
+    var careerThreePct: Double?
+    var careerEfgPct: Double?
+    var careerTsPct: Double?
     var approvedFormImages: [String]?
 }
 

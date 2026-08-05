@@ -19,10 +19,13 @@ import {
   ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Maximize,
   Share2, Download, Check,
 } from "lucide-react"
-import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { AnalysisOverview } from "@/components/shotiq/phone/results/AnalysisOverview"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -48,6 +51,7 @@ const MECHANICS = [
 
 export default function ResultsOverviewPage() {
   const router = useRouter()
+  const isPhone = usePhoneViewport()
   // Session-over-session delta and shot counts come from the shared history
   // hook, so this screen can never disagree with the dashboard.
   const { shots: liveShots, makes: liveMakes, delta, score: liveScore } = useHistory()
@@ -55,6 +59,11 @@ export default function ResultsOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(3) // canonical "3 OF 24"
   const [shared, setShared] = useState(false)
+  // The real transport: one clock behind the play button, the scrub head, the
+  // readout, the filmstrip selection and the phase strip.
+  const clip = useShotClip({ frames: 8 })
+  const stageRef = React.useRef<HTMLDivElement>(null)
+  const full = useFullscreen(stageRef)
 
   useEffect(() => {
     let cancelled = false
@@ -76,10 +85,26 @@ export default function ResultsOverviewPage() {
     catch { /* clipboard unavailable */ }
   }
   const doExport = () => { window.print() }
+  const score = liveScore
+  const shots = liveShots
+  const makes = liveMakes
 
+  /* Canonical iOS 038 is a different composition from the graded desktop 083 on
+     this same route, so the phone gets its own screen and the desktop tree is
+     left exactly as it was. */
   return (
+    <>
+    {isPhone && (
+      <AnalysisOverview
+        score={score ?? 82}
+        shots={shots != null ? String(shots) : "24"}
+        makes={makes != null ? String(makes) : "15"}
+        pct={formatMakePct(shots, makes)}
+      />
+    )}
+    <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Analyze">
-    <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[16px]">
+    <div data-testid="screen-results-overview" className="pl-[21px] pr-[18px] pt-[16px]">
       {/* header */}
       <div className="flex items-start">
         <button type="button" aria-label="Back" onClick={() => router.push("/dashboard")}
@@ -87,25 +112,26 @@ export default function ResultsOverviewPage() {
           <ArrowLeft className="h-[22px] w-[22px]" strokeWidth={2} />
         </button>
         <div className="mr-auto">
-          <h1 className="shotiq-display text-[46px] leading-[48px]">ANALYSIS OVERVIEW</h1>
+          <PageTitle size={58}>ANALYSIS OVERVIEW</PageTitle>
           <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
             May 12, 2025&ensp;·&ensp;8:24 AM&ensp;·&ensp;Catch &amp; Shoot&ensp;·&ensp;Right Hand
           </p>
         </div>
-        <div className="mt-[18px] flex items-center gap-[18px]">
+        <div className="mt-[18px] flex items-center gap-[16px]">
           {/* Share and Export used to live in this screen's own left rail. That
-              rail is gone (one menu sidebar app-wide), so the two actions moved
-              into the header action row — they are the only place either one is
-              reachable from. */}
+              rail is gone (one menu sidebar app-wide), and nothing else in the
+              app can share or export an analysis, so they stay here — but as
+              quiet text actions, so canonical's PREV / N OF M / NEXT remains the
+              only button group in the header. */}
           <button type="button" onClick={share} data-testid="overview-share"
-                  className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
+                  className="flex h-[34px] items-center gap-[7px] text-[12px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
             {shared
               ? <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" strokeWidth={2.2} />
               : <Share2 className="h-[13px] w-[13px]" strokeWidth={1.8} />}
             {shared ? "COPIED" : "SHARE"}
           </button>
           <button type="button" onClick={doExport} data-testid="overview-export"
-                  className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
+                  className="flex h-[34px] items-center gap-[7px] text-[12px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
             <Download className="h-[13px] w-[13px]" strokeWidth={1.8} />
             EXPORT
           </button>
@@ -142,47 +168,78 @@ export default function ResultsOverviewPage() {
         </Card>
       ) : (
       <>
-      <div className="mt-[14px] flex gap-[24px]">
+      <div className="mt-[14px] flex gap-[20px]">
         {/* media column */}
-        <div className="w-[573px] shrink-0">
+        <div className="w-[543px] shrink-0">
           <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-hero.png" alt="Analyzed shot frame with skeleton overlay"
-                 className="block w-[573px] rounded-[4px]" width={573} height={369} />
-            <button type="button" aria-label="Play"
+            {/* The playback surface. Paused on the release frame it is the
+                canonical still, pixel for pixel; under way it paints the frame
+                the playhead is on. */}
+            <div ref={stageRef} className="bg-[var(--shotiq-color-paper)]">
+              <ClipFrame still="/images/canonical/083-hero.png"
+                         stillAlt="Analyzed shot frame with skeleton overlay"
+                         stillFrame={4} strip="/images/canonical/083-filmstrip.png"
+                         frames={8} frame={clip.frame}
+                         className="block h-[350px] w-[543px] rounded-[4px] object-cover" />
+            </div>
+            <button type="button" aria-label={clip.playing ? "Pause" : "Play"}
+                    aria-pressed={clip.playing} onClick={clip.toggle} data-testid="clip-play"
                     className="absolute -bottom-[23px] left-[1px] grid h-[32px] w-[32px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white shadow-[0_2px_6px_rgba(17,17,17,0.12)]">
-              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 L10.5 6 L2.5 10.5 Z" fill="var(--shotiq-color-ink)" /></svg>
+              {clip.playing
+                ? <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 h3 v9 h-3 z M6.5 1.5 h3 v9 h-3 z" fill="var(--shotiq-color-ink)" /></svg>
+                : <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 L10.5 6 L2.5 10.5 Z" fill="var(--shotiq-color-ink)" /></svg>}
             </button>
           </div>
           {/* frame scrubber */}
           <div className="mt-[9px] flex items-center">
-            <div className="relative ml-[38px]">
+            {/* The strip is the scrub track: eight seek targets under the film,
+                with the head riding the actual playhead. The orange marker on
+                the fourth cell is part of canonical's own film crop. */}
+            <div className="relative ml-[36px] w-[399px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-[41px] w-[425px]" width={425} height={41} />
-              <span className="absolute -top-[9px] left-[59%] h-[15px] w-[15px] -translate-x-1/2 rounded-full border border-[var(--shotiq-color-rule)] bg-white shadow-[0_1px_3px_rgba(17,17,17,0.25)]" />
+              <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-[39px] w-[399px]" width={425} height={41} />
+              <div className="absolute inset-0 flex">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <button key={i} type="button" className="h-full flex-1" data-testid={`clip-seek-${i}`}
+                          aria-label={`Seek to frame ${i + 1} of 8`} aria-pressed={clip.frame === i}
+                          onClick={() => clip.seekFrame(i)} />
+                ))}
+              </div>
+              <span aria-hidden="true" data-testid="clip-head"
+                    className="pointer-events-none absolute -top-[9px] h-[15px] w-[15px] -translate-x-1/2 rounded-full border border-[var(--shotiq-color-rule)] bg-white shadow-[0_1px_3px_rgba(17,17,17,0.25)]"
+                    style={{ left: `${clip.pct * 100}%` }} />
             </div>
-            <span className="shotiq-numeric ml-[32px] text-[13px]">0:07 <span className="text-[var(--shotiq-color-graphite)]">/ 0:24</span></span>
-            <button type="button" aria-label="Fullscreen" className="ml-auto">
+            <span className="shotiq-numeric ml-[24px] text-[13px]" data-testid="clip-readout">
+              {clock(clip.time)} <span className="text-[var(--shotiq-color-graphite)]">/ {clock(clip.duration)}</span>
+            </span>
+            <button type="button" aria-label="Fullscreen" aria-pressed={full.isFull}
+                    onClick={full.toggle} data-testid="clip-fullscreen" className="ml-auto">
               <Maximize className="h-[16px] w-[16px]" strokeWidth={1.8} />
             </button>
           </div>
           {/* phase strip */}
           <div className="mt-[14px] flex items-start">
             {PHASES.map((p, i) => {
-              const active = p.label === "RELEASE"
+              const active = p.label === phaseAt(clip.time)
               return (
                 <React.Fragment key={p.label}>
+                  {/* Canonical's connector is a SOLID hairline with one dot on
+                      it; the half nearest RELEASE is orange. The dashed
+                      segments flanking the dot were ours, not canonical's. */}
                   {i > 0 && (
-                    <div className="mt-[15px] flex flex-1 items-center gap-[4px] px-[4px]">
-                      <span className={`h-px flex-1 border-t ${i === 3 || i === 4 ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-dashed border-[var(--shotiq-color-muted)]"}`} />
-                      <span className={`h-[8px] w-[8px] rounded-full ${i === 3 || i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
-                      <span className={`h-px flex-1 border-t ${i === 3 || i === 4 ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-dashed border-[var(--shotiq-color-muted)]"}`} />
+                    <div className="mt-[19px] flex flex-1 items-center px-[4px]">
+                      <span className={`h-px flex-1 ${i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
+                      <span className={`h-[9px] w-[9px] shrink-0 rounded-full ${i === 3 || i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
+                      <span className={`h-px flex-1 ${i === 3 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
                     </div>
                   )}
                   <div className="shrink-0 text-center" style={{ width: i === 4 ? 108 : 78 }}>
                     <PoseFigure phase={p.label} active={active} height={41} className="mx-auto" />
-                    <div className={`mt-[4px] whitespace-nowrap text-[10px] font-bold tracking-[0.04em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
-                    <div className="shotiq-numeric mt-[1px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
+                    {/* Canonical sets the label in the condensed display face at
+                        an 11px cap and the time range in the body face, grey —
+                        not the condensed numeric face at an 8px cap. */}
+                    <div className={`shotiq-display mt-[4px] whitespace-nowrap text-[15px] leading-[16px] tracking-[0.06em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
+                    <div className="mt-[2px] whitespace-nowrap text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
                   </div>
                 </React.Fragment>
               )
@@ -193,29 +250,35 @@ export default function ResultsOverviewPage() {
         {/* score + coaching card */}
         <Card className="flex min-w-0 flex-1 rounded-[8px]">
           {/* form score + mechanics */}
-          <div className="w-[290px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[17px] pt-[16px]">
+          <div className="flex w-[275px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] px-[14px] pb-[10px] pt-[16px]">
             <SectionLabel>FORM SCORE</SectionLabel>
-            <div className="mt-[4px] flex items-end gap-[6px]">
-              <span className="shotiq-numeric text-[60px] leading-[54px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
-              <span className="shotiq-numeric text-[19px] text-[var(--shotiq-color-muted)]">/100</span>
+            <div className="mt-[4px] flex items-baseline gap-[6px]">
+              <span className="shotiq-numeric text-[85px] leading-[77px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
+              {/* Canonical sets "/100" at cap 16 over a 30px advance and rests
+                  it on the same baseline as the 82; the default line box lifted
+                  it 12px clear of that baseline. */}
+              <span className="shotiq-numeric text-[24px] text-[var(--shotiq-color-muted)]">/100</span>
             </div>
-            <div className="mt-[10px] h-[9px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="mt-[10px] h-[9px] w-[70%] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
             </div>
             <div className="shotiq-display mt-[10px] text-[18px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
             <p className="mt-[2px] w-[110px] text-[13px] leading-[18px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
 
             <SectionLabel className="mt-[14px]">MECHANICS AT RELEASE</SectionLabel>
-            <div className="mt-[2px]">
+            {/* The list takes the column's spare height instead of stacking at
+                the top and leaving ~120px of void above the card floor, which
+                is how canonical spaces these four rows. */}
+            <div className="mt-[2px] flex flex-1 flex-col">
               {MECHANICS.map((m) => (
-                <div key={m.name} className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[5px] last:border-b-0">
+                <div key={m.name} className="flex flex-1 items-center py-[5px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={m.icon} alt="" className="h-[30px] w-[28px] object-contain" />
                   <span className="ml-[8px] w-[92px] text-[12px]">{m.name}</span>
-                  <span className="shotiq-numeric ml-auto text-[20px]">{m.value}</span>
+                  <span className="shotiq-numeric ml-auto text-[27px]">{m.value}</span>
                   <span className="ml-[12px] w-[62px] text-right">
-                    <span className="block text-[11px] font-bold leading-[13px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
-                    <span className="shotiq-numeric block text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
+                    <span className="block text-[14px] font-bold leading-[16px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
+                    <span className="shotiq-numeric block text-[13px] leading-[15px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
                   </span>
                 </div>
               ))}
@@ -227,10 +290,10 @@ export default function ResultsOverviewPage() {
           </div>
 
           {/* coaching target / key insight / elite match */}
-          <div className="min-w-0 flex-1 px-[17px] pt-[16px]">
+          <div className="min-w-0 flex-1 px-[14px] pt-[16px]">
             <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
             <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
-              <span className="whitespace-nowrap text-[18px] font-semibold">Keep elbow stacked through release</span>
+              <span className="whitespace-nowrap text-[17px] font-semibold">Keep elbow stacked through release</span>
               <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
             <span className="mt-[8px] inline-block rounded-[5px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
@@ -239,7 +302,7 @@ export default function ResultsOverviewPage() {
               <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
               </div>
-              <span className="shotiq-numeric text-[13px]">72%</span>
+              <GoalPercent size={17}>72%</GoalPercent>
             </div>
 
             <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
@@ -272,17 +335,21 @@ export default function ResultsOverviewPage() {
         </Card>
       </div>
 
-      {/* bottom strip */}
-      <div className="mt-[18px] mb-[14px] flex gap-[16px]">
-        <Card className="flex h-[145px] w-[509px] shrink-0 flex-col px-[18px] pt-[12px]">
+      {/* Bottom strip. Canonical draws ONE bordered card here, divided by two
+          internal hairlines (its rules land at 58 % and 79 % of the card); this
+          shipped as three detached cards. TOP FLAW takes a slightly larger
+          share than canonical's because its description otherwise runs to a
+          third line at the type size this app sets it in. */}
+      <Card className="mt-[18px] mb-[14px] flex h-[145px] divide-x divide-[var(--shotiq-color-rule)]">
+        <div className="flex w-[47%] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
             {([[String(liveShots ?? "—"), "SHOTS"], [String(liveMakes ?? "—"), "MAKES"],
                [formatMakePct(liveShots, liveMakes), "MAKE %"],
                [liveScore != null ? String(liveScore) : "—", "FORM SCORE"]] as const).map(([v, l], i) => (
-              <div key={l} className={`pr-[20px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[20px]" : ""}`}>
-                <div className="shotiq-numeric text-[27px] leading-[30px]">{v}</div>
-                <div className="mt-[4px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{l}</div>
+              <div key={l} className={`pr-[16px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[16px]" : ""}`}>
+                <div className="shotiq-numeric text-[30px] leading-[33px]">{v}</div>
+                <div className="mt-[4px] shotiq-microcaps text-[var(--shotiq-color-graphite)]">{l}</div>
                 {l === "FORM SCORE" && (
                   <div className="mt-[6px] flex items-center justify-center gap-[6px] text-[12px]">
                     <span className="h-[9px] w-[9px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /> Good
@@ -290,8 +357,11 @@ export default function ResultsOverviewPage() {
                 )}
               </div>
             ))}
-            <div className="ml-auto pt-[2px] text-center">
-              <div className="text-[10px] font-bold tracking-[0.07em]">TREND</div>
+            {/* Canonical hangs "vs last session" under the DELTA, right-
+                aligned; centring it under the sparkline regrouped the block and
+                opened a gap between FORM SCORE and TREND. */}
+            <div className="ml-auto pl-[8px] pt-[2px] text-right">
+              <div className="shotiq-microcaps text-left">TREND</div>
               <div className="flex items-end gap-[6px]">
                 <TrendLine points={[2.2, 2.0, 2.8, 2.4, 3.4]} width={104} height={40} stroke="var(--shotiq-color-ink)" />
                 <span className={`pb-[4px] text-[12px] font-medium ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</span>
@@ -299,27 +369,30 @@ export default function ResultsOverviewPage() {
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">vs last session</div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="h-[145px] min-w-0 flex-1 px-[16px] pt-[12px]">
+        <div className="min-w-0 flex-1 px-[9px] pt-[12px]">
           <SectionLabel>TOP FLAW</SectionLabel>
-          <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[10px]">
+          {/* Canonical gives this description ~186px and holds it to two
+              lines; the cell only clears that at canonical’s own 22.7% share
+              once the glyph and gutters come back to canonical’s 48px/8px. */}
+          <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[7px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[80px] w-[50px] object-contain" />
+            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[68px] w-[42px] object-contain" />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-[8px]">
                 <span className="whitespace-nowrap text-[13px] font-semibold">Elbow flare at release</span>
                 <span className="shrink-0 whitespace-nowrap rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] px-[6px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-shotiqOrange)]">HIGH IMPACT</span>
               </span>
-              <span className="mt-[6px] block text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              <span className="mt-[6px] block text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
                 Elbow moves outward slightly during release, reducing alignment.
               </span>
             </span>
             <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </Link>
-        </Card>
+        </div>
 
-        <Card className="h-[145px] w-[370px] shrink-0 px-[18px] pt-[12px]">
+        <div className="w-[30.6%] shrink-0 px-[18px] pt-[12px]">
           <SectionLabel>NEXT TRAINING</SectionLabel>
           <Link href="/results/demo/training" className="mt-[10px] flex items-center gap-[14px]">
             <span className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
@@ -335,11 +408,13 @@ export default function ResultsOverviewPage() {
             </span>
             <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </Link>
-        </Card>
-      </div>
+        </div>
+      </Card>
       </>
       )}
     </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }

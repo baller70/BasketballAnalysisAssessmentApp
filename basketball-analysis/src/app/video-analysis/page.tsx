@@ -13,10 +13,11 @@
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FormScoreCell, useHistory } from "@/components/shotiq/ResultsBits"
 import { PoseGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
+import { LiveCapture, isCaptureState, type CaptureState } from "@/components/shotiq/phone/LiveCapture"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
@@ -47,6 +48,16 @@ type CaptureReview = { url: string; seconds: number; shots: boolean[] }
 export default function LiveCapturePage() {
   // Form score comes from the shared history hook, like every other screen.
   const { score } = useHistory()
+  /* `?state=` deep-links one state of the phone capture flow. It selects the
+     SAME branch the flow's own buttons select, so the harness can reach any of
+     the nine canonical states without depending on a camera device. Read from
+     location rather than useSearchParams so the route needs no Suspense
+     boundary and the desktop render is unaffected. */
+  const [phoneState, setPhoneState] = useState<CaptureState>("setup")
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("state")
+    if (isCaptureState(s)) setPhoneState(s)
+  }, [])
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -179,10 +190,16 @@ export default function LiveCapturePage() {
     : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
-    <div data-testid="screen-desktop-web-live-capture" className="px-[26px] pb-[8px] pt-[12px]">
+    <>
+    {/* The phone serves the nine canonical live-capture states (iOS 014,
+        028-035) from one flow; the desktop tree below is canonical 082 and is
+        untouched. `LiveCapture` renders nothing above the tablet breakpoint —
+        it portals into <body>, so a `md:hidden` wrapper could not hold it. */}
+    <LiveCapture initial={phoneState} />
+    <div data-testid="screen-desktop-web-live-capture" className="hidden px-[16px] pb-[8px] pt-[12px] md:block">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="shotiq-display flex items-center gap-[14px] text-[46px] leading-[48px]">
+          <h1 className="shotiq-display flex items-center gap-[14px] text-[53px] leading-[55px]">
             LIVE CAPTURE
             {/* The status has to agree with the CTA beside it. This read
                 "● RECORDING" in the orange live colour even while the camera
@@ -234,7 +251,7 @@ export default function LiveCapturePage() {
         </div>
       </div>
 
-      <div className="mt-[10px] flex gap-[18px]">
+      <div className="mt-[10px] flex gap-[14px]">
         {/* live surface */}
         <div className="min-w-0 flex-1">
           {/* The idle poster carries the canonical FPS badge and session timer
@@ -322,15 +339,21 @@ export default function LiveCapturePage() {
               </div>
             </Card>
           )}
-          <div className="mt-[14px] flex items-center justify-around rounded-full border border-[var(--shotiq-color-rule)] py-[8px]">
-            {PHASES.map((p) => (
-              <div key={p} className="text-center">
-                <PoseFigure phase={p} active={p === "RELEASE"} height={38} className="mx-auto" />
-                <div className={`text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
-                  {p}
-                  {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+          {/* Canonical's phase track is a 44px pill with the figures riding up
+              over its top edge and hairline connectors running between them —
+              boxing the whole figure inside made the pill 73px tall. */}
+          <div className="mt-[30px] flex h-[44px] items-center rounded-full border border-[var(--shotiq-color-rule)] px-[18px]">
+            {PHASES.map((p, i) => (
+              <React.Fragment key={p}>
+                {i > 0 && <span className="mt-[6px] h-px min-w-[16px] flex-1 bg-[var(--shotiq-color-rule)]" />}
+                <div className="shrink-0 px-[10px] text-center">
+                  <PoseFigure phase={p} active={p === "RELEASE"} height={36} className="mx-auto -mt-[17px]" />
+                  <div className={`mt-[1px] text-[10px] tracking-[0.03em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                    {p}
+                    {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+                  </div>
                 </div>
-              </div>
+              </React.Fragment>
             ))}
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -338,12 +361,18 @@ export default function LiveCapturePage() {
         </div>
 
         {/* right rail */}
-        <div className="w-[462px] shrink-0 space-y-[14px]">
-          <Card className="p-[18px]">
+        {/* Trimmed vertical padding: the rail used to run ~100px past the foot of
+            the capture column, and that overhang was the white band above SHOT
+            RAIL. Canonical leaves ~30px there. */}
+        <div className="w-[448px] shrink-0 space-y-[8px]">
+          <Card className="px-[18px] py-[13px]">
             <div className="flex items-center justify-between">
               <SectionLabel>CAPTURE READINESS</SectionLabel>
               <span className="shotiq-display text-[14px] text-[var(--shotiq-color-confirmGreen)]" title={live ? "Live checks passing" : "Preview — start the camera to run live checks"}>GOOD</span>
             </div>
+            {/* Canonical rules the four cells off from one another — vertical
+                hairlines at x=1045, 1161 and 1271 running the height of the
+                cell (verified by column scan, 87–92% coverage). */}
             <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
               {READINESS.map(([r, glyph]) => (
                 <div key={r} className="flex-1 px-[4px] text-center">
@@ -359,12 +388,12 @@ export default function LiveCapturePage() {
             </div>
             <p className="mt-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">Keep going. Great capture quality.</p>
           </Card>
-          <Card className="p-[18px]">
-            <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[10px]">
+          <Card className="px-[18px] py-[13px]">
+            <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px]">
               <SectionLabel>SESSION STATS</SectionLabel>
               <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
             </div>
-            <div className="mt-[12px] flex items-center">
+            <div className="mt-[9px] flex items-center">
               <Stat value={String(statShots)} label="SHOTS" valueClass="text-[28px] leading-[32px]" />
               <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
               <Stat value={String(statMakes)} label="MAKES" valueClass="text-[28px] leading-[32px]" />
@@ -373,25 +402,30 @@ export default function LiveCapturePage() {
               {/* The one shared form-score module (see FormScoreCell): the
                   numeral was undersized and the verdict block squeezed into an
                   86px column beside it. */}
-              <FormScoreCell score={score} size={34}
+              <FormScoreCell score={score} size={34} numeral={52}
                              className="ml-auto shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[16px]" />
             </div>
-            <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
               <div className="mt-[2px] flex items-center justify-between">
                 <span className="text-[17px] font-semibold">Keep elbow stacked through release</span>
                 <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
               </div>
-              <div className="mt-[8px] text-[10px] font-bold tracking-[0.06em]">TARGET PROGRESS</div>
+              <div className="mt-[8px] shotiq-microcaps">TARGET PROGRESS</div>
+              {/* The bar tracks THIS session against its shot target — 24 of 25
+                  logged — while 72% beside it is the standing goal figure. It
+                  was drawing the goal figure twice, which left the track 74%
+                  full against canonical's near-complete bar. */}
               <div className="mt-[4px] flex items-center gap-[10px]">
                 <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-                <span className="shotiq-numeric text-[12px]">72%</span>
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: `${Math.min(100, Math.round((statShots / 25) * 100))}%` }} /></div>
+                <GoalPercent size={12}>72%</GoalPercent>
               </div>
               <p className="mt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">Improving release consistency and arm alignment.</p>
             </div>
           </Card>
-          <Card className="p-[18px]">
+          <Card className="px-[18px] py-[13px]">
             <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px]">
               <SectionLabel>LIVE COACHING CUE</SectionLabel><span className="shotiq-numeric text-[12px]">1 / 1</span>
             </div>
@@ -416,15 +450,18 @@ export default function LiveCapturePage() {
       <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <div className="flex items-center">
           <span className="shotiq-display text-[19px]">SHOT RAIL</span>
-          <span className="ml-auto mr-[430px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+          <span className="shotiq-microcaps ml-auto mr-[430px] text-[var(--shotiq-color-graphite)]">
             {statShots} SHOTS
           </span>
         </div>
         <div className="mt-[8px] flex items-start">
-          <div className="flex flex-1 items-start gap-[14px] overflow-x-auto pr-[20px]">
+          {/* Canonical spreads the 24 markers across the whole band and sets the
+              numerals in the body face — the condensed numeric cut at 11px read
+              as ~9px of bold, half canonical's advance width. */}
+          <div className="flex flex-1 items-start justify-between pr-[6px]">
             {railStates.map((state, i) => (
               <div key={i} className="w-[18px] text-center">
-                <div className={`shotiq-numeric text-[11px] ${state === "live" ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>{i + 1}</div>
+                <div className={`text-[12px] leading-[14px] ${state === "live" ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>{i + 1}</div>
                 {state === "make" && (
                   <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
                 )}
@@ -440,7 +477,12 @@ export default function LiveCapturePage() {
               </div>
             ))}
           </div>
-          <div className="flex shrink-0 items-center gap-[16px] pt-[8px]">
+          {/* Canonical spaces the 24 markers at a 40px pitch; the app was at
+              34.4 because the legend and the review button were taking 42px
+              more of the band than canonical gives them. The rail also starts
+              at x=222 here against canonical's full bleed from x=0, so the
+              remaining shortfall is the 196px rail, not the spacing. */}
+          <div className="flex shrink-0 items-center gap-[12px] pt-[8px]">
             <button type="button" onClick={() => mark(true)} data-testid="rail-make"
                     className="flex items-center gap-[6px] text-[11px] font-bold tracking-[0.05em]">
               <span className="grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span> MAKE
@@ -453,7 +495,7 @@ export default function LiveCapturePage() {
               <span className="grid h-[15px] w-[15px] place-items-center rounded-full border-2 border-[var(--shotiq-color-analysisBlue)]"><span className="h-[5px] w-[5px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></span> LIVE
             </span>
             <Link href="/results/demo/analysis"
-                  className="ml-[14px] flex h-[46px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
+                  className="ml-[10px] flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
               <Film className="h-[15px] w-[15px]" strokeWidth={1.6} /> Review last shot
             </Link>
           </div>
@@ -501,5 +543,6 @@ export default function LiveCapturePage() {
         </div>
       )}
     </div>
+    </>
   )
 }

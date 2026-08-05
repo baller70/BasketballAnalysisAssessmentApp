@@ -85,15 +85,15 @@ export default function SignUpPage() {
   return (
     <div
       data-testid="screen-desktop-web-create-account"
-      className="shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
+      className="shotiq-canonical shotiq-phone-flow mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
       style={{ minHeight: 900 }}
     >
-      <header className="flex h-[57px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[24px]"
+      <header className="flex h-[39px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[18px] pr-[18px] md:h-[57px] md:pl-[20px] md:pr-[24px]"
               data-testid="region-topbar">
-        <span className="shotiq-wordmark text-[26px] leading-none tracking-[0.02em]">
+        <span className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
-        <div className="flex items-center gap-[10px]">
+        <div className="hidden items-center gap-[10px] md:flex">
           <span className="grid h-[34px] w-[34px] place-items-center rounded-full bg-[var(--shotiq-color-rule)] text-[12px] font-bold text-[var(--shotiq-color-graphite)]">JE</span>
           <span className="text-[15px]">Jordan Ellis</span>
           <ChevronDown className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
@@ -105,7 +105,7 @@ export default function SignUpPage() {
             112px rail. See the same note on /signin. */}
         <UnifiedSidebar />
 
-        <section className="w-[430px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pb-[40px] pt-[48px]"
+        <section className="w-[430px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pb-[40px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]"
                  data-testid="region-main">
           <h1 className="shotiq-display text-[46px] leading-[50px]">CREATE ACCOUNT</h1>
           <p className="mt-[10px] text-[15px] leading-[21px] text-[var(--shotiq-color-graphite)]">
@@ -205,7 +205,7 @@ export default function SignUpPage() {
         </section>
 
         {/* marketing rail mirrors the sign-in screen */}
-        <section className="flex-1 px-[48px] pt-[58px]">
+        <section className="hidden flex-1 px-[48px] pt-[58px] md:block">
           <h2 className="shotiq-display text-[40px] leading-[44px]">
             SAVE EVERY REP.<br />SEE EVERY GAIN.
           </h2>

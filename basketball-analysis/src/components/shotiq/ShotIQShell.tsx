@@ -23,7 +23,8 @@ import {
   SlidersHorizontal, Rocket, type LucideIcon,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
-import { PoseGlyph } from "@/components/shotiq/Glyphs"
+import { PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { PhoneChrome } from "@/components/shotiq/ShotIQPhoneChrome"
 
 export type IconType = LucideIcon
 
@@ -102,12 +103,17 @@ export function ShotIQShell({
       className="shotiq-canonical relative mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
       style={{ minHeight: 900 }}
     >
+      {/* Canonical phone chrome — top bar + five-item bottom tab bar, below the
+          tablet breakpoint only. See ShotIQPhoneChrome.tsx for the measured
+          geometry. It is display:none above md, so desktop is byte-identical. */}
+      <PhoneChrome />
+
       {/* ---------------------------------------------------------- topbar */}
       <header
         data-testid="region-topbar"
-        className="flex h-[65px] shrink-0 items-center border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[18px]"
+        className="hidden h-[65px] shrink-0 items-center border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[18px] md:flex"
       >
-        <Link href="/dashboard" className="shotiq-wordmark mr-[64px] text-[26px] leading-none">
+        <Link href="/dashboard" className="shotiq-wordmark mr-[64px] text-[21px] leading-none">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </Link>
 
@@ -121,18 +127,21 @@ export function ShotIQShell({
           </button>
 
           <div className="flex h-[38px] items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] px-[20px]">
-            <Film className="h-[22px] w-[22px]" strokeWidth={1.5} />
+            <StreakGlyph size={44} />
             <div className="text-left">
-              <div className="shotiq-numeric text-[17px] leading-[18px]">{streak}</div>
-              <div className="text-[9px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+              {/* Canonical sets these at cap 18; 17px of the condensed face draws
+                  12-13. Ink density already matched at 0.388 against 0.389, so
+                  the weight was right and only the size was wrong. */}
+              <div className="shotiq-numeric text-[23px] leading-[24px]">{streak}</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
             </div>
           </div>
 
           <div className="flex h-[38px] items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] px-[20px]">
-            <TrendingUp className="h-[20px] w-[20px]" strokeWidth={1.6} />
+            <PointsGlyph size={25} />
             <div className="text-left">
-              <div className="shotiq-numeric text-[17px] leading-[18px]">{points}</div>
-              <div className="text-[9px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">POINTS</div>
+              <div className="shotiq-numeric text-[23px] leading-[24px]">{points}</div>
+              <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">POINTS</div>
             </div>
           </div>
 
@@ -177,7 +186,7 @@ export function ShotIQShell({
                     <button key={d.href + d.label} type="button" onClick={() => go(d.href)}
                             className="flex h-[34px] w-full items-center justify-between rounded-[6px] px-[10px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                       <span>{d.label}</span>
-                      <span className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{d.group}</span>
+                      <span className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{d.group}</span>
                     </button>
                   ))}
                 </div>
@@ -243,7 +252,11 @@ export function ShotIQShell({
         <UnifiedSidebar />
 
         {/* ---------------------------------------------------- screen body */}
-        <div data-testid="region-main" className="min-w-0 flex-1">
+        {/* `shotiq-phone-flow` is inert above the tablet breakpoint; below it,
+            it reflows the desktop column layouts to a single 393pt column
+            (globals.css). The bottom pad clears the fixed tab bar. */}
+        <div data-testid="region-main"
+             className="shotiq-phone-flow min-w-0 flex-1 pb-[61px] md:pb-0">
           {children}
         </div>
       </div>
@@ -353,10 +366,113 @@ export function PhaseGlyph({ active = false, size = 30 }: { active?: boolean; si
  * `letterSpacing` is deliberately not taken from the sidecars: the field reads
  * 0 on all 638 text elements, so it is not measured and carries no signal. The
  * existing 0.06em tracking stands.
+ *
+ * The colour is measured from the renders, not from the sidecar's token name.
+ * The sidecar calls these "graphite", but sampling each label at its own bounds
+ * shows a spread from near-black to graphite with a median of rgb(75,77,79) —
+ * and the token name is demonstrably unreliable here, since two of the sampled
+ * labels it calls graphite are actually orange and green in the render. Taking
+ * the name at face value made every eyebrow the lightest end of the spread.
  */
-export function SectionLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function SectionLabel({ children, className = "", style }: {
+  children: React.ReactNode; className?: string; style?: React.CSSProperties
+}) {
+  /* `style` exists so a single site can raise this label to the tier canonical
+     draws it at (`--shotiq-label-size` / `--shotiq-label-tracking`) without
+     moving the shared default. It is deliberately per site: a histogram of
+     every all-caps run across the twenty canonical screens against the build
+     found canonical carries 146 runs above cap 12 and the build carries 199, so
+     the role is NOT uniformly undersized and a global raise would overshoot on
+     more screens than it fixed. */
   return (
-    <div className={`text-[14px] font-medium tracking-[0.06em] text-[var(--shotiq-color-graphite)] ${className}`}>{children}</div>
+    <div className={`shotiq-section-label ${className}`} style={style}>{children}</div>
+  )
+}
+
+/**
+ * THE page-title role. Every canonical screen opens with one of these and each
+ * one used to spell the role out for itself (`shotiq-display text-[46px]
+ * leading-[48px]`), so the face, the weight and the size/leading relationship
+ * were re-decided twenty times over — and twenty of them had drifted small.
+ *
+ * `size` stays per screen because canonical's own titles are not one size: at
+ * 1:1 their cap heights run from 28px (088 ELITE SHOOTERS DATABASE) to 46px
+ * (080 DASHBOARD). What this component owns is everything else — the display
+ * face and the leading, which is always `size + 2`, the ratio the screens had
+ * already converged on.
+ *
+ * Sizes are set from measurement, never by eye: cap height in the shipped PNG
+ * against cap height in `canonical-desktop/<screen>.png` at 1:1. Our display
+ * face draws a cap at 0.705em, so `size = canonical cap / 0.705`.
+ */
+export function PageTitle({
+  size, phoneSize, children, className = "", ...rest
+}: { size: number; phoneSize?: number } & React.HTMLAttributes<HTMLHeadingElement>) {
+  // `phoneSize` exists because canonical does not draw one title at one size on
+  // both devices: /signin is cap 44 on desktop 077 and cap 119 on iOS 003, so a
+  // single number cannot serve both. The phone value is applied by a rule in
+  // globals.css's phone block, which carries `!important` for the single reason
+  // that this element's own size is an inline style - the only way a stylesheet
+  // can win. Without `phoneSize` nothing is emitted and the element is exactly
+  // as it was.
+  const vars = phoneSize
+    ? ({ ["--shotiq-pt-phone"]: `${phoneSize}px`,
+         ["--shotiq-pt-phone-lh"]: `${phoneSize + 2}px` } as React.CSSProperties)
+    : null
+  return (
+    <h1 {...rest} className={`shotiq-display ${phoneSize ? "shotiq-pt-phone " : ""}${className}`}
+        style={{ fontSize: size, lineHeight: `${size + 2}px`, ...vars, ...(rest.style ?? {}) }}>
+      {children}
+    </h1>
+  )
+}
+
+/**
+ * A title that canonical spells differently on phone and on desktop.
+ *
+ * These are not synonyms chosen for variety - both strings are read off the
+ * canonical renders, and they disagree:
+ *
+ *   route        iOS canonical            desktop canonical
+ *   /signin      003 "SIGN IN"            077 "WELCOME BACK"
+ *   /analyze     021 "ANALYZE YOUR SHOT"  081 "UPLOAD & ANALYZE"
+ *   /elite-      052 "ELITE SHOOTERS"     088 "ELITE SHOOTERS DATABASE"
+ *   /profile     070 "JORDAN ELLIS"       096 "PROFILE & ACCOUNT"
+ *
+ * So the phone copy cannot simply replace the desktop copy: doing that would
+ * regress the 20 graded desktop screens. Both are rendered and the breakpoint
+ * picks one, at the same 768px boundary the phone-flow layer uses. This is CSS
+ * only - no viewport hook, so nothing depends on hydration and the server
+ * markup is correct for both.
+ */
+export function ResponsiveTitle({ phone, web }: { phone: string; web: string }) {
+  return (
+    <>
+      <span className="md:hidden">{phone}</span>
+      <span className="hidden md:inline">{web}</span>
+    </>
+  )
+}
+
+/**
+ * The percent that closes a coaching-target progress bar ("72%").
+ *
+ * Nine screens drew this by hand and five of them set it in `shotiq-numeric` —
+ * a condensed semibold face — at 11-15px. At those sizes the mark measures
+ * 8-9px tall and ~1.5x as wide as it is tall, where canonical's measures 9-13px
+ * tall and ~2x as wide: same nominal font-size, half the presence. It reads as
+ * a smudge rather than a number.
+ *
+ * So this is the body face at a cap-matched size (canonical cap / 0.727), and
+ * the numeric face is deliberately absent. Colour is left to the caller: the
+ * canonical instances are not one colour (080 samples rgb(65,70,82), 083
+ * rgb(20,16,22)), so there is nothing to standardise on.
+ */
+export function GoalPercent({
+  children, size = 15, className = "",
+}: { children: React.ReactNode; size?: number; className?: string }) {
+  return (
+    <span className={`shrink-0 ${className}`} style={{ fontSize: size }}>{children}</span>
   )
 }
 
@@ -402,13 +518,16 @@ export function MediaSurface({
 }
 
 /** Inline stat block: numeric value over tracked caps label. */
-export function Stat({ value, label, valueClass = "text-[24px] leading-[28px]", accent }: {
+export function Stat({ value, label, valueClass = "text-[29px] leading-[32px]", accent }: {
   value: React.ReactNode; label: string; valueClass?: string; accent?: string
 }) {
   return (
     <div>
       <div className={`shotiq-numeric ${valueClass}`} style={accent ? { color: accent } : undefined}>{value}</div>
-      <div className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{label}</div>
+      {/* See `.shotiq-microcaps` in globals.css — this was 10px of the body face
+          at 0.07em, which measured cap 7 against canonical's 9 and advance 31
+          against 27, i.e. too small and too wide at the same time. */}
+      <div className="shotiq-microcaps mt-[2px] text-[var(--shotiq-color-graphite)]">{label}</div>
     </div>
   )
 }
@@ -442,7 +561,7 @@ export function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-s
  * 3px left indicator. Row and heading heights are sized so the full menu fits
  * the 900px canvas below the 65px topbar without scrolling.
  */
-const SIDEBAR_GROUPS: {
+export const SIDEBAR_GROUPS: {
   heading: string
   items: { label: string; href: string; icon: IconType }[]
 }[] = [
@@ -479,7 +598,7 @@ const SIDEBAR_GROUPS: {
   ]},
 ]
 
-const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
+export const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
   { label: "Profile", href: "/profile", icon: User },
   { label: "Onboarding", href: "/onboarding", icon: Rocket },
   { label: "Settings", href: "/settings", icon: Settings },
@@ -488,7 +607,7 @@ const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
 
 /** Legal pages are real routes but not tabs; they sit in a compact footer line
  *  so every destination is reachable without eating a full nav row. */
-const SIDEBAR_LEGAL: { label: string; href: string }[] = [
+export const SIDEBAR_LEGAL: { label: string; href: string }[] = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ]
@@ -523,11 +642,11 @@ export function UnifiedSidebar() {
 
   return (
     <nav data-testid="region-sidebar" aria-label="Primary"
-         className="flex w-[196px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[8px]">
+         className="hidden w-[196px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[8px] md:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {SIDEBAR_GROUPS.map((g) => (
           <div key={g.heading} className="mb-[4px]">
-            <div className="px-[20px] pb-[2px] text-[10px] font-bold leading-[14px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+            <div className="px-[20px] pb-[2px] shotiq-microcaps text-[var(--shotiq-color-graphite)]">
               {g.heading}
             </div>
             {g.items.map((it) => row(it, "h-[27px]"))}

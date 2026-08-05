@@ -9,15 +9,100 @@
  */
 
 import React from "react"
+import { useRouter } from "next/navigation"
 import { VideoUpload } from "@/components/upload/VideoUpload"
 import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import Link from "next/link"
 import { ArrowLeft, Video, User } from "lucide-react"
 import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { VideoReview, type ClipMeta } from "@/components/shotiq/phone/VideoReview"
+import { VideoUploadPhone } from "@/components/shotiq/phone/VideoUploadPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { ActionGlyph } from "@/components/shotiq/Glyphs"
+
+/** MB/KB, matching the way the rest of the upload flow prints sizes. */
+const fmtBytes = (n: number) =>
+  n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`
 
 export default function VideoAnalysisPage() {
+  const router = useRouter()
+  /* 027-video-review is the STATE this route enters once a clip is chosen: a
+     player picks a video, reviews and trims it, then sends it for analysis.
+     The phone flow owns its own picker because the desktop <VideoUpload/> lays
+     its dropzone out for the 1440pt canvas. Metadata is read off the chosen
+     file and, where the container cannot be probed in this environment,
+     falls back to the clip defaults the review screen documents. */
+  const isPhone = usePhoneViewport()
+  const [clip, setClip] = React.useState<ClipMeta | null>(null)
+  const fileRef = React.useRef<HTMLInputElement>(null)
+
+  const onPick = (f: File | undefined) => {
+    if (!f) return
+    setClip({
+      durationLabel: "00:06.00",
+      resolution: "1080 × 1920",
+      sizeLabel: fmtBytes(f.size),
+      fps: "60 FPS",
+    })
+  }
+
+  if (clip) {
+    return (
+      <>
+        <div className="md:hidden">
+          <VideoReview
+            clip={clip}
+            onChange={() => setClip(null)}
+            onAnalyze={() => router.push("/video-analysis/processing")}
+          />
+        </div>
+        <div className="hidden md:block">
+          <main className="mx-auto max-w-[1180px] px-[26px] py-[18px]">
+            <button type="button" onClick={() => setClip(null)}
+                    className="flex items-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)]">
+              <ArrowLeft className="h-4 w-4" /> Choose a different video
+            </button>
+            <h1 className="shotiq-display mt-[10px] text-[48px] leading-[50px]">VIDEO REVIEW</h1>
+            <Card className="mt-[16px] p-6">
+              <SectionLabel>CLIP</SectionLabel>
+              <p className="mt-[8px] text-[14px]">
+                {clip.resolution} · {clip.durationLabel} · {clip.sizeLabel} · {clip.fps}
+              </p>
+              <button type="button" onClick={() => router.push("/video-analysis/processing")}
+                      className="mt-[16px] flex h-[46px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
+                <ActionGlyph kind="analyze" height={20} accent="#fff" /> Analyze video
+              </button>
+            </Card>
+          </main>
+        </div>
+      </>
+    )
+  }
+
   return (
-      <main data-testid="screen-desktop-web-video-upload" className="mx-auto max-w-4xl px-[26px] py-[18px]">
+    <>
+      {/* Canonical iOS 026 is a whole screen, not one button. Round 6 painted
+          an orphan orange "Choose video" ABOVE the page's own back link, so the
+          element order inverted and the dropzone, the two action cards, the
+          FRAMING GUIDE photo pair, the profile summary and the phase rail never
+          existed. The desktop uploader below is untouched. */}
+      {isPhone && (
+        <VideoUploadPhone
+          onChoose={() => fileRef.current?.click()}
+          onRecord={() => router.push("/video-analysis")}
+        />
+      )}
+      <input ref={fileRef} type="file" accept="video/*,image/*" className="hidden"
+             data-testid="video-choose-input"
+             onChange={(e) => onPick(e.target.files?.[0])} />
+      {(
+      /* Two columns, not one 1683px scroll: the three profile controls the
+         analysis needs — Position (required), Skill Level and Body Type — used
+         to sit ~95px below the 900px fold, where a user has to scroll past the
+         whole uploader to find out they exist (R10 defect M8). They now open
+         beside the uploader, above the fold. */
+      <main data-testid="screen-desktop-web-video-upload"
+            className={`mx-auto max-w-[1180px] px-[26px] py-[18px] ${isPhone ? "hidden" : ""}`}>
         <Link href="/video-analysis"
               className="flex items-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-shotiqOrange)]">
           <ArrowLeft className="h-4 w-4" /> Back to live capture
@@ -29,8 +114,8 @@ export default function VideoAnalysisPage() {
           best results in portrait orientation.
         </p>
 
-        <Card className="mt-[18px] overflow-hidden">
-          <div className="border-b border-[var(--shotiq-color-rule)] p-6">
+        <div className="mt-[18px] grid gap-[16px] lg:grid-cols-[minmax(0,1fr)_460px]">
+          <Card className="overflow-hidden p-6">
             <div className="mb-1 flex items-center gap-3">
               <Video className="h-5 w-5 text-[var(--shotiq-color-shotiqOrange)]" />
               <SectionLabel>UPLOAD YOUR SHOOTING VIDEO</SectionLabel>
@@ -40,19 +125,19 @@ export default function VideoAnalysisPage() {
               3 key frames for analysis.
             </p>
             <VideoUpload />
-          </div>
+          </Card>
 
-          <div className="p-6">
+          <Card className="p-6">
             <div className="mb-1 flex items-center gap-3">
               <User className="h-5 w-5 text-[var(--shotiq-color-shotiqOrange)]" />
-              <SectionLabel>PLAYER PROFILE (OPTIONAL)</SectionLabel>
+              <SectionLabel>PLAYER PROFILE</SectionLabel>
             </div>
             <p className="mb-6 text-sm text-[var(--shotiq-color-graphite)]">
-              Fill out your information for personalized analysis and elite shooter matching.
+              Position drives the elite-shooter match; the rest sharpens the analysis.
             </p>
             <PlayerProfileForm />
-          </div>
-        </Card>
+          </Card>
+        </div>
 
         <Card className="mt-[18px] p-6">
           <SectionLabel>HOW VIDEO ANALYSIS WORKS</SectionLabel>
@@ -80,5 +165,7 @@ export default function VideoAnalysisPage() {
           </ul>
         </Card>
       </main>
+      )}
+    </>
   )
 }
