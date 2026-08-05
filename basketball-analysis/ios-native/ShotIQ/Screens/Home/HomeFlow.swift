@@ -52,7 +52,9 @@ struct HomeView: View {
             }
         }
         .task { await vm.load() }
-        .sheet(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
+        // fullScreenCover, not sheet — see the note on the same call in
+        // ShotIQComponents.TopBar.
+        .fullScreenCover(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
     }
 }
 
