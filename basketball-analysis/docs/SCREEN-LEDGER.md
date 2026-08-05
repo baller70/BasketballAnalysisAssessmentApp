@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | AWAITING GRADE | — | builder finished at `32d4353`; verified independently below; fresh grader running |
+| 003 | sign-in | GRADED **A**, one condition open | **A** | A+ withdrawn to A after its own falsification failed; A is conditional on the display face — see below |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -69,6 +69,52 @@ Consequences, which apply to every iOS screen and not just this one:
   diff that bottom-anchors or resizes will manufacture a whole-screen offset.
 - A grader reporting "the render is 5 px taller" has found the artboard, not a
   defect. Expect it on all 72.
+
+### The grade, and why it moved
+
+The fresh grader returned **A+** and attached a falsification to it: re-capture
+with `--font-render-hinting=slight`, and if the lowercase x-height does not move
+toward canonical and the headline's round-glyph overshoot does not collapse,
+"residual §6 needs an app-side explanation and this grade drops."
+
+**I ran it and it failed.** Whole-screen mean |d| went 3.7724 to 3.8553 — worse.
+The three lowercase bands moved 0 / 0 / away. All six headline segment tops were
+identical between `none` and `slight`.
+
+The grader then verified the negative was a true negative rather than an inert
+flag, which was the objection I could not rule out myself: hinting demonstrably
+fired, snapping caps to exact integers (R 19.16 to 19.98, D 19.17 to 20.00,
+L 19.16 to 20.00) and x-heights to exactly 15.00, with horizontal metrics
+unchanged to 0.02 px — vertical-only, as `slight` should be. Grid-fitting
+snapped x-height UP to 15.00 while canonical sits at 12.96-13.80. Snapping moves
+to the nearest grid line, under 1 px; canonical is 1.2-2.0 px away. **It was
+never reachable by that mechanism.**
+
+The accepted explanation is the builder's, and it is app-side: canonical's body
+face has an x-height 13.5% smaller relative to cap than Geist, the only
+body-weight face in the pack (canonical 16.02/16.03 device px against Geist's
+18.18/18.23 at matched extent). The grader independently re-derived it from
+pixels — canonical's x/cap is 0.695-0.706 across five runs against the render's
+0.772-0.783 — and independently confirmed the minimax: matching x-height needs
+scale 0.894, which takes cap error from -0.25 to -2.36 device px, a 10x
+degradation.
+
+Grade **A**, not A+: the residual is real and page-wide at ~1.5 device px
+(0.7 CSS px) on every lowercase run, so it is not at the rasteriser's floor. Not
+A-, because A- requires a parameter change that was found and not made, and the
+alternative was measured and is worse.
+
+**The A is CONDITIONAL and the condition is open.** The grader's §6: the DISPLAY
+face has deviations the Geist story does not explain — flat-cap 118.84 against
+116.99 (-1.6%) while round-glyph height matches to 0.03 px; N stems 16.08/15.84
+against 14.92/14.68 (-7.4%); word space 48.67 against 54.31 (+11.6%) while the
+total block width matches to 0.15 px. Its ruling: if a closer display face
+exists in the pack and was not tried, that is fixable and the grade drops to A-.
+
+**It was not tried.** The pack ships four Tungsten cuts — medium, semibold, bold,
+black — and the solve compared exactly two, Semibold (ink -2.0%) against Medium
+(+5.3%). Bold and Black were never measured, and a 7.4% thin stem is precisely
+what a heavier cut would move. Back with the builder for a four-way table.
 
 A method note worth keeping: the first pass of this verification used one
 permissive threshold and produced five false findings of 100+ px band
@@ -134,7 +180,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — seventeen, each learned by getting something wrong
+## Method rules — twenty, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -209,6 +255,22 @@ Also: **check the ASSET, not just the CSS** (002 drew an entirely different
 photograph at the right size and position), and **a large desktop-guard diff is
 often live data** — 1,495 of 1,508 differing pixels on one run were 079's date
 string rolling over at midnight.
+
+18. **`tsc --noEmit` is not the lint gate.** CI ran red for ten commits on two
+    unused constants in `phone-003.ts` that ESLint treats as errors and tsc does
+    not flag at all under this config. Every verification runs `npm run lint`
+    alongside tsc, and the CI conclusion gets checked after pushing rather than
+    assumed.
+19. **Ask a grader for a falsification, then actually run it.** 003's A+ came
+    with one, it failed, and the grade moved to A. A grade whose reasoning has
+    not been tested is an opinion. Equally: when the test comes back negative,
+    check the instrument fired before believing the negative — `slight` hinting
+    could have been inert at this scale, and the proof it was not is that caps
+    snapped to exact integers while horizontal metrics held to 0.02 px.
+20. **Try every cut in the family before calling a face residual unreachable.**
+    003's display solve compared two of four Tungsten cuts and declared the
+    better one final. A 7.4% thin stem is what an untried heavier cut would
+    move. "Alternatives measured worse" means ALL of them.
 
 ## Standing rulings
 
