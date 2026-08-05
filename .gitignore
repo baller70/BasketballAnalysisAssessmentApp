@@ -68,6 +68,12 @@ config/
 # The simulator screenshot + click-test harness is source-controlled — the
 # broker's simshots mode runs it from a fresh clone.
 !scripts/simulator-screenshots.sh
+# Its capture configuration has to travel with it. The broker clones fresh, so
+# an untracked config file would simply not exist on the runner and the capture
+# would silently fall back to the default text size — the one configuration in
+# which the Dynamic Type overflow is invisible. Deliberately NOT named *.env:
+# that pattern is for secrets, and this file must be readable in the clone.
+!scripts/simshots-config.sh
 !scripts/simshots-pick-device.py
 !scripts/simshots-export-attachments.py
 !scripts/imagegen/

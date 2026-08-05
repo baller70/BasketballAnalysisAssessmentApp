@@ -27,6 +27,20 @@ note() { printf '  %s\n' "$*"; }
 step() { printf '\n==> %s\n' "$*"; }
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Optional committed defaults, so a capture CONFIGURATION can be chosen in the
+# repo rather than only from the caller's environment.
+#
+# The broker's simshots lane invokes this script with a fixed command line and
+# sets only SIMSHOTS_OUTPUT_DIR / SIMSHOTS_LOG_DIR, so without this there is no
+# way to ask CI for a run at a different text size — which is exactly the run
+# that was missing while the app was unusable on a real phone. Entries here must
+# use `: "${VAR:=value}"` so anything the caller already set still wins; this
+# file supplies defaults, it does not override the lane.
+if [ -f "${repo_root}/scripts/simshots-config.sh" ]; then
+  # shellcheck disable=SC1091
+  . "${repo_root}/scripts/simshots-config.sh"
+fi
 project_dir="${repo_root}/basketball-analysis/ios-native"
 project="ShotIQ.xcodeproj"
 scheme="ShotIQ"
