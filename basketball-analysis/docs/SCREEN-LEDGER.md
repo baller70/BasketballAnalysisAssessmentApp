@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | RE-GRADING | — | all four A- defects closed and verified; palette scoped to phone, desktop baseline UNCHANGED and confirmed from two capture paths; fresh grader on the shipping capture 834c8b18 |
+| 003 | sign-in | GRADED **A-** (4th grader) | **A-** | footer runs ~6.5% undersized, hidden by scaleX compensation on a matched advance; back with the builder |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -315,7 +315,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — thirty-one, each learned by getting something wrong
+## Method rules — thirty-two, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -496,6 +496,21 @@ string rolling over at midnight.
     the baseline sat wrong until the builder's report contradicted mine. A
     baseline is only as good as the last measurement that confirmed it — update
     it after the guard passes, never in anticipation.
+
+32. **Matching a run's ADVANCE does not pin its SIZE — the two are degenerate.**
+    Every run on 003 was solved to canonical's advance width, which leaves a
+    whole family of (size, scaleX) pairs and lets the solver pick a wrong one
+    silently. It did: `acct1` landed at size 12.482 with scaleX 0.9171 where
+    `helpEmail` sits at 12.548 / 0.8149. Canonical's footer-to-helper size ratio
+    is 1.0679; ours was 0.9947 — the footer is ~6.5% undersized and scaleX
+    stretched it back onto the right advance. Nothing in an advance-based fit
+    can see this.
+    **Pin size from a within-image ratio between two runs, then let scaleX take
+    up the advance.** An o-height ratio between two runs of the SAME image is
+    exactly their font-size ratio, because the face cancels — which also makes
+    it immune to the adjudicated x-height residual. A size-invariant shape
+    check corroborates: `o`-width/`o`-height put canonical's five body runs in
+    a 5.2% band while ours had the footer 4-15% off its own ramp.
 
 ## Standing rulings
 
