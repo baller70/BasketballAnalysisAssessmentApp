@@ -2440,10 +2440,20 @@ struct EditProfileSheet: View {
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         MicroLabel(text: "EXPERIENCE LEVEL")
-                        HStack(spacing: 6) {
-                            choice("Beginner", "beginner", $level)
-                            choice("Intermediate", "intermediate", $level)
-                            choice("Advanced", "advanced", $level)
+                        // Content-sized inside a horizontal scroller. Sizing to
+                        // content is what stops the truncation; the scroller is
+                        // what stops that turning into the 020 failure, where
+                        // making a child take its intrinsic width pushed the
+                        // overflow onto its neighbour and then onto the whole
+                        // screen. Three chips fit a 393pt row, so this will not
+                        // scroll in practice — it simply cannot clip if a label
+                        // or a text size grows.
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                choice("Beginner", "beginner", $level, fill: false)
+                                choice("Intermediate", "intermediate", $level, fill: false)
+                                choice("Advanced", "advanced", $level, fill: false)
+                            }
                         }
                     }
                     if let errorText {
@@ -2483,11 +2493,21 @@ struct EditProfileSheet: View {
         .padding(.vertical, 4)
         .overlay(HRule(), alignment: .bottom)
     }
-    private func choice(_ label: String, _ value: String, _ sel: Binding<String>) -> some View {
+    /// `fill: true` splits the row equally — right for two short labels like
+    /// Right/Left. `fill: false` sizes the chip to its own label, for rows whose
+    /// options are long enough that an equal share truncates them: EXPERIENCE
+    /// LEVEL rendered "Interme..." and "Advanc..." because a third of the row
+    /// was not enough for "Intermediate", and `minimumScaleFactor` does not
+    /// save it — when the text still does not fit at the floor, SwiftUI
+    /// truncates rather than shrinking further.
+    private func choice(_ label: String, _ value: String, _ sel: Binding<String>,
+                        fill: Bool = true) -> some View {
         Button { sel.wrappedValue = value } label: {
             Text(label).shotiqBody(13, weight: sel.wrappedValue == value ? .semibold : .regular)
                 .lineLimit(1).minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity).frame(height: 42)
+                .frame(maxWidth: fill ? .infinity : nil)
+                .padding(.horizontal, fill ? 0 : 14)
+                .frame(height: 42)
                 .overlay(RoundedRectangle(cornerRadius: 6)
                     .stroke(sel.wrappedValue == value ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                 .foregroundStyle(sel.wrappedValue == value ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
