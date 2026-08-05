@@ -15,6 +15,60 @@ struct ShotIQApp: App {
                 .environmentObject(app)
                 .tint(ShotIQColor.shotiqOrange)
                 .preferredColorScheme(.light) // canonical white interface
+                // THE TYPE SCALE IS PART OF THE DESIGN, SO IT DOES NOT FLOAT.
+                //
+                // Every one of the ~176 type declarations in this app is
+                // `Font.custom(_:size:)`, and since iOS 14 that form SCALES WITH
+                // THE PHONE'S TEXT SIZE SETTING. Everything around the type —
+                // column widths, paddings, glyph sizes, the 853px canonical
+                // geometry — is fixed. So on a phone set above the default, the
+                // text grows and its containers do not: labels stop fitting,
+                // rows sum wider than the screen, and (per the note in
+                // CanonicalPhoto.swift) the whole screen ends up wider than the
+                // viewport and centred inside it, clipped off BOTH edges with
+                // the header wordmark and tab bar cut away.
+                //
+                // That is what Kevin was looking at, and no simulator capture
+                // could ever have shown it: the simulator runs at the default
+                // size, so all 74 screenshots came back clean while the app on
+                // a real phone was unusable. Same shape of blind spot as the
+                // seeded-vs-empty account (ledger rule 36).
+                //
+                // Clamping to `.large` — the system default — pins the scale the
+                // canonical screens were measured at. Smaller settings still
+                // apply (text below the design size cannot overflow a fixed
+                // frame); larger ones are capped.
+                //
+                // This is a LAYOUT FIX, NOT AN ACCESSIBILITY POSITION. A player
+                // who needs larger text is still not served, and making these 72
+                // pixel-specified screens genuinely reflow is a separate piece
+                // of work that has to be designed, not bolted on. Until then the
+                // app must at least be legible and whole rather than clipped.
+                // `-uiTestNoTypeClamp` lifts the clamp so the capture harness
+                // can shoot the unclamped arm and prove this is the cause.
+                .modifier(CanonicalTypeScale())
+        }
+    }
+}
+
+/// Pins the canonical type scale — see the long note at the call site.
+///
+/// A plain `.dynamicTypeSize(...)` cannot be made conditional inline (there is
+/// no optional-range overload), so the branch lives in a modifier. Both arms
+/// must exist for the falsification to be runnable: with the clamp the app
+/// holds its measured layout, without it the capture harness reproduces the
+/// overflow, and a run that shows no difference between the two arms would
+/// mean this diagnosis is wrong.
+struct CanonicalTypeScale: ViewModifier {
+    // Explicit @ViewBuilder: the two arms return different concrete types, and
+    // this repo has no Swift toolchain to catch it if the protocol requirement
+    // does not propagate the builder on the toolchain that actually compiles.
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if UITestHooks.noTypeClamp {
+            content
+        } else {
+            content.dynamicTypeSize(...DynamicTypeSize.large)
         }
     }
 }
@@ -51,6 +105,17 @@ enum UITestHooks {
     /// appeared" twice running. With this hook the splash waits for an event
     /// instead of a timer, so the walk is deterministic on any machine.
     static var holdSplash: Bool { args.contains("-uiTestHoldSplash") }
+
+    /// Lift the canonical Dynamic Type clamp, so a capture run can shoot the
+    /// app the way a phone set above the default text size draws it.
+    ///
+    /// This exists to make the clamp FALSIFIABLE rather than asserted. The
+    /// claim is that unclamped type is what pushed screens wider than the
+    /// viewport on Kevin's phone; the test of that claim is to boot the
+    /// simulator at an accessibility content size and capture both arms. If the
+    /// clamped and unclamped sets come back the same, the diagnosis is wrong
+    /// and the real cause is still out there.
+    static var noTypeClamp: Bool { args.contains("-uiTestNoTypeClamp") }
 
     /// `-uiTestHomeVariant new|standard|pro` forces one of the three canonical
     /// home states (017/018/019) instead of inferring it from history data.

@@ -6,6 +6,13 @@
 #   SIMSHOTS_DEVICE='iPhone 16 Pro' ./scripts/simulator-screenshots.sh
 #   SIMSHOTS_OUTPUT_DIR=/somewhere/artifacts/simshots ./scripts/simulator-screenshots.sh
 #
+#   # the configuration a real phone with larger text actually runs:
+#   SIMSHOTS_CONTENT_SIZE=accessibility-medium ./scripts/simulator-screenshots.sh
+#   # ... and the same walk with the app's type clamp lifted, to show what the
+#   # clamp is preventing:
+#   SIMSHOTS_CONTENT_SIZE=accessibility-medium SIMSHOTS_EXTRA_ARGS=-uiTestNoTypeClamp \
+#     ./scripts/simulator-screenshots.sh
+#
 # The walk itself is ShotIQ/UITests/CanonicalScreenshotTests.swift: it launches
 # the app with the test-only `-uiTestBypassAuth` flag, pushes into every screen
 # it can reach, attaches a screenshot per screen, and asserts that each control
@@ -223,6 +230,30 @@ xcrun simctl bootstatus "$udid" -b || die 'the simulator never finished booting'
 xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 \
   >/dev/null 2>&1 || true
 
+# THE TEXT SIZE IS PART OF THE ENVIRONMENT, AND LEAVING IT AT THE DEFAULT HID A
+# REAL BUG FOR AS LONG AS THIS SCRIPT HAS EXISTED.
+#
+# Every one of the app's ~176 type declarations is `Font.custom(_:size:)`, which
+# scales with the phone's Text Size setting, while the layout around it is fixed
+# canonical geometry. On a phone set above the default the text outgrows its
+# containers, rows sum wider than the screen, and the whole screen is drawn wider
+# than the viewport and centred — clipped off both edges, wordmark and tab bar
+# included. Kevin was looking at exactly that while all 74 screenshots from this
+# script came back clean, because a freshly created simulator always boots at the
+# default size. A capture that only ever samples the default configuration is not
+# evidence about the configurations users actually run.
+#
+# `SIMSHOTS_CONTENT_SIZE` sets the simulator's content size category for the run.
+# Values are simctl's: small … large (default) … extra-extra-extra-large, then
+# accessibility-medium … accessibility-extra-extra-extra-large.
+content_size="${SIMSHOTS_CONTENT_SIZE:-}"
+if [ -n "$content_size" ]; then
+  step "Setting the simulator content size to ${content_size}"
+  xcrun simctl ui "$udid" content_size "$content_size" \
+    || die "simctl ui content_size ${content_size} was rejected — check the spelling against 'xcrun simctl ui --help'"
+  note 'A run at a non-default content size measures the app as a real phone draws it.'
+fi
+
 # ---------------------------------------------------------------- the walk --
 
 destination="platform=iOS Simulator,id=${udid}"
@@ -259,6 +290,7 @@ xcodebuild test-without-building \
   -test-timeouts-enabled YES \
   -maximum-test-execution-time-allowance 420 \
   CODE_SIGNING_ALLOWED=NO \
+  TEST_RUNNER_SIMSHOTS_EXTRA_ARGS="${SIMSHOTS_EXTRA_ARGS:-}" \
   >"$test_log" 2>&1 &
 xcodebuild_pid=$!
 

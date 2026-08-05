@@ -48,10 +48,23 @@ final class CanonicalScreenshotTests: XCTestCase {
     private func launch(_ args: [String]) -> XCUIApplication {
         app?.terminate()
         let a = XCUIApplication()
-        a.launchArguments = args
+        a.launchArguments = args + Self.extraLaunchArguments
         a.launch()
         app = a
         return a
+    }
+
+    /// Extra launch arguments injected by the capture script, whitespace
+    /// separated, via `TEST_RUNNER_SIMSHOTS_EXTRA_ARGS` (xcodebuild strips the
+    /// `TEST_RUNNER_` prefix and puts the rest in the runner's environment).
+    ///
+    /// This exists so a capture run can shoot the SAME walk under a different
+    /// app configuration without a second test target — specifically, so the
+    /// Dynamic Type clamp can be lifted with `-uiTestNoTypeClamp` and the
+    /// overflow it prevents can be photographed rather than argued about.
+    private static var extraLaunchArguments: [String] {
+        (ProcessInfo.processInfo.environment["SIMSHOTS_EXTRA_ARGS"] ?? "")
+            .split(whereSeparator: \.isWhitespace).map(String.init)
     }
 
     private func slug(_ screenID: String) -> String {
