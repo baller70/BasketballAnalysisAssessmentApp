@@ -44,7 +44,37 @@ const PORT = process.env.PORT || 3181
 const APP = process.env.APP || '/home/user/BasketballAnalysisAssessmentApp/basketball-analysis'
 const SETTLE = Number(process.env.SETTLE || 2600)
 
-const map = JSON.parse(fs.readFileSync(S + '/ios-route-map.json', 'utf8'))
+/**
+ * THE ROUTE MAP IS READ FROM THIS SCRIPT'S OWN DIRECTORY — the committed file —
+ * never from `S`.
+ *
+ * It used to be `S + '/ios-route-map.json'`, and that silently invalidated
+ * every capture whose screen needed steps. `S` is the scratchpad: it does not
+ * survive a container restart, nothing keeps it in step with the repo, and a
+ * copy left there on one day drives the harness on the next. On 004 the
+ * scratchpad copy was six hours stale and carried **no steps at all**, so the
+ * fill/click/blur sequence that puts the form into canonical's FILLED state
+ * never ran. The harness then reported `step fails 0` — truthfully, because
+ * there were no steps to fail — and the screenshot was an empty form measured
+ * against a filled canonical. That is a null presented as data, which is
+ * exactly what ledger rule 30 forbids; the failure mode is worse than a crash
+ * because every downstream number looks real.
+ *
+ * `S` stays what its name says: scratch. Outputs go to `OUT`. Inputs come from
+ * the repo, so what runs is what was reviewed and committed.
+ */
+const HERE = path.dirname(new URL(import.meta.url).pathname)
+const MAP_PATH = process.env.ROUTE_MAP || path.join(HERE, 'ios-route-map.json')
+const map = JSON.parse(fs.readFileSync(MAP_PATH, 'utf8'))
+console.log(`map   ${MAP_PATH}`)
+
+/**
+ * A screen whose canonical is a non-default state declares steps. If the map
+ * says a selected screen has none, say so loudly rather than shooting whatever
+ * the route happens to render: "no steps" and "steps ran" are indistinguishable
+ * in the output image, and only one of them is a valid capture.
+ */
+const stepless = (rows) => rows.filter((r) => !(r.steps || []).length).map((r) => r.canonical)
 
 /**
  * `ONLY=003` (or `ONLY=003,004`) shoots just those screens. The project works
@@ -62,9 +92,18 @@ const map = JSON.parse(fs.readFileSync(S + '/ios-route-map.json', 'utf8'))
 const ONLY = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean)
 const wanted = (r) => !ONLY.length || ONLY.some((o) => r.canonical.startsWith(o))
 if (ONLY.length) {
-  const hit = map.screens.filter(wanted).map((r) => r.canonical)
+  const rows = map.screens.filter(wanted)
+  const hit = rows.map((r) => r.canonical)
   if (!hit.length) throw new Error(`ONLY=${ONLY.join(',')} matched no screen`)
   console.log(`ONLY  ${hit.join(', ')}`)
+  for (const r of rows) {
+    console.log(`steps ${r.canonical}: ${(r.steps || []).length}`)
+  }
+  const none = stepless(rows)
+  if (none.length) {
+    console.log(`NOTE  no steps declared for ${none.join(', ')} — if that screen's` +
+                ' canonical is a non-default state, this capture is invalid.')
+  }
 }
 const base = 'http://localhost:' + PORT
 fs.mkdirSync(OUT, { recursive: true })
