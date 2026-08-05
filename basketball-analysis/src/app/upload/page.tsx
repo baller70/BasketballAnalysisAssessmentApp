@@ -8,6 +8,7 @@ import { UploadEducation } from "@/components/upload/UploadEducation"
 import { UploadQualityScore } from "@/components/upload/UploadQualityScore"
 import { PreUploadValidationDisplay } from "@/components/upload/PreUploadValidation"
 import { VideoUpload } from "@/components/upload/VideoUpload"
+import UploadedPoseOverlay from "@/components/upload/UploadedPoseOverlay"
 import { LiveAnalysis } from "@/components/live"
 import {
   CameraIcon,
@@ -502,10 +503,16 @@ function ImageUploadContent({
                     key={idx}
                     className="aspect-square rounded-lg overflow-hidden bg-[#1B1D20]"
                   >
-                    <img
+                    {/* The preview now carries the REAL skeleton, measured off
+                        this photo by the same MoveNet detector Live mode uses.
+                        UploadedPoseOverlay renders the plain <img> underneath
+                        and paints the canvas on top, so a model failure or a
+                        photo with nobody in it degrades to exactly the preview
+                        that shipped before. */}
+                    <UploadedPoseOverlay
                       src={url}
                       alt={`Preview ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full"
                     />
                   </div>
                 ))}

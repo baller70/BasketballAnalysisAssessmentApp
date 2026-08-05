@@ -161,6 +161,27 @@ class PoseDetectionService {
           ? poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
           : poseDetection.movenet.modelType.SINGLEPOSE_THUNDER;
 
+      // SERVE THE SINGLE-POSE WEIGHTS FROM OUR OWN ORIGIN WHEN THEY ARE THERE.
+      //
+      // With no `modelUrl`, tfjs fetches MoveNet from Google on every cold
+      // start. That is a ~4.6MB third-party download standing between a player
+      // and their first analysis: it fails on a bad connection, on a network
+      // that blocks the host, and offline — and when it fails the only symptom
+      // is a photo with no skeleton on it, which reads as "the app doesn't
+      // work" rather than "the model didn't arrive".
+      //
+      // `public/models/movenet/singlepose-lightning/` holds the same weights
+      // (model.json + 2 shards, graph-model format). Pointing at them makes the
+      // first analysis same-origin, cacheable and offline-capable.
+      //
+      // STRICTLY ADDITIVE: `LOCAL_SINGLEPOSE_URL` is only applied to the
+      // single-pose models, and only as a `modelUrl` — every other option is
+      // untouched, and multipose (Live mode's tracked detector) keeps fetching
+      // exactly what it fetched before. If the files are ever absent the fetch
+      // 404s and tfjs falls back to its default host, which is the behaviour
+      // that shipped.
+      const LOCAL_SINGLEPOSE_URL = '/models/movenet/singlepose-lightning/model.json'
+
       const modelConfig = modelType === 'multipose'
         ? {
             modelType: model,
@@ -174,6 +195,7 @@ class PoseDetectionService {
             modelType: model,
             enableSmoothing: true,
             minPoseScore: 0.25,
+            ...(modelType === 'lightning' ? { modelUrl: LOCAL_SINGLEPOSE_URL } : {}),
           };
       
       this.detector = await poseDetection.createDetector(
