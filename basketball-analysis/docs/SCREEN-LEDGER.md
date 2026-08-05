@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | RE-GRADING | — | both reachable defects closed: baseline split 2.07 -> 0.06, wordmark measured across the whole pack and unreachable; fresh grader on verify-003c |
+| 003 | sign-in | GRADED **A-** | **A-** | one defect: the Google mark ships the official brand palette, canonical does not; back with the builder |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -272,7 +272,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — twenty-six, each learned by getting something wrong
+## Method rules — twenty-nine, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -419,6 +419,25 @@ string rolling over at midnight.
     **Never close a baseline by changing font-size alone** — the horizontal
     metrics on this screen are right (12 runs matched to 0.3%) and a bare size
     change moves them off.
+
+27. **A brand palette is not evidence that the palette is right.** 003 shipped
+    the official Google marks — `#EA4335 / #FBBC05 / #34A853 / #4285F4` — and
+    every review passed over them because they were obviously correct. Canonical
+    uses none of them: `#F0372D / #FDC80F / #21A552 / #3C86FA`. The thing that
+    hides a defect like this is that it looks like the answer.
+28. **Read a flat fill from the INTERIOR, never from its most saturated pixel.**
+    Canonical is unsharp-masked, so the extreme pixel is overshoot. Probing the
+    Google yellow by peak saturation gave (255, 204, 1); the distance-shell
+    plateau at d in [3,4) — mask by hue, Euclidean distance transform, average
+    only that shell — gives (252.2, 199.8, 15.7). Rule 8 applies to fills and
+    not just to type.
+29. **To rule out canonical's capture chain, measure a fill you already agree
+    on.** The obvious objection to any colour finding is that canonical's export
+    moved it. Three flat fills on the same image answer it: orange plate
+    (252.0, 55.7, 1.5) against our (253, 55, 1), black (2.7, 2.3, 2.1) against
+    (0,0,0), white (254.1) against (255) — all within 2 units, while the Google
+    arcs differ by 6-20. A chain that leaves orange, black and white alone did
+    not move the arcs.
 
 ## Standing rulings
 
