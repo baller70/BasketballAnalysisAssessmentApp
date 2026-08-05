@@ -1291,35 +1291,60 @@ struct VideoUploadView: View {      // 026
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
+                    // THE EQUAL SHARE IS CORRECT HERE; THE TYPE AND THE CHROME
+                    // INSIDE IT WERE NOT.
+                    //
+                    // Canonical 026 runs the same two cards at the same equal
+                    // share — 17.5..191.7pt and 199.1..373.6pt, ~174.5pt each
+                    // against the 171.5pt these get — and fits "View filming
+                    // tips" on one line with its caption on two. So the row is
+                    // not the defect; the right card's text column is.
+                    //
+                    // Measured on the same string on both sides: "Record video"
+                    // is 63.12pt wide in canonical and 86.00pt in the render —
+                    // 1.362x — while the ink height ratio is only 1.134. The
+                    // type is ~13% too large AND ~20% wider per unit height, so
+                    // "View filming tips" needs ~108pt where the column offers
+                    // 85.5pt (171.5 less 14 lead pad, 22 icon, 12 gap, 12 gap,
+                    // 12 chevron, 14 trail pad) and breaks into three lines,
+                    // with the caption falling into four. That is the layout
+                    // audit's "4 consecutive short lines, narrowest 65px".
+                    //
+                    // Two changes, both toward canonical rather than away from
+                    // it: the title drops to 13pt, which puts its cap at 9.53pt
+                    // against canonical's measured 9.70pt (it was 11.0pt), and
+                    // the card's own inset drops from 14pt to 10pt, canonical's
+                    // being 9.1pt. The caption follows the title down. Column
+                    // becomes 101.5pt against a 93.6pt title.
                     HStack(alignment: .top, spacing: 10) {
                         NavigationLink { LiveCameraSetupView() } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "camera.metering.center.weighted").font(.system(size: 22))
+                            HStack(spacing: 10) {
+                                Image(systemName: "camera.metering.center.weighted").font(.system(size: 18))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Record video").shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                    Text("Use your camera").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                    Text("Record video").shotiqBody(13, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                    Text("Use your camera").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Spacer(minLength: 0)
                             }
-                            .padding(14)
+                            .padding(10)
                             .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         }
                         .buttonStyle(.plain)
                         NavigationLink { CaptureGuideView() } label: {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 10) {
                                 Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                                    .font(.system(size: 22)).foregroundStyle(ShotIQColor.analysisBlue)
+                                    .font(.system(size: 18)).foregroundStyle(ShotIQColor.analysisBlue)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("View filming tips").shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                    Text("View filming tips").shotiqBody(13, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                     Text("Learn the best way to film your shot")
-                                        .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                             }
-                            .padding(14)
+                            .padding(10)
                             .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         }

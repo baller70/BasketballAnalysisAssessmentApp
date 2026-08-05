@@ -81,8 +81,31 @@ So the rows split:
   edge on 024. `EditProfileSheet` is a sheet too and is not a `CanonicalScreen`,
   which is the "Interme…" / "Advanc…" truncation in his third screenshot.
 - **005, 028, 040, 044, 058, 026 are pushed screens.** The clamp WAS active for
-  those, so they remain genuine defects at the design text size, and the
-  sentence below still holds for them.
+  those, so whatever is wrong with them is wrong at the design text size.
+
+**And then four of those six turned out not to be defects at all, which is the
+audit's fault rather than the app's.** Reading each capture against its
+canonical instead of trusting the tool:
+
+- **005 create-account is CORRECT.** Its "5 consecutive short lines, narrowest
+  67px" are the five section labels — FIRST NAME, LAST NAME, EMAIL, PASSWORD,
+  CONFIRM PASSWORD — each legitimately short and each separated from the next
+  by an empty input field that inks nothing. The run counter incremented across
+  a hundred-pixel gap. Fixed: a gap wider than 1.4x a line's own height now
+  starts a new run rather than extending the old one, because wrapped text is
+  tightly stacked and form labels are a field apart. 005, 044 and 058 leave the
+  failing list on that alone; nothing was changed in the app for them.
+- **028 video-upload IS a real squeeze and the tool now MISSES it.** Its
+  right-hand card breaks "View filming tips" over three lines and its caption
+  over four. The tool cannot see it because it measures full-width row bands,
+  and the neighbouring card's long line makes every band wide. **A pass from
+  this audit is not evidence that a two-column row is clean** — that limitation
+  is now written at the top of the script.
+
+So the honest count after the sheet fix is: two edge failures the tool can see
+(024, 026 — both addressed), one squeeze it can see (021 — addressed), and at
+least one squeeze it cannot (028 — addressed by measurement against canonical,
+not by the tool).
 
 Fixed by moving the clamp onto `CanonicalScreen` — the scaffold every canonical
 screen already uses — so it is presentation-independent, plus
@@ -170,6 +193,39 @@ So the next pass must first find a window that isolates the LABEL from the pill
 chrome — the ~120px-tall window used here is far taller than the text — and
 sanity-check every cap against its font size before any ratio is taken. A cap
 larger than the em is the cheapest available proof that a window is wrong.
+
+**ANSWERED ELSEWHERE: it is the FACE, and 040's tab strip proves it cleanly.**
+The 020 pill resisted measurement because the label sits inside chrome. Screen
+040's section tabs are the same role — short all-caps labels set with
+`shotiqBody` — on plain white with nothing around them, so the same question
+can be asked without a window problem. Canonical 038 against the native 040
+capture, matching each string to ITSELF rather than normalising per glyph:
+
+| string | canonical advance / cap | native advance / cap (kerning removed) | ratio |
+|---|---|---|---|
+| FLAWS | 19.8 / 7.85 = 2.522 | 38.33 / 10.67 = 3.592 | **1.424** |
+| PLAYER | 23.5 / 7.85 = 2.994 | 42.73 / 10.67 = 4.005 | **1.338** |
+| COMPARE | 29.0 / 7.85 = 3.694 | 54.47 / 10.67 = 5.105 | **1.382** |
+
+Three different strings, each compared only with itself, agreeing at 1.34–1.42.
+Cap-normalising removes size from the comparison entirely, so what is left is
+width-per-cap — the face. **Canonical sets this role in a condensed grotesque
+and the app sets it in the wide Boxed face.** Shrinking the point size cannot
+fix it: matching the cap alone (13 → 9.56pt) still leaves the seven tabs
+summing to roughly 487pt against a 393pt screen, which is why only four and a
+half of them are visible.
+
+And the obvious substitute is measured to be wrong in the other direction:
+Tungsten is far narrower than a normal grotesque — the wordmark note above
+records Tungsten-Black advancing 73px against the canonical face's 148px at the
+same cap, aspect 2.70 against 5.48. The tab role needs 1/1.38 = 0.72x the
+Boxed width, not ~0.5x. **So neither bundled face matches this role, and the
+next step is to identify a face at the measured width rather than to swap in
+whichever condensed face is already linked.** Nothing has been changed on the
+strength of this yet.
+
+040 also drops the "ANALYSIS" tab that canonical carries between "ANALYSIS
+RESULT" and "FLAWS" — six tabs against canonical's seven.
 
 ### The pattern behind 020, and why the earlier fix made it worse
 
@@ -974,7 +1030,17 @@ that **nothing in CI deploys the live site.**
   so every wakeup rediscovered the wrong story.
 
 - **Broker lanes** (repo `baller70/kcloud-xcode-runner`, self-hosted runner on
-  Kevin's Mac, Xcode on `/Volumes/APPLICATIONS`). Fire by pushing a branch:
+  Kevin's Mac, Xcode on `/Volumes/APPLICATIONS`). **The fire branch is pushed to
+  the BROKER repo, not to the app repo** — `git push -f` from a checkout of
+  `kcloud-xcode-runner` (add it with `add_repo`; it lands at
+  `/workspace/kcloud-xcode-runner`). Pushing `device/BasketballAnalysisAssessmentApp`
+  to `origin` in the app repo is silent: it creates a branch nobody watches, no
+  run appears, and the only symptom is a broker run list that never grows. That
+  cost 25 minutes here. The branch NAME carries the target repository, and the
+  broker checks out the target ref itself, so the commit being pushed is only a
+  trigger — but it must CHANGE the ref, or the push is "Everything up-to-date"
+  and nothing fires. `git commit --allow-empty` is the reliable way to fire the
+  same target twice. Fire by pushing a branch:
   `device/BasketballAnalysisAssessmentApp` installs onto the connected iPhone;
   `simshots/BasketballAnalysisAssessmentApp` boots a simulator, walks every
   canonical screen and publishes one PNG per screen as a run artifact. Use the
