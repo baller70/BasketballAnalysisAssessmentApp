@@ -146,6 +146,25 @@ The render therefore changed and the A no longer applies to it. A **fresh**
 grader is running on the new capture (`verify-003b`, md5
 ac331962d5c481cf477707e3d2b73ee6).
 
+### Grade bands pinned for the next 003 capture
+
+The grader fixed these in advance so the grade cannot drift, and it reclassified
+its own largest defect against its own interest — D1, the body x-height, is now
+an **unreachable pack defect rather than a parameter defect**, because the only
+lever is scale and scale is at its constrained optimum. It also corrected the
+gap UPWARD while doing so: +10.6% on its estimator, not the +8.2% it graded on.
+The reclassification is about reachability, not magnitude. Sizing to fix
+x-height would take 12 advance widths from matched-to-0.3% to wrong-by-10.6%,
+which is the strongest fidelity result on the screen.
+
+- Baseline split <= 0.4 device px **and** wordmark H/S within ~2% of 1.146 -> **A**
+- One of the two -> **A-**
+- Wordmark measured across all three Boxed cuts with none reaching 1.146, i.e.
+  it becomes unreachable like the H1, and the baseline closed -> **A**
+- **A+ is NOT available on this screen with the current pack.** A 10.6% gap on a
+  within-run outline invariant is roughly 20x the rasteriser floor. Do not let
+  anyone argue it up.
+
 A method note worth keeping: the first pass of this verification used one
 permissive threshold and produced five false findings of 100+ px band
 displacement, which were canonical's unsharp halo bridging bands the render
@@ -210,7 +229,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — twenty-four, each learned by getting something wrong
+## Method rules — twenty-six, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -337,6 +356,26 @@ string rolling over at midnight.
     it was one step from being reported. Three of this screen's false findings
     have now come from hasty measurement; this is the only one that would have
     been believed because it was welcome.
+
+25. **A ratio threshold without a named estimator is a hand-picked column
+    waiting to happen.** The grader set +/-0.02 on x/cap without saying how to
+    measure x/cap, and the two reasonable readings disagreed by more than the
+    threshold. The mechanism is sub-pixel phase: at a different size a glyph
+    lands on a different phase, one column's top crossing moves ~0.5 px, and on
+    a ~12 px x-height that is ~4% — about 0.03 on the ratio, almost exactly the
+    spurious move. Percentile-over-all-columns averages the phase out. **Every
+    threshold this project states must name its estimator.**
+26. **Size and scaleX move TOGETHER, and that is the vertical degree of
+    freedom.** Each run here is solved with its own size and its own scaleX, so
+    a run can be made taller while holding its advance — and that is how 003's
+    baselines came apart: "Forgot password?" was given a larger size with a
+    narrower scaleX than "Remember me", both landed their advances, and the
+    taller run split the baseline by 2.07 px against canonical's 0.19. Proof it
+    is vertical-only rather than a size increase with tracking compensation:
+    per-glyph ink widths match canonical at ratio 1.0000 and the gaps match too.
+    **Never close a baseline by changing font-size alone** — the horizontal
+    metrics on this screen are right (12 runs matched to 0.3%) and a bare size
+    change moves them off.
 
 ## Standing rulings
 
