@@ -337,6 +337,35 @@ against canonical's measured 33.2 / 35.5 / 30.8 / 33.6.
 
 Applied to **024 only** — 040 carries the same role and is a different screen.
 
+**VERIFIED IN THE BUILT CAPTURE — run 31036869790, target-head ffb934f.** All
+five tabs render inside the screen, spanning 20.3..349.3pt where the Boxed face
+needed ~511pt and showed four and a half:
+
+| label | render ink | canonical ink | error |
+|---|---|---|---|
+| OVERVIEW | 33.67 | 35.94 | −2.27 |
+| MECHANICS | 39.33 | 40.08 | −0.75 |
+| STRENGTHS | 38.67 | 38.70 | **−0.03** |
+| WEAKNESSES | 44.67 | 46.07 | −1.40 |
+| REFERENCE | 36.33 | 38.70 | −2.37 |
+
+Mean absolute error 1.36pt on labels of 34–46pt. Every render figure sits
+1.0–1.2pt under the `fontTools` prediction, which is the right direction and
+magnitude — the prediction is ADVANCE and the measurement is INK EXTENT, which
+excludes side bearings (rule 6 of the grading brief). Cap is a uniform 9.33pt
+across all five, so 040's two-baseline defect does not exist here.
+
+**The sheet is gone.** Top 207px of 021/022/023/024 now read light-fraction
+0.943–0.971 where a black band stood; 018, a pushed screen, reads 0.967. And
+the layout audit over the whole 75-screen set goes to **1 failing, which is 040,
+not 024**.
+
+**Tab strip inset 20 → 31pt.** Canonical is consistent that the strip sits
+further in than the rest of the screen: back label 21.65pt, name 21.19, meta
+22.11, CAREER SHOOTING SUMMARY 23.04, FORM SCORE 21.65 — but OVERVIEW's ink
+starts at 31.79pt. Tungsten's "O" side bearing is a few tenths of a point at
+13pt, nowhere near the ~10pt difference, so the inset is deliberate.
+
 040 also drops the "ANALYSIS" tab that canonical carries between "ANALYSIS
 RESULT" and "FLAWS" — six tabs against canonical's seven — and puts its active
 tab on a baseline 17px above its inactive ones, which canonical does not.
