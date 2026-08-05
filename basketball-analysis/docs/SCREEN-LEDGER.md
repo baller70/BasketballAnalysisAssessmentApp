@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | RE-GRADING | — | A was conditional on the display face; condition answered, word-spacing defect found and fixed, render changed, fresh grader running |
+| 003 | sign-in | GRADED **B+**, defects open | **B+** | fresh grader; baseline split and wordmark face confirmed independently; back with the builder |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -210,7 +210,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — twenty-three, each learned by getting something wrong
+## Method rules — twenty-four, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -325,6 +325,18 @@ string rolling over at midnight.
     redirect that ate a screen, which is what found 072 == 048 — and regression
     is judged on a pixel threshold. The desktop side already knew this shape:
     8 of its 20 are not byte-stable run to run. On iOS it is 3 of 72.
+
+24. **Scrutinise a measurement that favours the build HARDER than one that does
+    not.** Running the second grader's falsification, a hand-picked column band
+    on the m's left stem gave x/cap 0.7336 -> 0.7039 under a x1.10 scale — a
+    move of -0.0297, past the grader's own +/-0.02 threshold, which by its
+    stated criterion would have invalidated its largest defect and raised the
+    grade. Re-measured by rule 1 — per-column sub-pixel crossings across the
+    whole run — the move is **+0.0025** and the finding stands. The wrong answer
+    was the flattering one, it came from the exact shortcut rule 1 forbids, and
+    it was one step from being reported. Three of this screen's false findings
+    have now come from hasty measurement; this is the only one that would have
+    been believed because it was welcome.
 
 ## Standing rulings
 
