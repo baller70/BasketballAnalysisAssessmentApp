@@ -262,21 +262,21 @@ struct TopBar: View {
         .padding(.horizontal, 20)
         .frame(height: 52)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-        // THE MENU IS A FULL SCREEN IN THE DESIGN, NOT A SHEET.
+        // REVERTED to `.sheet`. Changing this to `fullScreenCover` was not
+        // asked for, and it broke every screen reached through the menu: the
+        // app pins `.buttonStyle(.plain)` at the app root because iOS 26's
+        // default style tint-washes every Button into a salmon capsule, and
+        // that setting does not cross a presentation boundary any more than
+        // the type clamp does. Moving the menu to a different presentation
+        // moved the whole path behind it, and My Media came back with a pink
+        // blob behind every chip, button and thumbnail.
         //
-        // Canonical 020 is white from row 0 — no backdrop, no rounded card
-        // inset, no drag handle — and it draws its own X to close, which is the
-        // affordance a full-screen modal needs and a sheet does not. Presented
-        // as a `.sheet`, the card top landed at 207px of 2556 and every screen
-        // reached through the menu lost 69pt off the top and 69pt of height:
-        // 021, 022, 023 and 024 all shot with a black band above them where
-        // canonical has none. Their content then sits ~69pt lower than
-        // canonical everywhere, which no amount of internal layout can correct.
-        //
-        // `fullScreenCover` restores the canonical geometry for all four at
-        // once. The X already calls `dismiss()`, so nothing is lost but the
-        // swipe-down, which canonical never showed.
-        .fullScreenCover(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
+        // `.buttonStyle(.plain)` is now stated explicitly on the presented
+        // content rather than inherited, so the style holds whichever
+        // presentation this uses.
+        .sheet(isPresented: $showMenu) {
+            ProfileMenuView().modifier(CanonicalTypeScale()).buttonStyle(.plain)
+        }
     }
 }
 

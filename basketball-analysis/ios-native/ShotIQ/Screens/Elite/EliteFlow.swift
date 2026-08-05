@@ -1442,35 +1442,8 @@ struct EliteShooterDetailView: View { // 053
                             // Canonical reference-shooter frame; pose overlay is baked in.
                             CanonicalPhoto("053-visual-001", width: 170, height: 210, cornerRadius: 0)
                         }
-                        // THE TAB ROLE IS TUNGSTEN, AND THAT IS SETTLED FROM THE
-                        // FONT FILES RATHER THAN ARGUED.
-                        //
-                        // Advance per character per unit cap removes both point
-                        // size and string length, so it compares faces and
-                        // nothing else. Measured off canonical: 053's OVERVIEW
-                        // is 0.463 and 038's FLAWS is 0.504. Read straight out
-                        // of the bundled OTFs with fontTools: BoxedSemibold is
-                        // 0.882 / 0.941 — roughly 1.8x too wide — and
-                        // Tungsten-Medium is 0.479 / 0.512, inside 3.4% of
-                        // canonical on both strings.
-                        //
-                        // At Tungsten-Medium 13pt the five advances land within
-                        // ±1.4pt of canonical's measured ink extents across all
-                        // five labels (OVERVIEW 34.84 vs 35.94, MECHANICS 40.33
-                        // vs 40.08, STRENGTHS 39.81 vs 38.70, WEAKNESSES 45.84
-                        // vs 46.07, REFERENCE 37.32 vs 38.70) and the row sums
-                        // to 371.3pt inside the 393pt screen, against roughly
-                        // 511pt in the Boxed face — which is why only four and a
-                        // half tabs were visible.
-                        //
-                        // Canonical uses ONE weight for all five and marks the
-                        // active tab with colour and the underline alone: its
-                        // active OVERVIEW (35.94) and inactive MECHANICS (40.08)
-                        // are both matched by the same medium cut. The added
-                        // 0.6 tracking goes too — Tungsten is already the
-                        // canonical width and does not need padding out.
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 33) { // canonical gaps: 33.2, 35.5, 30.8, 33.6
+                            HStack(spacing: 26) {
                                 ForEach(tabs, id: \.self) { t in
                                     Button {
                                         tab = t
@@ -1479,7 +1452,7 @@ struct EliteShooterDetailView: View { // 053
                                         }
                                     } label: {
                                         VStack(spacing: 8) {
-                                            Text(t).shotiqCondensed(13)
+                                            Text(t).shotiqBody(13, weight: tab == t ? .bold : .semibold).kerning(0.6)
                                                 .foregroundStyle(tab == t ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                             Rectangle().fill(tab == t ? ShotIQColor.shotiqOrange : .clear).frame(height: 3)
                                         }
@@ -1488,17 +1461,7 @@ struct EliteShooterDetailView: View { // 053
                                     .buttonStyle(.plain)
                                 }
                             }
-                            // The tab strip is inset FURTHER than the rest of
-                            // the screen, and canonical is consistent about it:
-                            // on 053 the back label sits at 21.65pt, the name at
-                            // 21.19, the meta line at 22.11, CAREER SHOOTING
-                            // SUMMARY at 23.04 and FORM SCORE at 21.65 — but
-                            // OVERVIEW's ink starts at 31.79pt. Tungsten's "O"
-                            // carries a side bearing of a few tenths of a point
-                            // at 13pt, nowhere near the ~10pt difference, so the
-                            // inset is deliberate. At 31 the render's first ink
-                            // lands at ~31.3pt against canonical's 31.79.
-                            .padding(.horizontal, 31)
+                            .padding(.horizontal, 20)
                         }
                         .padding(.top, 14)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)

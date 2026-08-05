@@ -52,9 +52,11 @@ struct HomeView: View {
             }
         }
         .task { await vm.load() }
-        // fullScreenCover, not sheet — see the note on the same call in
-        // ShotIQComponents.TopBar.
-        .fullScreenCover(isPresented: $showMenu) { ProfileMenuView().modifier(CanonicalTypeScale()) }
+        // Reverted to `.sheet` with the button style stated explicitly — see the
+        // note on the same call in ShotIQComponents.TopBar.
+        .sheet(isPresented: $showMenu) {
+            ProfileMenuView().modifier(CanonicalTypeScale()).buttonStyle(.plain)
+        }
     }
 }
 
