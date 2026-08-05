@@ -171,6 +171,39 @@ chrome — the ~120px-tall window used here is far taller than the text — and
 sanity-check every cap against its font size before any ratio is taken. A cap
 larger than the em is the cheapest available proof that a window is wrong.
 
+**ANSWERED ELSEWHERE: it is the FACE, and 040's tab strip proves it cleanly.**
+The 020 pill resisted measurement because the label sits inside chrome. Screen
+040's section tabs are the same role — short all-caps labels set with
+`shotiqBody` — on plain white with nothing around them, so the same question
+can be asked without a window problem. Canonical 038 against the native 040
+capture, matching each string to ITSELF rather than normalising per glyph:
+
+| string | canonical advance / cap | native advance / cap (kerning removed) | ratio |
+|---|---|---|---|
+| FLAWS | 19.8 / 7.85 = 2.522 | 38.33 / 10.67 = 3.592 | **1.424** |
+| PLAYER | 23.5 / 7.85 = 2.994 | 42.73 / 10.67 = 4.005 | **1.338** |
+| COMPARE | 29.0 / 7.85 = 3.694 | 54.47 / 10.67 = 5.105 | **1.382** |
+
+Three different strings, each compared only with itself, agreeing at 1.34–1.42.
+Cap-normalising removes size from the comparison entirely, so what is left is
+width-per-cap — the face. **Canonical sets this role in a condensed grotesque
+and the app sets it in the wide Boxed face.** Shrinking the point size cannot
+fix it: matching the cap alone (13 → 9.56pt) still leaves the seven tabs
+summing to roughly 487pt against a 393pt screen, which is why only four and a
+half of them are visible.
+
+And the obvious substitute is measured to be wrong in the other direction:
+Tungsten is far narrower than a normal grotesque — the wordmark note above
+records Tungsten-Black advancing 73px against the canonical face's 148px at the
+same cap, aspect 2.70 against 5.48. The tab role needs 1/1.38 = 0.72x the
+Boxed width, not ~0.5x. **So neither bundled face matches this role, and the
+next step is to identify a face at the measured width rather than to swap in
+whichever condensed face is already linked.** Nothing has been changed on the
+strength of this yet.
+
+040 also drops the "ANALYSIS" tab that canonical carries between "ANALYSIS
+RESULT" and "FLAWS" — six tabs against canonical's seven.
+
 ### The pattern behind 020, and why the earlier fix made it worse
 
 020's segmented control used to collapse into "Analy sis" / "Traini ng". The
