@@ -33,7 +33,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
 | 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
-| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 6.302**. VERIFIED in built captures: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342 (labConfirm 16.447->8.384). Open: monogram 13.804 (residual, see rule 40 — every geometry tried is worse), oneacct 12.912, eyePass 11.556, eyeConf 11.361, helpPass 10.949, plate 10.549, fieldEmail 10.524, checkbox 9.314, wordmark 8.716, signin 6.699 |
+| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 6.051**. VERIFIED in built captures, each matching its in-page solve exactly: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342, oneacct 12.912->6.329, eyePass 11.556->8.731, eyeConfirm 11.361->7.499. STATED RESIDUALS (traced-SVG shape errors in Marks004.tsx, not box errors — do not chase with geometry): monogram 13.804, and the eyes' remainder. OPEN: helpPass 10.949, plate 10.549, fieldEmail 10.524, checkbox 9.314, wordmark 8.716, signin 6.699 |
 | 005+ | … | not started | — | |
 
 ## The native app has layout defects the 72 web rows above never measured
