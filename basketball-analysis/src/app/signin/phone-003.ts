@@ -50,7 +50,25 @@
  *    measures a different screen, the same class of mistake as capturing
  *    /signin signed IN (which redirects away entirely).
  *
- * 2. Placement quantises on TWO different lattices and both need beating.
+ * 2. BASELINE beats cap-top where canonical baseline-aligns. Canonical sets
+ *    "Remember me" and "Forgot password?" on one baseline (1039.68 / 1039.70,
+ *    split 0.02 device px). Probing each run to its own cap-top split them by
+ *    2.01 px, because the solver had reached the same advance two ways — a
+ *    larger size with a narrower scaleX — and the larger size is taller. Size
+ *    and scaleX therefore move together to buy the vertical, since font-size
+ *    alone would close the baseline and break the advance.
+ *    Which runs get this treatment is decided by measurement, not by rule. Only
+ *    the runs with an actual SIZE error do; the rest have a baseline offset that
+ *    is the x-height face residual and shifting them makes the pixels worse.
+ *    Swept at 0 / -1 / -2 device px, run-band mean |d| against canonical:
+ *      body line 1  14.52 / 13.81 / 16.63     body line 2  22.70 / 25.77 / 29.37
+ *      email value  12.80 / 13.04 / 14.40     Looks good.  10.24 / 11.05 / 14.60
+ *      Password looks good.                   13.13 / 16.75 / 21.82
+ *    The lede is one run, so its two lines vote together: 37.22 at 0 against
+ *    39.58 at -1. All five are left where they are, and their baseline residual
+ *    (+0.63 to +1.78) is stated rather than forced.
+ *
+ * 3. Placement quantises on TWO different lattices and both need beating.
  *    `top` moves a run in steps of ~2 device px and `left` in steps of ~2.17
  *    (one whole CSS px), so neither alone can land a cap-top or an ink-left
  *    that falls between. A `translate()` INSIDE the element's own transform

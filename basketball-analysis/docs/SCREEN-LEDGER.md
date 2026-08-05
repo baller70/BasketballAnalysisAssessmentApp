@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | GRADED **B+**, defects open | **B+** | fresh grader; baseline split and wordmark face confirmed independently; back with the builder |
+| 003 | sign-in | RE-GRADING | — | both reachable defects closed: baseline split 2.07 -> 0.06, wordmark measured across the whole pack and unreachable; fresh grader on verify-003c |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
