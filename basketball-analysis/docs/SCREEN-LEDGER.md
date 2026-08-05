@@ -585,6 +585,22 @@ string rolling over at midnight.
     list is overridable with `ROUTES=` precisely because a seeded account cannot
     reach an empty state, and that is how the second leak was proven.
 
+37. **"How this reaches the user" is a measurable claim, and I asserted it from
+    a config file instead of measuring it.** I read `server.url` in
+    `capacitor.config.ts`, saw the live host, and told Kevin — repeatedly, over
+    days — that no Xcode build was needed. Two independent things falsify that,
+    and one log line would have caught either: `server.url` is frozen into the
+    binary at build time, so the value in the *repo* says nothing about the app
+    already *installed*; and the phone does not run that project at all, it runs
+    native SwiftUI from `ios-native/`. The evidence was one `device`-lane log
+    away the whole time (`Debug-iphoneos/ShotIQ.app`, Swift files compiling).
+    The same discipline the rest of this ledger applies to pixels applies here:
+    **read the artefact, not the source that supposedly produced it.** Kevin
+    kept saying he could not see the work; each time I re-explained the theory
+    rather than checking what was actually on the device. When someone reports
+    that the output is missing, that is data about the pipeline — treat a user's
+    "I don't see it" exactly like a failing measurement.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
@@ -622,10 +638,48 @@ which only 163 were the screen's own work.
 Kevin could not see any of the work, and the reason was not the branch. It was
 that **nothing in CI deploys the live site.**
 
-- The iOS app is a Capacitor shell whose `capacitor.config.ts` sets
-  `server.url = https://shotiq.194-146-12-139.sslip.io`. **It loads the live web
-  app.** No Xcode build, no TestFlight and no App Store update is needed for a
-  screen change to reach the phone — the user force-quits and reopens.
+- **CORRECTED 2026-08-05 — the two bullets that used to sit here were both
+  wrong, and between them they hid every screen change from Kevin for days.**
+
+  Wrong claim 1: "the iOS app is a Capacitor shell, so it loads the live web
+  app and no Xcode build is ever needed." Two separate errors.
+
+  a. `server.url` in `capacitor.config.ts` is **compiled into the binary at
+     build time.** An app installed *before* that line pointed at the live host
+     keeps loading whatever URL it was built with, forever. A web deploy can
+     never reach it. "No Xcode build is needed" is only true of a build made
+     *after* the config changed — i.e. it is never true of the build already on
+     the phone.
+  b. More fundamentally: **the app on Kevin's phone is not the Capacitor shell
+     at all.** It is a native SwiftUI app at `basketball-analysis/ios-native/`
+     — 18,352 lines across `Screens/{Onboarding,Auth,Home,Capture,Analysis,
+     Training,Elite,Goals}`, `Components/` and `Core/`. That is what the
+     `device` lane builds and installs (run 31009524048 log: `Emplaced …
+     Debug-iphoneos/ShotIQ.app`, then `App installed: bundleID
+     com.baller70.shotiq`). Both iOS projects exist in the tree; only
+     `ios-native` ships.
+
+  **Consequence for this ledger's method.** A web deploy updates the *web* app
+  and nothing else. Getting a screen onto the phone needs an Xcode build via the
+  broker. So iOS screen work has TWO surfaces to keep in step — the phone tree
+  in `src/components/shotiq/phone/` and the Swift screen in `ios-native/` — and
+  a screen is not truly delivered to Kevin until the native side carries the
+  same change and a `device` build has run. The commit history shows this has
+  been happening (`iOS carried the same wrong hairline colour as web`,
+  `confirmGreen was wrong on both platforms`), but it was never written down,
+  so every wakeup rediscovered the wrong story.
+
+- **Broker lanes** (repo `baller70/kcloud-xcode-runner`, self-hosted runner on
+  Kevin's Mac, Xcode on `/Volumes/APPLICATIONS`). Fire by pushing a branch:
+  `device/BasketballAnalysisAssessmentApp` installs onto the connected iPhone;
+  `simshots/BasketballAnalysisAssessmentApp` boots a simulator, walks every
+  canonical screen and publishes one PNG per screen as a run artifact. Use the
+  **bare** form — the resolve regex is greedy and `-` is inside its character
+  class, so `…--on--main` is swallowed into the repository name and the job
+  fails the allowlist in ~15s. Bare defaults the ref to `main`.
+- A green `device` run is not proof of an install: read the log for
+  `App installed:` / `ShotIQ is on the phone`. A 90-second run is normal when
+  DerivedData is warm — short duration is not evidence of a short-circuit.
 - That host is a Contabo VPS. The app runs under **pm2 as `shotiq`**, cwd
   `/opt/shotiq/basketball-analysis`, `next start --port 3060`.
 - The checkout at `/opt/shotiq` tracks `main` and **must be pulled by hand**.
@@ -649,6 +703,11 @@ that **nothing in CI deploys the live site.**
 
 **Deploy after every screen from now on**, and send Kevin the app-vs-design
 image. Merging to `main` alone changes nothing he can see.
+
+**And for an iOS screen, deploying the web is not enough either** — see the
+correction above. The phone runs `ios-native`, so an iOS screen reaches Kevin
+only when the Swift side carries the change and a `device/` build has installed
+it. Web deploy + `device` build, both, or he sees nothing and says so.
 
 ## The measurement library — `docs/shotiq/measure/`
 
