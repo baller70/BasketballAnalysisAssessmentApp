@@ -346,17 +346,40 @@ export const RUNS: Record<string, Run> = {
               colour: "var(--s3-green)", dx: 2.05, dy: 6.11, tx: 0.8350, ty: 0.0438 },
   remember: { x: 96, top: 1019.66, size: 12.467, weight: 386, scale: 0.8854, ls: -0.0018,
               colour: "var(--s3-graphite)", dx: 1.45, dy: 4.4, tx: -0.3799, ty: -0.3709 },
-  forgot: { x: 604, top: 1019.71, size: 13.125, weight: 375, scale: 0.8462, ls: -0.0072,
-            colour: "var(--s3-orange-text)", dx: 2.25, dy: 4.88, tx: 0.7514, ty: -0.6017 },
-  signinLab: { x: 418, top: 1143.21, size: 17.355, weight: 443, scale: 0.8806, ls: -0.0325,
-               colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0.0105, ty: -0.5165, ox: PLATE.x, oy: PLATE.y },
+  /* BASELINE, not cap-top. Canonical sets "Remember me" and "Forgot password?"
+     on one baseline — 1039.68 and 1039.70, a split of 0.02 device px. Solving
+     each run to its own cap-top split them by 2.00 px in the render, because
+     the solver had reached the same advance two different ways: it gave this
+     run size x1.053 and scaleX x0.956 against "Remember me" (product 1.006, so
+     the advance landed either way) and the extra size made it 4.9% taller —
+     F cap height 21.17 against canonical's 20.19. Size and scaleX therefore
+     move TOGETHER here, which buys the vertical without spending the advance;
+     shrinking font-size alone would have closed the baseline and broken the
+     advance match, which is the trap in the obvious fix. Re-solved: size -4.5%
+     with scaleX +4.3%, weight for ink, ty for the baseline. Baseline
+     +1.80 -> -0.20, advance +0.45 -> +0.08, ink +0.1% -> -0.3%, ladder still
+     straddling, and the run's own band reads mean |d| 14.55 against 15.97. The
+     cost is the run's 50%-crossing extent, -0.63 where it was +0.37: that
+     extent runs from the 'd' ascender to the 'g' descender and Geist's
+     ascender-to-cap ratio is not canonical's, so it cannot hold while the cap
+     height and the baseline both do. */
+  forgot: { x: 604, top: 1019.71, size: 12.534, weight: 393, scale: 0.8823, ls: -0.0072,
+            colour: "var(--s3-orange-text)", dx: 2.25, dy: 4.88, tx: 0.7514, ty: -1.5232 },
+  /* The three button labels carried the same defect and are fixed the same way
+     — size and scaleX moved together so the baseline lands without spending the
+     advance. Baseline +1.61 -> +0.61, advance +0.22 -> +0.06, run extent
+     -0.10 -> -0.38, band mean |d| 7.09 -> 6.70. */
+  signinLab: { x: 418, top: 1143.21, size: 16.921, weight: 455, scale: 0.8977, ls: -0.0325,
+               colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0.0105, ty: -0.9772, ox: PLATE.x, oy: PLATE.y },
   or: { x: 412, top: 1280.99, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
         colour: "var(--s3-or)", dx: 0.64, dy: 6.29, tx: -0.0194, ty: 0.7855 },
-  appleLab: { x: 338, top: 1373.19, size: 16.810, weight: 440, scale: 0.7918, ls: -0.0415,
-              colour: "var(--shotiq-color-ink)", dx: 2.06, dy: 7.12, tx: 0.2211, ty: 0.0369,
+  /* baseline +1.36 -> +0.36, advance +0.33 -> -0.26, band mean |d| 11.38 -> 11.34 */
+  appleLab: { x: 338, top: 1373.19, size: 16.390, weight: 458, scale: 0.8071, ls: -0.0415,
+              colour: "var(--shotiq-color-ink)", dx: 2.06, dy: 7.12, tx: 0.2211, ty: -0.4238,
               ox: BOX_X, oy: APPLE.y },
-  googLab: { x: 331, top: 1502.42, size: 16.753, weight: 438, scale: 0.7957, ls: -0.0410,
-             colour: "var(--shotiq-color-ink)", dx: -0.15, dy: 8.01, tx: -0.8164, ty: -0.3727,
+  /* baseline +1.42 -> +0.42, advance +0.47 -> +0.09, band mean |d| 12.13 -> 11.15 */
+  googLab: { x: 331, top: 1502.42, size: 15.999, weight: 464, scale: 0.8267, ls: -0.0410,
+             colour: "var(--shotiq-color-ink)", dx: -0.15, dy: 8.01, tx: -0.8164, ty: -0.8334,
              ox: BOX_X, oy: GOOGLE.y },
   acct1: { cx: 419.11, top: 1654.30, size: 12.482, weight: 389, scale: 0.9171, ls: -0.0056,
            colour: "var(--s3-graphite)", dx: 0, dy: 3.45, tx: -0.0100, ty: -0.7597, width: 500 },
