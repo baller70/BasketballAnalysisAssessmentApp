@@ -344,12 +344,16 @@ private func captureStat(_ value: String, _ label: String,
 
 struct AnalyzeHubView: View {       // 021
     @EnvironmentObject var app: AppState
-    // Fourth field is the canonical crop for that thumbnail; only the 2nd and 4th
-    // captures have a frame bundled (021-visual-003 / -004 in the sidecar).
+    // Fourth field is the canonical crop for that thumbnail. All four are
+    // bundled now (021-visual-001…004); it used to be only the 2nd and 4th.
     private let recents: [(String, String, String, String?)] = [
-        ("0:06", "Today • 8:24 AM", "Free Throw", nil),
+        // Cards 1 and 3 were `nil` — no asset had ever been cut for them — so
+        // two of the four thumbnails rendered as black placeholders against
+        // canonical 021's four photographs. Cut from the canonical PNG at the
+        // same card boundaries and the same 1x convention as 003/004.
+        ("0:06", "Today • 8:24 AM", "Free Throw", "021-visual-001"),
         ("0:04", "Today • 8:17 AM", "Catch & Shoot", "021-visual-003"),
-        ("0:05", "Yesterday • 6:42 PM", "Pull-Up Jumper", nil),
+        ("0:05", "Yesterday • 6:42 PM", "Pull-Up Jumper", "021-visual-002"),
         ("0:05", "Yesterday • 6:35 PM", "Off the Dribble", "021-visual-004")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analyze-hub") {
@@ -402,16 +406,28 @@ struct AnalyzeHubView: View {       // 021
                     }
                     .padding(.horizontal, 20).padding(.top, 22)
 
+                    // MEASURED OFF CANONICAL 021, NOT CHOSEN.
+                    //
+                    // The white-gap detector puts the four cards at 15.7..107.3,
+                    // 114.7..200.0, 207.8..293.0 and 299.9..378.7pt, so the card
+                    // is ~85pt wide with a ~7.5pt gap, and the photo runs
+                    // y 942..1223px = 129.8pt tall. At 104pt wide with 10pt gaps
+                    // the row summed to 20 + 4×104 + 3×10 = 466pt against a
+                    // 393pt screen — 73pt over, which is the fourth card sliced
+                    // in half down the right edge of the capture and the reason
+                    // the layout audit reads ink on that edge over 19% of the
+                    // height. At 85/7.5 the row ends at 382.5pt, inside the
+                    // screen, with the cards landing within ~2pt of canonical.
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 10) {
+                        HStack(alignment: .top, spacing: 7.5) {
                             ForEach(recents, id: \.1) { dur, when, kind, photo in
                                 NavigationLink { MediaDetailView() } label: {
                                     VStack(alignment: .leading, spacing: 4) {
                                         ZStack(alignment: .bottomTrailing) {
                                             if let photo {
-                                                CanonicalPhoto(photo, width: 104, height: 128, cornerRadius: 4)
+                                                CanonicalPhoto(photo, width: 85, height: 130, cornerRadius: 4)
                                             } else {
-                                                captureDark(128, radius: 4).frame(width: 104)
+                                                captureDark(130, radius: 4).frame(width: 85)
                                             }
                                             Text(dur).font(.custom("Tungsten-Medium", size: 12)).foregroundStyle(.white)
                                                 .padding(.horizontal, 6).padding(.vertical, 3)
@@ -421,7 +437,7 @@ struct AnalyzeHubView: View {       // 021
                                         Text(when).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         Text(kind).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.ink)
                                     }
-                                    .frame(width: 104)
+                                    .frame(width: 85)
                                 }
                                 .buttonStyle(.plain)
                             }
