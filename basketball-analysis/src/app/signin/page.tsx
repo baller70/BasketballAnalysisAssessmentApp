@@ -20,6 +20,8 @@ import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
 import { UnifiedSidebar, PageTitle, ResponsiveTitle } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize } from "lucide-react"
+import { PHONE_CSS } from "./phone-003"
+import { Marks003, EyeMark, FocusMark } from "./Marks003"
 
 const STEPS = [
   { title: "CAPTURE", body: ["Record from any angle", "with your phone."], icon: "/images/canonical/077-step-capture.png" },
@@ -100,6 +102,13 @@ export default function SignInPage() {
   // --------------------------------------------------------------------------
 
   const busy = isSubmitting || isLoading
+  /* Canonical 003 captures the FILLED, validated state: a ring-and-tick beside
+     the address, "Looks good." under it and "Password looks good." under the
+     mask. Those are live validation, not decoration — they appear when the
+     field's own value passes, and they are the phone screen's only feedback
+     before submit. Below the tablet breakpoint only; 077 has no such row. */
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim())
+  const passwordValid = formData.password.length >= 8
   /* Canonical's field labels are the condensed micro-caps tier: EMAIL cap 11
      over 30px, PASSWORD cap 12 over 54px. The body face at 12px bold drew cap 9
      over 36 and 66 — two short and 20% WIDER, the undersized-and-over-tracked
@@ -107,25 +116,39 @@ export default function SignInPage() {
   const label = "shotiq-microcaps text-[var(--shotiq-color-ink)]"
   const labelVars = { "--shotiq-microcaps-size": "15px",
                       "--shotiq-microcaps-tracking": "0.10em" } as React.CSSProperties
+  /* The border moved from the input to a wrapper so the phone layer can draw
+     it as an SVG hairline (Chromium clamps a CSS border to a whole CSS pixel;
+     canonical draws 1.85 device px). The wrapper's box is identical to the
+     input's old box, so 077 is unchanged. */
+  const fieldBox =
+    "relative w-full h-[46px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white " +
+    "focus-within:border-[var(--shotiq-color-ink)]"
   const field =
-    "w-full h-[46px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[14px] " +
+    "block h-full w-full rounded-[6px] border-0 bg-transparent px-[14px] " +
     "text-[15px] text-[var(--shotiq-color-ink)] placeholder:text-[var(--shotiq-color-muted)] " +
-    "outline-none focus:border-[var(--shotiq-color-ink)]"
+    "outline-none"
 
   return (
     <div
       data-testid="screen-desktop-web-sign-in"
-      className="shotiq-canonical shotiq-phone-flow mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
-      style={{ minHeight: 900 }}
+      className="s3 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px]"
     >
+      <style dangerouslySetInnerHTML={{ __html: PHONE_CSS }} />
+      <Marks003 emailOk={emailValid} />
+
       {/* ---------------------------------------------------------- topbar */}
       <header
+        data-s3-contents
         className="flex h-[39px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[18px] pr-[18px] md:h-[57px] md:pl-[20px] md:pr-[24px]"
         data-testid="region-topbar"
       >
-        <span className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
-          SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
+        <span data-s3="wordmark"
+              className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
+          SHOT<span data-s3-iq className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
+        {/* Canonical 003 sets the product eyebrow under the wordmark; 077 does
+            not draw it at all, so it is phone-only. */}
+        <span data-s3="eyebrow" className="md:hidden">AI ANALYSIS</span>
 
         <div className="hidden items-center md:flex">
           {/* Decorative on the sign-in screen — nobody is signed in yet, so
@@ -150,7 +173,7 @@ export default function SignInPage() {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div data-s3-contents className="flex flex-1">
         {/* ------------------------------------------------------- sidebar
             The product owner's ruling is one menu sidebar for the whole app —
             no per-screen rail variants. This screen used to draw its own
@@ -160,85 +183,114 @@ export default function SignInPage() {
         <UnifiedSidebar />
 
         {/* --------------------------------------------------- form column */}
-        <section className="w-[394px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]">
+        <section data-s3-contents className="w-[394px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]">
           {/* 46px drew a 32px cap against canonical's 44px.
               Phone and desktop disagree on both the words and the size, and
               both readings are off the canonical renders: iOS 003 says
-              "SIGN IN" at cap 119 (of 853px-wide art, so 54.8 CSS px, and
-              54.8/0.705 = 77.8px), desktop 077 says "WELCOME BACK" at cap 44. */}
-          <PageTitle size={63} phoneSize={77.8}>
+              "SIGN IN" at cap 118.86 device px, desktop 077 says
+              "WELCOME BACK" at cap 44. The phone size, scale and stroke are
+              solved in phone-003.ts; `phoneSize` is therefore NOT passed here,
+              because `.shotiq-pt-phone` would emit a competing font-size. */}
+          <PageTitle size={63} data-s3="display">
             <ResponsiveTitle phone="SIGN IN" web="WELCOME BACK" />
           </PageTitle>
-          <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
-            Sign in to continue your training.
+          <p data-s3="body" className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
+            <span className="md:hidden">
+              Continue your training, saved<br />analyses, and progress.
+            </span>
+            <span className="hidden md:inline">Sign in to continue your training.</span>
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-[30px]" noValidate>
-            <label htmlFor="email" className={label} style={labelVars}>EMAIL</label>
-            <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signin-email"
-                   className={`${field} mt-[9px]`} placeholder="Enter your email"
-                   value={formData.email}
-                   onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+          <form data-s3-contents onSubmit={handleSubmit} className="mt-[30px]" noValidate>
+            <label htmlFor="email" data-s3="labelEmail" className={label} style={labelVars}>EMAIL</label>
+            <div data-s3-contents className={`${fieldBox} mt-[9px]`}>
+              <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signin-email"
+                     data-s3="valueEmail"
+                     className={field} placeholder="Enter your email"
+                     value={formData.email}
+                     onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+            </div>
+            {/* live validation — phone only; see the note by `emailValid` */}
+            {emailValid && (
+              <p data-s3="helpEmail" data-testid="signin-email-ok" className="md:hidden">Looks good.</p>
+            )}
 
-            <label htmlFor="password" className={`${label} mt-[22px] block`} style={labelVars}>PASSWORD</label>
-            <div className="relative mt-[9px]">
+            <label htmlFor="password" data-s3="labelPass" className={`${label} mt-[22px] block`} style={labelVars}>PASSWORD</label>
+            <div data-s3-contents className={`${fieldBox} mt-[9px]`}>
               <input id="password" type={showPassword ? "text" : "password"}
                      autoComplete="current-password" data-testid="signin-password"
+                     data-s3="valuePass"
                      className={`${field} pr-[44px]`} placeholder="Enter your password"
                      value={formData.password}
                      onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
+                      data-s3="eye"
                       className="absolute right-[13px] top-1/2 -translate-y-1/2 text-[var(--shotiq-color-graphite)]">
-                {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                <span className="hidden md:inline">
+                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                </span>
+                <span className="block h-full w-full md:hidden"><EyeMark off={showPassword} /></span>
               </button>
             </div>
+            {passwordValid && (
+              <p data-s3="helpPass" data-testid="signin-password-ok" className="md:hidden">Password looks good.</p>
+            )}
 
-            <div className="mt-[20px] flex items-center justify-between">
-              <label className="flex items-center gap-[9px] text-[13px]">
+            <div data-s3-contents className="mt-[20px] flex items-center justify-between">
+              <label data-s3-contents className="flex items-center gap-[9px] text-[13px]">
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
+                       data-s3="checkbox"
                        className="h-[15px] w-[15px] rounded-[3px] border border-[var(--shotiq-color-rule)] accent-[var(--shotiq-color-shotiqOrange)]" />
-                Remember me
+                <span data-s3="remember">Remember me</span>
               </label>
-              <Link href="/forgot-password"
+              <Link href="/forgot-password" data-s3="forgot"
                     className="text-[13px] text-[var(--shotiq-color-analysisBlue)]">
                 Forgot password?
               </Link>
             </div>
 
             {error && (
-              <p role="alert" data-testid="signin-error"
+              <p role="alert" data-testid="signin-error" data-s3="error"
                  className="mt-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
             )}
 
-            <button type="submit" disabled={busy} data-testid="signin-submit"
+            <button type="submit" disabled={busy} data-testid="signin-submit" data-s3="plate"
                     className="mt-[20px] flex h-[46px] w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-medium text-white disabled:opacity-70">
               {busy && <Loader2 className="h-[16px] w-[16px] animate-spin" />}
-              {busy ? "Signing in…" : "Sign in"}
+              {/* canonical 003 leads the primary action with the capture frame */}
+              <span data-s3="focus" className="md:hidden"><FocusMark /></span>
+              <span data-s3="signinLab">{busy ? "Signing in…" : "Sign in"}</span>
             </button>
           </form>
 
-          <div className="mt-[26px] flex items-center gap-[14px]">
-            <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
-            <span className="text-[11px] tracking-[0.09em] text-[var(--shotiq-color-graphite)]">OR CONTINUE WITH</span>
-            <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
+          <div data-s3-contents className="mt-[26px] flex items-center gap-[14px]">
+            <span data-s3-off className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
+            <span data-s3="or" className="text-[11px] tracking-[0.09em] text-[var(--shotiq-color-graphite)]">
+              <span className="md:hidden">OR</span>
+              <span className="hidden md:inline">OR CONTINUE WITH</span>
+            </span>
+            <span data-s3-off className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
           </div>
 
           {(["Continue with Apple", "Continue with Google"] as const).map((t, i) => (
             <button key={t} type="button"
+                    data-s3={i ? "google" : "apple"}
                     onClick={() => {
                       setError(`${t.replace("Continue with ", "")} sign-in isn't enabled on this server yet — use your email and password.`)
                       emailRef.current?.focus()
                     }}
                     className={`${i ? "mt-[14px]" : "mt-[20px]"} flex h-[46px] w-full items-center justify-center gap-[11px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white text-[15px]`}>
-              {i ? <GoogleMark /> : <AppleMark />}
-              {t}
+              <span data-s3={i ? "googMark" : "appleMark"} className="contents">
+                {i ? <GoogleMark /> : <AppleMark />}
+              </span>
+              <span data-s3={i ? "googLab" : "appleLab"}>{t}</span>
             </button>
           ))}
 
-          <p className="mt-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-[var(--shotiq-color-analysisBlue)]">Create account</Link>
+          <p data-s3-contents className="mt-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
+            <span data-s3="acct1">Don&apos;t have an account?</span>{" "}
+            <Link href="/signup" data-s3="acct2" className="text-[var(--shotiq-color-analysisBlue)]">Create account</Link>
           </p>
         </section>
 
