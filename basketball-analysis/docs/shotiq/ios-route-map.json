@@ -70,8 +70,42 @@
    "route": "/signup",
    "context": "anon",
    "userPath": "'Create account' on 002-welcome, or 'Create account' at the foot of 003-sign-in.",
-   "source": "src/app/signup/page.tsx",
-   "steps": []
+   "source": "src/app/signup/page.tsx + src/app/signup/phone-004.ts + src/app/signup/Marks004.tsx",
+   "steps": [
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signup-first-name\"]",
+     "value": "Jordan"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signup-last-name\"]",
+     "value": "Ellis"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signup-email\"]",
+     "value": "jordan.ellis@example.com"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signup-password\"]",
+     "value": "shotiqd99"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signup-confirm-password\"]",
+     "value": "shotiqd99"
+    },
+    {
+     "action": "click",
+     "selector": "[data-testid=\"signup-agree\"]"
+    },
+    {
+     "action": "blur"
+    }
+   ],
+   "note": "Canonical 004 is the FILLED, VALIDATED state, not an empty form: FIRST NAME \"Jordan\", LAST NAME \"Ellis\", EMAIL \"jordan.ellis@example.com\", both password fields masked to NINE bullets, and the terms checkbox TICKED with its green ring and tick. Eleven of the twenty ink bands do not exist until the player types, and the checkbox ring only turns green when it is really checked \u2014 so the box is clicked rather than defaulted on. Nine characters go into both password fields because canonical draws nine bullets and Chromium masks one bullet per character. Captured signed out, in the anonymous context: /signup is in middleware's AUTH_PAGES and redirects a signed-in user away, so an authenticated capture measures a different screen."
   },
   {
    "canonical": "005-verify-email",
