@@ -197,7 +197,22 @@ export const RUNS: Record<string, Run> = {
            colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: 0, ty: 0 },
   lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
            colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
-  oneacct: { x: 188.97, top: 444.30, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
+  /* "One account across web and iOS." Band 12.912 -> 6.329, at size 14.464 ->
+     12.95 and scaleX 0.9027 -> 0.955.
+     SOLVED ON ITS OWN, AND THAT MATTERED. It started from the same numbers the
+     two lede lines did (14.464 / 0.9027) and its crossings predicted 13.12 /
+     0.950, which is close enough to the lede's solved 13.2 / 0.96 to be tempting
+     to just copy across as "one body role". It is not the same: the lede's exact
+     values score 10.918 here against 8.513 for its own, and the settled answer
+     is 12.95 / 0.955 at 6.329. Rule 14 says solve runs that SHARE a role
+     jointly; it does not say assume two runs share one because they started from
+     the same numbers.
+     dx is unchanged at -0.86 because every dx candidate scored identically —
+     layout lattice, so a new value would be invented precision. Per rule 40 the
+     sweep carried a CONTROL at the recipe's own values, and it reproduced the
+     built capture's 12.9118 exactly, which is what makes the rest of the run
+     trustworthy. */
+  oneacct: { x: 188.97, top: 444.30, size: 12.95, weight: 352, scale: 0.955, ls: -0.0044,
              colour: "var(--s4-graphite)", dx: -0.86, dy: 6.075, tx: 0, ty: 0 },
   /* THE FIVE MICRO-CAP LABELS, SOLVED JOINTLY (rule 14): size 14.30 -> 14.15,
      scaleX 0.640 -> 0.62. Summed band mean 44.347 -> 28.342.
