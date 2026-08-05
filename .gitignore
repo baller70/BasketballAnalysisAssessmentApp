@@ -91,6 +91,11 @@ config/
 !basketball-analysis/public/**/*.jpg
 !basketball-analysis/src/**/*.png
 !basketball-analysis/src/**/*.jpg
+# The canonical design sets are the SPEC for the 1:1 fidelity work — every
+# measurement is taken against them. A container rollback already destroyed the
+# scratchpad copy once. They live in git so that cannot happen again.
+!basketball-analysis/docs/shotiq/canonical/*.png
+!basketball-analysis/docs/shotiq/canonical-desktop/*.png
 
 # Large dataset directories (use Git LFS or S3 for these)
 training_data/raw_downloads/
