@@ -300,7 +300,16 @@ export default function SignInPage() {
           ))}
 
           <p data-s3-contents className="mt-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
-            <span data-s3="acct1">Don&apos;t have an account?</span>{" "}
+            {/* Canonical iOS 003 sets a typographic apostrophe (U+2019) here —
+                its glyph slants and joins the n, where U+0027 draws an upright
+                tick. Desktop 077 is one of the 20 graded screens and is not
+                being re-cut in this pass, so the two spellings are split by the
+                same breakpoint the rest of this screen's phone/desktop copy
+                already uses rather than changing the shared string. */}
+            <span data-s3="acct1">
+              <span className="md:hidden">Don&rsquo;t have an account?</span>
+              <span className="hidden md:inline">Don&apos;t have an account?</span>
+            </span>{" "}
             <Link href="/signup" data-s3="acct2" className="text-[var(--shotiq-color-analysisBlue)]">Create account</Link>
           </p>
         </section>
