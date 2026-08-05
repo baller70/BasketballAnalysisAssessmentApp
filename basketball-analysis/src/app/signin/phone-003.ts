@@ -232,12 +232,10 @@ const APPLE = { y: 1335.01, h: 101.28 }
 const GOOGLE = { y: 1462.18, h: 105.88 }
 const BOX_X = 52.05
 const BOX_W = 748.35
-/* Vertical trim on the two field texts: with `line-height` set to the field
-   height the run centres on the box, and canonical sets its value 2.5 device px
-   below that centre and its bullet row 2.1 px below. Probed against the live
-   render, not assumed. */
-const EMAIL_DY = 0
-const PASS_DY = 0
+/* The two field texts used to carry their own vertical trim constants here. The
+   probed `ty` on each run supersedes them — see the lattice note at the top —
+   so they were both sitting at 0 and referenced nowhere, which `next lint`
+   rejects and `tsc` does not. */
 
 export const RUNS: Record<string, Run> = {
   /* SHOTIQ — Geist at cap 44.85. Canonical advances 225.78 against Geist's 214.6
