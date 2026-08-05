@@ -163,6 +163,32 @@ Whole screen 3.6792 -> 3.6546. Desktop 077 still byte-identical to the pre-003
 baseline (md5 69b2184b0f0e7553108d23c2aae71071). The wordmark is the remaining
 reachable defect.
 
+### Final state under grade
+
+Capture `verify-003c`, md5 `333f26638b495a3d0082c622efe7c823`, byte-identical to
+the builder's final reported state and to the harness's own capture. Committed
+through `aa1021e`.
+
+- Whole-screen mean |d| against canonical **3.655**. Across the whole
+  engagement: **7.015 -> 3.655**.
+- Worst residuals over all 27 runs: capTop 0.72, run-extent 1.29, inkL 0.37,
+  advance 2.32 (the display block width — the stated word-space trade), ink 4.4%
+  (mask bullets).
+- iOS harness 72/72, 72 distinct md5s, 0 gaps, 0 step failures, 0 wider than
+  393pt. Desktop 077 unchanged from the pre-003 baseline.
+- Functional contract re-run green: reveal toggle, live validation, empty-submit
+  error and focus, bad-password error, real sign-in to /results/demo, signed-in
+  redirect, both links.
+- `tsc --noEmit` and `npm run lint` both clean.
+
+**A worked example of rule 25.** The builder and I measure the checkbox-row
+baselines with different estimators and get absolute values ~1.2 device px
+apart — it reads canonical 1039.68/1039.70 and the render 1039.49/1039.50, I
+read canonical 1038.49/1038.68 and the render 1038.29/1038.34. The offset is
+consistent across BOTH images, so the quantity that matters agrees: split 0.01
+against 0.06, both far inside the 0.4 band. Absolute positions from two
+estimators are not comparable; a difference taken within one estimator is.
+
 ### Grade bands pinned for the next 003 capture
 
 The grader fixed these in advance so the grade cannot drift, and it reclassified
