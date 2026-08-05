@@ -146,6 +146,23 @@ The render therefore changed and the A no longer applies to it. A **fresh**
 grader is running on the new capture (`verify-003b`, md5
 ac331962d5c481cf477707e3d2b73ee6).
 
+### Defect 1 of 2 closed — the baseline split
+
+Re-solved by moving size and scaleX together (rule 26), never font-size alone.
+Verified here independently, sub-pixel bottom 50% crossing, R stem of "Remember
+me" at x97-98 against F stem of "Forgot password?" at x604-605:
+
+| | R baseline | F baseline | split |
+|---|---|---|---|
+| canonical | 1038.49 | 1038.68 | **0.19** |
+| before | 1038.29 | 1040.36 | **2.07** |
+| after | 1038.29 | 1038.34 | **0.06** |
+
+Inside the pinned band of 0.4, and tighter than canonical's own internal split.
+Whole screen 3.6792 -> 3.6546. Desktop 077 still byte-identical to the pre-003
+baseline (md5 69b2184b0f0e7553108d23c2aae71071). The wordmark is the remaining
+reachable defect.
+
 ### Grade bands pinned for the next 003 capture
 
 The grader fixed these in advance so the grade cannot drift, and it reclassified
