@@ -707,6 +707,30 @@ string rolling over at midnight.
     broker clones fresh and an untracked config would silently restore the
     blind spot.
 
+39. **A CI job that dies mid-step is a null, and a null is not agreement.** The
+    unclamped falsification arm (run 31021077649) was the one piece of evidence
+    that could have confirmed *or refuted* the Dynamic Type diagnosis. It died
+    14 minutes in: "Run guarded Xcode job" still marked in_progress, the upload
+    step never reached, no artifact, and the logs 404 because GitHub never
+    received them either. A runner interruption on the Mac — the device build
+    and the clamped capture on the same runner either side of it both finished.
+
+    The failure mode to guard against is quiet: an experiment set up to
+    challenge a belief produces nothing, and the belief simply survives
+    unchallenged. It is very easy to write "the run didn't come back, but the
+    clamped arm looked fine" and move on, which converts a missing measurement
+    into soft support for the claim. **The clamped arm can only show that the
+    clamp pins layout across text sizes; it cannot show that unclamped type was
+    what broke Kevin's phone.** That remains unproven, and the arm is queued
+    rather than dropped.
+
+    Two mechanical tells that a run produced nothing, both cheap to check before
+    reading any pixels: `list_workflow_run_artifacts` returning `total_count: 0`,
+    and a job whose steps show a later step still `pending` while the job itself
+    reads `completed`. Also note the job API can serve stale `in_progress` state
+    for a while — this job read as running 30 minutes after its own
+    `completed_at`. Trust `completed_at` and the artifact list, not the status.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
