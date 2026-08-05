@@ -49,14 +49,18 @@ export default function VideoAnalysisPage() {
   if (clip) {
     return (
       <>
-        <div className="md:hidden">
+        {/* `isPhone`, not `md:hidden` — VideoReview portals into <body>, so a
+            wrapper cannot hide it. Same defect as the dashboard and analyze
+            empty states; this one needed a selected clip to show, which is why
+            no capture caught it. */}
+        {isPhone && (
           <VideoReview
             clip={clip}
             onChange={() => setClip(null)}
             onAnalyze={() => router.push("/video-analysis/processing")}
           />
-        </div>
-        <div className="hidden md:block">
+        )}
+        <div className={isPhone ? "hidden" : undefined}>
           <main className="mx-auto max-w-[1180px] px-[26px] py-[18px]">
             <button type="button" onClick={() => setClip(null)}
                     className="flex items-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)]">

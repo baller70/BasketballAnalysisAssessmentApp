@@ -163,9 +163,11 @@ export default function AnalyzeWorkspacePage() {
         so the state stays reachable on a seeded account that already has
         history (the grading account always does). Phone layout only — the
         1440pt desktop screen 081 is untouched. */}
-    {emptyHistory && (
-      <div className="md:hidden"><NoAnalysisYet /></div>
-    )}
+    {/* `isPhone`, not `md:hidden` — NoAnalysisYet portals into <body> and a
+        wrapper cannot hide a portal. The branch below already gated correctly;
+        this one did not, so the phone screen painted over desktop 081 on any
+        account with no analysis history. */}
+    {emptyHistory && isPhone && <NoAnalysisYet />}
     {isPhone && !emptyHistory && (
       phoneView === "queue" ? (
         <UploadQueuePhone

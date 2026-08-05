@@ -205,10 +205,14 @@ export default function DashboardPage() {
   if (view === "standard" || view === "basic" || newPlayer) {
     return (
       <>
-      {newPlayer && (
-        <div className="md:hidden">
-          <HomeNewPlayer name={displayName} points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"} />
-        </div>
+      {/* Gated on `isPhone`, NOT on a `md:hidden` wrapper. HomeNewPlayer renders
+          PhoneShell, which portals into <body> — the portal subtree is not a
+          descendant of the wrapper and never inherits its `display:none`, so a
+          `md:hidden` div let the 393pt phone screen paint over the desktop
+          dashboard at every width. It only showed on an account with no
+          analyses, or under ?view=basic, which is why it survived the guards. */}
+      {newPlayer && isPhone && (
+        <HomeNewPlayer name={displayName} points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"} />
       )}
       <div className={newPlayer ? "hidden md:block" : undefined}>
       <ShotIQShell active="Home" {...shellProps}>
