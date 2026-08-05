@@ -274,15 +274,39 @@ ruled out. The app bundles only two families — Boxed (medium/semibold/heavy)
 and Tungsten (medium/semibold/bold/black) — so this is the only substitution
 available without adding a font.
 
-**STATED RESIDUAL, not forced.** 024's five tabs sum to ~511pt against a 393pt
-screen (67 + 73 + 73 + ~81 + ~73 labels, four 26pt gaps, 40pt padding) where
-canonical 053 fits them in 332.6pt from 31.8pt to 364.4pt with 33.3pt gaps. The
-row is inside a horizontal `ScrollView`, so every tab is reachable; it is not
-clipped-dead. Closing the gap needs the face question SETTLED BY MEASUREMENT —
-render "OVERVIEW" in Tungsten at a cap of 9.70pt and compare its advance with
-canonical's 35.94pt — not by shrinking the point size (which measures correct on
-024) and not by squeezing the gaps (which would break a measured metric to fix
-another).
+**SETTLED — and Tungsten IS the face. The ruling-out above was wrong.** The
+"~0.5x where the role needs 0.58x" figure compared Tungsten-BLACK against a
+different reference face, and the 0.58x it was tested against came from the
+contaminated cap. Read straight out of the bundled OTFs with `fontTools`
+(`hmtx` advances over `OS/2.sCapHeight`, both faces at upm 1000, cap ~700):
+
+| face | OVERVIEW | FLAWS |
+|---|---|---|
+| canonical, measured off the PNG | **0.463** | **0.504** |
+| BoxedSemibold (what the app used) | 0.882 | 0.941 |
+| BoxedMedium | 0.885 | 0.941 |
+| **Tungsten-Medium** | **0.479** | **0.512** |
+| Tungsten-Semibold | 0.498 | 0.526 |
+
+Tungsten-Medium lands inside 3.4% of canonical on both strings; Boxed is ~1.8x.
+**The font files answer this question offline in seconds — no capture, no
+simulator, no guessing.** That should be the first move on any face question
+from here.
+
+At Tungsten-Medium **13pt** the five advances land within ±1.4pt of canonical's
+measured ink extents on every label (OVERVIEW 34.84 vs 35.94, MECHANICS 40.33 vs
+40.08, STRENGTHS 39.81 vs 38.70, WEAKNESSES 45.84 vs 46.07, REFERENCE 37.32 vs
+38.70), and the row sums to **371.3pt inside the 393pt screen** against ~511pt
+in Boxed. 13.86pt — the size that matches canonical's 9.70pt cap exactly — runs
++1.1 to +3.7pt wide on every label, so 13pt is the better fit and the cap lands
+at 9.10pt against 9.70pt.
+
+Canonical marks the active tab with colour and the underline alone: its active
+OVERVIEW (35.94) and inactive MECHANICS (40.08) are matched by the same medium
+cut, so the bold/semibold split goes, and the 0.6 tracking with it. Gaps 26 → 33
+against canonical's measured 33.2 / 35.5 / 30.8 / 33.6.
+
+Applied to **024 only** — 040 carries the same role and is a different screen.
 
 040 also drops the "ANALYSIS" tab that canonical carries between "ANALYSIS
 RESULT" and "FLAWS" — six tabs against canonical's seven — and puts its active
@@ -628,7 +652,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-three, each learned by getting something wrong
+## Method rules — forty-five, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1021,6 +1045,26 @@ string rolling over at midnight.
     received. An arm that claims to change the app's configuration is only
     readable against that line, and any A/B whose two arms come back identical
     should be suspected of being one arm run twice before it is believed.
+
+44. **A face question is answered by the font files, not by a capture.** Two
+    sessions were spent arguing whether a role was the wrong SIZE or the wrong
+    FACE from pixel ratios — a comparison that needs a clean cap, a clean
+    advance and the same string on both sides, and that produced two wrong
+    answers in a row (1.0999 from mismatched glyph counts, 1.34–1.42 from a cap
+    contaminated by two baselines). `fontTools` reads `hmtx` advances and
+    `OS/2.sCapHeight` straight out of the bundled OTF in seconds, offline, with
+    no simulator and no capture: advance-per-character-per-unit-cap is then
+    exact, and comparing it against the same figure measured off the canonical
+    PNG identifies the face outright. Doing that put the 024 tab role on
+    Tungsten-Medium to within 3.4% after the pixel route had ruled Tungsten out
+    entirely. **Read the fonts first.**
+
+45. **A whole-band scan assumes one baseline.** 040's tab row scans as 45px of
+    ink for a 13pt font because its ACTIVE tab sits 17px above its inactive
+    ones. Measure each word's own bounding box and compare the caps to each
+    other before combining them; if they disagree, the band holds more than one
+    thing. This is the same class of error as the pill border in the 020 window
+    and it produced the same kind of confidently wrong ratio.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
