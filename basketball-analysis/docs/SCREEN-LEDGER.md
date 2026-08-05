@@ -76,6 +76,40 @@ displacement, which were canonical's unsharp halo bridging bands the render
 keeps separate. Sweeping the threshold (rule 6) collapsed the worst case to
 1 device px. Rule 6 is not optional.
 
+## The iOS baseline — 72 screens, and evidence the method works
+
+Full sweep against the current build: **72/72 captured, 72 distinct md5s, 0
+gaps, 0 step failures, 0 wider than 393pt.** Per-screen numbers in
+`$SCRATCH/verify-ios-full/BASELINE.json`, measured top-anchored over canonical's
+1844 rows (see the artboard note above).
+
+The result is the strongest evidence so far that the one-screen-at-a-time method
+is doing something real rather than moving numbers around. **The three finished
+screens are the three best on the entire set, and it is not close:**
+
+| screen | mean \|d\| | state |
+|---|---|---|
+| 001 splash | **2.493** | DONE, A+ |
+| 003 sign-in | **3.772** | awaiting grade |
+| 002 welcome | **6.528** | DONE, A |
+| 033 live-form-feedback | 15.109 | best untouched screen |
+| … | … | |
+| 023 photo-review-crop | 55.018 | worst |
+
+Across all 72 the mean is 30.488 and the median 29.390, so the untouched screens
+sit around 30 and the finished ones sit under 7 — a factor of four to twelve.
+003 currently measures better than 002, which a fresh grader scored A.
+
+Worklist by distance, worst first: 023 (55.018), 018 (50.024), 060 (49.756),
+068 (48.674), 051 (46.947), 053 (46.825), 042 (46.632), 061 (45.199),
+055 (44.014), 007 (43.731). Note 018 was already known to have no phone
+composition at all — it renders a reflowed desktop tree — and the measurement
+independently puts it second worst.
+
+Same caveat as the desktop table: this is a **regression and triage** baseline,
+not a grade. A screen is compared to its own earlier capture, and the ordering
+tells you where to spend a cycle, nothing more.
+
 ## The desktop regression baseline — 20 screens, rebuilt
 
 `$SCRATCH/verify-desktop` now holds all 20 desktop screens captured from the
