@@ -53,14 +53,48 @@ function AppleMark() {
   )
 }
 
-/** Google "G", four-colour, drawn inline. */
+/** Google "G", four-colour, drawn inline.
+ *
+ *  These are NOT the official Google brand palette. Canonical does not use it,
+ *  on either surface. Measured with a distance-shell plateau estimator — mask
+ *  each arc by hue, take the Euclidean distance transform, average only the
+ *  shell at d in [3,4) so the read is interior material rather than the
+ *  antialiased rim or the unsharp ring — canonical iOS 003 draws:
+ *
+ *    arc      canonical        official (was)     shipped
+ *    red      240.4  55.7 45.1  234  67  53       #F0372D
+ *    yellow   252.2 199.7 15.8  251 188   5       #FDC80F
+ *    green     32.8 164.4 81.9   52 168  83       #21A552
+ *    blue      60.4 135.4 250.4  66 133 244       #3C86FA
+ *
+ *  Take the plateau, never the most-saturated pixel: canonical is
+ *  unsharp-masked, so its extreme pixel is overshoot, not ink (ledger rule 8).
+ *  The estimator has no bias of its own — run against our own flat fills it
+ *  returns them exactly.
+ *
+ *  This is not canonical's capture chain. That chain leaves flat fills alone:
+ *  on the same image the orange plate reads (251.7, 56.2, 2.1) against our
+ *  (253, 55, 1), black (2.2, 1.8, 1.6) against (0,0,0) and white paper
+ *  (253.9) against (255) — every one within 2.2 units, where the arcs differ
+ *  by 6 to 20 and in different directions per channel (green's R is -19 while
+ *  red's R is +6), which no single chain effect produces.
+ *
+ *  It is corrected HERE, in shared markup, rather than in PHONE_CSS — the
+ *  opposite of the fill/stroke corrections below it — because canonical
+ *  DESKTOP 077 disagrees with the official palette in the SAME direction:
+ *  measured there, green R 32.7 against official 52, yellow G 193.8 against
+ *  188, blue B 251.2 against 244. Both canonical surfaces want the same
+ *  change, so making it shared moves 077 toward canonical, not away. The phone
+ *  values are the ones used because that measurement is far better
+ *  conditioned: a 47px mark with 19-52 px in the d[3,4) shell, against a 24px
+ *  mark with 4-23 px at d[2,3) on desktop. */
 function GoogleMark() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
-      <path fill="#4285F4" stroke="#4285F4" strokeWidth="0" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.5h12.1c-.2 1.9-1.6 4.8-4.5 6.8l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7Z"/>
-      <path fill="#34A853" stroke="#34A853" strokeWidth="0" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.02-6.7 5.2-.1.3C7.9 41 15.4 46 24 46Z"/>
-      <path fill="#FBBC05" stroke="#FBBC05" strokeWidth="0" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4 0-1.5.3-3 .7-4.4v-.3l-6.8-5.3-.2.1A22 22 0 0 0 2 24c0 3.5.9 6.9 2.5 9.9l7-5.5Z"/>
-      <path fill="#EA4335" stroke="#EA4335" strokeWidth="0" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.4 1 7.9 6 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1Z"/>
+      <path fill="#3C86FA" stroke="#3C86FA" strokeWidth="0" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.5h12.1c-.2 1.9-1.6 4.8-4.5 6.8l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7Z"/>
+      <path fill="#21A552" stroke="#21A552" strokeWidth="0" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.02-6.7 5.2-.1.3C7.9 41 15.4 46 24 46Z"/>
+      <path fill="#FDC80F" stroke="#FDC80F" strokeWidth="0" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4 0-1.5.3-3 .7-4.4v-.3l-6.8-5.3-.2.1A22 22 0 0 0 2 24c0 3.5.9 6.9 2.5 9.9l7-5.5Z"/>
+      <path fill="#F0372D" stroke="#F0372D" strokeWidth="0" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.4 1 7.9 6 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1Z"/>
     </svg>
   )
 }
@@ -205,9 +239,17 @@ export default function SignInPage() {
           <PageTitle size={63} data-s3="display">
             <ResponsiveTitle phone="SIGN IN" web="WELCOME BACK" />
           </PageTitle>
-          <p data-s3="body" className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
+          {/* The phone lede is TWO runs, not one with a line-height. Canonical's
+              L1->L2 baseline delta is 38.12; a single element can only reach 37.00
+              or 39.00 because the line box quantises to two device rows, so the
+              best a line-height can do is -1.12. Placed independently each line
+              lands on its own one-device-px lattice and the delta closes to
+              -0.12. Phone-only: this whole branch is `md:hidden`, so 077 keeps
+              its own single-line copy untouched. */}
+          <p data-s3-contents className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
             <span className="md:hidden">
-              Continue your training, saved<br />analyses, and progress.
+              <span data-s3="body">Continue your training, saved</span>
+              <span data-s3="bodyB">analyses, and progress.</span>
             </span>
             <span className="hidden md:inline">Sign in to continue your training.</span>
           </p>

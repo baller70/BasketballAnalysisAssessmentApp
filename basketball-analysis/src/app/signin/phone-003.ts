@@ -394,9 +394,21 @@ export const RUNS: Record<string, Run> = {
      display and Boxed), so the x-height ratio is not selectable, and the joint
      fit below is the minimax: cap +0.298 / -0.461, advance -0.31 / +1.50,
      ink -2.5% / +2.1%. */
+  /* The lede is TWO runs. As one element with a `line-height` it could only
+     reach an L1->L2 baseline delta of 37.00 or 39.00 against canonical's 38.12,
+     because a line box quantises to two device rows — swept, `line-height`
+     35.99 / 36.60 both give 37.00 and 37.20 / 37.80 / 38.20 / 38.90 all give
+     39.00, so the best a leading can do is -1.12. Placed independently each
+     line gets its own ONE-device-px lattice and the two can be chosen against
+     each other: L1 one row up, L2 where it already was. Delta -1.123 -> -0.123,
+     L1 baseline +1.75 -> +0.75, L2 baseline +0.63 unchanged, and the two lines'
+     bands read 13.81 + 22.70 = 36.51 against 37.22. Size, scaleX and weight are
+     the joint minimax solved across both lines and are unchanged; only the
+     placement is now per line. */
   body: { x: 52, top: 382.38, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
-          colour: "var(--s3-graphite)", dx: -0.86, tx: -0.0358, dy: 6.075, ty: 1.1626,
-          lead: 35.989 },
+          colour: "var(--s3-graphite)", dx: -0.86, tx: -0.0358, dy: 6.075, ty: 0.7019 },
+  bodyB: { x: 52, top: 420.37, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
+           colour: "var(--s3-graphite)", dx: -0.86, tx: -0.0358, dy: 6.075, ty: 0.2412 },
   labelEmail: { x: 53, top: 527.31, size: 12.784, weight: 646, scale: 0.7444, ls: 0.0514,
                 colour: "var(--s3-label)", dx: 1.68, dy: 6.13, tx: -0.2228, ty: 0.3096 },
   helpEmail: { x: 53, top: 699.34, size: 12.548, weight: 401, scale: 0.8149, ls: 0.0230,
@@ -514,6 +526,7 @@ ${runCss("wordmark", RUNS.wordmark)}
 ${runCss("eyebrow", RUNS.eyebrow)}
 ${runCss("display", RUNS.display)}
 ${runCss("body", RUNS.body)}
+${runCss("bodyB", RUNS.bodyB)}
 ${runCss("labelEmail", RUNS.labelEmail)}
 ${runCss("helpEmail", RUNS.helpEmail)}
 ${runCss("labelPass", RUNS.labelPass)}
@@ -587,6 +600,30 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
    colour. */
 .s3 [data-s3="appleMark"] path{fill:#000000}
 .s3 [data-s3="googMark"] path{stroke-width:1.35}
+/* Canonical's Google arcs are NOT the official brand palette. Measured with a
+   distance-shell plateau estimator — mask each arc by hue, distance-transform
+   it, average only the shell at d in [3,4) so the read is interior material
+   rather than the antialiased rim or the unsharp ring:
+
+     arc      canonical            official (markup)   here
+     red      240.4  55.7  45.1    234  67  53         #F0372D
+     yellow   252.2 199.7  15.8    251 188   5         #FDC80F
+     green     32.8 164.4  81.9     52 168  83         #21A552
+     blue      60.4 135.4 250.4     66 133 244         #3C86FA
+
+   Never the most-saturated pixel: canonical is unsharp-masked, so the extreme
+   pixel is overshoot (rule 8). The estimator is unbiased — run against a flat
+   fill it returns it exactly.
+   This is not canonical's capture chain. That chain leaves flat fills alone: on
+   the same image the orange plate reads (251.7, 56.2, 2.1) against our
+   (253, 55, 1), black (2.2, 1.8, 1.6) against (0,0,0) and white paper (253.9)
+   against (255) — all within 2.2 units, where the arcs differ by 6 to 20 and in
+   opposite directions per channel (green's R is -19 while red's R is +6), which
+   no single chain effect produces. */
+.s3 [data-s3="googMark"] path[data-arc="red"]{fill:#F0372D;stroke:#F0372D}
+.s3 [data-s3="googMark"] path[data-arc="yellow"]{fill:#FDC80F;stroke:#FDC80F}
+.s3 [data-s3="googMark"] path[data-arc="green"]{fill:#21A552;stroke:#21A552}
+.s3 [data-s3="googMark"] path[data-arc="blue"]{fill:#3C86FA;stroke:#3C86FA}
 .s3 [data-s3="appleMark"] svg,.s3 [data-s3="googMark"] svg,.s3 [data-s3="focus"] svg{
   width:100%;height:100%;display:block}
 .s3 [data-s3="error"]{position:absolute;left:${u(52)};top:${u(1222)};width:${u(750)};

@@ -78,8 +78,14 @@ export function Marks003({ emailOk }: { emailOk: boolean }) {
             stroke={SLATE} strokeWidth={3.59} fill="none" />
 
       {/* the two OR hairlines */}
-      <rect x={52} y={1291.25 - 0.9} width={338} height={1.8} fill={HAIR} />
-      <rect x={461} y={1291.25 - 0.9} width={338} height={1.8} fill={HAIR} />
+      {/* Ends measured off canonical at 50% of each rule's own peak, on the
+          rule's own centre row: left 51.70..391.31, right 460.64..799.78, so the
+          centre gap is 69.33 and each rule is 339.6/339.1 long. The rules are
+          drawn geometry here, not a flex row around the label, so the gap is
+          these two rects and nothing else — 52..390 and 461..799 left it 71.00,
+          1.67 px wide, with each rule 1.6 px short. */}
+      <rect x={51.70} y={1291.25 - 0.9} width={339.61} height={1.8} fill={HAIR} />
+      <rect x={460.64} y={1291.25 - 0.9} width={339.14} height={1.8} fill={HAIR} />
     </svg>
   )
 }
