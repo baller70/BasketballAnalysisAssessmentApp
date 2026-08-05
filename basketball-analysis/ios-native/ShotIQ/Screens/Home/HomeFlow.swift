@@ -754,13 +754,47 @@ struct ProfileMenuView: View {      // 020
                     HStack(spacing: 14) {
                         Image(systemName: "camera.metering.center.weighted").font(.system(size: 24))
                             .foregroundStyle(ShotIQColor.ink)
+                        // NO Spacer HERE, AND THE LABEL COLUMN CLAIMS THE SLACK
+                        // ITSELF. A Spacer and a Text are both flexible, so an
+                        // over-budget HStack splits the leftover width between
+                        // them — and Text compresses furthest, so Text loses.
+                        // That starved this column to under one word: the
+                        // capture measured thirteen consecutive short lines,
+                        // narrowest 23 device px of 1178, i.e. "DASHBOARD MODE"
+                        // set as DASH / BOAR / D / MODE and the sentence below
+                        // it broken mid-word.
+                        //
+                        // The `.fixedSize` on the segmented control below is
+                        // NOT the culprit and must stay — it is there because
+                        // the control used to be the thing that collapsed
+                        // ("Analy sis" / "Traini ng"). Making it incompressible
+                        // only moved the squeeze to the next-most-flexible
+                        // child. Removing the Spacer and giving this column the
+                        // remaining width outright is what actually settles it,
+                        // because then nothing is competing for the slack.
+                        //
+                        // Canonical 020-profile-menu keeps all three side by
+                        // side — icon, label column, control — with the
+                        // sentence wrapping to exactly two lines, so this is a
+                        // width fix and NOT a licence to restack the row.
                         VStack(alignment: .leading, spacing: 3) {
                             Text("DASHBOARD MODE").shotiqCondensed(14, weight: .heavy).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.ink)
+                                .fixedSize(horizontal: false, vertical: true)
                             Text("Choose what you see first when you open ShotIQ.")
                                 .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        Spacer()
+                        // maxWidth WITHOUT a layoutPriority, deliberately. An
+                        // HStack allocates to its least flexible children
+                        // first, so the `.fixedSize` control takes its ideal
+                        // width and this column then absorbs whatever is left.
+                        // Adding `.layoutPriority(1)` here would invert that —
+                        // this column would be laid out first against the full
+                        // width, take all of it, and starve the control back
+                        // into "Analy sis" / "Traini ng". The priority is the
+                        // fixedSize, not a number.
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         HStack(spacing: 0) {
                             ForEach(["Analysis", "Training"], id: \.self) { mode in
                                 Button {
