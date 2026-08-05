@@ -974,7 +974,17 @@ that **nothing in CI deploys the live site.**
   so every wakeup rediscovered the wrong story.
 
 - **Broker lanes** (repo `baller70/kcloud-xcode-runner`, self-hosted runner on
-  Kevin's Mac, Xcode on `/Volumes/APPLICATIONS`). Fire by pushing a branch:
+  Kevin's Mac, Xcode on `/Volumes/APPLICATIONS`). **The fire branch is pushed to
+  the BROKER repo, not to the app repo** — `git push -f` from a checkout of
+  `kcloud-xcode-runner` (add it with `add_repo`; it lands at
+  `/workspace/kcloud-xcode-runner`). Pushing `device/BasketballAnalysisAssessmentApp`
+  to `origin` in the app repo is silent: it creates a branch nobody watches, no
+  run appears, and the only symptom is a broker run list that never grows. That
+  cost 25 minutes here. The branch NAME carries the target repository, and the
+  broker checks out the target ref itself, so the commit being pushed is only a
+  trigger — but it must CHANGE the ref, or the push is "Everything up-to-date"
+  and nothing fires. `git commit --allow-empty` is the reliable way to fire the
+  same target twice. Fire by pushing a branch:
   `device/BasketballAnalysisAssessmentApp` installs onto the connected iPhone;
   `simshots/BasketballAnalysisAssessmentApp` boots a simulator, walks every
   canonical screen and publishes one PNG per screen as a run artifact. Use the
