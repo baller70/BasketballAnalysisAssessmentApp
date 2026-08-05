@@ -247,7 +247,15 @@ export const RUNS: Record<string, Run> = {
              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
                 colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  helpPass: { x: 69.56, top: 1263.08, size: 12.55, weight: 380, scale: 0.900, ls: -0.004,
+  /* "Use at least 8 characters." Band 10.949 -> 4.571, size 12.55 -> 10.35 and
+     scaleX 0.900 -> 0.945. A clean size error and it said so plainly: advance
+     ratio 0.86882 against vertical ratio 0.86378, both ~13.5% over and within
+     0.6% of each other, so almost all of it is size with a small scale trim.
+     dx is unchanged: -0.5 and 0.934 scored identically (layout lattice), so a
+     new value would be invented precision.
+     Rule 40 control at the recipe's own values reproduced the built capture's
+     10.9493 exactly, which is what licenses reading the rest of the sweep. */
+  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.945, ls: -0.004,
               colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: 0, ty: 0 },
   /* "I agree to the Terms of Use and Privacy Policy." Band 20.078 -> 10.666,
      at size 14.46 -> 11.5 and scaleX 0.900 -> 0.95.
