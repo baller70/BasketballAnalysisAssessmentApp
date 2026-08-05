@@ -780,6 +780,23 @@ string rolling over at midnight.
     uniform. Forcing a box change to chase the number would break rule 24 and
     the standing ruling against padding a metric.
 
+41. **A capture's target ref is read when the JOB STARTS, so a moving branch is
+    not a reproducible experiment.** The unclamped falsification arm is fired by
+    flipping one line in `scripts/simshots-config.sh` and pointing the broker at
+    a branch. Fire, then revert the line a minute later, and which configuration
+    actually ran depends on whether the runner had reached its `git clone` yet —
+    a race, decided by CI scheduling, on the one run whose entire purpose is to
+    settle a claim.
+
+    Two things follow. **`falsify/no-type-clamp` is a FROZEN branch** holding the
+    diagnostic config permanently (at ee8fa62); fire the falsification against
+    that ref and no revert is ever needed, so the working branch never carries a
+    config that must not merge. And **every artifact records `target-head.txt`**
+    — the exact target SHA the job checked out. Read it before reading any
+    pixels: it says which arm actually ran, and it is the difference between an
+    experiment and a coin flip. The same file is how a run's provenance
+    (repository, ref, content size) gets confirmed at all.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
