@@ -33,7 +33,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
 | 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
-| 004 | create-account | IN PROGRESS | — | canonical is the FILLED state. Harness was reading a stale scratchpad route map and shooting the EMPTY form with "step fails 0" — fixed at 82a3a7f. display run solved 89.96 → 14.80 (scaleX 0.8539 → 1.0195, stroke 0.33); whole screen 11.457 → 11.112. Remaining bands, worst first: lede 21.19 (solved to 12.77 in-page, not yet baked), terms 20.08, labConfirm 16.45, monogram 13.80, oneacct 12.91 |
+| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 6.302**. VERIFIED in built captures: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342 (labConfirm 16.447->8.384). Open: monogram 13.804 (residual, see rule 40 — every geometry tried is worse), oneacct 12.912, eyePass 11.556, eyeConf 11.361, helpPass 10.949, plate 10.549, fieldEmail 10.524, checkbox 9.314, wordmark 8.716, signin 6.699 |
 | 005+ | … | not started | — | |
 
 ## The native app has layout defects the 72 web rows above never measured
@@ -730,6 +730,32 @@ string rolling over at midnight.
     reads `completed`. Also note the job API can serve stale `in_progress` state
     for a while — this job read as running 30 minutes after its own
     `completed_at`. Trust `completed_at` and the artifact list, not the status.
+
+40. **A sweep result identical across inputs that should differ is not a
+    measurement — put a control in every sweep.** Solving 004's monogram, an
+    81-candidate sweep returned 9.5756 for its winner against a 13.8039
+    baseline, and SIX different (left, top) inputs all returned that same number
+    to four decimals. Re-run alone, the identical CSS reproduced 20.9480 four
+    times — WORSE than baseline. The 9.5756 measured nothing; the page was in
+    some other state, and it happened to point the flattering way, which is the
+    direction that gets acted on (rule 24).
+
+    Two cheap defences, both now in place. Every sweep carries a CONTROL
+    candidate set to the recipe's own current values: it must reproduce the
+    built capture's number for that band, and if it does not, nothing else in
+    the run is trustworthy. And `sweep-run.mjs` now records each candidate's
+    post-injection `getBoundingClientRect` and computed font-size/transform in
+    `index.json`, so "these two candidates differed" is checkable rather than
+    assumed.
+
+    The monogram itself is left ALONE. Every geometry tried scored worse than
+    the recipe, so the 13.804 residual stands as measured: the render sits
+    0.93px too tall and 1.39px too narrow (aspect 1.291 against canonical's
+    1.343), which is a shape-coordinate error inside the traced SVG, not a box
+    error — the box uses `viewBox="80 424 76 58"` matching its CSS box exactly,
+    so scaling the box moves every edge uniformly and the measured error is not
+    uniform. Forcing a box change to chase the number would break rule 24 and
+    the standing ruling against padding a metric.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

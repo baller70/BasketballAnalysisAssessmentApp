@@ -96,9 +96,37 @@ for (const [i, c] of candidates.entries()) {
       .map(([r, d]) => `.s4 [data-s4="${r}"]{${d}}`).join('\n')
   }, { decls })
   await p.waitForTimeout(220)
+
+  // READ THE CANDIDATE BACK BEFORE BELIEVING THE SHOT.
+  //
+  // A sweep of 81 monogram candidates returned 9.5756 for the winner, and
+  // six DIFFERENT (left, top) inputs all returned that same number to four
+  // decimals. Re-run on its own, the same CSS reproduced 20.9480 four times —
+  // worse than the unmodified baseline. The first figure was not a measurement
+  // of anything; it was the page in some other state, and it happened to look
+  // like an improvement, which is the direction that gets acted on.
+  //
+  // So each candidate now records the element's own post-injection geometry.
+  // A scorer can assert that the geometry actually CHANGED between candidates
+  // that were supposed to differ, and identical geometry across different
+  // inputs is proof the run is not measuring what it claims.
+  const applied = await p.evaluate((runs) => {
+    const out = {}
+    for (const r of runs) {
+      const el = document.querySelector(`[data-s4="${r}"]`)
+      if (!el) { out[r] = null; continue }
+      const b = el.getBoundingClientRect()
+      const cs = getComputedStyle(el)
+      out[r] = { x: +b.x.toFixed(3), y: +b.y.toFixed(3),
+                 w: +b.width.toFixed(3), h: +b.height.toFixed(3),
+                 fontSize: cs.fontSize, transform: cs.transform }
+    }
+    return out
+  }, RUN.split(',').map((s) => s.trim()).filter(Boolean))
+
   const file = path.join(OUT, `c${String(i).padStart(3, '0')}.png`)
   await p.screenshot({ path: file })
-  index.push({ label: c.label, css: c.css, file })
+  index.push({ label: c.label, css: c.css, file, applied })
 }
 fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index, null, 2))
 console.log(`${index.length} candidates -> ${OUT}`)
