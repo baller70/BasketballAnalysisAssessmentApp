@@ -136,7 +136,7 @@ screens are the three best on the entire set, and it is not close:**
 | screen | mean \|d\| | state |
 |---|---|---|
 | 001 splash | **2.493** | DONE, A+ |
-| 003 sign-in | **3.772** | awaiting grade |
+| 003 sign-in | **3.772** | graded A, display-face condition open |
 | 002 welcome | **6.528** | DONE, A |
 | 033 live-form-feedback | 15.109 | best untouched screen |
 | … | … | |
