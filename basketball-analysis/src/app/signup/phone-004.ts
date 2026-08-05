@@ -199,15 +199,38 @@ export const RUNS: Record<string, Run> = {
            colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
   oneacct: { x: 188.97, top: 444.30, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
              colour: "var(--s4-graphite)", dx: -0.86, dy: 6.075, tx: 0, ty: 0 },
-  labFirst: { x: 69.39, top: 564.61, size: 14.30, weight: 700, scale: 0.640, ls: 0.0500,
+  /* THE FIVE MICRO-CAP LABELS, SOLVED JOINTLY (rule 14): size 14.30 -> 14.15,
+     scaleX 0.640 -> 0.62. Summed band mean 44.347 -> 28.342.
+       labFirst   7.933 -> 5.535     labPass    8.152 -> 5.568
+       labLast    8.521 -> 5.267     labConfirm 16.447 -> 8.384
+       labEmail   3.294 -> 3.589  <- the one that got WORSE, and it stays.
+     labEmail regressing 0.295 while the other four gain 11.7 between them is
+     the joint solve working as intended. Canonical sets these five at ONE cap;
+     fitting each locally would let five different sizes each look plausible
+     while the column reads wrong, which is the mistake rule 14 exists to stop.
+     Do not "fix" labEmail on its own.
+
+     What made this one screen-level defect rather than five: the advance ratios
+     came back 0.9530 / 0.9338 / 0.9549 / 0.9438 / 0.9436 — one shared error of
+     about 5.4%, not five independent ones. The band means looked wildly
+     different (labConfirm 16.45 against labEmail 3.29) only because 5.4% of
+     labConfirm's 212px run is 11.5px of accumulated drift while the same
+     fraction of labEmail's 62px run is 3.3px. Run LENGTH, not defect size.
+
+     dx stays 1.68: dx 1.13 and 1.68 score identically because the layout
+     lattice quantises, so moving it would record precision that was never
+     measured. Cap heights are not used here at all — the baseline snaps to a
+     whole device pixel on this screen, which puts ~5% noise on any cap ratio
+     (see the terms run). */
+  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
               colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labLast: { x: 69.39, top: 748.85, size: 14.30, weight: 700, scale: 0.640, ls: 0.0500,
+  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labEmail: { x: 69.39, top: 931.45, size: 14.30, weight: 700, scale: 0.640, ls: 0.0500,
+  labEmail: { x: 69.39, top: 931.45, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
               colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labPass: { x: 69.40, top: 1111.61, size: 14.30, weight: 700, scale: 0.640, ls: 0.0500,
+  labPass: { x: 69.40, top: 1111.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labConfirm: { x: 69.35, top: 1316.29, size: 14.30, weight: 700, scale: 0.640, ls: 0.0500,
+  labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
                 colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   helpPass: { x: 69.56, top: 1263.08, size: 12.55, weight: 380, scale: 0.900, ls: -0.004,
               colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: 0, ty: 0 },
