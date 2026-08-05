@@ -210,7 +210,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — twenty, each learned by getting something wrong
+## Method rules — twenty-two, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -301,6 +301,20 @@ string rolling over at midnight.
     003's display solve compared two of four Tungsten cuts and declared the
     better one final. A 7.4% thin stem is what an untried heavier cut would
     move. "Alternatives measured worse" means ALL of them.
+
+21. **A ratio taken INSIDE a run is scaleX-invariant, and that is what identifies
+    a face.** On 003 the display stem pointed at Tungsten Bold, and Bold does
+    land it — 16.05 against canonical's 16.09 where Semibold reads 14.79. What
+    disproved it was I/N, the ratio of two ink widths in the same run: canonical
+    0.3574, Semibold 0.3590, Bold 0.4196. Absolute widths can always be fitted
+    with scaleX; a within-run ratio cannot. Reach for one before concluding a
+    face is right or wrong.
+22. **Segmenting an N returns `nan` on exactly the cuts under test.** Its
+    diagonal welds to the left stem near the top and the right stem near the
+    bottom, so demanding three clean column segments fails on heavy weights —
+    the ones a stem investigation is about. Read the RIGHT stem across the top
+    of the glyph and the LEFT stem across the bottom. That reproduces
+    canonical's 16.08 / 15.84 to within 0.02.
 
 ## Standing rulings
 
