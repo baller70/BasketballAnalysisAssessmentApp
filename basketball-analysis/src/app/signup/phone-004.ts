@@ -376,9 +376,27 @@ export const MASKS = {
 const MARKS = `
 .s4 [data-s4="monogram"]{position:absolute;left:${u(80)};top:${u(424)};width:${u(76)};height:${u(58)};
   display:block;pointer-events:none}
-.s4 [data-s4="eyePass"]{position:absolute;left:${u(712)};top:${u(1180)};width:${u(46)};height:${u(42)};
+/* THE TWO EYE MARKS WERE ONE DEFECT. Both rendered ~7% oversized in BOTH
+   dimensions - width ratios canonical/render 0.928 and 0.931, height ratios
+   0.934 and 0.946 - i.e. a uniform scale error on a shared component, not two
+   placements gone wrong. Box 46x42 -> 43.6x40.0 at left 712 -> 713.1, tops
+   +0.8. eyePass 11.556 -> 8.731, eyeConfirm 11.361 -> 7.499.
+   Unlike the monogram, this error IS uniform, which is why scaling the box is
+   the right lever here and was the wrong one there.
+   Vertical placement is NOT the residual: sweeping each eye's top independently
+   over a 2.4px range moved the score by 0.001, so what remains is the traced
+   SVG's own shape, stated rather than forced.
+   THE SELECTOR IS eyeConfirm, NOT eyeConf. The band label in
+   measure/report004.py is eyeConf; the DOM attribute is eyeConfirm. A sweep
+   addressed to eyeConf silently changed nothing and returned the control's
+   score for every candidate - caught only because rule 40's read-back reported
+   eyeConfirm as null. Without it this would have shipped as a fix that moved
+   one eye.
+   NOTE: this comment lives INSIDE a template literal, so it is emitted as a
+   CSS comment. No backticks, no dollar-brace - either would end the literal. */
+.s4 [data-s4="eyePass"]{position:absolute;left:${u(713.1)};top:${u(1180.8)};width:${u(43.6)};height:${u(40)};
   padding:0;margin:0;transform:none;display:block}
-.s4 [data-s4="eyeConfirm"]{position:absolute;left:${u(712)};top:${u(1383.3)};width:${u(46)};height:${u(42)};
+.s4 [data-s4="eyeConfirm"]{position:absolute;left:${u(713.1)};top:${u(1384.1)};width:${u(43.6)};height:${u(40)};
   padding:0;margin:0;transform:none;display:block}
 .s4 [data-s4="focus"]{display:block;position:absolute;left:${u(252 - PLATE.x)};
   top:${u(1557 - PLATE.y)};width:${u(64)};height:${u(66)}}
