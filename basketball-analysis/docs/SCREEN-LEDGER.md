@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | GRADED **A**, one condition open | **A** | A+ withdrawn to A after its own falsification failed; A is conditional on the display face — see below |
+| 003 | sign-in | RE-GRADING | — | A was conditional on the display face; condition answered, word-spacing defect found and fixed, render changed, fresh grader running |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -111,10 +111,40 @@ against 14.92/14.68 (-7.4%); word space 48.67 against 54.31 (+11.6%) while the
 total block width matches to 0.15 px. Its ruling: if a closer display face
 exists in the pack and was not tried, that is fixable and the grade drops to A-.
 
-**It was not tried.** The pack ships four Tungsten cuts — medium, semibold, bold,
-black — and the solve compared exactly two, Semibold (ink -2.0%) against Medium
-(+5.3%). Bold and Black were never measured, and a 7.4% thin stem is precisely
-what a heavier cut would move. Back with the builder for a four-way table.
+**It was not tried, and the challenge was well aimed.** All four cuts were then
+solved to their own optimum, and **Bold does land the stem** — N stem 16.05
+against canonical's 16.09, where Semibold reads 14.79.
+
+It is still the wrong cut, and what settles it is rule 9's kind of measurement:
+**I/N, the ratio of two ink widths inside the same run, from which scaleX
+cancels entirely.** Canonical 0.3574; Semibold 0.3590, a 0.4% miss; Bold 0.4196,
+out by 17%. Bold reaches the stem only by being squeezed to scaleX 0.789, which
+thins the verticals into place while leaving horizontals and bowls Bold-thick,
+and its ladder sits above 1.0 at every level (1.075-1.131) — genuinely heavy by
+rule 4. Semibold is the only one of the four that straddles.
+
+The stem residual is then unreachable, with rule 13's algebra. Canonical needs
+I/N 0.3574 and stem/I 0.9013 simultaneously. Across the four cuts I/N RISES with
+weight (0.2777 / 0.3477 / 0.4194 / 0.4821) while stem/I FALLS (0.8874 / 0.8432 /
+0.8156 / 0.7807). Monotone in opposite directions, so I/N pins the weight just
+above Semibold where stem/I is 0.843 against 0.9013 — 6.9% out, worse in either
+direction, and these are four discrete OTFs with nothing in between.
+
+The round-glyph overshoot is a family property, not a weight: every cut
+overshoots the flat cap by +2.002 where canonical overshoots by +0.114.
+
+**One real defect fell out of the exercise.** Word spacing was 7.14, putting the
+word space 11.9% wide and dragging "IN" right by up to 3.80 px. Swept, 5.90 is
+the joint minimum of glyph-position RMS (2.11 -> 0.98) and display-band mean |d|.
+Verified independently: whole screen **3.7724 -> 3.6792**, display band
+9.989 -> 8.568, and the 2,376 changed pixels are confined to y227-344 x302-382,
+which is exactly the word "IN". Desktop 077 stays byte-identical to the pre-003
+baseline (md5 69b2184b0f0e7553108d23c2aae71071), so the change is fully
+phone-scoped.
+
+The render therefore changed and the A no longer applies to it. A **fresh**
+grader is running on the new capture (`verify-003b`, md5
+ac331962d5c481cf477707e3d2b73ee6).
 
 A method note worth keeping: the first pass of this verification used one
 permissive threshold and produced five false findings of 100+ px band
