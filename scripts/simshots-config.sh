@@ -33,4 +33,4 @@
 # If both arms come back identical, the clamp is not what fixed it and the real
 # cause is still out there. Leave this commented in the committed state so the
 # routine CI capture measures the SHIPPING configuration.
-# : "${SIMSHOTS_EXTRA_ARGS:=-uiTestNoTypeClamp}"
+: "${SIMSHOTS_EXTRA_ARGS:=-uiTestNoTypeClamp}"
