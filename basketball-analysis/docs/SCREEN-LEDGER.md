@@ -32,10 +32,39 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | IN PROGRESS | — | checkpointed at ed032eb and 2fd4d6c; type within ±0.35 capTop / ±0.19 cap / ±2% ink on all but 4 runs; desktop-077 guard run and clean except a 163px mark leak relayed to the builder |
+| 003 | sign-in | AWAITING GRADE | — | builder finished at `32d4353`; verified independently below; fresh grader running |
 | 004+ | … | not started | — | |
 
-## Method rules — thirteen, each learned by getting something wrong
+## 003 — independent verification, before the grade
+
+Re-measured from scratch rather than taken from the builder's report. The
+measurement script shares no code with its solver.
+
+- `tsc --noEmit` clean. Own production build into `.next-v3`, served on 3192.
+- Capture via `ONLY=003`: 1/1, 0 gaps, 0 step failures, 0 wider than 393pt.
+- Band alignment at matched threshold 160: **18 ink runs each side, worst
+  |dtop| 1 device px, worst |dh| 1, mean dtop -0.06.** No shared sign, so no
+  container offset (rule 15).
+- Whole-screen mean |d| against canonical **3.772**, reproducing the builder's
+  figure exactly by an independent route.
+- **Desktop guard clean: 0 pixels differ** from the pre-003 baseline, and 077
+  sits identically against canonical (mean 22.547 / 291,046 over 8 / 199,886
+  over 32). Desktop DOM reads `rgb(17,17,17)` and `0px`, so the AppleMark and
+  GoogleMark leak is closed in pixels and not merely in markup.
+
+**Open residual found here, not in the builder's report:** the render's canvas
+is 1849 device px tall against canonical's 1844. Ink extent is identical on both
+sides — y41-1730 at 50% coverage — so all 5 px are trailing empty canvas below
+the last ink, 118 blank rows against 113. Invisible, but it is a real difference
+in document height and it gets closed or explicitly accepted before DONE.
+
+A method note worth keeping: the first pass of this verification used one
+permissive threshold and produced five false findings of 100+ px band
+displacement, which were canonical's unsharp halo bridging bands the render
+keeps separate. Sweeping the threshold (rule 6) collapsed the worst case to
+1 device px. Rule 6 is not optional.
+
+## Method rules — seventeen, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
