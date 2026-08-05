@@ -96,6 +96,16 @@ iOS 001 -> 072, then desktop 077 -> 096.
     permanently with `stroke-width="0"` in the markup and raise the width only
     inside the query — a zero-width stroke paints nothing.
 
+17. **Ask what STATE canonical is in before measuring a single band.** Canonical
+    003 is not an empty sign-in form — it shows a typed address, a 16-character
+    password masked to 16 bullets, a green validation ring and two "Looks good."
+    lines, all of it live validation that does not exist until the player types.
+    Measuring it against a default render compares two different screens, and
+    several bands have no counterpart at all. The capture harness now has `fill`
+    and `blur` steps for this; put the state in the route map so it is reached
+    the way a player reaches it. **Check 004-007 for the same thing before
+    starting them** — every form screen is a candidate.
+
 Also: **check the ASSET, not just the CSS** (002 drew an entirely different
 photograph at the right size and position), and **a large desktop-guard diff is
 often live data** — 1,495 of 1,508 differing pixels on one run were 079's date
