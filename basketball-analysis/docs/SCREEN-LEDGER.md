@@ -32,7 +32,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 |---|---|---|---|---|
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
-| 003 | sign-in | GRADED **A-** (4th grader) | **A-** | footer runs ~6.5% undersized, hidden by scaleX compensation on a matched advance; back with the builder |
+| 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
 | 004+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
@@ -145,6 +145,33 @@ phone-scoped.
 The render therefore changed and the A no longer applies to it. A **fresh**
 grader is running on the new capture (`verify-003b`, md5
 ac331962d5c481cf477707e3d2b73ee6).
+
+### 003 FINAL — A, closed
+
+Fourth grader, on the shipping capture `834c8b18`. It graded A- on the footer
+being undersized, then **withdrew its own defect** when its falsification was
+run: the three targets are inversely coupled and mutually unsatisfiable
+(size-ratio needs x1.065, its shape target x0.973, canonical's actual shape
+x0.921), and its own `shape.py` table already contained the refutation with the
+sign misread. Verified here independently by a different estimator: footer1's
+`o` reads width x0.909 and height x1.103 against canonical, so no font-size
+fixes it.
+
+It also retired its ratio estimator as a fault-detector: "the face cancels
+between two runs of one image" needs one shared face AND one shared scale on
+both sides. Canonical has that (its `o` w/h fingerprint spans 0.826-0.869 across
+five body runs). The render does not, because every run was solved to its own
+advance and cap. The estimator survives only as a dispersion statistic.
+
+**Accepted residuals, all bounded and recorded:** the body x-height and
+wordmark/H1 letterform pack residuals; per-run vertical dispersion of 8.6-11.3%
+including three runs the baseline fix itself regressed; and footer1 interior
+word displacement of -2 to -3 px driven by the apostrophe and question-mark
+advances, with both line ends correct to 1 px.
+
+Final: whole screen **3.644** mean |d| (7.015 at the start), worst residual over
+27 runs 0.74 device px of cap-top, 19/19 bands within 1 row, desktop 077
+byte-identical to baseline, functional contract green.
 
 ### Defect 1 of 2 closed — the baseline split
 
@@ -315,7 +342,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — thirty-two, each learned by getting something wrong
+## Method rules — thirty-four, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -511,6 +538,23 @@ string rolling over at midnight.
     it immune to the adjudicated x-height residual. A size-invariant shape
     check corroborates: `o`-width/`o`-height put canonical's five body runs in
     a 5.2% band while ours had the footer 4-15% off its own ramp.
+
+33. **A falsification can be unsatisfiable by construction — check BOTH branches
+    are physically reachable before running it.** 003's fourth grader asked for
+    o w/h to "fall from 0.777 to 0.842" (0.842 is higher than 0.777 — the
+    sentence is incoherent on its face) and for w/h and size to rise together.
+    At a pinned advance they cannot: width goes as f·s and advance goes as f·s,
+    so pinning the advance pins the width, height goes as f alone, and therefore
+    **w/h goes as 1/size**. Its confirm branch was impossible for any render to
+    satisfy, so the outcome fell in the gap between its two branches. A test only
+    one branch can pass is not a test, and the claim it defends does not survive
+    its removal. The grader found this itself and withdrew the defect.
+34. **Matched width with excess height means the FACE, not the size.** The
+    footer's `o` measures width x0.909-0.986 and height x1.068-1.103 against
+    canonical depending on estimator — every estimator agrees on the direction.
+    No font-size produces that: raising size worsens the height, lowering it
+    worsens the width. Read the two axes together before calling anything a size
+    error; a height gap alone is not evidence.
 
 ## Standing rulings
 
