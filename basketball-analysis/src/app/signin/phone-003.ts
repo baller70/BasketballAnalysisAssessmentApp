@@ -245,19 +245,70 @@ export const RUNS: Record<string, Run> = {
               colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: -0.0527, ty: -0.0958 },
   eyebrow: { x: 51, top: 99.37, size: 12.053, weight: 501, scale: 0.9977, ls: 0.1115,
              colour: "var(--s3-eyebrow)", dx: 0.0, dy: 5.28, tx: 0.4064, ty: 0.7938 },
-  /* SIGN IN — Tungsten. Canonical's stem/cap is 16.840/118.857 = 0.1417, where
-     Tungsten Medium draws 0.1141 and Semibold 0.1533, so neither cut lands it
-     alone. Solving cap, stem and glyph-width sum together against the measured
-     response (cap = 1.52f + 2.1705t, stem = s(0.233f + 2.1705t),
-     Sw = s(3.28f + 13.02t) for Semibold) gives f 77.15, t 0.734, s 0.858; the
-     size and scale were then closed on the render itself to f 75.99, s 0.8539,
-     which lands cap 119.985 against canonical's 120.017 and advance 331.65
-     against 331.81. The Medium branch of the same solve wants t 2.96 — four
-     times the stroke — and lands ink at 22,136 against canonical's 21,028
-     (+5.3%), where Semibold lands 20,635 (-2.0%). Semibold ships; the Medium
-     alternative is measured, not asserted. */
+  /* SIGN IN — Tungsten. WHICH CUT, settled by measuring all four in the pack.
+     The pack ships tungsten_medium (400), _semibold (600), _bold (700) and
+     _black (900). Each was solved to its OWN optimum — size, scaleX,
+     letter-spacing and word-spacing all free to hit canonical's flat-cap height
+     119.851, block width 331.81, mean intra-word gap 14.30 and word space
+     47.66 — with `-webkit-text-stroke` then set for total ink, the rule-4
+     criterion the rest of this screen is solved on. Judging one cut through
+     another's fit proves nothing, so no two of these share a parameter:
+
+       cut   flat  block  word |  N stem      I width   I/N     ink    ladder
+       400  +0.45  +2.34 +0.31 | 14.80(-1.29) 16.52  0.3259  -1.8%  .981-.997
+       600  +0.11  +0.10 +0.05 | 14.79(-1.30) 17.47  0.3590  -0.2%  .994-1.022
+       700  +0.15  +0.02 +0.12 | 16.05(-0.05) 19.64  0.4196  +8.8%  1.075-1.131
+       900  +0.15  +0.18 -0.28 | 16.98(+0.88) 21.78  0.4826  +14.2% 1.130-1.182
+       canonical                  16.09        17.86  0.3574
+
+     Bold alone lands the N stem, and it is still the wrong cut. I/N is the
+     ratio of two ink widths inside the same run, so scaleX cancels out of it
+     entirely — it is a face fingerprint no horizontal fit can fake. Canonical
+     reads 0.3574; Semibold reads 0.3590, a 0.4% miss, where Bold reads 0.4196,
+     out by 17%. Bold reaches the stem only by being squeezed to scaleX 0.789,
+     which thins the verticals into place while leaving the horizontals and the
+     bowls Bold-thick: its I is 10% too wide and its area ladder sits above 1.0
+     at EVERY level (1.075-1.131), which rule 4 calls genuinely heavy. Semibold
+     is the only one of the four whose ladder straddles 1.0.
+
+     THE STEM IS UNREACHABLE, with the numbers. Canonical wants I/N 0.3574 and
+     stem/I 0.9013 simultaneously. Across the four cuts I/N runs 0.2777 /
+     0.3477 / 0.4194 / 0.4821, RISING with weight, while stem/I runs 0.8874 /
+     0.8432 / 0.8156 / 0.7807, FALLING with weight. Being monotone in opposite
+     directions, I/N 0.3574 pins the weight just above Semibold, where stem/I is
+     0.843 against the 0.9013 required — a 6.9% disagreement that only gets
+     worse in either direction. These are four discrete OTFs, not a variable
+     font, so there is nothing in between to try. Canonical's N carries thicker
+     verticals relative to its I than any Tungsten cut, and the residual N stem
+     of -1.28 device px (-7.9%) is exactly that: bounded, and closed.
+
+     A SECOND FACE RESIDUAL sets what this fit optimises. Canonical's round
+     glyphs overshoot the flat cap by +0.114 device px; every Tungsten cut
+     overshoots by +2.002 — identical across all four, so it is a family
+     property, not a weight. Flat-cap and round-glyph height therefore disagree
+     by 1.89 px whatever is done, and the fit can only choose where to stand
+     between them. Solving the flat cap directly was built and measured: it
+     lands flat +0.11 and word space -0.30, but pushes the round S and G 1.9 px
+     proud and costs pixel agreement across the whole run — the display band
+     reads mean |d| 10.86 against canonical where this fit reads 7.36, with the
+     per-glyph cap-top error rising from 0.58 to 0.85. So the run stays solved
+     on its 50%-crossing extent, which straddles the two cap lines (round -0.31,
+     flat +0.56), and the flat cap runs 1.86 px short as the stated cost.
+
+     WORD SPACING is the one thing that did move. It was 7.14, which put the
+     word space 5.65 px wide (+11.9%) and dragged "IN" right — the second word's
+     glyphs landed +3.80 and +2.25 off canonical. Because word-spacing touches
+     only the glyphs after the space, it corrects that without disturbing SIGN.
+     Swept against canonical: 7.14 -> 6.40 -> 5.90 -> 5.51 -> 5.00 -> 4.10 gives
+     word space +5.65 / +4.29 / +3.29 / +2.65 / +1.65 / -0.02, glyph-position
+     RMS 2.11 / 1.37 / 0.98 / 0.88 / 1.07 / 1.87, and display-band mean |d|
+     8.55 / 7.57 / 7.36 / 7.55 / 8.32 / 10.37. 5.90 is the minimum of both the
+     pixel error and the placement error. Closing the word space the rest of the
+     way costs block width, because canonical's letterforms are collectively
+     4.77 px wider than Tungsten's at this cap and the gaps have to absorb the
+     difference — which is the same face mismatch, seen from the other side. */
   display: { x: 52, top: 226.77, size: 75.99, weight: 600, scale: 0.8539, ls: 0.0547,
-             ws: 7.14, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             ws: 5.90, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
              bang: true, dx: 3.01, dy: 30.4, tx: -0.5503, ty: 0.6055 },
   /* The two-line lede is ONE run, so its size, scaleX and weight are solved
      JOINTLY against both lines rather than fitted to line 1 (ledger rule 14).
