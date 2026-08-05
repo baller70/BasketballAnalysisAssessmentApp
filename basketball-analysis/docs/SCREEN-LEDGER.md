@@ -863,6 +863,21 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## Infrastructure notes
 
+- **`pkill -f "next start"` kills the shell that runs it.** The pattern matches
+  the killer's own command line, so a chain like
+  `pkill -f "next start"; rm -rf .next && npx next build` dies at the first
+  statement with exit 144 and neither the `rm` nor the build ever runs.
+  The failure is not the dead command — it is what it leaves behind. `.next`
+  survives from the PREVIOUS build, `next start` serves it happily, and a
+  capture then measures the old code while every log says the build "was run".
+  A stale dist measured as if fresh yields a plausible wrong number, which is
+  the worst kind. Match on something that cannot match itself
+  (`pkill -f "[n]ext start"`, or `next-server`), and prefer checking
+  `ps aux | grep -c "[n]ext start"` first — usually there is nothing to kill.
+  Confirm a build really happened by its own artefacts (`.next/BUILD_ID`
+  changed, `prerender-manifest.json` present, exit 0 in the log), never by the
+  absence of an error.
+
 - **The ledger-first rule has now prevented acting on wrong state twice in one
   hour.** Scheduled wakeups that embed a state snapshot go stale the moment the
   work moves, and two consecutive ones asserted that the desktop baseline had
