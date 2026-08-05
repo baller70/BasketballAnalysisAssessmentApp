@@ -51,7 +51,22 @@ export default function UploadPage() {
     const requested = new URLSearchParams(window.location.search).get('mode')
     return requested === 'video' || requested === 'live' ? requested : 'image'
   })
-  const [showEducation, setShowEducation] = useState(true)
+  // THE GUIDELINES SCREEN NO LONGER STANDS IN FRONT OF THE UPLOAD SCREEN.
+  //
+  // Kevin: "that's the old functionality… that is the old screen, that even
+  // shouldn't be on the web app." He is right that it is not canonical — the
+  // iOS designs for this flow are 022-photo-upload-source, 024-upload-quality-
+  // check, 025-upload-queue and 026-video-upload, and none of them is an
+  // "Upload Guidelines" interstitial. Defaulting this to `true` meant /upload
+  // returned the guidelines module INSTEAD of the canonical UPLOAD & ANALYZE
+  // screen, so the first thing anyone saw on this route was a screen the
+  // designs do not contain and the real one was one click away.
+  //
+  // NOTHING IS DELETED, per the standing instruction to add rather than remove:
+  // `UploadEducation` is untouched and still reachable from the header link
+  // below, so the advice (Do's / Don'ts / Video Tips / Image Guide) is still
+  // there for anyone who wants it — it just no longer blocks the door.
+  const [showEducation, setShowEducation] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [isValidating, setIsValidating] = useState(false)
@@ -234,6 +249,12 @@ export default function UploadPage() {
         <div className="mb-6">
           <h1 className="shotiq-display text-[48px] leading-[50px]">UPLOAD &amp; ANALYZE</h1>
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
+            {/* No guidelines link here: the drop zone below already carries
+                "View upload guidelines", wired to the same `onShowEducation`.
+                Adding a second entry point put the same control on the page
+                twice — the capture that proved the interstitial was gone also
+                showed both links, which is why this one came straight back
+                out. The advice is reachable; it does not need two doors. */}
             Upload a clear photo or video of your shot for AI analysis.
           </p>
           {/* Entry into canonical iOS 015: ShotIQ's own photo-access primer.
