@@ -1190,6 +1190,17 @@ struct EliteShootersView: View {    // 052
                         }
                         .padding(.top, 14)
                         if showFilters {
+                            // Horizontally scrollable, so content-sized chips can
+                            // never widen the screen. Sizing them to content is
+                            // what stops the truncation; putting them in a
+                            // scroller is what stops that fix turning into the
+                            // 020 failure, where making one child incompressible
+                            // pushed the overflow onto its neighbour and then
+                            // onto the whole screen. On a 393pt phone the four
+                            // chips fit and this never scrolls; on a narrower
+                            // one, or with longer labels, it scrolls instead of
+                            // clipping.
+                            ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 filterChip($level, options: levelOptions, defaultLabel: "All Levels")
                                 filterChip($position, options: positionOptions, defaultLabel: "All Positions")
@@ -1197,6 +1208,7 @@ struct EliteShootersView: View {    // 052
                                            options: ["All Shot Types", "Catch & Shoot", "Pull-Up", "Off Dribble"],
                                            defaultLabel: "All Shot Types")
                                 filterChip($league, options: leagueOptions, defaultLabel: "More Filters")
+                            }
                             }
                             .padding(.top, 10)
                         }
@@ -1283,7 +1295,18 @@ struct EliteShootersView: View {    // 052
                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(ShotIQColor.graphite)
             }
-            .frame(maxWidth: .infinity).frame(height: 42)
+            // CONTENT-SIZED, NOT AN EQUAL SHARE. These four chips used to take
+            // .frame(maxWidth: .infinity), i.e. a quarter of the row each —
+            // about 82pt on a 393pt screen, of which the chevron and padding
+            // leave ~67pt for the label. "All Shot Types" needs more than that,
+            // so every chip truncated: "All Le...", "All Po...", "All Sh...",
+            // "More...". minimumScaleFactor cannot rescue it because the text
+            // still does not fit at the floor, and SwiftUI then truncates.
+            //
+            // Canonical 052 sizes each chip to its own label — measured ~82 /
+            // 92 / 90 / 85pt, so they are deliberately UNEQUAL and total ~349pt
+            // inside the ~363pt available.
+            .padding(.horizontal, 12).frame(height: 42)
             .overlay(RoundedRectangle(cornerRadius: 8)
                 .stroke(selection.wrappedValue == defaultLabel ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
         }
