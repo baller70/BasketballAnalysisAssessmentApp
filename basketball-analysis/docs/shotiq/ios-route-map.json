@@ -1,0 +1,639 @@
+{
+ "generated": "2026-08-05",
+ "purpose": "iOS capture route map. One row per canonical iOS screen (001-072). Every row was derived by reading the application source, not carried over from the round-1 ios-web-map.json, which predates the split of 8 route families onto distinct query-addressed surfaces.",
+ "surface": "The iOS app is Capacitor wrapping this same Next.js app, so 'iOS' is this codebase rendered at 393pt. Below the md breakpoint (max-width:767px) every route swaps in its phone design; the 1440pt desktop trees are hidden and never read the query keys below.",
+ "viewport": {
+  "width": 393,
+  "height": 852,
+  "deviceScaleFactor": 2.170483,
+  "isMobile": false,
+  "hasTouch": true,
+  "note": "1 output px == 1 canonical px (853 wide). isMobile MUST stay false: Chromium's isMobile:true is Android wide-viewport/overview mode, which widens the layout viewport to content width (innerWidth measured 1450 on /signin) and zooms out, making window.scrollTo inert and putting controls outside the visual viewport. iOS WKWebView keeps the layout viewport at device-width. With isMobile:false + hasTouch:true, innerWidth is 393, scrolling works, and pointer:coarse / hover:none still match. Screenshots under both settings were verified pixel-identical."
+ },
+ "launchArgs": [
+  "--font-render-hinting=none"
+ ],
+ "contexts": {
+  "anon": "Signed-out context, screens 001-007 only. /signin and /signup are in middleware's AUTH_PAGES and redirect a signed-in user to /, and / then routes a signed-in, profile-complete user on to /results/demo. Capturing these authenticated silently produces the wrong screen.",
+  "auth": "Signed-in context, screens 008-072. Everything outside middleware's PUBLIC_ROUTES is default-deny and bounces to /signin when signed out."
+ },
+ "credentials": {
+  "email": "khouston721@gmail.com",
+  "password": "hunterrr"
+ },
+ "screens": [
+  {
+   "canonical": "001-splash",
+   "route": "/",
+   "context": "anon",
+   "userPath": "App launch. `/` paints the canonical splash while the auth and profile stores rehydrate, holds SPLASH_HOLD_MS = 1600ms, then routes: signed out -> /welcome, signed in + profile pending -> /onboarding, signed in + complete -> /results/demo.",
+   "source": "src/app/page.tsx",
+   "sessionStorage": {
+    "shotiq-splash-hold": "1"
+   },
+   "steps": [],
+   "note": "sessionStorage['shotiq-splash-hold']='1' pins the screen open \u2014 the deterministic entry the page itself documents for the harness, since a 1.6s dwell cannot be raced reliably."
+  },
+  {
+   "canonical": "002-welcome",
+   "route": "/welcome",
+   "context": "anon",
+   "userPath": "The splash forwards here once the auth store has rehydrated and found no session. 'Sign in' -> /signin, 'Create account' -> /signup.",
+   "source": "src/app/welcome/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "003-sign-in",
+   "route": "/signin",
+   "context": "anon",
+   "userPath": "'Sign in' on 002-welcome, or any auth-gated deep link (middleware redirects to /signin?from=\u2026).",
+   "source": "src/app/signin/page.tsx + src/app/signin/phone-003.ts",
+   "steps": [
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signin-email\"]",
+     "value": "jordan.ellis@example.com"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"signin-password\"]",
+     "value": "shotiqdemopass99"
+    },
+    {
+     "action": "blur"
+    }
+   ],
+   "note": "Canonical 003 is the FILLED, validated state: the address jordan.ellis@example.com typed in, a 16-character password masked to 16 bullets, the green ring beside the address and the two \"Looks good.\" lines. Those are live validation driven by the fields' own values, so they only exist after the player types \u2014 the steps put the screen in the state canonical shows, by the path a real player takes. Captured signed out, in the anonymous context: /signin is in middleware's AUTH_PAGES and redirects a signed-in user away, so an authenticated capture measures a different screen."
+  },
+  {
+   "canonical": "004-create-account",
+   "route": "/signup",
+   "context": "anon",
+   "userPath": "'Create account' on 002-welcome, or 'Create account' at the foot of 003-sign-in.",
+   "source": "src/app/signup/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "005-verify-email",
+   "route": "/verify-email",
+   "context": "anon",
+   "userPath": "Emailed verification link hits /api/auth/verify-email?token=\u2026 and redirects back here with ?status=\u2026; also reachable from the account before verifying.",
+   "source": "src/app/verify-email/page.tsx",
+   "steps": [],
+   "note": "GAP: this route has no phone-specific design \u2014 it renders the same centred card at 393pt as at 1440pt, with no PhoneScreen chrome and no code boxes, where canonical 005 draws the phone header, a six-box code entry and a resend countdown. Signed out it shows the 'Sign in, then open this page' variant; signed in it shows the resend variant, which is the closer match to canonical. Captured signed-out per the harness contract that 001-007 are anonymous."
+  },
+  {
+   "canonical": "006-forgot-password",
+   "route": "/forgot-password",
+   "context": "anon",
+   "userPath": "'Forgot password?' beside Remember me on 003-sign-in.",
+   "source": "src/app/forgot-password/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "007-reset-password",
+   "route": "/reset-password?token=shotiq-demo-reset-token",
+   "context": "anon",
+   "userPath": "The reset link mailed by 006 lands here with the one-time token in the query string. The token is read by `searchParams.get('token')` and only used on submit, so the form composition is the same with or without it.",
+   "source": "src/app/reset-password/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "008-onboarding-intro",
+   "route": "/onboarding?step=intro",
+   "context": "auth",
+   "userPath": "First sign-in with an incomplete profile: the splash routes to /onboarding, which opens on the intro. The flow writes its position back into ?step= with history.replaceState, so every surface is also a deep link.",
+   "source": "src/app/onboarding/page.tsx, PHONE_STEPS in src/components/shotiq/phone/OnboardingPhone.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "009-physical-profile",
+   "route": "/onboarding?step=physical",
+   "context": "auth",
+   "userPath": "'Build my player profile' on 008.",
+   "source": "src/app/onboarding/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "010-experience-body-type",
+   "route": "/onboarding?step=experience",
+   "context": "auth",
+   "userPath": "Continue from 009.",
+   "source": "src/app/onboarding/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "011-shooting-profile",
+   "route": "/onboarding?step=shooting",
+   "context": "auth",
+   "userPath": "Continue from 010.",
+   "source": "src/app/onboarding/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "012-player-bio",
+   "route": "/onboarding?step=bio",
+   "context": "auth",
+   "userPath": "Continue from 011 (step 4 of 5).",
+   "source": "src/app/onboarding/page.tsx + src/components/shotiq/phone/PlayerBio.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "013-onboarding-review",
+   "route": "/onboarding?step=review",
+   "context": "auth",
+   "userPath": "Continue from 012, or 'Skip' on 008 (step 5 of 5). Finish saves the profile and lands on /dashboard.",
+   "source": "src/app/onboarding/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "014-camera-permission-primer",
+   "route": "/video-analysis?state=primer",
+   "context": "auth",
+   "userPath": "'Set up camera' on 028-live-camera-setup, shown once before the platform camera prompt so the request has context. 'Continue' -> 029 calibrate, 'Not now' -> back to 028.",
+   "source": "src/app/video-analysis/page.tsx, CAPTURE_STATES in src/components/shotiq/phone/LiveCapture.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "015-photo-library-permission",
+   "route": "/upload/photo-access",
+   "context": "auth",
+   "userPath": "'Choose from library' on /upload opens this pre-permission primer before anything touches the platform picker. 'Choose access' returns to /upload?picker=1 and opens the real picker; skipped on later visits via localStorage shotiq-photo-primer-seen.",
+   "source": "src/app/upload/photo-access/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "016-notification-permission-primer",
+   "route": "/settings?panel=notifications",
+   "context": "auth",
+   "userPath": "The Notifications row on 071-settings-hub pushes ?panel=notifications as a history entry, so the back gesture returns to the hub. The 1440pt screen 096 never reads the key.",
+   "source": "src/app/settings/page.tsx + NotificationPrimerPhone in src/components/shotiq/phone/SettingsPhone.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "017-home-new-player",
+   "route": "/dashboard?view=basic",
+   "context": "auth",
+   "userPath": "The home a player sees before any analysis exists \u2014 it paints whenever the account has no analyses, and whenever the home layout is set to the simplified 'basic' view (Settings -> Preferences -> Dashboard layout, or ?view= on this route).",
+   "source": "src/app/dashboard/page.tsx + src/components/shotiq/phone/HomeNewPlayer.tsx",
+   "steps": [],
+   "note": "?view=basic is used rather than emptying the account, so 017 stays distinct from 018/019 on the seeded grading account."
+  },
+  {
+   "canonical": "018-home-standard",
+   "route": "/dashboard?view=standard",
+   "context": "auth",
+   "userPath": "Settings -> Preferences -> Dashboard layout -> Standard, or ?view=standard on this route; the professional header carries the switch back the other way.",
+   "source": "src/app/dashboard/page.tsx (standard branch)",
+   "steps": [],
+   "note": "GAP: the standard dashboard has no phone-specific composition. Below md it renders the standard desktop tree reflowed to 393pt inside ShotIQShell's PhoneChrome (top bar + five-item tab bar). 017 and 019 both have dedicated phone components; 018 does not."
+  },
+  {
+   "canonical": "019-home-professional",
+   "route": "/dashboard?view=professional",
+   "context": "auth",
+   "userPath": "The default home for an account with analyses. Settings -> Preferences -> Dashboard layout -> Professional selects it explicitly.",
+   "source": "src/app/dashboard/page.tsx + HomeProfessionalPhone in src/components/shotiq/phone/HomeProPhone.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "020-profile-menu",
+   "route": "/dashboard?view=professional&menu=1",
+   "context": "auth",
+   "userPath": "Tapping your own name on 019 pushes ?menu=1, so the overflow sheet has a URL and a back gesture.",
+   "source": "src/app/dashboard/page.tsx + ProfileMenuPhone in src/components/shotiq/phone/HomeProPhone.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "021-analyze-hub",
+   "route": "/analyze",
+   "context": "auth",
+   "userPath": "The Capture tab, or 'New capture' / 'Analyze shot' on the home screens.",
+   "source": "src/app/analyze/page.tsx + src/components/shotiq/phone/AnalyzePhone.tsx",
+   "steps": [],
+   "note": "Renders only when the account HAS analysis history; with an empty history this route paints 039 instead (see 039)."
+  },
+  {
+   "canonical": "022-photo-upload-source",
+   "route": "/upload?step=source",
+   "context": "auth",
+   "userPath": "'Upload image' on 021-analyze-hub. The flow writes each surface back into ?step= with history.replaceState, so the in-flow back button works and every step is a deep link.",
+   "source": "src/app/upload/page.tsx + PhotoUploadSource in src/components/shotiq/phone/UploadPhone.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "023-photo-review-crop",
+   "route": "/upload?step=review",
+   "context": "auth",
+   "userPath": "'Choose from library' on 022, then pick a photo. Deep-linked with an empty picker it reviews the player's most recent capture, which is what 'review your shot' means with nothing selected.",
+   "source": "src/app/upload/page.tsx + PhotoReviewCrop",
+   "steps": []
+  },
+  {
+   "canonical": "024-upload-quality-check",
+   "route": "/upload?step=quality",
+   "context": "auth",
+   "userPath": "'USE PHOTO' on 023.",
+   "source": "src/app/upload/page.tsx + UploadQualityCheck",
+   "steps": []
+  },
+  {
+   "canonical": "025-upload-queue",
+   "route": "/analyze?view=queue",
+   "context": "auth",
+   "userPath": "The hub's own 'Upload image' tile pushes ?view=queue. The 1440pt screen 081 never reads the key.",
+   "source": "src/app/analyze/page.tsx + UploadQueuePhone",
+   "steps": []
+  },
+  {
+   "canonical": "026-video-upload",
+   "route": "/video-analysis/upload",
+   "context": "auth",
+   "userPath": "'Upload video' on 021-analyze-hub or on the home tiles.",
+   "source": "src/app/video-analysis/upload/page.tsx + src/components/shotiq/phone/VideoUploadPhone.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "027-video-review",
+   "route": "/video-analysis/upload",
+   "context": "auth",
+   "userPath": "'Choose video' on 026 and pick a clip: the route enters the review state with the clip's duration, resolution, size and frame rate, and 'Analyze video' sends it to /video-analysis/processing.",
+   "source": "src/app/video-analysis/upload/page.tsx + src/components/shotiq/phone/VideoReview.tsx",
+   "steps": [
+    {
+     "action": "setInputFiles",
+     "selector": "[data-testid=\"video-choose-input\"]",
+     "file": "public/images/canonical/094-t1.png"
+    }
+   ],
+   "note": "The ONLY screen in the set that is not reachable by navigation alone. This route holds the chosen clip in component state (`clip`) with no query key, unlike every other split family. Reached by driving the page's own file input \u2014 the same handler the 'Choose video' button fires \u2014 rather than by a scroll or a synthetic click on a hit box. A fixed repo asset is used so the printed file size is reproducible."
+  },
+  {
+   "canonical": "028-live-camera-setup",
+   "route": "/video-analysis?state=setup",
+   "context": "auth",
+   "userPath": "'Live camera' on 021-analyze-hub or on the home tiles. The entry state of the one capture flow.",
+   "source": "src/app/video-analysis/page.tsx + LiveCapture state machine",
+   "steps": []
+  },
+  {
+   "canonical": "029-hoop-calibration",
+   "route": "/video-analysis?state=calibrate",
+   "context": "auth",
+   "userPath": "'Continue' on the 014 camera primer.",
+   "source": "LiveCapture / Calibrate",
+   "steps": []
+  },
+  {
+   "canonical": "030-readiness-check",
+   "route": "/video-analysis?state=readiness",
+   "context": "auth",
+   "userPath": "'Confirm hoop' or 'Skip calibration' on 029.",
+   "source": "LiveCapture / Readiness",
+   "steps": []
+  },
+  {
+   "canonical": "031-capture-ready",
+   "route": "/video-analysis?state=ready",
+   "context": "auth",
+   "userPath": "'Keep position' on 030.",
+   "source": "LiveCapture / Ready",
+   "steps": []
+  },
+  {
+   "canonical": "032-live-recording",
+   "route": "/video-analysis?state=recording",
+   "context": "auth",
+   "userPath": "'Start recording' on 031. A deep-linked state is a still of the take, so the clock holds at canonical's 03:18 rather than drifting.",
+   "source": "LiveCapture / Recording",
+   "steps": []
+  },
+  {
+   "canonical": "033-live-form-feedback",
+   "route": "/video-analysis?state=feedback",
+   "context": "auth",
+   "userPath": "Tapping the live coaching cue during 032.",
+   "source": "LiveCapture / Feedback",
+   "steps": []
+  },
+  {
+   "canonical": "034-shot-detected",
+   "route": "/video-analysis?state=shot",
+   "context": "auth",
+   "userPath": "A shot is detected during 032/033.",
+   "source": "LiveCapture / Shot",
+   "steps": []
+  },
+  {
+   "canonical": "035-capture-review",
+   "route": "/video-analysis?state=review",
+   "context": "auth",
+   "userPath": "'Stop' / 'STOP RECORDING' on 032, or confirming the last shot on 034. 'Analyze session' -> /video-analysis/processing.",
+   "source": "LiveCapture / Review",
+   "steps": []
+  },
+  {
+   "canonical": "036-analysis-processing",
+   "route": "/video-analysis/processing",
+   "context": "auth",
+   "userPath": "'Analyze video' on 027, or 'Analyze session' on 035, starts the job and this paints immediately. Progress is stage-derived, not clock-derived.",
+   "source": "src/app/video-analysis/processing/page.tsx + AnalysisProcessing",
+   "steps": [],
+   "note": "The job becomes 037 after SLOW_AFTER_MS = 15000ms on the same screen, so this must be shot within 15s of load \u2014 the harness's 2.6s settle is well inside that."
+  },
+  {
+   "canonical": "037-analysis-taking-longer",
+   "route": "/video-analysis/processing?state=slow",
+   "context": "auth",
+   "userPath": "Stay on 036 for 15s without the job finishing \u2014 the same timeout the copy on 036 promises. ?state=slow selects it directly.",
+   "source": "src/app/video-analysis/processing/page.tsx + AnalysisTakingLonger",
+   "steps": []
+  },
+  {
+   "canonical": "038-analysis-result-overview",
+   "route": "/results/demo",
+   "context": "auth",
+   "userPath": "The job completes and lands on the results overview; also the home destination for a signed-in, profile-complete launch.",
+   "source": "src/app/results/demo/page.tsx + src/components/shotiq/phone/results/AnalysisOverview.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "039-no-analysis-yet",
+   "route": "/analyze?state=empty",
+   "context": "auth",
+   "userPath": "The analyze hub as a just-onboarded account sees it \u2014 it paints whenever /api/analysis-history comes back empty. ?state=empty selects the same branch on a seeded account (the grading account always has history).",
+   "source": "src/app/analyze/page.tsx + src/components/shotiq/phone/NoAnalysisYet.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "040-analysis-error",
+   "route": "/video-analysis/processing?state=error",
+   "context": "auth",
+   "userPath": "The run reports a failure and the job screen swaps in the error state; 'Try analysis again' restarts it.",
+   "source": "src/app/video-analysis/processing/page.tsx + AnalysisError",
+   "steps": []
+  },
+  {
+   "canonical": "041-shot-breakdown",
+   "route": "/results/demo/analysis",
+   "context": "auth",
+   "userPath": "The ANALYSIS tab on the results surface.",
+   "source": "src/app/results/demo/(tabs)/analysis/page.tsx + ShotBreakdown",
+   "steps": []
+  },
+  {
+   "canonical": "042-frame-detail-skeleton",
+   "route": "/results/demo/biomechanics",
+   "context": "auth",
+   "userPath": "The BIOMECHANICS tab \u2014 the frame viewer with the skeleton and joint overlays.",
+   "source": "src/app/results/demo/biomechanics/page.tsx + FrameDetail",
+   "steps": []
+  },
+  {
+   "canonical": "043-annotation-toolbar",
+   "route": "/results/demo/biomechanics?view=annotate",
+   "context": "auth",
+   "userPath": "The Annotations overlay card on 042. It is a PAGE in canonical, not a modal \u2014 it draws no scrim and fills the canvas. Each view is its own history entry.",
+   "source": "src/app/results/demo/biomechanics/page.tsx + AnnotationToolbar",
+   "steps": []
+  },
+  {
+   "canonical": "044-form-score",
+   "route": "/results/demo/analysis?view=score",
+   "context": "auth",
+   "userPath": "The FORM SCORE card on 041 opens the score method behind it. The desktop 083 never reads the key.",
+   "source": "src/app/results/demo/(tabs)/analysis/page.tsx + FormScore",
+   "steps": []
+  },
+  {
+   "canonical": "045-metric-detail",
+   "route": "/results/demo/biomechanics?view=metric",
+   "context": "auth",
+   "userPath": "A measurement row on 042 opens its metric detail (value, ideal band, trend, coaching copy).",
+   "source": "src/app/results/demo/biomechanics/page.tsx + MetricDetail",
+   "steps": []
+  },
+  {
+   "canonical": "046-flaws-overview",
+   "route": "/results/demo/flaws",
+   "context": "auth",
+   "userPath": "The FLAWS tab on the results surface.",
+   "source": "src/app/results/demo/flaws/page.tsx + FlawsOverview",
+   "steps": []
+  },
+  {
+   "canonical": "047-flaw-detail",
+   "route": "/results/demo/flaws?flaw=elbow-flare",
+   "context": "auth",
+   "userPath": "Opening a flaw card on 046. The detail is addressed by the flaw's own slug, so each of the three flaws has its own surface (elbow-flare / early-wrist-extension / low-follow-through) rather than one shared detail region driven by selection state.",
+   "source": "src/app/results/demo/flaws/page.tsx + FLAWS in FlawsOverview.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "048-player-card",
+   "route": "/results/demo/player",
+   "context": "auth",
+   "userPath": "The PLAYER CARD tab on the results surface.",
+   "source": "src/app/results/demo/(tabs)/player/page.tsx + results/PlayerCard.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "049-customize-player-card",
+   "route": "/results/demo/player?view=customize",
+   "context": "auth",
+   "userPath": "'Customize' on 048 \u2014 style, accent colour, badge and stat toggles.",
+   "source": "src/app/results/demo/(tabs)/player/page.tsx + CustomizeCard",
+   "steps": []
+  },
+  {
+   "canonical": "050-elite-match",
+   "route": "/results/demo/compare",
+   "context": "auth",
+   "userPath": "The COMPARE tab on the results surface \u2014 the elite match summary.",
+   "source": "src/app/results/demo/(tabs)/compare/page.tsx + EliteMatch",
+   "steps": []
+  },
+  {
+   "canonical": "051-photo-comparison",
+   "route": "/results/demo/compare?view=frames",
+   "context": "auth",
+   "userPath": "Opening the frame pair from 050.",
+   "source": "src/app/results/demo/(tabs)/compare/page.tsx + PhotoComparison",
+   "steps": []
+  },
+  {
+   "canonical": "052-elite-shooters",
+   "route": "/elite-shooters",
+   "context": "auth",
+   "userPath": "'Elite shooters' in the overflow sheet / Explore. Search field, four compact pills and a list of shooter rows with photography.",
+   "source": "src/app/elite-shooters/page.tsx + EliteShootersPhone",
+   "steps": []
+  },
+  {
+   "canonical": "053-elite-shooter-detail",
+   "route": "/elite-shooters/stephen-curry",
+   "context": "auth",
+   "userPath": "Tapping a shooter row on 052. The slug resolves against /api/shooters, which falls back to the 328-entry static catalog when the DB table is empty.",
+   "source": "src/app/elite-shooters/[shooterId]/EliteShooterDetailClient.tsx + EliteShooterDetailPhone",
+   "steps": []
+  },
+  {
+   "canonical": "054-training-home",
+   "route": "/results/demo/training?step=home",
+   "context": "auth",
+   "userPath": "The Train tab / TRAINING tab on the results surface.",
+   "source": "src/app/results/demo/(tabs)/training/page.tsx + TrainingHome",
+   "steps": []
+  },
+  {
+   "canonical": "055-quick-start",
+   "route": "/results/demo/training?step=quick",
+   "context": "auth",
+   "userPath": "The 'Quick start' button on 054 writes ?step=quick back into the URL. Starting it opens /training/drills/wall-elbow-alignment?step=tracker.",
+   "source": "src/app/results/demo/(tabs)/training/page.tsx + QuickStart",
+   "steps": []
+  },
+  {
+   "canonical": "056-discover-drills",
+   "route": "/training/drills?tab=discover",
+   "context": "auth",
+   "userPath": "'Browse drills' from the training hub, then the Discover tab. Canonical draws a four-frame photo strip on every discover row.",
+   "source": "src/app/training/drills/page.tsx + DiscoverDrills",
+   "steps": []
+  },
+  {
+   "canonical": "057-drill-detail",
+   "route": "/training/drills/wall-elbow-alignment?step=detail",
+   "context": "auth",
+   "userPath": "Tapping a drill on 056/058. Each of the four drill surfaces owns a ?step=, so a player walks detail -> Start drill -> Begin set -> End workout.",
+   "source": "src/app/training/drills/[drillId]/DrillExecutionClient.tsx + DrillDetail",
+   "steps": []
+  },
+  {
+   "canonical": "058-my-drills",
+   "route": "/training/drills?tab=saved",
+   "context": "auth",
+   "userPath": "The 'My drills' tab on the drill library, including drills the player created. Canonical draws a portrait still on every my-drills card.",
+   "source": "src/app/training/drills/page.tsx + MyDrills",
+   "steps": []
+  },
+  {
+   "canonical": "059-workout-calendar",
+   "route": "/training/calendar",
+   "context": "auth",
+   "userPath": "'Calendar' from the training hub. Canonical 059 is a month grid with status rings and a legend.",
+   "source": "src/app/training/calendar/page.tsx + WorkoutCalendar",
+   "steps": []
+  },
+  {
+   "canonical": "060-drill-execution",
+   "route": "/training/drills/wall-elbow-alignment?step=execution",
+   "context": "auth",
+   "userPath": "'Start drill' on 057.",
+   "source": "src/app/training/drills/[drillId]/DrillExecutionClient.tsx + DrillExecution",
+   "steps": []
+  },
+  {
+   "canonical": "061-shot-tracker",
+   "route": "/training/drills/wall-elbow-alignment?step=tracker",
+   "context": "auth",
+   "userPath": "'Begin set' on 060, or 'Start' on 055-quick-start. Opens mid-set on the seeded log (02:24 elapsed, 24 shots, 15 makes) so Mark make / Mark miss / Undo work from here.",
+   "source": "src/app/training/drills/[drillId]/DrillExecutionClient.tsx + ShotTracker",
+   "steps": []
+  },
+  {
+   "canonical": "062-workout-completion",
+   "route": "/training/drills/wall-elbow-alignment?step=complete",
+   "context": "auth",
+   "userPath": "'End workout' on 060 or 061.",
+   "source": "src/app/training/drills/[drillId]/DrillExecutionClient.tsx + WorkoutComplete",
+   "steps": []
+  },
+  {
+   "canonical": "063-goals",
+   "route": "/results/demo/goals?step=list",
+   "context": "auth",
+   "userPath": "'Goals' from Progress / the training hub.",
+   "source": "src/app/results/demo/goals/page.tsx + GoalsList",
+   "steps": []
+  },
+  {
+   "canonical": "064-create-goal",
+   "route": "/results/demo/goals?step=create",
+   "context": "auth",
+   "userPath": "'Create goal' on 063; submitting persists through the goals API.",
+   "source": "src/app/results/demo/goals/page.tsx + CreateGoal",
+   "steps": []
+  },
+  {
+   "canonical": "065-goal-detail",
+   "route": "/results/demo/goals?step=detail",
+   "context": "auth",
+   "userPath": "Opening the primary goal on 063 \u2014 progress, trend, log progress, mark complete.",
+   "source": "src/app/results/demo/goals/page.tsx + GoalDetail",
+   "steps": []
+  },
+  {
+   "canonical": "066-analytics-cards",
+   "route": "/results/demo/history",
+   "context": "auth",
+   "userPath": "The Progress tab / 'View history' on 019.",
+   "source": "src/app/results/demo/(tabs)/history/page.tsx + AnalyticsCards",
+   "steps": []
+  },
+  {
+   "canonical": "067-analytics-detailed",
+   "route": "/results/demo/history?view=detailed",
+   "context": "auth",
+   "userPath": "'Detailed' on 066.",
+   "source": "src/app/results/demo/(tabs)/history/page.tsx + AnalyticsDetailed",
+   "steps": []
+  },
+  {
+   "canonical": "068-my-media",
+   "route": "/media",
+   "context": "auth",
+   "userPath": "The Media tab.",
+   "source": "src/app/media/page.tsx + MediaPhone",
+   "steps": []
+  },
+  {
+   "canonical": "069-media-detail",
+   "route": "/media?media=1",
+   "context": "auth",
+   "userPath": "Tapping a capture tile on 068 pushes ?media=<id>, so every capture has its own URL and the back button works. Canonical 069 is a PAGE, not the dimmed sheet the desktop library opens.",
+   "source": "src/app/media/page.tsx",
+   "steps": []
+  },
+  {
+   "canonical": "070-profile",
+   "route": "/profile",
+   "context": "auth",
+   "userPath": "'Profile' in the overflow sheet (020). Canonical 070 is the profile OVERVIEW; the edit form is one tap away at ?view=edit.",
+   "source": "src/app/profile/page.tsx + ProfileOverviewPhone",
+   "steps": []
+  },
+  {
+   "canonical": "071-settings-hub",
+   "route": "/settings",
+   "context": "auth",
+   "userPath": "The gear in the phone top bar, or 'Settings' in the overflow sheet.",
+   "source": "src/app/settings/page.tsx + SettingsHubPhone",
+   "steps": []
+  },
+  {
+   "canonical": "072-share-results",
+   "route": "/results/demo/player",
+   "context": "auth",
+   "userPath": "SHARE on 048-player-card opens ShotIQ's own share surface instead of going straight to navigator.share; the platform sheet still opens from 'Share image' inside the preview.",
+   "source": "src/app/results/demo/(tabs)/player/page.tsx + src/components/shotiq/phone/ShareResults.tsx",
+   "steps": [
+    {
+     "action": "click",
+     "selector": "[data-testid=\"player-share\"]"
+    }
+   ],
+   "note": "Not reachable by navigation alone: the share surface is held in the page's `sharing` useState and is checked BEFORE usePhoneRoute('view'), so it has no query key. Reached by clicking the card's own labelled SHARE control. The testid resolves to two nodes on this route \u2014 the phone card and the hidden 1440pt tree, which is display:none below md rather than unmounted \u2014 so the harness takes the visible one."
+  }
+ ]
+}

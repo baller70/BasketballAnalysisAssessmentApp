@@ -39,6 +39,45 @@
  *     248/255/[74 85]/255/248 — ringing on BOTH sides), so below ~30px an
  *     eroded stroke core is unobtainable and colour is solved from total ink at
  *     matched geometry instead.
+ *
+ * TWO THINGS THIS SCREEN ADDED TO THE METHOD.
+ *
+ * 1. Canonical 003 is the FILLED, VALIDATED state, not the empty form. It draws
+ *    a typed address, sixteen mask bullets, a green ring beside the address and
+ *    two "Looks good." lines — five bands that do not exist until the player
+ *    types. The route map therefore drives 003 with `fill` + `blur` steps; that
+ *    is the real user path and it is deterministic. Capturing the empty form
+ *    measures a different screen, the same class of mistake as capturing
+ *    /signin signed IN (which redirects away entirely).
+ *
+ * 2. BASELINE beats cap-top where canonical baseline-aligns. Canonical sets
+ *    "Remember me" and "Forgot password?" on one baseline (1039.68 / 1039.70,
+ *    split 0.02 device px). Probing each run to its own cap-top split them by
+ *    2.01 px, because the solver had reached the same advance two ways — a
+ *    larger size with a narrower scaleX — and the larger size is taller. Size
+ *    and scaleX therefore move together to buy the vertical, since font-size
+ *    alone would close the baseline and break the advance.
+ *    Which runs get this treatment is decided by measurement, not by rule. Only
+ *    the runs with an actual SIZE error do; the rest have a baseline offset that
+ *    is the x-height face residual and shifting them makes the pixels worse.
+ *    Swept at 0 / -1 / -2 device px, run-band mean |d| against canonical:
+ *      body line 1  14.52 / 13.81 / 16.63     body line 2  22.70 / 25.77 / 29.37
+ *      email value  12.80 / 13.04 / 14.40     Looks good.  10.24 / 11.05 / 14.60
+ *      Password looks good.                   13.13 / 16.75 / 21.82
+ *    The lede is one run, so its two lines vote together: 37.22 at 0 against
+ *    39.58 at -1. All five are left where they are, and their baseline residual
+ *    (+0.63 to +1.78) is stated rather than forced.
+ *
+ * 3. Placement quantises on TWO different lattices and both need beating.
+ *    `top` moves a run in steps of ~2 device px and `left` in steps of ~2.17
+ *    (one whole CSS px), so neither alone can land a cap-top or an ink-left
+ *    that falls between. A `translate()` INSIDE the element's own transform
+ *    does better: vertically it halves the step to one device px, which is
+ *    Skia's floor (it positions glyphs at sub-pixel x but snaps y to whole
+ *    device rows), and horizontally it is continuous. Every run therefore
+ *    carries `tx`/`ty` probed against the render. The worst residual left on
+ *    the screen is 0.49 device px of cap-top, i.e. under a quarter of a CSS
+ *    pixel, and it is a lattice residual rather than a modelling error.
  */
 
 /** canonical device px -> CSS px */
@@ -51,31 +90,87 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  * tokens carry the 20 desktop screens that grade B+, so a disagreement on THIS
  * canonical render is overridden inside the phone media query and nowhere else.
  *
- *   role         canonical                                   global token
- *   ink          (2.0, 1.7, 1.5) eroded core k2, n 15,971    #111111
- *                on SIGN IN; (4.3,4.3,4.3) on the Apple
- *                label; (2.1,2.1,2.1) on the email value
- *   plate orange (252.64, 54.89, 0.91) over 18,000 flat px   #FD3701  <- KEPT
- *                — that IS the token, so it is not overridden
- *   text orange  (250.7, 60.4, 7.1) k2 n 796 on the IQ       #FD3701
- *   rule         1.82 device px of (210,212,217) under the   #EBECED
- *                wordmark; field borders (213,213,217);
- *                the two OR hairlines (218,218,222)
- *   green        (12.4, 155.6, 75.6) k2 on the check ring    (no token)
+ * HOW THESE WERE SOLVED. Every one of these roles is set below 30px, where
+ * ledger rule 8 says an eroded stroke core is unobtainable — canonical's
+ * unsharp mask overshoots the core darker and the surround lighter, so the
+ * darkest pixel in a run is NOT the colour. Measured, canonical's body copy
+ * peaks at coverage 0.914 and its field labels at 0.918, which no flat colour
+ * anywhere near this grey can reach.
  *
- * The greys below 30px cannot be cored at all, so they are solved from total
- * ink at matched geometry.
+ * Total ink alone does not pin a colour either: ink is the product of colour
+ * and stroke area, and font-weight moves the area, so (colour, weight) is
+ * degenerate against ink. What breaks the degeneracy is the NORMALISED
+ * coverage CDF — the fraction of a run's ink above each coverage level, scaled
+ * by the count above 0.25. That shape is nearly weight-invariant and it is set
+ * by the colour's ceiling, because a flat colour plateaus every stroke core at
+ * exactly d/255 while canonical's ramps past it.
+ *
+ * The method is calibrated on runs whose colour is KNOWN. Canonical draws
+ * `Continue with Apple`, `Continue with Google` and the email value in pure
+ * black (darkest sample 0,0,0; coverage reaches 1.000). At matched cap and
+ * advance, matching total ink on those three lands their whole ladder at
+ * 0.98-1.13 of canonical — so canonical's rasteriser and this one agree on the
+ * coverage distribution once the colour is right, and any grey whose CDF shape
+ * disagrees has the wrong colour, not the wrong weight.
+ *
+ * Sweeping each role's level and scoring the CDF against canonical over
+ * coverage 0.28-0.95 gives a clean interior minimum in every case (RMS CDF
+ * distance, lower is better):
+ *
+ *   graphite  d 168 .1533 | 177 .1302 | 186 .1035 | 195 .1262 | 204 .1458
+ *   label     d 168 .1691 | 177 .1363 | 186 .0785 | 195 .1062 | 204 .1466
+ *   eyebrow   d 105 .1174 | 112 .0869 | 119 .0954 | 126 .1122 | 133 .1451
+ *   green     d 236 .0872 | 243 .0726 | 249 .0748 | 253 .0781 | 255 .1008
+ *
+ * Hue is fixed separately by the ink-weighted R:G:B ratio of (255 - channel)
+ * over the whole run — a large sample, per rule 8. Canonical's greys read
+ * G/R 0.9890, B/R 0.9335 over 2,407 px of body copy and agree to 0.002 across
+ * five independent runs.
+ *
+ *   role         solved              was          note
+ *   graphite     #454751 (d 186)     #4E525F      body lede, Remember me, the
+ *                                                 account line
+ *   label        #454751 (d 186)     #4A4E5B      EMAIL / PASSWORD. The fit
+ *                                                 lands on the SAME value as
+ *                                                 the body grey from two
+ *                                                 independent runs (187.6 and
+ *                                                 185.4), i.e. canonical sets
+ *                                                 one grey here, not two.
+ *   eyebrow      #8A8B93 (d 117)     #8A8F97      AI ANALYSIS, OR — the level
+ *                                                 barely moved, the hue did
+ *   green        #0D9144 (d 242)     #0C9B4A      the two validation lines and
+ *                                                 the check ring
+ *   orange text  #FD3701             #FA3B06      Forgot password?, Create
+ *                                                 account, the IQ. The CDF fit
+ *                                                 puts green at 54.9 where the
+ *                                                 PLATE's flat orange measures
+ *                                                 54.89 over 18,000 px, so the
+ *                                                 text orange IS the plate
+ *                                                 token and the screen no
+ *                                                 longer disagrees with it at
+ *                                                 all. Distance is identical
+ *                                                 (.0829) for the token and for
+ *                                                 the free fit.
+ *   ink          #000000                          unchanged; verified black by
+ *                                                 the three runs above
+ *
+ * What is NOT reachable, stated with its numbers: canonical's body copy has
+ * 490 px above coverage 0.75 and 1 px above 0.9; at d 186 the ceiling is 0.729
+ * so this render has 0 px above 0.75. That gap is the unsharp mask (rule 9) and
+ * no flat colour closes it — d 200 puts 1,130 px above 0.75 against canonical's
+ * 490 and makes the whole CDF worse (.1145 against .1035).
  */
 const COLOURS = `
   --shotiq-color-ink:#000000;
   --s3-rule:#D2D4D9;
   --s3-field-rule:#D5D5D9;
   --s3-hair:#DADADE;
-  --s3-green:#0C9B4A;
-  --s3-orange-text:#FA3B06;
-  --s3-graphite:#4E525F;
-  --s3-label:#4A4E5B;
-  --s3-eyebrow:#8A8F97;
+  --s3-green:#0D9144;
+  --s3-orange-text:#FD3701;
+  --s3-graphite:#454751;
+  --s3-label:#454751;
+  --s3-eyebrow:#8A8B93;
+  --s3-or:#838489;
 `
 
 /* ------------------------------------------------------------ type recipe ---
@@ -127,6 +222,19 @@ export type Run = {
   lead?: number     // line box, canonical px (multi-line runs only)
   width?: number    // canonical px (centred runs)
   bang?: boolean    // !important on size/leading (PageTitle sets them inline)
+  tx?: number       // sub-pixel horizontal nudge, CSS px, applied inside the
+                    // transform AFTER scaleX (so it moves the ink by
+                    // scale * tx). `left` snaps to a whole CSS pixel — 2.17
+                    // device px — so on its own it leaves up to 1.1 device px
+                    // of ink-left error with no interior value; Skia positions
+                    // glyphs at sub-pixel x, so a translateX inside the same
+                    // transform is continuous and closes it.
+  ty?: number       // sub-row vertical nudge, CSS px, applied inside the
+                    // transform. `top` alone lands the run on a TWO-device-px
+                    // lattice; a translateY inside the same transform halves
+                    // that to one device px, which is Skia's floor (it does
+                    // sub-pixel glyph positioning horizontally only). Probed,
+                    // per rule 12, not derived.
   ox?: number       // origin x of the positioned ancestor, canonical px
   oy?: number       // origin y of the positioned ancestor, canonical px
 }
@@ -142,59 +250,214 @@ const APPLE = { y: 1335.01, h: 101.28 }
 const GOOGLE = { y: 1462.18, h: 105.88 }
 const BOX_X = 52.05
 const BOX_W = 748.35
-/* Vertical trim on the two field texts: with `line-height` set to the field
-   height the run centres on the box, and canonical sets its value 2.5 device px
-   below that centre and its bullet row 2.1 px below. Probed against the live
-   render, not assumed. */
-const EMAIL_DY = 0
-const PASS_DY = 0
+/* The two field texts used to carry their own vertical trim constants here. The
+   probed `ty` on each run supersedes them — see the lattice note at the top —
+   so they were both sitting at 0 and referenced nowhere, which `next lint`
+   rejects and `tsc` does not. */
 
 export const RUNS: Record<string, Run> = {
-  /* SHOTIQ — Geist 700 at cap 40.67. Canonical advances 226 against Geist's 211
-     at that cap, so scaleX runs slightly OVER 1 here; canonical's wordmark is
-     the one run on this screen that is WIDER than Geist. */
-  wordmark: { x: 44, top: 41.29, size: 25.315, weight: 700, scale: 1.073, ls: 0.0123,
-              colour: "var(--shotiq-color-ink)", dx: 1.6, dy: 13.6 },
-  eyebrow: { x: 51, top: 99.37, size: 12.326, weight: 400, scale: 1.010, ls: 0.1115,
-             colour: "var(--s3-eyebrow)", dx: 1.2, dy: 9.0 },
-  /* SIGN IN — Tungsten. Canonical's stem/cap is 16.840/118.857 = 0.1417, where
-     Tungsten Medium draws 0.1141 and Semibold 0.1533, so neither cut lands it
-     alone. Solving cap, stem and glyph-width sum together against the measured
-     response (cap = 1.52f + 2.1705t, stem = s(0.233f + 2.1705t),
-     Sw = s(3.28f + 13.02t) for Semibold) gives f 77.15, t 0.734, s 0.858.
-     The Medium branch of the same solve wants t 2.96 — four times the stroke —
-     and lands ink at 22,136 against canonical's 21,028 (+5.3%), where Semibold
-     lands 21,340 (+1.5%). Semibold ships; the Medium alternative is measured,
-     not asserted. */
-  display: { x: 52, top: 226.77, size: 77.147, weight: 600, scale: 0.860, ls: 0.0547,
-             ws: 7.14, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 4.0, dy: 20.0 },
-  body: { x: 52, top: 382.38, size: 13.455, weight: 500, scale: 0.940, ls: -0.0044,
-          colour: "var(--s3-graphite)", dx: 1.0, dy: 9.4, lead: 38.14 },
-  labelEmail: { x: 53, top: 527.31, size: 12.703, weight: 700, scale: 0.750, ls: 0.0514,
-                colour: "var(--s3-label)", dx: 0.6, dy: 8.8 },
-  helpEmail: { x: 53, top: 699.34, size: 11.710, weight: 500, scale: 0.859, ls: 0.0230,
-               colour: "var(--s3-green)", dx: 0.8, dy: 8.2 },
-  labelPass: { x: 53, top: 779.01, size: 12.688, weight: 700, scale: 0.732, ls: 0.0990,
-               colour: "var(--s3-label)", dx: 0.6, dy: 8.8 },
-  helpPass: { x: 53, top: 946.59, size: 11.618, weight: 500, scale: 0.866, ls: 0.0115,
-              colour: "var(--s3-green)", dx: 0.8, dy: 8.2 },
-  remember: { x: 96, top: 1019.66, size: 12.245, weight: 500, scale: 0.886, ls: -0.0018,
-              colour: "var(--s3-graphite)", dx: 1.0, dy: 8.6 },
-  forgot: { x: 604, top: 1019.71, size: 12.305, weight: 600, scale: 0.852, ls: -0.0072,
-            colour: "var(--s3-orange-text)", dx: 1.2, dy: 8.6 },
-  signinLab: { x: 418, top: 1143.21, size: 16.244, weight: 500, scale: 0.923, ls: -0.0325,
-               colour: "#FFFFFF", dx: 1.2, dy: 11.4, ox: PLATE.x, oy: PLATE.y },
-  or: { x: 412, top: 1280.99, size: 11.505, weight: 700, scale: 0.756, ls: 0.1014,
-        colour: "var(--s3-eyebrow)", dx: 0.6, dy: 8.0 },
-  appleLab: { x: 338, top: 1373.19, size: 15.769, weight: 500, scale: 0.812, ls: -0.0415,
-              colour: "var(--shotiq-color-ink)", dx: 1.2, dy: 11.2, ox: BOX_X, oy: APPLE.y },
-  googLab: { x: 331, top: 1502.42, size: 15.643, weight: 500, scale: 0.822, ls: -0.0410,
-             colour: "var(--shotiq-color-ink)", dx: 1.2, dy: 11.2, ox: BOX_X, oy: GOOGLE.y },
-  acct1: { cx: 419, top: 1654.30, size: 12.550, weight: 500, scale: 0.886, ls: -0.0056,
-           colour: "var(--s3-graphite)", dx: 0, dy: 8.8, width: 500 },
-  acct2: { cx: 426, top: 1708.37, size: 13.590, weight: 500, scale: 0.912, ls: 0.0021,
-           colour: "var(--s3-orange-text)", dx: 0, dy: 9.6, width: 500 },
+  /* SHOTIQ — Geist, chosen by measuring EVERY face and cut in the pack against
+     the wordmark, not by inheritance. Each candidate was solved to its own
+     optimum (size for cap height 41.87, scaleX for advance 225.90) and then
+     compared on ratios taken INSIDE the run, where scaleX and font-size cancel:
+
+       face        H/S     O/S     T/S     I/S   stem/cap   ink%   ratio-RMS
+       canonical  1.1415  1.4607  1.2155  0.3064  0.2219
+       geist-400  1.0022  1.2257  1.1296  0.1938  0.1256   -35.3    0.1653
+       geist-600  1.0012  1.3249  1.0051  0.2554  0.1878   -12.6    0.1657
+       geist-759  0.9988  1.3178  1.1244  0.3050  0.2334    +3.1    0.1279  <-
+       geist-900  0.9911  1.2926  1.1259  0.3394  0.2667   +15.6    0.1401
+       boxed-400  1.0020  1.0014  0.9259  0.2489  0.1825   -15.3    0.3237
+       boxed-600  0.9967  0.9964  0.9130  0.2767  0.2154    -3.5    0.3306
+       boxed-800  glyphs will not separate at any threshold — unmeasurable
+       tung-400   1.0389  1.0323  1.0329  0.3114  0.2299    -8.0    0.2753
+       tung-600   1.0258  1.0301  0.9744  0.3695  0.2877   +14.9    0.2926
+       tung-700   1.0320  1.0329  0.9199  0.4309  0.3562   +38.6    0.3068
+       tung-900   1.1287  1.1273  1.1416  0.5638  0.4092   +54.3    0.1973
+       russo-400  0.9999  1.1792  1.2173  0.7058  0.2460   +15.1    0.1819
+
+     Geist at this weight wins the pack outright on ratio-RMS, and I/S — the
+     weight-sensitive control, running 0.1938 -> 0.3394 across Geist 400-900 —
+     lands 0.3050 against canonical's 0.3064, which is what pins the weight.
+
+     H/S IS UNREACHABLE, and it is a family property rather than a weight.
+     Canonical draws its H 14% wider than its S. Within Geist, H/S runs 1.0022 /
+     1.0012 / 0.9988 / 0.9911 across weights 400-900 — flat, and FALLING with
+     weight, so no Geist weight reaches it. Boxed is flat too (1.0020 / 0.9967)
+     and Russo is 0.9999. Only Tungsten Black rises to 1.1287, and it does so at
+     +54.3% ink with an area ladder of 1.50-1.76, which rule 4 calls heavy at
+     every level. O/S is the same story and worse: canonical 1.4607 against
+     Geist's 1.3178, Boxed's 1.00 and Tungsten's 1.03. Canonical's wordmark face
+     is not in this pack; Geist is the closest thing in it, and H/S -12.3% and
+     O/S -9.8% are the bounded residuals. */
+  wordmark: { x: 44, top: 41.29, size: 25.856, weight: 759, scale: 1.0481, ls: 0.0123,
+              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: -0.0527, ty: -0.0958 },
+  eyebrow: { x: 51, top: 99.37, size: 12.053, weight: 501, scale: 0.9977, ls: 0.1115,
+             colour: "var(--s3-eyebrow)", dx: 0.0, dy: 5.28, tx: 0.4064, ty: 0.7938 },
+  /* SIGN IN — Tungsten. WHICH CUT, settled by measuring all four in the pack.
+     The pack ships tungsten_medium (400), _semibold (600), _bold (700) and
+     _black (900). Each was solved to its OWN optimum — size, scaleX,
+     letter-spacing and word-spacing all free to hit canonical's flat-cap height
+     119.851, block width 331.81, mean intra-word gap 14.30 and word space
+     47.66 — with `-webkit-text-stroke` then set for total ink, the rule-4
+     criterion the rest of this screen is solved on. Judging one cut through
+     another's fit proves nothing, so no two of these share a parameter:
+
+       cut   flat  block  word |  N stem      I width   I/N     ink    ladder
+       400  +0.45  +2.34 +0.31 | 14.80(-1.29) 16.52  0.3259  -1.8%  .981-.997
+       600  +0.11  +0.10 +0.05 | 14.79(-1.30) 17.47  0.3590  -0.2%  .994-1.022
+       700  +0.15  +0.02 +0.12 | 16.05(-0.05) 19.64  0.4196  +8.8%  1.075-1.131
+       900  +0.15  +0.18 -0.28 | 16.98(+0.88) 21.78  0.4826  +14.2% 1.130-1.182
+       canonical                  16.09        17.86  0.3574
+
+     Bold alone lands the N stem, and it is still the wrong cut. I/N is the
+     ratio of two ink widths inside the same run, so scaleX cancels out of it
+     entirely — it is a face fingerprint no horizontal fit can fake. Canonical
+     reads 0.3574; Semibold reads 0.3590, a 0.4% miss, where Bold reads 0.4196,
+     out by 17%. Bold reaches the stem only by being squeezed to scaleX 0.789,
+     which thins the verticals into place while leaving the horizontals and the
+     bowls Bold-thick: its I is 10% too wide and its area ladder sits above 1.0
+     at EVERY level (1.075-1.131), which rule 4 calls genuinely heavy. Semibold
+     is the only one of the four whose ladder straddles 1.0.
+
+     THE STEM IS UNREACHABLE, with the numbers. Canonical wants I/N 0.3574 and
+     stem/I 0.9013 simultaneously. Across the four cuts I/N runs 0.2777 /
+     0.3477 / 0.4194 / 0.4821, RISING with weight, while stem/I runs 0.8874 /
+     0.8432 / 0.8156 / 0.7807, FALLING with weight. Being monotone in opposite
+     directions, I/N 0.3574 pins the weight just above Semibold, where stem/I is
+     0.843 against the 0.9013 required — a 6.9% disagreement that only gets
+     worse in either direction. These are four discrete OTFs, not a variable
+     font, so there is nothing in between to try. Canonical's N carries thicker
+     verticals relative to its I than any Tungsten cut, and the residual N stem
+     of -1.25 device px (-7.8%) is exactly that: bounded, and closed.
+
+     A SECOND FACE RESIDUAL sets what this fit optimises. Canonical's round
+     glyphs overshoot the flat cap by +0.114 device px; every Tungsten cut
+     overshoots by +2.002 — identical across all four, so it is a family
+     property, not a weight. Flat-cap and round-glyph height therefore disagree
+     by 1.89 px whatever is done, and the fit can only choose where to stand
+     between them. Solving the flat cap directly was built and measured: it
+     lands flat +0.11 and word space -0.30, but pushes the round S and G 1.9 px
+     proud and costs pixel agreement across the whole run — the display band
+     reads mean |d| 10.86 against canonical where this fit reads 7.36, with the
+     per-glyph cap-top error rising from 0.58 to 0.85. So the run stays solved
+     on its 50%-crossing extent, which straddles the two cap lines (round -0.31,
+     flat +0.56), and the flat cap runs 1.86 px short as the stated cost.
+
+     N/G, the width-distribution question, closes the same way and for the same
+     reason. Canonical's N/G is 1.0891; the four cuts give 1.0362 / 1.0048 /
+     0.9774 / 0.9559, falling monotonically with weight and ALL below canonical,
+     so N/G wants a weight lighter than Medium — while I/N 0.3574 pins the
+     weight just above Semibold. The two point to opposite ends of a range the
+     pack does not even span at the light end, Medium being its lightest cut.
+     The grader's own separability test settles that this is not a second,
+     independent finding: G/I varies by 0.7934 across the four cuts against a
+     0.05 threshold for weight-invariance, i.e. 16x, while the I/N control
+     sweeps 0.3259 -> 0.4826. G/I tracks weight, so the width distribution is
+     the weight question already settled above, not a family discriminator.
+
+     WORD SPACING is the one thing that did move. It was 7.14, which put the
+     word space 5.65 px wide (+11.9%) and dragged "IN" right — the second word's
+     glyphs landed +3.80 and +2.25 off canonical. Because word-spacing touches
+     only the glyphs after the space, it corrects that without disturbing SIGN.
+     Swept against canonical: 7.14 -> 6.40 -> 5.90 -> 5.51 -> 5.00 -> 4.10 gives
+     word space +5.65 / +4.29 / +3.29 / +2.65 / +1.65 / -0.02, glyph-position
+     RMS 2.11 / 1.37 / 0.98 / 0.88 / 1.07 / 1.87, and display-band mean |d|
+     8.55 / 7.57 / 7.36 / 7.55 / 8.32 / 10.37. 5.90 is the minimum of both the
+     pixel error and the placement error. Closing the word space the rest of the
+     way costs block width, because canonical's letterforms are collectively
+     4.35 px wider than Tungsten's at this cap and the gaps have to absorb the
+     difference — which is the same face mismatch, seen from the other side.
+     What this costs, stated: block width goes from -0.16 to -2.32 device px
+     (-0.7%). It is bought with word space +5.65 -> +3.29, glyph-position max
+     error 3.80 -> 1.45, display-band mean |d| 8.55 -> 7.36 and whole-screen
+     mean |d| 3.772 -> 3.679, and the area ladder still straddles 1.0
+     (.980-1.011). Block width and word space cannot both be right here: the
+     letterforms are collectively narrow and one of the two has to absorb it. */
+  display: { x: 52, top: 226.77, size: 75.99, weight: 600, scale: 0.8539, ls: 0.0547,
+             ws: 5.90, stroke: 0.734, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             bang: true, dx: 3.01, dy: 30.4, tx: -0.5503, ty: 0.6055 },
+  /* The two-line lede is ONE run, so its size, scaleX and weight are solved
+     JOINTLY against both lines rather than fitted to line 1 (ledger rule 14).
+     Fitting line 1 alone parked all the error on line 2 — cap -0.628, advance
+     +1.62 and ink +5.1% at once, which is not a one-parameter error.
+     The cause is a face metric, measured: canonical's x-height on both lines is
+     16.02 and 16.03 device px where Geist at the matched ascender-to-descender
+     extent draws 18.18 and 18.23 — 13.5% larger. Line 2, "analyses, and
+     progress.", has no capital at all, so it is almost entirely x-height and
+     carries the whole discrepancy; line 1 has a cap C and four ascenders and
+     hides it.
+     The obvious alternative — size the run so the x-height matches — was
+     measured, not assumed: at 12.58px the x-heights agree and the run collapses
+     to cap -3.14 / -3.90 and ink -11.2% / -7.2%, far worse on every metric.
+     Geist is the only body-weight face in the pack (the rest are Tungsten
+     display and Boxed), so the x-height ratio is not selectable, and the joint
+     fit below is the minimax: cap +0.298 / -0.461, advance -0.31 / +1.50,
+     ink -2.5% / +2.1%. */
+  /* The lede is TWO runs. As one element with a `line-height` it could only
+     reach an L1->L2 baseline delta of 37.00 or 39.00 against canonical's 38.12,
+     because a line box quantises to two device rows — swept, `line-height`
+     35.99 / 36.60 both give 37.00 and 37.20 / 37.80 / 38.20 / 38.90 all give
+     39.00, so the best a leading can do is -1.12. Placed independently each
+     line gets its own ONE-device-px lattice and the two can be chosen against
+     each other: L1 one row up, L2 where it already was. Delta -1.123 -> -0.123,
+     L1 baseline +1.75 -> +0.75, L2 baseline +0.63 unchanged, and the two lines'
+     bands read 13.81 + 22.70 = 36.51 against 37.22. Size, scaleX and weight are
+     the joint minimax solved across both lines and are unchanged; only the
+     placement is now per line. */
+  body: { x: 52, top: 382.38, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
+          colour: "var(--s3-graphite)", dx: -0.86, tx: -0.0358, dy: 6.075, ty: 0.7019 },
+  bodyB: { x: 52, top: 420.37, size: 14.464, weight: 352, scale: 0.9027, ls: -0.0044,
+           colour: "var(--s3-graphite)", dx: -0.86, tx: -0.0358, dy: 6.075, ty: 0.2412 },
+  labelEmail: { x: 53, top: 527.31, size: 12.784, weight: 646, scale: 0.7444, ls: 0.0514,
+                colour: "var(--s3-label)", dx: 1.68, dy: 6.13, tx: -0.2228, ty: 0.3096 },
+  helpEmail: { x: 53, top: 699.34, size: 12.548, weight: 401, scale: 0.8149, ls: 0.0230,
+               colour: "var(--s3-green)", dx: 1.85, dy: 5.5, tx: -0.2657, ty: -0.7418 },
+  labelPass: { x: 53, top: 779.01, size: 12.627, weight: 722, scale: 0.7074, ls: 0.0990,
+               colour: "var(--s3-label)", dx: 0.28, dy: 6.61, tx: 0.1042, ty: 0.0862 },
+  helpPass: { x: 53, top: 946.59, size: 12.501, weight: 389, scale: 0.8221, ls: 0.0115,
+              colour: "var(--s3-green)", dx: 2.05, dy: 6.11, tx: 0.8350, ty: 0.0438 },
+  remember: { x: 96, top: 1019.66, size: 12.467, weight: 386, scale: 0.8854, ls: -0.0018,
+              colour: "var(--s3-graphite)", dx: 1.45, dy: 4.4, tx: -0.3799, ty: -0.3709 },
+  /* BASELINE, not cap-top. Canonical sets "Remember me" and "Forgot password?"
+     on one baseline — 1039.68 and 1039.70, a split of 0.02 device px. Solving
+     each run to its own cap-top split them by 2.00 px in the render, because
+     the solver had reached the same advance two different ways: it gave this
+     run size x1.053 and scaleX x0.956 against "Remember me" (product 1.006, so
+     the advance landed either way) and the extra size made it 4.9% taller —
+     F cap height 21.17 against canonical's 20.19. Size and scaleX therefore
+     move TOGETHER here, which buys the vertical without spending the advance;
+     shrinking font-size alone would have closed the baseline and broken the
+     advance match, which is the trap in the obvious fix. Re-solved: size -4.5%
+     with scaleX +4.3%, weight for ink, ty for the baseline. Baseline
+     +1.80 -> -0.20, advance +0.45 -> +0.08, ink +0.1% -> -0.3%, ladder still
+     straddling, and the run's own band reads mean |d| 14.55 against 15.97. The
+     cost is the run's 50%-crossing extent, -0.63 where it was +0.37: that
+     extent runs from the 'd' ascender to the 'g' descender and Geist's
+     ascender-to-cap ratio is not canonical's, so it cannot hold while the cap
+     height and the baseline both do. */
+  forgot: { x: 604, top: 1019.71, size: 12.534, weight: 393, scale: 0.8823, ls: -0.0072,
+            colour: "var(--s3-orange-text)", dx: 2.25, dy: 4.88, tx: 0.7514, ty: -1.5232 },
+  /* The three button labels carried the same defect and are fixed the same way
+     — size and scaleX moved together so the baseline lands without spending the
+     advance. Baseline +1.61 -> +0.61, advance +0.22 -> +0.06, run extent
+     -0.10 -> -0.38, band mean |d| 7.09 -> 6.70. */
+  signinLab: { x: 418, top: 1143.21, size: 16.921, weight: 455, scale: 0.8977, ls: -0.0325,
+               colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0.0105, ty: -0.9772, ox: PLATE.x, oy: PLATE.y },
+  or: { x: 412, top: 1280.99, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
+        colour: "var(--s3-or)", dx: 0.64, dy: 6.29, tx: -0.0194, ty: 0.7855 },
+  /* baseline +1.36 -> +0.36, advance +0.33 -> -0.26, band mean |d| 11.38 -> 11.34 */
+  appleLab: { x: 338, top: 1373.19, size: 16.390, weight: 458, scale: 0.8071, ls: -0.0415,
+              colour: "var(--shotiq-color-ink)", dx: 2.06, dy: 7.12, tx: 0.2211, ty: -0.4238,
+              ox: BOX_X, oy: APPLE.y },
+  /* baseline +1.42 -> +0.42, advance +0.47 -> +0.09, band mean |d| 12.13 -> 11.15 */
+  googLab: { x: 331, top: 1502.42, size: 15.999, weight: 464, scale: 0.8267, ls: -0.0410,
+             colour: "var(--shotiq-color-ink)", dx: -0.15, dy: 8.01, tx: -0.8164, ty: -0.8334,
+             ox: BOX_X, oy: GOOGLE.y },
+  acct1: { cx: 419.11, top: 1654.30, size: 12.482, weight: 389, scale: 0.9171, ls: -0.0056,
+           colour: "var(--s3-graphite)", dx: 0, dy: 3.45, tx: -0.0100, ty: -0.7597, width: 500 },
+  acct2: { cx: 426.95, top: 1708.37, size: 13.807, weight: 416, scale: 0.9203, ls: 0.0021,
+           colour: "var(--s3-orange-text)", dx: 0, dy: 7.06, tx: -0.5907, ty: 0.5004, width: 500 },
 }
 
 function runCss(name: string, r: Run) {
@@ -211,7 +474,8 @@ function runCss(name: string, r: Run) {
     `font-size:${r.size}px${r.bang ? " !important" : ""}`,
     `letter-spacing:${r.ls}em`,
     `color:${r.colour}`,
-    `transform:scaleX(${r.scale})`,
+    `transform:scaleX(${r.scale})` +
+      (r.tx || r.ty ? ` translate(${(r.tx ?? 0).toFixed(4)}px,${(r.ty ?? 0).toFixed(4)}px)` : ""),
     `top:${u(r.top - r.dy - oy)}`,
   ]
   parts.push(`line-height:${r.lead ? u(r.lead) : "normal"}${r.bang ? " !important" : ""}`)
@@ -262,6 +526,7 @@ ${runCss("wordmark", RUNS.wordmark)}
 ${runCss("eyebrow", RUNS.eyebrow)}
 ${runCss("display", RUNS.display)}
 ${runCss("body", RUNS.body)}
+${runCss("bodyB", RUNS.bodyB)}
 ${runCss("labelEmail", RUNS.labelEmail)}
 ${runCss("helpEmail", RUNS.helpEmail)}
 ${runCss("labelPass", RUNS.labelPass)}
@@ -288,37 +553,77 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
    scale them: the input itself carries the scaleX and divides its width back
    out so the control still spans its field. */
 .s3 [data-s3="valueEmail"]{position:absolute;left:${u(BOX_X)};top:${u(568.58)};
-  height:${u(110.81)};width:${u((800.4 - BOX_X) / 0.858)};
-  transform:scaleX(0.858) translateY(${u(EMAIL_DY)});transform-origin:0 0;
-  font-family:${GEIST};font-weight:400;font-size:14.936px;letter-spacing:0em;
-  line-height:${u(110.81)};padding-left:${u((151 - 1.0 - BOX_X) / 0.858)};
+  height:${u(110.81)};width:${u((800.4 - BOX_X) / 0.8692)};
+  transform:scaleX(0.8692) translateY(2.0245px);transform-origin:0 0;
+  font-family:${GEIST};font-weight:330;font-size:14.918px;letter-spacing:0em;
+  line-height:${u(110.81)};padding-left:${u((151 + 0.73 - BOX_X) / 0.8692)};
   color:var(--shotiq-color-ink);background:transparent;border:0;outline:none;padding-top:0;
   padding-bottom:0;padding-right:0;margin:0}
-/* 16 bullets, pitch 16.33 and diameter 9 canonical px. Chromium masks with
+/* 16 bullets, pitch 16.33 and diameter 9.09 canonical px. Chromium masks with
    U+2022 taken from the element's own font, so the diameter is set by the
    font-size and the pitch by the letter-spacing — two independent knobs, and
-   no scaleX is needed. */
+   no scaleX is needed. At 11.9px/0.352em the previous values drew a 6.09px
+   bullet on a 16.70 pitch: the right rhythm around a disc a third too small,
+   which is why the mask read -57% on ink. */
 .s3 [data-s3="valuePass"]{position:absolute;left:${u(BOX_X)};top:${u(820.67)};
-  height:${u(108.39)};width:${u(680)};transform:translateY(${u(PASS_DY)});
-  font-family:${GEIST};font-weight:400;font-size:11.9px;letter-spacing:0.352em;
-  line-height:${u(108.39)};padding-left:${u(152 - 1.0 - BOX_X)};
+  height:${u(108.39)};width:${u(680)};transform:translateY(-0.1503px);
+  font-family:${GEIST};font-weight:400;font-size:18.859px;letter-spacing:0.10463em;
+  line-height:${u(108.39)};padding-left:${u(152 - 1.52 - BOX_X)};
   color:var(--shotiq-color-ink);background:transparent;border:0;outline:none;padding-top:0;
   padding-bottom:0;padding-right:0;margin:0}
 .s3 [data-s3="valuePass"]::placeholder,.s3 [data-s3="valueEmail"]::placeholder{
   color:var(--shotiq-color-muted);letter-spacing:0em}
 .s3 [data-s3="eye"]{position:absolute;left:${u(729)};top:${u(857)};width:${u(52)};height:${u(41)};
   padding:0;margin:0;transform:none;display:block;color:var(--shotiq-color-ink)}
-.s3 [data-s3="checkbox"]{position:absolute;left:${u(52.4)};top:${u(1015.0)};width:${u(27.4)};
-  height:${u(27.4)};margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;
-  border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(2.5)} var(--s3-label)}
+.s3 [data-s3="checkbox"]{position:absolute;left:${u(52.60)};top:${u(1015.35)};width:${u(28.4)};
+  height:${u(28.0)};margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;
+  border:0;border-radius:${u(6)};box-shadow:inset 0 0 0 ${u(3.06)} var(--s3-label);
+  transform:translate(${u(0.87)},${u(-0.594)})}
 .s3 [data-s3="checkbox"]:checked{background:var(--shotiq-color-shotiqOrange);
-  box-shadow:inset 0 0 0 ${u(2.5)} var(--shotiq-color-shotiqOrange)}
-.s3 [data-s3="focus"]{display:block;position:absolute;left:${u(324 - PLATE.x)};top:${u(1124 - PLATE.y)};
-  width:${u(66)};height:${u(66)}}
-.s3 [data-s3="appleMark"]{display:block;position:absolute;left:${u(266 - BOX_X)};
-  top:${u(1362 - APPLE.y)};width:${u(38)};height:${u(47)}}
-.s3 [data-s3="googMark"]{display:block;position:absolute;left:${u(254 - BOX_X)};
-  top:${u(1491 - GOOGLE.y)};width:${u(45)};height:${u(48)}}
+  box-shadow:inset 0 0 0 ${u(3.06)} var(--shotiq-color-shotiqOrange)}
+.s3 [data-s3="focus"]{display:block;position:absolute;left:${u(324.44 - PLATE.x)};
+  top:${u(1122.78 - PLATE.y)};width:${u(67.0)};height:${u(67.0)};
+  transform:translate(${u(0.64)},${u(1.364)})}
+.s3 [data-s3="appleMark"]{display:block;position:absolute;left:${u(263.95 - BOX_X)};
+  top:${u(1361.4 - APPLE.y)};width:${u(39.14)};height:${u(48.41)}}
+.s3 [data-s3="googMark"]{display:block;position:absolute;left:${u(255.55 - BOX_X)};
+  top:${u(1492.25 - GOOGLE.y)};width:${u(44.24)};height:${u(47.18)};
+  transform:translate(${u(-1.02)},${u(-0.947)})}
+/* Ink corrections for the two provider marks, scoped HERE rather than in the
+   markup: both components are shared DOM and desktop 077 is graded on their
+   markup values. Canonical draws the Apple glyph pure black (darkest sample
+   0,0,0) where the shared markup fills #111111 — a coverage ceiling of 0.933,
+   which is most of the -11.5% ink the mark read. Canonical's Google G is a
+   heavier cut than the stock 48-unit path: at matched cap the stock path reads
+   -14.1% on red, -8.6% on green and -5.1% on blue, i.e. every arc is thin
+   rather than one arc misplaced, so each arc is stroked in its own fill
+   colour. */
+.s3 [data-s3="appleMark"] path{fill:#000000}
+.s3 [data-s3="googMark"] path{stroke-width:1.35}
+/* Canonical's Google arcs are NOT the official brand palette. Measured with a
+   distance-shell plateau estimator — mask each arc by hue, distance-transform
+   it, average only the shell at d in [3,4) so the read is interior material
+   rather than the antialiased rim or the unsharp ring:
+
+     arc      canonical            official (markup)   here
+     red      240.4  55.7  45.1    234  67  53         #F0372D
+     yellow   252.2 199.7  15.8    251 188   5         #FDC80F
+     green     32.8 164.4  81.9     52 168  83         #21A552
+     blue      60.4 135.4 250.4     66 133 244         #3C86FA
+
+   Never the most-saturated pixel: canonical is unsharp-masked, so the extreme
+   pixel is overshoot (rule 8). The estimator is unbiased — run against a flat
+   fill it returns it exactly.
+   This is not canonical's capture chain. That chain leaves flat fills alone: on
+   the same image the orange plate reads (251.7, 56.2, 2.1) against our
+   (253, 55, 1), black (2.2, 1.8, 1.6) against (0,0,0) and white paper (253.9)
+   against (255) — all within 2.2 units, where the arcs differ by 6 to 20 and in
+   opposite directions per channel (green's R is -19 while red's R is +6), which
+   no single chain effect produces. */
+.s3 [data-s3="googMark"] path[data-arc="red"]{fill:#F0372D;stroke:#F0372D}
+.s3 [data-s3="googMark"] path[data-arc="yellow"]{fill:#FDC80F;stroke:#FDC80F}
+.s3 [data-s3="googMark"] path[data-arc="green"]{fill:#21A552;stroke:#21A552}
+.s3 [data-s3="googMark"] path[data-arc="blue"]{fill:#3C86FA;stroke:#3C86FA}
 .s3 [data-s3="appleMark"] svg,.s3 [data-s3="googMark"] svg,.s3 [data-s3="focus"] svg{
   width:100%;height:100%;display:block}
 .s3 [data-s3="error"]{position:absolute;left:${u(52)};top:${u(1222)};width:${u(750)};

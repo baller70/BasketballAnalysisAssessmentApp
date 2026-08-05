@@ -56,30 +56,36 @@ export function Marks003({ emailOk }: { emailOk: boolean }) {
       ))}
 
       {/* envelope */}
-      <rect x={80.4} y={610.4} width={36.7} height={28.5} rx={4.2}
-            stroke={SLATE} strokeWidth={3.3} fill="none" />
-      <path d="M81.6 612.6 L98.75 625.5 L115.9 612.6" stroke={SLATE} strokeWidth={3.3}
+      <rect x={80.7} y={610.9} width={36.7} height={28.42} rx={4.2}
+            stroke={SLATE} strokeWidth={3.44} fill="none" />
+      <path d="M81.9 612.95 L99.05 625.85 L116.2 612.95" stroke={SLATE} strokeWidth={3.44}
             strokeLinecap="round" strokeLinejoin="round" fill="none" />
 
       {/* validated-email ring + tick — live state, so it is drawn only while
           the address actually passes, exactly as the "Looks good." line is */}
       {emailOk && (
         <g>
-          <circle cx={757.2} cy={624.5} r={16.8} stroke="var(--s3-green)" strokeWidth={3.2} fill="none" />
-          <path d="M748.6 624.8 L754.8 631.2 L766.6 618.4" stroke="var(--s3-green)" strokeWidth={3.3}
+          <circle cx={757.8} cy={624.92} r={17.06} stroke="var(--s3-green)" strokeWidth={3.18} fill="none" />
+          <path d="M749.2 625.22 L755.4 631.62 L767.2 618.82" stroke="var(--s3-green)" strokeWidth={3.28}
                 strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </g>
       )}
 
       {/* padlock */}
-      <rect x={82.06} y={873.22} width={27.41} height={21.02} rx={3.6}
-            stroke={SLATE} strokeWidth={3.3} fill="none" />
-      <path d="M87.6 873.2 V865.6 a8.1 8.1 0 0 1 16.2 0 V873.2"
-            stroke={SLATE} strokeWidth={3.3} fill="none" />
+      <rect x={82.63} y={873.85} width={27.41} height={20.72} rx={3.6}
+            stroke={SLATE} strokeWidth={3.59} fill="none" />
+      <path d="M88.17 873.83 V866.6 a8.1 8.1 0 0 1 16.2 0 V873.83"
+            stroke={SLATE} strokeWidth={3.59} fill="none" />
 
       {/* the two OR hairlines */}
-      <rect x={52} y={1291.25 - 0.9} width={338} height={1.8} fill={HAIR} />
-      <rect x={461} y={1291.25 - 0.9} width={338} height={1.8} fill={HAIR} />
+      {/* Ends measured off canonical at 50% of each rule's own peak, on the
+          rule's own centre row: left 51.70..391.31, right 460.64..799.78, so the
+          centre gap is 69.33 and each rule is 339.6/339.1 long. The rules are
+          drawn geometry here, not a flex row around the label, so the gap is
+          these two rects and nothing else — 52..390 and 461..799 left it 71.00,
+          1.67 px wide, with each rule 1.6 px short. */}
+      <rect x={51.70} y={1291.25 - 0.9} width={339.61} height={1.8} fill={HAIR} />
+      <rect x={460.64} y={1291.25 - 0.9} width={339.14} height={1.8} fill={HAIR} />
     </svg>
   )
 }
