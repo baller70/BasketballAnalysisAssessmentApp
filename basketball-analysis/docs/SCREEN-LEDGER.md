@@ -36,6 +36,37 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 004 | create-account | IN PROGRESS | — | canonical is the FILLED state. Harness was reading a stale scratchpad route map and shooting the EMPTY form with "step fails 0" — fixed at 82a3a7f. display run solved 89.96 → 14.80 (scaleX 0.8539 → 1.0195, stroke 0.33); whole screen 11.457 → 11.112. Remaining bands, worst first: lede 21.19 (solved to 12.77 in-page, not yet baked), terms 20.08, labConfirm 16.45, monogram 13.80, oneacct 12.91 |
 | 005+ | … | not started | — | |
 
+## The native app has layout defects the 72 web rows above never measured
+
+**Measured, with the type clamp in place, on the accessibility-size capture
+(run 31017306748).** `docs/shotiq/simshot-layout-audit.py` reads the captured
+PNGs — which nothing had ever done — and fails 8 of 75 screens:
+
+| screen | defect, measured |
+|---|---|
+| 021 profile-menu | **13 consecutive short lines, narrowest 23px of 1178** — "DASHBOARD MODE" wraps as DASH / BOAR / D / MODE |
+| 005 create-account | 5 consecutive short lines, narrowest 67px |
+| 058 shot-tracker | 5 consecutive short lines, narrowest 134px |
+| 028 video-upload | 4 consecutive short lines, narrowest 65px |
+| 044 form-score | 4 consecutive short lines, narrowest 127px |
+| 024 elite-shooter-detail | ink down the right edge over 58% of the height; stat row overprints — `45.7%41.3%85.3%54.8%58.6%` with no gaps; tab row cut off |
+| 040 analysis-result-overview | ink down the left edge over 74% of the height; tab row truncated |
+| 026 analyze-hub | ink down the right edge over 19% of the height |
+
+**THE CLAMP WAS NECESSARY AND IS NOT SUFFICIENT, and the record should say so.**
+These were captured WITH the Dynamic Type clamp active, so they are not text-size
+artefacts — they are defects at the design text size, and they are exactly what
+Kevin meant by "almost every screen … alignment issues … running off the page".
+Rule 38 explains why no capture had shown them; this table is what was actually
+in the pixels once something looked.
+
+Three of these edge findings needed a second estimator before they could be
+trusted: a sheet over a dimmed backdrop shows its rounded top corner at both
+edges and reads exactly 167 left / 152 right on FOUR different screens — one
+shared component, not a defect. Counting edge pixels called all four clipped;
+flagging on the vertical SPAN of the edge ink (a sheet corner spans ~3% of the
+height, real clipping 19–74%) separates them.
+
 **PAUSED, deliberately, and this is not the screen loop's fault.** Kevin's
 phone was drawing the app clipped off both edges with the type oversized. That
 is an app-wide defect on the surface he actually uses (native `ios-native`,
