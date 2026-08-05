@@ -44,7 +44,7 @@ PNGs — which nothing had ever done — and fails 8 of 75 screens:
 
 | screen | defect, measured |
 |---|---|
-| 021 profile-menu | **13 consecutive short lines, narrowest 23px of 1178** — "DASHBOARD MODE" wraps as DASH / BOAR / D / MODE |
+| 021 profile-menu | **13 consecutive short lines, narrowest 23px of 1178** — "DASHBOARD MODE" wraps as DASH / BOAR / D / MODE. **FIX WRITTEN, NOT YET VERIFIED** (f59bae6) |
 | 005 create-account | 5 consecutive short lines, narrowest 67px |
 | 058 shot-tracker | 5 consecutive short lines, narrowest 134px |
 | 028 video-upload | 4 consecutive short lines, narrowest 65px |
@@ -59,6 +59,42 @@ artefacts — they are defects at the design text size, and they are exactly wha
 Kevin meant by "almost every screen … alignment issues … running off the page".
 Rule 38 explains why no capture had shown them; this table is what was actually
 in the pixels once something looked.
+
+### The native screens have no local verification loop — plan for it
+
+This repo has **no Swift toolchain and no macOS**. A native fix cannot be
+compiled, let alone measured, in this container: the only way to see whether it
+worked is a simshots run on Kevin's Mac, which takes 11 minutes warm and has run
+to 45+ minutes cold. So the web loop's rhythm — edit, rebuild, re-measure in
+seconds — does not exist here, and pretending otherwise produces exactly the
+failure this section is about: a fix asserted from reading the code.
+
+Consequences to respect:
+- **A native fix is UNVERIFIED until a capture comes back through
+  `simshot-layout-audit.py`.** Say so in the commit, and do not mark anything
+  done on the strength of the diff.
+- Batch the *diagnosis* across screens if useful, but keep the *verification*
+  per screen, because one capture measures all 75 at once — the run is the
+  expensive part, not the screen.
+- A cold run rebuilds DerivedData from scratch. Firing against a non-`main` ref
+  costs the full build every time.
+
+### The pattern behind 020, and why the earlier fix made it worse
+
+020's segmented control used to collapse into "Analy sis" / "Traini ng". The
+fix was `.fixedSize` on the control — which made it incompressible, so the
+HStack squeezed the *next* most flexible child instead, and the label column
+fell to under one word. **The defect moved; it did not go away.** Nothing
+measured the screenshots afterwards, so it looked solved for months.
+
+The mechanism to look for on 005, 058, 028 and 044: an over-budget `HStack`
+containing both a `Spacer()` and a `Text`. Both are flexible, so the stack
+splits the leftover width between them, and `Text` compresses furthest — so the
+text loses. Removing the Spacer and giving the text column
+`.frame(maxWidth: .infinity)` leaves nothing competing for the slack. Do NOT
+reach for `.layoutPriority`: an HStack allocates to its least flexible children
+first, so a `fixedSize` sibling already gets its ideal width, and a priority
+number on the text column inverts that and starves the sibling instead.
 
 Three of these edge findings needed a second estimator before they could be
 trusted: a sheet over a dimmed backdrop shows its rounded top corner at both
