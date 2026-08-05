@@ -56,7 +56,7 @@ export function Marks003({ emailOk }: { emailOk: boolean }) {
       ))}
 
       {/* envelope */}
-      <rect x={80.7} y={610.75} width={36.7} height={28.7} rx={4.2}
+      <rect x={80.7} y={610.9} width={36.7} height={28.42} rx={4.2}
             stroke={SLATE} strokeWidth={3.44} fill="none" />
       <path d="M81.9 612.95 L99.05 625.85 L116.2 612.95" stroke={SLATE} strokeWidth={3.44}
             strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -65,7 +65,7 @@ export function Marks003({ emailOk }: { emailOk: boolean }) {
           the address actually passes, exactly as the "Looks good." line is */}
       {emailOk && (
         <g>
-          <circle cx={757.8} cy={624.92} r={16.8} stroke="var(--s3-green)" strokeWidth={3.18} fill="none" />
+          <circle cx={757.8} cy={624.92} r={17.06} stroke="var(--s3-green)" strokeWidth={3.18} fill="none" />
           <path d="M749.2 625.22 L755.4 631.62 L767.2 618.82" stroke="var(--s3-green)" strokeWidth={3.28}
                 strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </g>
@@ -73,9 +73,9 @@ export function Marks003({ emailOk }: { emailOk: boolean }) {
 
       {/* padlock */}
       <rect x={82.63} y={873.85} width={27.41} height={20.72} rx={3.6}
-            stroke={SLATE} strokeWidth={3.48} fill="none" />
+            stroke={SLATE} strokeWidth={3.59} fill="none" />
       <path d="M88.17 873.83 V866.6 a8.1 8.1 0 0 1 16.2 0 V873.83"
-            stroke={SLATE} strokeWidth={3.48} fill="none" />
+            stroke={SLATE} strokeWidth={3.59} fill="none" />
 
       {/* the two OR hairlines */}
       <rect x={52} y={1291.25 - 0.9} width={338} height={1.8} fill={HAIR} />
