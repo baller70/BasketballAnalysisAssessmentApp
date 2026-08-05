@@ -33,7 +33,8 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
 | 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
-| 004+ | … | not started | — | |
+| 004 | create-account | IN PROGRESS | — | canonical is the FILLED state; 7 route-map steps added; recipe checkpointed at 826b1aa |
+| 005+ | … | not started | — | |
 
 ## 003 — independent verification, before the grade
 
@@ -342,7 +343,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — thirty-five, each learned by getting something wrong
+## Method rules — thirty-six, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -570,7 +571,19 @@ string rolling over at midnight.
     number in this file measured before it should be treated as an estimator of
     unknown calibration until re-run.
 
-## Standing rulings
+36. **A React portal cannot be hidden by a wrapper — gate it on the viewport.**
+    `PhoneShell` portals into `<body>` as `position:fixed; z-index:60;
+    max-width:393px`, so a `md:hidden` div around the *call site* never applies:
+    the portal subtree is not a descendant of it and does not inherit
+    `display:none`. Three call sites did this and the 393pt phone screen painted
+    over the desktop app at every width. Use `usePhoneViewport()`, which exists
+    for exactly this and says so in its own docstring.
+    **Two of the three only appear on an account with NO DATA**, which is why
+    every capture missed them — the grading account is seeded and Kevin's is
+    empty. `docs/shotiq/phone-leak-audit.mjs` is the guard; it walks the app
+    signed in at 1512x900 and fails on any visible fixed 393pt panel. Its route
+    list is overridable with `ROUTES=` precisely because a seeded account cannot
+    reach an empty state, and that is how the second leak was proven.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
