@@ -29,13 +29,11 @@ import {
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhoneCard,
-  MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  MiniStat, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, MechanicGlyph, PoseFigure,
 } from "@/components/shotiq/Glyphs"
-
-const RED = "var(--shotiq-color-reviewRed)"
 
 /** Data-driven trend plot — the series is drawn, never a decorative curve. */
 function Trend({ points, width, height, fill = true, badge }: {

@@ -28,7 +28,7 @@ import { FileText, Users } from "lucide-react"
 import { MechanicGlyph, PoseFigure, PointsGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, Panel, Micro, Chev, Frame, TickDisc,
-  PHASE_STILLS, capDisplay, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
+  PHASE_STILLS, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
 
 const ROWS: [MechanicKind, string, string, string, string, string][] = [

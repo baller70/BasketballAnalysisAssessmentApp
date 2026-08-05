@@ -143,7 +143,6 @@ export default function DrillExecutionClient() {
   const setIndex = Math.min(TOTAL_SETS, Math.floor(elapsed / SET_SECONDS) + 1)
   const setsCompleted = Math.min(TOTAL_SETS, Math.floor(elapsed / SET_SECONDS))
   const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
-  const last24 = useMemo(() => shots.slice(-24), [shots])
   // Canonical's strip is 11 logged marks then three empty placeholders.
   const lastMarks = useMemo(() => shots.slice(-MARK_REAL), [shots])
   // Canonical paints nine frames on the history strip with the newest ringed LIVE.

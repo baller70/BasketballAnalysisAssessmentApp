@@ -27,9 +27,7 @@ import React from "react"
 import { CorrectionGlyph, MechanicGlyph, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, ShareIcon, Panel, Micro, ScoreBar, PhaseRail, Chev,
-  PrimaryBar, Frame, SkeletonOverlay, Spark, TickDisc, CrossDisc, capDisplay,
-  ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
-} from "./Kit"
+  PrimaryBar, Frame, SkeletonOverlay, Spark, TickDisc, CrossDisc, ORANGE, BLUE, GREEN, GRAPHITE, RULE, } from "./Kit"
 
 export function MetricDetail({
   metric = "ELBOW ANGLE", value = "91", unit = "°",

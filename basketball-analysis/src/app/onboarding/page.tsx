@@ -123,6 +123,27 @@ export default function OnboardingPage() {
     }, 250)
     return () => clearTimeout(t)
   }, [isAuthenticated, router])
+  /* These four hooks MUST sit above the `signedOut` early return below.
+     React requires the same hook order on every render, and returning null
+     first made the hook count differ between the signed-in and signed-out
+     renders — a crash, not a lint nit. Caught by rules-of-hooks in CI. */
+  // Phone viewport, tracked live (the phone bio screen is a portal, so CSS
+  // breakpoints on its wrapper do not reach it).
+  const [isPhone, setIsPhone] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const sync = () => setIsPhone(mq.matches)
+    sync()
+    mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
+
+  const [phoneStep, setPhoneStep] = useState<PhoneStep>("intro")
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("step")
+    if (q && (PHONE_STEPS as readonly string[]).includes(q)) setPhoneStep(q as PhoneStep)
+  }, [])
+
   if (signedOut) return null
 
   const first = (user?.firstName || user?.displayName || "Shooter").split(" ")[0]
@@ -184,16 +205,6 @@ export default function OnboardingPage() {
      1440pt wizard keeps the step in its card column, so the phone layout is
      the only thing swapped in below the md breakpoint. */
   const BIO_STEP = STEPS.findIndex(([n]) => n === "Bio") + 1
-  // Phone viewport, tracked live (the phone bio screen is a portal, so CSS
-  // breakpoints on its wrapper do not reach it).
-  const [isPhone, setIsPhone] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)")
-    const sync = () => setIsPhone(mq.matches)
-    sync()
-    mq.addEventListener("change", sync)
-    return () => mq.removeEventListener("change", sync)
-  }, [])
   const enhanceBio = () =>
     setEnhanced(
       `${first} is a ${(store.experienceLevel ?? "advanced")} ${position} who trains to `
@@ -212,11 +223,6 @@ export default function OnboardingPage() {
      every surface owns a `?step=` the flow writes back into the URL, so it is
      also a deep link. `window.location` rather than `useSearchParams` because
      this page prerenders and `useSearchParams` would force it dynamic. */
-  const [phoneStep, setPhoneStep] = useState<PhoneStep>("intro")
-  useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("step")
-    if (q && (PHONE_STEPS as readonly string[]).includes(q)) setPhoneStep(q as PhoneStep)
-  }, [])
   const goPhone = (s: PhoneStep) => {
     setPhoneStep(s)
     const u = new URL(window.location.href)

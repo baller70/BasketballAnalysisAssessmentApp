@@ -31,9 +31,9 @@ import React from "react"
 import { Bookmark } from "lucide-react"
 import { ActionGlyph, MechanicGlyph, PoseGlyph, CorrectionGlyph } from "@/components/shotiq/Glyphs"
 import {
-  ResultsScreen, ResultsBar, ShareIcon, ResultsIdentity, Panel, Micro, ScoreBar,
+  ResultsScreen, ResultsBar, ShareIcon, ResultsIdentity, Panel, ScoreBar,
   Chev, PrimaryBar, Frame, PHASE_STILLS, capDisplay,
-  ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
+  ORANGE, BLUE, GRAPHITE, RULE, INK,
 } from "./Kit"
 
 const FRAMES = ["LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH", "RESET"]

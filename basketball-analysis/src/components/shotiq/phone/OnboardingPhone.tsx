@@ -139,7 +139,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
 
       {/* ------------------------------------------------ benefit rows */}
       <div className="mt-[11px]">
-        {BENEFITS.map(([t, d, img], i) => (
+        {BENEFITS.map(([t, d, img]) => (
           <div key={t} className="flex items-start gap-[16px] px-[18px] py-[8px]"
                style={{ borderTop: `1px solid ${RULE}` }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -23,8 +23,7 @@ import React from "react"
 import { CalendarDays, Info } from "lucide-react"
 import { PoseFigure, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
-  ResultsScreen, ResultsBar, Panel, Micro, Frame, capDisplay,
-  ORANGE, BLUE, GREEN, RED, GRAPHITE, RULE, INK,
+  ResultsScreen, ResultsBar, Panel, Micro, Frame, ORANGE, BLUE, GREEN, RED, GRAPHITE, RULE, INK,
 } from "./Kit"
 
 const SCORECARD: [string, string, string, string, string][] = [

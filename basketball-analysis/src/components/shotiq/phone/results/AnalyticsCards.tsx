@@ -26,7 +26,7 @@ import { CalendarDays, SlidersHorizontal, MoreVertical } from "lucide-react"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, Micro, PhaseRail,
-  Chev, Frame, capDisplay, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
+  Chev, Frame, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
 
 const TREND: [string, number][] = [

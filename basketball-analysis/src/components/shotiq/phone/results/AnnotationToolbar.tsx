@@ -22,10 +22,10 @@
 
 import React from "react"
 import { Pause, SkipBack, SkipForward, Type as TypeIcon, Undo2, Redo2, Trash2, ArrowUpRight } from "lucide-react"
-import { MechanicGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
+import { MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, Panel, Micro, PhaseRail, PrimaryBar,
-  Frame, SkeletonOverlay, capDisplay, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
+  Frame, SkeletonOverlay, ORANGE, BLUE, GRAPHITE, RULE, INK,
   StreakPoints,
 } from "./Kit"
 

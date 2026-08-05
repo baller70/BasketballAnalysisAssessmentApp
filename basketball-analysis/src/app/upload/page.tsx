@@ -11,7 +11,6 @@ import { VideoUpload } from "@/components/upload/VideoUpload"
 import { LiveAnalysis } from "@/components/live"
 import {
   CameraIcon,
-  BasketballIcon,
   InfoIcon,
   GoodFormIcon,
 } from "@/components/icons"

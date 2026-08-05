@@ -27,7 +27,7 @@ import { ChevronRight, ChevronLeft, Check, Minus, Plus, X } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneAction, Eyebrow, PhaseRail, PhoneCard,
-  MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, PoseFigure, MechanicGlyph,

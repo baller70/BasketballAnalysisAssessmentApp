@@ -130,7 +130,7 @@ function DrillLibrary() {
   }, [])
 
   const toggleSave = (title: string) =>
-    setSaved((s) => { const n = new Set(s); n.has(title) ? n.delete(title) : n.add(title); return n })
+    setSaved((s) => { const n = new Set(s); if (n.has(title)) n.delete(title); else n.add(title); return n })
 
   const ALL = [...custom, ...DRILLS]
   const shown = ALL.filter((d) =>

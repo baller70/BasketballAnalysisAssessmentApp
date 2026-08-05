@@ -25,8 +25,7 @@ import { Play, Maximize2 } from "lucide-react"
 import { ActionGlyph, MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, Micro, ScoreBar,
-  PhaseRail, Chev, PrimaryBar, Frame, SkeletonOverlay, PHASE_STILLS, capDisplay,
-  ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
+  PhaseRail, Chev, PrimaryBar, Frame, SkeletonOverlay, PHASE_STILLS, ORANGE, BLUE, GRAPHITE, RULE, INK,
 } from "./Kit"
 
 const TOGGLES: [string, "skeletonDots" | "nodeGraph" | "analyze" | "nodeClimb", boolean][] = [

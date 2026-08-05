@@ -33,8 +33,7 @@ import React from "react"
 import { Info } from "lucide-react"
 import {
   ResultsScreen, ResultsBar, Panel, Micro, ScoreBar, PhaseRail, Frame,
-  SkeletonOverlay, ORANGE, BLUE, GRAPHITE, RULE, INK,
-} from "./Kit"
+  SkeletonOverlay, ORANGE, BLUE, GRAPHITE, RULE, } from "./Kit"
 import { StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 
 const SWATCHES = [ORANGE, "#2D6CDF", "#0B8A3D", "#8B2FD6", "#565A5E"]
