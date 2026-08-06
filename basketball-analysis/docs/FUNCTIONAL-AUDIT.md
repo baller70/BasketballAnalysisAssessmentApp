@@ -43,6 +43,26 @@ the shooter. Two things had to be corrected to make it work at all:
 | No `modelUrl` — tfjs fetched ~4.6MB from Google on every cold start | When that fetch fails the only symptom is a photo with no skeleton, which reads as "the app is broken". Weights are now served from our own origin, byte-identical (sha256 `c65a3447…`) to what tfjs fetched. |
 | tfjs reads an `HTMLImageElement` through its **layout** size | A 182×281 photo in a square tile was sampled as 280×280, so keypoints came back stretched while the overlay drew in the file's own space: a correctly shaped skeleton standing *beside* the player. Detection now runs on an offscreen canvas at `naturalWidth`/`naturalHeight`. |
 
+**Fixed (iOS):** the phone ran no pose detection at all — Vision was never
+imported. `Core/PoseDetection.swift` now runs Apple's body-pose request on the
+player's own photo, on device, and `Components/CapturedPoseImage.swift` draws it
+in the same white-bones/orange-joints treatment the web uses, so one shot looks
+the same on both platforms. `SkeletonOverlay` keeps its six constants and is
+unchanged for every existing caller — all of them pass no detected pose, which
+is correct over the canonical crops. The same aspect-fill trap the web hit is
+handled explicitly (`ShotIQPose.filledSize`, pinned by nine XCTest cases), and
+024's "full body visible" / "shooting hand visible" rows now come from the
+detection instead of being asserted from constants.
+
+**Fixed (video):** `analyzeVideoShooting` located only three phases — SETUP,
+RELEASE, FOLLOW_THROUGH — and lumped everything between setup and release into
+one `LOADING` bucket, so the LOAD and RISE cards on every five-phase strip had
+no source of frames at all. LOAD is now the deepest knee bend between setup and
+release and RISE is where the wrists sit halfway between their load and release
+heights, both from per-frame data already computed. `PhaseFrames.tsx` reads the
+stills back and puts each one in its card, falling back to the canonical figure
+whenever a still is not available.
+
 **Still not done:** video → phase frames, a real per-upload results page, and the
 same overlay on iOS.
 
@@ -87,6 +107,28 @@ carries 27 models including `UserAnalysis`, `MediaUpload`, `AnalysisHistory`,
 the plumbing is sound, but the client's auth is undeclared, its recovery path
 calls a route that isn't there, and the destination rejects any account that
 hasn't been through onboarding.
+
+### All four are fixed
+
+- **(1) and (2)** — `getSessionUser` now verifies the same signed token from
+  either carrier, cookie first so a browser request cannot be re-attributed by
+  an attacker-supplied header. A forged Bearer is still rejected.
+- **(2, second half)** — signin and signup return the token they already mint
+  for the cookie, so the client's Keychain finally holds something.
+- **(3)** — `POST /api/auth/refresh` exists and re-issues the session token to a
+  caller who can still present a valid one, re-reading the user so a deleted
+  account stops there. On the client, the Keychain is cleared only on an
+  explicit 401 — never on a 404, a 500, or a dead network — and refresh/retry is
+  bounded to one attempt.
+- **(4)** — `resolveProfileId` creates the profile on demand rather than 404ing.
+  It is a row the data hangs off, not a gate, and it is only ever created for a
+  caller who has already proved who they are.
+
+Proven end to end in `tests/e2e/ios-auth-chain.spec.ts`, over real HTTP, the way
+the phone behaves — Bearer token, no cookie jar. Any request carrying a cookie
+would have passed with all four defects present, so the suite never sends one.
+It signs up a phone-only account, saves a capture, and reads it back from the
+web library tagged "iOS Capture".
 
 ---
 
