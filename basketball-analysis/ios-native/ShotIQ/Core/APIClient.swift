@@ -136,7 +136,7 @@ actor APIClient {
         csrfToken = decoded.csrfToken
     }
 
-    private func request<T: Decodable>(_ path: String, method: String = "GET", body: Encodable? = nil, retriedCsrf: Bool = false) async throws -> T {
+    private func request<T: Decodable>(_ path: String, method: String = "GET", body: Encodable? = nil, retriedCsrf: Bool = false, retriedAuth: Bool = false) async throws -> T {
         if method != "GET" { try await ensureCsrfToken() }
         var req = URLRequest(url: baseURL.appending(path: path))
         req.httpMethod = method
@@ -152,32 +152,68 @@ actor APIClient {
         }
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw APIError.network }
-        if http.statusCode == 401 { try await refreshTokens(); return try await request(path, method: method, body: body) }
+        // Refresh and retry ONCE. Without the guard a server that keeps
+        // answering 401 sends this into an unbounded refresh/retry loop.
+        if http.statusCode == 401 && !retriedAuth {
+            try await refreshTokens()
+            return try await request(path, method: method, body: body,
+                                     retriedCsrf: retriedCsrf, retriedAuth: true)
+        }
         // A stale/expired CSRF pair comes back as 403 — fetch a fresh token once.
         if http.statusCode == 403 && method != "GET" && !retriedCsrf {
             try await ensureCsrfToken(force: true)
-            return try await request(path, method: method, body: body, retriedCsrf: true)
+            return try await request(path, method: method, body: body,
+                                     retriedCsrf: true, retriedAuth: retriedAuth)
         }
         guard (200..<300).contains(http.statusCode) else { throw APIError.http(http.statusCode) }
         do { return try JSONDecoder().decode(T.self, from: data) } catch { throw APIError.decode }
     }
 
-    /// Short-lived access token + rotating refresh token, both in Keychain.
+    /// Trade a still-valid session token for a fresh one (POST /api/auth/refresh).
+    ///
+    /// THIS USED TO SIGN PEOPLE OUT FOR THE WRONG REASONS. It required a
+    /// `refreshToken` in the Keychain, which the backend never issued, so it
+    /// threw 401 before sending anything. And it wiped BOTH Keychain entries on
+    /// any non-200 at all — the route itself answered 404 because it did not
+    /// exist, a flaky network answers nothing, and every one of those was read
+    /// as "your session is gone" and threw the player back to the sign-in screen.
+    ///
+    /// Now: the access token is the credential when no separate refresh token
+    /// was issued (this backend mints one session JWT, not two), and the
+    /// Keychain is cleared ONLY when the server explicitly says the session is
+    /// dead. A 404, a 500, or no answer at all leaves the tokens alone so the
+    /// next request can try again.
     private func refreshTokens() async throws {
-        guard let refresh = KeychainStore.read(key: "refreshToken") else { throw APIError.http(401) }
-        struct Refresh: Codable { var accessToken: String; var refreshToken: String }
+        let credential = KeychainStore.read(key: "refreshToken")
+            ?? KeychainStore.read(key: "accessToken")
+        guard let credential else { throw APIError.http(401) }
+
+        struct Refresh: Codable { var accessToken: String?; var refreshToken: String? }
         var req = URLRequest(url: baseURL.appending(path: "/api/auth/refresh"))
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONEncoder().encode(["refreshToken": refresh])
+        req.setValue("Bearer \(credential)", forHTTPHeaderField: "Authorization")
+        req.httpBody = try JSONEncoder().encode(["refreshToken": credential])
+
         let (data, resp) = try await URLSession.shared.data(for: req)
-        guard (resp as? HTTPURLResponse)?.statusCode == 200,
-              let tokens = try? JSONDecoder().decode(Refresh.self, from: data) else {
-            KeychainStore.delete(key: "accessToken"); KeychainStore.delete(key: "refreshToken")
+        guard let http = resp as? HTTPURLResponse else { throw APIError.network }
+
+        // Only an explicit 401 means the session is over. Signing out on
+        // anything else is what made one bad request look like a logout.
+        if http.statusCode == 401 {
+            signOut()
             throw APIError.http(401)
         }
-        KeychainStore.save(tokens.accessToken, key: "accessToken")
-        KeychainStore.save(tokens.refreshToken, key: "refreshToken")
+        guard (200..<300).contains(http.statusCode),
+              let tokens = try? JSONDecoder().decode(Refresh.self, from: data),
+              let access = tokens.accessToken else {
+            throw APIError.http(http.statusCode)
+        }
+
+        KeychainStore.save(access, key: "accessToken")
+        // The backend has one token; it echoes it here so both Keychain keys
+        // stay in step whether or not a separate refresh credential ever exists.
+        KeychainStore.save(tokens.refreshToken ?? access, key: "refreshToken")
     }
 
     // MARK: endpoints (mirroring the web client)
@@ -186,8 +222,14 @@ actor APIClient {
         struct Resp: Codable { var user: APIUser; var accessToken: String?; var refreshToken: String? }
         let r: Resp = try await request("/api/auth/signin", method: "POST",
                                         body: ["email": email, "password": password])
-        if let a = r.accessToken { KeychainStore.save(a, key: "accessToken") }
-        if let t = r.refreshToken { KeychainStore.save(t, key: "refreshToken") }
+        // The backend returns one session token. Both Keychain keys are written
+        // from it so `refreshTokens` has a credential to present — this app
+        // used to save nothing here, because signin returned no token at all,
+        // and every Bearer header it sent afterwards was empty.
+        if let a = r.accessToken {
+            KeychainStore.save(a, key: "accessToken")
+            KeychainStore.save(r.refreshToken ?? a, key: "refreshToken")
+        }
         return r.user
     }
 

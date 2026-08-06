@@ -7,6 +7,7 @@ import {
   createSessionToken,
   authCookieOptions,
   AUTH_COOKIE_NAME,
+  AUTH_TOKEN_MAX_AGE,
 } from "@/lib/authToken"
 
 // Basic RFC-ish email validation — good enough to reject obvious garbage.
@@ -98,11 +99,24 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _password, ...userWithoutPassword } = user
 
-    const res = NextResponse.json({ user: userWithoutPassword }, { status: 200 })
-
     // Issue a signed, httpOnly session token. If this fails we must NOT log the
     // user in via any insecure fallback — fail the request instead.
     const token = await createSessionToken({ sub: user.id, email: user.email })
+
+    // The token is also returned in the body for native clients, which have no
+    // cookie jar to rely on and send it as `Authorization: Bearer`. The iOS app
+    // has always looked for `accessToken` here (Core/APIClient.swift) and
+    // always found nothing, so its Keychain stayed empty and every request it
+    // made was authenticated only by an incidental cookie.
+    //
+    // This is the same token the cookie carries, handed to a client that has
+    // already proved the password on this very request — it discloses nothing
+    // the caller does not already hold. Browsers keep using the httpOnly
+    // cookie, which stays the safer carrier where a cookie jar exists.
+    const res = NextResponse.json(
+      { user: userWithoutPassword, accessToken: token, expiresIn: AUTH_TOKEN_MAX_AGE },
+      { status: 200 }
+    )
     res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
 
     return res
