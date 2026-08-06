@@ -55,6 +55,7 @@ import {
   BackArrow, UploadGlyph, ShieldGlyph, GearGlyph, CameraGlyph, Spark, ConfidenceArc,
   usePhoneViewport,
 } from "@/components/shotiq/phone/LiveCaptureBits"
+import { useCameraReadiness } from "@/components/shotiq/phone/useCameraReadiness"
 
 export const CAPTURE_STATES = [
   "setup", "primer", "calibrate", "readiness", "ready",
@@ -436,14 +437,12 @@ function Calibrate({
 /* 030 — readiness check                                                   */
 /* ======================================================================= */
 
-const READY_ROWS: [React.ComponentProps<typeof ReadinessGlyph>["kind"], string, string][] = [
-  ["framing", "Full body", "GOOD"],
-  ["lighting", "Lighting", "GOOD"],
-  ["stability", "Stability", "GOOD"],
-  ["athlete", "Hoop visible", "GOOD"],
-  ["framing", "Ball visible", "GOOD"],
-  ["athlete", "Pose confidence", "92%"],
-]
+/* The glyph each check draws, in canonical's order. The VALUES used to live
+   here too — six literals that told every player their setup was correct
+   before recording, in any light, framed or not. They are measured now; see
+   `useCameraReadiness`. */
+const READY_GLYPHS: React.ComponentProps<typeof ReadinessGlyph>["kind"][] =
+  ["framing", "lighting", "stability", "athlete", "framing", "athlete"]
 
 function Readiness({
   onKeep, onCancel, onHelp, stream, onStart,
@@ -451,6 +450,7 @@ function Readiness({
   onKeep: () => void; onCancel: () => void; onHelp: () => void
   stream: MediaStream | null; onStart: () => void
 }) {
+  const readiness = useCameraReadiness(stream)
   return (
     <PhoneScreen testid="screen-ios-readiness-check" pad={22} headerH={44} tab="home">
       <CaptureIdentity cap={24} className="pt-[11px]" />
@@ -476,14 +476,23 @@ function Readiness({
           {/* the live readiness list, x261.2-368.6 y308.2-496.2 of the canonical */}
           {/* canonical x261.2-368.6, y308.2-496.2 — six 31.3pt rows */}
           <div className="pointer-events-none absolute right-[10px] top-[88px] w-[108px] overflow-hidden rounded-[6px] bg-white">
-            {READY_ROWS.map(([kind, label, value], i) => (
-              <div key={label} className={`flex h-[31px] items-center gap-[5px] px-[6px] ${i ? "border-t" : ""}`}
+            {readiness.map((row, i) => (
+              <div key={row.label} className={`flex h-[31px] items-center gap-[5px] px-[6px] ${i ? "border-t" : ""}`}
                    style={{ borderColor: RULE }}>
-                <CheckDot size={14} />
-                <ReadinessGlyph kind={kind} size={13} />
+                {/* The tick is the RESULT of a check, so it only appears on a
+                    check that actually passed. A green dot beside "TOO DARK"
+                    would be the old lie wearing the new value. */}
+                {row.state === "good"
+                  ? <CheckDot size={14} />
+                  : <span className="inline-block h-[14px] w-[14px] shrink-0 rounded-full border"
+                          style={{ borderColor: row.state === "poor" ? ORANGE : RULE }} />}
+                <ReadinessGlyph kind={READY_GLYPHS[i]} size={13} />
                 <div className="min-w-0">
-                  <div className="whitespace-nowrap text-[9px] leading-[10px]">{label}</div>
-                  <div className="text-[8px] font-semibold leading-[9px]" style={{ color: GREEN }}>{value}</div>
+                  <div className="whitespace-nowrap text-[9px] leading-[10px]">{row.label}</div>
+                  <div className="whitespace-nowrap text-[8px] font-semibold leading-[9px]"
+                       style={{ color: row.state === "good" ? GREEN : row.state === "poor" ? ORANGE : GRAPHITE }}>
+                    {row.value}
+                  </div>
                 </div>
               </div>
             ))}

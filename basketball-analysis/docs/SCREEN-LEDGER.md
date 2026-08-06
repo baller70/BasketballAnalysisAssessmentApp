@@ -2288,6 +2288,51 @@ and the run stalls at that stage — an environment limit, not a code path. The
 stages past `pose`, and the success navigation, are verified by construction
 and by the desktop uploader's own flow, not by this harness.
 
+### DONE: the readiness panel actually checks the camera
+
+Second of Kevin's feature list. `LiveCapture`'s six rows were literals in
+`READY_ROWS` — "Full body GOOD / Lighting GOOD / Stability GOOD / Hoop visible
+GOOD / Ball visible GOOD / Pose confidence 92%" — so the screen told every
+player their setup was correct before recording: in the dark, with the phone in
+a pocket, with the player out of frame. It is the check a player trusts before
+they shoot, and it was six words on a card.
+
+**Five of the six are answered, by pipelines this app already ships:**
+
+- FULL BODY and POSE CONFIDENCE from MoveNet, the same detector the analysis
+  runs. Full body asks whether the joints that DEFINE a shot are in frame —
+  both ankles, both shoulders, the head — not merely whether some keypoints
+  came back: a player cropped at the knees returns plenty of keypoints and
+  cannot be analysed.
+- LIGHTING is mean frame luminance. No model needed.
+- STABILITY is the mean per-pixel change between consecutive samples — camera
+  shake plus subject motion. It reads CHECKING on the first sample, because one
+  frame cannot show movement.
+- BALL VISIBLE is the COCO detector the upload pipeline already uses for shot
+  tracking.
+
+**The sixth is not, and says so.** Nothing detects a hoop: the rim is
+USER-CALIBRATED, tapped by the player on the upload screen, so there is no
+detector to ask. It reads NOT CHECKED rather than a green GOOD, because a
+player who trusts that row and frames the rim out of shot gets no shot result
+at all.
+
+**The tick had to move too.** Canonical draws a green check beside every row; it
+is the RESULT of a check, so it now appears only on one that passed. A green dot
+beside "TOO DARK" would be the old lie wearing the new value.
+
+Sampling is one pass every 1.2s, non-overlapping, stopped on unmount — two
+models over a video frame is expensive on a phone and this runs while the player
+is still setting up.
+
+The thresholds are a pure `evaluateReadiness`, tested (8 cases) without a
+camera, a GPU or a model — including that a bad setup returns ZERO greens,
+which is the defect stated as a test.
+
+**What could NOT be exercised here:** this harness has no camera and no WebGL,
+so the panel was verified only in its honest pending state — all rows CHECKING,
+hoop NOT CHECKED. The measurements themselves need a real device.
+
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
