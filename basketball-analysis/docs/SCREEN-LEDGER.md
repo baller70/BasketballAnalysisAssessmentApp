@@ -1490,6 +1490,36 @@ verified at BOTH states in a browser before it is committed.
 | `/results/demo/goals` | DONE | `lib/goals/progress.ts` — goals measure themselves (15 tests) |
 | `/results/demo` (overview) | DONE | MECHANICS AT RELEASE from the derived measurements; elite match, form score, coaching target, key insight |
 
+### NEXT: two tables disagree about how many sessions you have
+
+Diagnosed, not yet fixed. `/api/analysis-history` reports 2 analyses for the
+test account while `/api/badges` and `/api/media` report 3, because they read
+different tables — `AnalysisHistory` and `UserAnalysis`.
+
+**Cause.** `save-analysis` writes the `AnalysisHistory` row only inside
+`if (body.overallScore !== undefined)`, and it has to: `AnalysisHistory.overallScore`
+is `Decimal` NOT NULL, so a scoreless analysis physically cannot be recorded
+there. An analysis that produced angles but no overall score therefore exists in
+`UserAnalysis` and is invisible to every screen that reads history.
+
+**What it breaks.** The history screen omits the session; the analysis
+overview's "N OF M" undercounts; the player card's 7-day deltas never see it;
+and — worst — a day the player actually trained does not count toward a streak
+or a consistency goal, because `lib/goals/progress.ts` and the badge engine read
+`UserAnalysis` while the history screen reads `AnalysisHistory`, so the two
+halves of the app disagree about whether that day happened.
+
+**Plan.**
+1. Migration: `ALTER TABLE analysis_history ALTER COLUMN overall_score DROP NOT NULL`,
+   and `overallScore Decimal?` in schema.prisma.
+2. `save-analysis`: write the history row whenever the analysis carries a score
+   OR any angle — a session the player did belongs in the timeline either way.
+3. Guard the six readers. `analysis-history` already null-checks in places
+   (`entry.overallScore != null ? ... : null`, `.filter(!isNaN)`); `calculateTrend`,
+   `scoreChange` and **`/api/leaderboard` (which averages scores and is a
+   user-visible ranking)** must be checked before this ships.
+4. Backfill is NOT needed — the existing rows are all scored.
+
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
