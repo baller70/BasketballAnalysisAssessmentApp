@@ -28,9 +28,22 @@ const DEMO_ROWS: [string, string, string, string, string, string][] = [
 // Extra clip count per row, mirroring the canonical media column.
 const ROW_EXTRA = ["+3", "+2", "+2", "+2", "+4", "+2", "+2", "+2"]
 
-const RANGES: [string, string, number][] = [
-  ["7", "May 6 – May 12, 2025", 6], ["14", "Apr 28 – May 12, 2025", 8], ["30", "Apr 12 – May 12, 2025", 8],
+/* THE DATE RANGE WAS A LABEL, NOT A RANGE.
+   These read "May 6 – May 12, 2025" over rows dated 2026, and the third tuple
+   member was a PAGE SIZE — so choosing "30 days" showed more rows of the same
+   unfiltered list rather than a wider window. Days are the unit now, the label
+   is computed from today, and the window actually filters. */
+const RANGES: [string, number, number][] = [
+  ["7", 7, 6], ["14", 14, 8], ["30", 30, 8],
 ]
+/** "Apr 28 – May 12, 2025", built from the range the player picked. */
+function rangeLabel(days: number): string {
+  const end = new Date()
+  const start = new Date(end)
+  start.setDate(end.getDate() - (days - 1))
+  const md = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  return `${md(start)} – ${md(end)}, ${end.getFullYear()}`
+}
 const METRICS = ["Form Score", "Make %", "Confidence"]
 // Canonical's SESSIONS columns, measured off the 093 render: the table spans
 // x 155→1000 and starts DATE at +37, FORM SCORE +187, MAKE % +297,
@@ -76,22 +89,55 @@ export default function AnalysisHistoryPage() {
   // Only sessions with a real score and timestamp render as live rows; junk
   // rows (no score, no date) fall back to the canonical demo sessions so the
   // table always mirrors the 093 screen.
-  const usable = items.filter((a) => a.score != null && a.when)
+  /* THE WINDOW, APPLIED. Sessions inside the picked number of days, using the
+     raw timestamp `at` — `when` is already formatted for display and cannot be
+     compared. A session with no timestamp at all cannot be placed in a window,
+     so it stays in rather than being silently dropped by a date filter. */
+  const windowStart = (() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - (range[1] - 1))
+    return d.getTime()
+  })()
+  const inWindow = items.filter((a) => {
+    if (!a.at) return true
+    const t = Date.parse(a.at)
+    return !Number.isFinite(t) || t >= windowStart
+  })
+  const usable = inWindow.filter((a) => a.score != null && a.when)
+
+  /* The AVERAGE the strip is labelled with, over the SAME window the table
+     shows. `stats.averageScore` is the average across everything the API
+     returned, which would disagree with the rows underneath it the moment the
+     range narrowed. */
+  const windowScores = usable.map((a) => a.score).filter((v): v is number => v != null)
+  const averageScore = windowScores.length
+    ? Math.round(windowScores.reduce((a, b) => a + b, 0) / windowScores.length)
+    : hasData ? null : (stats?.averageScore ?? null)
   // MAKE % and SHOTS / MAKES come from the shot events of the capture session
   // behind each analysis (projected by /api/analysis-history). They render as
   // em-dashes only when a session genuinely has no capture behind it.
-  const allRows: [string, string, string, string, string, string][] = usable.length
-    ? usable.map((a) => [
+  /* Sessions WITHOUT a score belong in the history too — that is the whole
+     point of the one-row-per-analysis invariant. They render with an em-dash
+     where the score would be and carry NO verdict: "Fair" is a judgement, and
+     a shot nobody scored has not earned one. */
+  const listed = inWindow.filter((a) => a.when)
+  const allRows: [string, string, string, string, string, string][] = listed.length
+    ? listed.map((a) => [
         `${a.when}`, a.score != null ? String(Math.round(a.score)) : "—",
-        (a.score ?? 0) >= 70 ? "Good" : "Fair",
+        a.score == null ? "—" : a.score >= 70 ? "Good" : "Fair",
         formatMakePct(a.shots, a.makes), formatShotsMakes(a.shots, a.makes),
         a.shots != null && a.shots >= 15 ? "High" : "Medium",
       ] as [string, string, string, string, string, string])
     : hasData || items.length ? DEMO_ROWS : []
-  const demoMode = !usable.length && allRows.length > 0
+  const demoMode = !listed.length && allRows.length > 0
   // Running average across the loaded range — what the FOCUS mark colours by.
-  const avgScore = allRows.length
-    ? allRows.reduce((a, r) => a + (Number(r[1]) || 0), 0) / allRows.length
+  // Only scored rows — `Number("—")` is NaN, and `|| 0` would have folded
+  // every unscored session in as a zero and dragged this average down.
+  const scoredRowValues = allRows
+    .map((r) => Number(r[1]))
+    .filter((n) => Number.isFinite(n))
+  const avgScore = scoredRowValues.length
+    ? scoredRowValues.reduce((a, b) => a + b, 0) / scoredRowValues.length
     : 0
   // One page is range[2] rows whether the sessions are live or demo. With the
   // rows restored to canonical's 57px pitch, an unpaged live history ran past
@@ -162,7 +208,7 @@ export default function AnalysisHistoryPage() {
               <button type="button" aria-expanded={menu === "range"}
                       onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
                       className="flex h-[45px] w-[207px] items-center gap-[8px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
-                <Calendar className="h-[14px] w-[14px]" /> {range[1]} <ChevronDown className="h-[12px] w-[12px]" />
+                <Calendar className="h-[14px] w-[14px]" /> {rangeLabel(range[1])} <ChevronDown className="h-[12px] w-[12px]" />
               </button>
               {menu === "range" && (
                 <div className="absolute left-0 top-[46px] z-30 w-[220px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -234,8 +280,11 @@ export default function AnalysisHistoryPage() {
           {/* This cell carries the longest label in the strip; an equal share
               broke it onto two lines where canonical keeps it on one. */}
           <div className="min-w-0 flex-[1.45] pr-[16px]">
+            {/* Was `score`, which useHistory defines as latestScore ?? average
+                — the newest session's number under a label reading AVERAGE.
+                On the test account that printed 84 beside an API average of 82. */}
             <div className="shotiq-section-label whitespace-nowrap">AVERAGE FORM SCORE</div>
-            <div className="shotiq-numeric text-[40px] leading-[44px]">{score ?? "—"}</div>
+            <div className="shotiq-numeric text-[40px] leading-[44px]">{averageScore ?? "—"}</div>
             <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">● Good</div>
           </div>
           <div className="flex min-w-0 flex-[3] px-[16px]">

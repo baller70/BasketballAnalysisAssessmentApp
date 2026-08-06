@@ -1522,16 +1522,39 @@ Three things the plan in this ledger got wrong, corrected during the work:
   trend fell from "improving" to "stable" and its improvement rate from 100% to
   50%, because the -1 had been hidden.
 
-### NEXT: `/results/demo/(tabs)/history` disagrees with its own API
+### DONE: `/results/demo/(tabs)/history` disagreed with its own API
 
-Found while verifying the above, NOT yet fixed. The screen prints "SESSIONS
-3 sessions" and "AVERAGE FORM SCORE 84" while `/api/analysis-history` reports
-the same 3 sessions with an average of 82 — 84 is the LATEST score, under a
-label that says AVERAGE. It also prints a hardcoded date range,
-"Apr 28 – May 12, 2025", above rows dated Aug 2026. One screen, three defects;
-take it as the next unit of work.
+Four defects, all on one screen:
 
-### Method rules learned here### Method rules learned here
+- **AVERAGE FORM SCORE was the LATEST score.** It rendered `score` from
+  `useHistory`, which is defined as `latestScore ?? averageScore` — 84 printed
+  under a label reading AVERAGE beside an API average of 82. It now averages the
+  sessions in the window it is showing, so the figure and the rows agree. 82.
+- **The date range was a label, not a range.** "Apr 28 – May 12, 2025" sat above
+  rows dated Aug 2026, and the third tuple member was a PAGE SIZE — picking
+  "30 days" showed more rows of the same unfiltered list. Ranges are day counts
+  now, the label is computed from today, and the window actually filters
+  (verified by backdating a session 40 days: it left all three windows, the
+  count fell 3 -> 2 and the average moved 82 -> 83; then restored exactly).
+- **Unscored sessions were dropped from the table**, which contradicted the
+  one-row-per-analysis invariant established in the previous task. They list
+  with an em-dash where the score would be and NO verdict — "Fair" is a
+  judgement, and a shot nobody scored has not earned one.
+- **`Number(r[1]) || 0`** in the FOCUS average would have folded each of those
+  em-dashes in as a ZERO (rule F11 again, in a second place).
+
+### NEXT
+
+No screen currently in progress. Candidates, in rough order of how much they
+lie to the player:
+1. iOS phone components still carry the persona constants — `2,840` points and a
+   `6`-day streak are hardcoded in ~10 files under `components/shotiq/phone/`,
+   the same defect the web topbar had before it was wired to the ledger.
+2. The five untracked badges (release time, shot distance, elbow height above
+   the shoulder, session length, game situation) each need a measurement added
+   upstream before they can ever be earned. Ask Kevin which matter.
+
+### Method rules learned here### Method rules learned here### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
   were complete, correct and had zero callers. Grep for the consumer before
