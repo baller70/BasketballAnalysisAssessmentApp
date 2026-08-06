@@ -2,7 +2,7 @@
 
 /** /results/demo/flaws — canonical 085-web-flaws-history. */
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, ArrowDown } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
@@ -35,7 +35,84 @@ export default function FlawsPage() {
   const { hasData, score, shots, makes, delta } = useHistory()
   const [sel, setSel] = useState(0)
   const [showLower, setShowLower] = useState(false)
-  const visible = hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
+
+  /* THE FLAWS ACTUALLY DETECTED IN YOUR SHOTS.
+     The five above are written into this file, gated only on `hasData`, so
+     every account with any analysis saw the same five titles and the same five
+     percentages — and "AFFECTS 62% OF SHOTS" named a rate over a population
+     nobody had counted.
+
+     GET /api/analysis/flaws runs the real engine (detectFlawsFromAngles, which
+     VideoUpload has been calling and discarding) over up to 100 of the caller's
+     analyses, so the share is a true count over a true denominator. The
+     canonical five remain the empty state and nothing more. */
+  const [live, setLive] = useState<{
+    analysed: number
+    reason?: string
+    flaws: Array<{
+      id: string; title: string; description: string; impact: string
+      priority: number; shotsAffected: number; shotsAnalysed: number
+      affectsPct: number; fixes: string[]; drills: string[]
+      /** Measured cost to make %, or null with a reason when the sample is thin. */
+      impactOnMakePct: number | null
+      impactSample: { withFlaw: { shots: number; makes: number }
+                      withoutFlaw: { shots: number; makes: number }; minShots: number }
+      impactReason: string | null
+    }>
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/analysis/flaws", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success) setLive(d) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /* A detected flaw carries no canonical figure crop, so it keeps the drawn
+     glyph its rule maps to; the impact band comes from the library's own
+     priority rather than a word typed beside the title. */
+  const glyphFor = (id: string): FlawKind =>
+    id.includes("elbow") ? "elbow"
+    : id.includes("wrist") || id.includes("guide") ? "wrist"
+    : id.includes("release") || id.includes("arc") ? "release"
+    : id.includes("base") || id.includes("foot") || id.includes("stance") ? "base"
+    : "guide"
+
+  const liveFlaws: Flaw[] = (live?.flaws ?? []).map((f, i) => ({
+    n: i + 1,
+    title: f.title,
+    impact: f.impact,
+    desc: f.description,
+    affects: `AFFECTS ${f.affectsPct}% OF ${f.shotsAnalysed} SHOT${f.shotsAnalysed === 1 ? "" : "S"}`,
+    // Impact is stated as the flaw's own priority, not an invented percentage
+    // loss — nothing in this app measures what a flaw costs in points.
+    delta: `PRIORITY ${f.priority}/10`,
+    glyph: glyphFor(f.id),
+  }))
+
+  const usingLive = liveFlaws.length > 0
+  /* The selected flaw's measured cost, or why it cannot be stated. The panel
+     used to print "-8.3%", "improved 8.7% over the last 14 days" and a
+     May 2025 session list, all constants, all claiming a causal effect on make
+     % that nothing computed. */
+  const selLive = usingLive ? live?.flaws[sel] : undefined
+  const impactText = !usingLive
+    ? "-8.3%"
+    : selLive?.impactOnMakePct != null
+      ? `${selLive.impactOnMakePct > 0 ? "+" : ""}${selLive.impactOnMakePct}%`
+      : "—"
+  const impactNote = !usingLive
+    ? "Impact: -8.3% to make % on affected shots."
+    : selLive?.impactOnMakePct != null
+      ? `Make % on shots with this flaw is ${impactText} against your shots without it `
+        + `(${selLive.impactSample.withFlaw.shots} vs ${selLive.impactSample.withoutFlaw.shots} scored shots).`
+      : selLive?.impactReason
+        ?? "Not enough scored shots to measure this flaw's cost yet." 
+  const visible = usingLive
+    ? (showLower ? liveFlaws : liveFlaws.slice(0, 3))
+    : hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
   /* Canonical iOS 046 and 047. The detail is addressed by the flaw's own slug,
      so every flaw in the list has its own surface rather than one shared
      "detail region" driven by selection state. The graded desktop 085 on this
@@ -196,7 +273,7 @@ export default function FlawsPage() {
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
             {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "085-insight-1"],
               ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "085-insight-2"],
-              ["Impact: -8.3% to make % on affected shots.", "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
+              [impactNote, "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
               <div key={i} className="flex gap-[10px] px-[11px] py-[8px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
@@ -281,7 +358,7 @@ export default function FlawsPage() {
                       {/* Canonical calls the terminal value out directly above
                           the last node, not adrift at the plot's right edge. */}
                       <text x="374" y="38" textAnchor="middle" fontSize="15" fontWeight="700"
-                            fill="var(--shotiq-color-shotiqOrange)">-8.3%</text>
+                            fill="var(--shotiq-color-shotiqOrange)">{impactText}</text>
                     </>
                   )
                 })()}
@@ -295,7 +372,9 @@ export default function FlawsPage() {
         <div className="w-[210px] shrink-0">
           <SectionLabel>TREND SUMMARY</SectionLabel>
           <p className="mt-[8px] text-[12px] leading-[17px]">
-            Impact on make % has improved 8.7% over the last 14 days.
+            {usingLive
+              ? impactNote
+              : "Impact on make % has improved 8.7% over the last 14 days."}
           </p>
           <div className="mt-[10px] flex items-center gap-[6px] text-[19px] font-bold text-[var(--shotiq-color-confirmGreen)]">
             <ArrowDown className="h-[16px] w-[16px]" /> 8.7%
