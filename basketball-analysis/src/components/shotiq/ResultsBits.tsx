@@ -240,6 +240,26 @@ export function useHistory() {
   }
 }
 
+/**
+ * The verdict band AND its colour, for a 0-100 form score.
+ *
+ * The dashboard carried a private `scoreBand` banding at 85/70/50 while
+ * `scoreVerdict` below bands at 90/70/55, so a score of 87 read EXCELLENT on
+ * one screen and GOOD on the next — the same disagreement, about the same
+ * number, that this module exists to prevent. One function, delegating to the
+ * shared verdict for its label so the two can never drift again.
+ */
+export function scoreBand(score: number | null): { label: string; color: string } {
+  const label = scoreVerdict(score)
+  const color =
+    score == null ? "var(--shotiq-color-muted)"
+    : score >= 90 ? "var(--shotiq-color-confirmGreen)"
+    : score >= 70 ? "var(--shotiq-color-analysisBlue)"
+    : score >= 55 ? "var(--shotiq-color-shotiqOrange)"
+    : "var(--shotiq-color-reviewRed)"
+  return { label, color }
+}
+
 /** Verdict band for a 0-100 form score, in canonical's wording. */
 export function scoreVerdict(score: number | null): string {
   if (score == null) return "—"

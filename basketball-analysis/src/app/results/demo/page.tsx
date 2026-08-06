@@ -26,6 +26,7 @@ import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct, formatSessionDate, scoreVerdict } from "@/components/shotiq/ResultsBits"
 import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { useProfileStore } from "@/stores/profileStore"
 import { AnalysisOverview } from "@/components/shotiq/phone/results/AnalysisOverview"
 
 interface HistoryStats {
@@ -56,6 +57,8 @@ export default function ResultsOverviewPage() {
   // Session-over-session delta and shot counts come from the shared history
   // hook, so this screen can never disagree with the dashboard.
   const { shots: liveShots, makes: liveMakes, delta, score: liveScore } = useHistory()
+  const profile = useProfileStore()
+  useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
   const [stats, setStats] = useState<HistoryStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(3) // canonical "3 OF 24"
@@ -119,10 +122,26 @@ export default function ResultsOverviewPage() {
   ] : null
   const mechanicsRows = liveMechanics ?? MECHANICS.map((m) => ({ ...m, value: m.value as string | null }))
 
-  /** The session line under the title, from the session it describes. */
+  /* The session line under the title, from the session it describes.
+
+     `mine.shootingPhase || "Catch & Shoot"` conflated two different
+     quantities and defaulted to canonical's. `shooting_phase` is a PHASE —
+     stance, dip, rise, release, follow_through — while canonical's slot
+     there is a shot TYPE, and nothing in this app records a shot type at
+     all (F18). So a null phase printed "Catch & Shoot" on every real
+     session, and a set one would have printed "release" in a shot-type
+     position.
+
+     The term drops out when there is no phase, and the hand is added from
+     the profile — this caption's two siblings, the biomechanics workspace
+     and the analysis overview tab, already read it there, and all three
+     describe the same session. */
+  const sessionHand = profile.dominantHand
+    ? `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1).toLowerCase()} Hand`
+    : null
   const sessionLine = mine
-    ? [formatSessionDate(mine.recordedAt),
-       mine.shootingPhase || "Catch & Shoot"].filter(Boolean).join(" · ")
+    ? [formatSessionDate(mine.recordedAt), mine.shootingPhase, sessionHand]
+        .filter(Boolean).join(" · ")
     : null
   /** The elbow this shot measured, for the diagram's CURRENT label. */
   const liveElbow = mine?.angles?.elbow != null ? Math.round(mine.angles.elbow) : null

@@ -30,7 +30,7 @@ import {
   ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
 import {
-  scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct, formatSessionDate,
+  scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct, formatSessionDate, scoreBand,
 } from "@/components/shotiq/ResultsBits"
 
 interface HistoryStats {
@@ -45,20 +45,6 @@ interface HistoryStats {
   makePct: number | null
 }
 
-function scoreBand(score: number | null): { label: string; color: string } {
-  if (score == null) return { label: "—", color: "var(--shotiq-color-muted)" }
-  if (score >= 85) return { label: "EXCELLENT", color: "var(--shotiq-color-confirmGreen)" }
-  if (score >= 70) return { label: "GOOD", color: "var(--shotiq-color-analysisBlue)" }
-  if (score >= 50) return { label: "FAIR", color: "var(--shotiq-color-shotiqOrange)" }
-  return { label: "NEEDS WORK", color: "var(--shotiq-color-reviewRed)" }
-}
-
-/**
- * The analysis API does not carry a per-session title, shot type or shot/make
- * split yet, so every RECENT ANALYSES row collapsed to the same "Shot analysis
- * / 62.5% / 24 / 15". These are the canonical per-row fallbacks (079/080) —
- * real values from the record win whenever the API supplies them.
- */
 /* RECENT_FALLBACK is gone. It read like an empty state and was not one: it was
    applied per-row INSIDE a map over the player's REAL sessions, so it never
    described "no data" — it patched holes in data that existed. A session whose

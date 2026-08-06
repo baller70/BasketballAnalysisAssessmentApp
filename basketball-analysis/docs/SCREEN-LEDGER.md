@@ -1947,6 +1947,64 @@ print the hand after the title, read "Shot analysis • Left".
 Probe capture, its shot event, both analyses and the profile hand were then
 deleted and the canonical empty state confirmed byte-identical.
 
+### DONE: the categorical half of the differential audit
+
+F19 said the detector matches numeric shapes only, so a constant that is a WORD
+survives every sweep. `scratchpad/audit-words.mjs` is the other half: the same
+signed-out/signed-in comparison over this app's data VOCABULARY — Make, Miss,
+the hands, the sources, the statuses, the verdict bands, the levels.
+
+**Read the response builders first, and they were clean.** Every API route was
+checked for fields assigned a literal inside a map over rows — the exact
+`/api/media` shape. Only query options, honest flags and empty-state zeros came
+back. That defect was a one-off on the server; the surviving ones are on the
+client.
+
+**It is noisy, and confirming by hand is not optional.** Of the first five
+hits, three were substring collisions with chrome — "Elite Shooters" in the
+sidebar, "Review and track your shooting performance", "Make percentage". Two
+more, on goals and training, were drill and goal names the account genuinely
+lacks, which the ledger already rules is not a defect. Acting on the raw output
+would have "fixed" five correct screens.
+
+Two were real:
+
+- **`/results/demo`'s caption said `mine.shootingPhase || "Catch & Shoot"`.**
+  That conflates two quantities and defaults to canonical's. `shooting_phase`
+  is a PHASE — stance, dip, rise, release, follow_through — while canonical's
+  slot there is a shot TYPE, and nothing in this app records a shot type at all
+  (F18). A null phase printed "Catch & Shoot" on every real session; a set one
+  would have printed "release" in a shot-type position. The term drops out now,
+  and the hand is read from the profile — this caption's two siblings, the
+  biomechanics workspace and the analysis overview tab, already do, and all
+  three describe the same session.
+
+- **Three phone screens printed the verdict `GOOD` as a literal, in canonical's
+  blue, directly under a WIRED score.** A seeded 93 read GOOD on the dashboard,
+  the progress tab and the analysis overview. Task #39 fixed two of these; three
+  more survived in other components.
+
+**And the two banding functions disagreed.** The dashboard carried a private
+`scoreBand` splitting at 85/70/50 while the shared `scoreVerdict` splits at
+90/70/55, so a score of 87 read EXCELLENT on one screen and GOOD on the next —
+the same disagreement, about the same number, that ResultsBits exists to
+prevent. One `scoreBand` there now, delegating to `scoreVerdict` for its label
+so the two cannot drift, and carrying the colour so a NEEDS WORK verdict stops
+rendering in the GOOD blue (F7).
+
+Verified at 393pt with a seeded score of 93: dashboard and the progress tab
+both moved 82/GOOD -> 93/EXCELLENT and back to 82/GOOD when the probe was
+deleted. Signed out is unchanged throughout.
+
+**NEXT, and it is the same defect one screen over:** `AnalysisOverview`'s
+METRICS table is six canonical constants with their own ratings — RELEASE
+HEIGHT 7'8" EXCELLENT, RELEASE ANGLE 52° GOOD, and four more. It is the PHONE
+counterpart of the desktop KEY MEASUREMENTS table wired early on, and it was
+never wired. The pattern to follow already exists in
+`results/demo/biomechanics/page.tsx`: a `MEASURED_BY` map answering what the
+pipeline computes and "Not measured" for what it does not, rather than
+inventing a number with a plausible-looking source.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -2034,6 +2092,10 @@ deleted and the canonical empty state confirmed byte-identical.
   sessions the player actually had, so it could not describe "no data" — it
   could only overwrite gaps in data that existed. An empty state belongs on the
   branch where the list is empty.
+- **F21.** Two functions computing the same band WILL split. `scoreBand`
+  (85/70/50) and `scoreVerdict` (90/70/55) sat in different files answering the
+  same question about the same score, so 87 was EXCELLENT on one screen and
+  GOOD on the next. When a second copy appears, delete it — do not re-tune it.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

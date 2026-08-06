@@ -54,11 +54,11 @@ import {
   Chev, Frame, ScoreBar, Micro, SectionHead, TrendArrow,
 } from "@/components/shotiq/phone/results/Kit"
 import { ActionGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
+import { scoreBand } from "@/components/shotiq/ResultsBits"
 
 const RULE = "var(--shotiq-color-rule)"
 const ORANGE = "var(--shotiq-color-shotiqOrange)"
 const GREEN = "var(--shotiq-color-confirmGreen)"
-const BLUE = "var(--shotiq-color-analysisBlue)"
 const RED = "var(--shotiq-color-reviewRed)"
 const GRAPHITE = "var(--shotiq-color-graphite)"
 
@@ -96,6 +96,11 @@ export function HomeProfessionalPhone({
   when?: string; target?: string
   onMenu?: () => void
 }) {
+  /* The verdict sat directly under a wired score as the literal "GOOD" in
+     canonical's blue, so a 93 read GOOD and a 41 read GOOD. Label and colour
+     both come from the one shared band now — a renderer tuned for a constant
+     is wrong for a real value the moment the value moves (F7). */
+  const band = scoreBand(typeof score === "number" ? score : null)
   return (
     <PhoneScreen testid="screen-ios-home-professional" tab="home" pad={0} headerH={38}>
       <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 70 }}>
@@ -137,7 +142,7 @@ export function HomeProfessionalPhone({
                  style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
             <div className="shotiq-numeric mt-[2px] text-[58px] leading-[0.82]" style={{ color: ORANGE }}>{score}</div>
             <ScoreBar score={score} width={74} height={6} />
-            <div className="shotiq-display mt-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+            <div className="shotiq-display mt-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</div>
             <div className="mt-[4px] text-[12.4px] leading-[14.4px]">Keep building<br />consistency.</div>
           </div>
         </div>

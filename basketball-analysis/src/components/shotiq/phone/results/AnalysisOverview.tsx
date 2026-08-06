@@ -37,6 +37,7 @@ import {
   ScoreBar, PhaseRail, Chev, PrimaryBar, Frame, SkeletonOverlay, capDisplay,
   ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
+import { scoreBand } from "@/components/shotiq/ResultsBits"
 
 const TABS: [string, string][] = [
   ["ANALYSIS RESULT", "/results/demo"],
@@ -93,6 +94,11 @@ export function AnalysisOverview({
   score?: number; shots?: string; makes?: string; pct?: string
   name?: string; streak?: string; points?: string
 }) {
+  /* The verdict sat directly under a wired score as the literal "GOOD" in
+     canonical's blue, so a 93 read GOOD and a 41 read GOOD. Label and colour
+     both come from the one shared band now — a renderer tuned for a constant
+     is wrong for a real value the moment the value moves (F7). */
+  const band = scoreBand(typeof score === "number" ? score : null)
   return (
     <ResultsScreen
       testid="screen-ios-analysis-result-overview"
@@ -113,7 +119,7 @@ export function AnalysisOverview({
           <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>FORM SCORE</div>
           <div className="shotiq-numeric mt-[3px] leading-[0.8]" style={{ fontSize: 74, color: ORANGE }}>{score}</div>
           <ScoreBar score={score} width={89} height={6.5} />
-          <div className="shotiq-display mt-[8px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+          <div className="shotiq-display mt-[8px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</div>
           <div className="mt-[5px] text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</div>
           <div className="mt-[10px] flex items-end">
             {([[shots, "SHOTS", "analyze"], [makes, "MAKES", "uploadVideo"], [pct, "MAKE %", "gauge"]] as const).map(([v, l, g]) => (

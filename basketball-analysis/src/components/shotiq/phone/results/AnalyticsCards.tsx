@@ -29,6 +29,7 @@ import {
   Chev, Frame, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
 import { useHistory, formatMakePct, formatRelativeSession } from "@/components/shotiq/ResultsBits"
+import { scoreBand } from "@/components/shotiq/ResultsBits"
 
 const TREND: [string, number][] = [
   ["APR 26", 68], ["MAY 2", 72], ["MAY 8", 76], ["MAY 14", 79], ["MAY 20", 80], ["TODAY", 82],
@@ -99,6 +100,11 @@ export function AnalyticsCards({
   score?: number; shots?: string; makes?: string; pct?: string; delta?: string
   name?: string; streak?: string; points?: string; onDetailed?: () => void
 }) {
+  /* The verdict sat directly under a wired score as the literal "GOOD" in
+     canonical's blue, so a 93 read GOOD and a 41 read GOOD. Label and colour
+     both come from the one shared band now — a renderer tuned for a constant
+     is wrong for a real value the moment the value moves (F7). */
+  const band = scoreBand(typeof score === "number" ? score : null)
   const rows = useSessionRows()
   return (
     <ResultsScreen
@@ -132,7 +138,7 @@ export function AnalyticsCards({
             <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">FORM SCORE TREND</div>
             <div className="mt-[2px] flex items-end gap-[9px]">
               <span className="shotiq-numeric text-[36px] leading-[32px]" style={{ color: ORANGE }}>{score}</span>
-              <span className="shotiq-display pb-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</span>
+              <span className="shotiq-display pb-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</span>
             </div>
             <div className="mt-[4px] text-[12px] leading-[14px]">Keep elbow stacked through release.</div>
           </div>
