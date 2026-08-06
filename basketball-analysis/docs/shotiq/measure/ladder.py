@@ -81,9 +81,10 @@ def ladder_ratio(measured, reference, min_reference=20):
     """Rung-by-rung ratio of two ladders, with rule 4's verdict attached.
 
     ESTIMATOR: ``measured[L] / reference[L]`` at every level both ladders share,
-    dropping levels where ``reference[L] < min_reference`` (rule 9 — canonical's
-    top rungs are unsharp-mask overshoot and a ratio there is noise over noise).
-    Returns a :class:`LadderComparison` with:
+    dropping levels where EITHER side carries fewer than ``min_reference`` px
+    (rule 9 — canonical's top rungs are unsharp-mask overshoot, and a ratio
+    against a rung one side structurally cannot reach is noise, whichever side
+    is empty). Returns a :class:`LadderComparison` with:
 
       ``verdict='light'``    every surviving rung < 1.0 — genuinely light
       ``verdict='heavy'``    every surviving rung > 1.0 — genuinely heavy
@@ -98,12 +99,28 @@ def ladder_ratio(measured, reference, min_reference=20):
         raise MeasurementError("the two ladders share no levels")
     ratios, dropped, logs = {}, [], []
     for L in levels:
-        if reference[L] < min_reference:
+        # Rule 9 applies to BOTH sides, and it used to be applied to one.
+        #
+        # A rung was dropped only when the REFERENCE was thin. But the failure
+        # this guards against is asymmetric in practice: canonical is
+        # unsharp-masked, so its top rungs carry material a flat render
+        # structurally cannot produce, and the measured side is the one that
+        # comes back empty. On 004's lede, canonical held 2141 px at coverage
+        # 0.75 and 612 at 0.90 where the render held ZERO — and the old code
+        # scored those rungs 0.0000, which is not "light", it is the absence of
+        # an overshoot nobody was asking the render to have.
+        #
+        # It cost a verdict. The four rungs the render CAN express read 1.0704,
+        # 1.1266, 1.1226 and 1.1050 — heavy on every one — and the two empty
+        # rungs dragged the answer to `matched` with an rms_log of 4.08, which
+        # is log(1/2141) leaking into a statistic that is supposed to be a
+        # weight residual. A run that is 11% heavy was reported as matched.
+        if reference[L] < min_reference or measured[L] < min_reference:
             dropped.append(L)
             continue
         r = measured[L] / reference[L]
         ratios[L] = r
-        logs.append(np.log(max(measured[L], 1) / reference[L]))
+        logs.append(np.log(measured[L] / reference[L]))
     if not ratios:
         raise MeasurementError(
             f"every rung dropped: no reference level carries >= {min_reference} px. "

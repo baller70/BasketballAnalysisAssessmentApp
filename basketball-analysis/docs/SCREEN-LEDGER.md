@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-seven, each learned by getting something wrong
+## Method rules — forty-eight, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1174,6 +1174,30 @@ string rolling over at midnight.
     parameter** — and if a run has to be solved through a different lever than
     it ships, the built capture is the only number that counts and the sweep
     figure must not be recorded as the prediction.
+
+48. **Rule 9 is symmetric, and the library applied it to one side.** The area
+    ladder dropped a rung when the REFERENCE was thin, which is the case rule 9
+    describes — canonical's top rungs are unsharp-mask overshoot. But the
+    failure that actually occurs is the mirror of it: canonical HAS that
+    material and the render, being flat colour, structurally cannot, so it is
+    the MEASURED side that comes back empty against a thick reference.
+
+    On 004's lede, canonical held 2141 px at coverage 0.75 and 612 at 0.90
+    where the render held zero. Those rungs scored 0.0000 — read as "light" —
+    and dragged the verdict on a run that is 11% HEAVY on every rung it can
+    express (1.0704, 1.1266, 1.1226, 1.1050) all the way to `matched`. The
+    rms_log came out 4.0831, which is log(1/2141) leaking into a statistic that
+    is supposed to be a weight residual and would have been minimised by a
+    solver.
+
+    Fixed: a rung is dropped when EITHER side is below `min_reference`, and the
+    zero-guard is gone from the log so an empty rung can never contribute. The
+    verdict is now `heavy` at rms_log 0.1027 with (0.75, 0.90) reported as
+    dropped rather than silently scored.
+
+    **Any ladder verdict recorded before this fix was computed by the one-sided
+    version** and should be re-run before it is relied on — a `matched` in
+    particular, since that is the value the bug produces from a `heavy`.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
