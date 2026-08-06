@@ -1463,6 +1463,41 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### Closing the dip chain at the link that was never asserted
+
+An F1 sweep over the domain modules - every exported function with no importer -
+flagged `analysisSessionToSavePayload` and `syncSessionToServer` as orphans.
+That was MY DETECTOR being wrong, not the code: it excluded same-file callers,
+and the chain is `saveSession` -> `syncSessionToServer` -> the payload builder,
+all three inside sessionStorage.ts. Worth recording, because a sweep that
+reports a live save path as dead is worse than no sweep.
+
+But chasing it down exposed a real gap. Every earlier test of the dip seeded
+the DATABASE directly, so all of them would have passed just as happily if a
+real upload never sent the column. The last link - a finished analysis actually
+carrying `knee_angle_range.min` into the save payload - was read and believed,
+never asserted. That is precisely what F30 was written about, one turn after
+writing it.
+
+Traced and now pinned: `findLoadFrame` takes the minimum knee ->
+`metrics.knee_angle_range.min` -> `toVideoSessionData` preserves it ->
+VideoUpload spreads it into `videoData` -> `saveSession` ->
+`syncSessionToServer` -> `analysisSessionToSavePayload` reads
+`videoData.metrics.knee_angle_range.min` -> POST. Three tests hold it:
+the dip is sent; the DIP is sent rather than the release knee when they differ
+(112 vs 143 in the same session); and it is `undefined`, not 0, when the clip
+measured none.
+
+323 tests pass, tsc clean, 0 lint errors.
+
+### F31 - an orphan sweep must count same-file callers
+
+The detector walked `src/lib`, `src/services` and `src/data` for exported
+functions, then grepped for each name excluding its own file. Everything called
+only by a sibling in the same module reads as dead - including the live
+client-to-server save path for every analysis in the app. If a sweep says a
+central function has no caller, read the file before believing it.
+
 ### Recommended drills now address the flaw they name
 
 Finishing the dip work properly turned up three more breaks in the same chain -
