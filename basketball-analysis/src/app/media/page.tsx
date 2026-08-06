@@ -94,6 +94,11 @@ const SORTS = ["Newest", "Oldest", "Score"] as const
 export default function MediaLibraryPage() {
   const [groups, setGroups] = useState(DEMO)
   const [empty, setEmpty] = useState(false)
+  /* True once real analyses have replaced DEMO. The two hardcoded counts below
+     exist to match the canonical design's "12 items" / "10 items" / "8 items";
+     they must not be reported over live data, where they would simply be
+     wrong. */
+  const [live, setLive] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [checked, setChecked] = useState<Record<string, string>>(() =>
     Object.fromEntries(FILTERS.map((g) => [g.head, g.all])))
@@ -117,10 +122,27 @@ export default function MediaLibraryPage() {
     })
   }
   useEffect(() => {
+    // Render what comes back, don't just count it.
+    //
+    // This used to read the response only to decide whether the library was
+    // EMPTY — a non-empty list left the hardcoded DEMO groups on screen, so a
+    // real upload could never appear here even once the endpoint returned it.
+    // (And until now the endpoint answered 405, since /api/media exported
+    // DELETE only, so the branch never ran at all.)
+    //
+    // DEMO stays as the fallback: with no analyses yet the library looks
+    // exactly as it always has. Real rows replace it when they exist.
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const list = d?.media ?? d?.items
-        if (Array.isArray(list) && list.length === 0) { setGroups({}); setEmpty(true) }
+        if (!Array.isArray(list)) return
+        if (list.length === 0) { setGroups({}); setEmpty(true); return }
+        const real = d?.groups
+        if (real && typeof real === "object" && Object.keys(real).length) {
+          setGroups(real as Record<string, MediaItem[]>)
+          setEmpty(false)
+          setLive(true)
+        }
       }).catch(() => {})
   }, [])
   // Every group in the rail is consulted, not just two of the five.
@@ -384,7 +406,7 @@ export default function MediaLibraryPage() {
           <label className="flex items-center gap-[8px]">
             <input type="checkbox" className="h-[13px] w-[13px]" readOnly checked={selected.size > 0} /> {selected.size} selected
           </label>
-          <span>{total === Object.values(groups).flat().length ? 12 : total} items</span>
+          <span>{!live && total === Object.values(groups).flat().length ? 12 : total} items</span>
         </div>
 
         {/* Canonical fills the fold and clips the last group at the viewport
@@ -402,7 +424,7 @@ export default function MediaLibraryPage() {
         )}
         {Object.entries(shown).map(([day, items]) => {
           const groupUnfiltered = items.length === (groups[day]?.length ?? 0)
-          const count = groupUnfiltered ? DECLARED_COUNT[day] : `${items.length} items`
+          const count = groupUnfiltered ? (DECLARED_COUNT[day] ?? `${items.length} items`) : `${items.length} items`
           return (
           // Canonical rules each date section off from the one above it —
           // full-width hairlines at y=474 and y=746 (x240–1436). The app ran
