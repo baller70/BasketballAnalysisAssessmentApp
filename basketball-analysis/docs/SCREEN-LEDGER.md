@@ -1463,6 +1463,45 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### Fired sessions into the Mac and Contabo environments produce NO observable effect
+
+`list_environments` shows three active environments, two of which are exactly
+what was needed all day:
+
+  env_01EL18zvADbWj96aypV9E6Qi  Kevins-Mac-mini:codex-cloud-control:c202 (bridge)
+  env_01KUKVN75rocgiZohZPFKdDZ  Contabo Production
+
+`create_trigger` + `fire_trigger` against both returns a session_id every time.
+FIVE fires - four at the Mac, one at Contabo - produced zero observable effect:
+
+  - the box still serves 160deg - 180deg, so `deploy.sh` never ran
+  - no comment on PR #56 and no `device-install-report` branch, though the last
+    Mac fire was told to post the log to one or the other as its ONLY job
+  - `list_triggers` exposes no last_run_at, last_status or ended_reason, so
+    there is no way from here to tell "did not execute" from "executed and
+    failed silently"
+
+THE REPORTING CHANNEL WAS THE POINT OF THE LAST FIRE and it also produced
+nothing, which is the strongest signal: a session that had run far enough to
+fail would still have been able to post the failure.
+
+WHAT WAS FOUND THAT IS REAL AND USEFUL: `scripts/install-on-device.sh` is the
+proven lane. Its own header - "Build ShotIQ for a physical iPhone and install it
+straight onto it. Ported from the hooptrack lane that put HoopTrack on the
+phone... builds Debug with a development identity... and hands the result to
+devicectl. It never touches the archive, the upload, or anything in review." It
+knows team DD9G8RP575, the project, the scheme, and takes an optional
+DEVICE_UDID. Run on Kevin's Mac with the phone attached, it is a single command.
+
+### F36 - a fire-and-forget channel is not a capability
+
+`fire_trigger` returning a session_id was treated as "the work is running" and
+reported to Kevin that way, three times. It is not evidence of anything except
+that a message was accepted. Never describe dispatched work as running without
+a return path that can be READ. If the only available channel is one-way, say
+so before firing, not after the third silent attempt - and prefer handing the
+user the one command over firing blind again.
+
 ### WHY THE SHIP PATH THAT WORKED BEFORE DOES NOT WORK NOW
 
 Kevin, correctly and furiously: this has been done many times, straight to his
