@@ -1,0 +1,94 @@
+# Deploys the merged app to the production box, which is what both the web app
+# and BOTH iOS surfaces actually read from: the Capacitor shell loads that host
+# as its web view, and the native Swift app calls its API. One run here updates
+# all three.
+#
+# WHY THIS EXISTS. `deploy.sh` has always had to be run by hand, over SSH, on
+# the box. Agents work from a container whose egress is HTTPS-only — ports 22
+# and 2222 are blocked, 80 and 443 are not — so every deploy stalled waiting on
+# a human to open a terminal, and merged work sat unshipped without anything
+# saying so. A GitHub runner has open egress and can do it.
+#
+# The script it calls is unchanged and still idempotent: git pull --ff-only,
+# npm ci, prisma migrate deploy, seed-if-empty, build, pm2 restart.
+name: Deploy to production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'basketball-analysis/**'
+      - 'deploy.sh'
+      - '.github/workflows/deploy-production.yml'
+  # Manual runs, so a deploy can be re-driven without an empty commit.
+  workflow_dispatch:
+
+# Never let two deploys touch the box at once; the later one wins, and it does
+# NOT cancel a run already part-way through a migration.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the deploy credentials are configured
+        env:
+          HAS_HOST: ${{ secrets.DEPLOY_HOST != '' }}
+          HAS_USER: ${{ secrets.DEPLOY_USER != '' }}
+          HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+        run: |
+          missing=0
+          for pair in "DEPLOY_HOST:$HAS_HOST" "DEPLOY_USER:$HAS_USER" "DEPLOY_SSH_KEY:$HAS_KEY"; do
+            name="${pair%%:*}"; set="${pair##*:}"
+            if [ "$set" != "true" ]; then
+              echo "::error::Repository secret $name is not set. See DEPLOY_CONTABO.md." >&2
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
+      - name: Run deploy.sh on the box
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          # Optional: defaults to 22 when the secret is absent.
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          port="${DEPLOY_PORT:-22}"
+
+          # Plain ssh rather than a marketplace action: one less third party
+          # holding a key that can reach production.
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # Pin the host key on first contact and reuse it after, so a changed
+          # fingerprint fails the deploy instead of being accepted silently.
+          ssh-keyscan -p "$port" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          ssh -i ~/.ssh/deploy_key -p "$port" \
+              -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=20 \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              'cd /opt/shotiq && ./deploy.sh'
+
+      - name: Confirm the box is serving the new build
+        env:
+          SITE: ${{ secrets.DEPLOY_SITE_URL }}
+        run: |
+          set -euo pipefail
+          url="${SITE:-https://shotiq.194-146-12-139.sslip.io}"
+          # A deploy that returns 0 but leaves the old bundle up is the failure
+          # mode worth catching, so this asserts the site actually answers.
+          for i in 1 2 3 4 5 6; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url/" || echo 000)"
+            echo "attempt $i: $url -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "::error::$url did not return 200 after the deploy." >&2
+          exit 1
