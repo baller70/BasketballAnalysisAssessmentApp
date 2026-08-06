@@ -35,6 +35,27 @@ interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
 }
 
+/**
+ * The signed-in player's stature, in inches, off their profile.
+ *
+ * This is the scale reference for release height, release distance and vertical
+ * jump. It returns null rather than a default when the profile carries no
+ * height: an average human standing in for a real one would put a number in
+ * three cells nobody measured, which is the defect these measurements exist to
+ * remove. See lib/vision/derivedMetrics.
+ */
+async function fetchProfileHeightInches(): Promise<number | null> {
+  try {
+    const res = await fetch("/api/profile", { credentials: "include" })
+    if (!res.ok) return null
+    const data = await res.json()
+    const h = Number(data?.profile?.heightInches ?? data?.heightInches)
+    return Number.isFinite(h) && h > 0 ? h : null
+  } catch {
+    return null
+  }
+}
+
 export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const router = useRouter()
   const [videoFile, setVideoFile] = useState<File | null>(null)
@@ -172,7 +193,13 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       setAnalysisProgress("Analyzing frames...")
       
       // Call the video analysis service
-      const analysisResult = await analyzeVideoShooting(videoFile, { rimCalibration })
+      /* The player's stature is what turns pixels into inches for release
+         height, release distance and vertical jump. Without it those three are
+         withheld rather than estimated — see lib/vision/derivedMetrics. */
+      const analysisResult = await analyzeVideoShooting(videoFile, {
+        rimCalibration,
+        playerHeightInches: await fetchProfileHeightInches(),
+      })
 
       if (!analysisResult.success) {
         throw new Error(analysisResult.error || 'Analysis failed')

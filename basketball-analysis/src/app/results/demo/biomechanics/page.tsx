@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
+import { formatFeetInches } from "@/lib/vision/derivedMetrics"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 import { useShotClip, ClipFrame } from "@/components/shotiq/ShotClip"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
@@ -102,20 +103,36 @@ const RING_OUT = 6 / STRIP_W
  * Filling those four from shoulder/hip tilt would be inventing a measurement
  * with a plausible-looking source, which is the defect, not the fix.
  */
-const MEASURED_BY: Record<string, "elbow" | "release"> = {
-  "Elbow Angle": "elbow",
-  "Shooting Arc": "release",
+type Reader = (a: LatestAnalysis) => string | null
+
+/** How each canonical row is answered from a real analysis. */
+const MEASURED_BY: Record<string, Reader> = {
+  "Elbow Angle": (a) => (a.angles.elbow == null ? null : `${Math.round(a.angles.elbow)}°`),
+  // Canonical's Shooting Arc is the release angle — same quantity, same band.
+  "Shooting Arc": (a) => (a.angles.release == null ? null : `${Math.round(a.angles.release)}°`),
+  "Release Height": (a) =>
+    a.measurements?.releaseHeightInches == null ? null : formatFeetInches(a.measurements.releaseHeightInches),
+  "Release Distance": (a) =>
+    a.measurements?.releaseDistanceInches == null ? null : `${a.measurements.releaseDistanceInches.toFixed(1)}"`,
+  "Vertical Jump": (a) =>
+    a.measurements?.verticalJumpInches == null ? null : `${a.measurements.verticalJumpInches.toFixed(1)}"`,
+  "Centerline Deviation": (a) =>
+    a.measurements?.centerlineDeviationDeg == null ? null : `${a.measurements.centerlineDeviationDeg.toFixed(1)}°`,
+}
+
+interface LatestAnalysis {
+  recordedAt: string
+  angles: Record<string, number | null>
+  measured: string[]
+  measurements?: Record<string, number | null>
+  measurementsPresent?: string[]
 }
 
 export default function BiomechanicsWorkspacePage() {
   const { hasData, score, items } = useHistory()
 
   /** The caller's own most recent shot, and exactly which angles it carries. */
-  const [latest, setLatest] = useState<{
-    recordedAt: string
-    angles: Record<string, number | null>
-    measured: string[]
-  } | null>(null)
+  const [latest, setLatest] = useState<LatestAnalysis | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -129,10 +146,10 @@ export default function BiomechanicsWorkspacePage() {
   /** The value to print for a canonical measurement row, and whether it is real. */
   const readingFor = (metric: string, demo: string): { text: string; real: boolean } => {
     if (!latest) return { text: hasData ? demo : "—", real: false }
-    const key = MEASURED_BY[metric]
-    const v = key ? latest.angles[key] : null
-    if (key && v != null) return { text: `${Math.round(v)}°`, real: true }
-    return { text: "Not measured", real: false }
+    const read = MEASURED_BY[metric]?.(latest) ?? null
+    // All six are computable now; a null means THIS shot could not answer it —
+    // a photo cannot show lift, and a length needs a profile height for scale.
+    return read ? { text: read, real: true } : { text: "Not measured", real: false }
   }
   // Same session-over-session delta the rest of the app prints — this readout
   // used to be a hard-coded +8.1%.

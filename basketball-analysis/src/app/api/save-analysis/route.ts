@@ -25,6 +25,13 @@ interface SaveAnalysisRequest {
   shoulderAngle?: number
   hipAngle?: number
   releaseAngle?: number
+  // The four derived KEY MEASUREMENTS (lib/vision/derivedMetrics.ts). Every one
+  // is optional and stays NULL when the client could not measure it — a length
+  // needs the player's profile height for scale, and jump needs a video.
+  releaseHeightInches?: number
+  releaseDistanceInches?: number
+  verticalJumpInches?: number
+  centerlineDeviationDeg?: number
   visionAnalysis?: Record<string, unknown>
   bodyPositions?: Record<string, unknown>
   annotatedImageUrl?: string
@@ -123,6 +130,12 @@ function parseSaveAnalysisRequest(value: unknown): SaveAnalysisRequest {
     shoulderAngle: optionalNumber(body.shoulderAngle, "shoulderAngle", -360, 360),
     hipAngle: optionalNumber(body.hipAngle, "hipAngle", -360, 360),
     releaseAngle: optionalNumber(body.releaseAngle, "releaseAngle", -360, 360),
+    // Ranges are generous but real: a release above 15ft or a 6ft vertical is a
+    // broken measurement, not an athlete, and must be rejected at the door.
+    releaseHeightInches: optionalNumber(body.releaseHeightInches, "releaseHeightInches", 0, 180),
+    releaseDistanceInches: optionalNumber(body.releaseDistanceInches, "releaseDistanceInches", 0, 120),
+    verticalJumpInches: optionalNumber(body.verticalJumpInches, "verticalJumpInches", 0, 72),
+    centerlineDeviationDeg: optionalNumber(body.centerlineDeviationDeg, "centerlineDeviationDeg", 0, 90),
     matchedShooterId: optionalNumber(body.matchedShooterId, "matchedShooterId", 1, 2_147_483_647),
     matchConfidence: optionalNumber(body.matchConfidence, "matchConfidence", 0, 1),
     strengths: stringArray(body.strengths, "strengths"),
@@ -245,6 +258,10 @@ export async function POST(request: NextRequest) {
         shoulderAngle: body.shoulderAngle,
         hipAngle: body.hipAngle,
         releaseAngle: body.releaseAngle,
+        releaseHeightInches: body.releaseHeightInches,
+        releaseDistanceInches: body.releaseDistanceInches,
+        verticalJumpInches: body.verticalJumpInches,
+        centerlineDeviationDeg: body.centerlineDeviationDeg,
         visionAnalysis: body.visionAnalysis as any,
         bodyPositions: body.bodyPositions as any,
         annotatedImageUrl,

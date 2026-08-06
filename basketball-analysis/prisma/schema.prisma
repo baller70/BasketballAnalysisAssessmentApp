@@ -249,6 +249,15 @@ model UserAnalysis {
   hipAngle      Decimal? @map("hip_angle") @db.Decimal(5, 2)
   releaseAngle  Decimal? @map("release_angle") @db.Decimal(5, 2)
 
+  // The four KEY MEASUREMENTS the biomechanics screen displayed as constants
+  // for the life of the app. Derived in lib/vision/derivedMetrics.ts from the
+  // same pose keypoints, scaled by the player's profile height; NULL whenever
+  // the scale or the joints were unavailable, never defaulted.
+  releaseHeightInches    Decimal? @map("release_height_inches") @db.Decimal(6, 2)
+  releaseDistanceInches  Decimal? @map("release_distance_inches") @db.Decimal(6, 2)
+  verticalJumpInches     Decimal? @map("vertical_jump_inches") @db.Decimal(6, 2)
+  centerlineDeviationDeg Decimal? @map("centerline_deviation_deg") @db.Decimal(5, 2)
+
   // Analysis Results (JSON)
   visionAnalysis Json? @map("vision_analysis") // GPT-4 Vision response
   bodyPositions  Json? @map("body_positions") // Detected body part positions

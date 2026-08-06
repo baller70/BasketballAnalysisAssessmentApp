@@ -56,6 +56,7 @@ import {
   cocoBallDetector,
   type CocoDetectorInput,
 } from '@/services/vision/CocoBallDetector'
+import { deriveMetrics, type DerivedMetrics } from '@/lib/vision/derivedMetrics'
 
 // Cap on how many frames we actually run inference on, so a long clip stays
 // responsive (90s * 10fps would be 900 frames). Frames are sampled evenly.
@@ -124,6 +125,14 @@ export interface VideoAnalysisResult {
     release_mechanics?: MechanicsGateResult
     /** Canonical phase/mechanics sidecar for the release frame. */
     canonicalObservation?: CanonicalVisionObservation
+    /**
+     * The four KEY MEASUREMENTS the biomechanics screen used to print as
+     * constants. A video is the only capture that can answer all four: the
+     * setup frame gives the stature scale and the jump baseline, the peak
+     * frame gives the lift, and the release frame gives height, distance and
+     * centreline drift. Each is null with a stated reason when unmeasurable.
+     */
+    derived?: DerivedMetrics
   }
 
   frame_data?: VideoFrameRecord[]
@@ -236,6 +245,10 @@ export function toVideoSessionData(videoResult: VideoAnalysisResult): VideoSessi
     release_angles: sourceMetrics?.release_angles ?? {},
     release_untrusted_angles: sourceMetrics?.release_untrusted_angles,
     release_mechanics: sourceMetrics?.release_mechanics,
+    // Carried, not recomputed: this is a persistence copy, and dropping the
+    // derived block here is what would silently empty four cells after a
+    // page navigation reloaded the session.
+    derived: sourceMetrics?.derived,
     canonicalObservation: sourceMetrics?.canonicalObservation ?? videoResult.canonicalObservation,
   }
 
@@ -406,6 +419,12 @@ export interface UploadedVideoBallDetector {
 
 export interface VideoAnalysisOptions {
   rimCalibration?: RimCalibration | null
+  /**
+   * The player's stature, off their profile. Without it there is NO real-world
+   * scale and the three LENGTH measurements are withheld rather than guessed
+   * (centreline deviation is an angle and survives). See lib/vision/derivedMetrics.
+   */
+  playerHeightInches?: number | null
   /** Injectable for deterministic tests; production uses the shared COCO model. */
   ballDetector?: UploadedVideoBallDetector
 }
@@ -545,6 +564,18 @@ export async function analyzeVideoShooting(
       .map((f) => trustedAnglesFromForm(f.form!).knee)
       .filter((v): v is number => v != null)
 
+    /* Highest hips anywhere in the clip — the apex of the jump. Distinct from
+       the release frame on purpose (see `derived` below). */
+    let peakFrame: SampledFrame | null = null
+    let bestHipY = Infinity
+    for (const f of detected) {
+      if (!f.keypoints) continue
+      const hips = f.keypoints.filter((k) => (k.name === 'left_hip' || k.name === 'right_hip') && k.score > 0.3)
+      if (!hips.length) continue
+      const y = hips.reduce((s, k) => s + k.y, 0) / hips.length
+      if (y < bestHipY) { bestHipY = y; peakFrame = f }
+    }
+
     const releaseFrame = frames[releaseIdx] ?? detected[0]
     const releaseForm = releaseFrame.form ?? detected[0].form!
     const releaseTrustedAngles = trustedAnglesFromForm(releaseForm)
@@ -653,6 +684,17 @@ export async function analyzeVideoShooting(
         release_untrusted_angles,
         release_mechanics: releaseForm.mechanics,
         canonicalObservation: releaseForm.canonicalObservation,
+        /* The four KEY MEASUREMENTS, from the frames this pass already picked.
+           The PEAK frame is the highest-hip frame across the clip, which is
+           not necessarily the release: a shooter releases on the way up as
+           often as at the apex, so taking release as the peak would understate
+           every jump. */
+        derived: deriveMetrics(
+          frames[releaseIdx]?.keypoints ?? [],
+          frames[setupIdx]?.keypoints ?? null,
+          peakFrame?.keypoints ?? null,
+          options.playerHeightInches,
+        ),
       },
       frame_data,
       all_keypoints,

@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
         imageUrl: true, annotatedImageUrl: true,
         elbowAngle: true, kneeAngle: true, wristAngle: true,
         shoulderAngle: true, hipAngle: true, releaseAngle: true,
+        releaseHeightInches: true, releaseDistanceInches: true,
+        verticalJumpInches: true, centerlineDeviationDeg: true,
         strengths: true, improvements: true,
       },
     })
@@ -63,6 +65,17 @@ export async function GET(request: NextRequest) {
       release: num(row.releaseAngle),
     }
 
+    /* The four derived KEY MEASUREMENTS. Kept apart from `angles` because they
+       are a different kind of quantity — three lengths in inches and one angle
+       in degrees, each of which can be absent for its own reason — and because
+       a screen needs to know which it may print. */
+    const measurements = {
+      releaseHeightInches: num(row.releaseHeightInches),
+      releaseDistanceInches: num(row.releaseDistanceInches),
+      verticalJumpInches: num(row.verticalJumpInches),
+      centerlineDeviationDeg: num(row.centerlineDeviationDeg),
+    }
+
     return NextResponse.json({
       success: true,
       analysis: {
@@ -78,6 +91,9 @@ export async function GET(request: NextRequest) {
         /** Exactly the angles this shot really carries — the caller's licence
          *  to print a number, and its instruction to print nothing otherwise. */
         measured: Object.entries(angles).filter(([, v]) => v != null).map(([k]) => k),
+        measurements,
+        measurementsPresent: Object.entries(measurements)
+          .filter(([, v]) => v != null).map(([k]) => k),
         strengths: Array.isArray(row.strengths) ? row.strengths : [],
         improvements: Array.isArray(row.improvements) ? row.improvements : [],
       },
