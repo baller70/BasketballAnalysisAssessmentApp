@@ -25,6 +25,7 @@
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
+import { useLatestShots } from "@/components/shotiq/phone/useLatestShots"
 import { Clock, MapPin } from "lucide-react"
 import { MechanicGlyph, PoseFigure, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
@@ -54,17 +55,47 @@ export function ShotBreakdown({
   /* `when` was a DEFAULT PROP reading "Today at 8:24 AM", and the one caller
      never passes it — so the screen dated every player's shot to the same
      canonical morning. It resolves from the session hook now, which keeps the
-     canonical wording as its empty state.
-
-     SHOT CONTEXT below is deliberately untouched. Its shot type, court
-     location, in-workout time and result describe ONE shot, and this screen is
-     never handed one — its caller passes a score and nothing else, so even
-     `shot = "41"` is a constant. `ShotEvent` does store `timestampMs` and
-     `detectedResult`, so two of those four could be answered once a shot is
-     threaded in; court location is not recorded anywhere. Wiring the panel
-     needs a selected shot first — see the ledger. */
+     canonical wording as its empty state. */
   const session = useLatestSession()
   const shotWhen = when ?? session.when
+
+  /* THE SHOT ITSELF. This screen describes ONE shot and was never handed one:
+     its caller passes a score and nothing else, so `Shot 41`, the in-workout
+     `26:12` and the `Make` beside them were all constants describing a shot
+     that did not exist. `useLatestShots` reads the newest capture's events —
+     already stored, already served, never read here — and resolves each one
+     through the same corrections the session counts use.
+
+     TWO of the four cells stay em-dashes whenever a real shot is showing.
+     Court location is recorded nowhere — no column, no detector output,
+     nothing to derive it from. Neither is shot type: `/api/analysis-history`
+     returns no `shotType`, so the `|| "Catch & Shoot"` that used to answer it
+     was canonical's own value dressed as the session's (F4). Inventing either
+     for a shot the player actually took is worse than the constant it
+     replaced. What IS stored — the shot's number, its offset into the capture
+     and its result — is answered. */
+  const shotData = useLatestShots()
+  const pick = shotData.latest
+  const shotNumber = pick ? String(pick.number) : shot
+  const context: [React.ReactNode, string, string, string][] = [
+    [<ActionGlyph key="a" kind="nodeGraph" height={16} />,
+      shotData.live ? (shotData.style ?? "—") : "Catch & Shoot", "Shot Type",
+      shotData.live && !shotData.style ? GRAPHITE : INK],
+    [<MapPin key="b" className="h-[17px] w-[17px]" strokeWidth={1.6} />,
+      shotData.live ? "—" : "Right Corner", "Court Location",
+      shotData.live ? GRAPHITE : INK],
+    [<Clock key="c" className="h-[17px] w-[17px]" strokeWidth={1.6} />,
+      pick ? (pick.clock ?? "—") : "26:12", "In Workout", INK],
+    pick
+      ? pick.result === "make"
+        ? [<TickDisc key="d" size={17} tone={GREEN} />, "Make", "Result", GREEN]
+        : pick.result === "miss"
+          ? [<TickDisc key="d" size={17} tone={"#D92D20"} />, "Miss", "Result", "#D92D20"]
+          // Detected as a shot, but nobody — detector or reviewer — said
+          // whether it went in. That is not a miss.
+          : [<TickDisc key="d" size={17} tone={GRAPHITE} />, "—", "Result", GRAPHITE]
+      : [<TickDisc key="d" size={17} tone={GREEN} />, "Make", "Result", GREEN],
+  ]
 
   return (
     <ResultsScreen
@@ -77,7 +108,7 @@ export function ShotBreakdown({
         <div className="min-w-0">
           <div className="shotiq-display whitespace-nowrap text-[36px] leading-[32px] tracking-[0.02em]">SHOT BREAKDOWN</div>
           <div className="mt-[5px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
-            Shot {shot} &nbsp;•&nbsp; {shotWhen}
+            Shot {shotNumber} &nbsp;•&nbsp; {shotWhen}
           </div>
         </div>
         <div className="flex shrink-0 items-start pt-[2px]">
@@ -187,12 +218,7 @@ export function ShotBreakdown({
       <Panel className="mx-[16px] mt-[9px] px-[10px] pb-[7px] pt-[7px]">
         <div className="shotiq-section-label leading-[12px] tracking-[0.08em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>SHOT CONTEXT</div>
         <div className="mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)]">
-          {([
-            [<ActionGlyph key="a" kind="nodeGraph" height={16} />, "Catch & Shoot", "Shot Type", INK],
-            [<MapPin key="b" className="h-[17px] w-[17px]" strokeWidth={1.6} />, "Right Corner", "Court Location", INK],
-            [<Clock key="c" className="h-[17px] w-[17px]" strokeWidth={1.6} />, "26:12", "In Workout", INK],
-            [<TickDisc key="d" size={17} tone={GREEN} />, "Make", "Result", GREEN],
-          ] as [React.ReactNode, string, string, string][]).map(([g, v, l, c]) => (
+          {context.map(([g, v, l, c]) => (
             <div key={l} className="flex min-w-0 flex-1 items-center gap-[6px] px-[6px]">
               <span className="shrink-0" style={{ color: INK }}>{g}</span>
               <span className="min-w-0">

@@ -62,7 +62,10 @@ export default function TrainingHubPage() {
   // carrying their real shot counts; these used to be written into the markup.
   const recent = items.length
     ? items.slice(0, 3).map((a) => [
-        a.title, `${a.when} · ${a.style}`,
+        // Neither an analysis title nor a shot type is recorded anywhere yet,
+        // so the row is labelled by what it is and the subtitle carries only
+        // the date rather than canonical's "Catch & Shoot".
+        a.title ?? "Shot session", [a.when, a.style].filter(Boolean).join(" · "),
         a.score != null ? String(a.score) : "—",
         formatMakePct(a.shots, a.makes), formatShotsMakes(a.shots, a.makes),
       ] as [string, string, string, string, string])

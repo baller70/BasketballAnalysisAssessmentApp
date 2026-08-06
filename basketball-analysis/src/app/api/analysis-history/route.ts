@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { validateCsrf } from "@/lib/csrf"
+import { resolveShot } from "@/lib/shots/resolveShot"
 
 class HistoryValidationError extends Error {}
 
@@ -180,14 +181,9 @@ async function shotTally(userProfileId: string, captureSessionIds: string[]) {
     const bucket = tally.get(event.captureSessionId ?? "")
     if (!bucket) continue
 
-    let dropped = event.detected === false
-    let result = event.detectedResult ?? null
-    for (const correction of event.corrections) {
-      if (correction.kind === "false_shot") dropped = correction.value !== false
-      else if (correction.kind === "make_miss" && (correction.value === "make" || correction.value === "miss")) {
-        result = correction.value
-      }
-    }
+    // Same resolver the shot-context panel reads, so a shot cannot count as a
+    // make here and read as a miss there.
+    const { dropped, result } = resolveShot(event)
     if (dropped) continue
     bucket.shots += 1
     if (result === "make") bucket.makes += 1

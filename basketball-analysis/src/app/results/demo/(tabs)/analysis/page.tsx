@@ -17,6 +17,7 @@ import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { ShotBreakdown } from "@/components/shotiq/phone/results/ShotBreakdown"
 import { FormScore } from "@/components/shotiq/phone/results/FormScore"
 import { usePhaseTimings } from "@/components/shotiq/PhaseFrames"
+import { useProfileStore } from "@/stores/profileStore"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
@@ -33,6 +34,15 @@ const MECHANICS: [string, string, string, string][] = [
 
 export default function AnalysisOverviewPage() {
   const { hasData, score, items, shots, makes } = useHistory()
+  /* The subtitle ended "· Right Hand" as a literal, and named every session
+     "Catch & Shoot" via a `||` default the API never satisfies. The hand is a
+     profile fact; the shot type is recorded nowhere and simply drops out of
+     the line rather than borrowing canonical's answer. */
+  const profile = useProfileStore()
+  React.useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
+  const hand = profile.dominantHand
+    ? `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1).toLowerCase()} Hand`
+    : null
   const trend = scoreSeries(items, 6)
   const delta = sessionDelta(items)
   // "N OF M" counts real analyses, not a literal.
@@ -93,7 +103,8 @@ export default function AnalysisOverviewPage() {
             <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS OVERVIEW</h1>
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
               {hasData
-                ? `${items[0]?.when || "Latest analysis"} · ${items[0]?.style || "Catch & Shoot"} · Right Hand`
+                ? [items[0]?.when || "Latest analysis", items[0]?.style, hand]
+                    .filter(Boolean).join(" · ")
                 : "Run an analysis to populate this view."}
             </p>
           </div>

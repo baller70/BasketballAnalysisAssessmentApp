@@ -18,18 +18,24 @@ export interface HistoryStats {
 }
 
 export interface HistoryItem {
-  title: string
+  /** The analysis's own name, when it has one. Nothing sets one yet. */
+  title: string | null
   when: string
   /** The raw ISO timestamp. `when` is already formatted for display, so a
    *  screen that wants to compare against "the last 7 days" had nothing to
    *  window on and printed a typed delta instead. */
   at: string | null
-  style: string
+  /** The kind of shot, when anything recorded one. Nothing does yet. */
+  style: string | null
   score: number | null
   /** Attempts detected in the capture session behind this analysis. */
   shots: number | null
   /** Attempts scored as a make, after human corrections. */
   makes: number | null
+  /** The capture behind this analysis — the key to its individual shots.
+   *  Null when the analysis has no capture (an uploaded still, an iOS run
+   *  with no session), which is also when it has no shots to look at. */
+  captureSessionId: string | null
 }
 
 /**
@@ -163,22 +169,30 @@ function loadHistory() {
           items: ((d.history ?? []) as {
             title?: string; createdAt?: string; recordedAt?: string; shotType?: string
             mediaType?: string; score?: number; scores?: { overall?: number | null }
-            shots?: number | null; makes?: number | null
+            shots?: number | null; makes?: number | null; captureSessionId?: string | null
           }[]).map((a) => {
             const iso = a.recordedAt || a.createdAt
             const overall = a.scores?.overall ?? a.score ?? null
             return {
-              title: a.title || "Shot analysis",
+              title: a.title ?? null,
               // One shared formatter, so 079/083/093 can never disagree about
               // how the same session is dated.
               when: formatSessionDate(iso),
               at: iso ?? null,
-              style: a.shotType || "Catch & Shoot",
+              /* NOT RECORDED. `/api/analysis-history` returns no `shotType`
+                 and no `title` — it never has — so these two `||` defaults
+                 fired on every row for every account, and "Catch & Shoot" was
+                 canonical's own value being served as though it were the
+                 session's. Null now, so a screen has to decide what to show
+                 for a thing nobody stored instead of being handed a
+                 plausible-looking answer (F4). */
+              style: a.shotType ?? null,
               score: overall != null ? Math.round(overall) : null,
               // Counted from the shot events of the capture session behind the
               // analysis; null when the analysis has no capture behind it.
               shots: a.shots ?? null,
               makes: a.makes ?? null,
+              captureSessionId: a.captureSessionId ?? null,
             }
           }),
         }

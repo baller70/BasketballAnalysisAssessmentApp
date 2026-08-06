@@ -1849,13 +1849,58 @@ capture: all four routes moved together to 20 / 13 / 65.0% and back to
 em-dashes when the probe capture was deleted (F14). Signed out, every screen is
 byte-for-byte the canonical it shipped with.
 
-**Left deliberately: `/results/demo/analysis`'s SHOT CONTEXT panel** — shot
-type, court location, `26:12` in-workout and result. It describes ONE shot and
-the screen is never handed one; its caller passes a score and nothing else, so
-even `Shot 41` is a constant. `ShotEvent` does store `timestampMs` and
-`detectedResult`, so two of the four become answerable once a shot is threaded
-in — court location is recorded nowhere. That is a shot-selection feature, not
-a wiring fix, and it is the one token the 393pt sweep still reports.
+### DONE: the shot breakdown described a shot that did not exist
+
+`/results/demo/analysis` draws a SHOT CONTEXT panel — shot type, court
+location, `26:12` in workout, result — under a `Shot 41` header. All five were
+constants, because the screen is never handed a shot: its one caller passes a
+score and nothing else. There was no per-shot anything on it to be wrong about.
+
+The data was already stored and already served. `ShotEvent` carries `sequence`,
+`timestampMs` and `detectedResult`, and `/api/shot-events?captureSessionId=`
+has returned them with their corrections all along — it simply had no reader
+here (F1: the fourth engine with no caller).
+
+**One resolver, not two.** Whether a shot counts and whether it went in is not
+a one-liner — `false_shot` review drops an attempt, `make_miss` review
+overrules the detector, and later corrections beat earlier ones.
+`/api/analysis-history` already did this inline for the session counts. Copying
+those rules onto the client is exactly how one screen ends up saying a shot was
+a make while another says miss, so they moved to `lib/shots/resolveShot.ts`
+(15 tests) and the history route now reads from there too.
+
+**Dropped shots are removed BEFORE numbering.** A false positive that review
+threw out must not push every later shot's number up by one — the player is
+looking at the Nth shot they took, not the Nth row the detector wrote.
+
+**And two of the four cells still cannot be answered — including one I had
+believed was data.** Court location is recorded nowhere: no column, no detector
+output, nothing to derive it from. Shot type turned out to be the same:
+`/api/analysis-history` returns no `shotType` and no `title`, so `loadHistory`'s
+`a.shotType || "Catch & Shoot"` and `a.title || "Shot analysis"` fired on EVERY
+row for EVERY account — canonical's own value being served as though it were
+the session's (F4, in a place I had already wired and signed off). Both are
+null at the source now, and the five screens reading them either drop the term
+from the line or say what the row IS rather than borrowing canonical's answer.
+
+That also fixed this route's own desktop subtitle, which ended in a literal
+`· Right Hand` and named every session "Catch & Shoot". The hand is a profile
+fact; the shot type simply drops out.
+
+Verified at 393pt with six seeded detector rows — one false positive dropped by
+review, one `unknown`, and one the detector called a MISS with a `make_miss`
+correction on top:
+
+- header read `Shot 5`, not `Shot 6` — the dropped row did not inflate the count
+- moving the newest shot's offset moved the clock with it (`26:12` -> `20:00`
+  -> `30:45` -> `33:20`), which is the only way to tell a real `26:12` from
+  canonical's `26:12`
+- with the `unknown` row newest, Result read `—`, NOT a miss
+- with the corrected row newest, Result read `Make` — review beating the
+  detector, the same answer the session counts give
+- shot type and court location read `—` throughout
+- signed out, and signed in with the probe deleted, every cell is byte-for-byte
+  the canonical it shipped with
 
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
@@ -1927,6 +1972,13 @@ a wiring fix, and it is the one token the 393pt sweep still reports.
   sweep before this one ran at 1440px, so a whole component subtree behind a
   responsive switch was reported clean without ever being loaded. Sweep at each
   breakpoint the app actually branches on.
+- **F18.** A `||` default on a field the API never returns is indistinguishable
+  from data at every call site. `a.shotType || "Catch & Shoot"` and
+  `a.title || "Shot analysis"` had fired on every row for every account since
+  they were written, and I wired two screens to read them without checking the
+  response actually carried the field. Grep the API's response builder for the
+  key before treating a mapped field as real — F3 applies to your OWN mapping
+  layer, not just to someone else's endpoint.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

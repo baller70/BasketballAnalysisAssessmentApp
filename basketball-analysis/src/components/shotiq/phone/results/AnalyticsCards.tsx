@@ -74,7 +74,9 @@ function useSessionRows(): Session[] {
     const pct = formatMakePct(it.shots, it.makes)
     return {
       when: formatRelativeSession(it.at),
-      title: it.title,
+      // Nothing records an analysis title yet, so the row is labelled by what
+      // it IS — a session — rather than by canonical's "Catch & Shoot".
+      title: it.title ?? "Shot session",
       // An analysis with no capture behind it counted no shots; that is an
       // em-dash, never a zero (F5).
       shots: it.shots != null ? String(it.shots) : "—",
