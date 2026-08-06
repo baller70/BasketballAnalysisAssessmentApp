@@ -1463,6 +1463,69 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### Four badges nobody could ever earn
+
+Kevin's item 3 was "five badges that can never be earned". Three of them turned
+out not to need anything from him.
+
+MARATHON - "Log a 60-minute session." The engine declared session length
+untracked and sat locked forever. It was never a missing measurement:
+`capture_sessions` has always carried `startedAt` (defaulted on insert) and
+`endedAt`, written by BOTH the live camera and the upload pipeline. No rule ever
+read them (F1 again - the engine complete, no caller). It has a real rule now.
+A session still in flight has a null `endedAt` and is skipped, not counted as a
+zero-length one, which would read as a session the player somehow failed at.
+
+STACKED RELEASE and CLEAN ARC had rules, and no shot on earth could satisfy
+them - the same wrong-moment defect as the display bands, sitting in the badge
+engine where nobody would see it fail:
+
+  stacked-release  elbow within 80-100   a set-point "L". A release-frame
+                   elbow is ~150-180, so the count was always 0.
+  clean-arc        release angle 45-55   canonical's ball ARC. The stored
+                   value is deviation from vertical, ideal 0, so this asked
+                   for a shot thrown 45-55 degrees off vertical. Not merely
+                   unreachable - INVERTED, rewarding bad shots, refusing good
+                   ones.
+
+Both now read `angleBands`, the same source the share card, the phone metric
+strip, /results/demo and the biomechanics table use, so a badge cannot promise
+one thing while the results screen shows another. IRON WRIST's follow-through
+floor also comes from that source instead of a bare 60 chosen in this file.
+
+Verified against the live API and the live UI, with the negative control that
+matters - proof the band moved rather than everything simply passing:
+
+  seeded elbow 168 / release 4 / wrist 78 (a textbook release frame) + a
+  75-minute capture session:
+    stacked-release  unlocked 5/5     clean-arc  unlocked 5/5
+    marathon-session unlocked 60/60   iron-wrist locked   5/50
+  reseeded elbow 90 / release 52 / wrist 21 - the ONLY values the old bands
+  accepted:
+    stacked-release  LOCKED 0/5       clean-arc  LOCKED 0/5
+  with only an in-flight session and no completed one:
+    marathon-session LOCKED 0/60, no crash, not "untracked"
+
+/points followed the API in the browser both ways - EARNED on the textbook
+shots, LOCKED on the old-band ones - and MARATHON renders with its green check
+under "Log a 60-minute session". Signed out is canonical throughout. Probe
+account deleted.
+
+STILL GENUINELY BLOCKED, needing a measurement that does not exist: QUICK
+RELEASE (nothing times a release), DEEP RANGE (shot events carry a result, not
+a distance), HIGH ELBOW SET (an analysis stores joint ANGLES, not the points
+they came from), CLUTCH PERFORMER (no game context at all), FILM STUDENT
+(opening an analysis is not written down). Those five keep their stated reason
+rather than a bar stuck at zero.
+
+### F27 - a rule that never fires looks exactly like a feature nobody uses
+
+`stackedElbowCount` and `cleanArcCount` were real code, over real data, wired to
+a real screen, and returned 0 for every account since the day they were written.
+Nothing errored and no test failed. When adding a rule that gates a reward,
+assert that some realistic input SATISFIES it - a counter that only ever counts
+zero is indistinguishable from a badge nobody has earned yet.
+
 ### The app disagreed with itself about the elbow — and the reason was worse
 
 Kevin found it: `/results/demo` banded the elbow 160deg-180deg while the

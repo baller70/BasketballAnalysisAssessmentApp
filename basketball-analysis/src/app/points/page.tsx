@@ -40,11 +40,17 @@ const EXTRA_BADGES: [string, string, boolean, string, string][] = [
  * that had never analysed a shot. `/api/badges` has always computed real unlock
  * state from stored activity, and nothing called it.
  *
- * This maps each drawn badge to its rule in that engine. Five of the fifteen
+ * This maps each drawn badge to its rule in that engine. Four of the fifteen
  * have no rule to map to because the app records nothing that could answer them
- * (release time, shot distance, elbow height, session length, game situation);
- * the engine returns those with a reason, and the screen prints the reason
- * rather than a bar stuck at zero.
+ * (release time, shot distance, elbow height above the shoulder, game
+ * situation); the engine returns those with a reason, and the screen prints the
+ * reason rather than a bar stuck at zero.
+ *
+ * MARATHON used to be a fifth. It was never a missing measurement — a capture
+ * session has always written both `startedAt` and `endedAt`, from the live
+ * camera and from uploads alike, and no rule ever read them. It has a real
+ * rule now, and so do STACKED RELEASE and CLEAN ARC, which had rules that no
+ * shot could satisfy because they judged the wrong moment of the shot.
  */
 const BADGE_ID: Record<string, string> = {
   "STACKED RELEASE": "stacked-release",

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { validateCsrf } from "@/lib/csrf"
+import {
+  ELBOW_AT_RELEASE, RELEASE_FROM_VERTICAL, WRIST_AT_RELEASE, inBand,
+} from "@/lib/analysis/angleBands"
 
 /**
  * /api/badges
@@ -63,6 +66,7 @@ interface BadgeStats {
   cleanArcCount: number        // analyses with a release angle in the arc band
   heldFollowThroughCount: number // analyses with a held wrist at release
   longestBreakDays: number     // biggest gap between two active days, returned from
+  longestSessionMinutes: number // longest COMPLETED capture session, in minutes
 }
 
 type BadgeResult = {
@@ -190,9 +194,13 @@ function evalBadge(id: string, s: BadgeStats): BadgeResult {
     case "iron-wrist":
       return { unlocked: s.heldFollowThroughCount >= 50, progress: p(s.heldFollowThroughCount, 50) }
     case "marathon-session":
-      // An analysis records when it happened, not how long the player trained.
-      return { unlocked: false, progress: null,
-               untracked: "Session length isn't recorded yet." }
+      /* "Log a 60-minute session." A capture session records both ends of its
+         own clock and always did; this badge simply never asked. Progress is
+         the longest COMPLETED session — a run still in flight has no length
+         yet, and counting it as zero would read as a session the player
+         somehow failed at. */
+      return { unlocked: s.longestSessionMinutes >= 60,
+               progress: p(s.longestSessionMinutes, 60) }
     case "comeback":
       return { unlocked: s.longestBreakDays >= 7, progress: p(s.longestBreakDays, 7) }
 
@@ -327,7 +335,7 @@ interface ComputedState {
 }
 
 async function computeState(userProfileId: string): Promise<ComputedState> {
-  const [analyses, history, profile, shotsAnalysed] = await Promise.all([
+  const [analyses, history, profile, shotsAnalysed, captureSessions] = await Promise.all([
     prisma.userAnalysis.findMany({
       where: { userProfileId },
       orderBy: { createdAt: "asc" },
@@ -356,6 +364,17 @@ async function computeState(userProfileId: string): Promise<ComputedState> {
     }),
     // VOLUME SHOOTER counts SHOTS, not sessions — one video can carry dozens.
     prisma.shotEvent.count({ where: { userProfileId } }),
+    /* MARATHON — "Log a 60-minute session." A capture session has always
+       carried both ends of its own clock: `startedAt` defaults on insert and
+       `endedAt` is written when the run finishes, by BOTH the live camera and
+       the upload pipeline. Nothing ever read them back, so the badge declared
+       session length untracked and sat locked forever (F1: the engine was
+       complete and had no caller). A session still in flight has a null
+       `endedAt` and is skipped rather than counted as zero. */
+    prisma.captureSession.findMany({
+      where: { userProfileId, endedAt: { not: null } },
+      select: { startedAt: true, endedAt: true },
+    }),
   ])
 
   // ---- Points (from the Points agent's ledger; do NOT keep a second total) ----
@@ -434,16 +453,34 @@ async function computeState(userProfileId: string): Promise<ComputedState> {
   }
 
   /* ---- Counters for the fifteen badges the achievements screen draws ----
-     The bands are the ones the app already uses elsewhere: the stacked elbow
-     band from the flaw rules, the 45–55° arc band from `techniques95` above,
-     and a held follow-through read off the wrist angle at release. */
-  const inBand = (v: number | null, lo: number, hi: number) => v != null && v >= lo && v <= hi
-  const stackedElbowCount = analyses.filter((a) => inBand(num(a.elbowAngle), 80, 100)).length
-  const cleanArcCount = analyses.filter((a) => inBand(num(a.releaseAngle), 45, 55)).length
+     THESE BANDS JUDGED THE WRONG MOMENT, so two of the three badges below
+     could not be earned by anybody. Every angle on an analysis is sampled at
+     the RELEASE frame: `elbowAngle` is an extended elbow (~150-180), and
+     `releaseAngle` is the forearm's signed deviation from vertical with an
+     ideal of 0. Requiring an elbow of 80-100 asked for a set-point "L" that a
+     release frame never shows, and requiring a release angle of 45-55 —
+     canonical's ball ARC, a different quantity — asked for a shot thrown well
+     off vertical, so CLEAN ARC was not merely unreachable but inverted,
+     rewarding the bad shots and refusing the good ones.
+
+     The bands come from `angleBands` now, the same source the share card, the
+     phone metric strip and the biomechanics table read, so a badge cannot
+     promise one thing while the results screen shows another. */
+  const stackedElbowCount = analyses.filter((a) => inBand(num(a.elbowAngle), ELBOW_AT_RELEASE)).length
+  const cleanArcCount = analyses.filter((a) => inBand(num(a.releaseAngle), RELEASE_FROM_VERTICAL)).length
+  /* IRON WRIST wants a HELD follow-through, not a centred one, so this stays a
+     floor rather than a band — but the floor is the bottom of the measured
+     band instead of a number chosen here. */
   const heldFollowThroughCount = analyses.filter((a) => {
     const v = num(a.wristAngle)
-    return v != null && v >= 60
+    return v != null && v >= WRIST_AT_RELEASE.min
   }).length
+
+  /* MARATHON — the longest completed capture session, in minutes. */
+  const longestSessionMinutes = captureSessions.reduce((best, s) => {
+    const ms = (s.endedAt as Date).getTime() - s.startedAt.getTime()
+    return ms > 0 ? Math.max(best, ms / 60000) : best
+  }, 0)
 
   /* COMEBACK — "return after a 7-day break". The gap only counts once the
      player came BACK, so it is measured between two days that both have
@@ -461,6 +498,7 @@ async function computeState(userProfileId: string): Promise<ComputedState> {
     cleanArcCount,
     heldFollowThroughCount,
     longestBreakDays,
+    longestSessionMinutes,
     bestOverall,
     firstOverall,
     maxImprovement,
