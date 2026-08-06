@@ -32,7 +32,26 @@ const LOWER_FLAWS: Flaw[] = [
 ]
 
 export default function FlawsPage() {
-  const { hasData, score, shots, makes, delta } = useHistory()
+  const { hasData, score, shots, makes, delta, items } = useHistory()
+
+  /* RECENT SESSIONS was three rows written into the markup — "Today at 8:24 AM
+     · 24 shots · -8.3%" — on a panel that names the sessions a flaw was seen
+     in. The dates and shot counts are the player's own now.
+
+     The red percentage is NOT. It is this flaw's cost IN THAT SESSION, and
+     nothing computes a per-session impact: /api/analysis/flaws measures one
+     figure across the whole history, with a minimum sample on both sides, and
+     splitting that back out per session would be arithmetic with no data under
+     it. Live rows show an em-dash there instead. */
+  const recentSessions: [string, string, string][] = items.length
+    ? items.slice(0, 3).map((a) => [
+        a.when,
+        a.shots != null ? `${a.shots} shots` : "shots not counted",
+        "—",
+      ] as [string, string, string])
+    : [["Today at 8:24 AM", "24 shots", "-8.3%"],
+       ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"],
+       ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]]
   const [sel, setSel] = useState(0)
   const [showLower, setShowLower] = useState(false)
 
@@ -390,7 +409,7 @@ export default function FlawsPage() {
               x927–1410) with its internal rules at y796 and y834. The app drew
               the two internal rules and no box. */}
           <Card className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)] px-[12px]">
-            {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (
+            {recentSessions.map(([d, s, v]) => (
               <Link key={d} href="/results/demo/history" className="flex items-center py-[9px] text-[12px]">
                 <span className="w-[170px]">{d}</span>
                 <span className="text-[var(--shotiq-color-graphite)]">{s}</span>

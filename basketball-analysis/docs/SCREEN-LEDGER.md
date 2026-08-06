@@ -1640,11 +1640,42 @@ analysis link were then deleted and the canonical values confirmed restored.
    with both sides seeded at 24/15 the wired and unwired renders were identical
    (rule F14 again).
 
-5. **Still open:** the capture flow tracks no NEED REVIEW, DISCARDED or PRACTICE
-   TIME counters, and `/video-analysis/processing` is a timer simulation with no
-   analysis behind it — it never receives an id and polls nothing. Making that
-   route real is a feature (a processing pipeline with status), not a wiring fix,
-   and should be scoped with Kevin before it is built.
+5. **DONE — flaws RECENT SESSIONS.** Found by a differential audit (below), not
+   by reading code: three rows written into the markup — "Today at 8:24 AM ·
+   24 shots · -8.3%" — on the panel naming the sessions a flaw was seen in. My
+   own gap: I wired the flaw LIST on this screen and missed the panel beside it.
+   Dates and shot counts are the player's own now. The red per-session
+   percentage is NOT, and is drawn as an em-dash: it is a flaw's cost IN THAT
+   SESSION, and nothing computes that — `/api/analysis/flaws` measures one figure
+   across the whole history with a minimum sample on both sides, and splitting
+   it back out per session would be arithmetic with no data under it.
+
+### THE DIFFERENTIAL AUDIT (how the last item was found, and what it still says)
+
+Load every route twice — signed out and signed in — and extract data-shaped
+tokens (percentages, clock times, dates, degrees). **A data value that is
+byte-identical in both states is a candidate constant**, because real data
+cannot survive signing in unchanged. This is the cheapest reliable detector for
+this whole class of defect and should be re-run after any batch of wiring.
+
+`scratchpad/audit.mjs`, driven by an `RT=` comma list of routes (running all 23
+at once exceeds the tool timeout; do them in batches of ~5).
+
+Outstanding finding, NOT yet fixed:
+
+- **`/results/demo/analysis`** reports identical phase timings signed in and
+  out — `0:00 – 0:02`, `0:02 – 0:04`, `0:04 – 0:06`, `0:06 – 0:07`,
+  `0:07 – 0:10`, and a `0:07 / 0:12` transport readout. These are the `PHASES`
+  constant. The video pipeline already finds five phase FRAMES (task #33); it
+  does not persist their TIMES, so the timeline is canonical for every clip.
+  Next unit of work: carry the phase frame timestamps through `save-analysis`
+  and render them, canonical values remaining the empty state.
+
+6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
+   DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
+   timer simulation with no analysis behind it — it never receives an id and
+   polls nothing. Making that route real is a feature (a processing pipeline
+   with status), not a wiring fix, and should be scoped with him first.
 
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
