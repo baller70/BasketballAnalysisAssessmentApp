@@ -1,0 +1,19 @@
+-- A session you actually did belongs in your timeline, scored or not.
+--
+-- `save-analysis` can only write an AnalysisHistory row inside
+-- `if (body.overallScore !== undefined)`, because this column is NOT NULL. An
+-- analysis that produced angles but no overall score therefore lands in
+-- `user_analyses` and NOWHERE ELSE, which makes the two halves of the app
+-- disagree about whether that day happened:
+--
+--   /api/analysis-history (this table)  -> 2 sessions
+--   /api/badges, /api/media (user_analyses) -> 3 sessions
+--
+-- The history screen omits it, the analysis overview's "N OF M" undercounts,
+-- the player card's 7-day deltas never see it, and — worst — the day does not
+-- count toward a streak or a consistency goal, because the goal evaluator and
+-- the badge engine read `user_analyses` while the history screen reads this.
+--
+-- Nullable, so an unscored session can be recorded with its angles and its
+-- date. No backfill: every existing row was written through the scored path.
+ALTER TABLE "analysis_history" ALTER COLUMN "overall_score" DROP NOT NULL;

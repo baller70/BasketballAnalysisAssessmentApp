@@ -9,18 +9,27 @@ import {
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
-import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
+import { formatFeetInches } from "@/lib/vision/derivedMetrics"
+import { useHistory, CoachingTarget, sessionDelta, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useProfileStore } from "@/stores/profileStore"
 import { useShotClip, ClipFrame } from "@/components/shotiq/ShotClip"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { FrameDetail } from "@/components/shotiq/phone/results/FrameDetail"
 import { AnnotationToolbar } from "@/components/shotiq/phone/results/AnnotationToolbar"
 import { MetricDetail } from "@/components/shotiq/phone/results/MetricDetail"
+import { ELBOW_AT_RELEASE } from "@/lib/analysis/angleBands"
 
 // One bespoke diagram per measured quantity — canonical never repeats a glyph
 // down this list (angle, height ruler, distance tape, lift, ball arc, midline).
+/* The elbow row was judging a release-frame angle against a set-point band —
+   85°–95° is the "L" a shooter holds before the push, while every angle on an
+   analysis record is sampled at the RELEASE frame, where the arm is extended.
+   A textbook ~168° read as a failure. The band now comes from `angleBands`, so
+   this table, the share card, the phone strip and /results/demo cannot drift
+   apart again, and the empty-state value moves with it. */
 const MEASUREMENTS: [string, string, string, string, string][] = [
-  ["Elbow Angle", "92°", "Ideal: 85°–95°", "Good", "084-metric-elbow"],
+  ["Elbow Angle", "168°", `Ideal: ${ELBOW_AT_RELEASE.label}`, "Good", "084-metric-elbow"],
   ["Release Height", "8'10\"", "Ideal: 8'6\"–9'2\"", "Good", "084-metric-height"],
   ["Release Distance", "16.2\"", "Ideal: 14\"–16\"", "Slightly High", "084-metric-distance"],
   ["Vertical Jump", "24.6\"", "Ideal: 20\"–28\"", "Good", "084-metric-jump"],
@@ -32,9 +41,9 @@ const MEASUREMENTS: [string, string, string, string, string][] = [
 const METRIC_DETAIL: Record<string, { what: string; why: string; tip: string; trend: number[] }> = {
   "Elbow Angle": {
     what: "The angle of your shooting elbow at the moment of release.",
-    why: "A stacked elbow (85°–95°) sends force straight at the rim; flare adds side spin.",
-    tip: "Think “elbow under the ball” — check it each time you bring the ball to your set point.",
-    trend: [88, 90, 87, 91, 92],
+    why: `Full extension at release (${ELBOW_AT_RELEASE.label}) sends force straight at the rim; a short arm leaves the shot flat.`,
+    tip: "Finish with the arm long and the elbow above the eyebrow — reach for the rim, don't push at it.",
+    trend: [161, 164, 159, 166, 168],
   },
   "Release Height": {
     what: "How high the ball is when it leaves your hand.",
@@ -87,11 +96,114 @@ const cellCentre = (i: number) => cellLeft(i) + CELL / 2
 /** Canonical's marker sat ~6px proud of the cell on each side. */
 const RING_OUT = 6 / STRIP_W
 
+/**
+ * Which of canonical's six KEY MEASUREMENTS this pipeline actually produces.
+ *
+ * The table above is six constants — "Elbow Angle 92°", "Release Height 8'10"" —
+ * printed as `hasData ? value : "—"`, so an account with one real analysis was
+ * shown 92° whatever its elbow measured, on a screen headed KEY MEASUREMENTS.
+ *
+ * One of the six is measured: the elbow angle, at the release frame. The other
+ * five — release height, release distance, vertical jump, centreline deviation
+ * and the shooting arc — need a calibrated camera and a ball track this app
+ * does not compute. They now say so rather than carrying a number nobody
+ * derived.
+ * Filling those four from shoulder/hip tilt would be inventing a measurement
+ * with a plausible-looking source, which is the defect, not the fix.
+ */
+type Reader = (a: LatestAnalysis) => string | null
+
+/** How each canonical row is answered from a real analysis. */
+const MEASURED_BY: Record<string, Reader> = {
+  "Elbow Angle": (a) => (a.angles.elbow == null ? null : `${Math.round(a.angles.elbow)}°`),
+  /* SHOOTING ARC IS NOT MEASURED, and it used to be answered from
+     `angles.release`. Those are not the same quantity: canonical's arc is the
+     ball's launch angle, 45°–55°, while `angles.release` is the FORE ARM's
+     signed deviation from vertical with an ideal of 0. A near-perfect release
+     of 4° was printed as a 4° shooting arc and graded against 45°–55°, so it
+     read as a catastrophically flat shot when nothing was wrong with it.
+     Nothing on an analysis record tracks the ball's flight — the closest thing
+     the pipeline has is `launchArc`, itself a forearm-elevation proxy, and it
+     is not stored here. So this row has no reader and shows "—". The real
+     release measurement keeps its own row on the phone metric strip, under the
+     name of the thing it measures. */
+  "Release Height": (a) =>
+    a.measurements?.releaseHeightInches == null ? null : formatFeetInches(a.measurements.releaseHeightInches),
+  "Release Distance": (a) =>
+    a.measurements?.releaseDistanceInches == null ? null : `${a.measurements.releaseDistanceInches.toFixed(1)}"`,
+  "Vertical Jump": (a) =>
+    a.measurements?.verticalJumpInches == null ? null : `${a.measurements.verticalJumpInches.toFixed(1)}"`,
+  "Centerline Deviation": (a) =>
+    a.measurements?.centerlineDeviationDeg == null ? null : `${a.measurements.centerlineDeviationDeg.toFixed(1)}°`,
+}
+
+interface LatestAnalysis {
+  recordedAt: string
+  angles: Record<string, number | null>
+  measured: string[]
+  measurements?: Record<string, number | null>
+  measurementsPresent?: string[]
+}
+
 export default function BiomechanicsWorkspacePage() {
   const { hasData, score, items } = useHistory()
+  // The shooting hand named in the header comes from the player's profile —
+  // there is nothing in an analysis that says which hand took the shot.
+  const profile = useProfileStore()
+  useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
+
+  /** The caller's own most recent shot, and exactly which angles it carries. */
+  const [latest, setLatest] = useState<LatestAnalysis | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success && d.analysis) setLatest(d.analysis) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /** The value to print for a canonical measurement row, and whether it is real. */
+  const readingFor = (metric: string, demo: string): { text: string; real: boolean } => {
+    if (!latest) return { text: hasData ? demo : "—", real: false }
+    const read = MEASURED_BY[metric]?.(latest) ?? null
+    // All six are computable now; a null means THIS shot could not answer it —
+    // a photo cannot show lift, and a length needs a profile height for scale.
+    return read ? { text: read, real: true } : { text: "Not measured", real: false }
+  }
   // Same session-over-session delta the rest of the app prints — this readout
   // used to be a hard-coded +8.1%.
   const delta = sessionDelta(items)
+
+  /* WHICH SESSION THIS WORKSPACE IS DESCRIBING.
+     The header named it "PULL-UP JUMPER · May 12, 2025 at 8:24 AM · Catch &
+     Shoot · Right Hand" with 24 SHOTS / 15 MAKES / 62.5% beside it, every one
+     of them behind `hasData ? <constant> : <zero>`. That gate is the wrong way
+     round: the zero state was honest, and the constants only ever appeared for
+     a player who HAD a session — so the screen was accurate until it had
+     something real to say, then described someone else's shot. */
+  const session = items[0] ?? null
+  const hand = profile.dominantHand
+    ? `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1).toLowerCase()} Hand`
+    : null
+  const caption = session
+    ? [session.when, session.style, hand].filter(Boolean).join(" · ")
+    : "Run an analysis to populate this workspace."
+  /* The breadcrumb and the H1 both name the shot. With nothing analysed,
+     canonical's PULL-UP JUMPER stands as the empty state; with a real session
+     the workspace has to be headed by the session it is actually showing. */
+  const heading = (session?.title ?? "Pull-Up Jumper").toUpperCase()
+  /* Shots and makes come from the capture behind the analysis, and an analysis
+     can exist without one (an uploaded still, an iOS run with no session). Then
+     the honest mark is an em-dash, NOT a zero — "no capture was counted" is not
+     "you missed every shot". The no-data column keeps the zeros it already
+     shipped with. */
+  const counts = session?.shots != null && session.makes != null
+    ? { shots: String(session.shots), makes: String(session.makes), pct: formatMakePct(session.shots, session.makes) }
+    : hasData
+      ? { shots: "—", makes: "—", pct: "—" }
+      : { shots: "0", makes: "0", pct: "—" }
   const [tab, setTab] = useState("METRICS")
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Annotations: true })
   // Annotation ink tools live behind the fourth toggle (canonical toolbar).
@@ -195,11 +307,11 @@ export default function BiomechanicsWorkspacePage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[11px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
-            <Link href="/results/demo/history">ANALYSES</Link>&ensp;›&ensp;PULL-UP JUMPER
+            <Link href="/results/demo/history">ANALYSES</Link>&ensp;›&ensp;{heading}
           </div>
-          <PageTitle size={52} className="mt-[2px]">ANALYSIS — PULL-UP JUMPER</PageTitle>
+          <PageTitle size={52} className="mt-[2px]">ANALYSIS — {heading}</PageTitle>
           <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
-            {hasData ? "May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand" : "Run an analysis to populate this workspace."}
+            {caption}
           </p>
         </div>
         {/* Canonical runs this strip 464px wide (FORM SCORE x843 to VS LAST x1307)
@@ -214,15 +326,15 @@ export default function BiomechanicsWorkspacePage() {
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "24" : "0"}</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{counts.shots}</div>
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "15" : "0"}</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{counts.makes}</div>
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "62.5%" : "—"}</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{counts.pct}</div>
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST</div>
@@ -415,7 +527,17 @@ export default function BiomechanicsWorkspacePage() {
                         and leaves ~47px between it and the status badge (92° ends
                         x1030, badge starts x1078); right-aligned it left 15px. */}
                     <div className="w-[104px] shrink-0 text-center">
-                      <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? v : "—"}</div>
+                      {(() => {
+                        const r = readingFor(m, v)
+                        return (
+                          <div className={r.real || r.text === "—" || !latest
+                                 ? "shotiq-numeric text-[19px] leading-[21px]"
+                                 : "text-[11px] leading-[21px] text-[var(--shotiq-color-graphite)]"}
+                               data-testid={`measure-${m.toLowerCase().replace(/\s+/g, "-")}`}>
+                            {r.text}
+                          </div>
+                        )
+                      })()}
                       <div className="mt-[1px] text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>
                     {/* Tailwind's /10 opacity modifier does not apply to a raw

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { validateCsrf } from "@/lib/csrf"
+import { resolveShot } from "@/lib/shots/resolveShot"
 
 class HistoryValidationError extends Error {}
 
@@ -70,7 +71,17 @@ export async function GET(request: NextRequest) {
 
     // Calculate statistics
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const scores = history.map((h: any) => Number(h.overallScore)).filter((s: number) => !isNaN(s))
+    /* NULL MUST BE DROPPED BEFORE Number(), NOT AFTER.
+       `Number(null)` is 0, not NaN, so an unscored session — which this table
+       can now hold — would have survived an `!isNaN` filter as a ZERO and
+       dragged the average down while setting lowestScore to 0. The null check
+       has to come first. */
+    const scores = history
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((h: any) => h.overallScore != null)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((h: any) => Number(h.overallScore))
+      .filter((s: number) => Number.isFinite(s))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const counted = history.map((h: any) => tally.get(h.analysis?.captureSessionId ?? "")).filter(Boolean) as { shots: number; makes: number }[]
     const totalShots = counted.reduce((a, c) => a + c.shots, 0)
@@ -170,14 +181,9 @@ async function shotTally(userProfileId: string, captureSessionIds: string[]) {
     const bucket = tally.get(event.captureSessionId ?? "")
     if (!bucket) continue
 
-    let dropped = event.detected === false
-    let result = event.detectedResult ?? null
-    for (const correction of event.corrections) {
-      if (correction.kind === "false_shot") dropped = correction.value !== false
-      else if (correction.kind === "make_miss" && (correction.value === "make" || correction.value === "miss")) {
-        result = correction.value
-      }
-    }
+    // Same resolver the shot-context panel reads, so a shot cannot count as a
+    // make here and read as a miss there.
+    const { dropped, result } = resolveShot(event)
     if (dropped) continue
     bucket.shots += 1
     if (result === "make") bucket.makes += 1
@@ -319,12 +325,18 @@ export async function POST(request: NextRequest) {
         orderBy: [{ analysisDate: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         select: { id: true, overallScore: true, scoreChange: true },
       })
+      /* Chain each scored session to the PREVIOUS SCORED one, skipping the
+         unscored rows this table can now hold. Subtracting straight from the
+         row before would have read `Number(null)` as 0 and written a delta of
+         -84 or +84 the moment an unscored session landed between two scored
+         ones — and an unscored row has no score change of its own at all. */
+      let previousScored: { overallScore: unknown } | null = null
       for (let index = 0; index < chronological.length; index += 1) {
         const current = chronological[index]
-        const previous = chronological[index - 1]
-        const scoreChange = previous
-          ? Number(current.overallScore) - Number(previous.overallScore)
-          : null
+        const scoreChange = current.overallScore == null || previousScored == null
+          ? null
+          : Number(current.overallScore) - Number(previousScored.overallScore)
+        if (current.overallScore != null) previousScored = current
         const storedScoreChange = current.scoreChange == null ? null : Number(current.scoreChange)
         if (storedScoreChange === scoreChange) continue
         await tx.analysisHistory.update({

@@ -31,7 +31,17 @@ export interface UserProfile {
   athleticAbility: number | null  // 1-10 scale
   dominantHand: DominantHand | null
   shootingStyle: ShootingStyle | null
-  
+
+  /* Onboarding answers. The wizard has always collected these four — position,
+     years played, practice cadence and what the player is training toward —
+     held them in component state, printed them back on its own REVIEW step,
+     and then dropped every one of them, because there was no field to save
+     them into and no column behind it. */
+  position: string | null
+  yearsPlaying: string | null
+  practiceFrequency: string | null
+  primaryGoal: string | null
+
   // Bio (NEW)
   bio: string | null
   enhancedBio: string | null
@@ -45,6 +55,9 @@ export interface UserProfile {
   profileComplete: boolean
   createdAt: string | null
   updatedAt: string | null
+  /** When the ACCOUNT was created — what the JOINED readouts print. Distinct
+   *  from `createdAt`, which dates the profile row, not the sign-up. */
+  joinedAt: string | null
 }
 
 export interface ProfileState extends UserProfile {
@@ -62,6 +75,10 @@ export interface ProfileState extends UserProfile {
   setAthleticAbility: (score: number) => void
   setDominantHand: (hand: DominantHand) => void
   setShootingStyle: (style: ShootingStyle) => void
+  setPosition: (position: string) => void
+  setYearsPlaying: (years: string) => void
+  setPracticeFrequency: (frequency: string) => void
+  setPrimaryGoal: (goal: string) => void
   setBio: (bio: string) => void
   setEnhancedBio: (bio: string) => void
   
@@ -111,6 +128,7 @@ const initialState: Omit<ProfileState,
   | "setHeight" | "setWeight" | "setWingspan" | "setAge" 
   | "setExperienceLevel" | "setBodyType" 
   | "setAthleticAbility" | "setDominantHand" | "setShootingStyle"
+  | "setPosition" | "setYearsPlaying" | "setPracticeFrequency" | "setPrimaryGoal"
   | "setBio" | "setEnhancedBio"
   | "nextStep" | "prevStep" | "goToStep"
   | "completeProfile" | "resetProfile" | "isStepComplete"
@@ -134,6 +152,11 @@ const initialState: Omit<ProfileState,
   shootingStyle: null,
   
   // Bio
+  position: null,
+  yearsPlaying: null,
+  practiceFrequency: null,
+  primaryGoal: null,
+
   bio: null,
   enhancedBio: null,
   
@@ -146,6 +169,7 @@ const initialState: Omit<ProfileState,
   profileComplete: false,
   createdAt: null,
   updatedAt: null,
+  joinedAt: null,
   
   // Wizard State
   currentStep: 1,
@@ -244,6 +268,22 @@ export const useProfileStore = create<ProfileState>()(
         })
       },
       
+      setPosition: (position: string) => {
+        set({ position, updatedAt: new Date().toISOString() })
+      },
+
+      setYearsPlaying: (yearsPlaying: string) => {
+        set({ yearsPlaying, updatedAt: new Date().toISOString() })
+      },
+
+      setPracticeFrequency: (practiceFrequency: string) => {
+        set({ practiceFrequency, updatedAt: new Date().toISOString() })
+      },
+
+      setPrimaryGoal: (primaryGoal: string) => {
+        set({ primaryGoal, updatedAt: new Date().toISOString() })
+      },
+
       setBio: (bio: string) => {
         set({
           bio,
@@ -348,6 +388,10 @@ export const useProfileStore = create<ProfileState>()(
               athleticAbility: p.athleticAbility,
               dominantHand: p.dominantHand,
               shootingStyle: p.shootingStyle,
+              position: p.position ?? null,
+              yearsPlaying: p.yearsPlaying ?? null,
+              practiceFrequency: p.practiceFrequency ?? null,
+              primaryGoal: p.primaryGoal ?? null,
               bio: p.bio,
               enhancedBio: p.enhancedBio,
               coachingTier: p.coachingTier,
@@ -356,6 +400,7 @@ export const useProfileStore = create<ProfileState>()(
               profileComplete: p.profileComplete,
               createdAt: p.createdAt,
               updatedAt: p.updatedAt,
+              joinedAt: p.joinedAt ?? null,
             })
             return true
           }
@@ -384,6 +429,10 @@ export const useProfileStore = create<ProfileState>()(
               athleticAbility: s.athleticAbility,
               dominantHand: s.dominantHand,
               shootingStyle: s.shootingStyle,
+              position: s.position,
+              yearsPlaying: s.yearsPlaying,
+              practiceFrequency: s.practiceFrequency,
+              primaryGoal: s.primaryGoal,
               bio: s.bio,
               enhancedBio: s.enhancedBio,
               coachingTier: s.coachingTier,
@@ -412,6 +461,10 @@ export const useProfileStore = create<ProfileState>()(
         athleticAbility: state.athleticAbility,
         dominantHand: state.dominantHand,
         shootingStyle: state.shootingStyle,
+        position: state.position,
+        yearsPlaying: state.yearsPlaying,
+        practiceFrequency: state.practiceFrequency,
+        primaryGoal: state.primaryGoal,
         bio: state.bio,
         enhancedBio: state.enhancedBio,
         coachingTier: state.coachingTier,
@@ -420,6 +473,7 @@ export const useProfileStore = create<ProfileState>()(
         profileComplete: state.profileComplete,
         createdAt: state.createdAt,
         updatedAt: state.updatedAt,
+        joinedAt: state.joinedAt,
         currentStep: state.currentStep,
       }),
     }

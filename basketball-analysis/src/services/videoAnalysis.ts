@@ -6,8 +6,10 @@
  * - Extracts frames from an uploaded video ENTIRELY IN THE BROWSER (HTMLVideo +
  *   canvas seeking) and runs the on-device MoveNet provider (services/pose) on
  *   each sampled frame. No server round-trip.
- * - Detects shot phases (Setup / Release / Follow-through) from the per-frame
- *   keypoints and produces the same result shape the results page already uses.
+ * - Detects all five shot phases (Setup / Load / Rise / Release / Follow-through)
+ *   from the per-frame keypoints and produces the same result shape the results
+ *   page already uses. It located only three of them until the phase strips'
+ *   LOAD and RISE cards were traced back to having no source of frames at all.
  * - All scoring comes from lib/scoring/biomechanicalScoring.ts via the provider.
  *
  * HISTORY:
@@ -54,6 +56,7 @@ import {
   cocoBallDetector,
   type CocoDetectorInput,
 } from '@/services/vision/CocoBallDetector'
+import { deriveMetrics, type DerivedMetrics } from '@/lib/vision/derivedMetrics'
 
 // Cap on how many frames we actually run inference on, so a long clip stays
 // responsive (90s * 10fps would be 900 frames). Frames are sampled evenly.
@@ -62,7 +65,7 @@ const MAX_ANALYSIS_FRAMES = 90
 const CAPTURE_MAX_WIDTH = 720
 
 export interface KeyScreenshot {
-  label: string  // SETUP, RELEASE, FOLLOW_THROUGH
+  label: string  // SETUP, LOAD, RISE, RELEASE, FOLLOW_THROUGH
   frame_index: number
   phase: string
   /** Legacy uppercase phase label retained for old result cards. */
@@ -122,6 +125,14 @@ export interface VideoAnalysisResult {
     release_mechanics?: MechanicsGateResult
     /** Canonical phase/mechanics sidecar for the release frame. */
     canonicalObservation?: CanonicalVisionObservation
+    /**
+     * The four KEY MEASUREMENTS the biomechanics screen used to print as
+     * constants. A video is the only capture that can answer all four: the
+     * setup frame gives the stature scale and the jump baseline, the peak
+     * frame gives the lift, and the release frame gives height, distance and
+     * centreline drift. Each is null with a stated reason when unmeasurable.
+     */
+    derived?: DerivedMetrics
   }
 
   frame_data?: VideoFrameRecord[]
@@ -174,7 +185,7 @@ function seekTo(video: HTMLVideoElement, time: number): Promise<void> {
   })
 }
 
-interface SampledFrame {
+export interface SampledFrame {
   index: number
   timestamp: number
   keypoints: ProviderKeypoint[] | null
@@ -234,6 +245,10 @@ export function toVideoSessionData(videoResult: VideoAnalysisResult): VideoSessi
     release_angles: sourceMetrics?.release_angles ?? {},
     release_untrusted_angles: sourceMetrics?.release_untrusted_angles,
     release_mechanics: sourceMetrics?.release_mechanics,
+    // Carried, not recomputed: this is a persistence copy, and dropping the
+    // derived block here is what would silently empty four cells after a
+    // page navigation reloaded the session.
+    derived: sourceMetrics?.derived,
     canonicalObservation: sourceMetrics?.canonicalObservation ?? videoResult.canonicalObservation,
   }
 
@@ -284,6 +299,86 @@ export function buildVideoFrameRecord(
 }
 
 /**
+ * y of the higher of the two confident wrists in a frame (smaller y = higher up
+ * the image), or null when neither wrist cleared the confidence floor.
+ *
+ * Factored out of findReleaseFrame so LOAD and RISE read wrist height the same
+ * way RELEASE always has — one definition of "where the hands are", not three.
+ */
+function wristHeight(frame: SampledFrame | undefined): number | null {
+  if (!frame?.keypoints) return null
+  const rw = frame.keypoints.find((k) => k.name === 'right_wrist' && k.score > 0.3)
+  const lw = frame.keypoints.find((k) => k.name === 'left_wrist' && k.score > 0.3)
+  const wrist = rw && lw ? (rw.y < lw.y ? rw : lw) : rw || lw
+  return wrist ? wrist.y : null
+}
+
+/**
+ * LOAD — the dip. Between setup and release the shooter sinks into the legs, so
+ * the load frame is the one with the *deepest knee bend*: the smallest knee
+ * angle in that window.
+ *
+ * Uses the confidence-gated knee angle first and only falls back to the raw
+ * derivation when the gate never trusted a knee in the whole window — a phase
+ * cue is a weaker claim than a printed measurement, so a raw angle is
+ * acceptable here where it would not be on a scorecard. If knees were never
+ * derived at all, falls back to the first third of the window by time, which is
+ * where the dip sits in a normal jump shot.
+ */
+export function findLoadFrame(frames: SampledFrame[], setupIdx: number, releaseIdx: number): number {
+  const window = frames.filter((f) => f.index > setupIdx && f.index < releaseIdx && f.form)
+  if (window.length === 0) return setupIdx
+
+  for (const useRaw of [false, true]) {
+    let best = -1
+    let minKnee = Infinity
+    for (const f of window) {
+      const knee = useRaw ? f.form!.angles.knee : trustedAnglesFromForm(f.form!).knee
+      if (knee != null && knee < minKnee) {
+        minKnee = knee
+        best = f.index
+      }
+    }
+    if (best >= 0) return best
+  }
+
+  return window[Math.floor((window.length - 1) / 3)].index
+}
+
+/**
+ * RISE — the lift. Between the dip and the release the ball travels up, so the
+ * rise frame is the one where the wrists sit *halfway* between where they were
+ * at load and where they end up at release.
+ *
+ * Falls back to the temporal midpoint of the window when wrist tracking is too
+ * sparse to interpolate.
+ */
+export function findRiseFrame(frames: SampledFrame[], loadIdx: number, releaseIdx: number): number {
+  const window = frames.filter((f) => f.index > loadIdx && f.index < releaseIdx && f.keypoints)
+  if (window.length === 0) return loadIdx
+
+  const yLoad = wristHeight(frames[loadIdx])
+  const yRelease = wristHeight(frames[releaseIdx])
+  if (yLoad != null && yRelease != null) {
+    const midpoint = (yLoad + yRelease) / 2
+    let best = -1
+    let bestGap = Infinity
+    for (const f of window) {
+      const y = wristHeight(f)
+      if (y == null) continue
+      const gap = Math.abs(y - midpoint)
+      if (gap < bestGap) {
+        bestGap = gap
+        best = f.index
+      }
+    }
+    if (best >= 0) return best
+  }
+
+  return window[Math.floor(window.length / 2)].index
+}
+
+/**
  * Pick the release frame: the detected frame where the shooting wrist is highest
  * relative to the shoulders (peak of the shot). Falls back to the frame with the
  * greatest elbow extension if wrists are unreliable.
@@ -292,12 +387,9 @@ function findReleaseFrame(frames: SampledFrame[]): number {
   let best = -1
   let bestWristLift = Infinity // lower y = higher up
   for (const f of frames) {
-    if (!f.keypoints) continue
-    const rw = f.keypoints.find((k) => k.name === 'right_wrist' && k.score > 0.3)
-    const lw = f.keypoints.find((k) => k.name === 'left_wrist' && k.score > 0.3)
-    const wrist = rw && lw ? (rw.y < lw.y ? rw : lw) : rw || lw
-    if (wrist && wrist.y < bestWristLift) {
-      bestWristLift = wrist.y
+    const y = wristHeight(f)
+    if (y != null && y < bestWristLift) {
+      bestWristLift = y
       best = f.index
     }
   }
@@ -327,6 +419,12 @@ export interface UploadedVideoBallDetector {
 
 export interface VideoAnalysisOptions {
   rimCalibration?: RimCalibration | null
+  /**
+   * The player's stature, off their profile. Without it there is NO real-world
+   * scale and the three LENGTH measurements are withheld rather than guessed
+   * (centreline deviation is an angle and survives). See lib/vision/derivedMetrics.
+   */
+  playerHeightInches?: number | null
   /** Injectable for deterministic tests; production uses the shared COCO model. */
   ballDetector?: UploadedVideoBallDetector
 }
@@ -432,10 +530,19 @@ export async function analyzeVideoShooting(
     const lastDetected = detected[detected.length - 1].index
     const setupIdx = firstDetected
     const followIdx = Math.max(releaseIdx, lastDetected)
+    // The shot has five phases on every screen in this app — SETUP, LOAD, RISE,
+    // RELEASE, FOLLOW-THROUGH — but this pipeline only ever located three of
+    // them, so two of the five cards could never be filled from a real upload.
+    // LOAD and RISE are found from signals already computed per frame (knee
+    // flexion and wrist ascent); nothing extra is inferred and no existing
+    // phase changed.
+    const loadIdx = findLoadFrame(frames, setupIdx, releaseIdx)
+    const riseIdx = findRiseFrame(frames, loadIdx, releaseIdx)
 
     const phaseForIndex = (i: number): string => {
       if (i <= setupIdx) return 'SETUP'
-      if (i < releaseIdx) return 'LOADING'
+      if (i < riseIdx) return 'LOAD'
+      if (i < releaseIdx) return 'RISE'
       if (i === releaseIdx) return 'RELEASE'
       return 'FOLLOW_THROUGH'
     }
@@ -456,6 +563,18 @@ export async function analyzeVideoShooting(
     const kneeValues = detected
       .map((f) => trustedAnglesFromForm(f.form!).knee)
       .filter((v): v is number => v != null)
+
+    /* Highest hips anywhere in the clip — the apex of the jump. Distinct from
+       the release frame on purpose (see `derived` below). */
+    let peakFrame: SampledFrame | null = null
+    let bestHipY = Infinity
+    for (const f of detected) {
+      if (!f.keypoints) continue
+      const hips = f.keypoints.filter((k) => (k.name === 'left_hip' || k.name === 'right_hip') && k.score > 0.3)
+      if (!hips.length) continue
+      const y = hips.reduce((s, k) => s + k.y, 0) / hips.length
+      if (y < bestHipY) { bestHipY = y; peakFrame = f }
+    }
 
     const releaseFrame = frames[releaseIdx] ?? detected[0]
     const releaseForm = releaseFrame.form ?? detected[0].form!
@@ -508,8 +627,13 @@ export async function analyzeVideoShooting(
       }
     }
 
+    // Ordered as the shot happens, which is the order the five phase cards read
+    // in. Consumers that look screenshots up by label (convertVideoToSessionFormat
+    // finds 'RELEASE') are unaffected by the two new entries.
     const key_screenshots: KeyScreenshot[] = [
       buildScreenshot('SETUP', setupIdx),
+      buildScreenshot('LOAD', loadIdx),
+      buildScreenshot('RISE', riseIdx),
       buildScreenshot('RELEASE', releaseIdx),
       buildScreenshot('FOLLOW_THROUGH', followIdx),
     ]
@@ -523,6 +647,8 @@ export async function analyzeVideoShooting(
     })
     const phases = [
       phaseRecord('SETUP', setupIdx),
+      phaseRecord('LOAD', loadIdx),
+      phaseRecord('RISE', riseIdx),
       phaseRecord('RELEASE', releaseIdx),
       phaseRecord('FOLLOW_THROUGH', followIdx),
     ]
@@ -558,11 +684,26 @@ export async function analyzeVideoShooting(
         release_untrusted_angles,
         release_mechanics: releaseForm.mechanics,
         canonicalObservation: releaseForm.canonicalObservation,
+        /* The four KEY MEASUREMENTS, from the frames this pass already picked.
+           The PEAK frame is the highest-hip frame across the clip, which is
+           not necessarily the release: a shooter releases on the way up as
+           often as at the apex, so taking release as the peak would understate
+           every jump. */
+        derived: deriveMetrics(
+          frames[releaseIdx]?.keypoints ?? [],
+          frames[setupIdx]?.keypoints ?? null,
+          peakFrame?.keypoints ?? null,
+          options.playerHeightInches,
+        ),
       },
       frame_data,
       all_keypoints,
       key_screenshots,
-      shot_range: { start: setupIdx, end: followIdx, phases: ['SETUP', 'RELEASE', 'FOLLOW_THROUGH'] },
+      shot_range: {
+        start: setupIdx,
+        end: followIdx,
+        phases: ['SETUP', 'LOAD', 'RISE', 'RELEASE', 'FOLLOW_THROUGH'],
+      },
       canonicalObservation: releaseForm.canonicalObservation,
       shot_result: latestShotResult,
     }

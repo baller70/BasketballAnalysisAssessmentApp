@@ -16,6 +16,8 @@ import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { ShotBreakdown } from "@/components/shotiq/phone/results/ShotBreakdown"
 import { FormScore } from "@/components/shotiq/phone/results/FormScore"
+import { usePhaseTimings } from "@/components/shotiq/PhaseFrames"
+import { useProfileStore } from "@/stores/profileStore"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
@@ -32,6 +34,15 @@ const MECHANICS: [string, string, string, string][] = [
 
 export default function AnalysisOverviewPage() {
   const { hasData, score, items, shots, makes } = useHistory()
+  /* The subtitle ended "· Right Hand" as a literal, and named every session
+     "Catch & Shoot" via a `||` default the API never satisfies. The hand is a
+     profile fact; the shot type is recorded nowhere and simply drops out of
+     the line rather than borrowing canonical's answer. */
+  const profile = useProfileStore()
+  React.useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
+  const hand = profile.dominantHand
+    ? `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1).toLowerCase()} Hand`
+    : null
   const trend = scoreSeries(items, 6)
   const delta = sessionDelta(items)
   // "N OF M" counts real analyses, not a literal.
@@ -41,7 +52,26 @@ export default function AnalysisOverviewPage() {
   const [shot, setShot] = React.useState(3)
   // One real clock behind the play button, the progress bar, the filmstrip and
   // the readout — `frame` used to be state that only fed aria-pressed.
-  const clip = useShotClip({ frames: 8 })
+  /* THE PHASE WINDOWS WERE A CONSTANT. Every clip was broken into the same
+     five — 0:00-0:02, 0:02-0:04 … — so a four-second shot and a forty-second
+     one reported identical timings, and the strip that claims to show WHEN each
+     phase happened showed when it happened in the mock. The pipeline already
+     records a timestamp per phase and the clip's duration; both ride along with
+     the stills. Canonical's windows remain the empty state. */
+  const timings = usePhaseTimings(null, { fallbackToLatest: true })
+  const phaseRows: [string, string][] = PHASES.map(([label, canonical]) =>
+    [label, timings.ranges[label] ?? canonical])
+
+  /* The transport reads `0:07 / 0:12` — canonical's clip. `useShotClip` has
+     always accepted a duration and start; nothing ever passed the real ones, so
+     every clip was 12 seconds long and parked at 7. Both come from the same
+     stored session as the phase windows, and canonical's pair stands in until
+     one exists. */
+  const clip = useShotClip({
+    frames: 8,
+    ...(timings.durationSeconds != null ? { duration: timings.durationSeconds } : {}),
+    ...(timings.releaseSeconds != null ? { start: timings.releaseSeconds } : {}),
+  })
   const stageRef = React.useRef<HTMLDivElement>(null)
   const full = useFullscreen(stageRef)
   /* Canonical iOS 041 and 044 are two screens of this one route: the breakdown
@@ -73,7 +103,8 @@ export default function AnalysisOverviewPage() {
             <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS OVERVIEW</h1>
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
               {hasData
-                ? `${items[0]?.when || "Latest analysis"} · ${items[0]?.style || "Catch & Shoot"} · Right Hand`
+                ? [items[0]?.when || "Latest analysis", items[0]?.style, hand]
+                    .filter(Boolean).join(" · ")
                 : "Run an analysis to populate this view."}
             </p>
           </div>
@@ -157,10 +188,10 @@ export default function AnalysisOverviewPage() {
               of phase figures; the dots either side of the current phase are
               picked out in orange. */}
           <div className="mt-[14px] flex items-start">
-            {PHASES.map(([p, t], i) => {
+            {phaseRows.map(([p, t], i) => {
               const current = phaseAt(clip.time)
               const active = p === current
-              const reached = active || PHASES[i - 1]?.[0] === current
+              const reached = active || phaseRows[i - 1]?.[0] === current
               return (
                 <React.Fragment key={p}>
                   {i > 0 && (

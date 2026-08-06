@@ -1696,10 +1696,29 @@ function resolveFlawSignal(
   angles: Record<string, number>
 ): number | null {
   switch (metric) {
+    /* ELBOW_ANGLE_ACUTE and ELBOW_ANGLE_OBTUSE are SET-POINT rules — their own
+       descriptions say so ("greater than 110° at set point (too straight)"),
+       and their cause chains are about power reserve before the push. The
+       angles on an analysis record are sampled at the RELEASE frame, where a
+       correct shot extends to ~150-180. Reading them here fired OBTUSE on
+       every shot ever taken, telling every player their elbow was too straight
+       for doing the one thing a release frame is supposed to show.
+       Same trap this function already refuses for `shoulder_angle` below.
+       A set-point elbow would be evaluable; nothing measures or stores one, so
+       the rule abstains rather than inventing a verdict. The dedicated key is
+       accepted so the pipeline can start supplying it without touching this. */
     case 'elbow_angle':
-      return firstAngle(angles, ['right_elbow_angle', 'left_elbow_angle', 'elbow_angle'])
+      return firstAngle(angles, ['elbow_angle_set_point'])
+    /* INSUFFICIENT_KNEE_BEND (>160) and EXCESSIVE_KNEE_BEND (<100) describe the
+       DIP — the deepest bend of the load, which is what "insufficient bend"
+       can only mean. The stored knee is from the release frame, where the legs
+       have extended to ~165-180, so INSUFFICIENT fired on every shot for the
+       same reason. `videoAnalysis` already finds that frame (`findLoadFrame`
+       takes the minimum knee) and computes `knee_angle_range.min`; it is simply
+       never persisted onto the analysis, so the flaws route cannot see it.
+       Accepted here under its own key, ready for when it is. */
     case 'knee_angle':
-      return firstAngle(angles, ['right_knee_angle', 'left_knee_angle', 'knee_angle'])
+      return firstAngle(angles, ['knee_angle_min', 'knee_angle_at_load'])
     case 'wrist_extension':
       // Follow-through / wrist-snap angle. Canonical record emits wrist_angle.
       return firstAngle(angles, ['wrist_angle', 'right_wrist_angle', 'left_wrist_angle'])

@@ -22,6 +22,8 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, Check, Minus, Plus, X } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
@@ -34,6 +36,8 @@ import {
 } from "@/components/shotiq/Glyphs"
 
 function Identity({ tabTint }: { tabTint?: boolean }) {
+  const chrome = usePlayerChrome()
+
   void tabTint
   return (
     <div className="flex items-start px-[18px] pt-[13px]">
@@ -45,12 +49,12 @@ function Identity({ tabTint }: { tabTint?: boolean }) {
             51, 055 cap 44 - median 51.5, against the 46 that 30px drew. The
             outliers stay outliers by design; chasing 055 would push the other
             three off. 30 * 51.5/46 = 33.6px. */}
-        <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
-        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+        <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
+        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
       </div>
       <div className="ml-auto flex shrink-0 items-start">
-        <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-        <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+        <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+        <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
       </div>
     </div>
   )
@@ -66,6 +70,8 @@ export type PhoneDrill = {
 export function TrainingHome({ drills, onQuickStart }: {
   drills: PhoneDrill[]; onQuickStart: () => void
 }) {
+  const session = useLatestSession()
+
   return (
     <PhoneScreen testid="screen-ios-training-home" tab="train" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<GearLink />} />
@@ -135,7 +141,11 @@ export function TrainingHome({ drills, onQuickStart }: {
         {/* --------------------------------------------- recent workout */}
         <div className="mt-[14px] flex items-center">
           <Eyebrow>RECENT WORKOUT</Eyebrow>
-          <span className="ml-auto text-[9px]" style={{ color: GRAPHITE }}>Today at 8:24 AM</span>
+          {/* The card below already prints the session's shots, makes, make%,
+              score and verdict; its TIME was the one field left canonical, so
+              the only wrong number on the card was the one saying when it
+              happened. */}
+          <span className="ml-auto text-[9px]" style={{ color: GRAPHITE }}>{session.when}</span>
         </div>
         <PhoneCard className="mt-[8px] flex items-stretch gap-[11px] p-[9px]">
           <Shot src="/images/canonical/090-rec-1.png" zoom={1.4}
@@ -143,19 +153,21 @@ export function TrainingHome({ drills, onQuickStart }: {
           <div className="min-w-0 flex-1">
             <div className="text-[12.5px] font-semibold leading-[15px]">Quick Release Builder</div>
             <StatCells className="mt-[7px]" valueSize={15} labelSize={7}
-                       cells={[{ v: "24", l: "SHOTS" }, { v: "15", l: "MAKES" }, { v: "62.5%", l: "MAKE %" }]} />
+                       cells={[{ v: session.shots, l: "SHOTS" }, { v: session.makes, l: "MAKES" }, { v: session.pct, l: "MAKE %" }]} />
             <div className="mt-[7px] flex items-end gap-[8px]">
               <div className="min-w-0 flex-1">
                 <div className="shotiq-microcaps" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>FORM SCORE</div>
                 <div className="mt-[1px] h-[3px] w-full rounded-full" style={{ background: RULE }}>
-                  <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
+                  {/* The bar was pinned at 82% beside a numeral reading the
+                      real score — the two halves of one readout disagreeing. */}
+                  <div className="h-full rounded-full" style={{ width: `${session.score}%`, background: ORANGE }} />
                 </div>
               </div>
-              <span className="shotiq-numeric shrink-0 text-[22px] leading-[20px]" style={{ color: ORANGE }}>82</span>
+              <span className="shotiq-numeric shrink-0 text-[22px] leading-[20px]" style={{ color: ORANGE }}>{session.score}</span>
             </div>
             <div className="mt-[6px] flex items-center gap-[6px]">
               <span className="rounded-[3px] px-[5px] py-[2px] text-[7.5px] leading-[9px]"
-                    style={{ border: `1px solid ${GREEN}`, color: GREEN }}>GOOD</span>
+                    style={{ border: `1px solid ${GREEN}`, color: GREEN }}>{session.verdict}</span>
               <span className="text-[9px]" style={{ color: GRAPHITE }}>Keep building consistency.</span>
             </div>
           </div>
@@ -185,6 +197,8 @@ function Stepper({ value, onChange }: { value: number; onChange: (v: number) => 
 }
 
 export function QuickStart({ onStart }: { onStart: () => void }) {
+  const session = useLatestSession()
+
   const [shots, setShots] = React.useState(24)
   const [makes, setMakes] = React.useState(15)
   return (
@@ -210,11 +224,11 @@ export function QuickStart({ onStart }: { onStart: () => void }) {
           </div>
           <div className="min-w-0 flex-1">
             <Eyebrow>FORM SCORE</Eyebrow>
-            <div className="shotiq-numeric mt-[4px] text-[62px] leading-[58px]" style={{ color: ORANGE }}>82</div>
+            <div className="shotiq-numeric mt-[4px] text-[62px] leading-[58px]" style={{ color: ORANGE }}>{session.score}</div>
             <div className="mt-[6px] h-[4px] w-full rounded-full" style={{ background: RULE }}>
               <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
             </div>
-            <div className="shotiq-microcaps mt-[8px]" style={{ fontSize: 9, lineHeight: "10px", color: GREEN }}>GOOD</div>
+            <div className="shotiq-microcaps mt-[8px]" style={{ fontSize: 9, lineHeight: "10px", color: GREEN }}>{session.verdict}</div>
             <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>Keep building consistency.</p>
           </div>
         </div>
@@ -336,6 +350,8 @@ function DayCell({ day, inMonth, state, note, onPick }: {
 }
 
 export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
+  const session = useLatestSession()
+
   const [picked, setPicked] = React.useState(7)
   return (
     <PhoneScreen testid="screen-ios-workout-calendar" tab="train" pad={0} header={false}>
@@ -350,7 +366,7 @@ export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
           <div className="mt-[3px] text-[10.5px] leading-[13px]">Keep elbow stacked through release</div>
         </div>
         <div className="ml-auto flex shrink-0">
-          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "FG%"]].map(([v, l]) => (
+          {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "FG%"]].map(([v, l]) => (
             <div key={l} className="w-[42px] text-center">
               <div className="shotiq-numeric text-[12px] leading-[13px]">{v}</div>
               <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 6.5, lineHeight: "7px", color: GRAPHITE }}>{l}</div>

@@ -24,6 +24,8 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import { StreakGlyph, PointsGlyph, MechanicGlyph } from "@/components/shotiq/Glyphs"
 
@@ -42,6 +44,10 @@ export function PlayerBio({
   onEnhance?: () => void
   enhanced?: string
 }) {
+  const session = useLatestSession()
+
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-player-bio" tab="home" pad={19.4} headerH={46}>
       {/* ------------------------------------------------- step + meter */}
@@ -72,8 +78,8 @@ export function PlayerBio({
 
       {/* ----------------------------------------------------- stat strip */}
       <div className="mt-[14px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
-        {([["6", "DAY STREAK", "streak"], ["2,840", "POINTS", "points"],
-           ["82", "FORM SCORE", "form"], ["62.5%", "MAKE %", "make"]] as const).map(([v, l, kind]) => (
+        {([[chrome.streak, "DAY STREAK", "streak"], [chrome.points, "POINTS", "points"],
+           [session.score, "FORM SCORE", "form"], [session.pct, "MAKE %", "make"]] as const).map(([v, l, kind]) => (
           <div key={l} className="min-w-0 flex-1 text-center">
             <span className="flex h-[24px] items-center justify-center">
               {kind === "streak" && <StreakGlyph size={44} />}

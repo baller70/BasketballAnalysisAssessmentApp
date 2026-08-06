@@ -79,6 +79,12 @@ config/
 !scripts/imagegen/
 !scripts/imagegen/**
 
+# The local test database is the difference between a functional test and a
+# test that cannot log in. Without it /api/auth/signin answers 503, Playwright
+# never gets past sign-in, and /upload renders its signed-out shell with no file
+# input — a state that looks identical whether the upload feature works or not.
+!scripts/dev-testdb.sh
+
 # ShotIQ product specifications and automated tests are source-controlled.
 !basketball-analysis/docs/
 !basketball-analysis/docs/superpowers/
@@ -168,3 +174,9 @@ basketball-analysis/_*.mjs
 basketball-analysis/snap*.mjs
 basketball-analysis/cw.mjs
 basketball-analysis/ci.mjs
+
+# Scratch dir used by scripts/build-pages-static.mjs while it moves the API
+# routes aside for the static export. Cleaned up by the script, but an
+# interrupted build leaves it behind holding real source.
+.pages-tmp/
+basketball-analysis/.pages-tmp/

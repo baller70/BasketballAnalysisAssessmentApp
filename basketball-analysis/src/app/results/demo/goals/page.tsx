@@ -21,8 +21,30 @@ import { usePhoneViewport, usePhoneStep } from "@/components/shotiq/phone/PhoneB
    canonical draws a full form page, and 065 as 063 scrolled 560px. */
 const PHONE_GOAL_STEPS = ["list", "create", "detail"] as const
 
-interface Goal { id: string; title: string; description?: string; progress?: number }
-interface ApiGoal { id: string; name: string; description?: string; currentValue?: number; targetValue?: number }
+interface Goal {
+  id: string; title: string; description?: string; progress?: number
+  /** True when the bar is a reading over real sessions, not a stored number. */
+  measured?: boolean
+  /** Why no reading was possible, when there is none. */
+  progressReason?: string | null
+  /** The server could not measure this goal — distinct from measuring zero. */
+  unmeasured?: boolean
+  currentValue?: number | null
+  unit?: string
+  startedAt?: string | null
+  deadline?: string | null
+}
+interface ApiGoal {
+  id: string; name: string; description?: string
+  currentValue?: number; targetValue?: number; unit?: string
+  createdAt?: string; deadline?: string | null
+  progress?: {
+    currentValue: number | null
+    source: "measured" | "stored" | "unmeasured"
+    reason: string | null
+    fraction: number | null
+  }
+}
 
 const DEMO_GOAL: Goal = { id: "demo", title: "Keep elbow stacked through release", progress: 0.72 }
 
@@ -39,12 +61,144 @@ export default function GoalsPlanPage() {
       .then((d) => {
         if (d?.goals?.length) setGoals((d.goals as ApiGoal[]).map((g) => ({
           id: g.id, title: g.name, description: g.description,
-          progress: g.targetValue ? (g.currentValue ?? 0) / g.targetValue : 0,
+          /* THE BAR NEVER MOVED. `currentValue` is only ever written by a
+             client PATCH, so a goal's progress was whatever the client last
+             said it was — in practice zero, forever, on the one screen whose
+             subject is progress. /api/goals now measures each goal against the
+             player's own sessions and returns the reading beside the stored
+             value; the stored one is still the fallback for a goal nothing can
+             measure. */
+          progress: g.progress?.fraction ?? (g.targetValue ? (g.currentValue ?? 0) / g.targetValue : 0),
+          measured: g.progress?.source === "measured",
+          progressReason: g.progress?.reason ?? null,
+          unmeasured: g.progress?.source === "unmeasured",
+          /* NOT `progress.currentValue ?? currentValue`. `??` treats an
+             explicit null as "try the next one", so a goal the server had just
+             declined to measure fell straight through to the stored 0 and
+             printed "0%" — presenting "nobody has checked" as "you have made no
+             progress", which is the one confusion this whole path exists to
+             prevent. An unmeasured goal carries no value at all. */
+          currentValue: g.progress
+            ? (g.progress.source === "unmeasured" ? null : g.progress.currentValue)
+            : g.currentValue ?? null,
+          unit: g.unit ?? "",
+          startedAt: g.createdAt ?? null,
+          deadline: g.deadline ?? null,
         })))
       }).catch(() => {})
   }, [])
   const primary = goals[0] ?? DEMO_GOAL
   const pct = Math.round((primary.progress ?? 0) * 100)
+
+  /** "Started 10 May 2025 · Target date 10 Jun 2025" was typed onto the card;
+   *  a Goal row carries both dates. A goal with no deadline says so rather
+   *  than inheriting one from the demo. */
+  const goalDate = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleDateString("en-US",
+      { month: "short", day: "numeric", year: "numeric" }) : null
+  const startedLabel = goalDate(primary.startedAt)
+  const targetLabel = goalDate(primary.deadline)
+  const datesLine = startedLabel
+    ? `Started ${startedLabel}${targetLabel ? ` · Target date ${targetLabel}` : " · No target date"}`
+    : "Started May 10, 2025 · Target date Jun 10, 2025"
+  /* The trend's x-axis. It printed five dates ending "May 11" whatever the
+     sessions under the line were, so the chart and its own axis disagreed the
+     moment the line became real. Six evenly-spread labels across the same
+     window the line plots, oldest first, with the last reading TODAY as
+     canonical draws it. */
+  const trendLabels = (() => {
+    const dated = items.filter((i) => i.at).slice(0, 8).reverse()
+    if (dated.length < 2) return ["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"]
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    // Five marks plus the TODAY flag the markup already draws after them.
+    const step = Math.max(1, Math.floor(dated.length / 5))
+    const marks = dated.filter((_, i) => i % step === 0).slice(0, 5).map((i) => fmt(i.at as string))
+    /* Several sessions in one day are normal, and they all format to the same
+       date — an axis reading "Aug 6  Aug 6  Aug 6  TODAY" labels nothing.
+       Collapse repeats and let the row spread what is left. */
+    return marks.filter((d, i) => d !== marks[i - 1])
+  })()
+
+  /* LINKED ANALYSES listed three sessions written into the markup — "Pull-Up
+     Jumper · May 12, 2025 · 82" — on a card headed with what this goal is
+     linked TO. The player's three newest real sessions, thumbnails riding
+     along by position because an analysis carries no card art. */
+  const linkedAnalyses: [string, string, string, string][] = items.length
+    ? items.slice(0, 3).map((a, i) => [
+        a.title, a.when, a.score != null ? String(a.score) : "—", String(i + 1),
+      ] as [string, string, string, string])
+    : [["Pull-Up Jumper", "May 12, 2025 at 8:24 AM", "82", "1"],
+       ["Spot-Up Three", "May 11, 2025 at 6:15 PM", "78", "2"],
+       ["Transition Pull-Up", "May 10, 2025 at 4:02 PM", "75", "3"]]
+
+  /* SCHEDULED WORKOUTS listed three by name with times — "Today at 5:00 PM",
+     "Tomorrow at 11:00 AM" — that were true on no account at all. The player's
+     own upcoming workouts, from the table the calendar writes into. */
+  const [workouts, setWorkouts] = useState<null | {
+    id: string; name: string | null; scheduledDate: string
+    duration: number | null; completed: boolean; focusAreas: unknown
+  }[]>(null)
+  useEffect(() => {
+    let dead = false
+    fetch("/api/workouts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success) setWorkouts(d.workouts ?? []) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+  const GLYPHS: WorkoutKind[] = ["release", "ladder", "flow"]
+  const upcoming = (workouts ?? [])
+    .filter((w) => !w.completed)
+    .sort((a, b) => Date.parse(a.scheduledDate) - Date.parse(b.scheduledDate))
+    .slice(0, 3)
+  const scheduledWorkouts: [string, string, string, WorkoutKind][] = upcoming.length
+    ? upcoming.map((w, i) => {
+        const d = new Date(w.scheduledDate)
+        const today = new Date()
+        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+        const same = (a: Date, b: Date) => a.toDateString() === b.toDateString()
+        const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+        const when = same(d, today) ? `Today at ${time}`
+          : same(d, tomorrow) ? `Tomorrow at ${time}`
+          : `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at ${time}`
+        const focus = Array.isArray(w.focusAreas) && w.focusAreas.length
+          ? String(w.focusAreas[0]) : "Training"
+        return [w.name || "Workout",
+                [w.duration ? `${w.duration} min` : null, focus, when].filter(Boolean).join(" · "),
+                focus, GLYPHS[i % GLYPHS.length]] as [string, string, string, WorkoutKind]
+      })
+    : [["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency", "release"],
+       ["Combo Control Ladder", "18 min · Control Focus · Tomorrow at 11:00 AM", "Control & Timing", "ladder"],
+       ["Handle to Release Flow", "22 min · Game Speed · May 15 at 4:30 PM", "Flow & Integration", "flow"]]
+
+  /* MILESTONES was five rows with five figures — "+5% Make Percentage ·
+     Achieved May 11, 2025 · 62.5%" — none of which anybody had achieved. The
+     goals the player actually holds, each with its measured reading and the
+     state that reading implies: done when it has reached its target, active for
+     the one being worked, open otherwise. */
+  const milestones: [string, string, string, string, string][] = goals.length
+    ? goals.slice(0, 5).map((g, i) => {
+        const reached = (g.progress ?? 0) >= 1
+        const value = g.currentValue != null
+          ? `${Math.round(g.currentValue * 10) / 10}${g.unit ?? ""}`
+          : "—"
+        /* Three different states, three different sentences. "Tracked by hand"
+           is true of a custom goal; it is NOT true of one the app would happily
+           measure as soon as there were shots to measure. */
+        const note = reached ? "Achieved"
+          : g.measured ? "In progress"
+          : g.unmeasured ? (g.progressReason ?? "Nothing to measure yet")
+          : g.progressReason ? "Tracked by hand" : "In progress"
+        return [g.title, note, value,
+                reached ? "done" : i === 0 ? "active" : "open", ""] as [string, string, string, string, string]
+      })
+    : [["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done", "+8.1%"],
+       ["3 Sessions Logged", "Achieved May 11, 2025", "3/3", "done", ""],
+       ["75+ Form Score Average", "In progress", hasData ? "78" : "—", "active", ""],
+       ["10 Consecutive Sessions", "0 / 10", "0/10", "open", ""],
+       ["65% Make Percentage", "In progress", "62.5%", "open", ""]]
+
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(""), 2500) }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setModal(null); setMenuOpen(false); setWorkoutMenu(null) } }
@@ -160,15 +314,31 @@ export default function GoalsPlanPage() {
               and dumped the difference into one dead gap above the button. */}
           <div className="mt-[18px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
             <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE</span>
-            Started May 10, 2025 · Target date Jun 10, 2025 <Pencil className="h-[12px] w-[12px]" />
+            {datesLine} <Pencil className="h-[12px] w-[12px]" />
           </div>
-          <p className="mt-[20px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
+          {/* The goal's own description; the card printed one sentence for
+              every goal anybody had ever created. */}
+          <p className="mt-[20px] text-[13px] text-[var(--shotiq-color-graphite)]">
+            {primary.description?.trim() || "Improve release consistency and arm alignment"}
+          </p>
           <div className="mt-[16px] flex items-center gap-[10px]">
             <div className="h-[7px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-[13px]">{pct}%</span>
           </div>
+          {/* What the bar is a reading OF. A goal nothing can measure says so
+              rather than presenting a hand-entered number as progress. */}
+          {primary.progressReason && (
+            <p className="mt-[6px] text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">
+              {primary.progressReason}
+            </p>
+          )}
+          {primary.measured && primary.currentValue != null && (
+            <p className="mt-[6px] text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">
+              Measured from your sessions: {primary.currentValue}{primary.unit}
+            </p>
+          )}
           {/* Hairline-ruled and evenly distributed, as canonical sets it — the
               cells used to sit in a left-clustered gap row with no rules. */}
           {/* pr keeps the trend cell off the card border — canonical leaves ~31px */}
@@ -192,7 +362,9 @@ export default function GoalsPlanPage() {
             <div className="min-w-0 flex-1">
               <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={268} height={116} />
               <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
-                {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
+                {/* The axis was five typed dates ending "May 11" whatever the
+                    sessions under the line actually were. */}
+                {trendLabels.map((d, i) => <span key={`${d}-${i}`}>{d}</span>)}
                 <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
               </div>
             </div>
@@ -263,7 +435,7 @@ export default function GoalsPlanPage() {
               <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-              {[["Pull-Up Jumper", "May 12, 2025 at 8:24 AM", "82", "1"], ["Spot-Up Three", "May 11, 2025 at 6:15 PM", "78", "2"], ["Transition Pull-Up", "May 10, 2025 at 4:02 PM", "75", "3"]].map(([t, d, s, img]) => (
+              {linkedAnalyses.map(([t, d, s, img]) => (
                 <Link key={String(t)} href="/results/demo/history"
                       className="flex items-center gap-[12px] py-[9px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -289,9 +461,7 @@ export default function GoalsPlanPage() {
               <Link href="/results/demo/training" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-              {([["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency", "release"],
-                ["Combo Control Ladder", "18 min · Control Focus · Tomorrow at 11:00 AM", "Control & Timing", "ladder"],
-                ["Handle to Release Flow", "22 min · Game Speed · May 15 at 4:30 PM", "Flow & Integration", "flow"]] as [string, string, string, WorkoutKind][]).map(([t, d, f, glyph]) => (
+              {scheduledWorkouts.map(([t, d, f, glyph]) => (
                 <div key={t} className="relative flex items-center gap-[12px] py-[9px]">
                   <span className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[8px] bg-[var(--shotiq-color-analysisBlue)] text-white">
                     <WorkoutGlyph kind={glyph} size={20} />
@@ -347,11 +517,7 @@ export default function GoalsPlanPage() {
             <div className="relative mt-[6px]">
               <span aria-hidden="true"
                     className="absolute bottom-[33px] left-[13px] top-[33px] w-[1px] bg-[var(--shotiq-color-rule)]" />
-              {[["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done", "+8.1%"],
-                ["3 Sessions Logged", "Achieved May 11, 2025", "3/3", "done", ""],
-                ["75+ Form Score Average", "In progress", hasData ? "78" : "—", "active", ""],
-                ["10 Consecutive Sessions", "0 / 10", "0/10", "open", ""],
-                ["65% Make Percentage", "In progress", "62.5%", "open", ""]].map(([t, d, v, st, sub]) => (
+              {milestones.map(([t, d, v, st, sub]) => (
                 <div key={String(t)} className="relative flex h-[66px] items-center gap-[12px]">
                   {/* the stem runs behind these, so each mark carries its own
                       opaque fill — one shared bg-paper utility here loses the

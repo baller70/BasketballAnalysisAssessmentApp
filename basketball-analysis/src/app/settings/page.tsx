@@ -29,7 +29,7 @@ import {
   ChevronRight, ChevronDown, CheckCircle2, Film, Hexagon,
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
-import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useHistory, formatDelta, formatMakePct, useJoinedDate } from "@/components/shotiq/ResultsBits"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { SettingsHubPhone, NotificationPrimerPhone } from "@/components/shotiq/phone/SettingsPhone"
@@ -115,6 +115,7 @@ export default function SettingsPage() {
   // Shot counts and the session-over-session delta come from the one shared
   // history hook — this panel used to print a hard-coded +8.1%.
   const { shots, makes, delta, score: liveScore } = useHistory()
+  const joined = useJoinedDate()
   /* Canonical iOS draws TWO screens on this route — 071 the settings hub and
      016 the notification permission primer — and round 6 shipped one surface
      for both (app-vs-app mean abs diff 4.68 against canonical-vs-canonical
@@ -555,7 +556,7 @@ export default function SettingsPage() {
           <Card id="section-profile" className="min-w-0 flex-1 scroll-mt-[76px] p-[18px]">
             <div className="flex items-start justify-between">
               <SectionLabel>PROFILE INFORMATION</SectionLabel>
-              <div className="text-right"><div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">JOINED</div><div className="text-[12px]">Jan 14, 2024</div></div>
+              <div className="text-right"><div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">JOINED</div><div className="text-[12px]">{joined}</div></div>
             </div>
             {/* Canonical rules the photo column off from the field column —
                 a 1px (239,239,240) hairline at x=384 running ~255px. */}

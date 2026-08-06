@@ -30,12 +30,52 @@ import {
   notifyUploadQueueChanged,
   uploadQueueStorage,
 } from "@/lib/upload/uploadQueue"
+import {
+  startAnalysisJob, advanceAnalysisJob, completeAnalysisJob, failAnalysisJob,
+} from "@/lib/analysis/analysisJob"
 
 interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
+  /**
+   * A clip handed in from outside — the canonical processing screen passes the
+   * one the player chose in the upload flow.
+   *
+   * That flow used to keep only the clip's METADATA and navigate away, so the
+   * file never reached a pipeline and no run started. The run is client-side
+   * and dies with the component that hosts it, so the processing screen mounts
+   * THIS component over the file rather than re-implementing the pipeline: one
+   * analysis path and one save path, or two routes disagree about one shot.
+   */
+  initialFile?: File | null
+  /** Start the run as soon as `initialFile` is accepted. */
+  autoAnalyze?: boolean
+  /** Render nothing. The processing screen draws canonical's own panel and
+   *  only needs this component for its pipeline. */
+  headless?: boolean
 }
 
-export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
+/**
+ * The signed-in player's stature, in inches, off their profile.
+ *
+ * This is the scale reference for release height, release distance and vertical
+ * jump. It returns null rather than a default when the profile carries no
+ * height: an average human standing in for a real one would put a number in
+ * three cells nobody measured, which is the defect these measurements exist to
+ * remove. See lib/vision/derivedMetrics.
+ */
+async function fetchProfileHeightInches(): Promise<number | null> {
+  try {
+    const res = await fetch("/api/profile", { credentials: "include" })
+    if (!res.ok) return null
+    const data = await res.json()
+    const h = Number(data?.profile?.heightInches ?? data?.heightInches)
+    return Number.isFinite(h) && h > 0 ? h : null
+  } catch {
+    return null
+  }
+}
+
+export function VideoUpload({ onAnalysisComplete, initialFile, autoAnalyze, headless }: VideoUploadProps) {
   const router = useRouter()
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
@@ -100,7 +140,12 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    acceptFile(file)
+  }
 
+  /** Every route into this component lands here, so a clip handed in from the
+   *  processing screen gets the same type and size checks as a picked one. */
+  const acceptFile = (file: File) => {
     // Validate file type
     if (!file.type.startsWith('video/')) {
       setError('Please select a video file')
@@ -126,6 +171,28 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setRimCalibration(null)
   }
 
+  /* Accept a clip handed in from outside, then run once it has landed in
+     state. Two effects, not one: `analyzeVideo` reads `videoFile` from state,
+     which `acceptFile` cannot have applied yet in the same tick — starting the
+     run from inside the accept would analyse `null`. `startedRef` makes the
+     run fire exactly once for a given file, so a re-render cannot start a
+     second pipeline over the same clip. */
+  const startedRef = React.useRef<File | null>(null)
+  const acceptedRef = React.useRef<File | null>(null)
+  React.useEffect(() => {
+    if (!initialFile || acceptedRef.current === initialFile) return
+    acceptedRef.current = initialFile
+    acceptFile(initialFile)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFile])
+  React.useEffect(() => {
+    if (!autoAnalyze || !videoFile || isAnalyzing) return
+    if (startedRef.current === videoFile) return
+    startedRef.current = videoFile
+    void analyzeVideo()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAnalyze, videoFile])
+
   const clearVideo = () => {
     if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl)
     setVideoFile(null)
@@ -145,6 +212,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setIsAnalyzing(true)
     setError(null)
     setAnalysisProgress("Uploading video...")
+    // The canonical processing screen watches this run; see lib/analysis/analysisJob.
+    startAnalysisJob(Date.now())
 
     const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
       mode: 'form',
@@ -170,15 +239,23 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
     try {
       setAnalysisProgress("Analyzing frames...")
+      advanceAnalysisJob("pose")
       
       // Call the video analysis service
-      const analysisResult = await analyzeVideoShooting(videoFile, { rimCalibration })
+      /* The player's stature is what turns pixels into inches for release
+         height, release distance and vertical jump. Without it those three are
+         withheld rather than estimated — see lib/vision/derivedMetrics. */
+      const analysisResult = await analyzeVideoShooting(videoFile, {
+        rimCalibration,
+        playerHeightInches: await fetchProfileHeightInches(),
+      })
 
       if (!analysisResult.success) {
         throw new Error(analysisResult.error || 'Analysis failed')
       }
 
       setAnalysisProgress("Processing results...")
+      advanceAnalysisJob("score")
       setResult(analysisResult)
       setCurrentFrameIndex(0)
 
@@ -266,6 +343,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       // Create and save session
       setAnalysisProgress("Saving session...")
+      advanceAnalysisJob("baseline")
       
       const detectedFlaws = detectFlawsFromAngles(sessionData.angles).map(f => f.name)
       const shooterLevel = getShooterLevel(sessionData.overallScore)
@@ -407,11 +485,14 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       // Navigate to results page
       setAnalysisProgress("Loading results...")
+      advanceAnalysisJob("plan")
+      completeAnalysisJob(session.id ?? null)
       router.push("/results/demo")
 
     } catch (err) {
       console.error('Video analysis error:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze video')
+      failAnalysisJob(err instanceof Error ? err.message : 'Failed to analyze video')
 
       const failedSessionId = captureSessionId ?? await resolveCaptureSessionId()
       if (failedSessionId) {
@@ -460,6 +541,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
   const currentFrame = result?.frame_data?.[currentFrameIndex]
   const currentFrameImage = result?.annotated_frames_base64?.[currentFrameIndex]
+
+  // The processing screen draws canonical's panel; it wants the pipeline, not
+  // this component's own uploader UI.
+  if (headless) return null
 
   return (
     <div className="space-y-6">

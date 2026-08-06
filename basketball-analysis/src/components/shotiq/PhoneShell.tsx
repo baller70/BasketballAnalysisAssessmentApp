@@ -30,6 +30,7 @@ import { createPortal } from "react-dom"
 import Link from "next/link"
 import { Settings } from "lucide-react"
 import { ActionGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 
 export const PHONE_W = 393
 
@@ -203,17 +204,23 @@ export function PhoneScreen({
  * with a hairline between them.
  */
 export function PhoneIdentity({
-  name = "Jordan Ellis", sub = "Right-handed • Advanced", streak = "6", points = "2,840",
-  className = "",
+  name, sub, streak, points, className = "",
 }: { name?: string; sub?: string; streak?: string; points?: string; className?: string }) {
+  // Same resolution as PhoneNameRow — the player's own record, canonical
+  // persona as the empty state, an explicit prop always wins.
+  const chrome = usePlayerChrome()
+  const shown = {
+    name: name ?? chrome.name, sub: sub ?? chrome.sub,
+    streak: streak ?? chrome.streak, points: points ?? chrome.points,
+  }
   return (
     <div className={`flex items-start justify-between ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-display text-[34.4px] leading-[34px] tracking-[0.05em]">{name.toUpperCase()}</div>
+        <div className="shotiq-display text-[34.4px] leading-[34px] tracking-[0.05em]">{shown.name.toUpperCase()}</div>
         {/* Cap matches at 11.06; the body face is wider per cap than canonical's,
             so the 117.5pt advance is closed with tracking, not by shrinking the
             cap. */}
-        <div className="mt-[0.5px] text-[11.4px] leading-[13px] tracking-[-0.04em] text-[var(--shotiq-color-graphite)]">{sub}</div>
+        <div className="mt-[0.5px] text-[11.4px] leading-[13px] tracking-[-0.04em] text-[var(--shotiq-color-graphite)]">{shown.sub}</div>
       </div>
       {/* Canonical centres BOTH marks in one 21.7pt row (streak ink 50.2-64.5,
           points ink 46.5-67.7, common centre 57.1), then sets the numeral ink at
@@ -221,13 +228,13 @@ export function PhoneIdentity({
       <div className="-mt-[3px] flex shrink-0 items-start">
         <div className="w-[86px] text-center">
           <span className="flex h-[21px] items-center justify-center"><StreakGlyph size={40} /></span>
-          <div className="shotiq-numeric mt-[4px] text-[19.5px] leading-[15px]">{streak}</div>
+          <div className="shotiq-numeric mt-[4px] text-[19.5px] leading-[15px]">{shown.streak}</div>
           <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[7px] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
         </div>
         <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px bg-[var(--shotiq-color-rule)]" />
         <div className="w-[62px] text-center">
           <span className="flex h-[21px] items-center justify-center"><PointsGlyph size={22} /></span>
-          <div className="shotiq-numeric mt-[4px] text-[19.5px] leading-[15px]">{points}</div>
+          <div className="shotiq-numeric mt-[4px] text-[19.5px] leading-[15px]">{shown.points}</div>
           <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[7px] text-[var(--shotiq-color-graphite)]">POINTS</div>
         </div>
       </div>

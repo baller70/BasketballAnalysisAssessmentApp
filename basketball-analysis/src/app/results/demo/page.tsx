@@ -21,11 +21,14 @@ import {
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
+import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
-import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useHistory, formatDelta, formatMakePct, formatSessionDate, scoreVerdict } from "@/components/shotiq/ResultsBits"
 import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { useProfileStore } from "@/stores/profileStore"
 import { AnalysisOverview } from "@/components/shotiq/phone/results/AnalysisOverview"
+import { ELBOW_AT_RELEASE, WRIST_AT_RELEASE } from "@/lib/analysis/angleBands"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -42,9 +45,24 @@ const PHASES: { label: string; time: string }[] = [
   { label: "FOLLOW-THROUGH", time: "0:07 – 0:10" },
 ]
 
+/* THE ELBOW ROW HERE WAS THE ONE THAT WAS RIGHT.
+   Canonical 083 prints "Elbow Angle 172°, ideal 160°–180°", and three other
+   screens contradicted it with 85°–95°. The 85°–95° screens were wrong: every
+   angle on an analysis is sampled at the RELEASE frame, where the arm is
+   extended, so `angles.elbow` really is ~150°–180°. The band now comes from
+   `angleBands` so all four screens move together; it reads 150°–180° rather
+   than canonical's 160°–180° because this app's own coaching calls 150°
+   excellent, and a printed range is a factual claim about the scoring rather
+   than a piece of layout.
+
+   THE WRIST ROW BESIDE IT WAS NOT. Canonical's "21°, ideal 15°–30°" is a wrist
+   SNAP flexion, and this pipeline has never measured that — `angles.wrist` is
+   forearm elevation from horizontal, high at release. Judged against 15°–30° a
+   textbook release failed. Both the band and the empty-state value move to the
+   quantity actually being printed, so the two agree. */
 const MECHANICS = [
-  { icon: "/images/canonical/083-mech-1.png", name: "Elbow Angle", value: "172°", ideal: "160° – 180°" },
-  { icon: "/images/canonical/083-mech-2.png", name: "Wrist Angle", value: "21°", ideal: "15° – 30°" },
+  { icon: "/images/canonical/083-mech-1.png", name: "Elbow Angle", value: "172°", ideal: ELBOW_AT_RELEASE.label },
+  { icon: "/images/canonical/083-mech-2.png", name: "Wrist Angle", value: "78°", ideal: WRIST_AT_RELEASE.label },
   { icon: "/images/canonical/083-mech-3.png", name: "Release Height", value: "8’6”", ideal: "7’8” – 8’8”" },
   { icon: "/images/canonical/083-mech-4.png", name: "Body Alignment", value: "2°", ideal: "−5° – 5°" },
 ]
@@ -55,6 +73,8 @@ export default function ResultsOverviewPage() {
   // Session-over-session delta and shot counts come from the shared history
   // hook, so this screen can never disagree with the dashboard.
   const { shots: liveShots, makes: liveMakes, delta, score: liveScore } = useHistory()
+  const profile = useProfileStore()
+  useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
   const [stats, setStats] = useState<HistoryStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(3) // canonical "3 OF 24"
@@ -62,6 +82,9 @@ export default function ResultsOverviewPage() {
   // The real transport: one clock behind the play button, the scrub head, the
   // readout, the filmstrip selection and the phase strip.
   const clip = useShotClip({ frames: 8 })
+  // Stills the video pipeline cut for each of the five phases, if this device
+  // has analysed a clip. Empty until then, and the strip keeps its figures.
+  const phaseFrames = usePhaseFrames(null, { fallbackToLatest: true })
   const stageRef = React.useRef<HTMLDivElement>(null)
   const full = useFullscreen(stageRef)
 
@@ -79,7 +102,101 @@ export default function ResultsOverviewPage() {
   }, [])
 
   const hasData = !!stats && stats.totalAnalyses > 0
-  const total = 24
+  /* "1 OF 24" was a constant, so PREV/NEXT walked to an analysis 24 that did
+     not exist and stopped short of a 30th that did. */
+  const total = stats?.totalAnalyses && stats.totalAnalyses > 0 ? stats.totalAnalyses : 24
+
+  /* MECHANICS AT RELEASE was four rows of constants — 172°, 21°, 8'6", 2° —
+     and two of them are exactly the measurements the derived-metrics work added:
+     release height, scaled off the player's stature, and body alignment, which
+     is the wrist's deviation from the hip centreline. This is the screen those
+     were built for. Each row draws only from a value this shot really carries;
+     a measurement the pipeline could not take says so instead of borrowing the
+     demo's number. */
+  const [mine, setMine] = useState<null | {
+    recordedAt: string; shootingPhase: string | null; coachingNotes: string | null
+    angles: Record<string, number | null>
+    measurements: Record<string, number | null>
+  }>(null)
+  useEffect(() => {
+    let dead = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.analysis) setMine(d.analysis) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+
+  const deg = (v: number | null | undefined) => (v == null ? null : `${Math.round(v)}°`)
+  const ftIn = (v: number | null | undefined) =>
+    v == null ? null : `${Math.floor(Math.round(v) / 12)}’${Math.round(v) % 12}”`
+  const liveMechanics = mine ? [
+    { icon: MECHANICS[0].icon, name: "Elbow Angle", value: deg(mine.angles.elbow), ideal: MECHANICS[0].ideal },
+    { icon: MECHANICS[1].icon, name: "Wrist Angle", value: deg(mine.angles.wrist), ideal: MECHANICS[1].ideal },
+    { icon: MECHANICS[2].icon, name: "Release Height", value: ftIn(mine.measurements?.releaseHeightInches), ideal: MECHANICS[2].ideal },
+    { icon: MECHANICS[3].icon, name: "Body Alignment", value: deg(mine.measurements?.centerlineDeviationDeg), ideal: MECHANICS[3].ideal },
+  ] : null
+  const mechanicsRows = liveMechanics ?? MECHANICS.map((m) => ({ ...m, value: m.value as string | null }))
+
+  /* The session line under the title, from the session it describes.
+
+     `mine.shootingPhase || "Catch & Shoot"` conflated two different
+     quantities and defaulted to canonical's. `shooting_phase` is a PHASE —
+     stance, dip, rise, release, follow_through — while canonical's slot
+     there is a shot TYPE, and nothing in this app records a shot type at
+     all (F18). So a null phase printed "Catch & Shoot" on every real
+     session, and a set one would have printed "release" in a shot-type
+     position.
+
+     The term drops out when there is no phase, and the hand is added from
+     the profile — this caption's two siblings, the biomechanics workspace
+     and the analysis overview tab, already read it there, and all three
+     describe the same session. */
+  const sessionHand = profile.dominantHand
+    ? `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1).toLowerCase()} Hand`
+    : null
+  const sessionLine = mine
+    ? [formatSessionDate(mine.recordedAt), mine.shootingPhase, sessionHand]
+        .filter(Boolean).join(" · ")
+    : null
+  /** The elbow this shot measured, for the diagram's CURRENT label. */
+  const liveElbow = mine?.angles?.elbow != null ? Math.round(mine.angles.elbow) : null
+  /** KEY INSIGHT: the note this analysis actually wrote. */
+  const coachingNote = mine?.coachingNotes?.trim() || null
+
+  /* PRIMARY COACHING TARGET and ELITE MATCH were both constants here — the same
+     cue as the training hub, and "Trae Young · 92% Similarity" for everybody.
+     Both have real endpoints; neither had a reader on this screen. */
+  const [target, setTarget] = useState<null | {
+    flaw: string; cue: string
+    baseline: number | null; targetValue: number | null; retestValue: number | null
+  }>(null)
+  const [topMatch, setTopMatch] = useState<{
+    name: string; overall: number; photoUrl: string | null
+    team?: string | null
+    reference?: { releaseAngle: number; elbowAngle: number; entryAngle: number } | null
+    estimated?: boolean
+  } | null>(null)
+  useEffect(() => {
+    let dead = false
+    fetch("/api/coaching-targets", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.target) setTarget(d.target) })
+      .catch(() => {})
+    fetch("/api/shooters/match", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.matched && d.top) setTopMatch(d.top) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+  /** Distance travelled from baseline toward target — see the training hub. */
+  const targetPct = (() => {
+    if (!target) return null
+    const { baseline: b, targetValue: t, retestValue: r } = target
+    if (b == null || t == null || r == null || b === t) return null
+    return Math.max(0, Math.min(100, Math.round(((r - b) / (t - b)) * 100)))
+  })()
+
   const share = async () => {
     try { await navigator.clipboard.writeText(window.location.href); setShared(true); setTimeout(() => setShared(false), 1800) }
     catch { /* clipboard unavailable */ }
@@ -97,9 +214,15 @@ export default function ResultsOverviewPage() {
     {isPhone && (
       <AnalysisOverview
         score={score ?? 82}
-        shots={shots != null ? String(shots) : "24"}
-        makes={makes != null ? String(makes) : "15"}
+        /* Three states, not two (F16). The two-state collapse put canonical's
+           24 and 15 beside a MAKE % of "—" — the strip contradicting itself,
+           since a make percentage is exactly what 24 and 15 would give you.
+           An analysis with no capture behind it counted no shots; that is an
+           em-dash, and canonical's pair stands only with no session at all. */
+        shots={shots != null ? String(shots) : hasData ? "—" : "24"}
+        makes={makes != null ? String(makes) : hasData ? "—" : "15"}
         pct={formatMakePct(shots, makes)}
+        match={topMatch}
       />
     )}
     <div className={isPhone ? "hidden" : undefined}>
@@ -114,7 +237,14 @@ export default function ResultsOverviewPage() {
         <div className="mr-auto">
           <PageTitle size={58}>ANALYSIS OVERVIEW</PageTitle>
           <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
-            May 12, 2025&ensp;·&ensp;8:24 AM&ensp;·&ensp;Catch &amp; Shoot&ensp;·&ensp;Right Hand
+            {/* Was one session's details printed above every analysis. */}
+            {sessionLine
+              ? sessionLine.split(" · ").map((part, i) => (
+                  <React.Fragment key={`${part}-${i}`}>
+                    {i > 0 && <>&ensp;·&ensp;</>}{part}
+                  </React.Fragment>
+                ))
+              : <>May 12, 2025&ensp;·&ensp;8:24 AM&ensp;·&ensp;Catch &amp; Shoot&ensp;·&ensp;Right Hand</>}
           </p>
         </div>
         <div className="mt-[18px] flex items-center gap-[16px]">
@@ -142,7 +272,9 @@ export default function ResultsOverviewPage() {
             <ChevronLeft className="h-[13px] w-[13px]" /> PREV
           </button>
           <div className="w-[110px] text-center">
-            <div className="text-[14px] font-bold tracking-[0.04em]"><span className="shotiq-numeric">{index}</span> OF <span className="shotiq-numeric">{total}</span></div>
+            {/* The counter opens on canonical's 3; with a real (smaller)
+                total it would read "3 OF 2" until the player pressed PREV. */}
+            <div className="text-[14px] font-bold tracking-[0.04em]"><span className="shotiq-numeric">{Math.min(index, total)}</span> OF <span className="shotiq-numeric">{total}</span></div>
             <Link href="/results/demo/history" className="mt-[4px] block whitespace-nowrap text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses</Link>
           </div>
           <button type="button" data-testid="overview-next"
@@ -234,7 +366,9 @@ export default function ResultsOverviewPage() {
                     </div>
                   )}
                   <div className="shrink-0 text-center" style={{ width: i === 4 ? 108 : 78 }}>
-                    <PoseFigure phase={p.label} active={active} height={41} className="mx-auto" />
+                    {/* The player's own frame for this phase once a video has
+                        been analysed; the canonical figure until then. */}
+                    <PhaseFrame phase={p.label} frames={phaseFrames} active={active} height={41} className="mx-auto" />
                     {/* Canonical sets the label in the condensed display face at
                         an 11px cap and the time range in the body face, grey —
                         not the condensed numeric face at an 8px cap. */}
@@ -253,16 +387,19 @@ export default function ResultsOverviewPage() {
           <div className="flex w-[275px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] px-[14px] pb-[10px] pt-[16px]">
             <SectionLabel>FORM SCORE</SectionLabel>
             <div className="mt-[4px] flex items-baseline gap-[6px]">
-              <span className="shotiq-numeric text-[85px] leading-[77px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
+              {/* The score was 82 in the markup while `score` sat computed and
+                  unread two lines up the file. */}
+              <span className="shotiq-numeric text-[85px] leading-[77px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? 82}</span>
               {/* Canonical sets "/100" at cap 16 over a 30px advance and rests
                   it on the same baseline as the 82; the default line box lifted
                   it 12px clear of that baseline. */}
               <span className="shotiq-numeric text-[24px] text-[var(--shotiq-color-muted)]">/100</span>
             </div>
             <div className="mt-[10px] h-[9px] w-[70%] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
+              <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+                   style={{ width: `${score ?? 82}%` }} />
             </div>
-            <div className="shotiq-display mt-[10px] text-[18px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
+            <div className="shotiq-display mt-[10px] text-[18px] text-[var(--shotiq-color-analysisBlue)]">{scoreVerdict(score) === "—" ? "GOOD" : scoreVerdict(score)}</div>
             <p className="mt-[2px] w-[110px] text-[13px] leading-[18px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
 
             <SectionLabel className="mt-[14px]">MECHANICS AT RELEASE</SectionLabel>
@@ -270,12 +407,16 @@ export default function ResultsOverviewPage() {
                 the top and leaving ~120px of void above the card floor, which
                 is how canonical spaces these four rows. */}
             <div className="mt-[2px] flex flex-1 flex-col">
-              {MECHANICS.map((m) => (
+              {mechanicsRows.map((m) => (
                 <div key={m.name} className="flex flex-1 items-center py-[5px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={m.icon} alt="" className="h-[30px] w-[28px] object-contain" />
                   <span className="ml-[8px] w-[92px] text-[12px]">{m.name}</span>
-                  <span className="shotiq-numeric ml-auto text-[27px]">{m.value}</span>
+                  {/* A measurement this shot does not carry is drawn as
+                      absence, not borrowed from the demo. */}
+                  {m.value
+                    ? <span className="shotiq-numeric ml-auto text-[27px]">{m.value}</span>
+                    : <span className="ml-auto text-[12px] text-[var(--shotiq-color-graphite)]">Not measured</span>}
                   <span className="ml-[12px] w-[62px] text-right">
                     <span className="block text-[14px] font-bold leading-[16px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
                     <span className="shotiq-numeric block text-[13px] leading-[15px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
@@ -293,42 +434,87 @@ export default function ResultsOverviewPage() {
           <div className="min-w-0 flex-1 px-[14px] pt-[16px]">
             <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
             <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
-              <span className="whitespace-nowrap text-[17px] font-semibold">Keep elbow stacked through release</span>
+              <span className="whitespace-nowrap text-[17px] font-semibold">{target?.cue ?? "Keep elbow stacked through release"}</span>
               <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
             <span className="mt-[8px] inline-block rounded-[5px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
-            <p className="mt-[8px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
+            <p className="mt-[8px] text-[13px] text-[var(--shotiq-color-graphite)]">{target?.flaw ?? "Improve release consistency and arm alignment"}</p>
             <div className="mt-[6px] flex items-center gap-[10px] pr-[4px]">
               <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+                <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                     style={{ width: `${targetPct ?? 72}%` }} />
               </div>
-              <GoalPercent size={17}>72%</GoalPercent>
+              <GoalPercent size={17}>{targetPct ?? 72}%</GoalPercent>
             </div>
 
             <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <SectionLabel>KEY INSIGHT</SectionLabel>
+              {/* The analysis writes its own coaching note; this printed one
+                  sentence about a flaring elbow over every shot ever taken. */}
               <p className="mt-[4px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">
-                Your elbow is slightly flaring late in release. Keeping it stacked will help improve consistency and shot accuracy.
+                {coachingNote ?? "Your elbow is slightly flaring late in release. Keeping it stacked will help improve consistency and shot accuracy."}
               </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/083-insight.png" alt="Current 172 degrees versus ideal 180 degrees elbow position"
-                   className="mx-auto mt-[2px] block h-[128px] w-[293px]" width={293} height={128} />
+              {/* The diagram has "172°" PAINTED INTO IT under the CURRENT
+                  figure, so once the mechanics row above reads a real elbow the
+                  picture contradicts it. Cover the baked label with the shot's
+                  own value; measured off the asset, the digits occupy
+                  x 59-95, y 79-100 of its 320x140 source. */}
+              <div className="relative mx-auto mt-[2px] block h-[128px] w-[293px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/083-insight.png"
+                     alt={`Current ${liveElbow ?? 172} degrees versus ideal 180 degrees elbow position`}
+                     className="block h-[128px] w-[293px]" width={293} height={128} />
+                {liveElbow != null && liveElbow !== 172 && (
+                  <span className="absolute grid place-items-center bg-[#FEFEFE] text-[19px] text-[var(--shotiq-color-ink)]"
+                        style={{ left: 52, top: 69, width: 40, height: 24 }}>
+                    {liveElbow}°
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="mt-[6px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <div className="flex items-start justify-between">
                 <div>
                   <SectionLabel>ELITE MATCH</SectionLabel>
-                  <div className="mt-[6px] text-[17px] font-semibold">Trae Young</div>
-                  <div className="mt-[2px] text-[13px] font-medium text-[var(--shotiq-color-confirmGreen)]">92% Similarity</div>
+                  {/* Was "Trae Young · 92% Similarity" on every account.
+                      /api/shooters/match ranks all 328 against this player's
+                      measured angles; the top of that ranking goes here. */}
+                  <div className="mt-[6px] text-[17px] font-semibold">{topMatch?.name ?? "Trae Young"}</div>
+                  <div className="mt-[2px] text-[13px] font-medium text-[var(--shotiq-color-confirmGreen)]">{topMatch ? `${topMatch.overall}% Similarity` : "92% Similarity"}</div>
                   <Link href="/results/demo/compare"
                         className="mt-[10px] inline-block text-[13px] font-medium text-[var(--shotiq-color-analysisBlue)]">
                     View comparison&ensp;›
                   </Link>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/083-elite.png" alt="Trae Young shooting form"
-                     className="h-[106px] w-[151px] rounded-[6px] object-cover" width={151} height={106} />
+                {/* Naming one shooter beside a photograph of another is worse
+                    than the constant this replaced, so the portrait follows the
+                    name. Canonical's Trae Young crop holds only while the card
+                    is canonical.
+                    Portraits are remote CDN headshots, and a blocked or moved
+                    one leaves a broken box — so a failure falls back to the
+                    shooter's initials on the card ground rather than to
+                    canonical's photograph, which would put the wrong player's
+                    face under the right player's name all over again. */}
+                {/* The portrait is LAYERED over the initials rather than
+                    swapped in on error. A remote headshot that is blocked does
+                    not fail — it HANGS, `complete:false` with no error event —
+                    so an onError fallback leaves an empty box for as long as
+                    the request is pending. Painting the initials underneath
+                    means the card is always right: the photo covers them when
+                    it arrives, and nothing has to detect that it never did. */}
+                <span className="relative grid h-[106px] w-[151px] shrink-0 place-items-center overflow-hidden rounded-[6px] bg-[var(--shotiq-color-warmCanvas)] text-[28px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
+                  {topMatch ? topMatch.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : null}
+                  {(!topMatch || topMatch.photoUrl) && (
+                    <img src={topMatch?.photoUrl || "/images/canonical/083-elite.png"}
+                         /* Empty for the same reason as the phone card: a broken
+                            headshot paints its alt text over the initials layered
+                            beneath it, and the name is already text beside it. */
+                         alt=""
+                         className="absolute inset-0 h-full w-full object-cover" width={151} height={106} />
+                  )}
+                </span>
               </div>
             </div>
           </div>

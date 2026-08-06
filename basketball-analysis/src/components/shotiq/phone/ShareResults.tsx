@@ -36,14 +36,22 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { createPortal } from "react-dom"
 import { PhoneHeading, MiniTrend } from "@/components/shotiq/PhoneShell"
 import { PhaseTrack, MechanicGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { gradeMechanics, type ShotAngles } from "@/lib/analysis/mechanicGrades"
 
 const ORANGE = "var(--shotiq-color-shotiqOrange)"
+const GRAPHITE = "var(--shotiq-color-graphite)"
 const BLUE = "var(--shotiq-color-analysisBlue)"
 const GREEN = "var(--shotiq-color-confirmGreen)"
 
+/* Canonical's four, which stand as the EMPTY STATE for a visitor with no
+   analysis. With a real shot they are graded — see lib/analysis/mechanicGrades.
+   This is the one card a player SENDS TO OTHER PEOPLE, so a constant here has
+   an audience. */
 const HIGHLIGHTS: [string, string][] = [
   ["ELBOW STACK", "GOOD"],
   ["RELEASE ANGLE", "GOOD"],
@@ -76,6 +84,24 @@ const ACTIONS: [string, React.ReactNode][] = [
 export function ShareResults({ onShare, onSave, onCopy, onMore }: {
   onShare?: () => void; onSave?: () => void; onCopy?: () => void; onMore?: () => void
 }) {
+  const session = useLatestSession()
+
+  /* The four grades, from this shot's own angles. Canonical's four stand only
+     when there is no analysis to grade — that is the empty state, not a pass. */
+  const [angles, setAngles] = React.useState<ShotAngles | null>(null)
+  React.useEffect(() => {
+    let dead = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.analysis?.angles) setAngles(d.analysis.angles) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+  const graded = gradeMechanics(angles)
+  const rows = graded ?? HIGHLIGHTS.map(([label, value]) => ({ label, value, state: "good" as const }))
+
+  const chrome = usePlayerChrome()
+
   const handlers = [onShare, onSave, onCopy, onMore]
   /* Mounted into <body>: this is a sheet over the player card, and the route it
      opens from sits inside ShotIQShell's `.shotiq-phone-flow` reflow scope,
@@ -112,7 +138,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
             <div className="flex items-center gap-[8px] pl-[13px]">
               <PointsGlyph size={20} />
               <div>
-                <div className="shotiq-numeric text-[17px] leading-[17px]">2,840</div>
+                <div className="shotiq-numeric text-[17px] leading-[17px]">{chrome.points}</div>
                 <div className="shotiq-microcaps mt-[3px] leading-[8px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "8px" } as React.CSSProperties}>POINTS</div>
               </div>
             </div>
@@ -121,16 +147,16 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
 
         <div className="mt-[10px] flex items-start border-t border-[var(--shotiq-color-rule)] pt-[12px]">
           <div className="min-w-0 flex-1">
-            <div className="shotiq-display text-[34.4px] leading-[35px]">JORDAN ELLIS</div>
+            <div className="shotiq-display text-[34.4px] leading-[35px]">{chrome.name.toUpperCase()}</div>
             <div className="mt-[6px] text-[11.4px] leading-[13px] tracking-[-0.04em] text-[var(--shotiq-color-graphite)]">
-              Right-handed • Advanced
+              {chrome.sub}
             </div>
           </div>
           <div className="shrink-0 text-center">
             <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
               FORM SCORE
             </div>
-            <div className="shotiq-numeric mt-[1px] text-[48px] leading-[48px]" style={{ color: ORANGE }}>82</div>
+            <div className="shotiq-numeric mt-[1px] text-[48px] leading-[48px]" style={{ color: ORANGE }}>{session.score}</div>
             <div className="mt-[3px] h-[5px] w-[80px] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full w-[82%] rounded-full" style={{ background: ORANGE }} />
             </div>
@@ -168,14 +194,15 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
               MECHANICS HIGHLIGHTS
             </div>
             <div className="divide-y divide-[var(--shotiq-color-rule)]">
-              {HIGHLIGHTS.map(([label, verdict], i) => (
+              {rows.map(({ label, value: verdict, state }, i) => (
                 <div key={label} className="flex items-center gap-[8px] py-[6px]">
                   <span className="flex w-[36px] shrink-0 justify-center">
                     <MechanicGlyph kind={(["angle", "arc", "wrist", "balance"] as const)[i]} size={30} />
                   </span>
                   <span className="min-w-0">
                     <span className="shotiq-microcaps block text-[9.6px] leading-[11px]">{label}</span>
-                    <span className="shotiq-display mt-[3px] block text-[13px] leading-[14px]" style={{ color: BLUE }}>{verdict}</span>
+                    <span className="shotiq-display mt-[3px] block text-[13px] leading-[14px]"
+                          style={{ color: state === "good" ? BLUE : state === "review" ? ORANGE : GRAPHITE }}>{verdict}</span>
                   </span>
                 </div>
               ))}
@@ -186,7 +213,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
         <PhaseTrack className="mt-[6px]" figure={27} label={10.5} underline />
 
         <div className="mt-[5px] flex items-center border-t border-[var(--shotiq-color-rule)] pt-[7px]">
-          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
+          {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "MAKE %"]].map(([v, l]) => (
             <div key={l} className="min-w-0 flex-1">
               <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
               <div className="shotiq-microcaps mt-[3px] leading-[10px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</div>

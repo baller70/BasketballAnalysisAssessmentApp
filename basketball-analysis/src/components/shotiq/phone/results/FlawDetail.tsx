@@ -43,7 +43,7 @@ export function FlawDetail({
   desc = "Your elbow drifts outward in the release phase, creating side spin and inconsistency.",
   phase = "Release phase", impact = "High impact", confidence = "72% confidence",
   yourAngle = "25°", idealRange = "15–20°",
-  score = 82, name = "Jordan Ellis", streak = "6", points = "2,840",
+  score = 82, name, streak, points,
   onBack,
 }: {
   title?: string; desc?: string; phase?: string; impact?: string; confidence?: string

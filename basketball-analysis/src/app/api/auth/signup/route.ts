@@ -7,6 +7,7 @@ import {
   createSessionToken,
   authCookieOptions,
   AUTH_COOKIE_NAME,
+  AUTH_TOKEN_MAX_AGE,
 } from "@/lib/authToken"
 import { ensureUserProfile } from "@/lib/data/ensureProfile"
 import { issueToken } from "@/lib/auth/verification"
@@ -144,11 +145,17 @@ export async function POST(request: NextRequest) {
       console.error("Failed to issue email verification token:", verifyError)
     }
 
-    const res = NextResponse.json({ user }, { status: 201 })
-
     // Issue a signed, httpOnly session token. If this fails we must NOT log the
     // user in via any insecure fallback — let it throw to the 500 handler.
     const token = await createSessionToken({ sub: user.id, email: user.email })
+
+    // Also returned in the body for native clients, which have no cookie jar
+    // and send it as `Authorization: Bearer`. Same token as the cookie, handed
+    // to the client that just created this account. See the signin route.
+    const res = NextResponse.json(
+      { user, accessToken: token, expiresIn: AUTH_TOKEN_MAX_AGE },
+      { status: 201 }
+    )
     res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
 
     return res

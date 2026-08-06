@@ -33,7 +33,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
 | 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
-| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 6.051**. VERIFIED in built captures, each matching its in-page solve exactly: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342, oneacct 12.912->6.329, eyePass 11.556->8.731, eyeConfirm 11.361->7.499. STATED RESIDUALS (traced-SVG shape errors in Marks004.tsx, not box errors — do not chase with geometry): monogram 13.804, and the eyes' remainder. OPEN: helpPass 10.949, plate 10.549, fieldEmail 10.524, checkbox 9.314, wordmark 8.716, signin 6.699 |
+| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 5.3669**, verified in built captures. THIS ROUND (all three solves matched their in-page prediction to four decimals, which is the evidence for rule 47): overlay viewBox origin +0.48/+0.50 device px — twelve features, twelve negative deltas, one container offset, nine bands better from one parameter; plate 10.5487 -> **8.4842** (createLab scaleX 0.90 -> 0.7845, height exact against a 14.7% advance); signin 6.6987 -> **5.1897** (signinLab 21.0/0.90 -> 18.95/0.9092, both axes 11% over within 0.7% of each other — the OPPOSITE diagnosis to createLab on a run seeded identically); wordmark 8.7161 -> **4.1879** (ty 1.2670, NOT dy — see rule 47). Carried by the overlay alone: checkbox 9.3142 -> 7.1859, orrow 3.1520 -> 2.4379, fieldPass 5.2310 -> 4.6804, fieldConf 5.1655 -> 4.7994, fieldFirst 3.4513 -> 3.1399, fieldLast 3.3287 -> 2.9323, eyePass 8.7305 -> 8.1379, eyeConf 7.4985 -> 7.1219, fieldEmail 10.5242 -> 10.1237. EARLIER: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342, oneacct 12.912->6.329, helpPass 10.949->4.571. monogram **13.8039 -> 5.5289** — its "unreachable residual" was an artefact of the sweep rule 40 discredited; re-solved against a clean control, a 1.20px translation was worth 8.3 of the 13.8. The remaining 5.5289 IS the shape error (L +1.05 R -0.35 T -1.13 B -0.21: 1.40px narrow, 0.92px tall, aspect 1.291 vs 1.343) and is left as measured — closing it means re-tracing Marks004.tsx, and a non-uniform scale would buy the extents with the stroke widths. display **14.8012 -> 14.3046** on the CORRECTED window (ty -0.3455 + stroke 0.15; the first attempt at this band was scored on a window that clipped 20 of its 78 ink rows and is retracted — see rule 49/50). lede 12.7701 INVESTIGATED, NOT SHIPPED: not colour and not weight (rule 51 control), position already optimal (control beats every offset), stems median 2.0 in both. A (size,scale) valley floor of ~12.01 exists — 13.00/0.976 = 12.013, 12.94/0.980 = 12.057, 13.06/0.972 = 12.167 — but it is the rule 32 degeneracy, a diagonal ridge the band mean cannot resolve into one pair, and the attempt to pin the size independently used an x-height estimator that spanned BOTH lede lines (rule 45) and is void. Not shipped on an undetermined pair. OPEN, largest first: display 14.3046, lede 12.7701, terms 10.6657, fieldEmail 10.1237, plate 8.4842, labConfirm 8.3835, eyePass 8.1379, checkbox 7.1859, eyeConf 7.1219, oneacct 6.3291, monogram 5.5289 (shape). NOT GRADED YET. |
 | 005+ | … | not started | — | |
 
 ## The native app has layout defects the 72 web rows above never measured
@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-five, each learned by getting something wrong
+## Method rules — fifty-one, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1124,6 +1124,154 @@ string rolling over at midnight.
     thing. This is the same class of error as the pill border in the 020 window
     and it produced the same kind of confidently wrong ratio.
 
+46. **The container exports `NODE_ENV=development`, and that silently breaks
+    `next build` — every page, not some.** Resuming 004 after a rollback, the
+    production build reported `Error occurred prerendering page` for **all 51
+    routes**, including `/terms` and `/privacy`, which import nothing anyone had
+    touched. The stack said why and it was one line up in the log: Next printed
+    `You are using a non-standard "NODE_ENV" value`, and every frame ran through
+    `react-dom-server.browser.development.js`. A dev react-dom cannot statically
+    generate an App Router page, so the error page generation falls back to the
+    pages-router document and reports `<Html> should not be imported outside of
+    pages/_document` — a message that points at markup nobody wrote and sends
+    you looking for an import that does not exist.
+
+    Two things make this worse than a normal build failure. **It prints the
+    route list at the end and exits looking successful**: `BUILD_ID` is written,
+    the closing summary scrolls past, and only `prerender-manifest.json` is
+    missing — which surfaces much later as `next start` throwing ENOENT. And
+    **`NODE_ENV=production npx next build` is not enough on its own here**; the
+    shell is re-initialised from the profile per command, so the working form is
+    `env -u NODE_ENV NODE_ENV=production ./node_modules/.bin/next build`.
+
+    The check, before reading a single pixel from any capture: the build log's
+    first lines must NOT contain "non-standard NODE_ENV", and
+    `.next-<screen>/prerender-manifest.json` must exist. A capture taken from a
+    server that never started is not a measurement, and this is the same shape
+    as rule 30 — a null that looks like data — one level further out in the
+    toolchain than any rule here had reached.
+
+47. **Solve with the lever you are going to ship, or the prediction is about
+    a different render.** Three of 004's bands were solved in one sweep round
+    and two of them transferred to the built capture to four decimals — plate
+    8.4842 -> 8.4842, signin 5.1898 -> 5.1897. The third missed by a full 1.06.
+
+    The two that landed were solved by injecting the SAME CSS property the
+    recipe emits: `transform:scaleX(...)` for the plate label, `font-size` for
+    the sign-in label. The one that missed was a vertical move, injected as
+    `transform:translate(0,ty)` in the sweep and then written into the recipe
+    as `dy`, which the recipe turns into `top`. Both ask for 2.75 device px.
+    They do not land in the same place: a transform is applied at paint and a
+    `top` goes through layout, so a text raster snaps onto a different phase
+    (rule 12), and the built band came back 5.2491 — which is not a random
+    miss, it is EXACTLY the sweep's adjacent plateau. The shipped move lost one
+    device row that the measured move had.
+
+    This is rule 43 one level in. There, an arm claimed a configuration the app
+    never received; here, a sweep claims a number for a render nobody is going
+    to ship. Both look like clean data. **Before believing a sweep, check that
+    every candidate's CSS uses the property the recipe emits for that
+    parameter** — and if a run has to be solved through a different lever than
+    it ships, the built capture is the only number that counts and the sweep
+    figure must not be recorded as the prediction.
+
+48. **Rule 9 is symmetric, and the library applied it to one side.** The area
+    ladder dropped a rung when the REFERENCE was thin, which is the case rule 9
+    describes — canonical's top rungs are unsharp-mask overshoot. But the
+    failure that actually occurs is the mirror of it: canonical HAS that
+    material and the render, being flat colour, structurally cannot, so it is
+    the MEASURED side that comes back empty against a thick reference.
+
+    On 004's lede, canonical held 2141 px at coverage 0.75 and 612 at 0.90
+    where the render held zero. Those rungs scored 0.0000 — read as "light" —
+    and dragged the verdict on a run that is 11% HEAVY on every rung it can
+    express (1.0704, 1.1266, 1.1226, 1.1050) all the way to `matched`. The
+    rms_log came out 4.0831, which is log(1/2141) leaking into a statistic that
+    is supposed to be a weight residual and would have been minimised by a
+    solver.
+
+    Fixed: a rung is dropped when EITHER side is below `min_reference`, and the
+    zero-guard is gone from the log so an empty rung can never contribute. The
+    verdict is now `heavy` at rms_log 0.1027 with (0.75, 0.90) reported as
+    dropped rather than silently scored.
+
+    **Any ladder verdict recorded before this fix was computed by the one-sided
+    version** and should be re-run before it is relied on — a `matched` in
+    particular, since that is the value the bug produces from a `heavy`.
+
+49. **RETRACTED AS ORIGINALLY WRITTEN, and kept because the retraction is the
+    lesson.** It claimed: when the band mean wants MORE ink and the ladder wants
+    LESS, the ink is paying for a misregistration. The evidence was 004's
+    display run, where sweeping `-webkit-text-stroke-width` had the band mean
+    preferring 0.29-0.33 and the ladder preferring 0.10, pointing opposite ways.
+
+    Both estimators were scoring a CLIPPED run. The report's display window was
+    148-220 and the run's ink spans 162-239, so a quarter of it — including its
+    whole baseline row — was outside both bands. Re-measured over the full run
+    the opposition mostly evaporates, and the solve the rule produced (stroke
+    0.05) is the worst of the three candidates on every full-run metric:
+
+      ty -0.75  st 0.33   band 14.2223  whole 5.3624  ladder 0.0419 heavy
+      ty -0.75  st 0.15   band 14.3046  whole 5.3669  ladder 0.0083 matched
+      ty -0.75  st 0.05   band 14.5484  whole 5.3801  ladder 0.0228 matched
+
+    What survives is weaker and worth keeping: an ink parameter CAN absorb a
+    geometric error, so a weight solve is only meaningful once the run's
+    position is solved, and two estimators disagreeing is a reason to question
+    the measurement before theorising about the render. What does not survive is
+    the specific diagnosis, and it was acted on before it was checked against
+    the whole run. The vertical move it came bundled with is real and stands.
+
+50. **A band window must CONTAIN its run's ink, and the windows do not tile the
+    screen.** Both halves bit on the same change.
+
+    The display window clipped 20 of its run's 78 rows, so the solver optimised
+    the part it could see and pushed error into the part it could not: the band
+    improved 14.8012 -> 13.9966 while the WHOLE SCREEN got worse, 5.3708 ->
+    5.3801, and row 238 alone went 11.9 -> 71.5 as the run's baseline slid out
+    of alignment in the gap between two windows. A band score is only a fidelity
+    number for the ink inside it.
+
+    And 448 of this screen's 1844 rows — 24% — are inside no window at all. The
+    band report can improve while the screen gets worse, and it did. **Report
+    the whole-screen mean beside the bands on every round**, and split it
+    in-window / out-of-window when the two disagree.
+
+    Cheap and worth running once per screen: for each window, check whether
+    canonical's ink touches its edge, and how far it continues past it. On 004
+    that check cleared 22 of 23 windows and found this one.
+
+51. **Canonical's small type is BIMODAL and a render's is not, so "heavy" and
+    "the wrong colour" are the default false findings on every small run — use
+    a SOLVED band as the control.** 004's lede measured 11% heavy on the area
+    ladder, and rule 8's total-ink solve pointed at #373942 against the shipped
+    #454751. Canonical reaches green 10 in that band where the render bottoms at
+    exactly 71, which is #454751's own green: on the face of it, a colour defect
+    with two independent estimators agreeing.
+
+    Both are artefacts. Canonical is unsharp-masked, and a mask on a 2 px stem
+    pushes the middle of the distribution OUT — some pixels down to a core far
+    darker than the fill, the rest up into the light ring. A flat render keeps
+    them in the middle. Shares of each image's own ink pixels:
+
+                     dark core    mid    light ring
+      canonical         0.190    0.167     0.643
+      render            0.000    0.550     0.450
+
+    The control is what makes this conclusive rather than a story: helpPass, on
+    the same screen, already solved to 4.5714, shows the SAME signature — 0.134
+    / 0.170 / 0.696 against 0.000 / 0.521 / 0.479. The bimodality is present
+    where the type is right, so it is canonical's export, not our ink. Every
+    darker candidate swept made the band mean AND the ladder worse while only
+    total ink improved, which is what a wrong diagnosis looks like from three
+    estimators at once.
+
+    So before reporting a small run heavy, light or mis-coloured: measure the
+    same three shares on a band already solved on that screen. If the pattern
+    matches, the finding is the mask. And confirm the geometry separately —
+    the lede's stems are median 2.0 px at every threshold in BOTH images, which
+    is what a matched weight actually looks like.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
@@ -1310,3 +1458,1438 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 - Capture harnesses (`capture-ios.mjs`, `capture-web.mjs`) and the grade
   directories were lost in the rollback and must be rebuilt before the next
   grading pass.
+
+---
+
+## FEATURE WORK LOG
+
+### Recommended drills now address the flaw they name
+
+Finishing the dip work properly turned up three more breaks in the same chain -
+the one that runs measurement -> flaw -> focus area -> drill. Every link was
+present. None of them connected.
+
+1. TWO COPIES OF `anglesOf`, character for character, in `/api/analysis/flaws`
+   and `/api/training/recommended`. Adding `kneeAngleMin` taught only the flaws
+   copy about the dip, so the Flaws screen could see a shallow dip and the drill
+   recommendations could not - the same player told what was wrong on one screen
+   and offered nothing to fix it on the next. My own half-finished change.
+   One `lib/analysis/analysisAngles.ts` now, both callers, plus a shared
+   `ANALYSIS_ANGLE_SELECT` so the two Prisma queries cannot drift either (F21).
+
+2. `mapFlawToFocusArea` MATCHED NOTHING. Its keys were lowercase -
+   `insufficient_knee_bend`, `poor_balance`, `flat_arc` - and not one of the
+   thirteen was a real flaw id; the library uses SCREAMING_SNAKE, and half those
+   names do not exist in it at all. Every lookup fell through to CONSISTENCY, so
+   an elbow problem and a knee problem drew the SAME drills. Rewritten against
+   the real vocabulary, with a test asserting the only ids that fall through are
+   the five miss-PATTERN flaws, which genuinely belong there.
+
+3. `getRecommendedDrills` RETURNED UNRELATED DRILLS AS THE RECOMMENDATION. It
+   sorted within one level and took the top N. The catalogue is not evenly
+   stocked: HIGH_SCHOOL - the level every player defaults to without a stated
+   experience or age - has NO knee-bend, elbow, follow-through, balance or arc
+   drill at all. The sort found nothing to promote and handed back the level's
+   first three. Now matches are drawn from the player's own level first, then
+   outward to the nearest levels, before the list is padded; a drill for the dip
+   is a drill for the dip whatever level it is filed under.
+
+Verified end to end through the real API and the real screen, with the release
+knee held at 172 throughout so only the dip moved:
+
+  dip 138, wrist 78   no flaws; "nothing specific to train out", no drills
+  dip 166, wrist 78   Knee Bend -> Knee Bend Power, Shot Load Optimization,
+                      Knee Bend Bounce
+  dip 138, wrist 30   Follow Through -> Follow-Through Hold, Follow-Through
+                      Freeze, High Five Finish
+
+/results/demo/training reads "RECOMMENDED FOR YOUR GOAL / Based on Insufficient
+Knee Bend" over three Knee Bend drills, each tagged with its focus and level.
+Two different flaws now give two different lists - the thing a player would
+actually have noticed. Probe account deleted. 320 tests pass, 13 new.
+
+### F30 - a chain is only as wired as its least-checked link
+
+Measurement, rule, mapping and catalogue were each individually plausible and
+individually broken in a way that returned a full, confident-looking answer.
+Checking "does the flaw fire?" was not enough; the drill list at the end still
+had nothing to do with the shot. When wiring a pipeline, assert at the LAST
+link that two different inputs produce two different outputs - end to end,
+through the real route, not at the layer being edited.
+
+### The preview deploy had been failing on every push, and /results/[id] was missed
+
+Kevin asked to update the web app and the iOS app. Establishing what that means
+turned up two things.
+
+THE PAGES PREVIEW DEPLOY HAS FAILED ON ALL 30 RUNS in the visible window, going
+back well before this session's work:
+
+  Error: Page "/results/[id]" is missing "generateStaticParams()" so it cannot
+  be used with "output: export" config.
+
+Invisible because the failure sits inside `build-pages-static.mjs`, whose logs
+nobody was reading — including me, pushing on top of it all day.
+
+The route's ids are cuids minted when a player uploads. There are none at build
+time, and an EMPTY `generateStaticParams()` does not satisfy the check — tried
+it, same error. The two dynamic routes that do build (drills, elite shooters)
+only manage it because they are fixed catalogues. Listing a made-up id would
+publish a preview page addressed by an analysis belonging to nobody. So the
+route joins `src/app/api` and `middleware.ts` in the script's MOVES list: it
+needs the API this preview deliberately removes. Production, with a real server,
+serves it normally. Verified locally with the CI's own command and env:
+"static preview exported to out/", 57 entries, sources restored.
+
+AND /results/[id] WAS MISSED BY THE BAND FIX (c8a464b). It carries its OWN copy
+of the ideal ranges, and it is the page a player actually lands on after
+uploading — /results/demo is the canonical showcase. Four of its six rows judged
+release-frame values against other moments:
+
+  Wrist    15-30    a wrist SNAP; stored value is forearm elevation, ~50-100
+  Release  45-55    canonical's ball ARC; stored value is deviation from
+                    vertical, ideal 0
+  Knee     110-140  the depth of the DIP; the release knee is ~165-180
+  Shoulder 80-100   the arm is overhead at release, ~150-175
+
+The three `angleBands` settles now come from it. KNEE AND SHOULDER PRINT
+"not graded" — their measurement with no verdict — because nothing in this
+codebase states what either should read at release, and choosing numbers here
+would repeat the defect. A blank verdict column would have read as a quiet pass.
+
+### F29 - check that your own pushes actually built
+
+Thirty consecutive red deploys while pushing green local trees. tsc, lint and
+vitest all passing says the code compiles, NOT that the thing that ships built.
+After pushing, look at the run.
+
+### WHAT UPDATING EACH SURFACE ACTUALLY REQUIRES
+
+Established by reading the configs, not assumed:
+
+  Capacitor shell (ios/)      capacitor.config.ts server.url =
+                              https://shotiq.194-146-12-139.sslip.io — it LOADS
+                              the live web app.
+  Native Swift (ios-native/)  APIClient.swift baseURL, same host.
+  Production web              that host, deployed by ./deploy.sh ON the box
+                              (git pull --ff-only + migrate + build + pm2).
+
+So ONE web deploy updates both platforms, and Xcode is NOT what stands between
+the feature work and users — the deploy is. No Xcode here regardless: Linux, no
+xcodebuild. A macos-15 runner exists in .github/workflows/ios-appstore.yml if a
+binary is ever wanted; it is gated behind an explicit stage input or a
+`release-*` tag, whose own comment calls the tag "deliberate enough to be the
+consent".
+
+The live box currently serves the OLD 160-180 elbow band — probed directly — so
+none of this session's work has reached anyone yet. Kevin's call, asked and
+answered: merge to main and HE runs deploy.sh (port 22 is unreachable from this
+container); NO new iOS binary, because the web deploy covers it.
+
+### INSUFFICIENT_KNEE_BEND detects insufficient knee bend now
+
+The rule abstained after the last change, because the only knee it could see
+was the release frame's - extended on every shot, so it could never answer
+"did this player load?". The measurement existed the whole time: `findLoadFrame`
+takes the minimum knee across the clip and `metrics.knee_angle_range.min`
+carries it. Nothing ever saved it.
+
+Wired end to end: a `knee_angle_min` column (migration, nullable, NO BACKFILL -
+a shot analysed before the column genuinely has no recorded dip, and a default
+would assert one), carried through `analysisSessionToSavePayload` off
+`videoData.metrics` the same way the four derived KEY MEASUREMENTS already are,
+validated 0-180 at the save route, selected by the flaws route and handed to
+the engine under its OWN key. Not merged into `knee_angle`: one key per
+quantity is exactly what stops a release knee being mistaken for a dip again.
+
+Verified through the real API with the release knee held at 172 in every case,
+so the dip alone decides:
+
+  dip 138  a proper load        -> no flaws
+  dip 166  barely bent          -> Insufficient Knee Bend, 100% of 3 shots
+  dip  95  collapsed into it    -> Excessive Knee Bend, 100% of 3 shots
+  dip null pre-migration shot   -> no flaws, nothing invented
+
+Both directions, per F28. In the browser the card reads "Insufficient Knee Bend
+/ HIGH IMPACT / Knees are too straight, not generating leg power / AFFECTS 100%
+OF 3 SHOTS / PRIORITY 8/10". Signed out is canonical. Probe account deleted,
+307 tests pass.
+
+The set-point elbow has no equivalent and is NOT done this way: there is no
+`findSetPointFrame`, and which frame counts as the set point is a design
+question rather than a wiring job. ELBOW_ANGLE_ACUTE and ELBOW_ANGLE_OBTUSE
+keep abstaining and keep accepting `elbow_angle_set_point` for whenever that
+question is answered.
+
+### On the wakeup that fired this work
+
+The trigger was the pixel-fidelity variant, and it named `$SCRATCH/
+SCREEN-LEDGER.md`, `$SCRATCH/BRIEF-002.md` and `$SCRATCH/verify-desktop` as the
+things to read, grade against and regress against. NONE of the three exist in
+this session's scratchpad. Its own instruction - "if any instruction conflicts
+with the ledger, the ledger wins" - resolves it: THIS file is the ledger, and
+it says the work is Kevin's feature program. No graders were dispatched against
+a ledger that is not there.
+
+### The flaw engine told every player the same two things were wrong
+
+The Flaws screen runs `detectFlawsFromAngles` over the caller's own analyses.
+Two of its rules fired on EVERY shot ever taken, by anybody:
+
+  ELBOW_ANGLE_OBTUSE      "elbow_angle greater than 110 - too straight AT SET
+                          POINT". Stored elbow is the RELEASE frame, ~150-180.
+  INSUFFICIENT_KNEE_BEND  "knee_angle greater than 160", which can only mean
+                          the DIP. Stored knee is the release frame, ~165-180,
+                          legs extended.
+
+So a textbook shot was reported as "Elbow Too Straight (no power reserve)" and
+"Insufficient Knee Bend" - the app diagnosing a player as faulty for doing
+exactly what a release frame is supposed to show. Verified before the fix by
+running the real engine on the pipeline's own textbook output: 2 flaws.
+
+`resolveFlawSignal` ALREADY REFUSED this trap twice. Its own comments say
+`shoulder_angle` is not used because "it would fire on every shot", and
+`release_angle` is not used because the canonical key "is a vertical-deviation
+angle (a different convention)". Whoever wrote it understood the problem and
+missed the same thing one case above. Both rules now abstain, and each accepts
+the key that WOULD answer it - `elbow_angle_set_point`, `knee_angle_min` - so
+the pipeline can supply the right moment without this file changing again.
+
+AND THE SCREEN HAD TO CHANGE WITH IT, or the fix would have made things worse.
+`visible` fell back to CANONICAL'S FIVE FLAWS whenever the live list was empty.
+That was nearly unreachable while two flaws always fired; with them abstaining
+it becomes the common path, and a player whose form the engine finds nothing
+wrong with would have been shown canonical's flaws as their own findings. That
+is F16 at its worst: not a missing value, a FABRICATED DIAGNOSIS. Analysed-but-
+clean is its own state now, and says which mechanics are and are not checked.
+
+One more contradiction fell out of it: "Flaws appear after your first analysis.
+Analyze a shot" was gated on `hasData` from the history timeline, while the
+engine counts analyses directly. The two can disagree, and a player with three
+analysed shots was being invited to go analyse their first one.
+
+Verified end to end, both states. Signed in on three textbook shots: API
+`analysed: 3, flaws: []`, screen reads "No flaws detected across 3 analysed
+shots" with NO canonical flaw cards. Reseeded with wrist 30 (the arm never came
+up): "No Wrist Snap (Follow-Through), 100%" - a genuine flaw still fires.
+Signed out is canonical throughout. Probe account deleted. 305 tests pass,
+7 of them new and covering the defect directly.
+
+### NEXT, and it makes INSUFFICIENT_KNEE_BEND live again
+
+`videoAnalysis` ALREADY computes the dip: `findLoadFrame` takes the minimum
+knee across the clip and `metrics.knee_angle_range.min` holds it. It is never
+persisted onto the analysis, so the flaws route cannot see it. Adding a
+`kneeAngleMin` column (migration + save-analysis + sessionStorage mapping +
+the flaws route's select, passed as `knee_angle_min`) turns "Insufficient Knee
+Bend" from an abstention into a rule that detects insufficient knee bend. The
+set-point elbow has no equivalent - no `findSetPointFrame` exists, and picking
+which frame counts as the set point is a real design question, not a wiring
+job.
+
+### F28 - a rule that ALWAYS fires is the same bug as one that never does
+
+F27 covered counters stuck at zero. This is the mirror: `ELBOW_ANGLE_OBTUSE`
+returned true for every shot in the database and looked exactly like a real
+finding, complete with a cause chain and drills. Neither failure mode raises an
+error. When wiring a rule, assert BOTH directions on realistic input - that a
+good shot does not trip it AND that a bad one does. A rule tested in only one
+direction is untested.
+
+### Four badges nobody could ever earn
+
+Kevin's item 3 was "five badges that can never be earned". Three of them turned
+out not to need anything from him.
+
+MARATHON - "Log a 60-minute session." The engine declared session length
+untracked and sat locked forever. It was never a missing measurement:
+`capture_sessions` has always carried `startedAt` (defaulted on insert) and
+`endedAt`, written by BOTH the live camera and the upload pipeline. No rule ever
+read them (F1 again - the engine complete, no caller). It has a real rule now.
+A session still in flight has a null `endedAt` and is skipped, not counted as a
+zero-length one, which would read as a session the player somehow failed at.
+
+STACKED RELEASE and CLEAN ARC had rules, and no shot on earth could satisfy
+them - the same wrong-moment defect as the display bands, sitting in the badge
+engine where nobody would see it fail:
+
+  stacked-release  elbow within 80-100   a set-point "L". A release-frame
+                   elbow is ~150-180, so the count was always 0.
+  clean-arc        release angle 45-55   canonical's ball ARC. The stored
+                   value is deviation from vertical, ideal 0, so this asked
+                   for a shot thrown 45-55 degrees off vertical. Not merely
+                   unreachable - INVERTED, rewarding bad shots, refusing good
+                   ones.
+
+Both now read `angleBands`, the same source the share card, the phone metric
+strip, /results/demo and the biomechanics table use, so a badge cannot promise
+one thing while the results screen shows another. IRON WRIST's follow-through
+floor also comes from that source instead of a bare 60 chosen in this file.
+
+Verified against the live API and the live UI, with the negative control that
+matters - proof the band moved rather than everything simply passing:
+
+  seeded elbow 168 / release 4 / wrist 78 (a textbook release frame) + a
+  75-minute capture session:
+    stacked-release  unlocked 5/5     clean-arc  unlocked 5/5
+    marathon-session unlocked 60/60   iron-wrist locked   5/50
+  reseeded elbow 90 / release 52 / wrist 21 - the ONLY values the old bands
+  accepted:
+    stacked-release  LOCKED 0/5       clean-arc  LOCKED 0/5
+  with only an in-flight session and no completed one:
+    marathon-session LOCKED 0/60, no crash, not "untracked"
+
+/points followed the API in the browser both ways - EARNED on the textbook
+shots, LOCKED on the old-band ones - and MARATHON renders with its green check
+under "Log a 60-minute session". Signed out is canonical throughout. Probe
+account deleted.
+
+STILL GENUINELY BLOCKED, needing a measurement that does not exist: QUICK
+RELEASE (nothing times a release), DEEP RANGE (shot events carry a result, not
+a distance), HIGH ELBOW SET (an analysis stores joint ANGLES, not the points
+they came from), CLUTCH PERFORMER (no game context at all), FILM STUDENT
+(opening an analysis is not written down). Those five keep their stated reason
+rather than a bar stuck at zero.
+
+### F27 - a rule that never fires looks exactly like a feature nobody uses
+
+`stackedElbowCount` and `cleanArcCount` were real code, over real data, wired to
+a real screen, and returned 0 for every account since the day they were written.
+Nothing errored and no test failed. When adding a rule that gates a reward,
+assert that some realistic input SATISFIES it - a counter that only ever counts
+zero is indistinguishable from a badge nobody has earned yet.
+
+### The app disagreed with itself about the elbow — and the reason was worse
+
+Kevin found it: `/results/demo` banded the elbow 160deg-180deg while the
+biomechanics table, the phone metric strip and the share card banded it
+85deg-95deg. Chasing which was right turned up the cause, and two more rows
+carrying the same defect.
+
+EVERY angle on an analysis record is sampled at ONE frame, the RELEASE frame.
+`videoAnalysis.ts` picks it as "the detected frame where the shooting wrist is
+highest relative to the shoulders (peak of the shot)", reads
+`trustedAnglesFromForm(releaseForm)` there, and writes those six numbers.
+So:
+
+  angles.elbow    shoulder-elbow-wrist AT RELEASE - arm extended, ~150-180.
+  angles.wrist    forearm elevation from horizontal - high at release, ~50-100.
+  angles.release  SIGNED deviation of the forearm from vertical, 0 = straight up.
+                  Not a launch angle, not an arc.
+
+Judged against that, THE 160-180 SCREEN WAS THE ONE THAT WAS RIGHT, and three
+rows across four screens were wrong in the same direction - marking correct
+shooting as a fault:
+
+  ELBOW   at 85-95 (a set-point "L"): a textbook 168deg read REVIEW.
+  WRIST   at 15-30 (canonical's wrist SNAP, which nothing measures): 78deg read REVIEW.
+  RELEASE at 45-55 (canonical's ball SHOOTING ARC): a near-perfect 4deg read REVIEW.
+
+Fixed by putting the bands in one place, `src/lib/analysis/angleBands.ts`, with
+the evidence for each beside it. The elbow band is the app's own coaching
+thresholds from `videoAnalysis.ts` (excellent 150-170, short below 140,
+over-extended above 180); wrist and release come straight from `IDEAL_RANGES`,
+which was already right about those two. Four surfaces now read that one source
+and cannot drift apart again.
+
+SHOOTING ARC now says "Not measured". It was answered from `angles.release`
+under a comment claiming they were "the same quantity, same band". They are not:
+one is the ball's flight, the other is where the forearm points. Nothing on an
+analysis record tracks the ball's flight, so the row has no reader.
+
+Verified in a browser, both states, with a seeded textbook release frame
+(elbow 168, wrist 78, release 4): /results/demo read "168deg IDEAL 150deg - 180deg"
+and "78deg IDEAL 50deg - 100deg"; the biomechanics table read "168deg Ideal:
+150deg - 180deg" with Shooting Arc "Not measured"; the phone grid read
+"RELEASE ANGLE 4deg GOOD / ELBOW ALIGNMENT 168deg GOOD". Signed out, all
+unchanged. Probe account deleted.
+
+CAUTION FOR WHOEVER READS THIS NEXT: the first attempt at this fix went the
+WRONG WAY - it made every screen read `IDEAL_RANGES.elbow` (80-100) on the
+theory that the scoring config must be authoritative. It is authoritative about
+SCORING and wrong about this frame, and shipping that would have mis-graded
+every real shot harder than the bug being fixed. What settled it was reading the
+producer, not the config: which frame the angles come from.
+
+### F26 - a band is a claim about a QUANTITY, not about a field name
+
+`angles.elbow`, `angles.wrist` and `angles.release` each had two plausible
+readings, and every screen picked one without checking the producer. Before
+judging a stored value against a range, read the code that WRITES it and
+establish which physical quantity, at which moment, it holds. A field name is
+not evidence. A canonical PNG's printed range is not evidence either - it
+describes the design's intent, which may be a quantity this pipeline never
+computes (canonical's 21deg wrist snap and 52deg shooting arc both are).
+
+### OPEN, NEEDS KEVIN: the form score is graded at the wrong moment
+
+Found while fixing the above; NOT fixed, because fixing it means inventing
+coaching thresholds.
+
+`scoreShootingForm` grades the release-frame angles against `IDEAL_RANGES`,
+which is a bag of SET-POINT and LOADING ideals - elbow 90 ("the classic shooting
+'L'"), knee 142 ("athletic bend for power"), shoulder 70. It was never one
+coherent frame. Applying it to a release frame:
+
+  a textbook release (elbow 168, knee 172, shoulder 160, hip 176, release 4,
+  wrist 78) scores 69 OVERALL - elbow 31/100, shoulder 40/100, knee 57/100.
+  The same player's set-point frame scores 100.
+
+Every uploaded video is scored this way (`videoAnalysis.ts` line ~592), and the
+live provider scores every frame it sees with the same one table. A player
+shooting correctly is told 69, "FAIR - keep building consistency".
+
+The elbow has a defensible release band now. The KNEE and the SHOULDER do not -
+nothing in this codebase states what either should read at release, and guessing
+would be the same defect one layer down (F5). Those two numbers are Kevin's to
+give.
+
+RELATED, same cause: the ELITE MATCH card puts the player's release-frame elbow
+(168deg) next to a pro reference of 87deg from `shooterDatabase.ts`, whose own
+comment reads "Ideal: 85-95". The catalog holds set-point figures, so the
+comparison is between two different moments and will always show a large gap.
+
+ (Kevin's redirect — supersedes the pixel program)
+
+Kevin's instruction: *"why are you not working on the features of the app like
+the placeholder images to make them come to real function not just images"* —
+then *"put all of that in the app because they all need it, because I have
+features that rely on those."* Feature work takes priority over the fidelity
+measurement program until he says otherwise. Scheduled triggers that ask to
+resume the pixel program are answered with feature work.
+
+**Standing rule for every screen here: the canonical demo content stays as the
+EMPTY STATE.** Real data only ever replaces invented data. Every screen is
+verified at BOTH states in a browser before it is committed.
+
+| Screen / area | State | What became real |
+|---|---|---|
+| video → 5 phase frames | DONE | SETUP/LOAD/RISE/RELEASE/FOLLOW-THROUGH from the clip |
+| iOS pose skeleton | DONE | Apple Vision joints, not 6 hardcoded points |
+| iOS auth (4 defects) | DONE | Bearer accepted, token returned, refresh route, profile 404 |
+| biomechanics KEY MEASUREMENTS | DONE | 6 constants → measured angles |
+| 4 derived measurements | DONE | `lib/vision/derivedMetrics.ts` + 15 tests; stature-scaled |
+| flaws | DONE | real `affectsPct`, computed `impactOnMakePct` |
+| elite compare | DONE | `/api/analysis/latest` + `/api/shooters/match` |
+| badges / points | DONE | `/api/badges` engine wired; 5 badges report "untracked" |
+| onboarding | DONE | 4 answers persisted (new columns); real bio enhancement |
+| player card | DONE | identity, streak, points, coaching target, 7-day deltas |
+| training hub | DONE | `/api/training/recommended` (new); week plan from workouts |
+| `/results/demo/goals` | DONE | `lib/goals/progress.ts` — goals measure themselves (15 tests) |
+| `/results/demo` (overview) | DONE | MECHANICS AT RELEASE from the derived measurements; elite match, form score, coaching target, key insight |
+
+### DONE: two tables disagreed about how many sessions you have
+
+**Was.** `/api/analysis-history` reported 2 sessions where `/api/badges` and
+`/api/media` reported 3, because `save-analysis` could only write an
+`AnalysisHistory` row inside `if (body.overallScore !== undefined)` — that
+column was `Decimal` NOT NULL. A session with no overall score existed in
+`user_analyses` and nowhere else, so a day the player actually trained counted
+toward no streak and no consistency goal.
+
+**Now.** `overall_score` is nullable; `save-analysis` writes ONE history row per
+analysis unconditionally (the guard was removed rather than loosened — any
+condition there is another way for the two tables to drift); existing orphans
+were backfilled; and `score_change` was re-chained afterwards. Verified: 0
+orphans across every profile, and both endpoints report the same count.
+
+Three things the plan in this ledger got wrong, corrected during the work:
+
+- **"Backfill is NOT needed — the existing rows are all scored."** Wrong. The
+  orphan WAS scored (82, with angles, a video). The gap was never only about
+  scores, so the backfill is by ANALYSIS, not by score.
+- **The leaderboard was the feared reader; it was already safe.** `form_score`
+  and `engagement` read `user_analyses`; `improvement` filters on `score_change`;
+  `streak` reads only dates and gets BETTER. The real hazard was one line in
+  `analysis-history` — see rule F11.
+- **A backfill of BACKDATED rows invalidates `score_change` downstream.**
+  Inserting the 01:24 session ahead of the 03:19 one left the latter reading
+  NULL when it should read -1. `save-analysis` recomputes that chain in its
+  transaction; raw SQL triggers none of it, so the recompute had to be written
+  as its own migration. The honest consequence showed immediately: the account's
+  trend fell from "improving" to "stable" and its improvement rate from 100% to
+  50%, because the -1 had been hidden.
+
+### DONE: `/results/demo/(tabs)/history` disagreed with its own API
+
+Four defects, all on one screen:
+
+- **AVERAGE FORM SCORE was the LATEST score.** It rendered `score` from
+  `useHistory`, which is defined as `latestScore ?? averageScore` — 84 printed
+  under a label reading AVERAGE beside an API average of 82. It now averages the
+  sessions in the window it is showing, so the figure and the rows agree. 82.
+- **The date range was a label, not a range.** "Apr 28 – May 12, 2025" sat above
+  rows dated Aug 2026, and the third tuple member was a PAGE SIZE — picking
+  "30 days" showed more rows of the same unfiltered list. Ranges are day counts
+  now, the label is computed from today, and the window actually filters
+  (verified by backdating a session 40 days: it left all three windows, the
+  count fell 3 -> 2 and the average moved 82 -> 83; then restored exactly).
+- **Unscored sessions were dropped from the table**, which contradicted the
+  one-row-per-analysis invariant established in the previous task. They list
+  with an em-dash where the score would be and NO verdict — "Fair" is a
+  judgement, and a shot nobody scored has not earned one.
+- **`Number(r[1]) || 0`** in the FOCUS average would have folded each of those
+  em-dashes in as a ZERO (rule F11 again, in a second place).
+
+### DONE: the phone tree stopped calling everyone Jordan Ellis
+
+The persona was hardcoded across ~30 phone components — "Jordan Ellis",
+"Right-handed • Advanced", a 6-day streak and 2,840 points — as default prop
+values that nothing ever overrode. The web topbar had exactly this defect until
+`ShotIQShell` was wired to the ledger; on the phone it was worse, because these
+four appear on ten canonical screens at once, so signing in changed nothing
+anywhere.
+
+`components/shotiq/phone/usePlayerChrome.ts` resolves all four once — name and
+level from the auth store and profile, points from the ledger, streak from
+`/api/badges` behind a module-scoped deduped request so ten mounted screens make
+one call and cannot disagree. The canonical persona is the empty state, and an
+explicit prop from a call site still wins.
+
+Verified at 393pt on five routes: signed out shows the canonical 6 / 2,840 /
+Jordan Ellis exactly as designed; signed in shows a real 1-day streak, 25 points
+and the account name, with no persona string anywhere in the tree.
+
+### DONE: the phone stat strips read the player's own last session
+
+One level down from the chrome. "24 SHOTS / 15 MAKES / 62.5%" was written as
+literals at 13 sites across 8 phone components. `useLatestSession` resolves them
+from the same shared history hook the desktop screens read, so a phone screen
+can never disagree with the desktop screen showing the same session. Canonical
+values remain the EMPTY STATE.
+
+**Both counts are required together.** The hook returns the canonical triple
+unless it has BOTH shots and makes — a strip showing real shots beside canonical
+makes would state a make% matching neither.
+
+**Deliberately NOT wired: the capture-in-progress screens.** `LiveCapture`'s
+`Recording` already receives real counts as props, and its post-capture `Review`
+describes the capture just taken — putting the last COMPLETED session's numbers
+there would label one session's counts as another's, which is worse than the
+constant. Only `Primer` / `Setup` / `Ready`, which run before recording starts
+and show the last session as context, are wired. The Review screen needs the
+capture's own counts plumbed through; that is its own task, not this one.
+
+Verified at 393pt by seeding a capture session with 20 shots / 13 makes: signed
+in, all four routes rendered 20 / 13 / 65.0% and 62.5% disappeared; signed out,
+the canonical triple held. Probe capture session, its shot events and the
+analysis link were then deleted and the canonical values confirmed restored.
+
+### NEXT
+
+1. **The five untracked badges** — release time, shot distance, elbow height
+   above the shoulder, session length, game situation. Each needs a measurement
+   added upstream before it can ever be earned. Ask Kevin which matter; this is
+   the one item that needs his input rather than a decision I can make.
+2. **`LiveCapture`'s Review screen** should show the counts of the capture it is
+   reviewing. Needs the capture's own shot events threaded to the component.
+3. **DONE — the "82" form score.** Wired at 13 sites across 8 components, plus
+   the two "GOOD" verdict labels sitting directly under a wired score.
+   `useLatestSession` carries `score` and `verdict` now.
+
+   The score and the shot counts are resolved INDEPENDENTLY: an analysis always
+   has a score, but only one with a capture behind it has shot counts, so a
+   screen may honestly show a real score beside canonical counts. What it must
+   never do is show real shots beside canonical makes — that pair is
+   all-or-nothing, because the make% would otherwise match neither.
+
+   Excluded on purpose, same reasoning as LiveCapture's Review: `AnalysisStates`'
+   Processing and Error screens draw a FORM SCORE while an analysis is still
+   running, so the LAST session's score there would assert that the in-progress
+   one had already scored. `HomeProPhone`'s per-phase table and `GoalsPhone`'s
+   goal-relative average are different quantities, not this one.
+
+4. **DONE — the three in-progress screens.** The last of this class.
+
+   `AnalysisError` printed "82 / GOOD / Keep building consistency" on the screen
+   whose own headline says the clip could not be analysed. `AnalysisProcessing`
+   printed the same under LIVE FRAME PREVIEW while its own stage list said
+   "Scoring mechanics — Queued" — the screen contradicted itself. Neither has a
+   state in which a number would be right: one describes a run that produced
+   nothing and never will, the other only ever renders pre-result. Both now show
+   absence (— / NOT SCORED, — / SCORING) with the band, label and geometry left
+   exactly where canonical puts them. When the pipeline can stream partial
+   scores, the processing panel is shaped to carry them.
+
+   `LiveCapture`'s Review had the counts available all along — the orchestrator
+   holds `shots`/`makes` and passes them to `Recording`; `Review` simply never
+   received them. Threaded through, so the two screens in one flow agree.
+   NEED REVIEW / DISCARDED / PRACTICE TIME keep canonical's figures because no
+   counter exists behind any of the three.
+
+   **And the seed was wrong.** `onRecord` reset the clock but not the shot
+   counters, so pressing record began a session claiming 24 shots and 15 makes
+   before the player had taken one. A real take starts at zero now; a
+   DEEP-LINKED `?state=` still holds the canonical reading, which is what the
+   `seconds` comment already established for that flow.
+
+   Verified: deep-linked review shows canonical 24; pressing record shows
+   0 SHOTS / 0 MAKES / 0.0%. That difference is also what PROVES the wiring —
+   with both sides seeded at 24/15 the wired and unwired renders were identical
+   (rule F14 again).
+
+5. **DONE — flaws RECENT SESSIONS.** Found by a differential audit (below), not
+   by reading code: three rows written into the markup — "Today at 8:24 AM ·
+   24 shots · -8.3%" — on the panel naming the sessions a flaw was seen in. My
+   own gap: I wired the flaw LIST on this screen and missed the panel beside it.
+   Dates and shot counts are the player's own now. The red per-session
+   percentage is NOT, and is drawn as an em-dash: it is a flaw's cost IN THAT
+   SESSION, and nothing computes that — `/api/analysis/flaws` measures one figure
+   across the whole history with a minimum sample on both sides, and splitting
+   it back out per session would be arithmetic with no data under it.
+
+### THE DIFFERENTIAL AUDIT (how the last item was found, and what it still says)
+
+Load every route twice — signed out and signed in — and extract data-shaped
+tokens (percentages, clock times, dates, degrees). **A data value that is
+byte-identical in both states is a candidate constant**, because real data
+cannot survive signing in unchanged. This is the cheapest reliable detector for
+this whole class of defect and should be re-run after any batch of wiring.
+
+`scripts/audit/audit-numbers.mjs`, driven by an `RT=` comma list of routes (running all 23
+at once exceeds the tool timeout; do them in batches of ~5).
+
+Findings so far:
+
+- **`/results/demo/analysis` phase timings — FIXED.** The strip drew
+  `0:00 – 0:02 · 0:02 – 0:04 · …` from a constant, so a four-second shot and a
+  forty-second one reported identical windows on the strip that claims to show
+  WHEN each phase happened. Nothing new had to be stored: the pipeline already
+  records a `timestamp` per phase and the clip's `duration`, and both are saved
+  with the session beside the stills `usePhaseFrames` already reads.
+  `usePhaseTimings` derives each window as "this phase's timestamp -> the NEXT
+  phase's", with the last running to the end of the clip.
+
+  Two things this turned up:
+  - The phases are sorted by timestamp before windows are computed. Reading
+    them as authored would produce a NEGATIVE window the moment the pipeline
+    emitted them out of order.
+  - **`useShotClip` reads `start` once, at mount.** Fine while it was a
+    constant; a real release time arrives from storage in a post-mount effect,
+    so the head stayed parked at canonical's 0:07 forever. It re-seeks when the
+    caller moves `start` — and only while the player is not watching, because
+    seeking under someone mid-playback would yank the head out from under them.
+
+  Verified with a seeded 27-second clip whose phases sit at 3/8/14/18/22s:
+  windows read 0:03-0:08 … 0:22-0:27 and the transport reads 0:18 / 0:27,
+  parked at the real release. With no clip, canonical's windows and 0:07 / 0:12
+  render exactly as they shipped.
+
+**CAVEAT — THE DETECTOR CRIES WOLF IF YOU RUSH IT.** Its first run used a
+1.6s settle per route and flagged `/results/demo` and `/results/demo/player` as
+still carrying May-2025 dates. Both were FALSE POSITIVES: the history fetch had
+simply not resolved, so the signed-in pass was still rendering the empty state.
+Re-checked at 6s, both show real data and zero May-2025 tokens. Acting on that
+output would have meant "fixing" two correct screens and deleting canonical
+empty states for nothing. **Settle at least 5s before reading**, and confirm any
+hit by hand before touching code.
+
+A canonical value present in BOTH states is also NOT a defect when the signed-in
+account genuinely lacks that data — `/results/demo/goals` shows canonical
+milestones because the account has no goals, and `/results/demo/history`'s date
+range is computed from today so it is identical by design. Check whether the
+data exists before calling it a constant.
+
+Sweep at the corrected settle time: `/dashboard`, `/results/demo`,
+`/results/demo/history`, `/results/demo/player`, `/results/demo/goals`,
+`/results/demo/training`, `/media`, `/points`, `/elite-shooters` — all clean
+except one lead below.
+
+- **`/media`'s `0:00 / 0:07` — FIXED, and it WAS a persistence gap.**
+  `media_uploads` had a size in bytes and a content type but no duration, which
+  is why `/api/media` had been answering `len: "—"` for every row: it had
+  nothing to answer with. `MediaSurface` defaults to `0:07`, so every clip in
+  the library claimed to be seven seconds long.
+
+  A full slice, because a wiring fix alone was impossible: a nullable
+  `duration_seconds` column; the browser reads the clip's length off the blob
+  the upload queue already holds and sends it on completion (the SERVER cannot
+  learn it — it receives bytes, not a decoded video); `/api/media` formats it;
+  the page passes it to the surface.
+
+  Best-effort by construction. A codec the browser cannot decode, a restored
+  queue, or a non-video blob all resolve to `undefined` behind a 5s timeout, and
+  the upload completes exactly as before — **a duration is a nicety and must
+  never cost the player their upload**. An em-dash means "not recorded", which
+  is the honest answer for an image, for a clip that predates the column, and
+  for one that failed to decode. It is never a zero.
+
+  Verified by seeding an upload row at 23.4s: the API returned `0:23` for that
+  analysis and `—` for the two without, the page showed `0:23` with no `0:07`
+  anywhere, and signed out the canonical `0:07` still renders. Probe row then
+  deleted and the em-dashes confirmed back.
+
+### THE SWEEP WAS NOT FINISHED, AND THE DETECTOR HAD A BLIND SPOT
+
+The sweep recorded above covered 9 routes of ~23 and read "all clean except
+one". Finishing it over the remaining routes turned up one more constant by the
+same method and — more importantly — showed that "clean" had been meaning two
+different things.
+
+**F15: a route that redirects when signed out can never fail this test.**
+`/profile`, `/settings` and `/training/calendar` all bounce to `/signin` with no
+session, so their signed-out token set is the SIGN-IN PAGE's tokens. The
+intersection with the real page is empty by construction, and the detector
+reports clean no matter what constants the page carries. The mirror image is
+just as blind: `/results/demo/biomechanics` renders NO data tokens signed out
+(its zero state is honest), so the intersection is empty there too. In both
+cases the differential has nothing to compare and silently passes.
+
+For an auth-gated or empty-state-silent route the test has to be run the other
+way round: read the SIGNED-IN render and check each data value against the
+canonical constant directly. Four constants were sitting behind that gap.
+
+- **`/training/drills` — every tile's transport read `0:07`.** Found by the
+  differential (this route does render signed out). `MediaSurface` defaults to
+  `0:07`, and the tile paints the drill's real length as a badge 8px above it,
+  so each card carried two different answers. For a drill the player CREATED it
+  contradicted their own number — badged `12:00`, transport `0:07`. Verified by
+  seeding a 12-minute custom drill: the tile read `0:00 / 12:00`, the canonical
+  rows read their own lengths, and the probe drill was then deleted.
+
+- **`/results/demo/biomechanics` described someone else's shot.** The header
+  read `PULL-UP JUMPER`, `May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand`,
+  `24 SHOTS / 15 MAKES / 62.5%` — every one behind `hasData ? <constant> : <zero>`.
+  **That gate is the wrong way round.** The zero state was honest; the constants
+  appeared ONLY for a player who had a real session, so the screen was accurate
+  until it had something true to say and then described a stranger's shot.
+
+  The session's own title, date, style and counts come from the shared history
+  hook now; the shooting hand from the profile, because nothing in an analysis
+  records which hand took the shot. Shots and makes are an EM-DASH, not a zero,
+  when the analysis has no capture behind it — "no capture was counted" is not
+  "you missed every shot" (F5 again). Verified: signed in reads
+  `SHOT ANALYSIS / Aug 6, 2026 • 4:06 AM · Catch & Shoot · Right Hand / 84 / — / — / —`;
+  signed out is byte-for-byte the empty state it shipped with.
+
+- **Every account had joined on Jan 14, 2024.** `/profile` and `/settings` each
+  wrote that date into their markup. These two cards are near-duplicates and
+  have drifted before, so the date resolves through one hook (`useJoinedDate`).
+
+  **It reads `User.createdAt`, not the profile row's.** `ensureUserProfile`
+  creates the profile lazily on first read — on this very account the profile
+  row is SEVEN MINUTES younger than the user — so dating the account from it
+  would report the day someone next opened their profile, not the day they
+  joined. Both screens now read `Aug 6, 2026`, which is the account's real
+  01:13 sign-up.
+
+- **`/training/calendar` announced the current week as a week in May 2025.**
+  `"This week · May 12 – 18, 2025"` and `{MONTHS[month]} 2025` were literals on
+  a page whose every other date was already live — so the label sat directly
+  above seven real August dates and contradicted them. Both compose from the
+  resolved week and year now (`This week · Aug 3 – 9, 2026`), and canonical's
+  string still stands when there is no live plan.
+
+  This one the differential could never have found: the route redirects signed
+  out, and the account HAS workouts, so the wrong label was showing the whole
+  time the sweep was calling the route clean.
+
+Two values here were indistinguishable from their canonical twins by reading
+the screen — the join date, and "Right Hand" — so both were proved against the
+database instead: the hand was flipped to `left`, confirmed to render
+`Left Hand`, and restored to `right` (F14).
+
+### THE AUDIT HAD ONLY EVER RUN AT 1440px
+
+`audit.mjs` hardcoded a desktop viewport, so in every sweep recorded above the
+phone tree was never loaded. Those components mount only behind
+`usePhoneViewport` — a different subtree entirely — so no phone screen had ever
+been through the differential audit at all. Re-run at 393pt it flagged four
+routes immediately, all of them the same missing quantity: **WHEN your last
+session was.**
+
+`8:24 AM` is canonical's session time and it was written as a literal across
+the phone tree, so every phone screen agreed with every other phone screen and
+none of them agreed with the player's session. This is the third member of the
+`usePlayerChrome` / `useLatestSession` family — who you are, what you did, and
+now when you did it — and it was the one never wired.
+
+`useLatestSession` carries `when` (and the raw `at`) now, off the same shared
+history hook. Wired: the progress tab's four ANALYSIS SESSIONS rows, goals'
+RECENT SESSIONS row, training's RECENT WORKOUT stamp, and the shot breakdown's
+`Shot 41 • …` line — where `when` was a DEFAULT PROP its one caller never
+passed, so it could never have been anything but canonical.
+
+Two things the wiring turned up:
+
+- **The training card's FORM SCORE bar was pinned at `width: "82%"`** beside a
+  numeral already reading the real score. Half a readout wired is worse than
+  neither: the bar and the number are one statement and they disagreed.
+
+- **F16 — `useLatestSession` had TWO states where the data has THREE, and
+  reading it as two put two screens in direct contradiction.** Adding `at` made
+  it possible to tell *no session at all* from *a session that counted no
+  shots*, and those want different marks:
+
+      no session          -> canonical's 24 / 15 / 62.5%, the EMPTY STATE
+      session, no capture -> em-dashes
+      session with counts -> the player's own numbers
+
+  Collapsing the middle case into the empty state printed canonical's 24 and 15
+  beside the player's REAL date and score. The progress tab, listing actual
+  sessions, had already started em-dashing that case — so signed in,
+  `/results/demo/history` read "— SHOTS" while `/results/demo/goals` read "24
+  shots" **for the same session**. The canonical triple is the empty state for a
+  visitor; it is never a stand-in for a real session's missing capture.
+
+Verified at 393pt in both states, then again with a seeded 20-shot / 13-make
+capture: all four routes moved together to 20 / 13 / 65.0% and back to
+em-dashes when the probe capture was deleted (F14). Signed out, every screen is
+byte-for-byte the canonical it shipped with.
+
+### DONE: the shot breakdown described a shot that did not exist
+
+`/results/demo/analysis` draws a SHOT CONTEXT panel — shot type, court
+location, `26:12` in workout, result — under a `Shot 41` header. All five were
+constants, because the screen is never handed a shot: its one caller passes a
+score and nothing else. There was no per-shot anything on it to be wrong about.
+
+The data was already stored and already served. `ShotEvent` carries `sequence`,
+`timestampMs` and `detectedResult`, and `/api/shot-events?captureSessionId=`
+has returned them with their corrections all along — it simply had no reader
+here (F1: the fourth engine with no caller).
+
+**One resolver, not two.** Whether a shot counts and whether it went in is not
+a one-liner — `false_shot` review drops an attempt, `make_miss` review
+overrules the detector, and later corrections beat earlier ones.
+`/api/analysis-history` already did this inline for the session counts. Copying
+those rules onto the client is exactly how one screen ends up saying a shot was
+a make while another says miss, so they moved to `lib/shots/resolveShot.ts`
+(15 tests) and the history route now reads from there too.
+
+**Dropped shots are removed BEFORE numbering.** A false positive that review
+threw out must not push every later shot's number up by one — the player is
+looking at the Nth shot they took, not the Nth row the detector wrote.
+
+**And two of the four cells still cannot be answered — including one I had
+believed was data.** Court location is recorded nowhere: no column, no detector
+output, nothing to derive it from. Shot type turned out to be the same:
+`/api/analysis-history` returns no `shotType` and no `title`, so `loadHistory`'s
+`a.shotType || "Catch & Shoot"` and `a.title || "Shot analysis"` fired on EVERY
+row for EVERY account — canonical's own value being served as though it were
+the session's (F4, in a place I had already wired and signed off). Both are
+null at the source now, and the five screens reading them either drop the term
+from the line or say what the row IS rather than borrowing canonical's answer.
+
+That also fixed this route's own desktop subtitle, which ended in a literal
+`· Right Hand` and named every session "Catch & Shoot". The hand is a profile
+fact; the shot type simply drops out.
+
+Verified at 393pt with six seeded detector rows — one false positive dropped by
+review, one `unknown`, and one the detector called a MISS with a `make_miss`
+correction on top:
+
+- header read `Shot 5`, not `Shot 6` — the dropped row did not inflate the count
+- moving the newest shot's offset moved the clock with it (`26:12` -> `20:00`
+  -> `30:45` -> `33:20`), which is the only way to tell a real `26:12` from
+  canonical's `26:12`
+- with the `unknown` row newest, Result read `—`, NOT a miss
+- with the corrected row newest, Result read `Make` — review beating the
+  detector, the same answer the session counts give
+- shot type and court location read `—` throughout
+- signed out, and signed in with the probe deleted, every cell is byte-for-byte
+  the canonical it shipped with
+
+### DONE: the F18 sweep — defaults standing in for fields nobody sends
+
+F18 came out of finding that `shotType` and `title` were pure `||` defaults.
+Running it across the rest of the app found the same shape twice more, and the
+second one was on the SERVER.
+
+**`/dashboard`'s RECENT ANALYSES was three-quarters canonical.** Its mapper
+declared `title`, `shotType`, `shotCount` and `makeCount` and read all four;
+`/api/analysis-history` returns none of them. So every `||` past them resolved
+to `RECENT_FALLBACK` — "Pull-Up Jumper · Catch & Shoot", 24 shots, 15 makes —
+on every row for every account, with the make% computed from the borrowed pair.
+
+`RECENT_FALLBACK` read like an empty state and was not one: it was applied
+per-row INSIDE a map over the player's REAL sessions, so it never described "no
+data", it patched holes in data that existed. It is deleted.
+
+**The em-dash two hundred lines below could never fire.** The stat strip
+already wrote `latestShots ?? "—"` — correct handling, dead code, because the
+mapper had filled the hole before the render ever saw it. Careful null
+handling at the render site is worthless if the mapper lies to it first.
+
+**F19 — the detector's regex only matches NUMBERS, so categorical constants
+walk straight through it.** `/api/media` was serving `result: "Make"` and
+`hand: "Right"` as literals in its response builder — every row, every account,
+sitting among a dozen carefully derived fields and looking exactly as real. The
+differential audit ran over `/media` twice and passed it both times, because
+`DATA` matches percentages, clock times, dates and degrees; "Make" and "Right"
+are none of those.
+
+Both are answered now. The hand is a profile fact and is read from it. The
+result is NOT, and is only answered where it is a well-defined quantity — a
+capture holding exactly ONE shot — resolved through the shared corrections
+resolver. A session-wide make/miss is not a thing, so it is an em-dash.
+
+**These two drove filters, which is how the defect bit.** SHOT RESULT and HAND
+are facets on the library rail: with every row hardcoded Make/Right, filtering
+by "Miss" or "Left" returned nothing and their opposites returned everything.
+Verified with a seeded single-shot MISS capture on a left-handed profile:
+unfiltered 2 rows; HAND=Left 2, HAND=Right 0; RESULT=Miss 1, RESULT=Make 0 —
+each of those a number that was previously impossible. The phone rows, which
+print the hand after the title, read "Shot analysis • Left".
+
+Probe capture, its shot event, both analyses and the profile hand were then
+deleted and the canonical empty state confirmed byte-identical.
+
+### DONE: the categorical half of the differential audit
+
+F19 said the detector matches numeric shapes only, so a constant that is a WORD
+survives every sweep. `scratchpad/audit-words.mjs` is the other half: the same
+signed-out/signed-in comparison over this app's data VOCABULARY — Make, Miss,
+the hands, the sources, the statuses, the verdict bands, the levels.
+
+**Read the response builders first, and they were clean.** Every API route was
+checked for fields assigned a literal inside a map over rows — the exact
+`/api/media` shape. Only query options, honest flags and empty-state zeros came
+back. That defect was a one-off on the server; the surviving ones are on the
+client.
+
+**It is noisy, and confirming by hand is not optional.** Of the first five
+hits, three were substring collisions with chrome — "Elite Shooters" in the
+sidebar, "Review and track your shooting performance", "Make percentage". Two
+more, on goals and training, were drill and goal names the account genuinely
+lacks, which the ledger already rules is not a defect. Acting on the raw output
+would have "fixed" five correct screens.
+
+Two were real:
+
+- **`/results/demo`'s caption said `mine.shootingPhase || "Catch & Shoot"`.**
+  That conflates two quantities and defaults to canonical's. `shooting_phase`
+  is a PHASE — stance, dip, rise, release, follow_through — while canonical's
+  slot there is a shot TYPE, and nothing in this app records a shot type at all
+  (F18). A null phase printed "Catch & Shoot" on every real session; a set one
+  would have printed "release" in a shot-type position. The term drops out now,
+  and the hand is read from the profile — this caption's two siblings, the
+  biomechanics workspace and the analysis overview tab, already do, and all
+  three describe the same session.
+
+- **Three phone screens printed the verdict `GOOD` as a literal, in canonical's
+  blue, directly under a WIRED score.** A seeded 93 read GOOD on the dashboard,
+  the progress tab and the analysis overview. Task #39 fixed two of these; three
+  more survived in other components.
+
+**And the two banding functions disagreed.** The dashboard carried a private
+`scoreBand` splitting at 85/70/50 while the shared `scoreVerdict` splits at
+90/70/55, so a score of 87 read EXCELLENT on one screen and GOOD on the next —
+the same disagreement, about the same number, that ResultsBits exists to
+prevent. One `scoreBand` there now, delegating to `scoreVerdict` for its label
+so the two cannot drift, and carrying the colour so a NEEDS WORK verdict stops
+rendering in the GOOD blue (F7).
+
+Verified at 393pt with a seeded score of 93: dashboard and the progress tab
+both moved 82/GOOD -> 93/EXCELLENT and back to 82/GOOD when the probe was
+deleted. Signed out is unchanged throughout.
+
+**NEXT, and it is the same defect one screen over:** `AnalysisOverview`'s
+METRICS table is six canonical constants with their own ratings — RELEASE
+HEIGHT 7'8" EXCELLENT, RELEASE ANGLE 52° GOOD, and four more. It is the PHONE
+counterpart of the desktop KEY MEASUREMENTS table wired early on, and it was
+never wired. The pattern to follow already exists in
+`results/demo/biomechanics/page.tsx`: a `MEASURED_BY` map answering what the
+pipeline computes and "Not measured" for what it does not, rather than
+inventing a number with a plausible-looking source.
+
+### DONE: YOUR SIX KEY METRICS, on the phone
+
+The panel headed YOUR six key metrics was six canonical constants with six
+canonical verdicts — 7'8" EXCELLENT, 52° GOOD, 93% GOOD, 46° GOOD, 8.6 GOOD,
+92% EXCELLENT — so it read identically for an account with a hundred analyses
+and one with none. It is the PHONE counterpart of the desktop KEY MEASUREMENTS
+table wired early on, and it was never connected.
+
+`readMetric` (9 tests) answers each row from the caller's newest analysis, the
+same endpoint the desktop workspace reads. **Four of the six are answerable and
+two are not:**
+
+- **SPIN RATE** has no pipeline behind it. Nothing tracks the ball, so nothing
+  can measure its rotation.
+- **SHOT ARC is the SAME QUANTITY as RELEASE ANGLE** in this pipeline — the
+  desktop table calls `releaseAngle` "Shooting Arc" for precisely that reason.
+  Printing one measurement under two labels would assert two independent
+  readings, which is worse than admitting to one.
+
+**Two rows change unit, deliberately.** ELBOW ALIGNMENT and CENTEREDNESS are
+drawn as percentages, but what the pipeline computes is an elbow ANGLE and a
+centreline DEVIATION, both in degrees. A degree value under a % sign is a wrong
+label on a right number.
+
+**The verdicts are computed, not carried.** Each answerable metric is judged
+against the same ideal band the desktop table prints — release height 102–110in,
+release angle 45–55°, elbow 85–95°, centreline under 3° — GOOD inside, REVIEW
+outside. The old constants were tuned for canonical's values and would have
+called any real reading GOOD (F7). A metric with no source shows an em-dash
+rather than a rating, because an unmeasured thing has not earned a judgement
+(F5).
+
+**And the screen contradicted itself in its own header.** It printed
+`24 SHOTS / 15 MAKES / MAKE % —` for a real session with no capture: canonical's
+pair beside a percentage admitting it could not be computed, when 24 and 15 are
+exactly what would compute it. Three states now, per F16.
+
+Verified at 393pt with angles chosen to share no digits with canonical's and to
+straddle the bands in both directions: signed in read `9'9" REVIEW · 49° GOOD ·
+71° REVIEW · Not measured · Not measured · 1.1° GOOD`, with counts as em-dashes;
+signed out, and signed in after the probe was deleted, the canonical six render
+exactly as they shipped. "Not measured" sits 54px inside its 61px column with no
+page scroll.
+
+**NEXT on this same screen:** the ELITE MATCH card below the strip is still
+constant — KLAY THOMPSON, 88% OVERALL MATCH, and three reference readings
+(`Release Angle 51°`, `Elbow Alignment 95%`, `Shot Arc 46°`) written into the
+markup. `/api/shooters/match` already serves this and the DESKTOP is wired to
+it; the phone card was never connected. Note its "Elbow Alignment 95%" now
+disagrees in UNIT with the strip above it, which reads degrees — wiring the
+card should settle both.
+
+### DONE: the phone ELITE MATCH card
+
+The card told every player they shoot like KLAY THOMPSON of the Golden State
+Warriors, to 88%, with the same three reference readings — his name, club,
+portrait, percentage and readings all written into the markup.
+`/api/shooters/match` ranks the whole 328-shooter catalog against the caller's
+measured angles and the DESKTOP card on this route has read it for some time;
+the phone card was never connected.
+
+`top` now also carries the shooter's club and three reference readings, so the
+card needs no second request. Verified with a seeded 6'7" elite profile and six
+measured angles: the card moved to CHRIS MULLIN · Golden State Warriors ·
+50° / 89° / 45° · 89% OVERALL MATCH, and back to canonical when the probe was
+deleted.
+
+**The readings are labelled as estimates, because the catalog says they must
+be.** `eliteShooters.ts` carries a documented honesty flag —
+`biomechanicsEstimated` is true for every record, the block is tier-derived and
+"the UI must never present them as measured biomechanics". `estimated` rides on
+the payload and the card prints the same short note the desktop compare table
+already prints.
+
+**Elbow Alignment is in DEGREES here now.** It read "95%" while the metric strip
+directly above it reads the player's own elbow in degrees. The two halves of a
+comparison have to be in one unit or the comparison is not one.
+
+**F23 — a BROKEN image paints its ALT TEXT over whatever is layered beneath it.**
+F9 established that a blocked remote headshot HANGS rather than erroring, so the
+initials are painted UNDER the portrait instead of swapped in on failure. That
+is right, and it was not enough: this headshot did not hang, it completed with
+`naturalWidth: 0`, and the browser rendered `alt="Chris Mullin at release"` as
+text — over the initials and spilling out of a 90x72 cell. The alt is empty on
+both cards now. The portrait carries no information of its own: the shooter's
+name is in text directly beside it, so it is decorative, and an empty alt is
+both the correct accessibility answer and the only one that lets the layered
+fallback show.
+
+The desktop card had the identical alt, and was fixed with it — the defect was
+in the pattern, not in one copy of it.
+
+### DONE: eleven screens still described the player as right-handed and advanced
+
+**The detectors now live in the repo.** `scripts/audit/audit-numbers.mjs` and
+`scripts/audit/audit-words.mjs` were scratchpad files that the ledger cited by
+name and that died with every container recycle — they were rebuilt from scratch
+three times. They are project tooling and are versioned now, with their blind
+spots (F15, F17, F19) and the 5s settle documented in the header.
+
+Running the categorical one over the routes it had never reached found the
+persona line surviving on ELEVEN phone components. `usePlayerChrome` has
+resolved name, description, streak and points since that sweep, and each of
+these screens already read `chrome.name` — **the name followed the player and
+the line directly beneath it did not.**
+
+**F13 again, and this is why the first sweep missed them.** That sweep found
+DEFAULT PROPS (`sub = "Right-handed • Advanced"`). These eleven wrote the same
+string as inline JSX between tags, so a search for the prop form reported them
+clean. Grep for what is RENDERED, in every form it can take.
+
+Wired: live capture, training, media, drills, drill detail, upload, onboarding
+(three places), share, video review, the elite-match card, the annotation
+toolbar, the metric detail and the player card. `usePlayerChrome` carries
+`hand` as well now, for the two screens that caption a shot "Release ·
+Right-handed" rather than printing the whole line.
+
+**And a fourth verdict constant.** `PlayerCard` printed `GOOD` in canonical's
+blue under a wired score — the same defect as the three fixed in the previous
+entry, in a component the earlier grep did not reach.
+
+Verified at 393pt with a LEFT-handed BEGINNER account scoring 41: every one of
+those screens moved to "Left-handed · Beginner", and the player card's verdict
+to NEEDS WORK. Signed out, and signed in after the probe was deleted, all of
+them read "Right-handed · Advanced / GOOD" exactly as canonical ships.
+
+Confirmed-by-hand false positives this round, for the record: "Make 10 shots
+from 22+ feet" (a badge challenge's copy), "Right-handed · Guard" on
+`/elite-shooters` (the SHOOTERS' own catalog attributes, not the player's), and
+"Review and track your shooting performance". Roughly half of every categorical
+run is chrome collision.
+
+### DONE: the frame viewer described a frame nobody captured — and the detector that should have caught it was broken
+
+**F25 — the numeric detector had never matched a percentage or a degree.**
+Its pattern ended in `\b`, and `%` and `°` are non-word characters: a trailing
+word boundary only matches when a WORD character follows, and in rendered text
+a percentage or an angle is almost always at the end of its line. For its whole
+life it matched clock times and dates and NOTHING ELSE. Every degree and
+percentage constant in this log — 92°, 93%, 88%, 8'10" — was found by eye or by
+reading source, and the sweeps that reported those screens "clean" were telling
+the truth about a test that could not fail. Fixed and re-run, it immediately
+named two screens the categorical detector had not.
+
+The first of those: `/results/demo/biomechanics` at 393pt. Its frame viewer
+reported `SHOT 12 OF 24`, `RELEASE • FRAME 42`, `120 FPS`, `168°` over the arm,
+and a CONFIDENCE / KEYPOINTS / TRACKING panel reading 98% / 17/17 / EXCELLENT —
+the same shot, the same frame and the same confidence for every player.
+
+**Three are answerable and three are not:**
+
+- the shot's position, the capture's total and the frame the detector opened
+  the shot on come from the shot events already served;
+- the angle over the arm is the release angle this analysis measured;
+- CONFIDENCE is the detector's own, recorded per shot.
+- **120 FPS is stored nowhere** — no column, no upload field.
+- **KEYPOINTS and TRACKING live on `capture_session_observations`**
+  (`poseConfidence`, `keypoints`, `stable`), which has NO read endpoint and is
+  written only by the live-capture readiness flow, never by an upload. Serving
+  them is a new route, not a wiring fix.
+
+Three states on the frame number, per F16: the detector's frame; an em-dash
+when a real shot carries none, because a shot whose frame nobody recorded did
+not happen on canonical's frame 42; canonical only with no session at all. The
+neighbour captions follow it — they read "Previous shot" / "Next shot" rather
+than naming frames that were never recorded.
+
+Verified at 393pt with a 37-shot capture scoring 41: `SHOT 37 OF 37`, `33°`,
+`CONFIDENCE 95%`, and em-dashes for the frame, the FPS, the keypoints and the
+tracking. Signed out, and signed in after the probe was deleted, the canonical
+readout renders exactly as it shipped.
+
+**NEXT, named by the repaired detector:** `/results/demo/player` at 393pt
+reports `6'3"`, `6'6"`, `8'2"`, `8'0"` and `8.1%` in both states — the player
+card's height/wingspan/reach block and a delta. Heights are on the profile
+(`heightInches`, `wingspanInches`); the reach figures may not be derived
+anywhere. Confirm each by hand before wiring.
+
+### DONE: the player card measured every player at 6'3"
+
+The repaired numeric detector's second name. `MEASUREMENTS` on the phone player
+card was four constants — HEIGHT 6'3", WINGSPAN 6'6", SHOOTING REACH 8'2",
+STANDING REACH 8'0" — so every card described the same body.
+
+Height and wingspan are on the profile; the player enters them in onboarding and
+three stature-scaled measurements downstream already depend on the height being
+right. **Neither REACH is recorded.** Standing reach is not a column and is not
+derived anywhere, and neither is shooting reach. The pipeline does compute a
+RELEASE HEIGHT per analysis, which is related but is not the same quantity — it
+is where the ball left the hand on one shot, not a static reach — and printing
+it under a reach label would be one measurement wearing a second name (F22).
+Both read as em-dashes over "Not recorded" once a profile exists.
+
+Two more on the same card, since the screen had to be finished:
+
+- **The delta was `+8.1%` as a default prop its caller never passed**, while the
+  page already had `sessionDelta(items)` in scope — the figure the rest of the
+  app computes.
+- **The make% contradicted its own counts.** `pct` was computed from the live
+  values while `shots`/`makes` fell back to canonical, so the empty state read
+  `24 SHOTS · 15 MAKES · MAKE % —` — the card admitting it could not compute the
+  one number those two values exist to produce. All three follow one triple now.
+
+Verified at 393pt with a 5'11" / 6'5" profile and a 37-shot capture scoring 41:
+`5'11" · 180 cm`, `6'5" · 196 cm`, two em-dashed reaches, `37 SHOTS`, `41 /
+NEEDS WORK`, `21.6% MAKE %`, `8 / 37`. Signed out, and signed in after the probe
+was deleted, canonical's four measurements and `62.5%` render as shipped, and
+"Not recorded" sits inside its column with no overflow.
+
+**A note on this route and the detector.** With the probe deleted the numeric
+sweep reports every one of those tokens again, because an account with no
+profile and no sessions legitimately shows the canonical card in both states.
+That is the empty state, not a defect — the same caveat the ledger already
+records for goals and the history date range. The detector cannot tell the two
+apart; only checking whether the data exists can.
+
+### PARTLY DONE: the processing screen now watches a real run
+
+Kevin, directly: *"a placeholder portrays a feature that I told you I want to
+be real, so that the user, when they go use it, actually works."* The feature
+log up to here has made displayed VALUES real. This is the first entry that
+makes a FEATURE real, and it is the biggest of the fakes.
+
+`/video-analysis/processing` was a `setTimeout`. Its `stage` was never advanced
+— the source read `void setStage` — so the bar sat at 64% for fifteen seconds
+and then declared itself slow, for every player, whether or not anything was
+running. It never received an analysis id and it polled nothing.
+
+**There is no server-side job to poll, and that is the point.** The run is
+CLIENT-SIDE: `VideoUpload` drives the pipeline in the browser and already moves
+through five real stages — uploading, analysing frames, processing results,
+saving the session, loading results — reporting each into its own local state
+where no other screen could see it. `/api/save-analysis` writes
+`processingStatus: "completed"` in the same request, so there has never been a
+row to watch.
+
+`lib/analysis/analysisJob.ts` is the contract: the pipeline publishes the stages
+it already computes, and the canonical screen renders whichever one the run has
+actually reached. It carries STATUS ONLY and deliberately does not re-implement
+the run — one analysis pipeline, one save path, or the two routes disagree
+about the same shot, which is the defect this whole log is about.
+
+Terminal states are the job's, not a guess: finishing routes to that analysis's
+results; throwing shows 040 with the pipeline's own message; passing 15s while
+still running shows 037, measured from the RUN's start so navigating in mid-run
+cannot reset the clock. Retry returns to the uploader rather than restarting
+here, because the run's subject is a `File` this screen never held — a retry
+that quietly did nothing would be the same lie one layer down.
+
+**With no run in flight the screen says NOTHING TO ANALYSE** and offers the
+uploader. Canonical has no state for this because canonical never imagined
+arriving without a run; a progress bar with nothing behind it is exactly what
+was removed.
+
+**AND THE HANDOFF IS DONE.** `/video-analysis/upload` read the chosen `File`
+in `onPick`, kept only its metadata for the review screen, and let the file go
+— so "Analyze video" navigated here with nothing to process. The page holds the
+file now and `queueAnalysisFile` carries it to the job.
+
+**The run had to move screens with it.** It is client-side, so it dies with
+whichever component hosts it; leaving it on the upload page and navigating away
+would kill it mid-analysis. The processing screen therefore MOUNTS the existing
+pipeline headlessly over the queued clip — `VideoUpload` gained `initialFile`,
+`autoAnalyze` and `headless` — rather than re-implementing it. One analysis
+path and one save path: a second copy would be two routes disagreeing about one
+shot, which is the defect this whole log is about. Every route into that
+component funnels through one `acceptFile`, so a clip handed in from outside
+gets the same type and size checks as a picked one.
+
+Two effects, not one, and both idempotent: `analyzeVideo` reads `videoFile`
+from state, which `acceptFile` cannot have applied in the same tick, so
+starting the run from inside the accept would analyse `null`. Separate refs
+guard the accept and the run — the first version shared one ref, re-accepted on
+every render, and put React into "Maximum update depth exceeded".
+
+Verified end to end at 393pt with a real 1.1MB clip: pick -> review -> Analyze
+-> `/video-analysis/processing`, and the bar reads a real **64%**, the `pose`
+stage published by the actual pipeline. **What could NOT be exercised here:**
+this headless Chromium has no WebGL, so TensorFlow cannot run pose detection
+and the run stalls at that stage — an environment limit, not a code path. The
+stages past `pose`, and the success navigation, are verified by construction
+and by the desktop uploader's own flow, not by this harness.
+
+### DONE: the readiness panel actually checks the camera
+
+Second of Kevin's feature list. `LiveCapture`'s six rows were literals in
+`READY_ROWS` — "Full body GOOD / Lighting GOOD / Stability GOOD / Hoop visible
+GOOD / Ball visible GOOD / Pose confidence 92%" — so the screen told every
+player their setup was correct before recording: in the dark, with the phone in
+a pocket, with the player out of frame. It is the check a player trusts before
+they shoot, and it was six words on a card.
+
+**Five of the six are answered, by pipelines this app already ships:**
+
+- FULL BODY and POSE CONFIDENCE from MoveNet, the same detector the analysis
+  runs. Full body asks whether the joints that DEFINE a shot are in frame —
+  both ankles, both shoulders, the head — not merely whether some keypoints
+  came back: a player cropped at the knees returns plenty of keypoints and
+  cannot be analysed.
+- LIGHTING is mean frame luminance. No model needed.
+- STABILITY is the mean per-pixel change between consecutive samples — camera
+  shake plus subject motion. It reads CHECKING on the first sample, because one
+  frame cannot show movement.
+- BALL VISIBLE is the COCO detector the upload pipeline already uses for shot
+  tracking.
+
+**The sixth is not, and says so.** Nothing detects a hoop: the rim is
+USER-CALIBRATED, tapped by the player on the upload screen, so there is no
+detector to ask. It reads NOT CHECKED rather than a green GOOD, because a
+player who trusts that row and frames the rim out of shot gets no shot result
+at all.
+
+**The tick had to move too.** Canonical draws a green check beside every row; it
+is the RESULT of a check, so it now appears only on one that passed. A green dot
+beside "TOO DARK" would be the old lie wearing the new value.
+
+Sampling is one pass every 1.2s, non-overlapping, stopped on unmount — two
+models over a video frame is expensive on a phone and this runs while the player
+is still setting up.
+
+The thresholds are a pure `evaluateReadiness`, tested (8 cases) without a
+camera, a GPU or a model — including that a bad setup returns ZERO greens,
+which is the defect stated as a test.
+
+**What could NOT be exercised here:** this harness has no camera and no WebGL,
+so the panel was verified only in its honest pending state — all rows CHECKING,
+hoop NOT CHECKED. The measurements themselves need a real device.
+
+### DONE: the share card grades the shot it is sharing
+
+Third of Kevin's feature list, and the worst place in the product to carry a
+constant. `ShareResults`' MECHANICS HIGHLIGHTS were four literals — ELBOW STACK
+GOOD, RELEASE ANGLE GOOD, WRIST SNAP GOOD, FOLLOW-THROUGH GOOD — on the one
+card in this app a player SENDS TO OTHER PEOPLE. Every other constant had an
+audience of one; this one went out to whoever the player showed it to.
+
+Two of the four grade from angles the analysis already measures, against the
+same ideal bands the metric surfaces print: elbow 85°-95°, release 45°-55°,
+wrist 15°-30°. An angle the shot did not carry reads NOT MEASURED, never GOOD.
+
+**FOLLOW-THROUGH is never graded.** It is a PHASE, and what would grade it —
+how the wrist and arm hold after release — is the wrist angle the row above
+already carries. Grading both from one number would assert two independent
+readings from a single measurement, which is F22 exactly, so the row says what
+it is instead of borrowing.
+
+**AND THE APP DISAGREES WITH ITSELF ABOUT THE ELBOW.** `angles.elbow` is graded
+85°-95° by the biomechanics KEY MEASUREMENTS table and by `readMetric` on the
+phone overview, and **160°-180°** by the MECHANICS panel on `/results/demo`.
+Those are two different quantities wearing one field name — flexion at the set
+point versus extension at release — and only one can be what the pipeline
+writes. This grades against 85°-95°, matching the two surfaces most recently
+verified against real seeded angles, and the conflict is recorded rather than
+papered over. **It must be settled before either band is trusted further: one
+of those two screens is currently mis-grading every shot.**
+
+Verified at 393pt with one shot carrying three distinct outcomes — elbow 66
+(REVIEW), release 50 (GOOD), wrist null (NOT MEASURED) — so the card read
+`REVIEW · GOOD · NOT MEASURED · NOT MEASURED`. Signed out, canonical's four
+GOODs render exactly as they shipped. Eight tests cover the bands, the edges,
+the missing angles and the defect stated directly: a shot that measured nothing
+returns no GOOD at all.
+
+### DONE: the capture's observations are readable, and the frame viewer uses them
+
+`capture_session_observations` has been written since capture was built — pose
+confidence, keypoints, full-body visibility, stability, lighting, hoop and ball
+visibility — by BOTH the live-capture readiness flow AND every video upload,
+which posts a pose confidence averaged across its frames. **Nothing had ever
+read it back.** F1 again: complete, correct, no caller.
+
+That is why the frame viewer's KEYPOINTS and TRACKING became em-dashes when the
+constants were removed — not because the data was missing, but because there was
+no route to ask for it. `GET /api/capture-sessions/[id]/observations` is that
+route, scoped through `resolveProfileId` with the capture re-checked against the
+caller's profile before anything is returned.
+
+`keypointCount` is derived rather than the landmarks served: the panel prints
+"13/17" and has no use for the coordinates, which are large. A `keypoints`
+payload that is not a countable list yields null — "no count recorded" — never
+a zero, which would read as "the detector found no joints".
+
+Verified with a seeded capture at 13/17 keypoints and `stable: false`: the
+endpoint returned them, a fabricated session id returned **404** and a
+signed-out request **401**, and the panel read `FRAME 103 · — FPS · 47° ·
+CONFIDENCE 88% · KEYPOINTS 13/17 · TRACKING UNSTABLE`. Signed out, canonical's
+`FRAME 42 · 120 FPS · 168° · 98% · 17/17 · EXCELLENT` renders as shipped.
+
+FPS is still an em-dash on a real capture. Nothing anywhere records a frame
+rate; that one needs a column before it can need a route.
+
+### Method rules learned here
+- **F1.** An endpoint existing is not an endpoint wired. Four separate engines
+  (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
+  were complete, correct and had zero callers. Grep for the consumer before
+  assuming a feature is missing — usually it is only disconnected.
+- **F2.** After a Prisma migration, RESTART the dev server. The running process
+  holds the old client, writes fail, and a page that falls back to demo values
+  looks green while saving nothing.
+- **F3.** Read the API's actual field names. `/api/shooters` publishes reference
+  angles under `measurements`, not `biomechanics`; the wrong key fails silently
+  and forever because the empty state looks identical to the canonical one.
+- **F4.** A display default is not a saved value. Onboarding rendered
+  `store.value ?? 74` and saved NULL — the review step showed a height the
+  database never received, which silently disabled three stature-scaled
+  measurements downstream.
+- **F5.** "0 of 20" and "we do not measure this" look identical on a progress
+  bar and only one is the player's fault. Anything unmeasurable carries a
+  reason string, and the screen prints the reason instead of a bar.
+- **F6.** Canonical photography has DATA PAINTED INTO IT. `090-rec-1.png` has
+  "05:28" in its pixels. Reusing canonical imagery behind live content puts two
+  contradictory figures on one card; cover the baked value or drop the asset.
+- **F7.** A renderer tuned for canonical constants can be wrong for real ones.
+  The player card greened its delta's first token unconditionally — correct for
+  four hardcoded rises, wrong the moment a real decline could appear.
+- **F8.** `a ?? b` is the wrong operator for "measured, or nothing". A goal the
+  server had explicitly declined to measure fell through the `??` to the stored
+  0 and rendered "0%" — turning "nobody has checked" into "you have made no
+  progress". Branch on the SOURCE, never on the value's nullness.
+- **F9.** A blocked remote image HANGS; it does not error. `complete:false`,
+  no error event, forever — so an `onError` fallback leaves an empty box. Layer
+  the fallback UNDER the image instead of swapping it in, and nothing has to
+  detect a failure that never announces itself.
+- **F11.** `Number(null)` is 0, NOT NaN — so `.map(Number).filter(!isNaN)` lets
+  a null through as a ZERO. It would have dragged an average down and set the
+  minimum to 0 the moment the schema allowed an unscored row. Drop nulls BEFORE
+  the cast, never after.
+- **F12.** Making a column nullable is the small half of the job. The readers
+  that assumed non-null, the rows already written, and any value DERIVED from
+  the column's ordering (here `score_change`, a delta against the previous row)
+  all have to be handled, or the schema change quietly produces wrong numbers
+  instead of missing ones.
+- **F14.** A screen with no data cannot prove a wiring works. The test account
+  had zero shot events, so every stat strip legitimately showed the canonical
+  triple whether or not it was wired — indistinguishable from a broken fix.
+  Seed the data, verify, then delete it; do not accept "looks unchanged" as a
+  pass on an empty account.
+- **F13.** Grep for the RENDERED form, not the source form. "Jordan Ellis" was
+  written `>JORDAN ELLIS<` in six components — already uppercased in the markup —
+  so a search for the mixed-case string reported them clean. Sweep with the
+  runtime text (walk the DOM for the string) as well as the source.
+- **F15.** The differential audit is blind to any route that redirects when
+  signed out, and to any route whose empty state renders no data at all. Both
+  produce an empty intersection and read as CLEAN however wrong they are. Four
+  constants hid there, including one on a page every other value of which was
+  already live. For those routes, check the signed-in render against the
+  canonical constant directly instead.
+- **F16.** Before collapsing "no data" and "data that is empty" into one
+  fallback, check whether the screens reading it can tell them apart. A hook
+  with two states over three-state data will make two screens contradict each
+  other the moment one of them starts distinguishing the cases on its own.
+- **F17.** The audit harness has a viewport, and a viewport is a filter. Every
+  sweep before this one ran at 1440px, so a whole component subtree behind a
+  responsive switch was reported clean without ever being loaded. Sweep at each
+  breakpoint the app actually branches on.
+- **F18.** A `||` default on a field the API never returns is indistinguishable
+  from data at every call site. `a.shotType || "Catch & Shoot"` and
+  `a.title || "Shot analysis"` had fired on every row for every account since
+  they were written, and I wired two screens to read them without checking the
+  response actually carried the field. Grep the API's response builder for the
+  key before treating a mapped field as real — F3 applies to your OWN mapping
+  layer, not just to someone else's endpoint.
+- **F19.** The differential detector matches NUMERIC shapes only — percentages,
+  clock times, dates, degrees. A categorical constant ("Make", "Right",
+  "Video", a status word) passes every sweep untouched, and `/media` was
+  cleared twice while its API hardcoded two of them. When a field's values are
+  words, the detector cannot help; read the response builder.
+- **F20.** A fallback applied per-row INSIDE a map over real rows is not an
+  empty state, whatever it is named. `RECENT_FALLBACK` only ever ran on
+  sessions the player actually had, so it could not describe "no data" — it
+  could only overwrite gaps in data that existed. An empty state belongs on the
+  branch where the list is empty.
+- **F21.** Two functions computing the same band WILL split. `scoreBand`
+  (85/70/50) and `scoreVerdict` (90/70/55) sat in different files answering the
+  same question about the same score, so 87 was EXCELLENT on one screen and
+  GOOD on the next. When a second copy appears, delete it — do not re-tune it.
+- **F22.** When one screen lists two rows that are the same underlying
+  quantity, only one may carry the measurement. The phone metric strip has both
+  RELEASE ANGLE and SHOT ARC, and this pipeline computes one number for both;
+  filling each would assert two independent readings from a single measurement.
+  Answer one, and say the other is not measured.
+- **F23.** A BROKEN image renders its alt text; a HANGING one renders nothing.
+  F9's layered fallback only works if the image has nothing to paint when it
+  fails, so a decorative image layered over a fallback must carry `alt=""`.
+  A descriptive alt turns a failed headshot into text spilling out of its cell,
+  on top of the initials that were supposed to cover for it.
+- **F24.** Tooling the ledger cites by name belongs in the repo. Both
+  differential detectors lived in a scratchpad, were referenced as the method
+  for finding most of the constants in this log, and were rebuilt from memory
+  three times after container recycles. If a rule depends on a script, version
+  the script.
+- **F25.** A detector that cannot fail is worse than no detector, because it
+  reports "clean". The numeric sweep's regex ended in `\b` after `%` and `°`,
+  so it never matched either — for its entire life it tested only clock times
+  and dates while appearing to test four token classes. Prove a detector FINDS
+  something known-bad before trusting a clean result from it.
+- **F10.** When a screen names an entity beside a picture of it, the picture
+  has to follow the name. The analysis overview named the real top match while
+  still showing canonical's Trae Young crop — worse than the constant it
+  replaced, because it asserts something false about a real person.

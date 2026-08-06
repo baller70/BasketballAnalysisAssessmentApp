@@ -21,6 +21,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Settings, Share, Download, Info } from "lucide-react"
 import { PhaseTrack, PointsGlyph, StreakGlyph } from "@/components/shotiq/Glyphs"
@@ -185,28 +186,30 @@ export function ResultsScreen({
  * hairline between the two clusters at x 296pt.
  */
 export function ResultsIdentity({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   className = "",
 }: { name?: string; sub?: string; streak?: string; points?: string; className?: string }) {
+  const chrome = usePlayerChrome()
+
   return (
     <div className={`flex items-start justify-between ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-display text-[34px] leading-[31px] tracking-[0.045em]">{name.toUpperCase()}</div>
-        <div className="mt-[2px] text-[11.6px] leading-[13px] tracking-[-0.02em]" style={{ color: GRAPHITE }}>{sub}</div>
+        <div className="shotiq-display text-[34px] leading-[31px] tracking-[0.045em]">{(name ?? chrome.name).toUpperCase()}</div>
+        <div className="mt-[2px] text-[11.6px] leading-[13px] tracking-[-0.02em]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
       </div>
       <div className="flex shrink-0 items-start">
         <div className="w-[76px] text-center">
           <span className="flex h-[17px] items-center justify-center"><StreakGlyph size={39} /></span>
-          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{streak}</div>
+          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{streak ?? chrome.streak}</div>
           <div className="shotiq-microcaps mt-[3px] text-[8.4px] leading-[8px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
         </div>
         <span aria-hidden="true" className="mx-[7px] mt-[1px] h-[50px] w-px" style={{ background: RULE }} />
         <div className="w-[60px] text-center">
           <span className="flex h-[17px] items-center justify-center"><PointsGlyph size={21} /></span>
-          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{points}</div>
+          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{points ?? chrome.points}</div>
           <div className="shotiq-microcaps mt-[3px] text-[8.4px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
         </div>
       </div>
@@ -217,19 +220,21 @@ export function ResultsIdentity({
 /** Just the streak + points cluster, for the screens whose left column is a
  *  title rather than the name (041, 043). */
 export function StreakPoints({
-  streak = "6", points = "2,840", className = "",
+  streak, points, className = "",
 }: { streak?: string; points?: string; className?: string }) {
+  const chrome = usePlayerChrome()
+
   return (
     <div className={`flex shrink-0 items-start ${className}`}>
       <div className="w-[74px] text-center">
         <span className="flex h-[17px] items-center justify-center"><StreakGlyph size={39} /></span>
-        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{streak}</div>
+        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{streak ?? chrome.streak}</div>
         <Micro className="mt-[4px]">DAY STREAK</Micro>
       </div>
       <span aria-hidden="true" className="mx-[6px] h-[48px] w-px" style={{ background: RULE }} />
       <div className="w-[58px] text-center">
         <span className="flex h-[17px] items-center justify-center"><PointsGlyph size={21} /></span>
-        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{points}</div>
+        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{points ?? chrome.points}</div>
         <Micro className="mt-[4px]">POINTS</Micro>
       </div>
     </div>
@@ -444,6 +449,8 @@ export function PhaseStrip({
   labels?: string[]; activeIndex?: number; height?: number; captionCap?: number
   sub?: string; gap?: number; className?: string; ring?: boolean
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <div className={className}>
       <div className="flex overflow-hidden rounded-[4px]" style={{ gap }}>
@@ -463,7 +470,7 @@ export function PhaseStrip({
             <div className="shotiq-display leading-[1.05] tracking-[0.03em]"
                  style={{ fontSize: capDisplay(captionCap), color: i === activeIndex ? ORANGE : INK }}>{l}</div>
             {sub && i === activeIndex && (
-              <div className="text-[10px] leading-[12px]" style={{ color: ORANGE }}>{sub}</div>
+              <div className="text-[10px] leading-[12px]" style={{ color: ORANGE }}>{sub ?? chrome.sub}</div>
             )}
           </div>
         ))}

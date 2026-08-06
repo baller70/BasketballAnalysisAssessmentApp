@@ -17,6 +17,11 @@ interface ProfileInput {
   athleticAbility?: number | null
   dominantHand?: string | null
   shootingStyle?: string | null
+  /** The four onboarding answers that used to be discarded on Finish. */
+  position?: string | null
+  yearsPlaying?: string | null
+  practiceFrequency?: string | null
+  primaryGoal?: string | null
   bio?: string | null
   enhancedBio?: string | null
   coachingTier?: string | null
@@ -73,6 +78,10 @@ function buildProfileData(input: ProfileInput) {
   if (has(input, "athleticAbility")) data.athleticAbility = num(input.athleticAbility)
   if (has(input, "dominantHand")) data.dominantHand = str(input.dominantHand)
   if (has(input, "shootingStyle")) data.shootingStyle = str(input.shootingStyle)
+  if (has(input, "position")) data.position = str(input.position)
+  if (has(input, "yearsPlaying")) data.yearsPlaying = str(input.yearsPlaying)
+  if (has(input, "practiceFrequency")) data.practiceFrequency = str(input.practiceFrequency)
+  if (has(input, "primaryGoal")) data.primaryGoal = str(input.primaryGoal)
   if (has(input, "bio")) data.bio = str(input.bio)
   if (has(input, "enhancedBio")) data.enhancedBio = str(input.enhancedBio)
   if (has(input, "coachingTier")) data.coachingTier = str(input.coachingTier)
@@ -180,13 +189,25 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.user.findUnique({ where: { id: user.userId }, select: { displayName: true, email: true } }),
+      prisma.user.findUnique({
+        where: { id: user.userId },
+        // `createdAt` is the ACCOUNT's birthday. The profile row's own
+        // createdAt is not the same thing — `ensureUserProfile` above creates
+        // it lazily on first read, so for anyone who signed up before that row
+        // existed it would date the account to their next visit.
+        select: { displayName: true, email: true, createdAt: true },
+      }),
     ])
 
     return NextResponse.json({
       success: true,
       profile: profile
-        ? { ...profile, displayName: userRow?.displayName ?? null, email: userRow?.email ?? null }
+        ? {
+            ...profile,
+            displayName: userRow?.displayName ?? null,
+            email: userRow?.email ?? null,
+            joinedAt: userRow?.createdAt?.toISOString() ?? null,
+          }
         : profile,
     })
   } catch (error) {

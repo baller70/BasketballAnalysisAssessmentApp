@@ -16,8 +16,12 @@ interface MediaItem {
   // group can be drawn without something behind it (R10 defect M1: SOURCE,
   // SHOT RESULT and HAND were rendered but never consulted).
   source: "iOS Capture" | "Web Upload"
-  result: "Make" | "Miss"
-  hand: "Right" | "Left"
+  /* Both were served as bare constants by /api/media — every row a Make, every
+     row Right-handed. The hand is a profile fact now; the result is answered
+     only for a capture holding exactly ONE shot, because a session-wide
+     make/miss is not a quantity. An em-dash means the row cannot say. */
+  result: "Make" | "Miss" | "—"
+  hand: "Right" | "Left" | "—"
 }
 
 const cimg = (n: string) => `/images/canonical/${n}.png`
@@ -94,6 +98,11 @@ const SORTS = ["Newest", "Oldest", "Score"] as const
 export default function MediaLibraryPage() {
   const [groups, setGroups] = useState(DEMO)
   const [empty, setEmpty] = useState(false)
+  /* True once real analyses have replaced DEMO. The two hardcoded counts below
+     exist to match the canonical design's "12 items" / "10 items" / "8 items";
+     they must not be reported over live data, where they would simply be
+     wrong. */
+  const [live, setLive] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [checked, setChecked] = useState<Record<string, string>>(() =>
     Object.fromEntries(FILTERS.map((g) => [g.head, g.all])))
@@ -117,10 +126,27 @@ export default function MediaLibraryPage() {
     })
   }
   useEffect(() => {
+    // Render what comes back, don't just count it.
+    //
+    // This used to read the response only to decide whether the library was
+    // EMPTY — a non-empty list left the hardcoded DEMO groups on screen, so a
+    // real upload could never appear here even once the endpoint returned it.
+    // (And until now the endpoint answered 405, since /api/media exported
+    // DELETE only, so the branch never ran at all.)
+    //
+    // DEMO stays as the fallback: with no analyses yet the library looks
+    // exactly as it always has. Real rows replace it when they exist.
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const list = d?.media ?? d?.items
-        if (Array.isArray(list) && list.length === 0) { setGroups({}); setEmpty(true) }
+        if (!Array.isArray(list)) return
+        if (list.length === 0) { setGroups({}); setEmpty(true); return }
+        const real = d?.groups
+        if (real && typeof real === "object" && Object.keys(real).length) {
+          setGroups(real as Record<string, MediaItem[]>)
+          setEmpty(false)
+          setLive(true)
+        }
       }).catch(() => {})
   }, [])
   // Every group in the rail is consulted, not just two of the five.
@@ -384,7 +410,7 @@ export default function MediaLibraryPage() {
           <label className="flex items-center gap-[8px]">
             <input type="checkbox" className="h-[13px] w-[13px]" readOnly checked={selected.size > 0} /> {selected.size} selected
           </label>
-          <span>{total === Object.values(groups).flat().length ? 12 : total} items</span>
+          <span>{!live && total === Object.values(groups).flat().length ? 12 : total} items</span>
         </div>
 
         {/* Canonical fills the fold and clips the last group at the viewport
@@ -402,7 +428,7 @@ export default function MediaLibraryPage() {
         )}
         {Object.entries(shown).map(([day, items]) => {
           const groupUnfiltered = items.length === (groups[day]?.length ?? 0)
-          const count = groupUnfiltered ? DECLARED_COUNT[day] : `${items.length} items`
+          const count = groupUnfiltered ? (DECLARED_COUNT[day] ?? `${items.length} items`) : `${items.length} items`
           return (
           // Canonical rules each date section off from the one above it —
           // full-width hairlines at y=474 and y=746 (x240–1436). The app ran
@@ -432,7 +458,12 @@ export default function MediaLibraryPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.img} alt="" className="absolute inset-0 h-full w-full object-contain" />
                     ) : (
-                      <MediaSurface height="100%" rounded={0} />
+                      /* The surface's canonical `0:07` is a claim about THIS
+                         clip. Pass the row's own length so a real upload shows
+                         its real one; a row with none recorded shows the
+                         em-dash the API sends rather than borrowing canonical's
+                         seven seconds. */
+                      <MediaSurface height="100%" rounded={0} duration={m.len} />
                     )}
                     <button type="button" onClick={() => setDetail({ item: m, day })} aria-label={`Open ${m.title}`}
                             data-testid={`media-open-${m.id}`}
@@ -495,7 +526,7 @@ export default function MediaLibraryPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={detail.item.img} alt="" className="h-[260px] w-full object-cover" />
               ) : (
-                <MediaSurface height={260} rounded={0} />
+                <MediaSurface height={260} rounded={0} duration={detail.item.len} />
               )}
               <span className="absolute bottom-[8px] right-[9px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{detail.item.len}</span>
             </div>
@@ -519,7 +550,17 @@ export default function MediaLibraryPage() {
                   Analyze now <ChevronRight className="h-[12px] w-[12px]" />
                 </Link>
               ) : (
-                <Link href="/results/demo/analysis" className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-analysisBlue)]">
+                /* "Open analysis" now opens THIS shot's analysis when the item
+                   is a real one. It used to send every card — demo or real — to
+                   /results/demo/analysis, which is how a player's own upload
+                   ended up showing somebody else's numbers. Demo items keep
+                   their old destination, because there is no record behind
+                   them to open. */
+                <Link
+                  href={live ? `/results/${detail.item.id}` : "/results/demo/analysis"}
+                  data-testid="media-open-analysis"
+                  className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-analysisBlue)]"
+                >
                   Open analysis <ChevronRight className="h-[12px] w-[12px]" />
                 </Link>
               )}

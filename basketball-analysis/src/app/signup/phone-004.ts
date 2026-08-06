@@ -138,8 +138,28 @@ const FIELDS: Record<string, [number, number]> = {
 }
 
 export const RUNS: Record<string, Run> = {
+  /* The lockup sat 2.75 device px HIGH — a pure vertical placement error, with
+     nothing wrong with its type: no size, scale or tracking is touched.
+
+     The rung, not a precision claim (rule 12): the sweep returns four flat
+     plateaux — {0.5,1.0} 6.9334, {1.5..2.2} 5.2491, {2.5,3.0} 4.1879,
+     {3.5,4.0} 5.0197 — because a text raster position quantises to whole
+     device rows. 2.75 is the centre of the winning plateau, and the minimum is
+     BRACKETED rather than sitting at the edge of the lattice: the first sweep
+     stopped at 3.0, where 2.5 and 3.0 tied, which is the shape rule 20 warns
+     about. Extending it to 6.0 showed the score climbing again.
+
+     THE MOVE IS `ty`, NOT `dy`, AND THAT IS THE WHOLE DIFFERENCE. The first
+     attempt shipped the same 2.75 px as `dy` — which lands in `top` — and the
+     built capture came back 5.2491: not the winning rung but the ADJACENT one,
+     a full 1.06 short of the 4.1879 the sweep had promised. The sweep moved
+     this run with a transform, and a transform and a `top` quantise onto
+     different raster phases, so the shipped move lost a device row that the
+     measured move had. The two other solves in the same round used the same
+     property in the sweep as in the recipe (scaleX, font-size) and landed
+     8.4842 -> 8.4842 and 5.1898 -> 5.1897. See method rule 47. */
   wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0456, ls: 0.0123,
-              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 0 },
+              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 1.2670 },
   /* CREATE ACCOUNT. The size was right and the WIDTH was not, which is the one
      pairing rule 32 says to read together before calling anything a size error:
      cap height canonical/render came back 1.0009 — exact — while the advance
@@ -166,9 +186,34 @@ export const RUNS: Record<string, Run> = {
      therefore sits +0.475 (cap top) / +0.403 (foot) canonical px low and cannot
      be placed closer. Do not "fix" it — the two lattices are why `tx`/`ty` are
      inside the transform, and vertically there is nothing between the rungs. */
+  /* CORRECTED — AND THE FIRST VERSION OF THIS COMMENT WAS WRONG, ON A CLIPPED
+     MEASUREMENT. Both facts are kept because the mistake is the lesson.
+
+     What was claimed: swept alone, the band mean wanted the 0.33 stroke KEPT
+     while the ladder wanted it gone, and I read that opposition as the stroke
+     masking a half-pixel misregistration. What was actually true: the report's
+     display window was 148-220 while this run's ink spans y 162-239, so BOTH
+     estimators were scoring three quarters of the run. Re-measured over the
+     whole run the opposition mostly evaporates, and the "solve" that came out
+     of it — stroke 0.05 — is the WORST of the three on every full-run metric.
+
+     Scored on the corrected 148-248 window:
+       ty -0.75  st 0.33   band 14.2223   whole 5.3624   ladder 0.0419 heavy
+       ty -0.75  st 0.15   band 14.3046   whole 5.3669   ladder 0.0083 matched
+       ty -0.75  st 0.05   band 14.5484   whole 5.3801   ladder 0.0228 matched
+       ty  0.00  st 0.33   band 14.3768   whole 5.3708   (the original)
+
+     So 0.15: best weight match on the board and second on pixels, 0.0045 of
+     whole screen behind 0.33. The vertical move survives the correction — it
+     improves band AND whole screen against ty 0 — and stays at the centre of
+     its plateau, -0.75 device px = -0.3455 CSS px. tx was swept -0.60..+0.45
+     and 0 won.
+
+     Shipped through `ty` and the stroke property, the same levers the sweep
+     injected (rule 47). See method rule 50 for the window fault itself. */
   display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
-             ws: 3.85, stroke: 0.33, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: 0 },
+             ws: 3.85, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: -0.3455 },
   /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
      size, so fitting each on its own would let two different sizes both look
      locally plausible while the block reads wrong.
@@ -283,11 +328,35 @@ export const RUNS: Record<string, Run> = {
      quantise, so these digits are the rung, not a precision claim. */
   terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.95, ls: -0.004,
            colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0 },
-  createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.90, ls: -0.03,
+  /* "Create account" — the plate's label, and the display run's signature all
+     over again (rule 32: read the two axes together before calling anything a
+     size error). Vertical extent canonical/render 1.0004 by outer bbox and
+     1.0037 by per-column 50% crossings — exact on both estimators — against an
+     advance of 324.69 / 372.50 = 0.8717. A size change cannot produce that;
+     the whole 14.7% is horizontal scale. 0.90 x 0.87165 = 0.7845.
+
+     dy is deliberately unchanged. The joint sweep put ty 0.00 / 0.29 / 0.58
+     device px at 8.4842 to four decimals — identical, so the lattice does not
+     resolve them and moving it would record precision nobody measured. */
+  createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.7845, ls: -0.03,
                colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
            colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 0, ty: 0 },
-  signinLab: { x: 412.72, top: 1736.39, size: 21.0, weight: 480, scale: 0.90, ls: -0.03,
+  /* "Sign in" — the OPPOSITE diagnosis to createLab above, which is why the two
+     are solved apart despite having been seeded with identical numbers. Here
+     vertical extent came back 0.8913 (per-column) / 0.8905 (bbox) against an
+     advance of 0.8852: both about 11% over and within 0.7% of EACH OTHER, so
+     nearly all of it is size with a small scale trim — the helpPass signature,
+     not the display one.
+
+     Two runs sharing a token set are not thereby one defect. Rule 14 says
+     solve related runs jointly; it does not say assume they agree, and these
+     two are on the same role at the same authored size for different reasons.
+
+     21.0 -> 18.95 and 0.90 -> 0.9092 by the joint sweep with the overlay held
+     at its solved origin: 6.0673 -> 5.1898. ty unresolved again (0.00 and 0.58
+     both 5.1898), so dy stands. */
+  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.9092, ls: -0.03,
                colour: "var(--shotiq-color-ink)", dx: 1.16, dy: 8.52, tx: 0, ty: 0,
                ox: BOX_X, oy: SIGNIN.y },
 }
@@ -382,8 +451,48 @@ export const MASKS = {
      share       334.38..372.61 x 1729.87..1771.66
      checkbox     68.19..107.89 x 1472.15..1511.60 */
 const MARKS = `
+/* THE MONOGRAM'S 13.804 WAS NOT UNREACHABLE — it had been ruled unreachable by
+   the one sweep this project has since discredited. That 81-candidate run is
+   the subject of method rule 40: six different (left, top) inputs returned the
+   same number to four decimals, and re-run alone the winner reproduced WORSE
+   than baseline. "Every geometry tried scored worse" was a conclusion drawn
+   from an instrument that was not measuring, and it stood in the ledger as a
+   stated residual for as long as nobody re-tested it against a control.
+
+   Re-solved with a control that reproduces the built capture's 13.8039 exactly
+   and 17/17 distinct candidate geometries: **13.8039 -> 5.5289** on a pure
+   vertical translation of 1.20 device px, with no box scaled and no traced
+   coordinate touched.
+
+   The shape error the ledger described is REAL and is what remains. Extents,
+   render minus canonical: L +1.05, R -0.35, T -1.13, B -0.21 — a translation
+   would move L and R together and T and B together, and these do not, so the
+   render is 1.40 px too narrow and 0.92 px too tall (aspect 1.291 against
+   1.343). What was wrong was inferring from a genuine shape error that the
+   whole band was shape: T -1.13 is a translation sitting on top of it, and it
+   was worth 8.3 of the 13.8.
+
+   The residual 5.5289 is the shape, and it is left alone deliberately. Fixing
+   it means re-tracing the glyph coordinates in Marks004.tsx; a non-uniform
+   scale on this box would land the extents while distorting every stroke
+   width, which is buying one metric with another (rule 24).
+
+   dy resolves cleanly here — 1.10 -> 5.7006, 1.20 -> 5.5289, 1.30 -> 5.9348,
+   bracketed on both sides — unlike the text runs on this screen, whose values
+   land on flat plateaux. This is SVG geometry with sub-pixel AA, not a text
+   raster snapping to whole device rows (rule 12), so the digits here are
+   measured rather than a rung.
+
+   Shipped as the SAME transform:translate the sweep injected, per rule 47: the
+   wordmark on this screen was solved with a transform, shipped through the top
+   property, and missed by a full raster rung. 1.20 device px / 2.170483 =
+   0.5529 CSS px.
+
+   NO BACKTICKS IN THIS COMMENT. It lives inside the MARKS template literal, so
+   a backtick around an identifier closes the string and the file stops parsing
+   — which is exactly what the first version of this comment did. */
 .s4 [data-s4="monogram"]{position:absolute;left:${u(80)};top:${u(424)};width:${u(76)};height:${u(58)};
-  display:block;pointer-events:none}
+  transform:translate(0px,0.5529px);display:block;pointer-events:none}
 /* THE TWO EYE MARKS WERE ONE DEFECT. Both rendered ~7% oversized in BOTH
    dimensions - width ratios canonical/render 0.928 and 0.931, height ratios
    0.934 and 0.946 - i.e. a uniform scale error on a shared component, not two

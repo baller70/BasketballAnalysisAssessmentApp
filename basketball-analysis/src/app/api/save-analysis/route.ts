@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { uploadMedia } from "@/lib/storage"
 import { validateCsrf } from "@/lib/csrf"
+import { recordEarn } from "@/lib/points/recordEarn"
 
 interface SaveAnalysisRequest {
   clientSessionId: string
@@ -24,6 +25,15 @@ interface SaveAnalysisRequest {
   shoulderAngle?: number
   hipAngle?: number
   releaseAngle?: number
+  /** The dip: deepest knee bend in the clip, not the release frame's knee. */
+  kneeAngleMin?: number
+  // The four derived KEY MEASUREMENTS (lib/vision/derivedMetrics.ts). Every one
+  // is optional and stays NULL when the client could not measure it — a length
+  // needs the player's profile height for scale, and jump needs a video.
+  releaseHeightInches?: number
+  releaseDistanceInches?: number
+  verticalJumpInches?: number
+  centerlineDeviationDeg?: number
   visionAnalysis?: Record<string, unknown>
   bodyPositions?: Record<string, unknown>
   annotatedImageUrl?: string
@@ -122,6 +132,15 @@ function parseSaveAnalysisRequest(value: unknown): SaveAnalysisRequest {
     shoulderAngle: optionalNumber(body.shoulderAngle, "shoulderAngle", -360, 360),
     hipAngle: optionalNumber(body.hipAngle, "hipAngle", -360, 360),
     releaseAngle: optionalNumber(body.releaseAngle, "releaseAngle", -360, 360),
+    /* The dip. A knee joint cannot read outside 0-180 in a real pose, so a
+       value beyond that is a broken measurement rather than a deep squat. */
+    kneeAngleMin: optionalNumber(body.kneeAngleMin, "kneeAngleMin", 0, 180),
+    // Ranges are generous but real: a release above 15ft or a 6ft vertical is a
+    // broken measurement, not an athlete, and must be rejected at the door.
+    releaseHeightInches: optionalNumber(body.releaseHeightInches, "releaseHeightInches", 0, 180),
+    releaseDistanceInches: optionalNumber(body.releaseDistanceInches, "releaseDistanceInches", 0, 120),
+    verticalJumpInches: optionalNumber(body.verticalJumpInches, "verticalJumpInches", 0, 72),
+    centerlineDeviationDeg: optionalNumber(body.centerlineDeviationDeg, "centerlineDeviationDeg", 0, 90),
     matchedShooterId: optionalNumber(body.matchedShooterId, "matchedShooterId", 1, 2_147_483_647),
     matchConfidence: optionalNumber(body.matchConfidence, "matchConfidence", 0, 1),
     strengths: stringArray(body.strengths, "strengths"),
@@ -244,6 +263,11 @@ export async function POST(request: NextRequest) {
         shoulderAngle: body.shoulderAngle,
         hipAngle: body.hipAngle,
         releaseAngle: body.releaseAngle,
+        kneeAngleMin: body.kneeAngleMin,
+        releaseHeightInches: body.releaseHeightInches,
+        releaseDistanceInches: body.releaseDistanceInches,
+        verticalJumpInches: body.verticalJumpInches,
+        centerlineDeviationDeg: body.centerlineDeviationDeg,
         visionAnalysis: body.visionAnalysis as any,
         bodyPositions: body.bodyPositions as any,
         annotatedImageUrl,
@@ -286,14 +310,30 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      if (body.overallScore !== undefined) {
+      /* ONE HISTORY ROW PER ANALYSIS, ALWAYS. THIS IS THE INVARIANT.
+         This used to run only when an overall score was present — it had to,
+         because analysis_history.overall_score was NOT NULL. So an analysis
+         that produced angles but no score existed in `user_analyses` and
+         nowhere else, and the two halves of the app disagreed about whether
+         that day happened: the history screen and the overview's "N OF M"
+         missed it, and it counted toward no streak and no consistency goal,
+         because the goal evaluator and the badge engine read the other table.
+
+         The guard is gone rather than merely loosened. Any condition here is
+         another way for the two tables to drift apart, and a session the
+         player did belongs in their timeline whether or not anything could be
+         measured from it — the date alone is what a streak is made of. The
+         column is nullable now, so an unscored session records honestly. */
+      {
         await tx.analysisHistory.upsert({
           where: { analysisId: analysis.id },
           create: {
             userProfileId,
             analysisId: analysis.id,
             analysisDate: recordedAt,
-            overallScore: body.overallScore,
+            // `undefined` would make Prisma skip the column; this row exists
+            // precisely to record a session that may have no score.
+            overallScore: body.overallScore ?? null,
             formScore: body.formScore,
             balanceScore: body.balanceScore,
             releaseScore: body.releaseScore,
@@ -304,7 +344,9 @@ export async function POST(request: NextRequest) {
           },
           update: {
             analysisDate: recordedAt,
-            overallScore: body.overallScore,
+            // `undefined` would make Prisma skip the column; this row exists
+            // precisely to record a session that may have no score.
+            overallScore: body.overallScore ?? null,
             formScore: body.formScore,
             balanceScore: body.balanceScore,
             releaseScore: body.releaseScore,
@@ -322,12 +364,19 @@ export async function POST(request: NextRequest) {
           orderBy: [{ analysisDate: "asc" }, { createdAt: "asc" }, { id: "asc" }],
           select: { id: true, overallScore: true, scoreChange: true },
         })
+        /* Chain each scored session to the PREVIOUS SCORED one, skipping the
+           unscored rows this table can now hold — the same rule as the
+           recompute in /api/analysis-history. Subtracting straight from the
+           row before would read `Number(null)` as 0 and write a delta of -84
+           or +84 as soon as an unscored session landed between two scored
+           ones, and an unscored row has no score change of its own. */
+        let previousScored: { overallScore: unknown } | null = null
         for (let index = 0; index < chronological.length; index += 1) {
           const current = chronological[index]
-          const previous = chronological[index - 1]
-          const scoreChange = previous
-            ? Number(current.overallScore) - Number(previous.overallScore)
-            : null
+          const scoreChange = current.overallScore == null || previousScored == null
+            ? null
+            : Number(current.overallScore) - Number(previousScored.overallScore)
+          if (current.overallScore != null) previousScored = current
           const storedScoreChange = current.scoreChange == null ? null : Number(current.scoreChange)
           if (storedScoreChange === scoreChange) continue
           await tx.analysisHistory.update({
@@ -340,12 +389,35 @@ export async function POST(request: NextRequest) {
       return { analysis, imageUrl, annotatedImageUrl }
     }, { maxWait: 10_000, timeout: 30_000 })
 
+    /* THE POINTS FEATURE HAD NO TRIGGER. The ledger table, /api/points, the
+       tier maths, the badge grid and the context's `earnPoints` all existed and
+       nothing in the app called any of them, so every points figure on every
+       screen was decoration over an empty table.
+
+       This is the earn, tied to a VERIFIED SERVER EVENT — a row actually
+       written — which is what /api/points' own docstring says the design is
+       for ("earns fired on UI clicks rather than verified activity"). Awarding
+       here rather than in the browser also means an iOS capture earns exactly
+       like a web upload; both platforms post to this one route.
+
+       Keyed on clientSessionId, which this route is already idempotent by, so
+       the upload queue retrying a shot cannot pay for it twice. `recordEarn`
+       never throws: a points failure must not turn a saved analysis into an
+       error the player sees, so the outcome is reported and nothing else. */
+    const earn = await recordEarn(
+      userProfileId,
+      body.mediaType === "video" ? "upload_video" : "upload_image",
+      { analysisId: result.analysis.id, mediaType: body.mediaType },
+      body.clientSessionId,
+    )
+
     return NextResponse.json({
       success: true,
       analysisId: result.analysis.id,
       clientSessionId: body.clientSessionId,
       imageUrl: result.imageUrl,
       annotatedImageUrl: result.annotatedImageUrl,
+      pointsEarned: earn.earned ? earn.points : 0,
       message: "Analysis saved successfully",
     })
   } catch (error) {

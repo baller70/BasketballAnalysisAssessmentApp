@@ -21,9 +21,12 @@ const DIFFS: [string, string, string, string][] = [
   ["Wrist Flexion", "21°", "28°", "-7°"], ["Shot Arc", "Medium", "High", "—"], ["Balance at Release", "Good", "Great", "—"],
 ]
 const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["RELEASE", 71], ["FOLLOW-THROUGH", 84]]
+/** The three ways a comparison cell can say "there is no number here". */
+const placeholder = (s: string) =>
+  s === "Not measured" || s === "No reference" || s === "Pick a shooter"
 
 export default function ComparePage() {
-  const { hasData, score } = useHistory()
+  const { hasData, score, shots, makes } = useHistory()
   const isPhone = usePhoneViewport()
   const [view, setView] = usePhoneRoute("view")
   const [shooters, setShooters] = useState<Shooter[]>([])
@@ -41,6 +44,97 @@ export default function ComparePage() {
     fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
       .then((d) => setShooters(d?.shooters ?? [])).catch(() => {})
   }, [])
+
+  /* THE COMPARISON WAS SEVEN TYPED ROWS. "Release Angle 52° vs 56° = -4°" was
+     printed whoever you were and whoever you picked, so the screen headed
+     ELITE COMPARISON compared nothing. Your side now comes from your own last
+     analysis and the reference side from the selected shooter's biomechanics;
+     a row is only drawn when BOTH sides carry a value. */
+  const [mine, setMine] = useState<{
+    angles: Record<string, number | null>
+    measurements?: Record<string, number | null>
+  } | null>(null)
+  const [match, setMatch] = useState<Record<string, { overall: number }> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success && d.analysis) setMine(d.analysis) })
+      .catch(() => {})
+    fetch("/api/shooters/match", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.matched) setMatch(d.scores) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /* The reference side. `/api/shooters` publishes the reference angles under
+     `measurements`, and marks them as TIER-DERIVED ESTIMATES rather than
+     frame measurements — every legendary shooter carries the same generated
+     numbers. That flag is carried onto the screen: comparing a measured angle
+     against an estimate and printing the difference as fact would be a new
+     invented number, not a fix for the old ones. */
+  const eliteRecord = elite
+    ? (shooters as Array<Shooter & {
+        measurements?: Record<string, number | null>
+        biomechanicsSource?: string
+      }>).find((s) => s.id === elite.id)
+    : undefined
+  const eliteBio = eliteRecord?.measurements
+  const eliteEstimated = Boolean(eliteRecord) && eliteRecord?.biomechanicsSource !== "measured"
+
+  const fmtDeg = (v: number | null | undefined) => (v == null ? null : `${Math.round(v)}°`)
+  const fmtFtIn = (v: number | null | undefined) =>
+    v == null ? null : `${Math.floor(Math.round(v) / 12)}′${Math.round(v) % 12}″`
+
+  /* One comparison row per metric, each cell filled only from a value that
+     really exists. A metric the pipeline did not measure says so, and one the
+     catalog has no reference for says so — neither is quietly filled in. The
+     DIFFERENCE column is only computed when both sides carry a number. */
+  const eliteMissing = elite ? "No reference" : "Pick a shooter"
+  const liveRows: [string, string, string, string][] = (() => {
+    if (!mine) return []
+    const rows: [string, string, string, string][] = []
+    const add = (
+      label: string, you: number | null | undefined, them: number | null | undefined,
+      fmt: (v: number | null | undefined) => string | null, unit: string,
+    ) => {
+      const y = fmt(you); const t = fmt(them)
+      const diff = you != null && them != null
+        ? `${you - them > 0 ? "+" : ""}${Math.round(you - them)}${unit}`
+        : "—"
+      rows.push([label, y ?? "Not measured", t ?? eliteMissing, diff])
+    }
+    add("Release Angle", mine.angles.release, eliteBio?.releaseAngle, fmtDeg, "°")
+    add("Release Height", mine.measurements?.releaseHeightInches, eliteBio?.releaseHeight, fmtFtIn, "″")
+    add("Elbow Angle at Release", mine.angles.elbow, eliteBio?.elbowAngle, fmtDeg, "°")
+    add("Wrist Flexion", mine.angles.wrist, eliteBio?.wristAngle, fmtDeg, "°")
+    add("Knee Angle", mine.angles.knee, eliteBio?.kneeAngle, fmtDeg, "°")
+    add("Hip Angle", mine.angles.hip, eliteBio?.hipAngle, fmtDeg, "°")
+    add("Shoulder Angle", mine.angles.shoulder, eliteBio?.shoulderAngle, fmtDeg, "°")
+    return rows
+  })()
+
+  const usingLiveRows = liveRows.length > 0
+  const rowsToDraw = usingLiveRows ? liveRows : DIFFS
+
+  /* TOP MATCHES was five phase percentages written into the file — SETUP 88,
+     LOAD 79 — and no per-phase similarity has ever been computed for anybody,
+     so there is nothing to fill them from and they are NOT reinterpreted as
+     real. What /api/shooters/match does produce is the thing the heading
+     actually names: how close your measured angles are to each shooter in the
+     catalog. When that is available the panel lists your five closest, ranked;
+     otherwise it keeps the canonical phase bars as its empty state. */
+  const matchRows: [string, number][] = match
+    ? Object.entries(match)
+        .map(([name, s]) => [name, s.overall] as [string, number])
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+    : []
+  const usingMatchRows = matchRows.length > 0
+  /** The real overall similarity for the picked shooter, when one is picked. */
+  const eliteMatchPct = elite && match ? match[elite.name]?.overall ?? null : null
   const stepPhase = (dir: 1 | -1) =>
     setPhase((p) => PHASES[(PHASES.indexOf(p) + dir + PHASES.length) % PHASES.length])
   // Canonical photography holds while nothing is customized.
@@ -170,12 +264,28 @@ export default function ComparePage() {
                   <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
                     {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
                   </div>
-                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7′4″" : "7′1″"], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
+                  {/* Was six constants — 56°/52°, 7′4″/7′1″, 0.62s/0.64s — on a
+                      panel that only ever appears once you have picked a
+                      shooter, i.e. only ever on a live comparison. RELEASE TIME
+                      is gone rather than faked: nothing in the pipeline or the
+                      catalog times a release, so there is no honest value for
+                      either side. Elbow angle both sides do carry. */}
+                  {([
+                    ["RELEASE ANGLE", sideIdx
+                      ? fmtDeg(eliteBio?.releaseAngle) : fmtDeg(mine?.angles.release)],
+                    ["RELEASE HEIGHT", sideIdx
+                      ? fmtFtIn(eliteBio?.releaseHeight) : fmtFtIn(mine?.measurements?.releaseHeightInches)],
+                    ["ELBOW ANGLE", sideIdx
+                      ? fmtDeg(eliteBio?.elbowAngle) : fmtDeg(mine?.angles.elbow)],
+                  ] as [string, string | null][]).map(([k, v0]) => {
+                    const v = v0 ?? "—"
+                    return (
                     <div key={k} className="mt-[6px]">
                       <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
                       <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -258,9 +368,9 @@ export default function ComparePage() {
               panel, as canonical sets it. */}
           {/* Canonical draws no rule between the donut and this strip. */}
           <div className="mt-[10px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)] pt-[6px] text-center">
-            <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
-            <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
-            <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={shots != null ? String(shots) : hasData ? "—" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={makes != null ? String(makes) : hasData ? "—" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={shots != null && makes != null && shots > 0 ? `${((makes / shots) * 100).toFixed(1)}%` : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
           </div>
         </Card>
 
@@ -278,16 +388,33 @@ export default function ComparePage() {
               <th className="w-[56px] text-center font-bold">ELITE</th>
               <th className="w-[66px] text-center font-bold">DIFFERENCE</th></tr></thead>
             <tbody>
-              {DIFFS.map(([m, you, el, d]) => (
+              {rowsToDraw.map(([m, you, el, d]) => (
                 <tr key={m}>
                   <td className="whitespace-nowrap py-[1px] pr-[8px]">{m}</td>
-                  <td className="text-center font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
-                  <td className="text-center font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
+                  {/* A cell that holds no measurement is drawn as absence —
+                      small and grey — so it never reads as a figure alongside
+                      the ones that are real. */}
+                  <td className={placeholder(you)
+                    ? "text-center text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]"
+                    : "text-center font-semibold text-[var(--shotiq-color-shotiqOrange)]"}>{you}</td>
+                  <td className={placeholder(el)
+                    ? "text-center text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]"
+                    : "text-center font-semibold text-[var(--shotiq-color-analysisBlue)]"}>{el}</td>
                   <td className="text-center">{d}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {/* The ELITE column is not a frame measurement of that player — the
+              catalog generates it from their tier, so every legendary shooter
+              carries the same angles. Printing a difference against it without
+              saying so would put a new invented number where the old ones were. */}
+          {usingLiveRows && eliteEstimated && (
+            <p className="mt-[6px] text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">
+              Your column is measured from your last analysed shot. The elite column is a
+              tier-derived reference for {elite?.name}, not a measurement of their video.
+            </p>
+          )}
         </div>
 
         <div className="w-[306px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[16px] py-[8px]">
@@ -312,16 +439,28 @@ export default function ComparePage() {
           {/* Label, bar and percentage each own a column, so the figure never
               lands on top of the end of its own bar. */}
           <div className="mt-[10px] space-y-[10px]">
-            {MATCH.map(([p, v]) => (
+            {(usingMatchRows ? matchRows : MATCH).map(([p, v]) => {
+              // Live: the shooter you are currently comparing against leads in
+              // orange. Empty state: canonical highlights RELEASE.
+              const lead = usingMatchRows ? p === elite?.name : p === "RELEASE"
+              return (
               <div key={p} className="flex items-center gap-[8px]">
-                <span className={`w-[86px] shrink-0 whitespace-nowrap text-[10px] font-bold tracking-[0] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
+                <span title={usingMatchRows ? p : undefined}
+                      className={`w-[86px] shrink-0 truncate whitespace-nowrap text-[10px] font-bold tracking-[0] ${lead ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
                 <span className="h-[4px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                  <span className={`block h-full rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
+                  <span className={`block h-full rounded-full ${lead ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
                 </span>
-                <span className={`w-[30px] shrink-0 text-right text-[12px] font-semibold ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}%</span>
+                <span className={`w-[30px] shrink-0 text-right text-[12px] font-semibold ${lead ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}%</span>
               </div>
-            ))}
+              )
+            })}
           </div>
+          {usingMatchRows && (
+            <p className="mt-[8px] text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">
+              Overall similarity to your last measured shot
+              {eliteMatchPct != null && elite ? ` · ${elite.name} ${eliteMatchPct}%` : ""}.
+            </p>
+          )}
         </div>
         </Card>
       </div>

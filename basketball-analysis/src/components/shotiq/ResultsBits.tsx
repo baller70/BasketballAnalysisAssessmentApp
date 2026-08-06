@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
+import { useProfileStore } from "@/stores/profileStore"
 
 export interface HistoryStats {
   totalAnalyses: number
@@ -17,14 +18,24 @@ export interface HistoryStats {
 }
 
 export interface HistoryItem {
-  title: string
+  /** The analysis's own name, when it has one. Nothing sets one yet. */
+  title: string | null
   when: string
-  style: string
+  /** The raw ISO timestamp. `when` is already formatted for display, so a
+   *  screen that wants to compare against "the last 7 days" had nothing to
+   *  window on and printed a typed delta instead. */
+  at: string | null
+  /** The kind of shot, when anything recorded one. Nothing does yet. */
+  style: string | null
   score: number | null
   /** Attempts detected in the capture session behind this analysis. */
   shots: number | null
   /** Attempts scored as a make, after human corrections. */
   makes: number | null
+  /** The capture behind this analysis — the key to its individual shots.
+   *  Null when the analysis has no capture (an uploaded still, an iOS run
+   *  with no session), which is also when it has no shots to look at. */
+  captureSessionId: string | null
 }
 
 /**
@@ -41,6 +52,62 @@ export function formatSessionDate(value: string | number | Date | null | undefin
   const day = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
   const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
   return `${day} • ${time}`
+}
+
+/**
+ * The phone's wording for a session's time — `Today at 8:24 AM`, or
+ * `May 19, 8:24 AM` once the session is no longer today.
+ *
+ * The phone tree writes the time of your last session as a literal on a dozen
+ * components; canonical's is 8:24 AM, so every phone screen agreed with every
+ * other and none of them agreed with the session. The desktop sweep could never
+ * see it — these components only mount behind `usePhoneViewport`.
+ *
+ * "Today" is relative to the READER's clock, which is what the phone screens
+ * say, so the comparison is on local calendar day rather than on elapsed hours:
+ * a session at 11pm is still "Today" at 11:30pm and "Nov 3" at 00:30.
+ */
+export function formatRelativeSession(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return ""
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ""
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+  const now = new Date()
+  const sameDay = d.getFullYear() === now.getFullYear()
+    && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+  if (sameDay) return `Today at ${time}`
+  const day = d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  return `${day}, ${time}`
+}
+
+/**
+ * The day half of that format, alone — `Jan 14, 2024`.
+ *
+ * The JOINED readouts on /profile and /settings want a date without a time.
+ * They share the month/day/year options above so a day printed on its own can
+ * never drift from the same day printed beside a time.
+ */
+export function formatDayDate(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return ""
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
+/**
+ * The JOINED date both /profile and /settings print.
+ *
+ * Each had `Jan 14, 2024` written into its markup, so every account was told it
+ * had joined on the same January afternoon. These two cards are near-duplicates
+ * of one another and have drifted before, so the date resolves in one place:
+ * the server now returns the ACCOUNT's creation time (not the profile row's,
+ * which is created lazily on first read), and the canonical date remains the
+ * empty state for a visitor with no account behind the screen.
+ */
+export function useJoinedDate(): string {
+  const joinedAt = useProfileStore((s) => s.joinedAt)
+  useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
+  return formatDayDate(joinedAt) || "Jan 14, 2024"
 }
 
 /** Make percentage from a shots/makes pair, or null when either is missing. */
@@ -102,21 +169,30 @@ function loadHistory() {
           items: ((d.history ?? []) as {
             title?: string; createdAt?: string; recordedAt?: string; shotType?: string
             mediaType?: string; score?: number; scores?: { overall?: number | null }
-            shots?: number | null; makes?: number | null
+            shots?: number | null; makes?: number | null; captureSessionId?: string | null
           }[]).map((a) => {
             const iso = a.recordedAt || a.createdAt
             const overall = a.scores?.overall ?? a.score ?? null
             return {
-              title: a.title || "Shot analysis",
+              title: a.title ?? null,
               // One shared formatter, so 079/083/093 can never disagree about
               // how the same session is dated.
               when: formatSessionDate(iso),
-              style: a.shotType || "Catch & Shoot",
+              at: iso ?? null,
+              /* NOT RECORDED. `/api/analysis-history` returns no `shotType`
+                 and no `title` — it never has — so these two `||` defaults
+                 fired on every row for every account, and "Catch & Shoot" was
+                 canonical's own value being served as though it were the
+                 session's. Null now, so a screen has to decide what to show
+                 for a thing nobody stored instead of being handed a
+                 plausible-looking answer (F4). */
+              style: a.shotType ?? null,
               score: overall != null ? Math.round(overall) : null,
               // Counted from the shot events of the capture session behind the
               // analysis; null when the analysis has no capture behind it.
               shots: a.shots ?? null,
               makes: a.makes ?? null,
+              captureSessionId: a.captureSessionId ?? null,
             }
           }),
         }
@@ -162,6 +238,26 @@ export function useHistory() {
     shots: latest?.shots ?? null,
     makes: latest?.makes ?? null,
   }
+}
+
+/**
+ * The verdict band AND its colour, for a 0-100 form score.
+ *
+ * The dashboard carried a private `scoreBand` banding at 85/70/50 while
+ * `scoreVerdict` below bands at 90/70/55, so a score of 87 read EXCELLENT on
+ * one screen and GOOD on the next — the same disagreement, about the same
+ * number, that this module exists to prevent. One function, delegating to the
+ * shared verdict for its label so the two can never drift again.
+ */
+export function scoreBand(score: number | null): { label: string; color: string } {
+  const label = scoreVerdict(score)
+  const color =
+    score == null ? "var(--shotiq-color-muted)"
+    : score >= 90 ? "var(--shotiq-color-confirmGreen)"
+    : score >= 70 ? "var(--shotiq-color-analysisBlue)"
+    : score >= 55 ? "var(--shotiq-color-shotiqOrange)"
+    : "var(--shotiq-color-reviewRed)"
+  return { label, color }
 }
 
 /** Verdict band for a 0-100 form score, in canonical's wording. */

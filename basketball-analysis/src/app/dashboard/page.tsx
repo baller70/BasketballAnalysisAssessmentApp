@@ -30,7 +30,7 @@ import {
   ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
 import {
-  scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct, formatSessionDate,
+  scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct, formatSessionDate, scoreBand,
 } from "@/components/shotiq/ResultsBits"
 
 interface HistoryStats {
@@ -45,25 +45,16 @@ interface HistoryStats {
   makePct: number | null
 }
 
-function scoreBand(score: number | null): { label: string; color: string } {
-  if (score == null) return { label: "—", color: "var(--shotiq-color-muted)" }
-  if (score >= 85) return { label: "EXCELLENT", color: "var(--shotiq-color-confirmGreen)" }
-  if (score >= 70) return { label: "GOOD", color: "var(--shotiq-color-analysisBlue)" }
-  if (score >= 50) return { label: "FAIR", color: "var(--shotiq-color-shotiqOrange)" }
-  return { label: "NEEDS WORK", color: "var(--shotiq-color-reviewRed)" }
-}
+/* RECENT_FALLBACK is gone. It read like an empty state and was not one: it was
+   applied per-row INSIDE a map over the player's REAL sessions, so it never
+   described "no data" — it patched holes in data that existed. A session whose
+   analysis has no capture behind it came out carrying canonical's 24 shots and
+   15 makes, and the make% below was then computed from them.
 
-/**
- * The analysis API does not carry a per-session title, shot type or shot/make
- * split yet, so every RECENT ANALYSES row collapsed to the same "Shot analysis
- * / 62.5% / 24 / 15". These are the canonical per-row fallbacks (079/080) —
- * real values from the record win whenever the API supplies them.
- */
-const RECENT_FALLBACK = [
-  { title: "Pull-Up Jumper", style: "Catch & Shoot", shots: 24, makes: 15 },
-  { title: "Spot-Up Three", style: "Catch & Shoot", shots: 12, makes: 7 },
-  { title: "Transition Pull-Up", style: "Off the Dribble", shots: 11, makes: 6 },
-]
+   Worse, the stat strip further down already writes `latestShots ?? "—"`. That
+   em-dash could never fire, because the mapper had filled the hole two hundred
+   lines earlier. Correct handling at the render site is worthless if the
+   mapper lies to it first. */
 
 export default function DashboardPage() {
   const points = usePoints()
@@ -97,15 +88,22 @@ export default function DashboardPage() {
      instead, which costs the canonical layout nothing. */
 
   const [stats, setStats] = useState<HistoryStats | null>(null)
+  /* No `title` and no `style`: neither is recorded anywhere, so the row cannot
+     carry them. Shots and makes are nullable because an analysis with no
+     capture behind it counted none — which is not the same as counting zero. */
   const [recent, setRecent] = useState<{
-    title: string; when: string; style: string; score: number | null
-    shots: number; makes: number; makePct: string
+    when: string; score: number | null
+    shots: number | null; makes: number | null; makePct: string
   }[]>([])
   // Every scored session, newest first. The trend marks plot slices of this —
   // a row whose score fell draws a falling line, which a placeholder series
   // could never do.
   const [history, setHistory] = useState<{ score: number | null }[]>([])
   const [loading, setLoading] = useState(true)
+  /* "Why this matters" was a button with an Info icon and no onClick — it read
+     as an explain-this affordance and did nothing when pressed. It now opens
+     the explanation it advertises. */
+  const [whyOpen, setWhyOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -117,11 +115,15 @@ export default function DashboardPage() {
           const hData = await hRes.json()
           if (!cancelled && hData?.success) {
             setStats(hData.stats ?? null)
+            /* Only keys `/api/analysis-history` actually emits. `title`,
+               `shotType`, `shotCount` and `makeCount` were declared here and
+               read below, and the endpoint has never returned any of them — so
+               every `||` past them resolved to the canonical fallback on every
+               row for every account (F18). */
             const all = (hData.history ?? hData.analyses ?? []) as {
-              title?: string; createdAt?: string; recordedAt?: string; shotType?: string
+              createdAt?: string; recordedAt?: string
               score?: number; scores?: { overall?: number | null }
               shots?: number | null; makes?: number | null
-              shotCount?: number; makeCount?: number
             }[]
             setHistory(all.map((a) => ({
               score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
@@ -130,18 +132,17 @@ export default function DashboardPage() {
             // One shared formatter app-wide (Mon D, YYYY • H:MM AM); this
             // screen used to date the same session differently from 083/093.
             const fmtWhen = (iso?: string) => formatSessionDate(iso)
-            setRecent(items.map((a, i: number) => {
-              const fb = RECENT_FALLBACK[i % RECENT_FALLBACK.length]
-              const shotsN = a.shots ?? a.shotCount ?? fb.shots
-              const makesN = a.makes ?? a.makeCount ?? fb.makes
+            setRecent(items.map((a) => {
+              // Null when the analysis has no capture behind it. That is an
+              // em-dash downstream, never a borrowed 24.
+              const shotsN = a.shots ?? null
+              const makesN = a.makes ?? null
               return {
-                title: a.title || fb.title,
                 when: fmtWhen(a.recordedAt || a.createdAt),
-                style: a.shotType || fb.style,
                 score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
                 shots: shotsN,
                 makes: makesN,
-                makePct: shotsN ? `${((makesN / shotsN) * 100).toFixed(1)}%` : "—",
+                makePct: formatMakePct(shotsN, makesN),
               }
             }))
           }
@@ -162,6 +163,11 @@ export default function DashboardPage() {
   const band = scoreBand(score)
   // Latest-session shot counts, projected by /api/analysis-history from the
   // capture session behind the analysis (they used to be 24 / 15 literals).
+  /* Three states, not two (F16). Both phone variants below print these as
+     `latestShots ?? (hasData ? "—" : "24")`: the player's own counts, an
+     em-dash when a real session counted none, and canonical's pair only when
+     there is no session at all. They used to collapse the middle case into
+     canonical's, which put 24 / 15 beside a real date and score. */
   const latestShots = recent[0]?.shots ?? null
   const latestMakes = recent[0]?.makes ?? null
   const latestMakePct = formatMakePct(latestShots, latestMakes)
@@ -270,9 +276,26 @@ export default function DashboardPage() {
                     </div>
                     <GoalPercent size={18}>{hasData ? "72%" : "0%"}</GoalPercent>
                   </div>
-                  <button type="button" className="mt-[8px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
+                  <button
+                    type="button"
+                    data-testid="dashboard-why-this-matters"
+                    aria-expanded={whyOpen}
+                    aria-controls="dashboard-why-panel"
+                    onClick={() => setWhyOpen((v) => !v)}
+                    className="mt-[8px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]"
+                  >
                     Why this matters <Info className="h-[13px] w-[13px]" />
                   </button>
+                  {whyOpen && (
+                    <p
+                      id="dashboard-why-panel"
+                      className="mt-[8px] text-[12px] leading-[18px] text-[var(--shotiq-color-graphite)]"
+                    >
+                      {hasData
+                        ? "Release consistency is the strongest single predictor of make percentage in your sessions — a repeatable elbow line changes where the ball leaves your hand, and that shows up in the arc before it shows up in the score. This goal tracks the share of your recent shots whose release angle sits inside your own best range."
+                        : "Once you have analysed a shot, this is where your active goal and its progress appear — what to work on next, and how close you are to it."}
+                    </p>
+                  )}
                 </div>
                 <Link href="/results/demo/analysis" data-testid="cta-view-analysis"
                       className="mt-[12px] flex h-[44px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] text-[15px] font-medium text-white">
@@ -289,9 +312,12 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="text-[16px] font-semibold">{recent[0]?.title ?? "No analyses yet"}</div>
+                      {/* Nothing records an analysis title or a shot type, so a
+                          real session is named for what it is and its subtitle
+                          carries only the date. */}
+                      <div className="text-[16px] font-semibold">{recent[0] ? "Shot session" : "No analyses yet"}</div>
                       <div className="mt-[3px] text-[12px] text-[var(--shotiq-color-graphite)]">
-                        {recent[0] ? `${recent[0].when} · ${recent[0].style}` : "Upload or capture a shot to begin"}
+                        {recent[0] ? recent[0].when : "Upload or capture a shot to begin"}
                       </div>
                     </div>
                     <MoreVertical className="h-[17px] w-[17px] text-[var(--shotiq-color-graphite)]" />
@@ -428,8 +454,8 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-semibold">{r?.title ?? (loading ? "Loading…" : "No analysis yet")}</div>
-                    <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{r ? `${r.when} · ${r.style}` : ""}</div>
+                    <div className="truncate text-[14px] font-semibold">{r ? "Shot session" : (loading ? "Loading…" : "No analysis yet")}</div>
+                    <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{r ? r.when : ""}</div>
                   </div>
                   <div className="text-right">
                     <div className="shotiq-numeric text-[22px] leading-[24px]">{r?.score ?? "—"}</div>
@@ -499,8 +525,8 @@ export default function DashboardPage() {
           name={displayName} streak="6"
           points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"}
           score={score ?? 82}
-          shots={latestShots != null ? String(latestShots) : "24"}
-          makes={latestMakes != null ? String(latestMakes) : "15"}
+          shots={latestShots != null ? String(latestShots) : hasData ? "—" : "24"}
+          makes={latestMakes != null ? String(latestMakes) : hasData ? "—" : "15"}
           pct={latestMakePct}
           delta={improvement}
           mode={view === "professional" ? "analysis" : "training"}
@@ -513,8 +539,8 @@ export default function DashboardPage() {
           name={displayName} streak="6"
           points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"}
           score={score ?? 82}
-          shots={latestShots != null ? String(latestShots) : "24"}
-          makes={latestMakes != null ? String(latestMakes) : "15"}
+          shots={latestShots != null ? String(latestShots) : hasData ? "—" : "24"}
+          makes={latestMakes != null ? String(latestMakes) : hasData ? "—" : "15"}
           pct={latestMakePct}
           delta={improvement}
           when={recent[0]?.when ?? "Today at 8:24 AM"}
@@ -682,8 +708,8 @@ export default function DashboardPage() {
               <img src={`/images/canonical/079-recent-${(i % 3) + 1}.png`} alt=""
                    className="h-[45px] w-[140px] shrink-0 rounded-[4px] object-cover" />
               <div className="w-[214px] shrink-0">
-                <div className="text-[15px] font-semibold">{r.title}</div>
-                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{r.when} · {r.style}</div>
+                <div className="text-[15px] font-semibold">Shot session</div>
+                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{r.when}</div>
               </div>
               {/* Four ruled cells, sized to canonical's column shares. */}
               <div className="flex min-w-0 flex-1 items-center">

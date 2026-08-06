@@ -23,6 +23,7 @@ import {
   SlidersHorizontal, Rocket, type LucideIcon,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
+import { usePoints } from "@/lib/points/pointsContext"
 import { PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 import { PhoneChrome } from "@/components/shotiq/ShotIQPhoneChrome"
 
@@ -71,7 +72,7 @@ const TOPBAR_NOTICES = [
 export function ShotIQShell({
   active,
   children,
-  user = { name: "Jordan Ellis", initials: "JE" },
+  user,
   points = "2,840",
   streak = "6",
 }: {
@@ -87,6 +88,27 @@ export function ShotIQShell({
   // `railOverride` escape hatch — a screen cannot ship its own menu.
   void active
   const router = useRouter()
+
+  /* THE TOPBAR CARRIED THE PERSONA'S 2,840 ON EVERY SCREEN OF THE APP.
+     That is the one number a player sees from every route, and it disagreed
+     with the achievements screen the moment that screen started reading the
+     real ledger — 25 XP in the card, 2,840 in the bar directly above it. Both
+     read the same ledger now. The canonical figure stays as the empty state,
+     so a signed-out visitor still sees the screen as designed. */
+  const live = usePoints().getTotalPoints()
+  const shownPoints = live > 0 ? live.toLocaleString() : points
+
+  /* And the same for the name beside it. The dashboard was the ONLY route that
+     resolved the signed-in account — every other screen in the app greeted the
+     player as Jordan Ellis, so signing in and clicking Badges changed who you
+     were. Resolved here, once, with the dashboard's own derivation; a call site
+     that passes `user` explicitly still wins. */
+  const authUser = useAuthStore((s) => s.user)
+  const resolvedName =
+    authUser?.displayName || authUser?.firstName || authUser?.email?.split("@")[0] || null
+  const shownUser = user ?? (resolvedName
+    ? { name: resolvedName, initials: resolvedName.slice(0, 2).toUpperCase() }
+    : { name: "Jordan Ellis", initials: "JE" })
   const [panel, setPanel] = React.useState<null | "search" | "bell" | "account">(null)
   const [query, setQuery] = React.useState("")
   const [notices, setNotices] = React.useState(TOPBAR_NOTICES)
@@ -140,7 +162,7 @@ export function ShotIQShell({
           <div className="flex h-[38px] items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] px-[20px]">
             <PointsGlyph size={25} />
             <div className="text-left">
-              <div className="shotiq-numeric text-[23px] leading-[24px]">{points}</div>
+              <div className="shotiq-numeric text-[23px] leading-[24px]">{shownPoints}</div>
               <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">POINTS</div>
             </div>
           </div>
@@ -160,7 +182,7 @@ export function ShotIQShell({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/avatar-topbar.png" alt=""
                  className="h-[36px] w-[36px] rounded-full object-cover" />
-            <span className="text-[13px] font-bold tracking-[0.03em]">{user.name.toUpperCase()}</span>
+            <span className="text-[13px] font-bold tracking-[0.03em]">{shownUser.name.toUpperCase()}</span>
             <ChevronDown className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
           </button>
         </div>
@@ -216,7 +238,7 @@ export function ShotIQShell({
             {panel === "account" && (
               <div className="p-[8px]">
                 <div className="border-b border-[var(--shotiq-color-rule)] px-[10px] pb-[8px]">
-                  <div className="text-[13px] font-bold">{user.name}</div>
+                  <div className="text-[13px] font-bold">{shownUser.name}</div>
                   <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Signed in</div>
                 </div>
                 {[["Profile", "/profile"], ["Settings", "/settings"], ["Help & guide", "/guide"]].map(([l, href]) => (

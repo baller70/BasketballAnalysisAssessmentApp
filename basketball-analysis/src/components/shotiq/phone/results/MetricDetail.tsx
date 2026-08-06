@@ -24,6 +24,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { CorrectionGlyph, MechanicGlyph, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, ShareIcon, Panel, Micro, ScoreBar, PhaseRail, Chev,
@@ -32,7 +33,7 @@ import {
 export function MetricDetail({
   metric = "ELBOW ANGLE", value = "91", unit = "°",
   low = "85°", high = "95°", floor = "80°", ceiling = "100°",
-  phase = "Release", hand = "Right-handed",
+  phase = "Release", hand,
   score = 82, shots = "24", makes = "15", pct = "62.5%",
   onBack,
 }: {
@@ -42,6 +43,8 @@ export function MetricDetail({
   score?: number; shots?: string; makes?: string; pct?: string
   onBack?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <ResultsScreen
       testid="screen-ios-metric-detail"
@@ -67,8 +70,8 @@ export function MetricDetail({
       <div className="mt-[7px] flex items-center px-[17px]">
         <span className="grid h-[27px] w-[27px] shrink-0 place-items-center rounded-full text-[12px] text-white" style={{ background: "#1B1B1B" }}>JE</span>
         <span className="ml-[10px] min-w-0">
-          <span className="block text-[15px] font-medium leading-[17px]">Jordan Ellis</span>
-          <span className="block text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>{hand} • Advanced</span>
+          <span className="block text-[15px] font-medium leading-[17px]">{chrome.name}</span>
+          <span className="block text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</span>
         </span>
         <span className="ml-auto flex items-center gap-[9px]">
           <ActionGlyph kind="uploadVideo" height={13} />
@@ -79,7 +82,7 @@ export function MetricDetail({
           <span aria-hidden="true" className="h-[32px] w-px" style={{ background: RULE }} />
           <ActionGlyph kind="nodeGraph" height={12} />
           <span className="text-center">
-            <span className="shotiq-numeric block text-[17px] leading-[16px]">2,840</span>
+            <span className="shotiq-numeric block text-[17px] leading-[16px]">{chrome.points}</span>
             <Micro size={8}>POINTS</Micro>
           </span>
         </span>
@@ -109,7 +112,7 @@ export function MetricDetail({
             /0.705 = 43.1px. 35px measured cap 54, 82% of canonical - this
             one was too SMALL, not too large. */}
         <h1 className="shotiq-display text-[43.1px] leading-[36px] tracking-[0.01em]">{metric}</h1>
-        <div className="mt-[4px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand}</div>
+        <div className="mt-[4px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand ?? chrome.hand}</div>
       </div>
 
       {/* photo + read-out --------------------------------------------------- */}

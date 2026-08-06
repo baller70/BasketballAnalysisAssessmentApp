@@ -42,6 +42,8 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { useRouter } from "next/navigation"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
 import { ReadinessGlyph, ActionGlyph, PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
@@ -53,6 +55,7 @@ import {
   BackArrow, UploadGlyph, ShieldGlyph, GearGlyph, CameraGlyph, Spark, ConfidenceArc,
   usePhoneViewport,
 } from "@/components/shotiq/phone/LiveCaptureBits"
+import { useCameraReadiness } from "@/components/shotiq/phone/useCameraReadiness"
 
 export const CAPTURE_STATES = [
   "setup", "primer", "calibrate", "readiness", "ready",
@@ -78,24 +81,28 @@ const RECORDS: [string, string, string][] = [
 ]
 
 function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
+  const session = useLatestSession()
+
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-camera-permission-primer" pad={23} headerH={39} tabBar={false}>
       {/* identity strip — 014 draws the whole stat cluster in the header row,
           not the two-mark cluster the rest of the family uses (y50.7-113.3) */}
       <div className="flex items-start justify-between pt-[11px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[27px] leading-[28px] tracking-[0.04em]">JORDAN ELLIS</div>
-          <div className="mt-[5px] whitespace-nowrap text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="shotiq-display text-[27px] leading-[28px] tracking-[0.04em]">{chrome.name.toUpperCase()}</div>
+          <div className="mt-[5px] whitespace-nowrap text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <div className="flex shrink-0 items-start text-center">
           <div className="w-[62px]">
-            <div className="shotiq-numeric text-[19px] leading-[19px]">82</div>
+            <div className="shotiq-numeric text-[19px] leading-[19px]">{session.score}</div>
             <div className="shotiq-microcaps mt-[3px] whitespace-nowrap leading-[9px]" style={{ "--shotiq-microcaps-size": "8px", color: GRAPHITE } as React.CSSProperties} >FORM SCORE</div>
             <div className="mt-[4px] text-[8px] leading-[9.5px]" style={{ color: GRAPHITE }}>{TARGET}</div>
           </div>
           <span aria-hidden="true" className="mx-[6px] h-[57px] w-px" style={{ background: RULE }} />
           <div className="w-[34px]">
-            {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "%"]].map(([v, l], i) => (
+            {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "%"]].map(([v, l], i) => (
               <div key={l} className={i ? "mt-[2px]" : undefined}>
                 <div className={`shotiq-numeric text-[15px] leading-[16px] ${i === 1 ? "" : ""}`}
                      style={i === 1 ? { color: GREEN } : undefined}>{v}</div>
@@ -111,7 +118,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
           <span aria-hidden="true" className="mx-[7px] h-[57px] w-px" style={{ background: RULE }} />
           <div className="w-[40px]">
             <span className="flex justify-center"><PointsGlyph size={19} /></span>
-            <div className="shotiq-numeric mt-[2px] text-[17px] leading-[18px]">2,840</div>
+            <div className="shotiq-numeric mt-[2px] text-[17px] leading-[18px]">{chrome.points}</div>
             <div className="shotiq-microcaps mt-[2px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
           </div>
         </div>
@@ -251,6 +258,8 @@ function Setup({
   hand: "LEFT" | "RIGHT"; onHand: (h: "LEFT" | "RIGHT") => void
   onStart: () => void; onUpload: () => void; stream: MediaStream | null
 }) {
+  const session = useLatestSession()
+
   return (
     <PhoneScreen testid="screen-ios-live-camera-setup" pad={18} headerH={40} tab="home">
       <CaptureIdentity cap={22.1} className="pt-[7px]" />
@@ -261,13 +270,13 @@ function Setup({
           <div>
             <div className="shotiq-microcaps whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
             <div className="mt-[2px] flex items-baseline gap-[2px]">
-              <span className="shotiq-numeric text-[20px] leading-[20px]" style={{ color: BLUE }}>82</span>
+              <span className="shotiq-numeric text-[20px] leading-[20px]" style={{ color: BLUE }}>{session.score}</span>
               <span className="text-[9px]" style={{ color: GRAPHITE }}>/100</span>
             </div>
           </div>
           <Spark width={42} height={24} />
         </div>
-        {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"]].map(([v, l]) => (
+        {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "ACCURACY"]].map(([v, l]) => (
           <div key={l} className="flex-1 border-l pl-[8px] pt-[11px]" style={{ borderColor: RULE }}>
             <div className="shotiq-numeric text-[17px] leading-[18px]">{v}</div>
             <div className="shotiq-microcaps mt-[3px] whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
@@ -362,6 +371,8 @@ function Calibrate({
   onConfirm: () => void; onSkip: () => void; onSwitch: () => void
   stream: MediaStream | null; onStart: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-hoop-calibration" pad={21} headerH={40} tab="home">
       <div className="flex items-start justify-between pt-[12px]">
@@ -378,7 +389,7 @@ function Calibrate({
           <span aria-hidden="true" className="mx-[9px] mt-[1px] h-[52px] w-px" style={{ background: RULE }} />
           <div className="w-[54px]">
             <span className="flex h-[20px] items-center justify-center"><PointsGlyph size={20} /></span>
-            <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">2,840</div>
+            <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{chrome.points}</div>
             <div className="shotiq-microcaps mt-[5px] text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>POINTS</div>
           </div>
         </div>
@@ -426,14 +437,12 @@ function Calibrate({
 /* 030 — readiness check                                                   */
 /* ======================================================================= */
 
-const READY_ROWS: [React.ComponentProps<typeof ReadinessGlyph>["kind"], string, string][] = [
-  ["framing", "Full body", "GOOD"],
-  ["lighting", "Lighting", "GOOD"],
-  ["stability", "Stability", "GOOD"],
-  ["athlete", "Hoop visible", "GOOD"],
-  ["framing", "Ball visible", "GOOD"],
-  ["athlete", "Pose confidence", "92%"],
-]
+/* The glyph each check draws, in canonical's order. The VALUES used to live
+   here too — six literals that told every player their setup was correct
+   before recording, in any light, framed or not. They are measured now; see
+   `useCameraReadiness`. */
+const READY_GLYPHS: React.ComponentProps<typeof ReadinessGlyph>["kind"][] =
+  ["framing", "lighting", "stability", "athlete", "framing", "athlete"]
 
 function Readiness({
   onKeep, onCancel, onHelp, stream, onStart,
@@ -441,6 +450,7 @@ function Readiness({
   onKeep: () => void; onCancel: () => void; onHelp: () => void
   stream: MediaStream | null; onStart: () => void
 }) {
+  const readiness = useCameraReadiness(stream)
   return (
     <PhoneScreen testid="screen-ios-readiness-check" pad={22} headerH={44} tab="home">
       <CaptureIdentity cap={24} className="pt-[11px]" />
@@ -466,14 +476,23 @@ function Readiness({
           {/* the live readiness list, x261.2-368.6 y308.2-496.2 of the canonical */}
           {/* canonical x261.2-368.6, y308.2-496.2 — six 31.3pt rows */}
           <div className="pointer-events-none absolute right-[10px] top-[88px] w-[108px] overflow-hidden rounded-[6px] bg-white">
-            {READY_ROWS.map(([kind, label, value], i) => (
-              <div key={label} className={`flex h-[31px] items-center gap-[5px] px-[6px] ${i ? "border-t" : ""}`}
+            {readiness.map((row, i) => (
+              <div key={row.label} className={`flex h-[31px] items-center gap-[5px] px-[6px] ${i ? "border-t" : ""}`}
                    style={{ borderColor: RULE }}>
-                <CheckDot size={14} />
-                <ReadinessGlyph kind={kind} size={13} />
+                {/* The tick is the RESULT of a check, so it only appears on a
+                    check that actually passed. A green dot beside "TOO DARK"
+                    would be the old lie wearing the new value. */}
+                {row.state === "good"
+                  ? <CheckDot size={14} />
+                  : <span className="inline-block h-[14px] w-[14px] shrink-0 rounded-full border"
+                          style={{ borderColor: row.state === "poor" ? ORANGE : RULE }} />}
+                <ReadinessGlyph kind={READY_GLYPHS[i]} size={13} />
                 <div className="min-w-0">
-                  <div className="whitespace-nowrap text-[9px] leading-[10px]">{label}</div>
-                  <div className="text-[8px] font-semibold leading-[9px]" style={{ color: GREEN }}>{value}</div>
+                  <div className="whitespace-nowrap text-[9px] leading-[10px]">{row.label}</div>
+                  <div className="whitespace-nowrap text-[8px] font-semibold leading-[9px]"
+                       style={{ color: row.state === "good" ? GREEN : row.state === "poor" ? ORANGE : GRAPHITE }}>
+                    {row.value}
+                  </div>
                 </div>
               </div>
             ))}
@@ -525,6 +544,8 @@ function Ready({
   onRecord: () => void; onAdjust: () => void; onCancel: () => void
   stream: MediaStream | null; onStart: () => void
 }) {
+  const session = useLatestSession()
+
   return (
     <PhoneScreen testid="screen-ios-capture-ready" pad={21} headerH={35} tab="home">
       <CaptureIdentity cap={24} className="pt-[19px]" />
@@ -588,7 +609,7 @@ function Ready({
 
       <div className="shotiq-microcaps mt-[9px] text-[9.5px]" style={{ color: GRAPHITE }}>LATEST SESSION</div>
       <div className="mt-[5px] flex items-start">
-        {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
+        {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "MAKE %"]].map(([v, l]) => (
           <div key={l} className="flex-1">
             <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
             <div className="shotiq-microcaps mt-[4px] leading-[10px]" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >{l}</div>
@@ -973,7 +994,18 @@ const FLAGGED: [string, string, string, string, string, number][] = [
 ]
 const CLIP_LEN = ["0:03", "0:05", "0:11"]
 
-function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDiscard: () => void; onBack: () => void }) {
+/* CAPTURE REVIEW REVIEWS *THIS* CAPTURE.
+   Its shots, makes and make% were literals, so the screen that exists to let
+   you confirm or correct the session you just recorded reported someone else's
+   session. The orchestrator has held these counts all along and passed them to
+   `Recording`; `Review` simply never received them. Threaded in now — the same
+   numbers the recorder was showing a moment earlier, which is the only way the
+   two screens in one flow can agree. */
+function Review({ onAnalyze, onDiscard, onBack, shots, makes }: {
+  onAnalyze: () => void; onDiscard: () => void; onBack: () => void
+  shots: number; makes: number
+}) {
+  const pct = shots ? `${((makes / shots) * 100).toFixed(1)}%` : "0.0%"
   const [filter, setFilter] = React.useState("needs")
   return (
     <PhoneScreen testid="screen-ios-capture-review" pad={24} headerH={43} tab="capture">
@@ -987,7 +1019,7 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
               style={{ borderColor: RULE, background: "var(--shotiq-color-warmCanvas)" }}>
           <StreakGlyph size={34} />
           <span className="text-center">
-            <span className="shotiq-numeric block text-[19px] leading-[19px]">24</span>
+            <span className="shotiq-numeric block text-[19px] leading-[19px]">{shots}</span>
             <span className="shotiq-microcaps block text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>SHOTS</span>
           </span>
         </span>
@@ -998,7 +1030,11 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
       </p>
 
       <div className="mt-[13px] flex">
-        {[["15", "MAKES", INK], ["62.5%", "MAKE %", INK], ["3", "NEED REVIEW", ORANGE],
+        {/* NEED REVIEW / DISCARDED / PRACTICE TIME are not tracked by the
+            capture flow yet — no counter exists behind any of the three — so
+            they keep canonical's figures rather than being given invented ones.
+            MAKES and MAKE % are real. */}
+        {[[String(makes), "MAKES", INK], [pct, "MAKE %", INK], ["3", "NEED REVIEW", ORANGE],
           ["6", "DISCARDED", INK], ["00:20:04", "PRACTICE TIME", INK]].map(([v, l, c], i) => (
           <React.Fragment key={l}>
             {i > 0 && <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />}
@@ -1155,7 +1191,17 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
                         onHelp={() => setState("primer")} />
     case "ready":
       return <Ready stream={stream} onStart={() => void openCamera()}
-                    onRecord={() => { setSeconds(0); setRunning(true); setState("recording") }}
+                    onRecord={() => {
+                      /* A REAL TAKE STARTS AT ZERO SHOTS. The clock was already
+                         reset here; the shot counters were not, so pressing
+                         record began a session claiming 24 shots and 15 makes
+                         before the player had taken one — and Capture Review
+                         then inherited them. The canonical seed on the state
+                         itself still stands for a DEEP-LINKED state, which is a
+                         still of canonical 032 rather than a new take. */
+                      setSeconds(0); setShots(0); setMakes(0)
+                      setRunning(true); setState("recording")
+                    }}
                     onAdjust={() => setState("setup")} onCancel={() => setState("setup")} />
     case "recording":
       return <Recording stream={stream} onStart={() => void openCamera()}
@@ -1174,7 +1220,8 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
                            onDiscard={() => setState("recording")} />
     case "review":
       return <Review onAnalyze={() => router.push("/video-analysis/processing")}
-                     onDiscard={() => setState("setup")} onBack={() => setState("setup")} />
+                     onDiscard={() => setState("setup")} onBack={() => setState("setup")}
+                     shots={shots} makes={makes} />
     default:
       return <Setup hand={hand} onHand={setHand} stream={stream}
                     onUpload={() => router.push("/video-analysis/upload")}

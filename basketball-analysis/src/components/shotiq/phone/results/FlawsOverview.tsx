@@ -71,7 +71,7 @@ export const FLAWS: Flaw[] = [
 ]
 
 export function FlawsOverview({
-  streak = "6", points = "2,840", onOpen,
+  streak, points, onOpen,
 }: { streak?: string; points?: string; onOpen?: (slug: string) => void }) {
   return (
     <ResultsScreen

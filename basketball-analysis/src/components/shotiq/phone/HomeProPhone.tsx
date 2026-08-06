@@ -47,17 +47,18 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { PhoneScreen, PhoneIdentity, MiniTrend } from "@/components/shotiq/PhoneShell"
 import {
   Chev, Frame, ScoreBar, Micro, SectionHead, TrendArrow,
 } from "@/components/shotiq/phone/results/Kit"
 import { ActionGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
+import { scoreBand } from "@/components/shotiq/ResultsBits"
 
 const RULE = "var(--shotiq-color-rule)"
 const ORANGE = "var(--shotiq-color-shotiqOrange)"
 const GREEN = "var(--shotiq-color-confirmGreen)"
-const BLUE = "var(--shotiq-color-analysisBlue)"
 const RED = "var(--shotiq-color-reviewRed)"
 const GRAPHITE = "var(--shotiq-color-graphite)"
 
@@ -77,10 +78,10 @@ const TRENDS: [string, "setup" | "load" | "rise" | "release" | "follow", string,
 /* ------------------------------------------------------------ 019 home -- */
 
 export function HomeProfessionalPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   score = 82,
   shots = "24",
   makes = "15",
@@ -95,6 +96,11 @@ export function HomeProfessionalPhone({
   when?: string; target?: string
   onMenu?: () => void
 }) {
+  /* The verdict sat directly under a wired score as the literal "GOOD" in
+     canonical's blue, so a 93 read GOOD and a 41 read GOOD. Label and colour
+     both come from the one shared band now — a renderer tuned for a constant
+     is wrong for a real value the moment the value moves (F7). */
+  const band = scoreBand(typeof score === "number" ? score : null)
   return (
     <PhoneScreen testid="screen-ios-home-professional" tab="home" pad={0} headerH={38}>
       <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 70 }}>
@@ -136,7 +142,7 @@ export function HomeProfessionalPhone({
                  style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
             <div className="shotiq-numeric mt-[2px] text-[58px] leading-[0.82]" style={{ color: ORANGE }}>{score}</div>
             <ScoreBar score={score} width={74} height={6} />
-            <div className="shotiq-display mt-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+            <div className="shotiq-display mt-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</div>
             <div className="mt-[4px] text-[12.4px] leading-[14.4px]">Keep building<br />consistency.</div>
           </div>
         </div>
@@ -343,10 +349,10 @@ function MenuMark({ kind }: { kind: string }) {
 }
 
 export function ProfileMenuPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   score = 82,
   shots = "24",
   makes = "15",
@@ -366,6 +372,8 @@ export function ProfileMenuPhone({
   onSignOut?: () => void
   avatar?: string
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-profile-menu" tab="home" pad={0} header={false}>
       <div style={{ paddingLeft: 20.7, paddingRight: 20.7, paddingBottom: 70 }}>
@@ -384,8 +392,8 @@ export function ProfileMenuPhone({
         <div className="mt-[7px] flex items-center gap-[15px]">
           <Frame src={avatar} w={100} h={100} radius={50} pos="50% 30%" />
           <div className="min-w-0">
-            <div className="shotiq-display text-[36px] leading-[34px] tracking-[0.035em]">{name.toUpperCase()}</div>
-            <div className="mt-[4px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub}</div>
+            <div className="shotiq-display text-[36px] leading-[34px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
+            <div className="mt-[4px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
             <Link href="/profile"
                   className="mt-[8px] flex h-[37px] w-[128px] items-center justify-center gap-[9px] rounded-[5px] text-[14px]"
                   style={{ border: `1px solid ${ORANGE}`, color: ORANGE }}>
@@ -402,14 +410,14 @@ export function ProfileMenuPhone({
             <span className="flex h-[26px] items-center justify-center">
               <ActionGlyph kind="uploadVideo" height={17} />
             </span>
-            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{streak}</div>
+            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{streak ?? chrome.streak}</div>
             <Micro className="mt-[5px]" size={8.6}>DAY STREAK</Micro>
           </div>
           <div className="flex-1" style={{ borderLeft: `1px solid ${RULE}` }}>
             <span className="flex h-[26px] items-center justify-center">
               <ActionGlyph kind="nodeGraph" height={20} />
             </span>
-            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{points}</div>
+            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{points ?? chrome.points}</div>
             <Micro className="mt-[5px]" size={8.6}>POINTS</Micro>
           </div>
           <div className="flex-1" style={{ borderLeft: `1px solid ${RULE}` }}>

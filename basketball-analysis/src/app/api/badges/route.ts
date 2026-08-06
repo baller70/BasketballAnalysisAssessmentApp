@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { validateCsrf } from "@/lib/csrf"
+import {
+  ELBOW_AT_RELEASE, RELEASE_FROM_VERTICAL, WRIST_AT_RELEASE, inBand,
+} from "@/lib/analysis/angleBands"
 
 /**
  * /api/badges
@@ -51,11 +54,32 @@ interface BadgeStats {
   bestMatchPct: number // best matched-shooter confidence * 100
   techniques95: number // distinct metric categories that have reached 95
   totalPoints: number
+
+  /* ---- The badges the achievements screen actually draws ------------------
+     095 ships fifteen named badges — STACKED RELEASE, CLEAN ARC, DEEP RANGE —
+     with their earned state written into the page, so every account saw the
+     same four earned and the same eleven locked. These are the counters those
+     fifteen need. Seven of them are answerable from stored data; the rest are
+     reported as untracked rather than as a zero the player could "fix". */
+  shotsAnalysed: number        // detector shot events, not analysis sessions
+  stackedElbowCount: number    // analyses with the elbow in the stacked band
+  cleanArcCount: number        // analyses with a release angle in the arc band
+  heldFollowThroughCount: number // analyses with a held wrist at release
+  longestBreakDays: number     // biggest gap between two active days, returned from
+  longestSessionMinutes: number // longest COMPLETED capture session, in minutes
 }
 
 type BadgeResult = {
   unlocked: boolean
   progress: { current: number; total: number } | null
+  /**
+   * Set when the badge's criterion is not something this app records at all.
+   * "0 of 20" and "we do not measure this" look identical on a progress bar,
+   * and only one of them is the player's fault — a screen that cannot tell
+   * them apart tells the player they are failing at something nobody is
+   * counting. The string is the reason, shown as-is.
+   */
+  untracked?: string
 }
 
 // Returns unlock + progress for a single badge id given the computed stats.
@@ -121,6 +145,65 @@ function evalBadge(id: string, s: BadgeStats): BadgeResult {
     case "ultimate":
       // Handled by caller (depends on every other badge). Default locked.
       return { unlocked: false, progress: p(0, 1) }
+
+    /* ---- The fifteen the achievements screen draws ------------------------
+       Each rule states the criterion the badge's own caption promises, read
+       off stored data. Where the app records nothing that could answer it,
+       the badge says so instead of sitting at 0 forever. */
+    case "stacked-release":
+      // "Keep elbow stacked through release" — the elbow inside the stacked
+      // band at release, on five separate shots.
+      return { unlocked: s.stackedElbowCount >= 5, progress: p(s.stackedElbowCount, 5) }
+    case "clean-arc":
+      // "Maintain a smooth ball path" — release angle inside the 45–55° arc
+      // band, on five separate shots.
+      return { unlocked: s.cleanArcCount >= 5, progress: p(s.cleanArcCount, 5) }
+    case "balanced-base":
+      return { unlocked: s.bestBalance >= 85, progress: p(s.bestBalance, 85) }
+    case "high-elbow-set":
+      // Elbow height relative to the shoulder line needs the joint positions,
+      // and an analysis stores joint ANGLES, not the points they came from.
+      return { unlocked: false, progress: null,
+               untracked: "Elbow height above the shoulder line isn't recorded yet." }
+    case "quick-release":
+      // The same gap the compare screen has: nothing times a release.
+      return { unlocked: false, progress: null,
+               untracked: "Release time isn't measured yet." }
+    case "deep-range":
+      // Shot events carry a result, not a distance from the rim.
+      return { unlocked: false, progress: null,
+               untracked: "Shot distance isn't recorded yet." }
+    case "streak-builder":
+      return { unlocked: s.longestStreak >= 10,
+               progress: p(Math.max(s.currentStreak, s.longestStreak), 10) }
+    case "perfect-form":
+      return { unlocked: s.bestOverall >= 90, progress: p(s.bestOverall, 90) }
+    case "volume-shooter":
+      return { unlocked: s.shotsAnalysed >= 500, progress: p(s.shotsAnalysed, 500) }
+    case "clutch-performer":
+      // Nothing marks a shot as game-winning; there is no game context at all.
+      return { unlocked: false, progress: null,
+               untracked: "Game situations aren't recorded yet." }
+    case "early-bird-five":
+      return { unlocked: s.earlyBirdCount >= 5, progress: p(s.earlyBirdCount, 5) }
+    case "film-student":
+      // Opening an analysis is not written down, so a review count would be a
+      // number invented to fill the bar.
+      return { unlocked: false, progress: null,
+               untracked: "Session reviews aren't counted yet." }
+    case "iron-wrist":
+      return { unlocked: s.heldFollowThroughCount >= 50, progress: p(s.heldFollowThroughCount, 50) }
+    case "marathon-session":
+      /* "Log a 60-minute session." A capture session records both ends of its
+         own clock and always did; this badge simply never asked. Progress is
+         the longest COMPLETED session — a run still in flight has no length
+         yet, and counting it as zero would read as a session the player
+         somehow failed at. */
+      return { unlocked: s.longestSessionMinutes >= 60,
+               progress: p(s.longestSessionMinutes, 60) }
+    case "comeback":
+      return { unlocked: s.longestBreakDays >= 7, progress: p(s.longestBreakDays, 7) }
+
     default:
       return { unlocked: false, progress: null }
   }
@@ -137,6 +220,12 @@ const BADGE_IDS = [
   "sniper", "mentor",
   "perfect-game", "year-one",
   "transcendent", "influencer",
+  // The catalogue the achievements screen draws (095). Kept in this same list
+  // so one engine answers for every badge the app shows anywhere.
+  "stacked-release", "clean-arc", "balanced-base", "high-elbow-set",
+  "quick-release", "deep-range", "streak-builder", "perfect-form",
+  "volume-shooter", "clutch-performer", "early-bird-five", "film-student",
+  "iron-wrist", "marathon-session", "comeback",
   "ultimate",
 ] as const
 
@@ -246,7 +335,7 @@ interface ComputedState {
 }
 
 async function computeState(userProfileId: string): Promise<ComputedState> {
-  const [analyses, history, profile] = await Promise.all([
+  const [analyses, history, profile, shotsAnalysed, captureSessions] = await Promise.all([
     prisma.userAnalysis.findMany({
       where: { userProfileId },
       orderBy: { createdAt: "asc" },
@@ -260,6 +349,7 @@ async function computeState(userProfileId: string): Promise<ComputedState> {
         elbowAngle: true,
         kneeAngle: true,
         releaseAngle: true,
+        wristAngle: true,
         matchConfidence: true,
       },
     }),
@@ -271,6 +361,19 @@ async function computeState(userProfileId: string): Promise<ComputedState> {
     prisma.userProfile.findUnique({
       where: { id: userProfileId },
       select: { pointsState: true },
+    }),
+    // VOLUME SHOOTER counts SHOTS, not sessions — one video can carry dozens.
+    prisma.shotEvent.count({ where: { userProfileId } }),
+    /* MARATHON — "Log a 60-minute session." A capture session has always
+       carried both ends of its own clock: `startedAt` defaults on insert and
+       `endedAt` is written when the run finishes, by BOTH the live camera and
+       the upload pipeline. Nothing ever read them back, so the badge declared
+       session length untracked and sat locked forever (F1: the engine was
+       complete and had no caller). A session still in flight has a null
+       `endedAt` and is skipped rather than counted as zero. */
+    prisma.captureSession.findMany({
+      where: { userProfileId, endedAt: { not: null } },
+      select: { startedAt: true, endedAt: true },
     }),
   ])
 
@@ -349,8 +452,53 @@ async function computeState(userProfileId: string): Promise<ComputedState> {
     }
   }
 
+  /* ---- Counters for the fifteen badges the achievements screen draws ----
+     THESE BANDS JUDGED THE WRONG MOMENT, so two of the three badges below
+     could not be earned by anybody. Every angle on an analysis is sampled at
+     the RELEASE frame: `elbowAngle` is an extended elbow (~150-180), and
+     `releaseAngle` is the forearm's signed deviation from vertical with an
+     ideal of 0. Requiring an elbow of 80-100 asked for a set-point "L" that a
+     release frame never shows, and requiring a release angle of 45-55 —
+     canonical's ball ARC, a different quantity — asked for a shot thrown well
+     off vertical, so CLEAN ARC was not merely unreachable but inverted,
+     rewarding the bad shots and refusing the good ones.
+
+     The bands come from `angleBands` now, the same source the share card, the
+     phone metric strip and the biomechanics table read, so a badge cannot
+     promise one thing while the results screen shows another. */
+  const stackedElbowCount = analyses.filter((a) => inBand(num(a.elbowAngle), ELBOW_AT_RELEASE)).length
+  const cleanArcCount = analyses.filter((a) => inBand(num(a.releaseAngle), RELEASE_FROM_VERTICAL)).length
+  /* IRON WRIST wants a HELD follow-through, not a centred one, so this stays a
+     floor rather than a band — but the floor is the bottom of the measured
+     band instead of a number chosen here. */
+  const heldFollowThroughCount = analyses.filter((a) => {
+    const v = num(a.wristAngle)
+    return v != null && v >= WRIST_AT_RELEASE.min
+  }).length
+
+  /* MARATHON — the longest completed capture session, in minutes. */
+  const longestSessionMinutes = captureSessions.reduce((best, s) => {
+    const ms = (s.endedAt as Date).getTime() - s.startedAt.getTime()
+    return ms > 0 ? Math.max(best, ms / 60000) : best
+  }, 0)
+
+  /* COMEBACK — "return after a 7-day break". The gap only counts once the
+     player came BACK, so it is measured between two days that both have
+     activity; a player who simply stopped a fortnight ago has no gap. */
+  const activeDayKeys = Array.from(new Set(keys)).sort((a, b) => a - b)
+  let longestBreakDays = 0
+  for (let i = 1; i < activeDayKeys.length; i++) {
+    longestBreakDays = Math.max(longestBreakDays, (activeDayKeys[i] - activeDayKeys[i - 1]) / DAY_MS)
+  }
+
   const stats: BadgeStats = {
     totalAnalyses: analyses.length,
+    shotsAnalysed,
+    stackedElbowCount,
+    cleanArcCount,
+    heldFollowThroughCount,
+    longestBreakDays,
+    longestSessionMinutes,
     bestOverall,
     firstOverall,
     maxImprovement,
@@ -483,6 +631,7 @@ export async function GET(request: NextRequest) {
           {
             unlocked: b.unlocked || !!persistedAt,
             progress: b.progress,
+            untracked: b.untracked ?? null,
             earnedDate: persistedAt ? persistedAt.toISOString() : null,
           },
         ]
@@ -598,6 +747,7 @@ export async function POST(request: NextRequest) {
           {
             unlocked: b.unlocked || !!persistedAt,
             progress: b.progress,
+            untracked: b.untracked ?? null,
             earnedDate: persistedAt ? persistedAt.toISOString() : null,
           },
         ]

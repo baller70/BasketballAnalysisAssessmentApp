@@ -30,6 +30,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Info } from "lucide-react"
 import {
   ResultsScreen, ResultsBar, Panel, Micro, ScoreBar, PhaseRail, Frame,
@@ -40,13 +41,15 @@ const SWATCHES = [ORANGE, "#2D6CDF", "#0B8A3D", "#8B2FD6", "#565A5E"]
 
 export function CustomizeCard({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
-  first = "Jordan", last = "Ellis", jersey = 24, streak = "6", points = "2,840",
+  first = "Jordan", last = "Ellis", jersey = 24, streak, points,
   onCancel, onSave,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string
   first?: string; last?: string; jersey?: number; streak?: string; points?: string
   onCancel?: () => void; onSave?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const [accent, setAccent] = React.useState(ORANGE)
   const [num, setNum] = React.useState(jersey)
   return (
@@ -85,13 +88,13 @@ export function CustomizeCard({
             <div className="ml-auto flex shrink-0 items-start pt-[2px]">
               <div className="w-[72px] text-center">
                 <span className="flex h-[18px] items-center justify-center"><StreakGlyph size={38} /></span>
-                <div className="shotiq-numeric mt-[3px] text-[18px] leading-[16px]">{streak}</div>
+                <div className="shotiq-numeric mt-[3px] text-[18px] leading-[16px]">{streak ?? chrome.streak}</div>
                 <Micro className="mt-[4px]" size={8}>DAY STREAK</Micro>
               </div>
               <span aria-hidden="true" className="mx-[7px] h-[46px] w-px" style={{ background: RULE }} />
               <div className="w-[58px] text-center">
                 <span className="flex h-[18px] items-center justify-center"><PointsGlyph size={20} /></span>
-                <div className="shotiq-numeric mt-[3px] text-[18px] leading-[16px]">{points}</div>
+                <div className="shotiq-numeric mt-[3px] text-[18px] leading-[16px]">{points ?? chrome.points}</div>
                 <Micro className="mt-[4px]" size={8}>POINTS</Micro>
               </div>
             </div>
@@ -192,6 +195,8 @@ export function CustomizeCard({
 }
 
 function Row({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
+  const chrome = usePlayerChrome()
+
   return (
     /* Canonical row pitch is 44.2pt (rows open at 549.2 / 593.9 / 638.1 /
        681.9), with the title cap at 12.0pt over a sub cap of 9.7pt on ONE line.
@@ -202,7 +207,7 @@ function Row({ title, sub, children }: { title: string; sub: string; children: R
     <div className="flex items-center gap-[10px] px-[12px] py-[6px]">
       <span className="min-w-0">
         <span className="shotiq-display block text-[15.5px] leading-[15px] tracking-[0.03em]">{title}</span>
-        <span className="mt-[1px] block text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>{sub}</span>
+        <span className="mt-[1px] block text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</span>
       </span>
       <span className="ml-auto shrink-0">{children}</span>
     </div>

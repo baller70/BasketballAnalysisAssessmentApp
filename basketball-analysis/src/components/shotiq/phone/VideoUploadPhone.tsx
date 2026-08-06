@@ -31,6 +31,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
 import { Chev, Frame, Micro, ScoreBar, PhaseRail } from "@/components/shotiq/phone/results/Kit"
 import { ActionGlyph } from "@/components/shotiq/Glyphs"
@@ -43,10 +44,10 @@ const RED = "var(--shotiq-color-reviewRed)"
 const GRAPHITE = "var(--shotiq-color-graphite)"
 
 export function VideoUploadPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   score = 82,
   shots = "24",
   makes = "15",
@@ -60,25 +61,27 @@ export function VideoUploadPhone({
   onChoose?: () => void
   onRecord?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-video-upload" tab="capture" pad={0} headerH={38}>
       <div style={{ paddingLeft: 17, paddingRight: 17, paddingBottom: 70 }}>
         <div className="flex items-start justify-between pt-[14px] pb-[12px]"
              style={{ borderBottom: `1px solid ${RULE}` }}>
           <div className="min-w-0">
-            <div className="shotiq-display text-[31px] leading-[30px] tracking-[0.035em]">{name.toUpperCase()}</div>
-            <div className="mt-[3px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{sub}</div>
+            <div className="shotiq-display text-[31px] leading-[30px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
+            <div className="mt-[3px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
           </div>
           <div className="flex shrink-0 items-start">
             <div className="w-[80px] text-center">
               <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="uploadVideo" height={17} /></span>
-              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{streak}</div>
+              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{streak ?? chrome.streak}</div>
               <Micro className="mt-[4px]" size={8.6}>DAY STREAK</Micro>
             </div>
             <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px" style={{ background: RULE }} />
             <div className="w-[64px] text-center">
               <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="nodeGraph" height={19} /></span>
-              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{points}</div>
+              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{points ?? chrome.points}</div>
               <Micro className="mt-[4px]" size={8.6}>POINTS</Micro>
             </div>
           </div>

@@ -37,6 +37,8 @@ import {
   ScoreBar, PhaseRail, Chev, PrimaryBar, Frame, SkeletonOverlay, capDisplay,
   ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
+import { scoreBand } from "@/components/shotiq/ResultsBits"
+import { ELBOW_AT_RELEASE, RELEASE_FROM_VERTICAL } from "@/lib/analysis/angleBands"
 
 const TABS: [string, string][] = [
   ["ANALYSIS RESULT", "/results/demo"],
@@ -86,13 +88,143 @@ const METRICS: [MechanicKind, string, string, string, string][] = [
   ["balance", "CENTEREDNESS", "92", "%", "EXCELLENT"],
 ]
 
+/**
+ * YOUR SIX KEY METRICS, from the shot they describe.
+ *
+ * The six above are canonical's constants — 7'8", 52°, 93% — each with its own
+ * verdict, on a panel headed YOUR six key metrics. This is the PHONE
+ * counterpart of the desktop KEY MEASUREMENTS table wired early on, and it was
+ * never connected: the strip read identically for an account with a hundred
+ * analyses and one with none.
+ *
+ * FOUR OF THE SIX ARE ANSWERABLE, and two are not:
+ *
+ *  - SPIN RATE has no pipeline behind it. Nothing tracks the ball, so nothing
+ *    can measure its rotation.
+ *  - SHOT ARC is the SAME QUANTITY as RELEASE ANGLE in this pipeline — the
+ *    desktop table calls `releaseAngle` "Shooting Arc" for exactly that reason.
+ *    Printing one measurement under two labels would assert two independent
+ *    readings, which is worse than admitting to one.
+ *
+ * Two rows change unit, and that is deliberate. ELBOW ALIGNMENT and
+ * CENTEREDNESS are drawn as percentages, but what the pipeline computes is an
+ * elbow ANGLE and a centreline DEVIATION, both in degrees. Printing a degree
+ * value under a % sign would be a wrong label on a right number.
+ */
+type MetricRead = { value: string; unit: string; verdict: string; real: boolean }
+
+/** Each answerable metric: how to read it, and the band it is judged against. */
+const METRIC_SOURCE: Record<string, {
+  read: (a: OverviewAnalysis) => number | null
+  format: (v: number) => string
+  unit: string
+  /** Inclusive ideal range, the same bands the desktop table prints. */
+  ideal: [number, number]
+}> = {
+  "RELEASE HEIGHT": {
+    read: (a) => a.measurements?.releaseHeightInches ?? null,
+    format: (v) => `${Math.floor(Math.round(v) / 12)}'${Math.round(v) % 12}"`,
+    unit: "", ideal: [102, 110],
+  },
+  /* Both bands come from `angleBands`, which is where the evidence lives for
+     why they are not what this file used to carry. `angles.release` is
+     deviation from vertical (ideal 0), not canonical's 45-55 launch arc, and
+     `angles.elbow` is the extended elbow at release, not the 85-95 set-point
+     "L". Judged against the old bands, a correct shot failed both rows. */
+  "RELEASE ANGLE": {
+    read: (a) => a.angles?.release ?? null,
+    format: (v) => String(Math.round(v)), unit: "°",
+    ideal: [RELEASE_FROM_VERTICAL.min, RELEASE_FROM_VERTICAL.max],
+  },
+  "ELBOW ALIGNMENT": {
+    read: (a) => a.angles?.elbow ?? null,
+    format: (v) => String(Math.round(v)), unit: "°",
+    ideal: [ELBOW_AT_RELEASE.min, ELBOW_AT_RELEASE.max],
+  },
+  "CENTEREDNESS": {
+    read: (a) => a.measurements?.centerlineDeviationDeg ?? null,
+    format: (v) => v.toFixed(1), unit: "°", ideal: [0, 3],
+  },
+}
+
+export interface OverviewAnalysis {
+  angles?: Record<string, number | null>
+  measurements?: Record<string, number | null>
+}
+
+/**
+ * What to print for one canonical row.
+ *
+ * With no analysis the canonical constant stands — the empty state is the
+ * screen as designed. With one, a metric the pipeline cannot answer says so
+ * rather than carrying a number nobody derived (F5), and the verdict is
+ * computed against the ideal band instead of staying the constant it was: a
+ * rating tuned for canonical's value is wrong the moment the value moves (F7).
+ */
+export function readMetric(
+  label: string, demoValue: string, demoUnit: string, demoVerdict: string,
+  analysis: OverviewAnalysis | null,
+): MetricRead {
+  if (!analysis) return { value: demoValue, unit: demoUnit, verdict: demoVerdict, real: false }
+  const source = METRIC_SOURCE[label]
+  const raw = source ? source.read(analysis) : null
+  if (!source || raw == null) return { value: "Not measured", unit: "", verdict: "—", real: false }
+  const [lo, hi] = source.ideal
+  return {
+    value: source.format(raw),
+    unit: source.unit,
+    verdict: raw >= lo && raw <= hi ? "GOOD" : "REVIEW",
+    real: true,
+  }
+}
+
+export interface EliteMatch {
+  name: string
+  overall: number
+  photoUrl: string | null
+  team?: string | null
+  /** The shooter's own readings — a TIER ESTIMATE, never their measured video. */
+  reference?: { releaseAngle: number; elbowAngle: number; entryAngle: number } | null
+  estimated?: boolean
+}
+
 export function AnalysisOverview({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
-  name = "Jordan Ellis", streak = "6", points = "2,840",
+  name, streak, points, match = null,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string
   name?: string; streak?: string; points?: string
+  match?: EliteMatch | null
 }) {
+  /* The verdict sat directly under a wired score as the literal "GOOD" in
+     canonical's blue, so a 93 read GOOD and a 41 read GOOD. Label and colour
+     both come from the one shared band now — a renderer tuned for a constant
+     is wrong for a real value the moment the value moves (F7). */
+  const band = scoreBand(typeof score === "number" ? score : null)
+  /* The metric strip's own source. `useHistory` carries the session, not the
+     per-shot angles, so this reads the same endpoint the desktop workspace
+     does — the caller's newest analysis and exactly which angles it holds. */
+  const [analysis, setAnalysis] = React.useState<OverviewAnalysis | null>(null)
+  React.useEffect(() => {
+    let dead = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.analysis) setAnalysis(d.analysis) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+
+  /* The elite shooter's own three readings. Canonical's are 51° / 95% / 46°;
+     with a real match they are that shooter's catalog values, and Shot Arc is
+     the ENTRY angle — a distinct catalog field, not the release angle again
+     (F22 applies to the player's strip above, where the two ARE one quantity). */
+  const eliteRows: [MechanicKind, string, string][] = match?.reference
+    ? [
+        ["angle", "Release Angle", `${Math.round(match.reference.releaseAngle)}°`],
+        ["centerline", "Elbow Alignment", `${Math.round(match.reference.elbowAngle)}°`],
+        ["arc", "Shot Arc", `${Math.round(match.reference.entryAngle)}°`],
+      ]
+    : [["angle", "Release Angle", "51°"], ["centerline", "Elbow Alignment", "95%"], ["arc", "Shot Arc", "46°"]]
   return (
     <ResultsScreen
       testid="screen-ios-analysis-result-overview"
@@ -113,7 +245,7 @@ export function AnalysisOverview({
           <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>FORM SCORE</div>
           <div className="shotiq-numeric mt-[3px] leading-[0.8]" style={{ fontSize: 74, color: ORANGE }}>{score}</div>
           <ScoreBar score={score} width={89} height={6.5} />
-          <div className="shotiq-display mt-[8px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+          <div className="shotiq-display mt-[8px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</div>
           <div className="mt-[5px] text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</div>
           <div className="mt-[10px] flex items-end">
             {([[shots, "SHOTS", "analyze"], [makes, "MAKES", "uploadVideo"], [pct, "MAKE %", "gauge"]] as const).map(([v, l, g]) => (
@@ -146,19 +278,30 @@ export function AnalysisOverview({
       {/* six key metrics ------------------------------------------------- */}
       <SectionHead cap={21} info className="mt-[6px] px-[14px]">YOUR SIX KEY METRICS</SectionHead>
       <Panel className="mx-[13px] mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)] pb-[9px] pt-[7px]">
-        {METRICS.map(([kind, label, value, unit, verdict]) => (
+        {METRICS.map(([kind, label, value, unit, verdict]) => {
+          const m = readMetric(label, value, unit, verdict, analysis)
+          return (
           <div key={label} className="min-w-0 flex-1 px-[3px] text-center">
             <span className="flex h-[36px] items-center justify-center" style={{ color: INK }}>
               <MechanicGlyph kind={kind} size={33} />
             </span>
             <div className="shotiq-microcaps mt-[8px] leading-[6px]" style={{ fontSize: 7, color: GRAPHITE }}>{label}</div>
-            <div className="shotiq-numeric mt-[8px] leading-[14px]" style={{ fontSize: 19 }}>
-              {value}{unit && <span style={{ fontSize: 12 }}>{unit}</span>}
+            {/* "Not measured" is prose, not a numeral, and drops to the body
+                face at a size that fits the 1/6 column rather than overflowing
+                it in the numeric face. */}
+            <div className={m.value === "Not measured" ? "mt-[8px] leading-[14px]" : "shotiq-numeric mt-[8px] leading-[14px]"}
+                 style={{ fontSize: m.value === "Not measured" ? 8 : 19,
+                          color: m.value === "Not measured" ? GRAPHITE : undefined }}>
+              {m.value}{m.unit && <span style={{ fontSize: 12 }}>{m.unit}</span>}
             </div>
             <div className="shotiq-microcaps mt-[6px] leading-[6px]"
-                 style={{ fontSize: 7, color: verdict === "EXCELLENT" ? GREEN : BLUE }}>{verdict}</div>
+                 style={{ fontSize: 7,
+                          color: m.verdict === "EXCELLENT" || m.verdict === "GOOD"
+                            ? (m.verdict === "EXCELLENT" ? GREEN : BLUE)
+                            : m.verdict === "REVIEW" ? ORANGE : GRAPHITE }}>{m.verdict}</div>
           </div>
-        ))}
+          )
+        })}
       </Panel>
 
       {/* elite match ----------------------------------------------------- */}
@@ -172,13 +315,48 @@ export function AnalysisOverview({
       >
         ELITE MATCH
       </SectionHead>
+      {/* KLAY THOMPSON, his club, his three readings and 88% OVERALL MATCH were
+          all written into this markup, so every player was told they shoot like
+          the same man to the same percentage. `/api/shooters/match` ranks the
+          whole 328-shooter catalog against the caller's measured angles and the
+          DESKTOP card on this route has read it for some time; the phone card
+          was never connected.
+
+          Elbow Alignment is in DEGREES here now. It read "95%" while the metric
+          strip directly above it reads the player's own elbow in degrees — the
+          two halves of a comparison have to be in the same unit or the
+          comparison is not one. */}
       <Panel className="mx-[13px] mt-[4px] flex items-center gap-[11px] p-[5px]">
-        <Frame src="083-elite" w={90} h={72} radius={3} alt="Klay Thompson at release" />
+        {/* F9/F10, exactly as the desktop card solves them: the initials sit
+            UNDER the portrait rather than replacing it on error, because a
+            blocked remote headshot hangs rather than failing; and the portrait
+            follows the NAME, so canonical's crop holds only while the card is
+            canonical. */}
+        <span className="relative grid h-[72px] w-[90px] shrink-0 place-items-center overflow-hidden rounded-[3px] text-[20px] font-bold tracking-[0.04em]"
+              style={{ background: "var(--shotiq-color-warmCanvas)", color: GRAPHITE }}>
+          {match ? match.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : null}
+          {(!match || match.photoUrl) && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={match?.photoUrl || "/images/canonical/083-elite.png"}
+                 /* EMPTY on purpose. F9 layers the initials UNDER the portrait
+                    so a hanging remote headshot never leaves a blank cell — but a
+                    BROKEN one renders its alt text, which paints over the initials
+                    and spills out of a 90x72 cell. The shooter's name is in text
+                    directly beside this image, so the portrait carries no
+                    information of its own to announce. */
+                 alt=""
+                 className="absolute inset-0 h-full w-full object-cover" width={90} height={72} />
+          )}
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="shotiq-display text-[22px] leading-[21px] tracking-[0.035em]">KLAY THOMPSON</div>
-          <div className="mt-[2px] text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>Golden State Warriors</div>
+          <div className="shotiq-display truncate text-[22px] leading-[21px] tracking-[0.035em]">
+            {(match?.name ?? "Klay Thompson").toUpperCase()}
+          </div>
+          <div className="mt-[2px] truncate text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>
+            {match ? (match.team ?? "—") : "Golden State Warriors"}
+          </div>
           <div className="mt-[4px] space-y-[2px]">
-            {([["angle", "Release Angle", "51°"], ["centerline", "Elbow Alignment", "95%"], ["arc", "Shot Arc", "46°"]] as [MechanicKind, string, string][]).map(([k, l, v]) => (
+            {eliteRows.map(([k, l, v]) => (
               <div key={l} className="flex items-center gap-[6px]">
                 <span style={{ color: INK }}><MechanicGlyph kind={k} size={13} /></span>
                 <span className="text-[11.5px] leading-[12px]">{l}</span>
@@ -188,10 +366,18 @@ export function AnalysisOverview({
           </div>
         </div>
         <div className="shrink-0 text-center">
-          <MatchArc pct={88} />
+          <MatchArc pct={match?.overall ?? 88} />
           <div className="shotiq-microcaps mt-[3px] leading-[9px]" style={{ fontSize: 8, color: INK }}>OVERALL MATCH</div>
         </div>
       </Panel>
+      {/* The catalog is explicit that these readings are tier-derived, not
+          measured from that shooter's video, and requires callers to say so.
+          The desktop compare table carries the same note. */}
+      {match && match.estimated !== false && (
+        <p className="mx-[13px] mt-[3px] text-[9px] leading-[11px]" style={{ color: GRAPHITE }}>
+          Reference readings are a tier-derived estimate for {match.name}, not a measurement of their video.
+        </p>
+      )}
 
       {/* actions --------------------------------------------------------- */}
       <div className="mt-[4px] px-[13px]">

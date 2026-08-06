@@ -33,6 +33,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
 import { Chev, Micro, SectionHead } from "@/components/shotiq/phone/results/Kit"
@@ -106,10 +107,10 @@ function BodyMark({ kind }: { kind: string }) {
 }
 
 export function ProfileOverviewPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   shots = "24",
   makes = "15",
   pct = "62.5%",
@@ -142,6 +143,8 @@ export function ProfileOverviewPhone({
   avatar?: string
   onEdit?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-profile" tab="profile" pad={0} headerH={38}>
       <div style={{ paddingLeft: 17.5, paddingRight: 17.5, paddingBottom: 70 }}>
@@ -162,20 +165,20 @@ export function ProfileOverviewPhone({
             </button>
           </span>
           <div className="min-w-0">
-            <div className="shotiq-display text-[41px] leading-[38px] tracking-[0.02em]">{name.toUpperCase()}</div>
-            <div className="mt-[6px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub}</div>
+            <div className="shotiq-display text-[41px] leading-[38px] tracking-[0.02em]">{(name ?? chrome.name).toUpperCase()}</div>
+            <div className="mt-[6px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
           </div>
         </div>
 
         <div className="mt-[9px] flex text-center">
           <div className="flex-1">
             <span className="flex h-[22px] items-center justify-center"><ActionGlyph kind="uploadVideo" height={17} /></span>
-            <div className="shotiq-numeric mt-[4px] text-[20px] leading-[20px]">{streak}</div>
+            <div className="shotiq-numeric mt-[4px] text-[20px] leading-[20px]">{streak ?? chrome.streak}</div>
             <Micro className="mt-[4px]" size={8.2}>DAY STREAK</Micro>
           </div>
           <div className="flex-1" style={{ borderRight: `1px solid ${RULE}` }}>
             <span className="flex h-[22px] items-center justify-center"><ActionGlyph kind="nodeGraph" height={20} /></span>
-            <div className="shotiq-numeric mt-[4px] text-[20px] leading-[20px]">{points}</div>
+            <div className="shotiq-numeric mt-[4px] text-[20px] leading-[20px]">{points ?? chrome.points}</div>
             <Micro className="mt-[4px]" size={8.2}>POINTS</Micro>
           </div>
           {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l], i) => (
@@ -237,7 +240,7 @@ export function ProfileOverviewPhone({
               </span>
               <span className="shotiq-display absolute inset-x-0 top-[27px] text-center text-[32px] leading-[32px] text-white">JE</span>
               <span className="shotiq-display absolute inset-x-0 bottom-[8px] text-center text-[11px] leading-[11px] tracking-[0.05em] text-white">
-                {name.toUpperCase()}
+                {(name ?? chrome.name).toUpperCase()}
               </span>
               {[["left-[8px] top-[26px]", "M0 10 V0 H10"], ["right-[8px] top-[26px]", "M10 10 V0 H0"],
                 ["left-[8px] bottom-[24px]", "M0 0 V10 H10"], ["right-[8px] bottom-[24px]", "M10 0 V10 H0"]].map(([pos, d]) => (
@@ -259,7 +262,7 @@ export function ProfileOverviewPhone({
 
         <div className="mt-[9px] rounded-[7px] bg-white px-[11px] pb-[10px] pt-[9px]" style={{ border: `1px solid ${RULE}` }}>
           <div className="flex items-baseline">
-            <SectionHead cap={22}>ABOUT {name.split(" ")[0].toUpperCase()}</SectionHead>
+            <SectionHead cap={22}>ABOUT {(name ?? chrome.name).split(" ")[0].toUpperCase()}</SectionHead>
             <span className="ml-auto flex items-center gap-[5px] text-[12.4px]" style={{ color: BLUE }}>
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M6 1 L7.4 4.6 L11 6 L7.4 7.4 L6 11 L4.6 7.4 L1 6 L4.6 4.6 Z" fill={BLUE} />

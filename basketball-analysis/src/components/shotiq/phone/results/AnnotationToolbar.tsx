@@ -21,6 +21,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Pause, SkipBack, SkipForward, Type as TypeIcon, Undo2, Redo2, Trash2, ArrowUpRight } from "lucide-react"
 import { MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
@@ -50,13 +51,15 @@ function AngleMark() {
 
 export function AnnotationToolbar({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
-  frame = 43, frames = 96, name = "Jordan Ellis", streak = "6", points = "2,840",
+  frame = 43, frames = 96, name, streak, points,
   onBack, onSave,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string
   frame?: number; frames?: number; name?: string; streak?: string; points?: string
   onBack?: () => void; onSave?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <ResultsScreen
       testid="screen-ios-annotation-toolbar"
@@ -79,8 +82,8 @@ export function AnnotationToolbar({
       {/* identity + stat row --------------------------------------------- */}
       <div className="mt-[10px] flex items-start justify-between px-[16px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[34px] leading-[33px] tracking-[0.045em]">{name.toUpperCase()}</div>
-          <div className="mt-[2px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="shotiq-display text-[34px] leading-[33px] tracking-[0.045em]">{(name ?? chrome.name).toUpperCase()}</div>
+          <div className="mt-[2px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <StreakPoints streak={streak} points={points} />
       </div>

@@ -22,6 +22,8 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import {
   ChevronDown, ChevronRight, Play, Upload, SlidersHorizontal, ArrowUpDown,
@@ -55,6 +57,10 @@ export function MyMedia({ groups, onOpen, onUpload }: {
   onOpen: (id: string) => void
   onUpload: () => void
 }) {
+  const session = useLatestSession()
+
+  const chrome = usePlayerChrome()
+
   const [tab, setTab] = React.useState(0)
   return (
     <PhoneScreen testid="screen-ios-my-media" tab="home" pad={0} header={false}>
@@ -62,12 +68,12 @@ export function MyMedia({ groups, onOpen, onUpload }: {
 
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
-          <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
+          <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
-          <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-          <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+          <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+          <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
         </div>
       </div>
 
@@ -81,8 +87,8 @@ export function MyMedia({ groups, onOpen, onUpload }: {
           <div className="min-w-0 flex-1">
             <StatCells valueSize={19} labelSize={7}
                        cells={[
-                         { v: "82", l: "FORM SCORE", tone: BLUE }, { v: "24", l: "SHOTS" },
-                         { v: "15", l: "MAKES" }, { v: "62.5%", l: "ACCURACY", tone: BLUE },
+                         { v: session.score, l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
+                         { v: session.makes, l: "MAKES" }, { v: session.pct, l: "ACCURACY", tone: BLUE },
                        ]} />
           </div>
           <span className="ml-[9px] shrink-0 pl-[9px]" style={{ borderLeft: `1px solid ${RULE}` }}>
@@ -174,6 +180,10 @@ export function MyMedia({ groups, onOpen, onUpload }: {
 export function MediaDetail({ item, frames, onBack }: {
   item: PhoneMedia; frames: string[]; onBack: () => void
 }) {
+  const session = useLatestSession()
+
+  const chrome = usePlayerChrome()
+
   const [frame, setFrame] = React.useState(4)
   const [confirm, setConfirm] = React.useState(true)
   return (
@@ -223,7 +233,7 @@ export function MediaDetail({ item, frames, onBack }: {
             </div>
             <div className="mt-[4px] text-[8.5px]" style={{ color: GRAPHITE }}>Form Score</div>
             <div className="mt-[2px] flex items-center gap-[7px]">
-              <span className="shotiq-numeric text-[19px] leading-[18px]" style={{ color: ORANGE }}>82</span>
+              <span className="shotiq-numeric text-[19px] leading-[18px]" style={{ color: ORANGE }}>{session.score}</span>
               <span className="h-[4px] min-w-0 flex-1 rounded-full" style={{ background: RULE }}>
                 <span className="block h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
               </span>
@@ -239,8 +249,8 @@ export function MediaDetail({ item, frames, onBack }: {
 
         <Eyebrow className="mt-[10px]">SHOT EVENTS</Eyebrow>
         <div className="mt-[7px] flex">
-          {([["24", "SHOTS", "angle"], ["15", "MAKES", "wrist"], ["62.5%", "MAKE %", "arc"],
-             ["6", "DAY STREAK", "impact"], ["2,840", "POINTS", "centerline"]] as const).map(([v, l, m], i) => (
+          {([[session.shots, "SHOTS", "angle"], [session.makes, "MAKES", "wrist"], [session.pct, "MAKE %", "arc"],
+             [chrome.streak, "DAY STREAK", "impact"], [chrome.points, "POINTS", "centerline"]] as const).map(([v, l, m], i) => (
             <div key={l} className="min-w-0 flex-1 pl-[7px] text-center first:pl-0"
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <span className="flex h-[24px] items-center justify-center"><MechanicGlyph kind={m} size={22} /></span>

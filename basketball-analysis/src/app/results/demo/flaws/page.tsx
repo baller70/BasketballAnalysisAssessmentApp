@@ -2,7 +2,7 @@
 
 /** /results/demo/flaws — canonical 085-web-flaws-history. */
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, ArrowDown } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
@@ -32,10 +32,124 @@ const LOWER_FLAWS: Flaw[] = [
 ]
 
 export default function FlawsPage() {
-  const { hasData, score, shots, makes, delta } = useHistory()
+  const { hasData, score, shots, makes, delta, items } = useHistory()
+
+  /* RECENT SESSIONS was three rows written into the markup — "Today at 8:24 AM
+     · 24 shots · -8.3%" — on a panel that names the sessions a flaw was seen
+     in. The dates and shot counts are the player's own now.
+
+     The red percentage is NOT. It is this flaw's cost IN THAT SESSION, and
+     nothing computes a per-session impact: /api/analysis/flaws measures one
+     figure across the whole history, with a minimum sample on both sides, and
+     splitting that back out per session would be arithmetic with no data under
+     it. Live rows show an em-dash there instead. */
+  const recentSessions: [string, string, string][] = items.length
+    ? items.slice(0, 3).map((a) => [
+        a.when,
+        a.shots != null ? `${a.shots} shots` : "shots not counted",
+        "—",
+      ] as [string, string, string])
+    : [["Today at 8:24 AM", "24 shots", "-8.3%"],
+       ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"],
+       ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]]
   const [sel, setSel] = useState(0)
   const [showLower, setShowLower] = useState(false)
-  const visible = hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
+
+  /* THE FLAWS ACTUALLY DETECTED IN YOUR SHOTS.
+     The five above are written into this file, gated only on `hasData`, so
+     every account with any analysis saw the same five titles and the same five
+     percentages — and "AFFECTS 62% OF SHOTS" named a rate over a population
+     nobody had counted.
+
+     GET /api/analysis/flaws runs the real engine (detectFlawsFromAngles, which
+     VideoUpload has been calling and discarding) over up to 100 of the caller's
+     analyses, so the share is a true count over a true denominator. The
+     canonical five remain the empty state and nothing more. */
+  const [live, setLive] = useState<{
+    analysed: number
+    reason?: string
+    flaws: Array<{
+      id: string; title: string; description: string; impact: string
+      priority: number; shotsAffected: number; shotsAnalysed: number
+      affectsPct: number; fixes: string[]; drills: string[]
+      /** Measured cost to make %, or null with a reason when the sample is thin. */
+      impactOnMakePct: number | null
+      impactSample: { withFlaw: { shots: number; makes: number }
+                      withoutFlaw: { shots: number; makes: number }; minShots: number }
+      impactReason: string | null
+    }>
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/analysis/flaws", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success) setLive(d) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /* A detected flaw carries no canonical figure crop, so it keeps the drawn
+     glyph its rule maps to; the impact band comes from the library's own
+     priority rather than a word typed beside the title. */
+  const glyphFor = (id: string): FlawKind =>
+    id.includes("elbow") ? "elbow"
+    : id.includes("wrist") || id.includes("guide") ? "wrist"
+    : id.includes("release") || id.includes("arc") ? "release"
+    : id.includes("base") || id.includes("foot") || id.includes("stance") ? "base"
+    : "guide"
+
+  const liveFlaws: Flaw[] = (live?.flaws ?? []).map((f, i) => ({
+    n: i + 1,
+    title: f.title,
+    impact: f.impact,
+    desc: f.description,
+    affects: `AFFECTS ${f.affectsPct}% OF ${f.shotsAnalysed} SHOT${f.shotsAnalysed === 1 ? "" : "S"}`,
+    // Impact is stated as the flaw's own priority, not an invented percentage
+    // loss — nothing in this app measures what a flaw costs in points.
+    delta: `PRIORITY ${f.priority}/10`,
+    glyph: glyphFor(f.id),
+  }))
+
+  const usingLive = liveFlaws.length > 0
+  /* A CLEAN SHOT IS NOT AN EMPTY SCREEN, and it must never borrow canonical's.
+     `visible` used to fall back to the canonical five whenever the live list
+     was empty, which was nearly harmless while two flaws fired on every shot —
+     ELBOW_ANGLE_OBTUSE and INSUFFICIENT_KNEE_BEND read release-frame angles
+     against set-point rules, so the live list was never empty. With those two
+     abstaining, a player whose form the engine finds nothing wrong with would
+     have been shown canonical's flaws as if they were their own findings,
+     which is the F16 violation in its worst form: not a missing value, but a
+     fabricated diagnosis. Analysed-but-clean is now its own state. */
+  const analysedClean = live != null && live.analysed > 0 && liveFlaws.length === 0
+  /* The selected flaw's measured cost, or why it cannot be stated. The panel
+     used to print "-8.3%", "improved 8.7% over the last 14 days" and a
+     May 2025 session list, all constants, all claiming a causal effect on make
+     % that nothing computed. */
+  const selLive = usingLive ? live?.flaws[sel] : undefined
+  const impactText = !usingLive
+    ? "-8.3%"
+    : selLive?.impactOnMakePct != null
+      ? `${selLive.impactOnMakePct > 0 ? "+" : ""}${selLive.impactOnMakePct}%`
+      : "—"
+  const impactNote = !usingLive
+    ? "Impact: -8.3% to make % on affected shots."
+    : selLive?.impactOnMakePct != null
+      ? `Make % on shots with this flaw is ${impactText} against your shots without it `
+        + `(${selLive.impactSample.withFlaw.shots} vs ${selLive.impactSample.withoutFlaw.shots} scored shots).`
+      : selLive?.impactReason
+        ?? "Not enough scored shots to measure this flaw's cost yet." 
+  const visible = usingLive
+    ? (showLower ? liveFlaws : liveFlaws.slice(0, 3))
+    : analysedClean || live?.reason ? []
+    : hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
+  /* What to say when the list is empty and the player HAS shots: either the
+     engine ran and found nothing, or it could not run and says why. */
+  const emptyNote = analysedClean
+    ? `No flaws detected across ${live!.analysed} analysed shot${live!.analysed === 1 ? "" : "s"}. `
+      + "Only the mechanics this app measures are checked — the elbow at the set point, "
+      + "the depth of your dip and the ball's flight are not among them yet."
+    : live?.reason ?? null
   /* Canonical iOS 046 and 047. The detail is addressed by the flaw's own slug,
      so every flaw in the list has its own surface rather than one shared
      "detail region" driven by selection state. The graded desktop 085 on this
@@ -117,6 +231,11 @@ export default function FlawsPage() {
             <SectionLabel>YOUR TOP FLAWS</SectionLabel>
             <span className="grid h-[13px] w-[13px] place-items-center rounded-full border border-[var(--shotiq-color-graphite)] text-[9px] text-[var(--shotiq-color-graphite)]">i</span>
           </div>
+          {visible.length === 0 && emptyNote && (
+            <p className="mt-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] p-[11px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              {emptyNote}
+            </p>
+          )}
           {visible.map((f, i) => (
             <button key={f.n} type="button" onClick={() => setSel(i)} aria-pressed={sel === i}
                     className={`mt-[10px] w-full rounded-[8px] border p-[11px] text-left ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
@@ -151,7 +270,13 @@ export default function FlawsPage() {
               </div>
             </button>
           ))}
-          {!hasData && (
+          {/* "Analyze a shot" is for someone who has none. `hasData` comes from
+              the history timeline while the engine counts analyses directly, so
+              the two can disagree — and when they do, the count of shots the
+              engine actually read is the one that decides whether this invite
+              still makes sense. Telling a player with three analysed shots to
+              go analyse their first one is worse than saying nothing. */}
+          {!hasData && !live?.analysed && (
             <Card className="mt-[10px] p-[16px] text-[13px] text-[var(--shotiq-color-graphite)]">
               Flaws appear after your first analysis. <Link className="text-[var(--shotiq-color-analysisBlue)]" href="/analyze">Analyze a shot</Link>.
             </Card>
@@ -196,7 +321,7 @@ export default function FlawsPage() {
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
             {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "085-insight-1"],
               ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "085-insight-2"],
-              ["Impact: -8.3% to make % on affected shots.", "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
+              [impactNote, "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
               <div key={i} className="flex gap-[10px] px-[11px] py-[8px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
@@ -281,7 +406,7 @@ export default function FlawsPage() {
                       {/* Canonical calls the terminal value out directly above
                           the last node, not adrift at the plot's right edge. */}
                       <text x="374" y="38" textAnchor="middle" fontSize="15" fontWeight="700"
-                            fill="var(--shotiq-color-shotiqOrange)">-8.3%</text>
+                            fill="var(--shotiq-color-shotiqOrange)">{impactText}</text>
                     </>
                   )
                 })()}
@@ -295,7 +420,9 @@ export default function FlawsPage() {
         <div className="w-[210px] shrink-0">
           <SectionLabel>TREND SUMMARY</SectionLabel>
           <p className="mt-[8px] text-[12px] leading-[17px]">
-            Impact on make % has improved 8.7% over the last 14 days.
+            {usingLive
+              ? impactNote
+              : "Impact on make % has improved 8.7% over the last 14 days."}
           </p>
           <div className="mt-[10px] flex items-center gap-[6px] text-[19px] font-bold text-[var(--shotiq-color-confirmGreen)]">
             <ArrowDown className="h-[16px] w-[16px]" /> 8.7%
@@ -311,7 +438,7 @@ export default function FlawsPage() {
               x927–1410) with its internal rules at y796 and y834. The app drew
               the two internal rules and no box. */}
           <Card className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)] px-[12px]">
-            {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (
+            {recentSessions.map(([d, s, v]) => (
               <Link key={d} href="/results/demo/history" className="flex items-center py-[9px] text-[12px]">
                 <span className="w-[170px]">{d}</span>
                 <span className="text-[var(--shotiq-color-graphite)]">{s}</span>

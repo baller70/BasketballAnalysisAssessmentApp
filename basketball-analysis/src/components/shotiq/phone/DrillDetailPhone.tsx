@@ -32,6 +32,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import {
   Bookmark, Share2, ChevronRight, ChevronDown, Check, X, Undo2, Square,
@@ -50,15 +51,17 @@ const RED = "var(--shotiq-color-reviewRed)"
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
 function Identity({ score }: { score?: string }) {
+  const chrome = usePlayerChrome()
+
   return (
     <div className="flex items-start px-[18px] pt-[13px]">
       <div className="min-w-0">
-        <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
-        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+        <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
+        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
       </div>
       <div className="ml-auto flex shrink-0 items-start">
-        <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={58} />
-        <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={54} />
+        <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={58} />
+        <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={54} />
         {score && <MiniStat glyph={<ActionGlyph kind="analyze" height={19} />} value={score} label="FORM SCORE" w={54} />}
       </div>
     </div>
@@ -369,6 +372,8 @@ export function ShotTracker({
   results: boolean[]; makes: number; shots: number; pct: string; streak: number
   total?: number; onMake: () => void; onMiss: () => void; onUndo: () => void; onEnd: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const frac = shots ? makes / shots : 0
   const R = 30, C = 2 * Math.PI * R
   return (
@@ -424,7 +429,7 @@ export function ShotTracker({
 
             <div className="mt-[9px] pt-[8px]" style={{ borderTop: `1px solid ${RULE}` }}>
               <Eyebrow>CURRENT STREAK</Eyebrow>
-              <div className="shotiq-numeric mt-[3px] text-[26px] leading-[25px]" style={{ color: GREEN }}>{streak}</div>
+              <div className="shotiq-numeric mt-[3px] text-[26px] leading-[25px]" style={{ color: GREEN }}>{streak ?? chrome.streak}</div>
               <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 7.5, color: GRAPHITE }}>MAKES</div>
             </div>
 
@@ -527,6 +532,8 @@ export function WorkoutComplete({
   shots: number; makes: number; pct: string
   onReview: () => void; onShare: () => void; onRepeat: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-workout-completion" tab="train" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<GearLink />} />
@@ -537,8 +544,8 @@ export function WorkoutComplete({
           <div className="mt-[5px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Great session, Jordan.</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
-          <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-          <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+          <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+          <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
         </div>
       </div>
 

@@ -260,10 +260,32 @@ export function PointsProvider({ children }: { children: ReactNode }) {
         const serverTotal = typeof data.totalPoints === 'number' ? data.totalPoints : 0
         const serverLifetime = typeof data.lifetimePoints === 'number' ? data.lifetimePoints : serverTotal
 
+        // GET /api/points has always returned the caller's real PointEvent
+        // history alongside the total, and this sync read the total and threw
+        // the history away — so the ledger was fetched and discarded, and the
+        // one screen that shows point events (/points, POINTS HISTORY) had a
+        // five-row list written into its source instead. Same source of truth
+        // as the balance, mapped into the shape the UI already consumes.
+        const serverHistory: PointEarnEvent[] = Array.isArray(data.history)
+          ? data.history.map((h: {
+              id: string; type: string; points: number; createdAt: string
+              metadata?: Record<string, unknown> | null
+            }) => ({
+              id: h.id,
+              actionId: h.type,
+              points: h.points,
+              timestamp: new Date(h.createdAt).getTime(),
+              description: POINT_ACTIONS[h.type]?.name ?? h.type,
+            }))
+          : []
+
         setState(prev => ({
           ...prev,
           totalPoints: serverTotal,
           lifetimePoints: serverLifetime,
+          // A server round trip is authoritative; an empty ledger legitimately
+          // means no events, so this replaces rather than merges.
+          history: serverHistory,
           ...recomputeDerived(prev, serverTotal, serverLifetime),
           lastUpdated: Date.now(),
         }))

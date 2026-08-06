@@ -99,15 +99,37 @@ export default function OnboardingPage() {
   const { isAuthenticated, user } = useAuthStore()
   const store = useProfileStore()
   const [step, setStep] = useState(1)
-  const [years, setYears] = useState("10+ years")
-  const [position, setPosition] = useState("guard")
-  const [goal, setGoal] = useState(GOALS[0])
-  const [bio, setBio] = useState("")
-  const [enhanced, setEnhanced] = useState("")
   const [saving, setSaving] = useState(false)
-  // Practice cadence has no profile-store field yet, so it lives here beside
-  // the other two screen-local answers (position, years).
-  const [practice, setPractice] = useState("3–5 times per week")
+
+  /* THIS WIZARD USED TO THROW FOUR ANSWERS AWAY.
+     Position, years played, practice cadence and the player's goal were
+     `useState` locals with no field in the profile store and no column behind
+     it. The REVIEW step read them back, the player pressed Finish, saveProfile()
+     sent everything EXCEPT them, and the four answers died with the component.
+     They live on the profile now, so they survive Finish and a reload — and so
+     the rest of the app can finally ask what a player is training toward. */
+  const years = store.yearsPlaying ?? "10+ years"
+  const setYears = store.setYearsPlaying
+  const position = store.position ?? "guard"
+  const setPosition = store.setPosition
+  const goal = store.primaryGoal ?? GOALS[0]
+  const setGoal = store.setPrimaryGoal
+  const practice = store.practiceFrequency ?? "3–5 times per week"
+  const setPractice = store.setPracticeFrequency
+  // Same for the bio: it was typed into a local, so it never reached the store
+  // that saveProfile() reads, and the field the player filled in saved nothing.
+  const bio = store.bio ?? ""
+  const setBio = store.setBio
+  const enhanced = store.enhancedBio ?? ""
+  const [enhancing, setEnhancing] = useState(false)
+
+  /* And the profile is LOADED before it is edited. Without this the wizard
+     opened on 6'2" / 185 lbs / 24 for a returning player who had already told
+     us otherwise, and saving wrote those defaults back over their real ones. */
+  useEffect(() => {
+    if (!isAuthenticated) return
+    void useProfileStore.getState().fetchProfile()
+  }, [isAuthenticated])
 
   // On a hard load the persisted auth store can still be rehydrating when this
   // effect first runs, so a signed-in user read as signed-out and got bounced
@@ -174,6 +196,32 @@ export default function OnboardingPage() {
 
   const finish = async () => {
     setSaving(true)
+
+    /* WHAT THE PLAYER REVIEWED IS WHAT GETS SAVED.
+       Every measurement field renders its store value `?? a default` — 6'2",
+       185 lbs, 24, 6'7" — so a player who agreed with what was already in the
+       boxes and pressed Finish read "Height 6' 2"" on the REVIEW step and wrote
+       NULL to their profile. That is not a cosmetic gap: the release height,
+       release distance and vertical jump on the biomechanics screen are scaled
+       off the player's stature, so a missing height silently turns all three
+       into "not measured" for someone who believes they entered it.
+       A field the player left alone still shows them the number before they
+       commit it, on a step whose whole purpose is to confirm these values. */
+    const st = useProfileStore.getState()
+    if (st.heightInches == null) st.setHeight(h)
+    if (st.weightLbs == null) st.setWeight(store.weightLbs ?? 185)
+    if (st.age == null) st.setAge(store.age ?? 24)
+    if (st.wingspanInches == null) st.setWingspan(ws)
+    if (st.dominantHand == null) st.setDominantHand((store.dominantHand ?? "right") as never)
+    if (st.experienceLevel == null) st.setExperienceLevel((store.experienceLevel ?? "advanced") as never)
+    if (st.bodyType == null) st.setBodyType((store.bodyType ?? "mesomorph") as never)
+    if (st.athleticAbility == null) st.setAthleticAbility(store.athleticAbility ?? 7)
+    if (st.shootingStyle == null) st.setShootingStyle((store.shootingStyle ?? "two_motion") as never)
+    if (st.position == null) st.setPosition(position)
+    if (st.yearsPlaying == null) st.setYearsPlaying(years)
+    if (st.practiceFrequency == null) st.setPracticeFrequency(practice)
+    if (st.primaryGoal == null) st.setPrimaryGoal(goal)
+
     // Preserved completion flow (client cache -> server source of truth).
     store.completeProfile()
     useAuthStore.getState().setProfileComplete(true)
@@ -205,11 +253,37 @@ export default function OnboardingPage() {
      1440pt wizard keeps the step in its card column, so the phone layout is
      the only thing swapped in below the md breakpoint. */
   const BIO_STEP = STEPS.findIndex(([n]) => n === "Bio") + 1
-  const enhanceBio = () =>
-    setEnhanced(
-      `${first} is a ${(store.experienceLevel ?? "advanced")} ${position} who trains to `
-      + `${goal.toLowerCase()}. ${practice} in the gym, tracking every rep with ShotIQ.`,
-    )
+  /* "Enhance with AI" pasted a template string together in the browser —
+     "{name} is a {level} {position} who trains to {goal}" — while
+     /api/enhance-bio, which runs the real LLM router, had no callers anywhere
+     in the app. It calls the endpoint now, and the enhanced text lands on the
+     profile so it is still there after Finish. The old template is kept as the
+     fallback for a failed or unconfigured call, so the button is never dead. */
+  const localBlurb = () =>
+    `${first} is a ${(store.experienceLevel ?? "advanced")} ${position} who trains to `
+    + `${goal.toLowerCase()}. ${practice} in the gym, tracking every rep with ShotIQ.`
+  const enhanceBio = async () => {
+    const source = bio.trim()
+    if (enhancing) return
+    // The endpoint requires 20 characters of the player's own words; below that
+    // there is nothing to enhance and the local blurb is the honest answer.
+    if (source.length < 20) { store.setEnhancedBio(localBlurb()); return }
+    setEnhancing(true)
+    try {
+      const r = await fetch("/api/enhance-bio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ bio: source }),
+      })
+      const d = r.ok ? await r.json() : null
+      store.setEnhancedBio(d?.enhancedBio || d?.bio || localBlurb())
+    } catch {
+      store.setEnhancedBio(localBlurb())
+    } finally {
+      setEnhancing(false)
+    }
+  }
 
   /* Canonical splits this ONE desktop wizard into SIX phone designs — 008
      intro, 009 physical profile, 010 experience and body type, 011 shooting
@@ -610,9 +684,9 @@ export default function OnboardingPage() {
                   Let ShotIQ AI craft a stronger bio based on your profile and training data.
                 </p>
               </div>
-              <button type="button" onClick={enhanceBio}
-                      className="h-[38px] shrink-0 rounded-[5px] border border-[var(--shotiq-color-shotiqOrange)] px-[16px] text-[13px] font-medium text-[var(--shotiq-color-shotiqOrange)]">
-                Enhance bio
+              <button type="button" onClick={enhanceBio} disabled={enhancing}
+                      className="h-[38px] shrink-0 rounded-[5px] border border-[var(--shotiq-color-shotiqOrange)] px-[16px] text-[13px] font-medium text-[var(--shotiq-color-shotiqOrange)] disabled:opacity-50">
+                {enhancing ? "Enhancing…" : "Enhance bio"}
               </button>
             </div>
             <div className="mt-[12px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[16px] py-[12px]">

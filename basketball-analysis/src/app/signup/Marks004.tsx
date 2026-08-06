@@ -155,7 +155,29 @@ export function Marks004({ agreed }: { agreed: boolean }) {
       className="md:hidden"
       width={393}
       height={1844 / (853 / 393)}
-      viewBox="0 0 853 1844"
+      /* THE WHOLE OVERLAY SAT HALF A DEVICE PIXEL UP AND LEFT, and because
+         every rule, border and plate on this screen is drawn in here, that one
+         origin error was being read as a separate defect in a dozen bands.
+
+         Measured, first 50% crossing per feature, render minus canonical:
+           field1/3/5 top  -0.32 -0.23 -0.50     field1/5 left  -0.37 -0.37
+           signin top/left -0.62 -0.40           checkbox top/left -0.58 -0.66
+           or-rule top     -0.62                 plate top/left -0.66 -0.60
+         Twelve features, twelve negatives, vertical mean -0.505 (sd 0.155) and
+         horizontal -0.480 (sd 0.124). A per-feature error scatters about zero;
+         nothing here is positive. That is rule 15's tell for ONE container
+         offset, and rule 42's rule about where a cross-cutting fix belongs —
+         on the thing common to the whole population, which is this viewBox.
+
+         Shifting the viewBox ORIGIN moves every child by the same amount and
+         leaves the scale alone (width/height are untouched, and the plate's
+         measured size already matched canonical to 0.03 px: 714.33 against
+         714.35 wide, 92.17 against 92.14 tall — it was never a sizing error).
+
+         In-page, with the rule 40 control at translate(0,0) reproducing the
+         built capture's 5.8985 exactly: the nine overlay-dominated bands go
+         6.3794 -> 5.6265. */
+      viewBox="-0.48 -0.50 853 1844"
       fill="none"
     >
       {/* the five field borders — centre lines straight off the PNG */}

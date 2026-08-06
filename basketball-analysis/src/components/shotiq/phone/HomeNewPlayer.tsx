@@ -81,7 +81,7 @@ const PHASES: [string, string][] = [
 ]
 
 export function HomeNewPlayer({
-  name = "Jordan Ellis", sub = "Right-handed • Advanced", streak = "6", points = "2,840",
+  name, sub, streak, points,
 }: { name?: string; sub?: string; streak?: string; points?: string }) {
   return (
     <PhoneScreen testid="screen-ios-home-new-player" tab="home" pad={22}>

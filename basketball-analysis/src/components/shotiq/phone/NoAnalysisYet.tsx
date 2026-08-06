@@ -90,7 +90,7 @@ function EmptyDiagram({ width = 158 }: { width?: number }) {
 }
 
 export function NoAnalysisYet({
-  name = "Jordan Ellis", sub = "Right-handed • Advanced", streak = "6", points = "2,840",
+  name, sub, streak, points,
 }: { name?: string; sub?: string; streak?: string; points?: string }) {
   return (
     <PhoneScreen testid="screen-ios-no-analysis-yet" tab="home" pad={16.6}>
