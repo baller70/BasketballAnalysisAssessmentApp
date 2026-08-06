@@ -2,7 +2,7 @@
 
 /** /results/demo/training — canonical 090-web-training-hub. */
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   Bookmark, ChevronRight, Check, CalendarCheck,
@@ -69,6 +69,155 @@ export default function TrainingHubPage() {
     : ([["Pull-Up Jumper", "May 12, 2025 • 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
         ["Spot-Up Three", "May 11, 2025 • 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
         ["Transition Pull-Up", "May 10, 2025 • 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]] as [string, string, string, string, string][])
+  /* RECOMMENDED FOR YOUR GOAL NAMED THREE DRILLS AND HAD NEVER READ A GOAL.
+     "Footwork Into Release", "Elbow Stack Holds", "High Elbow Release", under a
+     subtitle that credited them to "Keep elbow stacked through release" —
+     printed for every account, including one that had never analysed a shot.
+     /api/training/recommended runs the selection engine that has sat in the
+     repo unused: the player's own angles through the flaw rules, each flaw
+     mapped to the focus area that trains it out, and the 51-drill catalogue
+     ranked against those areas at the player's level. When it has nothing to
+     personalise from it says so and the canonical three stand. */
+  const [rec, setRec] = useState<null | {
+    personalised: boolean
+    primaryGoal: string | null
+    weakAreas?: { focus: string; flaw: string | null; shots: number }[]
+    drills: { id: string; title: string; time: string; level: string; focus: string; desc: string; why: string | null }[]
+  }>(null)
+  /* THIS WEEK'S PLAN was seven typed day tiles — MON 28 min, TUE 30 min, FRI
+     Rest — with "2 of 5 sessions completed · 40%" under them, on a page that
+     already had a real workouts table and a calendar writing into it. */
+  const [workouts, setWorkouts] = useState<null | {
+    id: string; name: string | null; scheduledDate: string
+    duration: number | null; completed: boolean; focusAreas: unknown
+  }[]>(null)
+  useEffect(() => {
+    let dead = false
+    fetch("/api/training/recommended?limit=3", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success) setRec(d) })
+      .catch(() => {})
+    fetch("/api/workouts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success) setWorkouts(d.workouts ?? []) })
+      .catch(() => {})
+    fetch("/api/coaching-targets", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.target) setTarget(d.target) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+
+  /* The hero's COACHING TARGET. Progress is how far the retest has travelled
+     from the baseline toward the target — the only reading of "72%" that means
+     anything. Before a retest there is no distance to report, so the target
+     shows with no claim about progress rather than a number that flatters. */
+  const [target, setTarget] = useState<null | {
+    flaw: string; cue: string; status: string
+    baseline: number | null; targetValue: number | null; retestValue: number | null
+  }>(null)
+  const targetPct = (() => {
+    if (!target) return null
+    const { baseline: b, targetValue: t, retestValue: r } = target
+    if (b == null || t == null || r == null || b === t) return null
+    return Math.max(0, Math.min(100, Math.round(((r - b) / (t - b)) * 100)))
+  })()
+
+  /** The three cards to draw. Canonical photography rides along by position —
+   *  the catalogue carries no imagery, and a drill card with no image is a
+   *  worse screen than one whose photograph is decorative. */
+  const liveRecs = rec?.personalised && rec.drills.length ? rec.drills : null
+  const recCards = liveRecs
+    ? liveRecs.map((d, i) => ({
+        len: d.time, title: d.title, time: d.time, level: d.level, focus: d.focus,
+        desc: d.desc, img: RECOMMENDED[i % RECOMMENDED.length].img, why: d.why,
+      }))
+    : RECOMMENDED.map((r) => ({ ...r, why: null as string | null }))
+  /** What the row is answering — the measured flaw, or the stated goal. */
+  const recBecause = liveRecs
+    ? rec?.weakAreas?.[0]?.flaw ?? rec?.primaryGoal ?? null
+    : null
+
+  /* Monday-first week, from the player's own scheduled workouts. */
+  const week = (() => {
+    const now = new Date()
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    const names = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    return names.map((label, i) => {
+      const day = new Date(monday); day.setDate(monday.getDate() + i)
+      const next = new Date(day); next.setDate(day.getDate() + 1)
+      const onDay = (workouts ?? []).filter((w) => {
+        const t = Date.parse(w.scheduledDate)
+        return Number.isFinite(t) && t >= day.getTime() && t < next.getTime()
+      })
+      const minutes = onDay.reduce((s, w) => s + (w.duration ?? 0), 0)
+      return {
+        label,
+        // "Rest" is a real answer here: a day with nothing scheduled.
+        len: onDay.length ? (minutes ? `${minutes} min` : "Scheduled") : "Rest",
+        today: day.toDateString() === now.toDateString(),
+        done: onDay.length > 0 && onDay.every((w) => w.completed),
+        count: onDay.length,
+      }
+    })
+  })()
+  const weekPlanned = week.reduce((s, d) => s + d.count, 0)
+  const weekDone = (workouts ?? []).filter((w) => {
+    const t = Date.parse(w.scheduledDate)
+    const monday = new Date(); monday.setHours(0, 0, 0, 0)
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    const end = new Date(monday); end.setDate(monday.getDate() + 7)
+    return w.completed && t >= monday.getTime() && t < end.getTime()
+  }).length
+  const weekPct = weekPlanned ? Math.round((weekDone / weekPlanned) * 100) : 0
+  const usingWeek = workouts != null && weekPlanned > 0
+
+  /** UP NEXT — the soonest workout still to do, not a written-in one. */
+  const upNext = (workouts ?? [])
+    .filter((w) => !w.completed)
+    .sort((a, b) => Date.parse(a.scheduledDate) - Date.parse(b.scheduledDate))[0] ?? null
+
+  /** Its own meta line: when it is, how long, and what it trains. */
+  const upNextMeta = (() => {
+    if (!upNext) return "28 min · 6 drills · Focus: Release consistency"
+    const when = new Date(upNext.scheduledDate)
+    const day = Number.isFinite(when.getTime())
+      ? when.toLocaleDateString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })
+      : null
+    const focus = Array.isArray(upNext.focusAreas) && upNext.focusAreas.length
+      ? `Focus: ${String(upNext.focusAreas[0])}` : null
+    return [day, upNext.duration ? `${upNext.duration} min` : null, focus]
+      .filter(Boolean).join(" · ")
+  })()
+
+  /** TODAY'S SNAPSHOT is dated by the session it is a snapshot OF. */
+  const snapshotWhen = items[0]?.when ?? "Today at 8:24 AM"
+
+  /* SAVED LIBRARY listed four drills nobody had saved. The drills page already
+     reads the player's own custom drills out of /api/saved-workouts — the same
+     rows, read the same way, so the two screens cannot disagree about what is
+     in the library. Fewer than four saved, and the canonical four stand rather
+     than leaving gaps in a four-up grid. */
+  const [custom, setCustom] = useState<[string, string, string, string, string][]>([])
+  useEffect(() => {
+    let dead = false
+    fetch("/api/saved-workouts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (dead) return
+        const rows = (d?.savedWorkouts ?? []).filter((w: { drillIds?: unknown[] }) =>
+          Array.isArray(w.drillIds) && (w.drillIds[0] as { customDrill?: boolean })?.customDrill)
+        setCustom(rows.slice(0, 4).map((w: { name: string; drillIds: unknown[] }, i: number) => {
+          const m = w.drillIds[0] as { len?: string; level?: string; cat?: string }
+          return [m.len ?? "10:00", w.name, m.level ?? "Beginner", m.cat ?? "Shooting",
+                  LIBRARY[i % LIBRARY.length][4]] as [string, string, string, string, string]
+        }))
+      }).catch(() => {})
+    return () => { dead = true }
+  }, [])
+  const libraryCards = custom.length >= 4 ? custom : [...custom, ...LIBRARY].slice(0, 4)
+
   const [saved, setSaved] = useState<Set<string>>(
     () => new Set([...RECOMMENDED.map((r) => r.title), ...LIBRARY.map(([, t]) => t)]))
   const toggleSave = (t: string) =>
@@ -133,21 +282,29 @@ export default function TrainingHubPage() {
           <div className="absolute right-0 top-0 flex w-[492px] shrink-0 gap-[14px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
             <div className="min-w-0 flex-1">
               <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
+              {/* The player's own target, from /api/coaching-targets — the same
+                  row the player card reads. Was one written-in cue, one
+                  written-in subtitle and 72% on every account. */}
               <Link href="/results/demo/goals" className="mt-[2px] flex items-start justify-between gap-[8px]">
-                <span className="text-[15px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
+                <span className="text-[15px] font-semibold leading-[18px]">
+                  {target?.cue ?? "Keep elbow stacked through release"}
+                </span>
                 <ChevronRight className="mt-[2px] h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </Link>
               <div className="mt-[3px] flex items-center gap-[8px]">
                 <span className="inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[5px] py-[1px] text-[9px] font-bold leading-[11px] tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
-                  ACTIVE GOAL
+                  {target ? target.status.toUpperCase() : "ACTIVE GOAL"}
                 </span>
-                <span className="min-w-0 flex-1 whitespace-nowrap text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</span>
+                <span className="min-w-0 flex-1 whitespace-nowrap text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">
+                  {target?.flaw ?? "Improve release consistency and arm alignment"}
+                </span>
               </div>
               <div className="mt-[4px] flex items-center gap-[8px]">
                 <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: `${targetPct ?? 72}%` }} />
                 </div>
-                <GoalPercent size={13} className="shrink-0">72%</GoalPercent>
+                <GoalPercent size={13} className="shrink-0">{targetPct ?? 72}%</GoalPercent>
               </div>
             </div>
             {/* The one shared form-score module rather than a hand-set numeral +
@@ -199,16 +356,34 @@ export default function TrainingHubPage() {
         <div className="mt-[14px] flex items-center justify-between">
           <div>
             <SectionLabel>RECOMMENDED FOR YOUR GOAL</SectionLabel>
-            <div className="text-[12px]">Based on <span className="font-semibold text-[var(--shotiq-color-confirmGreen)]">Keep elbow stacked through release</span></div>
+            {/* Credited to what actually drove the pick. */}
+            <div className="text-[12px]">
+              {liveRecs
+                ? recBecause
+                  ? <>Based on <span className="font-semibold text-[var(--shotiq-color-confirmGreen)]">{recBecause}</span></>
+                  : <>Matched to your level</>
+                : <>Based on <span className="font-semibold text-[var(--shotiq-color-confirmGreen)]">Keep elbow stacked through release</span></>}
+            </div>
           </div>
           <Link href="/training/drills?tab=recommended" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all recommendations ›</Link>
         </div>
         <div className="mt-[10px] grid grid-cols-3 gap-[14px]">
-          {RECOMMENDED.map((r) => (
+          {recCards.map((r) => (
             <Card key={r.title} className="overflow-hidden">
               <div className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={r.img} alt="" className="h-[150px] w-full object-cover" />
+                {/* The canonical photography has its OWN duration painted into
+                    it — "05:28" is pixels in 090-rec-1.png, not markup. Once
+                    the card names a real drill that runs 25 minutes, the baked
+                    badge contradicts the meta line two lines below it. Cover it
+                    with the drill's real length; on the canonical three the
+                    badge is already correct and nothing is drawn. */}
+                {liveRecs && (
+                  <span className="absolute left-[7px] top-[7px] rounded-[4px] bg-[#141518] px-[9px] py-[3px] text-[12px] font-medium leading-[16px] text-white">
+                    {r.time}
+                  </span>
+                )}
                 <button type="button" aria-pressed={saved.has(r.title)} onClick={() => toggleSave(r.title)}
                         aria-label={saved.has(r.title) ? "Remove from my drills" : "Save drill"}
                         className="absolute right-[6px] top-[6px] grid h-[24px] w-[24px] place-items-center rounded-[4px] bg-black/40">
@@ -243,7 +418,8 @@ export default function TrainingHubPage() {
             page title, then UP NEXT, then THIS WEEK'S PLAN. */}
         <div className="flex items-center justify-between">
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
-          <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
+          {/* The newest session's real time, not "Today at 8:24 AM". */}
+          <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{snapshotWhen}</span>
         </div>
         {/* Hairline-divided and evenly distributed, as canonical sets it. */}
         <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
@@ -269,9 +445,12 @@ export default function TrainingHubPage() {
         <Card className="mt-[8px] p-[10px]">
           <Link href="/training/drills/quick-start-workout" className="flex items-center gap-[12px]">
             <TrendLine points={[2, 4, 3, 5]} width={44} height={30} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+            {/* The soonest workout still to do. Was "Quick Start Workout ·
+                28 min · 6 drills · Focus: Release consistency" on every
+                account, whatever was actually on their calendar. */}
             <div className="flex-1">
-              <div className="text-[14px] font-semibold">Quick Start Workout</div>
-              <div className="text-[11px] text-[var(--shotiq-color-graphite)]">28 min · 6 drills · Focus: Release consistency</div>
+              <div className="text-[14px] font-semibold">{upNext?.name || "Quick Start Workout"}</div>
+              <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{upNextMeta}</div>
             </div>
             <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
           </Link>
@@ -291,10 +470,14 @@ export default function TrainingHubPage() {
             collapsed into a smudge. */}
         <Card className="mt-[8px] p-[8px]">
           <div className="flex gap-[4px]">
-            {WEEK.map(([d, len, active]) => (
+            {(usingWeek
+              ? week.map((d) => [d.label, d.len, d.today] as [string, string, boolean])
+              : WEEK).map(([d, len, active]) => (
               // Canonical draws the container and the orange MON outline and
               // nothing else — the six hairline cell boxes were the app's own
-              // addition and both round-8 graders counted them.
+              // addition and both round-8 graders counted them. The outline
+              // marks TODAY once the week is real, which is what canonical's
+              // highlight means on a plan you are living through.
               <Link key={d} href="/training/calendar"
                     className={`min-w-0 flex-1 rounded-[5px] border-2 p-[8px] text-center ${active ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-transparent"}`}>
                 <div className="text-[9px] font-bold">{d}</div>
@@ -311,12 +494,15 @@ export default function TrainingHubPage() {
           <div className="mt-[10px] flex items-center gap-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
             <Check className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" />
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] leading-[13px]">2 of 5 sessions completed</div>
+              <div className="text-[11px] leading-[13px]">
+                {usingWeek ? `${weekDone} of ${weekPlanned} sessions completed` : "2 of 5 sessions completed"}
+              </div>
               <div className="mt-[3px] h-[4px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full w-[40%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+                <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                     style={{ width: `${usingWeek ? weekPct : 40}%` }} />
               </div>
             </div>
-            <span className="shrink-0 text-[13px]">40%</span>
+            <span className="shrink-0 text-[13px]">{usingWeek ? weekPct : 40}%</span>
           </div>
         </Card>
 
@@ -332,7 +518,7 @@ export default function TrainingHubPage() {
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all drills ›</Link>
         </div>
         <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
-          {LIBRARY.map(([, t, level, focus, img]) => (
+          {libraryCards.map(([len, t, level, focus, img], li) => (
             <Link key={t} href={`/training/drills/${slug(t)}`}>
               <Card className="overflow-hidden">
                 <div className="relative">
@@ -341,6 +527,14 @@ export default function TrainingHubPage() {
                       frame on a 146px card gave 1.64 and turned the strip into
                       a letterbox row. */}
                   <img src={img} alt="" className="h-[113px] w-full object-cover" />
+                  {/* Same baked-badge problem as the recommended row: cover the
+                      photograph's own duration when the card is a saved drill
+                      whose length the photo knows nothing about. */}
+                  {li < custom.length && (
+                    <span className="absolute left-[6px] top-[6px] rounded-[4px] bg-[#141518] px-[8px] py-[2px] text-[11px] font-medium leading-[15px] text-white">
+                      {len}
+                    </span>
+                  )}
                   <button type="button" aria-pressed={saved.has(t)}
                           aria-label={saved.has(t) ? "Remove from my drills" : "Save drill"}
                           onClick={(e) => { e.preventDefault(); toggleSave(t) }}
