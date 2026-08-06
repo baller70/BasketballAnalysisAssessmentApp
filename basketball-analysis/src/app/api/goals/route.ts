@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { serializeGoal } from "@/lib/api/serializers"
 import { validateCsrf } from "@/lib/csrf"
+import { evaluateGoal, type GoalSession } from "@/lib/goals/progress"
 
 /**
  * GET  /api/goals  — list the signed-in user's goals
@@ -20,7 +21,70 @@ export async function GET(request: NextRequest) {
     where: { userProfileId: resolved.profileId },
     orderBy: { createdAt: "asc" },
   })
-  return NextResponse.json({ success: true, goals: goals.map(serializeGoal) })
+
+  /* EACH GOAL, MEASURED AGAINST WHAT THE PLAYER ACTUALLY DID.
+     `currentValue` is written by exactly one thing in the codebase — a PATCH
+     carrying a number from the client — so a goal has never moved on its own.
+     A player who set "65% Make Percentage" and then shot 68% for a month
+     watched the bar stay at zero, on the one screen whose entire subject is
+     progress. The stored value is still returned, unchanged; `progress` is the
+     reading alongside it, and it says when it could not take one. */
+  const sessions = await loadSessions(resolved.profileId)
+  return NextResponse.json({
+    success: true,
+    goals: goals.map((g) => ({
+      ...serializeGoal(g),
+      progress: evaluateGoal(
+        { category: g.category, targetValue: g.targetValue, unit: g.unit },
+        sessions,
+        g.currentValue,
+      ),
+    })),
+  })
+}
+
+/**
+ * The player's sessions, with the shot counts a goal needs.
+ *
+ * Attempts live on ShotEvent, keyed by capture session, and only `make`/`miss`
+ * count — an `unknown` is an attempt nobody adjudicated, and counting it would
+ * depress every make% by however often the detector was unsure.
+ */
+async function loadSessions(userProfileId: string): Promise<GoalSession[]> {
+  const analyses = await prisma.userAnalysis.findMany({
+    where: { userProfileId },
+    orderBy: { createdAt: "desc" },
+    take: 400,
+    select: { createdAt: true, overallScore: true, captureSessionId: true },
+  })
+
+  const ids = analyses.map((a) => a.captureSessionId).filter((v): v is string => Boolean(v))
+  const tally = new Map<string, { shots: number; makes: number }>()
+  if (ids.length) {
+    const events = await prisma.shotEvent.findMany({
+      where: { captureSessionId: { in: ids } },
+      select: { captureSessionId: true, detectedResult: true },
+    })
+    for (const e of events) {
+      if (!e.captureSessionId) continue
+      if (e.detectedResult !== "make" && e.detectedResult !== "miss") continue
+      const t = tally.get(e.captureSessionId) ?? { shots: 0, makes: 0 }
+      t.shots += 1
+      if (e.detectedResult === "make") t.makes += 1
+      tally.set(e.captureSessionId, t)
+    }
+  }
+
+  return analyses.map((a) => {
+    const t = a.captureSessionId ? tally.get(a.captureSessionId) : undefined
+    const score = a.overallScore == null ? null : Number(a.overallScore)
+    return {
+      at: a.createdAt,
+      score: score != null && Number.isFinite(score) ? score : null,
+      shots: t?.shots ?? 0,
+      makes: t?.makes ?? 0,
+    }
+  })
 }
 
 export async function POST(request: NextRequest) {
