@@ -22,6 +22,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, Check, Minus, Plus, X } from "lucide-react"
@@ -69,6 +70,8 @@ export type PhoneDrill = {
 export function TrainingHome({ drills, onQuickStart }: {
   drills: PhoneDrill[]; onQuickStart: () => void
 }) {
+  const session = useLatestSession()
+
   return (
     <PhoneScreen testid="screen-ios-training-home" tab="train" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<GearLink />} />
@@ -146,7 +149,7 @@ export function TrainingHome({ drills, onQuickStart }: {
           <div className="min-w-0 flex-1">
             <div className="text-[12.5px] font-semibold leading-[15px]">Quick Release Builder</div>
             <StatCells className="mt-[7px]" valueSize={15} labelSize={7}
-                       cells={[{ v: "24", l: "SHOTS" }, { v: "15", l: "MAKES" }, { v: "62.5%", l: "MAKE %" }]} />
+                       cells={[{ v: session.shots, l: "SHOTS" }, { v: session.makes, l: "MAKES" }, { v: session.pct, l: "MAKE %" }]} />
             <div className="mt-[7px] flex items-end gap-[8px]">
               <div className="min-w-0 flex-1">
                 <div className="shotiq-microcaps" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>FORM SCORE</div>
@@ -339,6 +342,8 @@ function DayCell({ day, inMonth, state, note, onPick }: {
 }
 
 export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
+  const session = useLatestSession()
+
   const [picked, setPicked] = React.useState(7)
   return (
     <PhoneScreen testid="screen-ios-workout-calendar" tab="train" pad={0} header={false}>
@@ -353,7 +358,7 @@ export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
           <div className="mt-[3px] text-[10.5px] leading-[13px]">Keep elbow stacked through release</div>
         </div>
         <div className="ml-auto flex shrink-0">
-          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "FG%"]].map(([v, l]) => (
+          {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "FG%"]].map(([v, l]) => (
             <div key={l} className="w-[42px] text-center">
               <div className="shotiq-numeric text-[12px] leading-[13px]">{v}</div>
               <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 6.5, lineHeight: "7px", color: GRAPHITE }}>{l}</div>

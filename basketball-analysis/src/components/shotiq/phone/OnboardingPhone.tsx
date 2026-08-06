@@ -35,6 +35,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Check, Lightbulb, ChevronRight, Info } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
@@ -103,6 +104,8 @@ const BENEFITS: [string, string, string][] = [
 export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }: {
   onStart: () => void; onSkip?: () => void; onSignOut?: () => void; name?: string
 }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   void name
@@ -207,7 +210,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
 
       {/* ------------------------------------------------ stat tiles */}
       <div className="mx-[18px] mt-[9px] flex rounded-[6px] py-[8px]" style={{ border: `1px solid ${RULE}` }}>
-        {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"], ["RIGHT", "HANDED"]].map(([v, l], i) => (
+        {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "ACCURACY"], ["RIGHT", "HANDED"]].map(([v, l], i) => (
           <div key={l} className="min-w-0 flex-1 text-center"
                style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
             <div className="shotiq-numeric text-[15px] leading-[16px]">{v}</div>
@@ -379,6 +382,8 @@ export function ExperienceBodyType({
   onLevel: (v: string) => void; onBody: (v: string) => void
   onNext: () => void; onBack: () => void
 }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   return (
@@ -399,8 +404,8 @@ export function ExperienceBodyType({
       <div className="mx-[18px] mt-[11px]" style={{ borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>
         <StatCells className="py-[9px]" valueSize={19} labelSize={7.5}
                    cells={[
-                     { v: "82", l: "FORM SCORE", tone: BLUE }, { v: "24", l: "SHOTS" },
-                     { v: "15", l: "MAKES" }, { v: "62.5%", l: "ACCURACY", tone: BLUE },
+                     { v: "82", l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
+                     { v: session.makes, l: "MAKES" }, { v: session.pct, l: "ACCURACY", tone: BLUE },
                      { v: <span className="text-[9px] leading-[11px]">Keep elbow<br />stacked</span>, l: "PRIMARY TARGET" },
                    ]} />
       </div>

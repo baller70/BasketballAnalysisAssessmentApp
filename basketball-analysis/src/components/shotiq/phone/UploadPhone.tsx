@@ -21,6 +21,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Check, AlertCircle, ChevronRight, RotateCcw, RotateCw, Crop, Camera } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
@@ -269,6 +270,8 @@ const CHECKS: [string, string, string, boolean][] = [
 export function UploadQualityCheck({ src, fileName = "IMG_4521.MOV", onContinue, onChoose }: {
   src: string; fileName?: string; onContinue: () => void; onChoose: () => void
 }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   return (
@@ -289,8 +292,8 @@ export function UploadQualityCheck({ src, fileName = "IMG_4521.MOV", onContinue,
       <div className="mx-[18px] mt-[11px]" style={{ borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>
         <StatCells className="py-[9px]" valueSize={19} labelSize={7.5}
                    cells={[
-                     { v: "82", l: "FORM SCORE", tone: BLUE }, { v: "24", l: "SHOTS" },
-                     { v: "15", l: "MAKES" }, { v: "62.5%", l: "ACCURACY", tone: BLUE },
+                     { v: "82", l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
+                     { v: session.makes, l: "MAKES" }, { v: session.pct, l: "ACCURACY", tone: BLUE },
                      { v: <span className="text-[9px] leading-[11px]">Keep elbow<br />stacked</span>, l: "PRIMARY TARGET" },
                    ]} />
       </div>

@@ -23,6 +23,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import {
@@ -42,6 +43,8 @@ export type ClipMeta = {
 export function VideoReview({
   clip, onAnalyze, onChange,
 }: { clip: ClipMeta; onAnalyze?: () => void; onChange?: () => void }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   const DETAILS: [React.ReactNode, string, string][] = [
@@ -121,7 +124,7 @@ export function VideoReview({
           <span className="text-[var(--shotiq-color-graphite)]">Advanced</span>
         </div>
         <div className="flex shrink-0 divide-x divide-[var(--shotiq-color-rule)] text-center">
-          {([["82", "FORM SCORE", ORANGE], ["24", "SHOTS", undefined], ["15", "MAKES", undefined], ["62.5%", "%", undefined]] as
+          {([["82", "FORM SCORE", ORANGE], [session.shots, "SHOTS", undefined], [session.makes, "MAKES", undefined], [session.pct, "%", undefined]] as
             [string, string, string | undefined][]).map(([v, l, c]) => (
             <div key={l} className="px-[6px]">
               <div className="shotiq-numeric text-[16px] leading-[17px]" style={c ? { color: c } : undefined}>{v}</div>

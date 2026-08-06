@@ -22,6 +22,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import {
@@ -56,6 +57,8 @@ export function MyMedia({ groups, onOpen, onUpload }: {
   onOpen: (id: string) => void
   onUpload: () => void
 }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   const [tab, setTab] = React.useState(0)
@@ -84,8 +87,8 @@ export function MyMedia({ groups, onOpen, onUpload }: {
           <div className="min-w-0 flex-1">
             <StatCells valueSize={19} labelSize={7}
                        cells={[
-                         { v: "82", l: "FORM SCORE", tone: BLUE }, { v: "24", l: "SHOTS" },
-                         { v: "15", l: "MAKES" }, { v: "62.5%", l: "ACCURACY", tone: BLUE },
+                         { v: "82", l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
+                         { v: session.makes, l: "MAKES" }, { v: session.pct, l: "ACCURACY", tone: BLUE },
                        ]} />
           </div>
           <span className="ml-[9px] shrink-0 pl-[9px]" style={{ borderLeft: `1px solid ${RULE}` }}>
@@ -177,6 +180,8 @@ export function MyMedia({ groups, onOpen, onUpload }: {
 export function MediaDetail({ item, frames, onBack }: {
   item: PhoneMedia; frames: string[]; onBack: () => void
 }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   const [frame, setFrame] = React.useState(4)
@@ -244,7 +249,7 @@ export function MediaDetail({ item, frames, onBack }: {
 
         <Eyebrow className="mt-[10px]">SHOT EVENTS</Eyebrow>
         <div className="mt-[7px] flex">
-          {([["24", "SHOTS", "angle"], ["15", "MAKES", "wrist"], ["62.5%", "MAKE %", "arc"],
+          {([[session.shots, "SHOTS", "angle"], [session.makes, "MAKES", "wrist"], [session.pct, "MAKE %", "arc"],
              [chrome.streak, "DAY STREAK", "impact"], [chrome.points, "POINTS", "centerline"]] as const).map(([v, l, m], i) => (
             <div key={l} className="min-w-0 flex-1 pl-[7px] text-center first:pl-0"
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>

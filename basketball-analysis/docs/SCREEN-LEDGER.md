@@ -1562,18 +1562,44 @@ Verified at 393pt on five routes: signed out shows the canonical 6 / 2,840 /
 Jordan Ellis exactly as designed; signed in shows a real 1-day streak, 25 points
 and the account name, with no persona string anywhere in the tree.
 
+### DONE: the phone stat strips read the player's own last session
+
+One level down from the chrome. "24 SHOTS / 15 MAKES / 62.5%" was written as
+literals at 13 sites across 8 phone components. `useLatestSession` resolves them
+from the same shared history hook the desktop screens read, so a phone screen
+can never disagree with the desktop screen showing the same session. Canonical
+values remain the EMPTY STATE.
+
+**Both counts are required together.** The hook returns the canonical triple
+unless it has BOTH shots and makes — a strip showing real shots beside canonical
+makes would state a make% matching neither.
+
+**Deliberately NOT wired: the capture-in-progress screens.** `LiveCapture`'s
+`Recording` already receives real counts as props, and its post-capture `Review`
+describes the capture just taken — putting the last COMPLETED session's numbers
+there would label one session's counts as another's, which is worse than the
+constant. Only `Primer` / `Setup` / `Ready`, which run before recording starts
+and show the last session as context, are wired. The Review screen needs the
+capture's own counts plumbed through; that is its own task, not this one.
+
+Verified at 393pt by seeding a capture session with 20 shots / 13 makes: signed
+in, all four routes rendered 20 / 13 / 65.0% and 62.5% disappeared; signed out,
+the canonical triple held. Probe capture session, its shot events and the
+analysis link were then deleted and the canonical values confirmed restored.
+
 ### NEXT
 
-No screen in progress. Candidates:
-1. The five untracked badges (release time, shot distance, elbow height above
-   the shoulder, session length, game situation) each need a measurement added
-   upstream before they can ever be earned. Ask Kevin which matter — this is the
-   one item on the list that needs his input rather than a decision I can make.
-2. A sweep of the phone tree for the OTHER canonical constants: "24 / 15 /
-   62.5%" shot lines and "May 2025" dates are still literals in several phone
-   components, the same class of defect one level down from the chrome.
+1. **The five untracked badges** — release time, shot distance, elbow height
+   above the shoulder, session length, game situation. Each needs a measurement
+   added upstream before it can ever be earned. Ask Kevin which matter; this is
+   the one item that needs his input rather than a decision I can make.
+2. **`LiveCapture`'s Review screen** should show the counts of the capture it is
+   reviewing. Needs the capture's own shot events threaded to the component.
+3. **The "82" form score** is still a literal beside the wired stat strips in
+   several phone components (MediaPhone, UploadPhone, OnboardingPhone,
+   VideoReview, PlayerBio) — the same class again, one field over.
 
-### Method rules learned here### Method rules learned here### Method rules learned here### Method rules learned here
+### Method rules learned here### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
   were complete, correct and had zero callers. Grep for the consumer before
@@ -1614,6 +1640,11 @@ No screen in progress. Candidates:
   the column's ordering (here `score_change`, a delta against the previous row)
   all have to be handled, or the schema change quietly produces wrong numbers
   instead of missing ones.
+- **F14.** A screen with no data cannot prove a wiring works. The test account
+  had zero shot events, so every stat strip legitimately showed the canonical
+  triple whether or not it was wired — indistinguishable from a broken fix.
+  Seed the data, verify, then delete it; do not accept "looks unchanged" as a
+  pass on an empty account.
 - **F13.** Grep for the RENDERED form, not the source form. "Jordan Ellis" was
   written `>JORDAN ELLIS<` in six components — already uppercased in the markup —
   so a search for the mixed-case string reported them clean. Sweep with the

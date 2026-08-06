@@ -36,6 +36,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { createPortal } from "react-dom"
 import { PhoneHeading, MiniTrend } from "@/components/shotiq/PhoneShell"
@@ -77,6 +78,8 @@ const ACTIONS: [string, React.ReactNode][] = [
 export function ShareResults({ onShare, onSave, onCopy, onMore }: {
   onShare?: () => void; onSave?: () => void; onCopy?: () => void; onMore?: () => void
 }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   const handlers = [onShare, onSave, onCopy, onMore]
@@ -189,7 +192,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
         <PhaseTrack className="mt-[6px]" figure={27} label={10.5} underline />
 
         <div className="mt-[5px] flex items-center border-t border-[var(--shotiq-color-rule)] pt-[7px]">
-          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
+          {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "MAKE %"]].map(([v, l]) => (
             <div key={l} className="min-w-0 flex-1">
               <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
               <div className="shotiq-microcaps mt-[3px] leading-[10px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</div>

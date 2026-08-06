@@ -42,6 +42,7 @@
  */
 
 import React from "react"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { useRouter } from "next/navigation"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
@@ -79,6 +80,8 @@ const RECORDS: [string, string, string][] = [
 ]
 
 function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
+  const session = useLatestSession()
+
   const chrome = usePlayerChrome()
 
   return (
@@ -98,7 +101,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
           </div>
           <span aria-hidden="true" className="mx-[6px] h-[57px] w-px" style={{ background: RULE }} />
           <div className="w-[34px]">
-            {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "%"]].map(([v, l], i) => (
+            {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "%"]].map(([v, l], i) => (
               <div key={l} className={i ? "mt-[2px]" : undefined}>
                 <div className={`shotiq-numeric text-[15px] leading-[16px] ${i === 1 ? "" : ""}`}
                      style={i === 1 ? { color: GREEN } : undefined}>{v}</div>
@@ -254,6 +257,8 @@ function Setup({
   hand: "LEFT" | "RIGHT"; onHand: (h: "LEFT" | "RIGHT") => void
   onStart: () => void; onUpload: () => void; stream: MediaStream | null
 }) {
+  const session = useLatestSession()
+
   return (
     <PhoneScreen testid="screen-ios-live-camera-setup" pad={18} headerH={40} tab="home">
       <CaptureIdentity cap={22.1} className="pt-[7px]" />
@@ -270,7 +275,7 @@ function Setup({
           </div>
           <Spark width={42} height={24} />
         </div>
-        {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"]].map(([v, l]) => (
+        {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "ACCURACY"]].map(([v, l]) => (
           <div key={l} className="flex-1 border-l pl-[8px] pt-[11px]" style={{ borderColor: RULE }}>
             <div className="shotiq-numeric text-[17px] leading-[18px]">{v}</div>
             <div className="shotiq-microcaps mt-[3px] whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
@@ -530,6 +535,8 @@ function Ready({
   onRecord: () => void; onAdjust: () => void; onCancel: () => void
   stream: MediaStream | null; onStart: () => void
 }) {
+  const session = useLatestSession()
+
   return (
     <PhoneScreen testid="screen-ios-capture-ready" pad={21} headerH={35} tab="home">
       <CaptureIdentity cap={24} className="pt-[19px]" />
@@ -593,7 +600,7 @@ function Ready({
 
       <div className="shotiq-microcaps mt-[9px] text-[9.5px]" style={{ color: GRAPHITE }}>LATEST SESSION</div>
       <div className="mt-[5px] flex items-start">
-        {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
+        {[[session.shots, "SHOTS"], [session.makes, "MAKES"], [session.pct, "MAKE %"]].map(([v, l]) => (
           <div key={l} className="flex-1">
             <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
             <div className="shotiq-microcaps mt-[4px] leading-[10px]" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >{l}</div>
