@@ -33,7 +33,7 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 001 | splash | **DONE** | **A+** | second independent grader; A- refuted, all 3 defects closed |
 | 002 | welcome | **DONE** | **A** | fresh grader refuted the A-; 6 defects closed; crossbar residual proven unreachable |
 | 003 | sign-in | **DONE** | **A** | 4th grader; withdrew its own defect after its falsification proved unsatisfiable by construction; 3.644 mean \|d\| |
-| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 5.3669**, verified in built captures. THIS ROUND (all three solves matched their in-page prediction to four decimals, which is the evidence for rule 47): overlay viewBox origin +0.48/+0.50 device px — twelve features, twelve negative deltas, one container offset, nine bands better from one parameter; plate 10.5487 -> **8.4842** (createLab scaleX 0.90 -> 0.7845, height exact against a 14.7% advance); signin 6.6987 -> **5.1897** (signinLab 21.0/0.90 -> 18.95/0.9092, both axes 11% over within 0.7% of each other — the OPPOSITE diagnosis to createLab on a run seeded identically); wordmark 8.7161 -> **4.1879** (ty 1.2670, NOT dy — see rule 47). Carried by the overlay alone: checkbox 9.3142 -> 7.1859, orrow 3.1520 -> 2.4379, fieldPass 5.2310 -> 4.6804, fieldConf 5.1655 -> 4.7994, fieldFirst 3.4513 -> 3.1399, fieldLast 3.3287 -> 2.9323, eyePass 8.7305 -> 8.1379, eyeConf 7.4985 -> 7.1219, fieldEmail 10.5242 -> 10.1237. EARLIER: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342, oneacct 12.912->6.329, helpPass 10.949->4.571. monogram **13.8039 -> 5.5289** — its "unreachable residual" was an artefact of the sweep rule 40 discredited; re-solved against a clean control, a 1.20px translation was worth 8.3 of the 13.8. The remaining 5.5289 IS the shape error (L +1.05 R -0.35 T -1.13 B -0.21: 1.40px narrow, 0.92px tall, aspect 1.291 vs 1.343) and is left as measured — closing it means re-tracing Marks004.tsx, and a non-uniform scale would buy the extents with the stroke widths. display **14.8012 -> 14.3046** on the CORRECTED window (ty -0.3455 + stroke 0.15; the first attempt at this band was scored on a window that clipped 20 of its 78 ink rows and is retracted — see rule 49/50). lede 12.7701 INVESTIGATED, NOT SHIPPED: not colour and not weight (rule 51 control), position already optimal (control beats every offset), stems median 2.0 in both. A (size,scale) valley floor of ~12.01 exists — 13.00/0.976 = 12.013, 12.94/0.980 = 12.057, 13.06/0.972 = 12.167 — but it is the rule 32 degeneracy, a diagonal ridge the band mean cannot resolve into one pair, and the attempt to pin the size independently used an x-height estimator that spanned BOTH lede lines (rule 45) and is void. Not shipped on an undetermined pair. OPEN, largest first: display 14.3046, lede 12.7701, terms 10.6657, fieldEmail 10.1237, plate 8.4842, labConfirm 8.3835, eyePass 8.1379, checkbox 7.1859, eyeConf 7.1219, oneacct 6.3291, monogram 5.5289 (shape). NOT GRADED YET. |
+| 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 5.3669**, verified in built captures. THIS ROUND (all three solves matched their in-page prediction to four decimals, which is the evidence for rule 47): overlay viewBox origin +0.48/+0.50 device px — twelve features, twelve negative deltas, one container offset, nine bands better from one parameter; plate 10.5487 -> **8.4842** (createLab scaleX 0.90 -> 0.7845, height exact against a 14.7% advance); signin 6.6987 -> **5.1897** (signinLab 21.0/0.90 -> 18.95/0.9092, both axes 11% over within 0.7% of each other — the OPPOSITE diagnosis to createLab on a run seeded identically); wordmark 8.7161 -> **4.1879** (ty 1.2670, NOT dy — see rule 47). Carried by the overlay alone: checkbox 9.3142 -> 7.1859, orrow 3.1520 -> 2.4379, fieldPass 5.2310 -> 4.6804, fieldConf 5.1655 -> 4.7994, fieldFirst 3.4513 -> 3.1399, fieldLast 3.3287 -> 2.9323, eyePass 8.7305 -> 8.1379, eyeConf 7.4985 -> 7.1219, fieldEmail 10.5242 -> 10.1237. EARLIER: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342, oneacct 12.912->6.329, helpPass 10.949->4.571. monogram **13.8039 -> 5.5289** — its "unreachable residual" was an artefact of the sweep rule 40 discredited; re-solved against a clean control, a 1.20px translation was worth 8.3 of the 13.8. The remaining 5.5289 IS the shape error (L +1.05 R -0.35 T -1.13 B -0.21: 1.40px narrow, 0.92px tall, aspect 1.291 vs 1.343) and is left as measured — closing it means re-tracing Marks004.tsx, and a non-uniform scale would buy the extents with the stroke widths. display **14.8012 -> 14.3046** on the CORRECTED window (ty -0.3455 + stroke 0.15; the first attempt at this band was scored on a window that clipped 20 of its 78 ink rows and is retracted — see rule 49/50). lede 12.7701 INVESTIGATED, NOT SHIPPED: not colour and not weight (rule 51 control), position already optimal (control beats every offset), stems median 2.0 in both. A (size,scale) valley floor of ~12.01 exists — 13.00/0.976 = 12.013, 12.94/0.980 = 12.057, 13.06/0.972 = 12.167 — but it is the rule 32 degeneracy, a diagonal ridge the band mean cannot resolve into one pair, and the attempt to pin the size independently used an x-height estimator that spanned BOTH lede lines (rule 45) and is void. Not shipped on an undetermined pair. OPEN, largest first: display 14.3046, lede 12.7701, terms 10.6657, fieldEmail 10.1237, plate 8.4842, labConfirm 8.3835, eyePass 8.1379, checkbox 7.1859, eyeConf 7.1219, oneacct 6.3291, monogram 5.5289 (shape). INDEPENDENTLY VERIFIED (not the builder's self-report): `.next-r9` predated the current 004 sources by two days and could not have contained this work, so it was reclaimed and a clean production build made into `.next-004v`, served by `next start` on 3181 and captured with the shipping harness. `python3 -m measure.report004` reproduces EVERY band to four decimals — whole screen 5.3669, display 14.3046, lede 12.7701, terms 10.6657, fieldEmail 10.1237, plate 8.4842, monogram 5.5289, orrow 2.4379. The work is real and it is in the built output. For calibration 003 graded A at 3.644, so 5.3669 is not yet there. SENT TO AN INDEPENDENT GRADER, brief at scratchpad/BRIEF-004.md. NOT GRADED YET. |
 | 005+ | … | not started | — | |
 
 ## The native app has layout defects the 72 web rows above never measured
@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — fifty-one, each learned by getting something wrong
+## Method rules — fifty-two, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1271,6 +1271,28 @@ string rolling over at midnight.
     matches, the finding is the mask. And confirm the geometry separately —
     the lede's stems are median 2.0 px at every threshold in BOTH images, which
     is what a matched weight actually looks like.
+
+52. **An orphaned `next dev` corrupts a concurrent production build, and the
+    errors it produces name the SOURCE.** Building 004 into `.next-004v` while
+    a forgotten dev server from a finished agent was still running failed on
+    every one of 95 pages with
+
+        Error: <Html> should not be imported outside of pages/_document.
+        TypeError: Cannot read properties of null (reading 'useContext')
+
+    Neither is true of this codebase. The tell is in the stack trace:
+    `react-dom-server.browser.development.js` — the DEVELOPMENT react-dom,
+    inside a production build. The same commit had built and deployed cleanly
+    on the box an hour earlier, which is the evidence that ruled the source
+    out. `kill` the dev server, rebuild, exit 0, no source change.
+
+    Two ways this wastes a session: it looks exactly like a real regression in
+    shared layout, and a builder that "fixes" the phantom will edit `_document`
+    or a provider that was never wrong. BEFORE diagnosing a build failure that
+    hits every page at once, run `pgrep -af "next dev|next start"` and check
+    whether the same commit builds elsewhere. A failure common to all 95 pages
+    is a claim about the environment until proven otherwise — the build-time
+    twin of rule 30.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
