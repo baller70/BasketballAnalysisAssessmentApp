@@ -1510,6 +1510,55 @@ turns the `img` src from `/images/canonical/...` into
 `data:image/jpeg;base64,...` - real cropped pixels. 331 tests, 8 new on the
 geometry. Probe account deleted.
 
+### ShotIQ IS ON KEVIN'S IPHONE, and the build that got it there found a real defect
+
+`scripts/install-on-device.sh` with DEVICE_UDID set to the Identifier
+`devicectl` prints, run on Kevin's Mac against the attached iPhone 11 Pro Max:
+
+    Device: Kevin's iPhone (00008030-001E4D203A80802E)
+    Generated ShotIQ.xcodeproj
+    ** BUILD SUCCEEDED **
+    App installed:
+    - bundleID: com.baller70.shotiq
+    ==> Done - ShotIQ installed on Kevin's iPhone
+
+Zero `error:` lines. Three defects stood between the request and that log, and
+each one alone was enough to stop it.
+
+### F39 - a GENERATED file that is also COMMITTED is a defect waiting to happen
+
+`ShotIQ.xcodeproj` is produced by XcodeGen from `project.yml`. A copy is ALSO
+committed. That copy had gone stale: `PoseDetection.swift` and
+`CapturedPoseImage.swift` were tracked in git and present on disk but were not
+members of the ShotIQ target. The build died with
+
+    AnalysisFlow.swift:595:15: error: cannot find type 'DetectedPose' in scope
+    CaptureFlow.swift:829:38: error: cannot find type 'DetectedPose' in scope
+
+THE ENTIRE ON-DEVICE POSE FEATURE WAS NOT BEING COMPILED. PoseDetection.swift's
+own header states what it is for - "THE SKELETON THE APP DRAWS WAS NEVER YOUR
+SKELETON" - the fixed six-point figure was to be replaced by Vision run on the
+player's own pixels. It was written, merged, and then not in the target, so the
+app kept drawing the canned skeleton.
+
+WHY NOTHING CAUGHT IT: `ios-appstore.yml` runs `xcodegen generate` before
+building, which overwrites the stale file. CI was green on a project it had
+regenerated; only builds that TRUSTED the committed one broke - every local
+Xcode run and every device install. A check that regenerates its own input
+cannot detect that the input was wrong.
+
+Fixed twice over, because either alone leaves a hole:
+  - `install-on-device.sh` now generates unconditionally, as CI does, so target
+    membership always matches the files on disk.
+  - the committed project was regenerated and committed (8-line diff, exactly
+    the two files' entries - which is itself the proof nothing else had drifted).
+
+THE RULE: when a generated artefact is also committed, staleness is silent and
+the error it produces names something else entirely ("cannot find type" says
+nothing about xcodegen). Either stop committing it, or regenerate before every
+build that depends on it. Never let a green CI that regenerates its input stand
+as evidence the committed copy is good.
+
 ### F38 - an id printed by a tool is the id users will paste
 
 `scripts/install-on-device.sh` takes an optional DEVICE_UDID. `xcrun devicectl
