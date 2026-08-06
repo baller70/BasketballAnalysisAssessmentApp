@@ -331,6 +331,8 @@ model MediaUpload {
   status          String    @default("pending") @db.VarChar(20)
   completedParts  Json?     @map("completed_parts")
   mediaUrl        String?   @map("media_url") @db.VarChar(1000)
+  /** Clip length in seconds. Null for an image, or an upload that predates it. */
+  durationSeconds Decimal?  @map("duration_seconds") @db.Decimal(8, 2)
   completedAt     DateTime? @map("completed_at")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")

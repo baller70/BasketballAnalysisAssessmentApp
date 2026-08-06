@@ -58,6 +58,49 @@ async function withRetry<T>(
   throw lastError instanceof Error ? lastError : new Error('Video part upload failed')
 }
 
+/**
+ * How long the clip runs, read from the blob the queue already holds.
+ *
+ * The server cannot learn this on its own — it receives bytes, not a decoded
+ * video — so if the browser does not send it, nothing ever knows a clip's
+ * length and every preview in the media library falls back to the same
+ * canonical `0:07`.
+ *
+ * Best effort by design: a codec the browser cannot decode, a queue restored
+ * without a live object URL, or a non-video blob all resolve to `undefined`,
+ * and the upload completes exactly as before. A duration is a nicety; failing
+ * to record one must never cost the player their upload.
+ */
+async function readBlobDuration(blob: Blob): Promise<number | undefined> {
+  if (typeof document === 'undefined' || typeof URL?.createObjectURL !== 'function') return undefined
+  if (blob.type && !blob.type.startsWith('video/')) return undefined
+  const url = URL.createObjectURL(blob)
+  try {
+    return await new Promise<number | undefined>((resolve) => {
+      const video = document.createElement('video')
+      video.preload = 'metadata'
+      // Never hang the upload on a file the browser will not decode.
+      const done = (value: number | undefined) => {
+        video.onloadedmetadata = null
+        video.onerror = null
+        clearTimeout(timer)
+        resolve(value)
+      }
+      const timer = setTimeout(() => done(undefined), 5_000)
+      video.onloadedmetadata = () => {
+        const d = video.duration
+        done(Number.isFinite(d) && d > 0 ? d : undefined)
+      }
+      video.onerror = () => done(undefined)
+      video.src = url
+    })
+  } catch {
+    return undefined
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 export async function uploadQueuedVideo(
   id: string,
   dependencies: ResumableUploadDependencies = {},
@@ -166,10 +209,14 @@ export async function uploadQueuedVideo(
       completed.set(partNumber, { partNumber, eTag: partResponse })
     }
 
+    const durationSeconds = await readBlobDuration(entry.blob)
     const completionResponse = await apiFetch(`/api/media-uploads/${entry.serverUploadId}/complete`, {
       method: 'POST',
       signal: dependencies.signal,
-      body: JSON.stringify({ parts: [...completed.values()].sort((a, b) => a.partNumber - b.partNumber) }),
+      body: JSON.stringify({
+        parts: [...completed.values()].sort((a, b) => a.partNumber - b.partNumber),
+        ...(durationSeconds != null ? { durationSeconds } : {}),
+      }),
     })
     const completion = await responseJson(completionResponse, 'Could not complete video upload')
     const upload = completion.upload as { mediaUrl?: unknown } | undefined

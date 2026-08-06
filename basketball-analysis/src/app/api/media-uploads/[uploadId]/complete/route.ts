@@ -11,6 +11,11 @@ const completeSchema = z.object({
     partNumber: z.number().int().min(1).max(10_000),
     eTag: z.string().trim().min(1).max(255),
   })).min(1).max(10_000),
+  /* The clip's length in seconds, which the browser knows from the file it
+     just uploaded and the server has no way to learn on its own. Optional so
+     an older client still completes; bounded so a bad value cannot be stored
+     as a fact. Four hours is far past any shooting clip. */
+  durationSeconds: z.number().positive().max(14_400).optional(),
 })
 
 export async function POST(request: NextRequest, { params }: { params: { uploadId: string } }) {
@@ -59,6 +64,11 @@ export async function POST(request: NextRequest, { params }: { params: { uploadI
         mediaUrl: completed.url,
         completedAt: new Date(),
         analysisId: analysis?.id,
+        // Rounded to hundredths, matching the column; absent stays null rather
+        // than becoming a zero, which would read as "an empty clip".
+        ...(parsed.data.durationSeconds != null
+          ? { durationSeconds: Math.round(parsed.data.durationSeconds * 100) / 100 }
+          : {}),
       },
     })
     await prisma.userAnalysis.updateMany({

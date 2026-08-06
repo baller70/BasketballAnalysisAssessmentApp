@@ -70,6 +70,27 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    /* The clip's length, which lives on the upload rather than the analysis.
+       `/api/media` has been answering "—" for every row because nothing
+       recorded a duration anywhere; media_uploads carries one now, so the
+       library can print a real length instead of the preview surface falling
+       back to its canonical 0:07 on every clip. */
+    const uploads = await prisma.mediaUpload.findMany({
+      where: { userProfileId, analysisId: { in: rows.map((r) => r.id) } },
+      select: { analysisId: true, durationSeconds: true },
+    })
+    const durationByAnalysis = new Map<string, number>()
+    for (const u of uploads) {
+      if (!u.analysisId || u.durationSeconds == null) continue
+      const n = Number(u.durationSeconds)
+      if (Number.isFinite(n) && n > 0) durationByAnalysis.set(u.analysisId, n)
+    }
+    /** `0:07`, the form every transport and duration chip in the app prints. */
+    const clock = (seconds: number) => {
+      const t = Math.max(0, Math.round(seconds))
+      return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`
+    }
+
     const now = new Date()
     const media = rows.map((r) => {
       const score = r.overallScore == null ? null : Number(r.overallScore)
@@ -86,7 +107,11 @@ export async function GET(request: NextRequest) {
           : score == null ? "Not analyzed"
           : score < 70 ? "Review"
           : "Analyzed",
-        len: r.mediaType === "video" ? "—" : "—",
+        /* An em-dash means "not recorded", which is the honest answer for an
+           image, for a clip uploaded before durations were kept, and for one
+           whose codec the browser could not decode. It is never a zero. */
+        len: durationByAnalysis.has(r.id) ? clock(durationByAnalysis.get(r.id) as number) : "—",
+        durationSeconds: durationByAnalysis.get(r.id) ?? null,
         // Prefer the annotated frame (the one carrying the skeleton) when the
         // pipeline produced one.
         img: r.annotatedImageUrl || r.imageUrl || undefined,

@@ -1707,10 +1707,29 @@ Sweep at the corrected settle time: `/dashboard`, `/results/demo`,
 `/results/demo/training`, `/media`, `/points`, `/elite-shooters` — all clean
 except one lead below.
 
-- **`/media` reports `0:00` and `0:07` in both states.** The clip transport's
-  canonical defaults on a screen listing real uploads. Whether the stored media
-  rows carry a duration at all is the first thing to check; if they do not, this
-  is a persistence gap rather than a wiring one. NOT yet investigated.
+- **`/media`'s `0:00 / 0:07` — FIXED, and it WAS a persistence gap.**
+  `media_uploads` had a size in bytes and a content type but no duration, which
+  is why `/api/media` had been answering `len: "—"` for every row: it had
+  nothing to answer with. `MediaSurface` defaults to `0:07`, so every clip in
+  the library claimed to be seven seconds long.
+
+  A full slice, because a wiring fix alone was impossible: a nullable
+  `duration_seconds` column; the browser reads the clip's length off the blob
+  the upload queue already holds and sends it on completion (the SERVER cannot
+  learn it — it receives bytes, not a decoded video); `/api/media` formats it;
+  the page passes it to the surface.
+
+  Best-effort by construction. A codec the browser cannot decode, a restored
+  queue, or a non-video blob all resolve to `undefined` behind a 5s timeout, and
+  the upload completes exactly as before — **a duration is a nicety and must
+  never cost the player their upload**. An em-dash means "not recorded", which
+  is the honest answer for an image, for a clip that predates the column, and
+  for one that failed to decode. It is never a zero.
+
+  Verified by seeding an upload row at 23.4s: the API returned `0:23` for that
+  analysis and `—` for the two without, the page showed `0:23` with no `0:07`
+  anywhere, and signed out the canonical `0:07` still renders. Probe row then
+  deleted and the em-dashes confirmed back.
 
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a

@@ -454,7 +454,12 @@ export default function MediaLibraryPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.img} alt="" className="absolute inset-0 h-full w-full object-contain" />
                     ) : (
-                      <MediaSurface height="100%" rounded={0} />
+                      /* The surface's canonical `0:07` is a claim about THIS
+                         clip. Pass the row's own length so a real upload shows
+                         its real one; a row with none recorded shows the
+                         em-dash the API sends rather than borrowing canonical's
+                         seven seconds. */
+                      <MediaSurface height="100%" rounded={0} duration={m.len} />
                     )}
                     <button type="button" onClick={() => setDetail({ item: m, day })} aria-label={`Open ${m.title}`}
                             data-testid={`media-open-${m.id}`}
@@ -517,7 +522,7 @@ export default function MediaLibraryPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={detail.item.img} alt="" className="h-[260px] w-full object-cover" />
               ) : (
-                <MediaSurface height={260} rounded={0} />
+                <MediaSurface height={260} rounded={0} duration={detail.item.len} />
               )}
               <span className="absolute bottom-[8px] right-[9px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{detail.item.len}</span>
             </div>
