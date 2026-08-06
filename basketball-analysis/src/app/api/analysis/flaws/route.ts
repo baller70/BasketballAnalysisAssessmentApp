@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { detectFlawsFromAngles, type ShootingFlaw } from "@/data/shootingFlawsDatabase"
+import { anglesOf, ANALYSIS_ANGLE_SELECT } from "@/lib/analysis/analysisAngles"
 
 /**
  * GET /api/analysis/flaws — the flaws actually detected in YOUR shots, with the
@@ -27,35 +28,6 @@ import { detectFlawsFromAngles, type ShootingFlaw } from "@/data/shootingFlawsDa
  */
 
 /** The loosely-keyed record the flaw rules read, from one stored analysis. */
-function anglesOf(row: {
-  elbowAngle: unknown; kneeAngle: unknown; wristAngle: unknown
-  shoulderAngle: unknown; hipAngle: unknown; releaseAngle: unknown
-  kneeAngleMin: unknown
-}): Record<string, number> {
-  const out: Record<string, number> = {}
-  const put = (joint: string, v: unknown) => {
-    const n = Number(v)
-    if (v == null || !Number.isFinite(n)) return
-    // Both conventions, exactly as services/pose/formAnglesToRecord emits them,
-    // so a rule keyed either way resolves.
-    out[`${joint}_angle`] = n
-    out[`right_${joint}_angle`] = n
-  }
-  put("elbow", row.elbowAngle)
-  put("knee", row.kneeAngle)
-  put("wrist", row.wristAngle)
-  put("shoulder", row.shoulderAngle)
-  put("hip", row.hipAngle)
-  put("release", row.releaseAngle)
-  /* THE DIP, under its own key and not as `knee_angle`. The knee above is the
-     release frame's, where the legs have extended; the knee rules ask about
-     the deepest bend of the load. Handing the release knee to a rule that
-     means the dip is what made INSUFFICIENT_KNEE_BEND fire on every shot ever
-     taken. One key per quantity, so neither can be mistaken for the other. */
-  const dip = Number(row.kneeAngleMin)
-  if (row.kneeAngleMin != null && Number.isFinite(dip)) out.knee_angle_min = dip
-  return out
-}
 
 /** Canonical's three impact bands, from the flaw library's own 1-10 priority. */
 const band = (priority: number): "HIGH IMPACT" | "MEDIUM IMPACT" | "LOW IMPACT" =>
@@ -70,12 +42,7 @@ export async function GET(request: NextRequest) {
       where: { userProfileId: resolved.profileId },
       orderBy: { createdAt: "desc" },
       take: 100,
-      select: {
-        id: true, createdAt: true, captureSessionId: true,
-        elbowAngle: true, kneeAngle: true, wristAngle: true,
-        shoulderAngle: true, hipAngle: true, releaseAngle: true,
-        kneeAngleMin: true,
-      },
+      select: { id: true, createdAt: true, captureSessionId: true, ...ANALYSIS_ANGLE_SELECT },
     })
 
     /* Makes and attempts per capture session, from the detector's own ShotEvent

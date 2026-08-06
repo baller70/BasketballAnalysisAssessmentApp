@@ -1463,6 +1463,60 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### Recommended drills now address the flaw they name
+
+Finishing the dip work properly turned up three more breaks in the same chain -
+the one that runs measurement -> flaw -> focus area -> drill. Every link was
+present. None of them connected.
+
+1. TWO COPIES OF `anglesOf`, character for character, in `/api/analysis/flaws`
+   and `/api/training/recommended`. Adding `kneeAngleMin` taught only the flaws
+   copy about the dip, so the Flaws screen could see a shallow dip and the drill
+   recommendations could not - the same player told what was wrong on one screen
+   and offered nothing to fix it on the next. My own half-finished change.
+   One `lib/analysis/analysisAngles.ts` now, both callers, plus a shared
+   `ANALYSIS_ANGLE_SELECT` so the two Prisma queries cannot drift either (F21).
+
+2. `mapFlawToFocusArea` MATCHED NOTHING. Its keys were lowercase -
+   `insufficient_knee_bend`, `poor_balance`, `flat_arc` - and not one of the
+   thirteen was a real flaw id; the library uses SCREAMING_SNAKE, and half those
+   names do not exist in it at all. Every lookup fell through to CONSISTENCY, so
+   an elbow problem and a knee problem drew the SAME drills. Rewritten against
+   the real vocabulary, with a test asserting the only ids that fall through are
+   the five miss-PATTERN flaws, which genuinely belong there.
+
+3. `getRecommendedDrills` RETURNED UNRELATED DRILLS AS THE RECOMMENDATION. It
+   sorted within one level and took the top N. The catalogue is not evenly
+   stocked: HIGH_SCHOOL - the level every player defaults to without a stated
+   experience or age - has NO knee-bend, elbow, follow-through, balance or arc
+   drill at all. The sort found nothing to promote and handed back the level's
+   first three. Now matches are drawn from the player's own level first, then
+   outward to the nearest levels, before the list is padded; a drill for the dip
+   is a drill for the dip whatever level it is filed under.
+
+Verified end to end through the real API and the real screen, with the release
+knee held at 172 throughout so only the dip moved:
+
+  dip 138, wrist 78   no flaws; "nothing specific to train out", no drills
+  dip 166, wrist 78   Knee Bend -> Knee Bend Power, Shot Load Optimization,
+                      Knee Bend Bounce
+  dip 138, wrist 30   Follow Through -> Follow-Through Hold, Follow-Through
+                      Freeze, High Five Finish
+
+/results/demo/training reads "RECOMMENDED FOR YOUR GOAL / Based on Insufficient
+Knee Bend" over three Knee Bend drills, each tagged with its focus and level.
+Two different flaws now give two different lists - the thing a player would
+actually have noticed. Probe account deleted. 320 tests pass, 13 new.
+
+### F30 - a chain is only as wired as its least-checked link
+
+Measurement, rule, mapping and catalogue were each individually plausible and
+individually broken in a way that returned a full, confident-looking answer.
+Checking "does the flaw fire?" was not enough; the drill list at the end still
+had nothing to do with the shot. When wiring a pipeline, assert at the LAST
+link that two different inputs produce two different outputs - end to end,
+through the real route, not at the layer being edited.
+
 ### The preview deploy had been failing on every push, and /results/[id] was missed
 
 Kevin asked to update the web app and the iOS app. Establishing what that means

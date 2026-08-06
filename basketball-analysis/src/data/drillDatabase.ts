@@ -1310,21 +1310,63 @@ export function getDrillsByFocusArea(focusArea: DrillFocusArea): Drill[] {
   return ALL_DRILLS.filter(drill => drill.focusArea === focusArea)
 }
 
+/** Levels in order, so a missing focus area can be drawn from the nearest one. */
+const LEVEL_ORDER: SkillLevel[] = [
+  'ELEMENTARY', 'MIDDLE_SCHOOL', 'HIGH_SCHOOL', 'COLLEGE', 'PROFESSIONAL',
+]
+
+/**
+ * Drills for a player's level, led by the ones that address what their shot
+ * actually gets wrong.
+ *
+ * THE OLD VERSION SORTED WITHIN ONE LEVEL AND RETURNED THE TOP N REGARDLESS.
+ * The catalogue is not evenly stocked: HIGH_SCHOOL — the level every player
+ * without a stated experience or age defaults to — has NO knee-bend, elbow,
+ * follow-through, balance or arc drills at all, only game-situation,
+ * consistency, release-point, footwork and fatigue. So a player whose dip was
+ * too shallow got "Game-Situation Shooting, Consistency Challenge, Pressure
+ * Free Throws", identical to what a player with no wrist snap got, and
+ * identical to what a player with no flaws at all would have got. The sort
+ * found nothing to promote and quietly handed back the first three.
+ *
+ * A KNEE-BEND FLAW NEEDS A KNEE-BEND DRILL, and a drill for the dip is a drill
+ * for the dip whatever level it is filed under. So matches are taken from the
+ * player's own level first, then from the nearest levels outward, before the
+ * list is padded with anything else. Padding is kept — a short list is a worse
+ * screen than a full one — but it can only ever appear BELOW the drills that
+ * address the flaw, and the caller labels those two groups differently.
+ */
 export function getRecommendedDrills(
   level: SkillLevel,
   weakAreas: DrillFocusArea[],
   limit: number = 5
 ): Drill[] {
-  const levelDrills = getDrillsByLevel(level)
-  
-  // Prioritize drills that address weak areas
-  const prioritized = levelDrills.sort((a, b) => {
-    const aMatch = weakAreas.includes(a.focusArea) ? 1 : 0
-    const bMatch = weakAreas.includes(b.focusArea) ? 1 : 0
-    return bMatch - aMatch
-  })
-  
-  return prioritized.slice(0, limit)
+  const picked: Drill[] = []
+  const taken = new Set<string>()
+  const add = (d: Drill) => {
+    if (picked.length >= limit || taken.has(d.id)) return
+    taken.add(d.id)
+    picked.push(d)
+  }
+
+  // Nearest-level ordering: the player's own level, then outward from it.
+  const home = Math.max(0, LEVEL_ORDER.indexOf(level))
+  const byDistance = [...LEVEL_ORDER].sort(
+    (a, b) => Math.abs(LEVEL_ORDER.indexOf(a) - home) - Math.abs(LEVEL_ORDER.indexOf(b) - home),
+  )
+
+  // 1. What is actually wrong, worst area first — the caller passes them ranked.
+  for (const area of weakAreas) {
+    for (const lvl of byDistance) {
+      for (const d of ALL_DRILLS) {
+        if (d.level === lvl && d.focusArea === area) add(d)
+      }
+    }
+  }
+  // 2. Then the rest of the player's own level, so the screen is not half empty.
+  for (const d of getDrillsByLevel(level)) add(d)
+
+  return picked
 }
 
 export function mapAgeToLevel(age: number): SkillLevel {
@@ -1352,23 +1394,61 @@ export function mapSkillLevelToLevel(skillLevel: string): SkillLevel {
 }
 
 // Map detected flaws to focus areas
+/**
+ * Which drill focus a detected flaw should train.
+ *
+ * NOT ONE OF THE OLD KEYS WAS A REAL FLAW ID. This table was written against a
+ * different vocabulary — `elbow_flare`, `poor_balance`, `flat_arc`, lowercase —
+ * while `SHOOTING_FLAWS` ids are SCREAMING_SNAKE: `ELBOW_FLARE`, `FLAT_SHOT`,
+ * `INSUFFICIENT_KNEE_BEND`. `mapping[flawId]` therefore missed on EVERY flaw
+ * and fell through to `'CONSISTENCY'`, so a player with an elbow problem and a
+ * player with a knee problem were recommended exactly the same drills. It never
+ * threw, and a plausible drill list came back every time — the failure mode F28
+ * is about, one layer along.
+ *
+ * Every id below is checked against `SHOOTING_FLAWS`; the test asserts the two
+ * vocabularies still agree, so a renamed flaw fails the suite instead of
+ * silently collapsing back to CONSISTENCY.
+ *
+ * The fall-through stays `CONSISTENCY` for the pattern flaws — CONSISTENT_LEFT_
+ * MISS, RANDOM_MISSES and their siblings are about repeatability rather than
+ * one joint, so that is their right home rather than a default nobody chose.
+ */
 export function mapFlawToFocusArea(flawId: string): DrillFocusArea {
   const mapping: Record<string, DrillFocusArea> = {
-    'elbow_flare': 'ELBOW_ALIGNMENT',
-    'elbow_too_high': 'ELBOW_ALIGNMENT',
-    'elbow_too_low': 'ELBOW_ALIGNMENT',
-    'insufficient_knee_bend': 'KNEE_BEND',
-    'excessive_knee_bend': 'KNEE_BEND',
-    'poor_balance': 'BALANCE',
-    'inconsistent_release': 'RELEASE_POINT',
-    'low_release': 'RELEASE_POINT',
-    'poor_follow_through': 'FOLLOW_THROUGH',
-    'flat_arc': 'ARC_TRAJECTORY',
-    'high_arc': 'ARC_TRAJECTORY',
-    'inconsistent_footwork': 'FOOTWORK',
-    'poor_stance': 'FOOTWORK'
+    // Elbow
+    ELBOW_FLARE: 'ELBOW_ALIGNMENT',
+    ELBOW_TOO_LOW: 'ELBOW_ALIGNMENT',
+    ELBOW_ANGLE_ACUTE: 'ELBOW_ALIGNMENT',
+    ELBOW_ANGLE_OBTUSE: 'ELBOW_ALIGNMENT',
+    // Legs — the dip
+    INSUFFICIENT_KNEE_BEND: 'KNEE_BEND',
+    EXCESSIVE_KNEE_BEND: 'KNEE_BEND',
+    // Release point and timing
+    LOW_RELEASE_POINT: 'RELEASE_POINT',
+    EARLY_RELEASE: 'RELEASE_POINT',
+    LATE_RELEASE: 'RELEASE_POINT',
+    // Hand and follow-through
+    NO_WRIST_SNAP: 'FOLLOW_THROUGH',
+    GUIDE_HAND_PUSH: 'FOLLOW_THROUGH',
+    GUIDE_HAND_LATE_RELEASE: 'FOLLOW_THROUGH',
+    GUIDE_HAND_UNDER: 'FOLLOW_THROUGH',
+    // Ball flight
+    FLAT_SHOT: 'ARC_TRAJECTORY',
+    HIGH_ARC_EXCESSIVE: 'ARC_TRAJECTORY',
+    // Body alignment over the base
+    SHOULDER_TILT: 'BALANCE',
+    HIP_ROTATION: 'BALANCE',
+    HEAD_MOVEMENT: 'BALANCE',
+    LEANING_BACK: 'BALANCE',
+    LEANING_FORWARD: 'BALANCE',
+    // The base itself
+    JUMPING_FORWARD: 'FOOTWORK',
+    FEET_NOT_SET: 'FOOTWORK',
+    NARROW_STANCE: 'FOOTWORK',
+    WIDE_STANCE: 'FOOTWORK',
   }
-  
+
   return mapping[flawId] || 'CONSISTENCY'
 }
 

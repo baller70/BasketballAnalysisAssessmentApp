@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { detectFlawsFromAngles } from "@/data/shootingFlawsDatabase"
+import { anglesOf, ANALYSIS_ANGLE_SELECT } from "@/lib/analysis/analysisAngles"
 import {
   getRecommendedDrills,
   mapAgeToLevel,
@@ -41,26 +42,6 @@ import {
  * than a stated one is reported through `levelSource` for the same reason.
  */
 
-/** The loosely-keyed record the flaw rules read, from one stored analysis. */
-function anglesOf(row: {
-  elbowAngle: unknown; kneeAngle: unknown; wristAngle: unknown
-  shoulderAngle: unknown; hipAngle: unknown; releaseAngle: unknown
-}): Record<string, number> {
-  const out: Record<string, number> = {}
-  const put = (joint: string, v: unknown) => {
-    const n = Number(v)
-    if (v == null || !Number.isFinite(n)) return
-    out[`${joint}_angle`] = n
-    out[`right_${joint}_angle`] = n
-  }
-  put("elbow", row.elbowAngle)
-  put("knee", row.kneeAngle)
-  put("wrist", row.wristAngle)
-  put("shoulder", row.shoulderAngle)
-  put("hip", row.hipAngle)
-  put("release", row.releaseAngle)
-  return out
-}
 
 /** Minutes as the screen writes them: "5:30", not "5 min". */
 const clock = (minutes: number) =>
@@ -108,10 +89,7 @@ export async function GET(request: NextRequest) {
         where: { userProfileId: resolved.profileId },
         orderBy: { createdAt: "desc" },
         take: 50,
-        select: {
-          elbowAngle: true, kneeAngle: true, wristAngle: true,
-          shoulderAngle: true, hipAngle: true, releaseAngle: true,
-        },
+        select: ANALYSIS_ANGLE_SELECT,
       }),
     ])
 
