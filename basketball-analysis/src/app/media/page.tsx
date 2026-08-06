@@ -541,7 +541,17 @@ export default function MediaLibraryPage() {
                   Analyze now <ChevronRight className="h-[12px] w-[12px]" />
                 </Link>
               ) : (
-                <Link href="/results/demo/analysis" className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-analysisBlue)]">
+                /* "Open analysis" now opens THIS shot's analysis when the item
+                   is a real one. It used to send every card — demo or real — to
+                   /results/demo/analysis, which is how a player's own upload
+                   ended up showing somebody else's numbers. Demo items keep
+                   their old destination, because there is no record behind
+                   them to open. */
+                <Link
+                  href={live ? `/results/${detail.item.id}` : "/results/demo/analysis"}
+                  data-testid="media-open-analysis"
+                  className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-analysisBlue)]"
+                >
                   Open analysis <ChevronRight className="h-[12px] w-[12px]" />
                 </Link>
               )}

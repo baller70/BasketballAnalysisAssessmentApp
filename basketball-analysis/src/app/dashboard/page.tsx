@@ -106,6 +106,10 @@ export default function DashboardPage() {
   // could never do.
   const [history, setHistory] = useState<{ score: number | null }[]>([])
   const [loading, setLoading] = useState(true)
+  /* "Why this matters" was a button with an Info icon and no onClick — it read
+     as an explain-this affordance and did nothing when pressed. It now opens
+     the explanation it advertises. */
+  const [whyOpen, setWhyOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -270,9 +274,26 @@ export default function DashboardPage() {
                     </div>
                     <GoalPercent size={18}>{hasData ? "72%" : "0%"}</GoalPercent>
                   </div>
-                  <button type="button" className="mt-[8px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
+                  <button
+                    type="button"
+                    data-testid="dashboard-why-this-matters"
+                    aria-expanded={whyOpen}
+                    aria-controls="dashboard-why-panel"
+                    onClick={() => setWhyOpen((v) => !v)}
+                    className="mt-[8px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]"
+                  >
                     Why this matters <Info className="h-[13px] w-[13px]" />
                   </button>
+                  {whyOpen && (
+                    <p
+                      id="dashboard-why-panel"
+                      className="mt-[8px] text-[12px] leading-[18px] text-[var(--shotiq-color-graphite)]"
+                    >
+                      {hasData
+                        ? "Release consistency is the strongest single predictor of make percentage in your sessions — a repeatable elbow line changes where the ball leaves your hand, and that shows up in the arc before it shows up in the score. This goal tracks the share of your recent shots whose release angle sits inside your own best range."
+                        : "Once you have analysed a shot, this is where your active goal and its progress appear — what to work on next, and how close you are to it."}
+                    </p>
+                  )}
                 </div>
                 <Link href="/results/demo/analysis" data-testid="cta-view-analysis"
                       className="mt-[12px] flex h-[44px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] text-[15px] font-medium text-white">
