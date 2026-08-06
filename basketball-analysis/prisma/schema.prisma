@@ -58,6 +58,13 @@ model UserProfile {
   dominantHand    String? @map("dominant_hand") @db.VarChar(20) // right/left/ambidextrous
   shootingStyle   String? @map("shooting_style") @db.VarChar(50) // one_motion/two_motion/set_shot/jump_shot/not_sure
 
+  // Onboarding answers. The wizard has always ASKED for these four and had
+  // nowhere to put them, so every one was discarded on Finish.
+  position          String? @db.VarChar(30) // guard/forward/center
+  yearsPlaying      String? @map("years_playing") @db.VarChar(30)
+  practiceFrequency String? @map("practice_frequency") @db.VarChar(40)
+  primaryGoal       String? @map("primary_goal") @db.VarChar(120)
+
   // Bio
   bio         String? @db.Text
   enhancedBio String? @map("enhanced_bio") @db.Text
