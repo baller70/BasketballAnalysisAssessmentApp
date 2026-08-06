@@ -1463,6 +1463,47 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### The iOS release would have died AFTER the archive, not before it
+
+Kevin has asked four times to have the app updated through Xcode, and the last
+attempt from here failed on permissions: `actions/workflows/.../dispatches`
+returns 403 for this token, and pushing a `release-*` tag - the path the
+workflow documents for exactly that case - is blocked by the sandbox classifier.
+So he has to start the run himself. The one useful thing left is making sure it
+does not waste his time when he does.
+
+It would have. `ios-appstore.yml`'s preflight checked two secrets,
+APPLE_DIST_CERT_P12_BASE64 and ASC_KEY_P8_BASE64. `appstore-release.sh` needs
+ASC_ISSUER_ID to upload - it dies on "ASC_ISSUER_ID is not set" at line 196 -
+and NOTHING asked for it until that moment. A release with it unset would have:
+started the macOS runner, installed XcodeGen, generated the project, imported
+the signing certificate, installed the API key, run the FULL ARCHIVE (twenty to
+forty minutes), and only then failed on the last step. ASC_KEY_ID was checked,
+but inside the macOS job, after the runner had already started.
+
+The config job runs on ubuntu in seconds. It now checks all four required
+secrets there and NAMES each missing one; the old message was "Release secrets
+are missing. Run the iOS Release Preflight workflow to see which", which sends
+the reader to a second workflow to learn what a single line could have said.
+APPLE_DIST_CERT_PASSWORD is deliberately not required - a .p12 may carry no
+password and demanding one would block a valid setup.
+
+Verified by dry-running the guard both ways: ASC_ISSUER_ID absent exits 1 and
+names it; all four present exits 0 and proceeds. YAML parses.
+
+ALSO CONFIRMED, since the instruction given to Kevin depended on it: the TAG
+path resolves correctly. `release-2` on main gives build_number 2 and stage
+upload-and-submit, and `--build N` reaches the archive as a real
+`CURRENT_PROJECT_VERSION=N` xcodebuild override. So `git push origin release-2`
+does what he was told it does.
+
+### F34 - check a preflight covers every secret its own script dies on
+
+A guard that checks SOME of the required inputs is worse than none: it reads as
+"the credentials were verified" and then fails deep inside an expensive job.
+Grep the scripts a workflow calls for what they `die` on, and make the cheap
+early job assert exactly that set.
+
 ### A clean shooter was recommended three hardcoded drills
 
 Continuing the F16 sweep. RECOMMENDED FOR YOUR GOAL fell back to `RECOMMENDED`
