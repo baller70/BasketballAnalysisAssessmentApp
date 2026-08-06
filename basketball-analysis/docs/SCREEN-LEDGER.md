@@ -1458,3 +1458,59 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 - Capture harnesses (`capture-ios.mjs`, `capture-web.mjs`) and the grade
   directories were lost in the rollback and must be rebuilt before the next
   grading pass.
+
+---
+
+## FEATURE WORK LOG (Kevin's redirect — supersedes the pixel program)
+
+Kevin's instruction: *"why are you not working on the features of the app like
+the placeholder images to make them come to real function not just images"* —
+then *"put all of that in the app because they all need it, because I have
+features that rely on those."* Feature work takes priority over the fidelity
+measurement program until he says otherwise. Scheduled triggers that ask to
+resume the pixel program are answered with feature work.
+
+**Standing rule for every screen here: the canonical demo content stays as the
+EMPTY STATE.** Real data only ever replaces invented data. Every screen is
+verified at BOTH states in a browser before it is committed.
+
+| Screen / area | State | What became real |
+|---|---|---|
+| video → 5 phase frames | DONE | SETUP/LOAD/RISE/RELEASE/FOLLOW-THROUGH from the clip |
+| iOS pose skeleton | DONE | Apple Vision joints, not 6 hardcoded points |
+| iOS auth (4 defects) | DONE | Bearer accepted, token returned, refresh route, profile 404 |
+| biomechanics KEY MEASUREMENTS | DONE | 6 constants → measured angles |
+| 4 derived measurements | DONE | `lib/vision/derivedMetrics.ts` + 15 tests; stature-scaled |
+| flaws | DONE | real `affectsPct`, computed `impactOnMakePct` |
+| elite compare | DONE | `/api/analysis/latest` + `/api/shooters/match` |
+| badges / points | DONE | `/api/badges` engine wired; 5 badges report "untracked" |
+| onboarding | DONE | 4 answers persisted (new columns); real bio enhancement |
+| player card | DONE | identity, streak, points, coaching target, 7-day deltas |
+| training hub | DONE | `/api/training/recommended` (new); week plan from workouts |
+| `/results/demo/goals` | NEXT | |
+| `/results/demo` (overview) | pending | |
+
+### Method rules learned here
+- **F1.** An endpoint existing is not an endpoint wired. Four separate engines
+  (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
+  were complete, correct and had zero callers. Grep for the consumer before
+  assuming a feature is missing — usually it is only disconnected.
+- **F2.** After a Prisma migration, RESTART the dev server. The running process
+  holds the old client, writes fail, and a page that falls back to demo values
+  looks green while saving nothing.
+- **F3.** Read the API's actual field names. `/api/shooters` publishes reference
+  angles under `measurements`, not `biomechanics`; the wrong key fails silently
+  and forever because the empty state looks identical to the canonical one.
+- **F4.** A display default is not a saved value. Onboarding rendered
+  `store.value ?? 74` and saved NULL — the review step showed a height the
+  database never received, which silently disabled three stature-scaled
+  measurements downstream.
+- **F5.** "0 of 20" and "we do not measure this" look identical on a progress
+  bar and only one is the player's fault. Anything unmeasurable carries a
+  reason string, and the screen prints the reason instead of a bar.
+- **F6.** Canonical photography has DATA PAINTED INTO IT. `090-rec-1.png` has
+  "05:28" in its pixels. Reusing canonical imagery behind live content puts two
+  contradictory figures on one card; cover the baked value or drop the asset.
+- **F7.** A renderer tuned for canonical constants can be wrong for real ones.
+  The player card greened its delta's first token unconditionally — correct for
+  four hardcoded rises, wrong the moment a real decline could appear.
