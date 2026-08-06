@@ -139,8 +139,7 @@ const FIELDS: Record<string, [number, number]> = {
 
 export const RUNS: Record<string, Run> = {
   /* The lockup sat 2.75 device px HIGH — a pure vertical placement error, with
-     nothing wrong with its type: dy 13.81 -> 11.06 and the band goes
-     8.7161 -> 4.1879 with no size, scale or tracking touched.
+     nothing wrong with its type: no size, scale or tracking is touched.
 
      The rung, not a precision claim (rule 12): the sweep returns four flat
      plateaux — {0.5,1.0} 6.9334, {1.5..2.2} 5.2491, {2.5,3.0} 4.1879,
@@ -148,9 +147,19 @@ export const RUNS: Record<string, Run> = {
      device rows. 2.75 is the centre of the winning plateau, and the minimum is
      BRACKETED rather than sitting at the edge of the lattice: the first sweep
      stopped at 3.0, where 2.5 and 3.0 tied, which is the shape rule 20 warns
-     about. Extending it to 6.0 showed the score climbing again. */
+     about. Extending it to 6.0 showed the score climbing again.
+
+     THE MOVE IS `ty`, NOT `dy`, AND THAT IS THE WHOLE DIFFERENCE. The first
+     attempt shipped the same 2.75 px as `dy` — which lands in `top` — and the
+     built capture came back 5.2491: not the winning rung but the ADJACENT one,
+     a full 1.06 short of the 4.1879 the sweep had promised. The sweep moved
+     this run with a transform, and a transform and a `top` quantise onto
+     different raster phases, so the shipped move lost a device row that the
+     measured move had. The two other solves in the same round used the same
+     property in the sweep as in the recipe (scaleX, font-size) and landed
+     8.4842 -> 8.4842 and 5.1898 -> 5.1897. See method rule 47. */
   wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0456, ls: 0.0123,
-              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 11.06, tx: 0, ty: 0 },
+              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 1.2670 },
   /* CREATE ACCOUNT. The size was right and the WIDTH was not, which is the one
      pairing rule 32 says to read together before calling anything a size error:
      cap height canonical/render came back 1.0009 — exact — while the advance

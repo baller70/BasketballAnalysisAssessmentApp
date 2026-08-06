@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-six, each learned by getting something wrong
+## Method rules — forty-seven, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1150,6 +1150,30 @@ string rolling over at midnight.
     server that never started is not a measurement, and this is the same shape
     as rule 30 — a null that looks like data — one level further out in the
     toolchain than any rule here had reached.
+
+47. **Solve with the lever you are going to ship, or the prediction is about
+    a different render.** Three of 004's bands were solved in one sweep round
+    and two of them transferred to the built capture to four decimals — plate
+    8.4842 -> 8.4842, signin 5.1898 -> 5.1897. The third missed by a full 1.06.
+
+    The two that landed were solved by injecting the SAME CSS property the
+    recipe emits: `transform:scaleX(...)` for the plate label, `font-size` for
+    the sign-in label. The one that missed was a vertical move, injected as
+    `transform:translate(0,ty)` in the sweep and then written into the recipe
+    as `dy`, which the recipe turns into `top`. Both ask for 2.75 device px.
+    They do not land in the same place: a transform is applied at paint and a
+    `top` goes through layout, so a text raster snaps onto a different phase
+    (rule 12), and the built band came back 5.2491 — which is not a random
+    miss, it is EXACTLY the sweep's adjacent plateau. The shipped move lost one
+    device row that the measured move had.
+
+    This is rule 43 one level in. There, an arm claimed a configuration the app
+    never received; here, a sweep claims a number for a render nobody is going
+    to ship. Both look like clean data. **Before believing a sweep, check that
+    every candidate's CSS uses the property the recipe emits for that
+    parameter** — and if a run has to be solved through a different lever than
+    it ships, the built capture is the only number that counts and the sweep
+    figure must not be recorded as the prediction.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
