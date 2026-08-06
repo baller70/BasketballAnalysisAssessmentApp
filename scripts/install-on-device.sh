@@ -57,7 +57,32 @@ def is_iphone(d):
     product = (d.get('hardwareProperties', {}) or {}).get('productType', '')
     return product.startswith('iPhone') or 'iphone' in name_of(d).lower()
 
-candidates = [d for d in devices if not wanted or udid_of(d) == wanted]
+def matches(d, wanted):
+    """DEVICE_UDID accepts EITHER id devicectl prints for the phone.
+
+    `xcrun devicectl list devices` shows an Identifier column — a CoreDevice
+    UUID like 37711652-37E7-57D1-9C76-8E028428D01B — and that is the value
+    anyone reads off the terminal and pastes in. It is NOT
+    hardwareProperties.udid, which is the 00008030-style hardware id. Matching
+    only the latter meant a correct-looking DEVICE_UDID selected nothing and
+    the script reported 'no paired iPhone at all' while devicectl was listing
+    the phone as available (paired) one command earlier.
+
+    Case-insensitive because the two ids differ in case between tools.
+    """
+    w = wanted.lower()
+    return w in (udid_of(d).lower(), (d.get('identifier', '') or '').lower())
+
+candidates = [d for d in devices if not wanted or matches(d, wanted)]
+if wanted and not candidates:
+    # Say which id was looked for and what is actually attached, rather than
+    # claiming nothing is paired.
+    sys.stderr.write(
+        'DEVICE_UDID=%s matched no device. Attached:\n%s\n' % (
+            wanted,
+            '\n'.join('  %s  udid=%s  identifier=%s' % (
+                name_of(d), udid_of(d) or '-', d.get('identifier', '-'))
+                for d in devices) or '  (none)'))
 ranked = sorted(candidates, key=lambda d: (not is_iphone(d), not usable(d)))
 chosen = (ranked or [None])[0]
 
@@ -66,7 +91,10 @@ if chosen is None:
 else:
     print(' '.join([
         chosen.get('identifier', ''),
-        udid_of(chosen) or '-',
+        # Second field feeds `-destination id=...`. Prefer the hardware udid,
+        # but a device that reports none must not turn into a literal '-' and
+        # send xcodebuild looking for a device called dash.
+        udid_of(chosen) or chosen.get('identifier', ''),
         name_of(chosen).replace(' ', '_'),
         state_of(chosen),
     ]))
