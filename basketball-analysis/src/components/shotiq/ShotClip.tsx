@@ -75,6 +75,23 @@ export function useShotClip({
   const raf = React.useRef(0)
   const last = React.useRef(0)
 
+  /* `start` is read once, at mount — which was fine while it was a constant.
+     A real clip's release time arrives from storage in a POST-MOUNT effect, so
+     by the time the caller knows where to park the head this state has already
+     been initialised to the canonical 7 and would never move. Re-seek when the
+     caller's start actually changes, and only while the player has not taken
+     over: seeking under someone who is watching their own clip would yank the
+     head out from under them. */
+  const startedAt = React.useRef(start)
+  React.useEffect(() => {
+    if (start === startedAt.current) return
+    startedAt.current = start
+    if (!playing) setTime(start)
+    // `playing` is deliberately not a dependency: this fires when the caller
+    // moves `start`, not when playback toggles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start])
+
   React.useEffect(() => {
     if (!playing) return
     last.current = performance.now()

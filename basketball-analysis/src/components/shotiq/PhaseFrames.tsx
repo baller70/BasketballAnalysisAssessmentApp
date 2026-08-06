@@ -79,6 +79,89 @@ export function usePhaseFrames(
   return frames
 }
 
+/** `0:07` — the clock every phase strip and transport prints. */
+export const clockOf = (seconds: number): string => {
+  const s = Math.max(0, Math.round(seconds))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
+}
+
+/** Label -> "0:04 – 0:06", plus the clip's own length. */
+export interface PhaseTimings {
+  /** Empty until a real clip is found; the caller keeps canonical until then. */
+  ranges: Record<string, string>
+  /** `0:12` — the clip's duration, for the transport readout. */
+  duration: string | null
+  /** The same length in seconds, for `useShotClip`, which scrubs in numbers. */
+  durationSeconds: number | null
+  /** When the release happened — canonical parks the scrub head there. */
+  releaseSeconds: number | null
+}
+
+/**
+ * WHEN each phase happened, for the strip that prints a time under every card.
+ *
+ * The strip has always drawn `0:00 – 0:02 · 0:02 – 0:04 · …` from a constant, so
+ * a 4-second clip and a 40-second clip were broken into the same five windows.
+ * Nothing new has to be stored to fix it: the pipeline already records a
+ * `timestamp` per phase and the clip's `duration`, and both are saved with the
+ * session alongside the stills this module already reads.
+ *
+ * Each phase runs from its own timestamp to the START of the next, and the last
+ * runs to the end of the clip — which is what the five cards mean by a window.
+ *
+ * Same contract as `usePhaseFrames`: no clip, no timings, and the caller keeps
+ * canonical's constants. A window is never invented from a partial record.
+ */
+export function usePhaseTimings(
+  clientSessionId?: string | null,
+  { fallbackToLatest = false }: { fallbackToLatest?: boolean } = {},
+): PhaseTimings {
+  const [timings, setTimings] = React.useState<PhaseTimings>({
+    ranges: {}, duration: null, durationSeconds: null, releaseSeconds: null,
+  })
+
+  React.useEffect(() => {
+    const session = clientSessionId
+      ? getSessionById(clientSessionId)
+      : (fallbackToLatest ? getLatestSessionByMediaType("video") : null)
+    const video = session?.videoData
+    const phases = video?.phases
+    if (!video || !Array.isArray(phases) || phases.length === 0) return
+
+    /* Ordered by when they happened, not by the order they were written: a
+       consumer that reads `phases` as authored would compute a negative window
+       the moment the pipeline emits them out of sequence. */
+    const ordered = [...phases]
+      .filter((p) => p && Number.isFinite(p.timestamp))
+      .sort((a, b) => a.timestamp - b.timestamp)
+    if (!ordered.length) return
+
+    const duration = Number.isFinite(video.duration) && video.duration > 0
+      ? video.duration
+      : ordered[ordered.length - 1].timestamp
+
+    const ranges: Record<string, string> = {}
+    ordered.forEach((p, i) => {
+      const label = normalise(p.legacy_phase || p.phase || "")
+      if (!label) return
+      const end = i + 1 < ordered.length ? ordered[i + 1].timestamp : duration
+      // First entry wins, matching usePhaseFrames' rule for duplicate labels.
+      ranges[label] ||= `${clockOf(p.timestamp)} – ${clockOf(end)}`
+    })
+
+    const release = ordered.find((p) =>
+      normalise(p.legacy_phase || p.phase || "") === "RELEASE")
+    setTimings({
+      ranges,
+      duration: clockOf(duration),
+      durationSeconds: duration,
+      releaseSeconds: release ? release.timestamp : null,
+    })
+  }, [clientSessionId, fallbackToLatest])
+
+  return timings
+}
+
 /**
  * One phase card's imagery: the captured still when this shot has one, and the
  * canonical figure when it does not.

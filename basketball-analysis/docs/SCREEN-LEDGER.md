@@ -1661,15 +1661,31 @@ this whole class of defect and should be re-run after any batch of wiring.
 `scratchpad/audit.mjs`, driven by an `RT=` comma list of routes (running all 23
 at once exceeds the tool timeout; do them in batches of ~5).
 
-Outstanding finding, NOT yet fixed:
+Findings so far:
 
-- **`/results/demo/analysis`** reports identical phase timings signed in and
-  out — `0:00 – 0:02`, `0:02 – 0:04`, `0:04 – 0:06`, `0:06 – 0:07`,
-  `0:07 – 0:10`, and a `0:07 / 0:12` transport readout. These are the `PHASES`
-  constant. The video pipeline already finds five phase FRAMES (task #33); it
-  does not persist their TIMES, so the timeline is canonical for every clip.
-  Next unit of work: carry the phase frame timestamps through `save-analysis`
-  and render them, canonical values remaining the empty state.
+- **`/results/demo/analysis` phase timings — FIXED.** The strip drew
+  `0:00 – 0:02 · 0:02 – 0:04 · …` from a constant, so a four-second shot and a
+  forty-second one reported identical windows on the strip that claims to show
+  WHEN each phase happened. Nothing new had to be stored: the pipeline already
+  records a `timestamp` per phase and the clip's `duration`, and both are saved
+  with the session beside the stills `usePhaseFrames` already reads.
+  `usePhaseTimings` derives each window as "this phase's timestamp -> the NEXT
+  phase's", with the last running to the end of the clip.
+
+  Two things this turned up:
+  - The phases are sorted by timestamp before windows are computed. Reading
+    them as authored would produce a NEGATIVE window the moment the pipeline
+    emitted them out of order.
+  - **`useShotClip` reads `start` once, at mount.** Fine while it was a
+    constant; a real release time arrives from storage in a post-mount effect,
+    so the head stayed parked at canonical's 0:07 forever. It re-seeks when the
+    caller moves `start` — and only while the player is not watching, because
+    seeking under someone mid-playback would yank the head out from under them.
+
+  Verified with a seeded 27-second clip whose phases sit at 3/8/14/18/22s:
+  windows read 0:03-0:08 … 0:22-0:27 and the transport reads 0:18 / 0:27,
+  parked at the real release. With no clip, canonical's windows and 0:07 / 0:12
+  render exactly as they shipped.
 
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
