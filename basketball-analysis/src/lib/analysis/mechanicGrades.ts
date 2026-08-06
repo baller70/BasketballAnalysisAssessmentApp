@@ -11,16 +11,17 @@
  * the same ideal bands the metric strip uses. Two are not, for different
  * reasons, and say so.
  *
- * A NOTE ON THE ELBOW BAND, because the app currently disagrees with itself.
- * `angles.elbow` is graded 85°-95° by the biomechanics KEY MEASUREMENTS table
- * and by `readMetric` on the phone overview, and 160°-180° by the MECHANICS
- * panel on `/results/demo`. Those are two different quantities wearing one
- * field name — flexion at the set point versus extension at release — and only
- * one of them can be what the pipeline writes. This grades against 85°-95°,
- * matching the two surfaces most recently verified against real seeded angles.
- * Resolving which the pipeline actually produces is its own task; it is in the
- * ledger, and it must be settled before either band is trusted further.
+ * THE BANDS ARE NOT THIS FILE'S TO CHOOSE. All three graded rows read angles
+ * sampled at the release frame, and what a release-frame angle counts as good
+ * is settled once in `@/lib/analysis/angleBands` — which is also where the
+ * evidence lives for why the numbers that used to be here (elbow 85-95, wrist
+ * 15-30, release 45-55) were each describing a different quantity from the one
+ * they were judging, and each marked a correct shot wrong.
  */
+
+import {
+  ELBOW_AT_RELEASE, WRIST_AT_RELEASE, RELEASE_FROM_VERTICAL, inBand, type AngleBand,
+} from "@/lib/analysis/angleBands"
 
 export type GradeState = "good" | "review" | "unmeasured"
 
@@ -37,18 +38,10 @@ export interface ShotAngles {
   [key: string]: number | null | undefined
 }
 
-/** Inclusive ideal ranges, the same the metric surfaces print. */
-const BANDS = {
-  elbow: [85, 95] as const,
-  release: [45, 55] as const,
-  wrist: [15, 30] as const,
-}
-
-function band(value: number | null | undefined, [lo, hi]: readonly [number, number], label: string): MechanicGrade {
-  if (value == null || !Number.isFinite(value)) {
-    return { label, value: "NOT MEASURED", state: "unmeasured" }
-  }
-  return value >= lo && value <= hi
+function band(value: number | null | undefined, range: AngleBand, label: string): MechanicGrade {
+  const ok = inBand(value, range)
+  if (ok == null) return { label, value: "NOT MEASURED", state: "unmeasured" }
+  return ok
     ? { label, value: "GOOD", state: "good" }
     : { label, value: "REVIEW", state: "review" }
 }
@@ -62,9 +55,9 @@ function band(value: number | null | undefined, [lo, hi]: readonly [number, numb
 export function gradeMechanics(angles: ShotAngles | null): MechanicGrade[] | null {
   if (!angles) return null
   return [
-    band(angles.elbow, BANDS.elbow, "ELBOW STACK"),
-    band(angles.release, BANDS.release, "RELEASE ANGLE"),
-    band(angles.wrist, BANDS.wrist, "WRIST SNAP"),
+    band(angles.elbow, ELBOW_AT_RELEASE, "ELBOW STACK"),
+    band(angles.release, RELEASE_FROM_VERTICAL, "RELEASE ANGLE"),
+    band(angles.wrist, WRIST_AT_RELEASE, "WRIST SNAP"),
     /* FOLLOW-THROUGH has no measurement of its own. It is a PHASE, and what
        would grade it — how the wrist and arm hold AFTER release — is the wrist
        angle, which the row above already carries. Grading both from one number

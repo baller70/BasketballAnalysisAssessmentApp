@@ -38,6 +38,7 @@ import {
   ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
 import { scoreBand } from "@/components/shotiq/ResultsBits"
+import { ELBOW_AT_RELEASE, RELEASE_FROM_VERTICAL } from "@/lib/analysis/angleBands"
 
 const TABS: [string, string][] = [
   ["ANALYSIS RESULT", "/results/demo"],
@@ -125,13 +126,20 @@ const METRIC_SOURCE: Record<string, {
     format: (v) => `${Math.floor(Math.round(v) / 12)}'${Math.round(v) % 12}"`,
     unit: "", ideal: [102, 110],
   },
+  /* Both bands come from `angleBands`, which is where the evidence lives for
+     why they are not what this file used to carry. `angles.release` is
+     deviation from vertical (ideal 0), not canonical's 45-55 launch arc, and
+     `angles.elbow` is the extended elbow at release, not the 85-95 set-point
+     "L". Judged against the old bands, a correct shot failed both rows. */
   "RELEASE ANGLE": {
     read: (a) => a.angles?.release ?? null,
-    format: (v) => String(Math.round(v)), unit: "°", ideal: [45, 55],
+    format: (v) => String(Math.round(v)), unit: "°",
+    ideal: [RELEASE_FROM_VERTICAL.min, RELEASE_FROM_VERTICAL.max],
   },
   "ELBOW ALIGNMENT": {
     read: (a) => a.angles?.elbow ?? null,
-    format: (v) => String(Math.round(v)), unit: "°", ideal: [85, 95],
+    format: (v) => String(Math.round(v)), unit: "°",
+    ideal: [ELBOW_AT_RELEASE.min, ELBOW_AT_RELEASE.max],
   },
   "CENTEREDNESS": {
     read: (a) => a.measurements?.centerlineDeviationDeg ?? null,

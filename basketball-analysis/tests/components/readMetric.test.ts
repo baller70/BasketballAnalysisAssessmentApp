@@ -16,20 +16,29 @@ describe("readMetric", () => {
   })
 
   it("judges a value inside its ideal band GOOD and outside it REVIEW", () => {
-    // Release angle ideal 45-55.
-    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 49 } }).verdict).toBe("GOOD")
-    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 61 } }).verdict).toBe("REVIEW")
-    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 30 } }).verdict).toBe("REVIEW")
+    // `angles.release` is deviation from vertical, ideal 0, good within ±15.
+    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 4 } }).verdict).toBe("GOOD")
+    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 31 } }).verdict).toBe("REVIEW")
+    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: -28 } }).verdict).toBe("REVIEW")
   })
 
   it("treats the band edges as inside it", () => {
-    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 45 } }).verdict).toBe("GOOD")
-    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 55 } }).verdict).toBe("GOOD")
+    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: -15 } }).verdict).toBe("GOOD")
+    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 15 } }).verdict).toBe("GOOD")
   })
 
   it("prints the elbow angle in DEGREES, not under canonical's % sign", () => {
-    const r = readMetric("ELBOW ALIGNMENT", "93", "%", "GOOD", { angles: { elbow: 88 } })
-    expect(r).toMatchObject({ value: "88", unit: "°", verdict: "GOOD", real: true })
+    const r = readMetric("ELBOW ALIGNMENT", "93", "%", "GOOD", { angles: { elbow: 168 } })
+    expect(r).toMatchObject({ value: "168", unit: "°", verdict: "GOOD", real: true })
+  })
+
+  it("bands both angles at the release frame they were sampled at", () => {
+    /* Every angle on an analysis comes from the release frame. These two rows
+       used to be judged against other moments — the elbow against the 85°-95°
+       set-point "L" and the release against canonical's 45°-55° ball arc — so a
+       correct shot was marked REVIEW on both. */
+    expect(readMetric("ELBOW ALIGNMENT", "93", "%", "GOOD", { angles: { elbow: 90 } }).verdict).toBe("REVIEW")
+    expect(readMetric("RELEASE ANGLE", "52", "°", "GOOD", { angles: { release: 52 } }).verdict).toBe("REVIEW")
   })
 
   it("reports the two metrics with no pipeline as not measured", () => {

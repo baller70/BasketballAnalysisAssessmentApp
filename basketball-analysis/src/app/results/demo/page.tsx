@@ -28,6 +28,7 @@ import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/compone
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { useProfileStore } from "@/stores/profileStore"
 import { AnalysisOverview } from "@/components/shotiq/phone/results/AnalysisOverview"
+import { ELBOW_AT_RELEASE, WRIST_AT_RELEASE } from "@/lib/analysis/angleBands"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -44,9 +45,24 @@ const PHASES: { label: string; time: string }[] = [
   { label: "FOLLOW-THROUGH", time: "0:07 – 0:10" },
 ]
 
+/* THE ELBOW ROW HERE WAS THE ONE THAT WAS RIGHT.
+   Canonical 083 prints "Elbow Angle 172°, ideal 160°–180°", and three other
+   screens contradicted it with 85°–95°. The 85°–95° screens were wrong: every
+   angle on an analysis is sampled at the RELEASE frame, where the arm is
+   extended, so `angles.elbow` really is ~150°–180°. The band now comes from
+   `angleBands` so all four screens move together; it reads 150°–180° rather
+   than canonical's 160°–180° because this app's own coaching calls 150°
+   excellent, and a printed range is a factual claim about the scoring rather
+   than a piece of layout.
+
+   THE WRIST ROW BESIDE IT WAS NOT. Canonical's "21°, ideal 15°–30°" is a wrist
+   SNAP flexion, and this pipeline has never measured that — `angles.wrist` is
+   forearm elevation from horizontal, high at release. Judged against 15°–30° a
+   textbook release failed. Both the band and the empty-state value move to the
+   quantity actually being printed, so the two agree. */
 const MECHANICS = [
-  { icon: "/images/canonical/083-mech-1.png", name: "Elbow Angle", value: "172°", ideal: "160° – 180°" },
-  { icon: "/images/canonical/083-mech-2.png", name: "Wrist Angle", value: "21°", ideal: "15° – 30°" },
+  { icon: "/images/canonical/083-mech-1.png", name: "Elbow Angle", value: "172°", ideal: ELBOW_AT_RELEASE.label },
+  { icon: "/images/canonical/083-mech-2.png", name: "Wrist Angle", value: "78°", ideal: WRIST_AT_RELEASE.label },
   { icon: "/images/canonical/083-mech-3.png", name: "Release Height", value: "8’6”", ideal: "7’8” – 8’8”" },
   { icon: "/images/canonical/083-mech-4.png", name: "Body Alignment", value: "2°", ideal: "−5° – 5°" },
 ]

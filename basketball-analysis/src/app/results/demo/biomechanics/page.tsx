@@ -18,11 +18,18 @@ import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { FrameDetail } from "@/components/shotiq/phone/results/FrameDetail"
 import { AnnotationToolbar } from "@/components/shotiq/phone/results/AnnotationToolbar"
 import { MetricDetail } from "@/components/shotiq/phone/results/MetricDetail"
+import { ELBOW_AT_RELEASE } from "@/lib/analysis/angleBands"
 
 // One bespoke diagram per measured quantity — canonical never repeats a glyph
 // down this list (angle, height ruler, distance tape, lift, ball arc, midline).
+/* The elbow row was judging a release-frame angle against a set-point band —
+   85°–95° is the "L" a shooter holds before the push, while every angle on an
+   analysis record is sampled at the RELEASE frame, where the arm is extended.
+   A textbook ~168° read as a failure. The band now comes from `angleBands`, so
+   this table, the share card, the phone strip and /results/demo cannot drift
+   apart again, and the empty-state value moves with it. */
 const MEASUREMENTS: [string, string, string, string, string][] = [
-  ["Elbow Angle", "92°", "Ideal: 85°–95°", "Good", "084-metric-elbow"],
+  ["Elbow Angle", "168°", `Ideal: ${ELBOW_AT_RELEASE.label}`, "Good", "084-metric-elbow"],
   ["Release Height", "8'10\"", "Ideal: 8'6\"–9'2\"", "Good", "084-metric-height"],
   ["Release Distance", "16.2\"", "Ideal: 14\"–16\"", "Slightly High", "084-metric-distance"],
   ["Vertical Jump", "24.6\"", "Ideal: 20\"–28\"", "Good", "084-metric-jump"],
@@ -34,9 +41,9 @@ const MEASUREMENTS: [string, string, string, string, string][] = [
 const METRIC_DETAIL: Record<string, { what: string; why: string; tip: string; trend: number[] }> = {
   "Elbow Angle": {
     what: "The angle of your shooting elbow at the moment of release.",
-    why: "A stacked elbow (85°–95°) sends force straight at the rim; flare adds side spin.",
-    tip: "Think “elbow under the ball” — check it each time you bring the ball to your set point.",
-    trend: [88, 90, 87, 91, 92],
+    why: `Full extension at release (${ELBOW_AT_RELEASE.label}) sends force straight at the rim; a short arm leaves the shot flat.`,
+    tip: "Finish with the arm long and the elbow above the eyebrow — reach for the rim, don't push at it.",
+    trend: [161, 164, 159, 166, 168],
   },
   "Release Height": {
     what: "How high the ball is when it leaves your hand.",
@@ -96,11 +103,11 @@ const RING_OUT = 6 / STRIP_W
  * printed as `hasData ? value : "—"`, so an account with one real analysis was
  * shown 92° whatever its elbow measured, on a screen headed KEY MEASUREMENTS.
  *
- * Two of the six are measured: the elbow angle, and the release angle which is
- * what canonical calls Shooting Arc (same quantity, same 45°–55° ideal band).
- * The other four — release height, release distance, vertical jump, centreline
- * deviation — need a calibrated camera and a ball track this app does not
- * compute. They now say so rather than carrying a number nobody derived.
+ * One of the six is measured: the elbow angle, at the release frame. The other
+ * five — release height, release distance, vertical jump, centreline deviation
+ * and the shooting arc — need a calibrated camera and a ball track this app
+ * does not compute. They now say so rather than carrying a number nobody
+ * derived.
  * Filling those four from shoulder/hip tilt would be inventing a measurement
  * with a plausible-looking source, which is the defect, not the fix.
  */
@@ -109,8 +116,17 @@ type Reader = (a: LatestAnalysis) => string | null
 /** How each canonical row is answered from a real analysis. */
 const MEASURED_BY: Record<string, Reader> = {
   "Elbow Angle": (a) => (a.angles.elbow == null ? null : `${Math.round(a.angles.elbow)}°`),
-  // Canonical's Shooting Arc is the release angle — same quantity, same band.
-  "Shooting Arc": (a) => (a.angles.release == null ? null : `${Math.round(a.angles.release)}°`),
+  /* SHOOTING ARC IS NOT MEASURED, and it used to be answered from
+     `angles.release`. Those are not the same quantity: canonical's arc is the
+     ball's launch angle, 45°–55°, while `angles.release` is the FORE ARM's
+     signed deviation from vertical with an ideal of 0. A near-perfect release
+     of 4° was printed as a 4° shooting arc and graded against 45°–55°, so it
+     read as a catastrophically flat shot when nothing was wrong with it.
+     Nothing on an analysis record tracks the ball's flight — the closest thing
+     the pipeline has is `launchArc`, itself a forearm-elevation proxy, and it
+     is not stored here. So this row has no reader and shows "—". The real
+     release measurement keeps its own row on the phone metric strip, under the
+     name of the thing it measures. */
   "Release Height": (a) =>
     a.measurements?.releaseHeightInches == null ? null : formatFeetInches(a.measurements.releaseHeightInches),
   "Release Distance": (a) =>

@@ -1461,7 +1461,99 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ---
 
-## FEATURE WORK LOG (Kevin's redirect — supersedes the pixel program)
+## FEATURE WORK LOG
+
+### The app disagreed with itself about the elbow — and the reason was worse
+
+Kevin found it: `/results/demo` banded the elbow 160deg-180deg while the
+biomechanics table, the phone metric strip and the share card banded it
+85deg-95deg. Chasing which was right turned up the cause, and two more rows
+carrying the same defect.
+
+EVERY angle on an analysis record is sampled at ONE frame, the RELEASE frame.
+`videoAnalysis.ts` picks it as "the detected frame where the shooting wrist is
+highest relative to the shoulders (peak of the shot)", reads
+`trustedAnglesFromForm(releaseForm)` there, and writes those six numbers.
+So:
+
+  angles.elbow    shoulder-elbow-wrist AT RELEASE - arm extended, ~150-180.
+  angles.wrist    forearm elevation from horizontal - high at release, ~50-100.
+  angles.release  SIGNED deviation of the forearm from vertical, 0 = straight up.
+                  Not a launch angle, not an arc.
+
+Judged against that, THE 160-180 SCREEN WAS THE ONE THAT WAS RIGHT, and three
+rows across four screens were wrong in the same direction - marking correct
+shooting as a fault:
+
+  ELBOW   at 85-95 (a set-point "L"): a textbook 168deg read REVIEW.
+  WRIST   at 15-30 (canonical's wrist SNAP, which nothing measures): 78deg read REVIEW.
+  RELEASE at 45-55 (canonical's ball SHOOTING ARC): a near-perfect 4deg read REVIEW.
+
+Fixed by putting the bands in one place, `src/lib/analysis/angleBands.ts`, with
+the evidence for each beside it. The elbow band is the app's own coaching
+thresholds from `videoAnalysis.ts` (excellent 150-170, short below 140,
+over-extended above 180); wrist and release come straight from `IDEAL_RANGES`,
+which was already right about those two. Four surfaces now read that one source
+and cannot drift apart again.
+
+SHOOTING ARC now says "Not measured". It was answered from `angles.release`
+under a comment claiming they were "the same quantity, same band". They are not:
+one is the ball's flight, the other is where the forearm points. Nothing on an
+analysis record tracks the ball's flight, so the row has no reader.
+
+Verified in a browser, both states, with a seeded textbook release frame
+(elbow 168, wrist 78, release 4): /results/demo read "168deg IDEAL 150deg - 180deg"
+and "78deg IDEAL 50deg - 100deg"; the biomechanics table read "168deg Ideal:
+150deg - 180deg" with Shooting Arc "Not measured"; the phone grid read
+"RELEASE ANGLE 4deg GOOD / ELBOW ALIGNMENT 168deg GOOD". Signed out, all
+unchanged. Probe account deleted.
+
+CAUTION FOR WHOEVER READS THIS NEXT: the first attempt at this fix went the
+WRONG WAY - it made every screen read `IDEAL_RANGES.elbow` (80-100) on the
+theory that the scoring config must be authoritative. It is authoritative about
+SCORING and wrong about this frame, and shipping that would have mis-graded
+every real shot harder than the bug being fixed. What settled it was reading the
+producer, not the config: which frame the angles come from.
+
+### F26 - a band is a claim about a QUANTITY, not about a field name
+
+`angles.elbow`, `angles.wrist` and `angles.release` each had two plausible
+readings, and every screen picked one without checking the producer. Before
+judging a stored value against a range, read the code that WRITES it and
+establish which physical quantity, at which moment, it holds. A field name is
+not evidence. A canonical PNG's printed range is not evidence either - it
+describes the design's intent, which may be a quantity this pipeline never
+computes (canonical's 21deg wrist snap and 52deg shooting arc both are).
+
+### OPEN, NEEDS KEVIN: the form score is graded at the wrong moment
+
+Found while fixing the above; NOT fixed, because fixing it means inventing
+coaching thresholds.
+
+`scoreShootingForm` grades the release-frame angles against `IDEAL_RANGES`,
+which is a bag of SET-POINT and LOADING ideals - elbow 90 ("the classic shooting
+'L'"), knee 142 ("athletic bend for power"), shoulder 70. It was never one
+coherent frame. Applying it to a release frame:
+
+  a textbook release (elbow 168, knee 172, shoulder 160, hip 176, release 4,
+  wrist 78) scores 69 OVERALL - elbow 31/100, shoulder 40/100, knee 57/100.
+  The same player's set-point frame scores 100.
+
+Every uploaded video is scored this way (`videoAnalysis.ts` line ~592), and the
+live provider scores every frame it sees with the same one table. A player
+shooting correctly is told 69, "FAIR - keep building consistency".
+
+The elbow has a defensible release band now. The KNEE and the SHOULDER do not -
+nothing in this codebase states what either should read at release, and guessing
+would be the same defect one layer down (F5). Those two numbers are Kevin's to
+give.
+
+RELATED, same cause: the ELITE MATCH card puts the player's release-frame elbow
+(168deg) next to a pro reference of 87deg from `shooterDatabase.ts`, whose own
+comment reads "Ideal: 85-95". The catalog holds set-point figures, so the
+comparison is between two different moments and will always show a large gap.
+
+ (Kevin's redirect — supersedes the pixel program)
 
 Kevin's instruction: *"why are you not working on the features of the app like
 the placeholder images to make them come to real function not just images"* —
