@@ -825,13 +825,51 @@ struct UploadQualityCheckView: View { // 024
     /// canonical analysis-error screen (040) when the upload/analyze call fails.
     enum UploadRoute: Hashable { case processing, failed }
     @State private var route: UploadRoute?
-    private let checks: [(String, String, String, Bool)] = [
+    /// What Vision found in the picked photo, once it has looked.
+    @State private var detectedPose: DetectedPose?
+    @State private var poseChecked = false
+
+    /// The canonical check list. Over the canonical placeholder it reads exactly
+    /// as it always has.
+    private let canonicalChecks: [(String, String, String, Bool)] = [
         ("Lighting", "Well-lit and clear.", "Good", true),
         ("Full body visibility", "Entire body is visible.", "Good", true),
         ("Video resolution", "High resolution.", "1080p", true),
         ("Shooting hand visibility",
          "Shooting hand is slightly cropped at the fingertips. Please reframe to show the full hand and ball.",
          "Needs attention", false)]
+
+    /// Over the player's OWN photo, the framing rows are answered by the pose
+    /// detection running on that photo rather than asserted from a constant.
+    /// "Entire body is visible · Good" printed over a picture with nobody in it
+    /// is the app telling the player something it never checked.
+    private var checks: [(String, String, String, Bool)] {
+        guard image != nil, poseChecked else { return canonicalChecks }
+        let body: (String, String, String, Bool)
+        let hand: (String, String, String, Bool)
+        if let pose = detectedPose {
+            body = pose.isFullBodyVisible
+                ? ("Full body visibility", "Entire body is visible.", "Good", true)
+                : ("Full body visibility",
+                   "Part of your body is out of frame. Reframe to include head to toe.",
+                   "Needs attention", false)
+            hand = pose.hasWrist
+                ? ("Shooting hand visibility", "Shooting hand is in frame.", "Good", true)
+                : ("Shooting hand visibility",
+                   "Shooting hand was not found. Reframe to show the full hand and ball.",
+                   "Needs attention", false)
+        } else {
+            body = ("Full body visibility",
+                    "No shooter was detected in this photo.", "Needs attention", false)
+            hand = ("Shooting hand visibility",
+                    "No shooter was detected, so the hand could not be checked.",
+                    "Needs attention", false)
+        }
+        // Lighting and resolution are left exactly as canonical states them —
+        // this pass measures pose, and swapping in a guess for the other two
+        // would trade one unmeasured claim for another.
+        return [canonicalChecks[0], body, canonicalChecks[2], hand]
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-quality-check") {
             ScrollView {
@@ -879,9 +917,15 @@ struct UploadQualityCheckView: View { // 024
                     // of the black rectangles — cut from the render instead.
                     ZStack(alignment: .topLeading) {
                         if let image {
-                            Image(uiImage: image).resizable().scaledToFill()
-                                .frame(height: 240).frame(maxWidth: .infinity).clipped()
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            // THE QUALITY CHECK BELOW ASKS WHETHER YOUR FULL BODY IS
+                            // IN FRAME — so show the body the app actually found.
+                            // Vision runs on device over these very pixels, and the
+                            // skeleton is the evidence for the checks; when nothing
+                            // is found the view says so instead of implying a read.
+                            CapturedPoseImage(image: image, height: 240, cornerRadius: 8) { found in
+                                detectedPose = found
+                                poseChecked = true
+                            }
                         } else {
                             CanonicalPhoto("024-visual-001", height: 240, cornerRadius: 8)
                         }

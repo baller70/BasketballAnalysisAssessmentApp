@@ -583,6 +583,16 @@ struct SkeletonOverlay: View {
         .init(x: 0.47, y: 0.9), .init(x: 0.46, y: 0.72), .init(x: 0.5, y: 0.55),
         .init(x: 0.52, y: 0.36), .init(x: 0.6, y: 0.27), .init(x: 0.66, y: 0.18),
     ]
+    /// A body actually found in the picture underneath. When this is set the
+    /// overlay draws THAT skeleton instead of the six constants above — the
+    /// player's own joints rather than the canonical shooter's. Every existing
+    /// caller passes nothing and is unaffected.
+    ///
+    /// The pose is in unit coordinates of the IMAGE, so whoever supplies one is
+    /// responsible for sizing this view to the image's drawn rect (see
+    /// `CapturedPoseImage`); an aspect-filled photo overflows its container and
+    /// drawing into the container instead would slide every joint off the body.
+    var pose: DetectedPose? = nil
     var ball = CGPoint(x: 0.7, y: 0.12)
     var showBones = true
     var showJoints = true
@@ -593,6 +603,30 @@ struct SkeletonOverlay: View {
     var body: some View {
         Canvas { ctx, size in
             func pt(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * size.width, y: p.y * size.height) }
+
+            // A real detection replaces the constants entirely: a full
+            // seventeen-point figure with two arms and two legs, drawn from
+            // where this player's joints actually are.
+            if let pose {
+                if showBones {
+                    var path = Path()
+                    for (a, b) in pose.boneSegments {
+                        path.move(to: pt(a))
+                        path.addLine(to: pt(b))
+                    }
+                    ctx.stroke(path, with: .color(boneColor),
+                               style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                }
+                if showJoints {
+                    for j in pose.points {
+                        ctx.fill(Path(ellipseIn: CGRect(origin: pt(j).applying(.init(translationX: -3.5, y: -3.5)),
+                                                        size: CGSize(width: 7, height: 7))),
+                                 with: .color(jointColor))
+                    }
+                }
+                return
+            }
+
             if showBones {
                 var path = Path()
                 path.move(to: pt(joints[0]))
