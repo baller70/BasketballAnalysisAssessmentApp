@@ -1463,6 +1463,52 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### The history table showed canonical's twelve sessions as a real player's own
+
+An F16 sweep - what a screen falls back to when a live list comes back EMPTY -
+turned up the history table, and it had the contract exactly inverted:
+
+    : hasData || items.length ? DEMO_ROWS : []
+
+`hasData || items.length` is true precisely when the caller HAS analyses. So a
+player who picked a 7- or 14-day range with no sessions in it was shown
+canonical's TWELVE ROWS - dates, form scores, verdicts, make %, shots/makes -
+plus a "12 sessions" count, as their own history. Nothing on the screen said
+otherwise: `demoMode` existed only to print that 12. Meanwhile a signed-out
+visitor, who is exactly who canonical is for, got an EMPTY TABLE.
+
+The file's own comment stated the intent: "junk rows ... fall back to the
+canonical demo sessions so the table always mirrors the 093 screen". Cosmetic
+fidelity bought with a fabricated record of sessions the player never shot.
+
+Inverted to the contract: nothing at all -> canonical, the screen as designed;
+real analyses with none in this window -> no rows and a line saying so. And the
+pre-existing "No sessions yet - run your first analysis" is now gated too, since
+it was telling a player with three analyses to go run their first.
+
+Verified in a browser, three states, after `rm -rf .next` (see below):
+  signed in, sessions 2 days old   3 sessions, Aug 4/3/2 2026, real scores
+  signed in, sessions 90 days old  0 sessions, "No sessions in the last 14
+                                   days. Widen the range to see your earlier
+                                   ones." - no canonical rows, no contradiction
+  signed out                       12 sessions, canonical May 2025 rows
+Probe account deleted. 323 tests pass, tsc clean, 0 lint errors.
+
+### F32 - the stale .next trap has a second trigger, and it fakes THIS defect
+
+The first three verification runs showed canonical rows to a signed-in player
+with seeded data - the exact defect being fixed, apparently still present after
+the fix. It was not: `scripts/build-pages-static.mjs` does `rmSync('.next')`
+mid-run, and a dev server started around it serves a half-built tree whose CSS
+and chunks 404, so the page never hydrates and the SSR pass renders the
+canonical default. `rm -rf .next` and a clean restart showed the real rows
+immediately.
+
+Two lessons. Any turn that has run the Pages export must clear `.next` before
+believing a browser check. And when a screenshot shows exactly the bug you are
+fixing, check hydration before concluding the fix failed - a 404 sweep for
+`_next/static` costs one Playwright run and settles it.
+
 ### Closing the dip chain at the link that was never asserted
 
 An F1 sweep over the domain modules - every exported function with no importer -

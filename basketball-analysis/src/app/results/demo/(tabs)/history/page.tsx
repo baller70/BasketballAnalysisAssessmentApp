@@ -128,8 +128,24 @@ export default function AnalysisHistoryPage() {
         formatMakePct(a.shots, a.makes), formatShotsMakes(a.shots, a.makes),
         a.shots != null && a.shots >= 15 ? "High" : "Medium",
       ] as [string, string, string, string, string, string])
-    : hasData || items.length ? DEMO_ROWS : []
+    /* CANONICAL BELONGS TO A VISITOR WITH NOTHING, NOT TO A PLAYER WHOSE
+       RANGE IS EMPTY — and this had it exactly backwards. `hasData ||
+       items.length` is true precisely when the caller HAS analyses, so a
+       player who picked a 7-day range with no sessions in it was shown
+       canonical's twelve rows — dates, scores, verdicts, make %, shots/makes —
+       and a "12 sessions" count, as their own history. Nothing on the screen
+       said otherwise; `demoMode` existed only to print that 12. Meanwhile a
+       signed-out visitor, who is exactly who canonical is for, got an empty
+       table.
+       Now: nothing at all -> canonical, the screen as designed (F16). Real
+       analyses, none in this window -> no rows and a line saying so, because
+       an empty range is a true answer about a real player and canonical's
+       sessions are not theirs. */
+    : !hasData && !items.length ? DEMO_ROWS : []
+  /** Canonical standing in for a visitor with no data — never for a real one. */
   const demoMode = !listed.length && allRows.length > 0
+  /** Has shots, but none inside the picked range. */
+  const emptyWindow = !listed.length && !demoMode && (hasData || items.length > 0)
   // Running average across the loaded range — what the FOCUS mark colours by.
   // Only scored rows — `Number("—")` is NaN, and `|| 0` would have folded
   // every unscored session in as a zero and dragged this average down.
@@ -338,6 +354,15 @@ export default function AnalysisHistoryPage() {
           ))}
         </div>
         <div>
+          {emptyWindow && (
+            /* A real player whose picked range holds no sessions. Saying so is
+               the true answer; canonical's twelve rows used to sit here and
+               read as theirs. */
+            <p className="mt-[10px] rounded-[10px] border border-[var(--shotiq-color-rule)] px-[14px] py-[16px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              No sessions in the last {range[1]} day{range[1] === 1 ? "" : "s"}.
+              {items.length > 0 && " Widen the range to see your earlier ones."}
+            </p>
+          )}
           {rows.map(([d, fs, rowBand, mk, sm, conf], i) => (
             <div key={i} role="button" tabIndex={0} onClick={() => setSel(i)}
                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSel(i) }}
@@ -384,7 +409,11 @@ export default function AnalysisHistoryPage() {
               <div className="justify-self-end pr-[10px]"><ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" /></div>
             </div>
           ))}
-          {!rows.length && (
+          {/* "No sessions yet" is for someone who has none. A player whose
+              picked range is empty has plenty — the line above already says so,
+              and this one told them to go run their first analysis while three
+              of theirs sat outside the window. */}
+          {!rows.length && !emptyWindow && (
             <div className="py-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
               {loading ? "Loading history…" : "No sessions yet — run your first analysis."}
             </div>
