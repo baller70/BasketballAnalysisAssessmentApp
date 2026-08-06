@@ -985,7 +985,18 @@ const FLAGGED: [string, string, string, string, string, number][] = [
 ]
 const CLIP_LEN = ["0:03", "0:05", "0:11"]
 
-function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDiscard: () => void; onBack: () => void }) {
+/* CAPTURE REVIEW REVIEWS *THIS* CAPTURE.
+   Its shots, makes and make% were literals, so the screen that exists to let
+   you confirm or correct the session you just recorded reported someone else's
+   session. The orchestrator has held these counts all along and passed them to
+   `Recording`; `Review` simply never received them. Threaded in now — the same
+   numbers the recorder was showing a moment earlier, which is the only way the
+   two screens in one flow can agree. */
+function Review({ onAnalyze, onDiscard, onBack, shots, makes }: {
+  onAnalyze: () => void; onDiscard: () => void; onBack: () => void
+  shots: number; makes: number
+}) {
+  const pct = shots ? `${((makes / shots) * 100).toFixed(1)}%` : "0.0%"
   const [filter, setFilter] = React.useState("needs")
   return (
     <PhoneScreen testid="screen-ios-capture-review" pad={24} headerH={43} tab="capture">
@@ -999,7 +1010,7 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
               style={{ borderColor: RULE, background: "var(--shotiq-color-warmCanvas)" }}>
           <StreakGlyph size={34} />
           <span className="text-center">
-            <span className="shotiq-numeric block text-[19px] leading-[19px]">24</span>
+            <span className="shotiq-numeric block text-[19px] leading-[19px]">{shots}</span>
             <span className="shotiq-microcaps block text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>SHOTS</span>
           </span>
         </span>
@@ -1010,7 +1021,11 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
       </p>
 
       <div className="mt-[13px] flex">
-        {[["15", "MAKES", INK], ["62.5%", "MAKE %", INK], ["3", "NEED REVIEW", ORANGE],
+        {/* NEED REVIEW / DISCARDED / PRACTICE TIME are not tracked by the
+            capture flow yet — no counter exists behind any of the three — so
+            they keep canonical's figures rather than being given invented ones.
+            MAKES and MAKE % are real. */}
+        {[[String(makes), "MAKES", INK], [pct, "MAKE %", INK], ["3", "NEED REVIEW", ORANGE],
           ["6", "DISCARDED", INK], ["00:20:04", "PRACTICE TIME", INK]].map(([v, l, c], i) => (
           <React.Fragment key={l}>
             {i > 0 && <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />}
@@ -1167,7 +1182,17 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
                         onHelp={() => setState("primer")} />
     case "ready":
       return <Ready stream={stream} onStart={() => void openCamera()}
-                    onRecord={() => { setSeconds(0); setRunning(true); setState("recording") }}
+                    onRecord={() => {
+                      /* A REAL TAKE STARTS AT ZERO SHOTS. The clock was already
+                         reset here; the shot counters were not, so pressing
+                         record began a session claiming 24 shots and 15 makes
+                         before the player had taken one — and Capture Review
+                         then inherited them. The canonical seed on the state
+                         itself still stands for a DEEP-LINKED state, which is a
+                         still of canonical 032 rather than a new take. */
+                      setSeconds(0); setShots(0); setMakes(0)
+                      setRunning(true); setState("recording")
+                    }}
                     onAdjust={() => setState("setup")} onCancel={() => setState("setup")} />
     case "recording":
       return <Recording stream={stream} onStart={() => void openCamera()}
@@ -1186,7 +1211,8 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
                            onDiscard={() => setState("recording")} />
     case "review":
       return <Review onAnalyze={() => router.push("/video-analysis/processing")}
-                     onDiscard={() => setState("setup")} onBack={() => setState("setup")} />
+                     onDiscard={() => setState("setup")} onBack={() => setState("setup")}
+                     shots={shots} makes={makes} />
     default:
       return <Setup hand={hand} onHand={setHand} stream={stream}
                     onUpload={() => router.push("/video-analysis/upload")}

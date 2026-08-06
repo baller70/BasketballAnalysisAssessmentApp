@@ -159,13 +159,20 @@ export function AnalysisProcessing({ pct = 64 }: { pct?: number }) {
           <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
             FORM SCORE
           </div>
-          <div className="shotiq-numeric mt-[2px] text-[52px] leading-[52px]" style={{ color: ORANGE }}>82</div>
-          <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-            <div className="h-full w-[82%] rounded-full" style={{ background: ORANGE }} />
-          </div>
-          <div className="shotiq-display mt-[8px] text-[16px] leading-[17px]" style={{ color: BLUE }}>GOOD</div>
+          {/* A SCREEN THAT IS BY DEFINITION PRE-RESULT CANNOT REPORT ONE.
+              This printed "82 / GOOD" under LIVE FRAME PREVIEW while the
+              analysis was still running — a specific score for a run that has
+              produced none. Unlike the strips elsewhere in the phone tree there
+              is no state in which the number would be right: this screen only
+              ever renders mid-analysis. The band, its label and its geometry
+              stay where canonical puts them; only the claim goes.
+              When the pipeline can stream partial scores, THIS is the panel
+              that should carry them — the shape is ready for it. */}
+          <div className="shotiq-numeric mt-[2px] text-[52px] leading-[52px] text-[var(--shotiq-color-muted)]">—</div>
+          <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]" />
+          <div className="shotiq-display mt-[8px] text-[16px] leading-[17px] text-[var(--shotiq-color-graphite)]">SCORING</div>
           <div className="mt-[4px] text-[10.5px] leading-[12px] text-[var(--shotiq-color-graphite)]">
-            Keep building<br />consistency.
+            Your score lands<br />when this finishes.
           </div>
         </div>
       </div>
@@ -407,16 +414,21 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
           </svg>
         </div>
         <div className="min-w-0 flex-1">
+          {/* AN ANALYSIS THAT FAILED HAS NO FORM SCORE.
+              This panel printed "82 / GOOD / Keep building consistency" on the
+              screen whose own headline says the clip could not be analysed —
+              asserting a result for a run that produced none and never will.
+              The region and its labels stay exactly where canonical puts them;
+              only the claim goes. The bar is drawn empty rather than removed,
+              because the score is absent, not zero. */}
           <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
             FORM SCORE
           </div>
-          <div className="shotiq-numeric mt-[2px] text-[52px] leading-[52px]" style={{ color: ORANGE }}>82</div>
-          <div className="mt-[3px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-            <div className="h-full w-[86%] rounded-full" style={{ background: ORANGE }} />
-          </div>
-          <div className="shotiq-display mt-[9px] text-[16px] leading-[17px]" style={{ color: BLUE }}>GOOD</div>
+          <div className="shotiq-numeric mt-[2px] text-[52px] leading-[52px] text-[var(--shotiq-color-muted)]">—</div>
+          <div className="mt-[3px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]" />
+          <div className="shotiq-display mt-[9px] text-[16px] leading-[17px] text-[var(--shotiq-color-graphite)]">NOT SCORED</div>
           <div className="mt-[5px] text-[10.5px] leading-[13px] text-[var(--shotiq-color-graphite)]">
-            Keep building<br />consistency.
+            Re-record and<br />try again.
           </div>
           <PhoneHeading size={16} className="mt-[15px]">SHOT QUALITY</PhoneHeading>
           <div className="shotiq-microcaps mt-[6px] leading-[10px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>FRAME 18/48</div>

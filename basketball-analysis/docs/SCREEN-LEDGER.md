@@ -1611,11 +1611,42 @@ analysis link were then deleted and the canonical values confirmed restored.
    one had already scored. `HomeProPhone`'s per-phase table and `GoalsPhone`'s
    goal-relative average are different quantities, not this one.
 
-4. **Still open:** `LiveCapture`'s Review and `AnalysisStates`' Processing/Error
-   all need the SUBJECT analysis's own numbers threaded in — one task, three
-   screens, and the last of this class.
+4. **DONE — the three in-progress screens.** The last of this class.
 
-### Method rules learned here### Method rules learned here
+   `AnalysisError` printed "82 / GOOD / Keep building consistency" on the screen
+   whose own headline says the clip could not be analysed. `AnalysisProcessing`
+   printed the same under LIVE FRAME PREVIEW while its own stage list said
+   "Scoring mechanics — Queued" — the screen contradicted itself. Neither has a
+   state in which a number would be right: one describes a run that produced
+   nothing and never will, the other only ever renders pre-result. Both now show
+   absence (— / NOT SCORED, — / SCORING) with the band, label and geometry left
+   exactly where canonical puts them. When the pipeline can stream partial
+   scores, the processing panel is shaped to carry them.
+
+   `LiveCapture`'s Review had the counts available all along — the orchestrator
+   holds `shots`/`makes` and passes them to `Recording`; `Review` simply never
+   received them. Threaded through, so the two screens in one flow agree.
+   NEED REVIEW / DISCARDED / PRACTICE TIME keep canonical's figures because no
+   counter exists behind any of the three.
+
+   **And the seed was wrong.** `onRecord` reset the clock but not the shot
+   counters, so pressing record began a session claiming 24 shots and 15 makes
+   before the player had taken one. A real take starts at zero now; a
+   DEEP-LINKED `?state=` still holds the canonical reading, which is what the
+   `seconds` comment already established for that flow.
+
+   Verified: deep-linked review shows canonical 24; pressing record shows
+   0 SHOTS / 0 MAKES / 0.0%. That difference is also what PROVES the wiring —
+   with both sides seeded at 24/15 the wired and unwired renders were identical
+   (rule F14 again).
+
+5. **Still open:** the capture flow tracks no NEED REVIEW, DISCARDED or PRACTICE
+   TIME counters, and `/video-analysis/processing` is a timer simulation with no
+   analysis behind it — it never receives an id and polls nothing. Making that
+   route real is a feature (a processing pipeline with status), not a wiring fix,
+   and should be scoped with Kevin before it is built.
+
+### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
   were complete, correct and had zero callers. Grep for the consumer before
