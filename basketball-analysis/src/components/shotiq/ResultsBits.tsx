@@ -19,6 +19,10 @@ export interface HistoryStats {
 export interface HistoryItem {
   title: string
   when: string
+  /** The raw ISO timestamp. `when` is already formatted for display, so a
+   *  screen that wants to compare against "the last 7 days" had nothing to
+   *  window on and printed a typed delta instead. */
+  at: string | null
   style: string
   score: number | null
   /** Attempts detected in the capture session behind this analysis. */
@@ -111,6 +115,7 @@ function loadHistory() {
               // One shared formatter, so 079/083/093 can never disagree about
               // how the same session is dated.
               when: formatSessionDate(iso),
+              at: iso ?? null,
               style: a.shotType || "Catch & Shoot",
               score: overall != null ? Math.round(overall) : null,
               // Counted from the shot events of the capture session behind the

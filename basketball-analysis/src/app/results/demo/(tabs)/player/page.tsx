@@ -10,7 +10,7 @@
  * the card.
  */
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
@@ -22,6 +22,8 @@ import { PlayerCard as PhonePlayerCard } from "@/components/shotiq/phone/results
 import { CustomizeCard } from "@/components/shotiq/phone/results/CustomizeCard"
 import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
+import { useProfileStore } from "@/stores/profileStore"
+import { usePoints } from "@/lib/points/pointsContext"
 
 const TOGGLES = ["Form score", "Shot totals", "Make percentage", "Day streak", "Points", "Coaching target"]
 const CARD_BG = ["#141518", "#4A4C50", "#26282E", "#FFFFFF", "#0A0A0A"]
@@ -36,7 +38,98 @@ const FILM = [1, 2, 3, 4, 5, 6].map((i) => `/images/canonical/086-film-${i}.png`
 export default function PlayerCardPage() {
   const { hasData, score, items, shots, makes } = useHistory()
   const authUser = useAuthStore((s) => s.user)
-  const name = (authUser?.displayName || authUser?.firstName || "Jordan Ellis").toUpperCase()
+  const name = (authUser?.displayName || authUser?.firstName
+    || authUser?.email?.split("@")[0] || "Jordan Ellis").toUpperCase()
+
+  /* THE CARD DESCRIBED EVERY PLAYER THE SAME WAY.
+     "RIGHT-HANDED SHOOTER" under the name, DAY STREAK 6, POINTS 2,840, and
+     "Keep elbow stacked through release" as the primary coaching target — on
+     a card whose entire purpose is to be the player's own and be shared.
+     Hand and position come from the profile (the position answer that
+     onboarding has only just started keeping), the streak from the badge
+     engine, points from the ledger, and the coaching target from
+     /api/coaching-targets, which computes one from the player's own analysis
+     signals and had no reader on this screen. */
+  const profile = useProfileStore()
+  const totalPoints = usePoints().getTotalPoints()
+  const [streak, setStreak] = useState<number | null>(null)
+  const [target, setTarget] = useState<{ flaw: string; cue: string } | null>(null)
+  useEffect(() => {
+    let dead = false
+    void useProfileStore.getState().fetchProfile()
+    fetch("/api/badges", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success) setStreak(d.stats?.currentStreak ?? null) })
+      .catch(() => {})
+    fetch("/api/coaching-targets", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.target) setTarget(d.target) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+
+  /* PROGRESSION OVER TIME carried four typed deltas — "+6 vs last 7 days",
+     "+4.2%", "+3", "+2" — and four typed sparklines, so the panel headed
+     PROGRESSION showed the same progress to a player on their first session as
+     to one on their hundredth. Both come off the real history now, split on the
+     seven-day boundary the caption already claims. A window with nothing on one
+     side of it says so rather than reporting a rise. */
+  type Metric = "score" | "makePct" | "shots" | "makes"
+  const metricOf = (it: (typeof items)[number], m: Metric): number | null => {
+    if (m === "score") return it.score
+    if (m === "shots") return it.shots
+    if (m === "makes") return it.makes
+    return it.shots ? ((it.makes ?? 0) / it.shots) * 100 : null
+  }
+  const weekSplit = (m: Metric) => {
+    const cut = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const recent: number[] = []; const older: number[] = []
+    // Sessions in the window, counted whether or not they carry THIS metric —
+    // the difference between "you did not train" and "we did not measure it".
+    let sessionsInWeek = 0
+    for (const it of items) {
+      const t = it.at ? Date.parse(it.at) : NaN
+      if (!Number.isFinite(t)) continue
+      if (t >= cut) sessionsInWeek += 1
+      const v = metricOf(it, m)
+      if (v == null) continue
+      ;(t >= cut ? recent : older).push(v)
+    }
+    return { recent, older, sessionsInWeek }
+  }
+  const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null)
+  /** The caption under each figure. `dp` is how the metric is written. */
+  const weekDelta = (m: Metric, dp: number, canonical: string): string => {
+    // No history at all: the canonical screen, exactly as it shipped.
+    if (!hasData) return canonical
+    const { recent, older, sessionsInWeek } = weekSplit(m)
+    const r = mean(recent); const o = mean(older)
+    // A metric can be missing because the week was quiet OR because nothing
+    // records it — a session with no capture behind it has no shot counts.
+    if (r == null) return sessionsInWeek
+      ? "Not recorded in the last 7 days" : "No sessions in the last 7 days"
+    if (o == null) return "No earlier sessions to compare"
+    const d = r - o
+    const unit = m === "makePct" ? "%" : ""
+    return `${d >= 0 ? "+" : ""}${d.toFixed(dp)}${unit} vs last 7 days`
+  }
+  /** Oldest-to-newest, so the line reads left to right like every other one. */
+  const weekSeries = (m: Metric, fallback: number[]): number[] => {
+    const pts = items.map((it) => metricOf(it, m)).filter((v): v is number => v != null)
+      .slice(0, 6).reverse()
+    return pts.length >= 2 ? pts : fallback
+  }
+
+  /** "RIGHT-HANDED GUARD" when we know both; never a hand nobody told us. */
+  const identity = (() => {
+    const hand = profile.dominantHand
+    const pos = profile.position
+    if (!hand && !pos) return "RIGHT-HANDED SHOOTER"
+    const handWord = hand === "left" ? "LEFT-HANDED"
+      : hand === "ambidextrous" ? "AMBIDEXTROUS" : hand ? "RIGHT-HANDED" : ""
+    const posWord = (pos || "shooter").toUpperCase()
+    return [handWord, posWord].filter(Boolean).join(" ")
+  })()
   const [accent, setAccent] = useState(0)
   const [cardStyle, setCardStyle] = useState(0)
   const [bgChoice, setBgChoice] = useState<"photo" | "clean">("photo")
@@ -176,7 +269,7 @@ export default function PlayerCardPage() {
               <div className="absolute left-[24px] top-[18px]">
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
                 <div className="mt-[2px] text-[11px] font-bold tracking-[0.08em] text-[var(--shotiq-color-shotiqOrange)]">
-                  RIGHT-HANDED SHOOTER
+                  {identity}
                 </div>
               </div>
             </div>
@@ -184,7 +277,7 @@ export default function PlayerCardPage() {
             <div className="relative flex h-[483px] gap-[14px] p-[22px]">
               <div className="min-w-0 flex-1">
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
-                <div className="text-[11px] font-bold tracking-[0.08em]" style={{ color: accentColor }}>RIGHT-HANDED SHOOTER</div>
+                <div className="text-[11px] font-bold tracking-[0.08em]" style={{ color: accentColor }}>{identity}</div>
                 {on.has("Form score") && (<>
                   <div className={`mt-[16px] shotiq-microcaps ${sub}`}>FORM SCORE</div>
                   <div className="shotiq-numeric text-[54px] leading-[56px]" style={{ color: accentColor }}>{score ?? "—"}</div>
@@ -196,15 +289,18 @@ export default function PlayerCardPage() {
                 </>)}
                 {on.has("Coaching target") && (<>
                   <div className={`mt-[22px] shotiq-microcaps ${sub}`}>PRIMARY COACHING TARGET</div>
-                  <div className="text-[17px] font-semibold leading-[23px]">Keep elbow stacked<br />through release</div>
+                  {/* The player's own target when one has been computed. */}
+                  <div className="text-[17px] font-semibold leading-[23px]">
+                    {target ? target.cue : <>Keep elbow stacked<br />through release</>}
+                  </div>
                 </>)}
                 <TrendLine points={[2, 3, 1.6, 3.4, 2.6, 4]} width={120} height={32}
                            stroke={dark ? "#FFFFFF" : "#111111"} dotFill={dark ? "#FFFFFF" : "#111111"} />
               </div>
               <div className="w-[130px] shrink-0 space-y-[12px] text-right">
                 {([["SHOTS", hasData ? String(shots ?? "—") : "0", "Shot totals"], ["MAKES", hasData ? String(makes ?? "—") : "0", "Shot totals"],
-                   ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "Make percentage"], ["DAY STREAK", "6", "Day streak"],
-                   ["POINTS", "2,840", "Points"]] as const).filter(([, , t]) => on.has(t)).map(([k, v]) => (
+                   ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "Make percentage"], ["DAY STREAK", streak != null ? String(streak) : "6", "Day streak"],
+                   ["POINTS", totalPoints > 0 ? totalPoints.toLocaleString() : "2,840", "Points"]] as const).filter(([, , t]) => on.has(t)).map(([k, v]) => (
                   <div key={k}>
                     <div className={`text-[9px] tracking-[0.08em] ${sub}`}>{k}</div>
                     <div className="shotiq-numeric text-[24px] leading-[26px]">{v}</div>
@@ -373,10 +469,10 @@ export default function PlayerCardPage() {
             {/* Canonical rules the card head off from the strip — a full-width
                 hairline at y=526 running x735→1410. */}
             <div className="mt-[9px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
-              {[["FORM SCORE", score != null ? String(score) : "—", "+6 vs last 7 days", [72, 75, 74, 78, 80, 82], "Good"],
-                ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "+4.2% vs last 7 days", [52, 56, 54, 58, 60, 62], ""],
-                ["SHOTS / SESSION", hasData ? String(shots ?? "—") : "0", "+3 vs last 7 days", [18, 20, 19, 22, 23, 24], ""],
-                ["MAKES / SESSION", hasData ? String(makes ?? "—") : "0", "+2 vs last 7 days", [10, 12, 11, 13, 14, 15], ""]].map(([k, v, d, pts, band]) => (
+              {[["FORM SCORE", score != null ? String(score) : "—", weekDelta("score", 0, "+6 vs last 7 days"), weekSeries("score", [72, 75, 74, 78, 80, 82]), "Good"],
+                ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", weekDelta("makePct", 1, "+4.2% vs last 7 days"), weekSeries("makePct", [52, 56, 54, 58, 60, 62]), ""],
+                ["SHOTS / SESSION", hasData ? String(shots ?? "—") : "0", weekDelta("shots", 0, "+3 vs last 7 days"), weekSeries("shots", [18, 20, 19, 22, 23, 24]), ""],
+                ["MAKES / SESSION", hasData ? String(makes ?? "—") : "0", weekDelta("makes", 0, "+2 vs last 7 days"), weekSeries("makes", [10, 12, 11, 13, 14, 15]), ""]].map(([k, v, d, pts, band]) => (
                 <div key={String(k)} className="px-[14px] first:pl-0">
                   <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{String(k)}</div>
                   <div className="flex items-center gap-[8px]">
@@ -396,9 +492,24 @@ export default function PlayerCardPage() {
                       on "+8.1%" against (124,124,126) on "vs last session".
                       Painting the whole string green reads as one green run and
                       flattens the emphasis the delta is there to carry. */}
+                  {/* Only a real signed figure gets the emphasis: a fall must
+                      not be printed in the same green as a rise, and a caption
+                      that explains there is nothing to compare ("No earlier
+                      sessions to compare") is not a delta at all. */}
                   <div className="text-[10px]">
-                    <span className="text-[var(--shotiq-color-confirmGreen)]">{String(d).split(" ")[0]}</span>
-                    <span className="ml-[3px] text-[#84868A]">{String(d).split(" ").slice(1).join(" ")}</span>
+                    {(() => {
+                      const parts = String(d).split(" ")
+                      const lead = /^[+-]/.test(parts[0]) ? parts[0] : null
+                      const rest = lead ? parts.slice(1).join(" ") : String(d)
+                      return (<>
+                        {lead && (
+                          <span className={lead.startsWith("-")
+                            ? "text-[var(--shotiq-color-reviewRed)]"
+                            : "text-[var(--shotiq-color-confirmGreen)]"}>{lead}</span>
+                        )}
+                        <span className={`${lead ? "ml-[3px]" : ""} text-[#84868A]`}>{rest}</span>
+                      </>)
+                    })()}
                   </div>
                   {/* Canonical draws these on a grey stroke and alternates the
                       nodes blue (improving) / grey (flat or down). Passing blue
