@@ -10,7 +10,7 @@
  * crops in /public/images/canonical.
  */
 
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, GitCompare, X, Check,
@@ -180,8 +180,52 @@ export default function EliteShootersPage() {
     setExtraChecks({}); setQuery("")
   }
 
+  /* YOUR match against each shooter, computed from YOUR last analysed shot.
+     Until this existed, the match column was `overall: 89` and friends written
+     into the source for six players and `null` for the other 322 — the same six
+     numbers on an account that had never analysed a shot as on one with a
+     hundred. GET /api/shooters/match ranks the whole catalogue through
+     services/comparisonAlgorithm, the shared implementation every surface is
+     supposed to agree with, using the elbow/knee/release/wrist/shoulder/hip
+     angles the pipeline actually measured.
+
+     The demo numbers stay as the empty state: a player with no analysis gets
+     `matched: false` and sees exactly the screen they saw before. Real scores
+     only ever REPLACE the invented ones, never the other way round. */
+  const [match, setMatch] = useState<{
+    matched: boolean
+    reason?: string
+    basedOn?: { recordedAt: string; anglesUsed: string[] }
+    usedProfileDefaults?: { height: boolean; age: boolean }
+    scores: Record<string, { overall: number; rank: number; reason: string | null }>
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/shooters/match", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success) setMatch(d) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /* One overlay, applied where ROWS is read, so the list, the grid and the
+     compare tray cannot disagree about the same shooter's score. */
+  const SCORED: Row[] = useMemo(() => {
+    if (!match?.matched) return ROWS
+    return ROWS.map((r) => {
+      const m = match.scores[r.name]
+      if (!m) return r
+      return {
+        ...r,
+        overall: m.overall,
+        keyMatch: m.reason ? (["Closest match", m.reason] as [string, string]) : r.keyMatch,
+      }
+    })
+  }, [match])
+
   const filtered = useMemo(() => {
-    let out = ROWS.filter((r) =>
+    let out = SCORED.filter((r) =>
       (!query.trim() || r.name.toLowerCase().includes(query.trim().toLowerCase())) &&
       (radios.hand === "All" || (radios.hand === "Right" ? r.hand === "R" : r.hand === "L")) &&
       (radios.pos === "All" || r.pos === radios.pos) &&
@@ -207,7 +251,7 @@ export default function EliteShootersPage() {
     // are the rows with measured mechanics and a similarity score.
     out.sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
     return out
-  }, [query, radios, attempts, wsiRange, extraChecks, sort])
+  }, [SCORED, query, radios, attempts, wsiRange, extraChecks, sort])
 
   // The table area shows one screenful; the count line reports the real size of
   // the match (it used to print a 158 literal whenever nothing was filtered,
@@ -216,7 +260,8 @@ export default function EliteShootersPage() {
   const page = filtered.slice(0, PAGE)
   const toggleRow = (name: string) =>
     setSelected((s) => { const n = new Set(s); if (n.has(name)) n.delete(name); else n.add(name); return n })
-  const pair = ROWS.filter((r) => selected.has(r.name)).slice(0, 2)
+  // The tray compares the same scored rows the table shows.
+  const pair = SCORED.filter((r) => selected.has(r.name)).slice(0, 2)
   const trayImg: Record<string, string> = {
     "Klay Thompson": "/images/canonical/088-tray-klay.png",
     "Kyrie Irving": "/images/canonical/088-tray-kyrie.png",
@@ -361,6 +406,35 @@ export default function EliteShootersPage() {
               <p className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">
                 Study proven mechanics. Compare profiles. Elevate your game.
               </p>
+              {/* SAY WHAT THE MATCH COLUMN IS MEASURING, or it is just a number
+                  again. When the score is real this names the shot it came
+                  from; when the physical half fell back to defaults it says so,
+                  because a guessed height dressed up as a measured one is the
+                  same defect this endpoint was written to remove. */}
+              {match?.matched && match.basedOn && (
+                <p className="mt-[3px] text-[11px] text-[var(--shotiq-color-analysisBlue)]"
+                   data-testid="match-basis">
+                  Match % is your shot from{" "}
+                  {new Date(match.basedOn.recordedAt).toLocaleDateString("en-US",
+                    { month: "short", day: "numeric" })}
+                  , across {match.basedOn.anglesUsed.length} measured angles.
+                  {(match.usedProfileDefaults?.height || match.usedProfileDefaults?.age) && (
+                    <>
+                      {" "}
+                      <Link href="/profile" className="underline">
+                        Add your height and age
+                      </Link>{" "}
+                      — the physical half is using defaults.
+                    </>
+                  )}
+                </p>
+              )}
+              {match && !match.matched && match.reason && (
+                <p className="mt-[3px] text-[11px] text-[var(--shotiq-color-graphite)]"
+                   data-testid="match-basis">
+                  {match.reason}
+                </p>
+              )}
             </div>
             <div className="flex gap-[12px] pt-[6px]">
               <div className="relative">
