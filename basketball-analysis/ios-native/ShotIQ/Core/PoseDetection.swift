@@ -52,7 +52,7 @@ struct DetectedPose: Equatable {
     /// were not both found. This is what the overlay strokes — it never has to
     /// look a joint up by name.
     var boneSegments: [(CGPoint, CGPoint)] {
-        ShotIQPose.bones.compactMap { pair in
+        ShotIQPose.bones.compactMap { pair -> (CGPoint, CGPoint)? in
             guard let a = joints[pair.0], let b = joints[pair.1] else { return nil }
             return (a, b)
         }
@@ -106,6 +106,22 @@ enum ShotIQPose {
         (.leftHip, .leftKnee), (.leftKnee, .leftAnkle),
         (.rightHip, .rightKnee), (.rightKnee, .rightAnkle),
     ]
+
+    /// The size an aspect-FILL image is actually drawn at inside a container:
+    /// the larger of the two scales covers both axes and the overflow is
+    /// centred and clipped, which is the geometry `.scaledToFill()` uses.
+    ///
+    /// This is the number the skeleton has to be drawn against. A pose is in
+    /// unit coordinates of the whole image, so drawing it against the visible
+    /// container instead puts a correctly-shaped figure beside the player —
+    /// which is exactly how the web overlay first went wrong, by reading an
+    /// <img>'s layout size rather than its natural size. Factored out so the
+    /// arithmetic can be tested rather than eyeballed on a phone.
+    static func filledSize(image: CGSize, in container: CGSize) -> CGSize {
+        let pixels = CGSize(width: max(image.width, 1), height: max(image.height, 1))
+        let scale = max(container.width / pixels.width, container.height / pixels.height)
+        return CGSize(width: pixels.width * scale, height: pixels.height * scale)
+    }
 
     /// Vision's normalized space has its origin at the BOTTOM left; SwiftUI's
     /// Canvas has its origin at the top left. Getting this backwards draws a

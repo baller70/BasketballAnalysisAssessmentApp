@@ -41,12 +41,8 @@ struct CapturedPoseImage: View {
 
     var body: some View {
         GeometryReader { geo in
-            // Aspect-fill: the larger scale covers both axes, then the overflow
-            // is centred and clipped — the same geometry `.scaledToFill()` uses.
-            let container = CGSize(width: geo.size.width, height: geo.size.height)
-            let pixels = CGSize(width: max(image.size.width, 1), height: max(image.size.height, 1))
-            let scale = max(container.width / pixels.width, container.height / pixels.height)
-            let drawn = CGSize(width: pixels.width * scale, height: pixels.height * scale)
+            let container = geo.size
+            let drawn = ShotIQPose.filledSize(image: image.size, in: container)
 
             ZStack {
                 Image(uiImage: image)
