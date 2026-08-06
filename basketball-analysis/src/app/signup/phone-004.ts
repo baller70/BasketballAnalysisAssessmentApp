@@ -458,10 +458,14 @@ const MARKS = `
    raster snapping to whole device rows (rule 12), so the digits here are
    measured rather than a rung.
 
-   Shipped as the SAME `transform:translate` the sweep injected, per rule 47:
-   the wordmark on this screen was solved with a transform, shipped through
-   `top`, and missed by a full raster rung. 1.20 device px / 2.170483 = 0.5529
-   CSS px. */
+   Shipped as the SAME transform:translate the sweep injected, per rule 47: the
+   wordmark on this screen was solved with a transform, shipped through the top
+   property, and missed by a full raster rung. 1.20 device px / 2.170483 =
+   0.5529 CSS px.
+
+   NO BACKTICKS IN THIS COMMENT. It lives inside the MARKS template literal, so
+   a backtick around an identifier closes the string and the file stops parsing
+   — which is exactly what the first version of this comment did. */
 .s4 [data-s4="monogram"]{position:absolute;left:${u(80)};top:${u(424)};width:${u(76)};height:${u(58)};
   transform:translate(0px,0.5529px);display:block;pointer-events:none}
 /* THE TWO EYE MARKS WERE ONE DEFECT. Both rendered ~7% oversized in BOTH
