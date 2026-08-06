@@ -17,6 +17,19 @@ const TMP = '.pages-tmp'
 const MOVES = [
   ['src/app/api', `${TMP}/api`],
   ['src/middleware.ts', `${TMP}/middleware.ts`],
+  /* `/results/[id]` is a DYNAMIC segment whose ids are cuids minted when a
+     player uploads a shot. `output: 'export'` demands every dynamic segment
+     name its params at build time, and this one cannot: there are no analyses
+     at build time, and an empty `generateStaticParams()` does not satisfy the
+     check — Next still reports the route as missing it. The two dynamic routes
+     that DO build (drills, elite shooters) can only do so because they are
+     fixed catalogues.
+     Listing a made-up id to get past the error would publish a preview page
+     addressed by an analysis belonging to nobody. The route needs the API this
+     preview deliberately removes, so it belongs in the same list as the API
+     itself. Production, which runs a real server, serves it normally.
+     This is why the Pages deploy failed on all 30 pushes before this. */
+  ['src/app/results/[id]', `${TMP}/results-id`],
 ]
 
 mkdirSync(TMP, { recursive: true })

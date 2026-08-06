@@ -1463,6 +1463,75 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### The preview deploy had been failing on every push, and /results/[id] was missed
+
+Kevin asked to update the web app and the iOS app. Establishing what that means
+turned up two things.
+
+THE PAGES PREVIEW DEPLOY HAS FAILED ON ALL 30 RUNS in the visible window, going
+back well before this session's work:
+
+  Error: Page "/results/[id]" is missing "generateStaticParams()" so it cannot
+  be used with "output: export" config.
+
+Invisible because the failure sits inside `build-pages-static.mjs`, whose logs
+nobody was reading — including me, pushing on top of it all day.
+
+The route's ids are cuids minted when a player uploads. There are none at build
+time, and an EMPTY `generateStaticParams()` does not satisfy the check — tried
+it, same error. The two dynamic routes that do build (drills, elite shooters)
+only manage it because they are fixed catalogues. Listing a made-up id would
+publish a preview page addressed by an analysis belonging to nobody. So the
+route joins `src/app/api` and `middleware.ts` in the script's MOVES list: it
+needs the API this preview deliberately removes. Production, with a real server,
+serves it normally. Verified locally with the CI's own command and env:
+"static preview exported to out/", 57 entries, sources restored.
+
+AND /results/[id] WAS MISSED BY THE BAND FIX (c8a464b). It carries its OWN copy
+of the ideal ranges, and it is the page a player actually lands on after
+uploading — /results/demo is the canonical showcase. Four of its six rows judged
+release-frame values against other moments:
+
+  Wrist    15-30    a wrist SNAP; stored value is forearm elevation, ~50-100
+  Release  45-55    canonical's ball ARC; stored value is deviation from
+                    vertical, ideal 0
+  Knee     110-140  the depth of the DIP; the release knee is ~165-180
+  Shoulder 80-100   the arm is overhead at release, ~150-175
+
+The three `angleBands` settles now come from it. KNEE AND SHOULDER PRINT
+"not graded" — their measurement with no verdict — because nothing in this
+codebase states what either should read at release, and choosing numbers here
+would repeat the defect. A blank verdict column would have read as a quiet pass.
+
+### F29 - check that your own pushes actually built
+
+Thirty consecutive red deploys while pushing green local trees. tsc, lint and
+vitest all passing says the code compiles, NOT that the thing that ships built.
+After pushing, look at the run.
+
+### WHAT UPDATING EACH SURFACE ACTUALLY REQUIRES
+
+Established by reading the configs, not assumed:
+
+  Capacitor shell (ios/)      capacitor.config.ts server.url =
+                              https://shotiq.194-146-12-139.sslip.io — it LOADS
+                              the live web app.
+  Native Swift (ios-native/)  APIClient.swift baseURL, same host.
+  Production web              that host, deployed by ./deploy.sh ON the box
+                              (git pull --ff-only + migrate + build + pm2).
+
+So ONE web deploy updates both platforms, and Xcode is NOT what stands between
+the feature work and users — the deploy is. No Xcode here regardless: Linux, no
+xcodebuild. A macos-15 runner exists in .github/workflows/ios-appstore.yml if a
+binary is ever wanted; it is gated behind an explicit stage input or a
+`release-*` tag, whose own comment calls the tag "deliberate enough to be the
+consent".
+
+The live box currently serves the OLD 160-180 elbow band — probed directly — so
+none of this session's work has reached anyone yet. Kevin's call, asked and
+answered: merge to main and HE runs deploy.sh (port 22 is unreachable from this
+container); NO new iOS binary, because the web deploy covers it.
+
 ### INSUFFICIENT_KNEE_BEND detects insufficient knee bend now
 
 The rule abstained after the last change, because the only knee it could see

@@ -33,6 +33,9 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"
 import UploadedPoseOverlay from "@/components/upload/UploadedPoseOverlay"
+import {
+  ELBOW_AT_RELEASE, WRIST_AT_RELEASE, RELEASE_FROM_VERTICAL,
+} from "@/lib/analysis/angleBands"
 
 interface Analysis {
   id: string
@@ -67,13 +70,34 @@ const num = (v: string | number | null | undefined): number | null => {
   return Number.isFinite(n) ? n : null
 }
 
-/** Canonical 083 prints each mechanic beside the range it should sit inside. */
+/**
+ * Canonical 083 prints each mechanic beside the range it should sit inside.
+ *
+ * FOUR OF THESE SIX JUDGED THE WRONG MOMENT. Every angle on an analysis record
+ * is sampled at the RELEASE frame, and these bands described the set point, the
+ * dip, or a quantity this pipeline never measures — so the page a player lands
+ * on after uploading marked a correct shot wrong on four of its six rows:
+ *
+ *   Wrist    15-30   a wrist SNAP flexion. The stored value is forearm
+ *                    elevation from horizontal, ~50-100 at release.
+ *   Release  45-55   canonical's ball ARC. The stored value is the forearm's
+ *                    signed deviation from vertical, ideal 0.
+ *   Knee     110-140 the depth of the DIP. The release knee is extended,
+ *                    ~165-180, so this could never pass.
+ *   Shoulder 80-100  the arm is overhead at release, ~150-175.
+ *
+ * The three that `angleBands` settles now come from it, so this page cannot
+ * drift from the share card, the phone strip, the biomechanics table and
+ * /results/demo. Knee and shoulder have NO defensible release-frame band —
+ * nothing in this codebase states one, and picking numbers here would be the
+ * same defect again — so they print their measurement with no verdict rather
+ * than a pass or fail nobody can justify. The hip is upright throughout a
+ * shot, so its band holds at the release frame and stays as canonical prints it.
+ */
 const IDEAL: Record<string, [number, number, string]> = {
-  "Elbow Angle": [160, 180, "160° – 180°"],
-  "Wrist Angle": [15, 30, "15° – 30°"],
-  "Release Angle": [45, 55, "45° – 55°"],
-  "Knee Angle": [110, 140, "110° – 140°"],
-  "Shoulder Angle": [80, 100, "80° – 100°"],
+  "Elbow Angle": [ELBOW_AT_RELEASE.min, ELBOW_AT_RELEASE.max, ELBOW_AT_RELEASE.label],
+  "Wrist Angle": [WRIST_AT_RELEASE.min, WRIST_AT_RELEASE.max, WRIST_AT_RELEASE.label],
+  "Release Angle": [RELEASE_FROM_VERTICAL.min, RELEASE_FROM_VERTICAL.max, RELEASE_FROM_VERTICAL.label],
   "Hip Angle": [160, 180, "160° – 180°"],
 }
 
@@ -284,7 +308,13 @@ export default function AnalysisResultPage() {
                     <span className="text-[13px] text-[var(--shotiq-color-graphite)]">{label}</span>
                     <span className="shotiq-numeric text-[17px]">{value == null ? "—" : `${Math.round(value)}°`}</span>
                     <span className={`w-[86px] text-right text-[10px] leading-[13px] ${value == null ? "text-[var(--shotiq-color-muted)]" : inRange ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>
-                      {range ? (value == null ? "not measured" : <>{inRange ? "IDEAL" : "OUTSIDE"}<br />{range[2]}</>) : ""}
+                      {/* No band means the measurement is real but nothing in
+                          this app states what it should read AT RELEASE — true
+                          of the knee and the shoulder. Blank would read as a
+                          quiet pass; the row says it is ungraded instead. */}
+                      {!range ? (value == null ? "not measured" : "not graded")
+                        : value == null ? "not measured"
+                        : <>{inRange ? "IDEAL" : "OUTSIDE"}<br />{range[2]}</>}
                     </span>
                   </div>
                 )

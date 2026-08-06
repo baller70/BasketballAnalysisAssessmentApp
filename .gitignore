@@ -174,3 +174,9 @@ basketball-analysis/_*.mjs
 basketball-analysis/snap*.mjs
 basketball-analysis/cw.mjs
 basketball-analysis/ci.mjs
+
+# Scratch dir used by scripts/build-pages-static.mjs while it moves the API
+# routes aside for the static export. Cleaned up by the script, but an
+# interrupted build leaves it behind holding real source.
+.pages-tmp/
+basketball-analysis/.pages-tmp/
