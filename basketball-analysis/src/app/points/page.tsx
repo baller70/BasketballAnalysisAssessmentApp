@@ -7,6 +7,7 @@ import Link from "next/link"
 import { ChevronDown, Check, Lock, ArrowUpDown, X } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
+import { useHistory } from "@/components/shotiq/ResultsBits"
 import { usePoints } from "@/lib/points/pointsContext"
 
 const BADGES: [string, string, boolean, string, string][] = [
@@ -29,6 +30,76 @@ const EXTRA_BADGES: [string, string, boolean, string, string][] = [
   ["MARATHON", "Log a 60-minute session.", false, "9,000 XP", "Volume"],
   ["COMEBACK", "Return after a 7-day break.", false, "3,000 XP", "Consistency"],
 ]
+
+/**
+ * THE BADGE NAMES ON THIS SCREEN NOW MEAN SOMETHING.
+ *
+ * The catalogue above carries each badge's earned flag as a literal — the
+ * first four `true`, the rest `false` — so every account that has ever opened
+ * this page has been shown the same four earned badges, including accounts
+ * that had never analysed a shot. `/api/badges` has always computed real unlock
+ * state from stored activity, and nothing called it.
+ *
+ * This maps each drawn badge to its rule in that engine. Five of the fifteen
+ * have no rule to map to because the app records nothing that could answer them
+ * (release time, shot distance, elbow height, session length, game situation);
+ * the engine returns those with a reason, and the screen prints the reason
+ * rather than a bar stuck at zero.
+ */
+const BADGE_ID: Record<string, string> = {
+  "STACKED RELEASE": "stacked-release",
+  "CLEAN ARC": "clean-arc",
+  "BALANCED BASE": "balanced-base",
+  "HIGH ELBOW SET": "high-elbow-set",
+  "QUICK RELEASE": "quick-release",
+  "DEEP RANGE": "deep-range",
+  "STREAK BUILDER": "streak-builder",
+  "PERFECT FORM": "perfect-form",
+  "VOLUME SHOOTER": "volume-shooter",
+  "CLUTCH PERFORMER": "clutch-performer",
+  "EARLY BIRD": "early-bird-five",
+  "FILM STUDENT": "film-student",
+  "IRON WRIST": "iron-wrist",
+  "MARATHON": "marathon-session",
+  "COMEBACK": "comeback",
+}
+
+/** What each badge actually asks of you — the engine's rule, in words. */
+const BADGE_CRITERION: Record<string, string> = {
+  "STACKED RELEASE": "Keep the elbow inside the stacked band on 5 analysed shots.",
+  "CLEAN ARC": "Release inside the 45–55° arc band on 5 analysed shots.",
+  "BALANCED BASE": "Reach a balance score of 85.",
+  "STREAK BUILDER": "Analyse a shot on 10 consecutive days.",
+  "PERFECT FORM": "Reach an overall form score of 90.",
+  "VOLUME SHOOTER": "Have 500 shots detected across your sessions.",
+  "EARLY BIRD": "Analyse a shot before 8 AM on 5 separate days.",
+  "IRON WRIST": "Hold the follow-through on 50 analysed shots.",
+  "COMEBACK": "Come back and analyse a shot after a 7-day break.",
+}
+
+interface BadgeState {
+  unlocked: boolean
+  progress: { current: number; total: number } | null
+  untracked: string | null
+  earnedDate: string | null
+}
+interface BadgesPayload {
+  stats: { totalPoints: number; totalAnalyses: number; currentStreak: number; longestStreak: number }
+  badges: Record<string, BadgeState>
+  challenges: Array<{ key: string; metric: string; target: number; current: number; completed: boolean }>
+}
+
+/** The engine's challenge keys, in the words the screen uses. */
+const CHALLENGE_COPY: Record<string, [string, string]> = {
+  angle_master: ["Angle Master", "Hold elbow consistency across your sessions this week."],
+  balance_breaker: ["Balance Breaker", "Improve your balance score this week."],
+  follow_through_focus: ["Follow-Through Focus", "Finish with a held wrist this week."],
+  consistency_champion: ["Consistency Champion", "Analyse a shot every day this week."],
+  rapid_improvement: ["Rapid Improvement", "Add points to your form score this week."],
+  analysis_marathon: ["Analysis Marathon", "Run analyses through the week."],
+  knee_bend_master: ["Knee Bend Master", "Hold your knee bend through the load this week."],
+  release_perfectionist: ["Release Perfectionist", "Keep your release angle repeatable this week."],
+}
 
 const CHALLENGES: [string, string, number, string][] = [
   ["7-Day Form Streak", "Run an analysis every day this week.", 0.71, "5 / 7 days"],
@@ -109,9 +180,23 @@ const KPI_EYEBROW = { "--shotiq-microcaps-size": "13px",
 
 export default function AchievementsPointsPage() {
   const points = usePoints()
+  const { items, shots, makes } = useHistory()
+  const latest = items[0] ?? null
   // Canonical demo persona baseline (matches the topbar's 2,840) until real
   // point events accumulate past it.
   const totalPoints = points.getTotalPoints() || 2840
+  /* Tier, and how far through it you are — from the ledger, not from 80%.
+     `getTotalPoints` falls back to the canonical persona above, so the tier is
+     computed from the real balance to keep the two from disagreeing. */
+  const realPoints = points.getTotalPoints()
+  const currentTier = points.getCurrentTierConfig()
+  const nextTier = points.getNextTierConfig()
+  const tierFill = nextTier
+    ? Math.max(0, Math.min(1, nextTier.pointsRequired > currentTier.pointsRequired
+        ? (realPoints - currentTier.pointsRequired) /
+          (nextTier.pointsRequired - currentTier.pointsRequired)
+        : 0))
+    : 1
   const [tab, setTab] = useState("BADGES")
   const [sel, setSel] = useState(0)
   const [tier, setTier] = useState<"All tiers" | "Earned" | "Locked">("All tiers")
@@ -123,8 +208,48 @@ export default function AchievementsPointsPage() {
   // is what pulls in the rest.
   const [unlockedOnly, setUnlockedOnly] = useState(true)
   const [loadedAll, setLoadedAll] = useState(false)
-  const pool = loadedAll ? [...BADGES, ...EXTRA_BADGES] : BADGES
+
+  /* Your real achievement state. Absent (signed out, or the call fails) the
+     page keeps every canonical constant exactly as it shipped. */
+  const [live, setLive] = useState<BadgesPayload | null>(null)
+  React.useEffect(() => {
+    let cancelled = false
+    fetch("/api/badges", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success) setLive(d) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /** The engine's verdict for a drawn badge, when there is one. */
+  const stateOf = (name: string): BadgeState | null =>
+    live ? live.badges[BADGE_ID[name]] ?? null : null
+
+  const rawPool = loadedAll ? [...BADGES, ...EXTRA_BADGES] : BADGES
+  // The earned flag is the engine's, not the literal in the catalogue above.
+  const pool: [string, string, boolean, string, string][] = rawPool.map((b) => {
+    const s = stateOf(b[0])
+    return s ? [b[0], b[1], s.unlocked, b[3], b[4]] : b
+  })
   const earned = pool.filter(([, , e]) => e).length
+  /* The count across the WHOLE catalogue this app defines, not just the rows
+     currently loaded into the grid — a headline that changed when you pressed
+     "Load more" would be measuring the page, not the player. */
+  const catalogueSize = BADGES.length + EXTRA_BADGES.length
+  const earnedAll = [...BADGES, ...EXTRA_BADGES]
+    .filter((b) => stateOf(b[0])?.unlocked).length
+  const earnedPct = Math.round((earnedAll / catalogueSize) * 100)
+
+  /** This week's three, counted against your own week. */
+  const liveChallenges: [string, string, number, string][] = live?.challenges?.length
+    ? live.challenges.map((c) => {
+        const [title, blurb] = CHALLENGE_COPY[c.key] ?? [c.key, ""]
+        const unit = c.metric === "daily_streak" ? "days"
+          : c.metric === "weekly_analyses" ? "sessions" : "points"
+        return [title, blurb, c.target ? c.current / c.target : 0,
+                `${c.current} / ${c.target} ${unit}`]
+      })
+    : CHALLENGES
   const badges = pool
     .map((b, i) => ({ b, i }))
     .filter(({ b }) =>
@@ -135,6 +260,8 @@ export default function AchievementsPointsPage() {
   if (order === "A–Z") sorted.sort((x, y) => x.b[0].localeCompare(y.b[0]))
   if (order === "XP") sorted.sort((x, y) => parseInt(y.b[3].replace(/\D/g, "") || "0") - parseInt(x.b[3].replace(/\D/g, "") || "0"))
   const selBadge = pool[sel] ?? pool[0]
+  const selState = stateOf(selBadge[0])
+  const selProgress = selState?.progress ?? null
   // The rail's primary CTA used to only setTab("BADGES") (already BADGES) and
   // scrollIntoView on a page that is exactly 900px tall and does not scroll, so
   // it moved nothing at all (R10 defect H6). It now opens the achievement
@@ -183,9 +310,18 @@ export default function AchievementsPointsPage() {
                   <div className="shotiq-numeric whitespace-nowrap text-[33px] leading-[36px]">{totalPoints.toLocaleString()} <span className="text-[14px]">XP</span></div>
                 </div>
               </div>
+              {/* The bar was fixed at 80% and the caption at "Next tier at
+                  3,500 XP" on every account, including one sitting at 25 XP.
+                  Both come off the points ledger now, and a player already at
+                  the top tier is told that instead of chased toward a number
+                  that does not exist. */}
               <div className="mt-[9px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full w-[80%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
-              <div className="mt-[5px] text-[9px] text-[var(--shotiq-color-graphite)]">Next tier at 3,500 XP</div>
+                <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+                     style={{ width: `${Math.round(tierFill * 100)}%` }} /></div>
+              <div className="mt-[5px] text-[9px] text-[var(--shotiq-color-graphite)]">
+                {nextTier
+                  ? `Next tier at ${nextTier.pointsRequired.toLocaleString()} XP`
+                  : "Top tier reached"}</div>
             </Card>
             {/* One card, one internal divider — canonical does not box these
                 two separately. */}
@@ -194,28 +330,37 @@ export default function AchievementsPointsPage() {
                 <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>CURRENT TIER</div>
                 <div className="mt-[6px] flex items-end justify-between">
                   <div>
+                    {/* "LEVEL 7 / Technician" was printed on every account.
+                        The tier ladder in pointsConfig is the real one. */}
                     <div className="flex items-center gap-[4px] text-[22px] font-bold leading-[24px] text-[var(--shotiq-color-analysisBlue)]">
-                      <ArrowUpDown className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-ink)]" strokeWidth={2} />LEVEL 7
+                      <ArrowUpDown className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-ink)]" strokeWidth={2} />
+                      {realPoints > 0 ? currentTier.displayName : "LEVEL 7"}
                     </div>
-                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Technician</div>
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">
+                      {realPoints > 0 ? currentTier.name : "Technician"}</div>
                   </div>
                   <TrendLine points={[2, 3, 2.4, 3.4, 4]} width={54} height={28} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
                 </div>
                 <div className="mt-[8px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className="h-full w-[92%] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></div>
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]"
+                       style={{ width: `${realPoints > 0 ? Math.round(tierFill * 100) : 92}%` }} /></div>
               </div>
               <div className="w-[196px] px-[14px]">
                 <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>BADGES EARNED</div>
                 {/* Canonical catalogue spans 36 badges across the seasons; this
                     page ships the first two rows (see Load more). Canonical
-                    sets the earned count black and the total in light grey. */}
+                    sets the earned count black and the total in light grey.
+                    "+14 / 36 · 50%" was three numbers with nothing behind them:
+                    the count over the badges this app actually defines is the
+                    one the player can move. */}
                 <div className="mt-[6px] flex items-baseline justify-between">
-                  <span className="shotiq-numeric text-[27px] leading-[30px]">{earned + 14}
-                    <span className="ml-[5px] text-[21px] text-[var(--shotiq-color-graphite)]">/ 36</span></span>
-                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">50%</span>
+                  <span className="shotiq-numeric text-[27px] leading-[30px]">{live ? earnedAll : earned + 14}
+                    <span className="ml-[5px] text-[21px] text-[var(--shotiq-color-graphite)]">/ {live ? catalogueSize : 36}</span></span>
+                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{live ? `${earnedPct}%` : "50%"}</span>
                 </div>
                 <div className="mt-[8px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className="h-full w-[50%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: `${live ? earnedPct : 50}%` }} /></div>
               </div>
             </Card>
             {/* Canonical runs this card at 190px, the same as TOTAL XP; at 160
@@ -224,7 +369,9 @@ export default function AchievementsPointsPage() {
               <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]" style={KPI_EYEBROW}>LONGEST STREAK</div>
               <div className="mt-[6px] flex items-center justify-between">
                 <div>
-                  <div className="shotiq-numeric text-[27px] leading-[30px]">6</div>
+                  {/* Was "6" for everybody. The engine counts consecutive days
+                      that carry an analysis. */}
+                  <div className="shotiq-numeric text-[27px] leading-[30px]">{live ? live.stats.longestStreak : 6}</div>
                   <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Days</div>
                 </div>
                 <TrendLine points={[2, 3, 2.4, 4, 3.2]} width={54} height={30} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
@@ -296,7 +443,9 @@ export default function AchievementsPointsPage() {
                 )}
               </div>
             </div>
-            <SectionLabel className="mt-[12px]">{`ALL BADGES (${earned + 14} / 36)`}</SectionLabel>
+            <SectionLabel className="mt-[12px]">
+              {live ? `ALL BADGES (${earnedAll} / ${catalogueSize})` : `ALL BADGES (${earned + 14} / 36)`}
+            </SectionLabel>
             <div className="mt-[8px] grid grid-cols-5 gap-[14px]">
               {sorted.map(({ b: [t, d, e, xp], i }) => (
                 <button key={t} type="button" id={`badge-${i}`} onClick={() => setSel(i)} aria-pressed={sel === i}
@@ -322,7 +471,12 @@ export default function AchievementsPointsPage() {
                       on others otherwise breaks. */}
                   <div className="mt-[3px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   <div className={`mt-auto pt-[6px] text-[10px] font-bold ${e ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
-                    {e ? "EARNED" : <span className="flex items-center justify-center gap-[4px]"><Lock className="h-[9px] w-[9px]" /> {xp}</span>}
+                    {/* The four badges the catalogue shipped as already earned
+                        carry no XP figure, because nothing ever expected them
+                        to be locked. Now that the engine decides, a locked one
+                        with no reward on file says LOCKED rather than showing a
+                        padlock next to nothing. */}
+                    {e ? "EARNED" : <span className="flex items-center justify-center gap-[4px]"><Lock className="h-[9px] w-[9px]" /> {xp || "LOCKED"}</span>}
                   </div>
                 </button>
               ))}
@@ -339,7 +493,12 @@ export default function AchievementsPointsPage() {
             {tab === "CHALLENGES" && (
               <div className="space-y-[10px]">
                 <SectionLabel>ACTIVE CHALLENGES</SectionLabel>
-                {CHALLENGES.map(([t, d, p, label]) => (
+                {/* THREE CHALLENGES WITH THREE TYPED PROGRESS BARS — "5 / 7
+                    days" at 71% on an account with no sessions at all. The
+                    engine picks this week's three deterministically and counts
+                    them against your own week; the canonical three stay as the
+                    empty state. */}
+                {liveChallenges.map(([t, d, p, label]) => (
                   <Card key={t} className="p-[14px]">
                     <div className="flex items-center justify-between">
                       <div className="text-[14px] font-semibold">{t}</div>
@@ -406,7 +565,9 @@ export default function AchievementsPointsPage() {
               <Hex earned={selBadge[2]} size={92} name={selBadge[0]} className="shrink-0" />
               <div>
                 <div className="text-[17px] font-bold tracking-[0.02em]">{selBadge[0]}</div>
-                <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">Technique</div>
+                {/* The rail printed "Technique" for every badge, including the
+                    Volume and Consistency ones. Each badge carries its own. */}
+                <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">{selBadge[4]}</div>
                 {selBadge[2] && <span className="mt-[4px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">EARNED</span>}
               </div>
             </div>
@@ -415,30 +576,65 @@ export default function AchievementsPointsPage() {
                 ? "Keep elbow stacked through release to improve consistency and shot control."
                 : selBadge[1]}
             </p>
+            {/* "Record 5 sessions with elbow verticality ≥ 85%" was printed
+                under all fifteen badges, whichever one you clicked. Each badge
+                states its own rule now — the one the engine actually applies. */}
             <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">HOW TO EARN</SectionLabel>
-            <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">Record 5 sessions with elbow verticality ≥ 85%.</p>
+            <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
+              {live
+                ? selState?.untracked ?? BADGE_CRITERION[selBadge[0]] ?? selBadge[1]
+                : "Record 5 sessions with elbow verticality ≥ 85%."}
+            </p>
             <div className="mt-[10px] flex items-center justify-between">
               <SectionLabel>YOUR PROGRESS</SectionLabel>
-              <span className="text-[11px] font-bold text-[var(--shotiq-color-confirmGreen)]">{selBadge[2] ? "Completed Apr 28, 2025" : "In progress"}</span>
+              {/* "Completed Apr 28, 2025" was a date nobody earned anything on. */}
+              <span className={`text-[11px] font-bold ${selState?.untracked
+                ? "text-[var(--shotiq-color-graphite)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
+                {selState?.untracked ? "Not tracked yet"
+                  : selBadge[2]
+                    ? selState?.earnedDate
+                      ? `Completed ${new Date(selState.earnedDate).toLocaleDateString("en-US",
+                          { month: "short", day: "numeric", year: "numeric" })}`
+                      : live ? "Earned" : "Completed Apr 28, 2025"
+                    : "In progress"}
+              </span>
             </div>
-            <div className="mt-[6px] flex items-center gap-[10px]">
-              <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: selBadge[2] ? "100%" : "40%" }} />
+            {/* A bar is only drawn where there is something to fill it with. */}
+            {selState?.untracked ? (
+              <p className="mt-[6px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
+                There is nothing to show yet — this badge is waiting on a
+                measurement the app does not take.
+              </p>
+            ) : (
+              <div className="mt-[6px] flex items-center gap-[10px]">
+                <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: selProgress
+                         ? `${Math.round((selProgress.current / Math.max(1, selProgress.total)) * 100)}%`
+                         : selBadge[2] ? "100%" : "40%" }} />
+                </div>
+                <span className="text-[12px]">
+                  {selProgress ? `${selProgress.current} / ${selProgress.total}`
+                    : selBadge[2] ? "5 / 5" : "2 / 5"}
+                </span>
               </div>
-              <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
-            </div>
+            )}
             {/* Canonical fills this sub-panel (249,249,250) against its (253,253,253)
                 paper — a tint, not white; drawn white the panel floated free of the card. */}
+            {/* LATEST MATCH — "May 12, 2025 at 8:24 AM · 24 shots · 15 makes ·
+                62.5% · 82" was one invented session shown to everyone. It is
+                the newest real session now, from the same history feed the
+                results screens read. */}
             <Card className="mt-[12px] bg-[#FAFAFA] p-[12px]">
               <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
-              <div className="text-[12px]">May 12, 2025 at 8:24 AM</div>
+              <div className="text-[12px]">{latest ? latest.when : "May 12, 2025 at 8:24 AM"}</div>
               {/* Canonical runs this row at ~24px — it is the headline of the
                   badge panel, not a footnote. */}
               <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)] text-center">
-                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[31px] leading-[35px]" /></div>
-                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[31px] leading-[35px]" /></div>
-                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[31px] leading-[35px]" /></div>
-                <div className="flex-1 pl-[10px]"><div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-analysisBlue)]">82</div>
+                <div className="flex-1 pr-[10px]"><Stat value={latest ? (shots != null ? String(shots) : "—") : "24"} label="SHOTS" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value={latest ? (makes != null ? String(makes) : "—") : "15"} label="MAKES" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value={latest ? (shots && makes != null ? `${((makes / shots) * 100).toFixed(1)}%` : "—") : "62.5%"} label="MAKE %" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 pl-[10px]"><div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-analysisBlue)]">{latest ? (latest.score ?? "—") : 82}</div>
                   <div className="mt-[2px] whitespace-nowrap text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
               </div>
             </Card>
@@ -497,13 +693,24 @@ export default function AchievementsPointsPage() {
             <p className="mt-[12px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">{selBadge[1]}</p>
             <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <SectionLabel>YOUR PROGRESS</SectionLabel>
-              <div className="mt-[6px] flex items-center gap-[10px]">
-                <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
-                       style={{ width: selBadge[2] ? "100%" : "40%" }} />
+              {selState?.untracked ? (
+                <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+                  {selState.untracked}
+                </p>
+              ) : (
+                <div className="mt-[6px] flex items-center gap-[10px]">
+                  <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                    <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                         style={{ width: selProgress
+                           ? `${Math.round((selProgress.current / Math.max(1, selProgress.total)) * 100)}%`
+                           : selBadge[2] ? "100%" : "40%" }} />
+                  </div>
+                  <span className="text-[12px]">
+                    {selProgress ? `${selProgress.current} / ${selProgress.total}`
+                      : selBadge[2] ? "5 / 5" : "2 / 5"}
+                  </span>
                 </div>
-                <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
-              </div>
+              )}
             </div>
             <Link href="/results/demo/training" data-testid="achievement-train"
                   className="mt-[16px] flex h-[42px] items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
