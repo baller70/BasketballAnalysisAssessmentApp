@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-nine, each learned by getting something wrong
+## Method rules — fifty, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1199,32 +1199,47 @@ string rolling over at midnight.
     version** and should be re-run before it is relied on — a `matched` in
     particular, since that is the value the bug produces from a `heavy`.
 
-49. **When the band mean wants MORE ink and the ladder wants LESS, the ink is
-    paying for a misregistration — solve the position first.** 004's display run
-    measured 5% heavy at every rung with an exact advance (ratio 1.0001), which
-    reads as a clean weight defect. Sweeping its `-webkit-text-stroke-width`
-    alone, the two estimators pointed OPPOSITE ways: the band mean preferred the
-    stroke kept (0.29 -> 14.7411, 0.00 -> 15.3622, i.e. removing ink made the
-    pixels disagree MORE) while the ladder preferred it removed (0.33 -> 0.0475
-    `heavy`, 0.10 -> 0.0095 `matched`).
+49. **RETRACTED AS ORIGINALLY WRITTEN, and kept because the retraction is the
+    lesson.** It claimed: when the band mean wants MORE ink and the ladder wants
+    LESS, the ink is paying for a misregistration. The evidence was 004's
+    display run, where sweeping `-webkit-text-stroke-width` had the band mean
+    preferring 0.29-0.33 and the ladder preferring 0.10, pointing opposite ways.
 
-    Both are right about what they measure, and together they say something
-    neither says alone. Lightening a correctly-placed run cannot increase |d| —
-    the ink it removes was on top of canonical's ink. It CAN increase |d| when
-    the run sits half a pixel off, because then the extra width is what re-covers
-    canonical's strokes. **A stroke tuned against a band mean will silently
-    absorb a placement error, and it will look like it improved the screen.**
+    Both estimators were scoring a CLIPPED run. The report's display window was
+    148-220 and the run's ink spans 162-239, so a quarter of it — including its
+    whole baseline row — was outside both bands. Re-measured over the full run
+    the opposition mostly evaporates, and the solve the rule produced (stroke
+    0.05) is the worst of the three candidates on every full-run metric:
 
-    Solved jointly, position first: 14.8012 -> 13.9966 and the weight verdict
-    goes `heavy` -> `matched`. And the tell that the diagnosis was right — once
-    registered, every stroke from 0.05 to 0.33 lands inside 0.12 of the same
-    band mean. The band mean stopped caring about the stroke the moment the
-    stroke stopped standing in for the position.
+      ty -0.75  st 0.33   band 14.2223  whole 5.3624  ladder 0.0419 heavy
+      ty -0.75  st 0.15   band 14.3046  whole 5.3669  ladder 0.0083 matched
+      ty -0.75  st 0.05   band 14.5484  whole 5.3801  ladder 0.0228 matched
 
-    So: before accepting any weight or colour solve, check that the run's
-    position is solved. An ink parameter is the easiest thing on a screen to
-    over-fit, because it can compensate for almost any small geometric error
-    while making the type measurably wrong.
+    What survives is weaker and worth keeping: an ink parameter CAN absorb a
+    geometric error, so a weight solve is only meaningful once the run's
+    position is solved, and two estimators disagreeing is a reason to question
+    the measurement before theorising about the render. What does not survive is
+    the specific diagnosis, and it was acted on before it was checked against
+    the whole run. The vertical move it came bundled with is real and stands.
+
+50. **A band window must CONTAIN its run's ink, and the windows do not tile the
+    screen.** Both halves bit on the same change.
+
+    The display window clipped 20 of its run's 78 rows, so the solver optimised
+    the part it could see and pushed error into the part it could not: the band
+    improved 14.8012 -> 13.9966 while the WHOLE SCREEN got worse, 5.3708 ->
+    5.3801, and row 238 alone went 11.9 -> 71.5 as the run's baseline slid out
+    of alignment in the gap between two windows. A band score is only a fidelity
+    number for the ink inside it.
+
+    And 448 of this screen's 1844 rows — 24% — are inside no window at all. The
+    band report can improve while the screen gets worse, and it did. **Report
+    the whole-screen mean beside the bands on every round**, and split it
+    in-window / out-of-window when the two disagree.
+
+    Cheap and worth running once per screen: for each window, check whether
+    canonical's ink touches its edge, and how far it continues past it. On 004
+    that check cleared 22 of 23 windows and found this one.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

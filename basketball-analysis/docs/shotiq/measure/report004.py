@@ -35,7 +35,15 @@ from . import compare, image
 #: are reported separately so a mark defect cannot hide inside a field's mean).
 WINDOWS: dict[str, tuple[int, int, int, int]] = {
     "wordmark":   (14, 74, 0, 853),
-    "display":    (148, 220, 0, 853),
+    # 148-220 CLIPPED ITS OWN RUN. Canonical's display ink spans y 162-239 and
+    # this window stopped at 220, so 20 rows — a quarter of the run, including
+    # the whole of its baseline row — were outside the band the solver scored.
+    # Optimising it moved the run up to suit the visible top and pushed the
+    # bottom out of alignment into the gap between windows, where nothing was
+    # looking: the band improved 14.8012 -> 13.9966 while the WHOLE SCREEN got
+    # worse, 5.3708 -> 5.3801, and row 238 alone went 11.9 -> 71.5.
+    # Every other window on this screen was checked the same way and is clear.
+    "display":    (148, 248, 0, 853),
     "lede":       (268, 352, 0, 853),
     "monogram":   (415, 492, 60, 180),
     "oneacct":    (415, 492, 180, 853),

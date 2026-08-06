@@ -186,30 +186,33 @@ export const RUNS: Record<string, Run> = {
      therefore sits +0.475 (cap top) / +0.403 (foot) canonical px low and cannot
      be placed closer. Do not "fix" it — the two lattices are why `tx`/`ty` are
      inside the transform, and vertically there is nothing between the rungs. */
-  /* THE 0.33 STROKE WAS PAYING FOR A MISREGISTRATION, and the two estimators
-     disagreeing is what exposed it. Swept on its own, the band mean wanted the
-     stroke KEPT (0.29 -> 14.7411, 0.00 -> 15.3622) while the area ladder wanted
-     it GONE (0.33 -> rms_log 0.0475 `heavy`, 0.10 -> 0.0095 `matched`). Those
-     point opposite ways, and that combination has only one reading: the excess
-     ink was not correcting a weight, it was widening the strokes until they
-     re-covered canonical's ink from half a pixel away. Thickening type to buy
-     pixel overlap is the "one metric bought with another" the standing rulings
-     forbid, and it had been tuned in.
+  /* CORRECTED — AND THE FIRST VERSION OF THIS COMMENT WAS WRONG, ON A CLIPPED
+     MEASUREMENT. Both facts are kept because the mistake is the lesson.
 
-     Solved jointly instead (rule 14), position first: 14.8012 -> 13.9966, and
-     the weight verdict goes `heavy` -> `matched` at rms_log 0.0150, the best on
-     the board. Once the run is registered the stroke conflict collapses — every
-     stroke from 0.05 to 0.33 sits inside 0.12 of the same band mean, so the
-     band mean no longer has an opinion and the ladder decides.
+     What was claimed: swept alone, the band mean wanted the 0.33 stroke KEPT
+     while the ladder wanted it gone, and I read that opposition as the stroke
+     masking a half-pixel misregistration. What was actually true: the report's
+     display window was 148-220 while this run's ink spans y 162-239, so BOTH
+     estimators were scoring three quarters of the run. Re-measured over the
+     whole run the opposition mostly evaporates, and the "solve" that came out
+     of it — stroke 0.05 — is the WORST of the three on every full-run metric.
 
-     ty is the centre of its plateau, not a measurement (rule 12): -0.30 through
-     -1.20 all return 13.8783 to four decimals, -0.15 returns 15.0271 and -1.35
-     returns 15.3220. One device row wide, centred at -0.75 device px = -0.3455
-     CSS px. tx stays 0 — it was swept over -0.60..+0.45 and 0 won.
+     Scored on the corrected 148-248 window:
+       ty -0.75  st 0.33   band 14.2223   whole 5.3624   ladder 0.0419 heavy
+       ty -0.75  st 0.15   band 14.3046   whole 5.3669   ladder 0.0083 matched
+       ty -0.75  st 0.05   band 14.5484   whole 5.3801   ladder 0.0228 matched
+       ty  0.00  st 0.33   band 14.3768   whole 5.3708   (the original)
 
-     Shipped through `ty`, the same transform the sweep injected (rule 47). */
+     So 0.15: best weight match on the board and second on pixels, 0.0045 of
+     whole screen behind 0.33. The vertical move survives the correction — it
+     improves band AND whole screen against ty 0 — and stays at the centre of
+     its plateau, -0.75 device px = -0.3455 CSS px. tx was swept -0.60..+0.45
+     and 0 won.
+
+     Shipped through `ty` and the stroke property, the same levers the sweep
+     injected (rule 47). See method rule 50 for the window fault itself. */
   display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
-             ws: 3.85, stroke: 0.05, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             ws: 3.85, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
              bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: -0.3455 },
   /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
      size, so fitting each on its own would let two different sizes both look
