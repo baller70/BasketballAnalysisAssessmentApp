@@ -87,8 +87,53 @@ const cellCentre = (i: number) => cellLeft(i) + CELL / 2
 /** Canonical's marker sat ~6px proud of the cell on each side. */
 const RING_OUT = 6 / STRIP_W
 
+/**
+ * Which of canonical's six KEY MEASUREMENTS this pipeline actually produces.
+ *
+ * The table above is six constants — "Elbow Angle 92°", "Release Height 8'10"" —
+ * printed as `hasData ? value : "—"`, so an account with one real analysis was
+ * shown 92° whatever its elbow measured, on a screen headed KEY MEASUREMENTS.
+ *
+ * Two of the six are measured: the elbow angle, and the release angle which is
+ * what canonical calls Shooting Arc (same quantity, same 45°–55° ideal band).
+ * The other four — release height, release distance, vertical jump, centreline
+ * deviation — need a calibrated camera and a ball track this app does not
+ * compute. They now say so rather than carrying a number nobody derived.
+ * Filling those four from shoulder/hip tilt would be inventing a measurement
+ * with a plausible-looking source, which is the defect, not the fix.
+ */
+const MEASURED_BY: Record<string, "elbow" | "release"> = {
+  "Elbow Angle": "elbow",
+  "Shooting Arc": "release",
+}
+
 export default function BiomechanicsWorkspacePage() {
   const { hasData, score, items } = useHistory()
+
+  /** The caller's own most recent shot, and exactly which angles it carries. */
+  const [latest, setLatest] = useState<{
+    recordedAt: string
+    angles: Record<string, number | null>
+    measured: string[]
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled && d?.success && d.analysis) setLatest(d.analysis) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  /** The value to print for a canonical measurement row, and whether it is real. */
+  const readingFor = (metric: string, demo: string): { text: string; real: boolean } => {
+    if (!latest) return { text: hasData ? demo : "—", real: false }
+    const key = MEASURED_BY[metric]
+    const v = key ? latest.angles[key] : null
+    if (key && v != null) return { text: `${Math.round(v)}°`, real: true }
+    return { text: "Not measured", real: false }
+  }
   // Same session-over-session delta the rest of the app prints — this readout
   // used to be a hard-coded +8.1%.
   const delta = sessionDelta(items)
@@ -415,7 +460,17 @@ export default function BiomechanicsWorkspacePage() {
                         and leaves ~47px between it and the status badge (92° ends
                         x1030, badge starts x1078); right-aligned it left 15px. */}
                     <div className="w-[104px] shrink-0 text-center">
-                      <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? v : "—"}</div>
+                      {(() => {
+                        const r = readingFor(m, v)
+                        return (
+                          <div className={r.real || r.text === "—" || !latest
+                                 ? "shotiq-numeric text-[19px] leading-[21px]"
+                                 : "text-[11px] leading-[21px] text-[var(--shotiq-color-graphite)]"}
+                               data-testid={`measure-${m.toLowerCase().replace(/\s+/g, "-")}`}>
+                            {r.text}
+                          </div>
+                        )
+                      })()}
                       <div className="mt-[1px] text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>
                     {/* Tailwind's /10 opacity modifier does not apply to a raw
