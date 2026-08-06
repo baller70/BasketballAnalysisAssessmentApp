@@ -186,9 +186,31 @@ export const RUNS: Record<string, Run> = {
      therefore sits +0.475 (cap top) / +0.403 (foot) canonical px low and cannot
      be placed closer. Do not "fix" it — the two lattices are why `tx`/`ty` are
      inside the transform, and vertically there is nothing between the rungs. */
+  /* THE 0.33 STROKE WAS PAYING FOR A MISREGISTRATION, and the two estimators
+     disagreeing is what exposed it. Swept on its own, the band mean wanted the
+     stroke KEPT (0.29 -> 14.7411, 0.00 -> 15.3622) while the area ladder wanted
+     it GONE (0.33 -> rms_log 0.0475 `heavy`, 0.10 -> 0.0095 `matched`). Those
+     point opposite ways, and that combination has only one reading: the excess
+     ink was not correcting a weight, it was widening the strokes until they
+     re-covered canonical's ink from half a pixel away. Thickening type to buy
+     pixel overlap is the "one metric bought with another" the standing rulings
+     forbid, and it had been tuned in.
+
+     Solved jointly instead (rule 14), position first: 14.8012 -> 13.9966, and
+     the weight verdict goes `heavy` -> `matched` at rms_log 0.0150, the best on
+     the board. Once the run is registered the stroke conflict collapses — every
+     stroke from 0.05 to 0.33 sits inside 0.12 of the same band mean, so the
+     band mean no longer has an opinion and the ladder decides.
+
+     ty is the centre of its plateau, not a measurement (rule 12): -0.30 through
+     -1.20 all return 13.8783 to four decimals, -0.15 returns 15.0271 and -1.35
+     returns 15.3220. One device row wide, centred at -0.75 device px = -0.3455
+     CSS px. tx stays 0 — it was swept over -0.60..+0.45 and 0 won.
+
+     Shipped through `ty`, the same transform the sweep injected (rule 47). */
   display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
-             ws: 3.85, stroke: 0.33, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: 0 },
+             ws: 3.85, stroke: 0.05, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: -0.3455 },
   /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
      size, so fitting each on its own would let two different sizes both look
      locally plausible while the block reads wrong.

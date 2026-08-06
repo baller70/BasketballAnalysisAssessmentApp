@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-eight, each learned by getting something wrong
+## Method rules — forty-nine, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1198,6 +1198,33 @@ string rolling over at midnight.
     **Any ladder verdict recorded before this fix was computed by the one-sided
     version** and should be re-run before it is relied on — a `matched` in
     particular, since that is the value the bug produces from a `heavy`.
+
+49. **When the band mean wants MORE ink and the ladder wants LESS, the ink is
+    paying for a misregistration — solve the position first.** 004's display run
+    measured 5% heavy at every rung with an exact advance (ratio 1.0001), which
+    reads as a clean weight defect. Sweeping its `-webkit-text-stroke-width`
+    alone, the two estimators pointed OPPOSITE ways: the band mean preferred the
+    stroke kept (0.29 -> 14.7411, 0.00 -> 15.3622, i.e. removing ink made the
+    pixels disagree MORE) while the ladder preferred it removed (0.33 -> 0.0475
+    `heavy`, 0.10 -> 0.0095 `matched`).
+
+    Both are right about what they measure, and together they say something
+    neither says alone. Lightening a correctly-placed run cannot increase |d| —
+    the ink it removes was on top of canonical's ink. It CAN increase |d| when
+    the run sits half a pixel off, because then the extra width is what re-covers
+    canonical's strokes. **A stroke tuned against a band mean will silently
+    absorb a placement error, and it will look like it improved the screen.**
+
+    Solved jointly, position first: 14.8012 -> 13.9966 and the weight verdict
+    goes `heavy` -> `matched`. And the tell that the diagnosis was right — once
+    registered, every stroke from 0.05 to 0.33 lands inside 0.12 of the same
+    band mean. The band mean stopped caring about the stroke the moment the
+    stroke stopped standing in for the position.
+
+    So: before accepting any weight or colour solve, check that the run's
+    position is solved. An ink parameter is the easiest thing on a screen to
+    over-fit, because it can compensate for almost any small geometric error
+    while making the type measurably wrong.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
