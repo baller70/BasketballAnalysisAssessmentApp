@@ -1510,6 +1510,36 @@ turns the `img` src from `/images/canonical/...` into
 `data:image/jpeg;base64,...` - real cropped pixels. 331 tests, 8 new on the
 geometry. Probe account deleted.
 
+### F38 - an id printed by a tool is the id users will paste
+
+`scripts/install-on-device.sh` takes an optional DEVICE_UDID. `xcrun devicectl
+list devices` prints an **Identifier** column - a CoreDevice UUID like
+37711652-37E7-57D1-9C76-8E028428D01B - and that is the only id visible on the
+terminal, so it is the one anybody copies. The matcher compared
+`hardwareProperties.udid`, the 00008030-style hardware id, which devicectl does
+NOT print in that listing. Passing the id straight off the screen therefore
+selected nothing, and the script died with:
+
+    no paired iPhone at all - pair it with the Mac in Xcode first
+
+one command after devicectl had listed the phone as `available (paired)`. The
+error accused the setup of a fault the setup did not have, and sent the reader
+off re-pairing a phone that was already paired.
+
+Fixed by matching EITHER id, case-insensitively (the two tools disagree on
+case), and by printing, on a miss, the id that was searched for next to every
+attached device with both of its ids - instead of asserting nothing is paired.
+Also stopped a device reporting no hardware udid from collapsing
+`-destination id=...` into a literal `id=-`; it falls back to the identifier.
+
+Verified against a three-device fixture: auto-pick, the identifier, the hardware
+udid, a lowercased identifier, the iPad's identifier, and a udid-less iPhone all
+resolve correctly, and a bogus id prints the full attached list.
+
+THE RULE: when a script accepts an identifier, accept every form the tool the
+user is looking at prints. And when a lookup misses, report what was looked for
+and what was there - never diagnose the environment from a failed match.
+
 ### F37 - a control that describes an action must be driven, not read
 
 Reading this file would have shown `onCrop` opening a file picker, which is
