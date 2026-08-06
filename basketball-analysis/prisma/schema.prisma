@@ -353,7 +353,9 @@ model AnalysisHistory {
   analysisId    String @unique(map: "uq_history_analysis") @map("analysis_id")
 
   // Snapshot of key metrics at time of analysis
-  overallScore     Decimal  @map("overall_score") @db.Decimal(5, 2)
+  // Nullable: a session the player did belongs in the timeline whether or not
+  // an overall score came out of it (see 20260806070000_history_allows_unscored).
+  overallScore     Decimal? @map("overall_score") @db.Decimal(5, 2)
   formScore        Decimal? @map("form_score") @db.Decimal(5, 2)
   balanceScore     Decimal? @map("balance_score") @db.Decimal(5, 2)
   releaseScore     Decimal? @map("release_score") @db.Decimal(5, 2)

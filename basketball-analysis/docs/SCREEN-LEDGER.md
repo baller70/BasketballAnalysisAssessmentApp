@@ -1490,37 +1490,48 @@ verified at BOTH states in a browser before it is committed.
 | `/results/demo/goals` | DONE | `lib/goals/progress.ts` — goals measure themselves (15 tests) |
 | `/results/demo` (overview) | DONE | MECHANICS AT RELEASE from the derived measurements; elite match, form score, coaching target, key insight |
 
-### NEXT: two tables disagree about how many sessions you have
+### DONE: two tables disagreed about how many sessions you have
 
-Diagnosed, not yet fixed. `/api/analysis-history` reports 2 analyses for the
-test account while `/api/badges` and `/api/media` report 3, because they read
-different tables — `AnalysisHistory` and `UserAnalysis`.
+**Was.** `/api/analysis-history` reported 2 sessions where `/api/badges` and
+`/api/media` reported 3, because `save-analysis` could only write an
+`AnalysisHistory` row inside `if (body.overallScore !== undefined)` — that
+column was `Decimal` NOT NULL. A session with no overall score existed in
+`user_analyses` and nowhere else, so a day the player actually trained counted
+toward no streak and no consistency goal.
 
-**Cause.** `save-analysis` writes the `AnalysisHistory` row only inside
-`if (body.overallScore !== undefined)`, and it has to: `AnalysisHistory.overallScore`
-is `Decimal` NOT NULL, so a scoreless analysis physically cannot be recorded
-there. An analysis that produced angles but no overall score therefore exists in
-`UserAnalysis` and is invisible to every screen that reads history.
+**Now.** `overall_score` is nullable; `save-analysis` writes ONE history row per
+analysis unconditionally (the guard was removed rather than loosened — any
+condition there is another way for the two tables to drift); existing orphans
+were backfilled; and `score_change` was re-chained afterwards. Verified: 0
+orphans across every profile, and both endpoints report the same count.
 
-**What it breaks.** The history screen omits the session; the analysis
-overview's "N OF M" undercounts; the player card's 7-day deltas never see it;
-and — worst — a day the player actually trained does not count toward a streak
-or a consistency goal, because `lib/goals/progress.ts` and the badge engine read
-`UserAnalysis` while the history screen reads `AnalysisHistory`, so the two
-halves of the app disagree about whether that day happened.
+Three things the plan in this ledger got wrong, corrected during the work:
 
-**Plan.**
-1. Migration: `ALTER TABLE analysis_history ALTER COLUMN overall_score DROP NOT NULL`,
-   and `overallScore Decimal?` in schema.prisma.
-2. `save-analysis`: write the history row whenever the analysis carries a score
-   OR any angle — a session the player did belongs in the timeline either way.
-3. Guard the six readers. `analysis-history` already null-checks in places
-   (`entry.overallScore != null ? ... : null`, `.filter(!isNaN)`); `calculateTrend`,
-   `scoreChange` and **`/api/leaderboard` (which averages scores and is a
-   user-visible ranking)** must be checked before this ships.
-4. Backfill is NOT needed — the existing rows are all scored.
+- **"Backfill is NOT needed — the existing rows are all scored."** Wrong. The
+  orphan WAS scored (82, with angles, a video). The gap was never only about
+  scores, so the backfill is by ANALYSIS, not by score.
+- **The leaderboard was the feared reader; it was already safe.** `form_score`
+  and `engagement` read `user_analyses`; `improvement` filters on `score_change`;
+  `streak` reads only dates and gets BETTER. The real hazard was one line in
+  `analysis-history` — see rule F11.
+- **A backfill of BACKDATED rows invalidates `score_change` downstream.**
+  Inserting the 01:24 session ahead of the 03:19 one left the latter reading
+  NULL when it should read -1. `save-analysis` recomputes that chain in its
+  transaction; raw SQL triggers none of it, so the recompute had to be written
+  as its own migration. The honest consequence showed immediately: the account's
+  trend fell from "improving" to "stable" and its improvement rate from 100% to
+  50%, because the -1 had been hidden.
 
-### Method rules learned here
+### NEXT: `/results/demo/(tabs)/history` disagrees with its own API
+
+Found while verifying the above, NOT yet fixed. The screen prints "SESSIONS
+3 sessions" and "AVERAGE FORM SCORE 84" while `/api/analysis-history` reports
+the same 3 sessions with an average of 82 — 84 is the LATEST score, under a
+label that says AVERAGE. It also prints a hardcoded date range,
+"Apr 28 – May 12, 2025", above rows dated Aug 2026. One screen, three defects;
+take it as the next unit of work.
+
+### Method rules learned here### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
   were complete, correct and had zero callers. Grep for the consumer before
@@ -1552,6 +1563,15 @@ halves of the app disagree about whether that day happened.
   no error event, forever — so an `onError` fallback leaves an empty box. Layer
   the fallback UNDER the image instead of swapping it in, and nothing has to
   detect a failure that never announces itself.
+- **F11.** `Number(null)` is 0, NOT NaN — so `.map(Number).filter(!isNaN)` lets
+  a null through as a ZERO. It would have dragged an average down and set the
+  minimum to 0 the moment the schema allowed an unscored row. Drop nulls BEFORE
+  the cast, never after.
+- **F12.** Making a column nullable is the small half of the job. The readers
+  that assumed non-null, the rows already written, and any value DERIVED from
+  the column's ordering (here `score_change`, a delta against the previous row)
+  all have to be handled, or the schema change quietly produces wrong numbers
+  instead of missing ones.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

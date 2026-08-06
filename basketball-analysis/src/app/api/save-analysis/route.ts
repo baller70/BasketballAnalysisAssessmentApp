@@ -304,14 +304,30 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      if (body.overallScore !== undefined) {
+      /* ONE HISTORY ROW PER ANALYSIS, ALWAYS. THIS IS THE INVARIANT.
+         This used to run only when an overall score was present — it had to,
+         because analysis_history.overall_score was NOT NULL. So an analysis
+         that produced angles but no score existed in `user_analyses` and
+         nowhere else, and the two halves of the app disagreed about whether
+         that day happened: the history screen and the overview's "N OF M"
+         missed it, and it counted toward no streak and no consistency goal,
+         because the goal evaluator and the badge engine read the other table.
+
+         The guard is gone rather than merely loosened. Any condition here is
+         another way for the two tables to drift apart, and a session the
+         player did belongs in their timeline whether or not anything could be
+         measured from it — the date alone is what a streak is made of. The
+         column is nullable now, so an unscored session records honestly. */
+      {
         await tx.analysisHistory.upsert({
           where: { analysisId: analysis.id },
           create: {
             userProfileId,
             analysisId: analysis.id,
             analysisDate: recordedAt,
-            overallScore: body.overallScore,
+            // `undefined` would make Prisma skip the column; this row exists
+            // precisely to record a session that may have no score.
+            overallScore: body.overallScore ?? null,
             formScore: body.formScore,
             balanceScore: body.balanceScore,
             releaseScore: body.releaseScore,
@@ -322,7 +338,9 @@ export async function POST(request: NextRequest) {
           },
           update: {
             analysisDate: recordedAt,
-            overallScore: body.overallScore,
+            // `undefined` would make Prisma skip the column; this row exists
+            // precisely to record a session that may have no score.
+            overallScore: body.overallScore ?? null,
             formScore: body.formScore,
             balanceScore: body.balanceScore,
             releaseScore: body.releaseScore,
@@ -340,12 +358,19 @@ export async function POST(request: NextRequest) {
           orderBy: [{ analysisDate: "asc" }, { createdAt: "asc" }, { id: "asc" }],
           select: { id: true, overallScore: true, scoreChange: true },
         })
+        /* Chain each scored session to the PREVIOUS SCORED one, skipping the
+           unscored rows this table can now hold — the same rule as the
+           recompute in /api/analysis-history. Subtracting straight from the
+           row before would read `Number(null)` as 0 and write a delta of -84
+           or +84 as soon as an unscored session landed between two scored
+           ones, and an unscored row has no score change of its own. */
+        let previousScored: { overallScore: unknown } | null = null
         for (let index = 0; index < chronological.length; index += 1) {
           const current = chronological[index]
-          const previous = chronological[index - 1]
-          const scoreChange = previous
-            ? Number(current.overallScore) - Number(previous.overallScore)
-            : null
+          const scoreChange = current.overallScore == null || previousScored == null
+            ? null
+            : Number(current.overallScore) - Number(previousScored.overallScore)
+          if (current.overallScore != null) previousScored = current
           const storedScoreChange = current.scoreChange == null ? null : Number(current.scoreChange)
           if (storedScoreChange === scoreChange) continue
           await tx.analysisHistory.update({
