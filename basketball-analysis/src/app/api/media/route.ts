@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { validateCsrf } from "@/lib/csrf"
+import { resolveShot } from "@/lib/shots/resolveShot"
 
 /**
  * DELETE /api/media?analysisId=<id>  (or ?historyId=<id>)
@@ -66,9 +67,59 @@ export async function GET(request: NextRequest) {
         id: true, createdAt: true, mediaType: true, imageUrl: true,
         annotatedImageUrl: true, videoUrl: true, overallScore: true,
         processingStatus: true, shootingPhase: true, clientSessionId: true,
-        coachingNotes: true,
+        coachingNotes: true, captureSessionId: true,
       },
     })
+
+    /* TWO FIELDS ON THIS RESPONSE WERE BARE CONSTANTS: `result: "Make"` and
+       `hand: "Right"`, on every row, for every account. Every other field here
+       was carefully derived; these two sat in the middle of them looking
+       exactly as real, and the differential audit could not see them because
+       its token regex only matches numeric shapes — percentages, clocks,
+       dates, degrees. A categorical constant like "Make" or "Right" walks
+       straight through it (F19).
+
+       The hand is a profile fact and is simply read. The result is not: a media
+       row is an ANALYSIS, and an analysis can cover a whole session, for which
+       a single make/miss is not a well-defined quantity. It is answered only
+       where it genuinely is one — a capture holding exactly one shot — and is
+       an em-dash otherwise. */
+    const profile = await prisma.userProfile.findUnique({
+      where: { id: userProfileId },
+      select: { dominantHand: true },
+    })
+    const hand: "Right" | "Left" | "—" =
+      profile?.dominantHand?.toLowerCase() === "left" ? "Left"
+      : profile?.dominantHand?.toLowerCase() === "right" ? "Right"
+      : "—"
+
+    const captureIds = rows.map((r) => r.captureSessionId).filter((id): id is string => !!id)
+    const events = captureIds.length
+      ? await prisma.shotEvent.findMany({
+          where: { userProfileId, captureSessionId: { in: captureIds } },
+          select: {
+            captureSessionId: true, detected: true, detectedResult: true,
+            corrections: {
+              where: { kind: { in: ["false_shot", "make_miss"] } },
+              orderBy: { createdAt: "asc" },
+              select: { kind: true, value: true },
+            },
+          },
+        })
+      : []
+    const byCapture = new Map<string, ("make" | "miss" | null)[]>()
+    for (const e of events) {
+      const { dropped, result } = resolveShot(e)
+      if (dropped || !e.captureSessionId) continue
+      const bucket = byCapture.get(e.captureSessionId) ?? []
+      bucket.push(result)
+      byCapture.set(e.captureSessionId, bucket)
+    }
+    const resultFor = (captureSessionId: string | null): "Make" | "Miss" | "—" => {
+      const bucket = captureSessionId ? byCapture.get(captureSessionId) : undefined
+      if (!bucket || bucket.length !== 1) return "—"
+      return bucket[0] === "make" ? "Make" : bucket[0] === "miss" ? "Miss" : "—"
+    }
 
     /* The clip's length, which lives on the upload rather than the analysis.
        `/api/media` has been answering "—" for every row because nothing
@@ -118,8 +169,8 @@ export async function GET(request: NextRequest) {
         // clientSessionId is prefixed "ios-" by the Swift client (see
         // CaptureFlow.swift), which is the only signal we have for provenance.
         source: r.clientSessionId?.startsWith("ios-") ? "iOS Capture" : "Web Upload",
-        result: "Make",
-        hand: "Right",
+        result: resultFor(r.captureSessionId),
+        hand,
         coachingNotes: r.coachingNotes ?? undefined,
         recordedAt: r.createdAt.toISOString(),
       }

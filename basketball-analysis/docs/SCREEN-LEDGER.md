@@ -1902,6 +1902,51 @@ correction on top:
 - signed out, and signed in with the probe deleted, every cell is byte-for-byte
   the canonical it shipped with
 
+### DONE: the F18 sweep — defaults standing in for fields nobody sends
+
+F18 came out of finding that `shotType` and `title` were pure `||` defaults.
+Running it across the rest of the app found the same shape twice more, and the
+second one was on the SERVER.
+
+**`/dashboard`'s RECENT ANALYSES was three-quarters canonical.** Its mapper
+declared `title`, `shotType`, `shotCount` and `makeCount` and read all four;
+`/api/analysis-history` returns none of them. So every `||` past them resolved
+to `RECENT_FALLBACK` — "Pull-Up Jumper · Catch & Shoot", 24 shots, 15 makes —
+on every row for every account, with the make% computed from the borrowed pair.
+
+`RECENT_FALLBACK` read like an empty state and was not one: it was applied
+per-row INSIDE a map over the player's REAL sessions, so it never described "no
+data", it patched holes in data that existed. It is deleted.
+
+**The em-dash two hundred lines below could never fire.** The stat strip
+already wrote `latestShots ?? "—"` — correct handling, dead code, because the
+mapper had filled the hole before the render ever saw it. Careful null
+handling at the render site is worthless if the mapper lies to it first.
+
+**F19 — the detector's regex only matches NUMBERS, so categorical constants
+walk straight through it.** `/api/media` was serving `result: "Make"` and
+`hand: "Right"` as literals in its response builder — every row, every account,
+sitting among a dozen carefully derived fields and looking exactly as real. The
+differential audit ran over `/media` twice and passed it both times, because
+`DATA` matches percentages, clock times, dates and degrees; "Make" and "Right"
+are none of those.
+
+Both are answered now. The hand is a profile fact and is read from it. The
+result is NOT, and is only answered where it is a well-defined quantity — a
+capture holding exactly ONE shot — resolved through the shared corrections
+resolver. A session-wide make/miss is not a thing, so it is an em-dash.
+
+**These two drove filters, which is how the defect bit.** SHOT RESULT and HAND
+are facets on the library rail: with every row hardcoded Make/Right, filtering
+by "Miss" or "Left" returned nothing and their opposites returned everything.
+Verified with a seeded single-shot MISS capture on a left-handed profile:
+unfiltered 2 rows; HAND=Left 2, HAND=Right 0; RESULT=Miss 1, RESULT=Make 0 —
+each of those a number that was previously impossible. The phone rows, which
+print the hand after the title, read "Shot analysis • Left".
+
+Probe capture, its shot event, both analyses and the profile hand were then
+deleted and the canonical empty state confirmed byte-identical.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -1979,6 +2024,16 @@ correction on top:
   response actually carried the field. Grep the API's response builder for the
   key before treating a mapped field as real — F3 applies to your OWN mapping
   layer, not just to someone else's endpoint.
+- **F19.** The differential detector matches NUMERIC shapes only — percentages,
+  clock times, dates, degrees. A categorical constant ("Make", "Right",
+  "Video", a status word) passes every sweep untouched, and `/media` was
+  cleared twice while its API hardcoded two of them. When a field's values are
+  words, the detector cannot help; read the response builder.
+- **F20.** A fallback applied per-row INSIDE a map over real rows is not an
+  empty state, whatever it is named. `RECENT_FALLBACK` only ever ran on
+  sessions the player actually had, so it could not describe "no data" — it
+  could only overwrite gaps in data that existed. An empty state belongs on the
+  branch where the list is empty.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

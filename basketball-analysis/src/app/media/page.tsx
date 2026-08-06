@@ -16,8 +16,12 @@ interface MediaItem {
   // group can be drawn without something behind it (R10 defect M1: SOURCE,
   // SHOT RESULT and HAND were rendered but never consulted).
   source: "iOS Capture" | "Web Upload"
-  result: "Make" | "Miss"
-  hand: "Right" | "Left"
+  /* Both were served as bare constants by /api/media — every row a Make, every
+     row Right-handed. The hand is a profile fact now; the result is answered
+     only for a capture holding exactly ONE shot, because a session-wide
+     make/miss is not a quantity. An em-dash means the row cannot say. */
+  result: "Make" | "Miss" | "—"
+  hand: "Right" | "Left" | "—"
 }
 
 const cimg = (n: string) => `/images/canonical/${n}.png`
