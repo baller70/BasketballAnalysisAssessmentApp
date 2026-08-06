@@ -24,6 +24,7 @@
 
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { Clock, MapPin } from "lucide-react"
 import { MechanicGlyph, PoseFigure, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
@@ -43,13 +44,27 @@ const MECHANICS: [MechanicKind, string, string, string][] = [
 ]
 
 export function ShotBreakdown({
-  score = 82, shot = "41", when = "Today at 8:24 AM", streak, points,
+  score = 82, shot = "41", when, streak, points,
   onScore,
 }: {
   score?: number; shot?: string; when?: string; streak?: string; points?: string
   onScore?: () => void
 }) {
   const chrome = usePlayerChrome()
+  /* `when` was a DEFAULT PROP reading "Today at 8:24 AM", and the one caller
+     never passes it — so the screen dated every player's shot to the same
+     canonical morning. It resolves from the session hook now, which keeps the
+     canonical wording as its empty state.
+
+     SHOT CONTEXT below is deliberately untouched. Its shot type, court
+     location, in-workout time and result describe ONE shot, and this screen is
+     never handed one — its caller passes a score and nothing else, so even
+     `shot = "41"` is a constant. `ShotEvent` does store `timestampMs` and
+     `detectedResult`, so two of those four could be answered once a shot is
+     threaded in; court location is not recorded anywhere. Wiring the panel
+     needs a selected shot first — see the ledger. */
+  const session = useLatestSession()
+  const shotWhen = when ?? session.when
 
   return (
     <ResultsScreen
@@ -62,7 +77,7 @@ export function ShotBreakdown({
         <div className="min-w-0">
           <div className="shotiq-display whitespace-nowrap text-[36px] leading-[32px] tracking-[0.02em]">SHOT BREAKDOWN</div>
           <div className="mt-[5px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
-            Shot {shot} &nbsp;•&nbsp; {when}
+            Shot {shot} &nbsp;•&nbsp; {shotWhen}
           </div>
         </div>
         <div className="flex shrink-0 items-start pt-[2px]">

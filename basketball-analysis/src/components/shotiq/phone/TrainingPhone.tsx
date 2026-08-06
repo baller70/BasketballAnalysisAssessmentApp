@@ -141,7 +141,11 @@ export function TrainingHome({ drills, onQuickStart }: {
         {/* --------------------------------------------- recent workout */}
         <div className="mt-[14px] flex items-center">
           <Eyebrow>RECENT WORKOUT</Eyebrow>
-          <span className="ml-auto text-[9px]" style={{ color: GRAPHITE }}>Today at 8:24 AM</span>
+          {/* The card below already prints the session's shots, makes, make%,
+              score and verdict; its TIME was the one field left canonical, so
+              the only wrong number on the card was the one saying when it
+              happened. */}
+          <span className="ml-auto text-[9px]" style={{ color: GRAPHITE }}>{session.when}</span>
         </div>
         <PhoneCard className="mt-[8px] flex items-stretch gap-[11px] p-[9px]">
           <Shot src="/images/canonical/090-rec-1.png" zoom={1.4}
@@ -154,7 +158,9 @@ export function TrainingHome({ drills, onQuickStart }: {
               <div className="min-w-0 flex-1">
                 <div className="shotiq-microcaps" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>FORM SCORE</div>
                 <div className="mt-[1px] h-[3px] w-full rounded-full" style={{ background: RULE }}>
-                  <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
+                  {/* The bar was pinned at 82% beside a numeral reading the
+                      real score — the two halves of one readout disagreeing. */}
+                  <div className="h-full rounded-full" style={{ width: `${session.score}%`, background: ORANGE }} />
                 </div>
               </div>
               <span className="shotiq-numeric shrink-0 text-[22px] leading-[20px]" style={{ color: ORANGE }}>{session.score}</span>

@@ -35,6 +35,7 @@ import {
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, MechanicGlyph, PoseFigure,
 } from "@/components/shotiq/Glyphs"
+import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 
 /** Data-driven trend plot — the series is drawn, never a decorative curve. */
 function Trend({ points, width, height, fill = true, badge }: {
@@ -65,6 +66,9 @@ function Trend({ points, width, height, fill = true, badge }: {
 const SERIES = [52, 55, 53, 58, 57, 61, 60, 63, 62, 66, 65, 68, 67, 71, 70, 74, 73, 77, 76, 80, 82]
 
 export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: () => void }) {
+  // RECENT SESSIONS below is one row describing the newest session — its date,
+  // its counts and its score were three separate canonical constants.
+  const session = useLatestSession()
   const chrome = usePlayerChrome()
 
   const [tab, setTab] = React.useState(0)
@@ -182,13 +186,13 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
               </span>
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[10.5px] font-medium leading-[13px]">May 19, 8:24 AM</span>
+              <span className="block text-[10.5px] font-medium leading-[13px]">{session.when}</span>
               <span className="mt-[2px] block text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>
-                24 shots &nbsp; 15 makes &nbsp; 62.5%
+                {session.shots} shots &nbsp; {session.makes} makes &nbsp; {session.pct}
               </span>
             </span>
             <span className="shrink-0 rounded-[3px] px-[6px] py-[3px] text-[10px] font-semibold"
-                  style={{ border: `1px solid ${BLUE}`, color: BLUE }}>82</span>
+                  style={{ border: `1px solid ${BLUE}`, color: BLUE }}>{session.score}</span>
             <ChevronRight className="h-[13px] w-[13px] shrink-0" style={{ color: GRAPHITE }} />
           </div>
         </div>

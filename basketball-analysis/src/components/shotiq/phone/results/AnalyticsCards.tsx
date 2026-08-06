@@ -28,6 +28,7 @@ import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, Micro, PhaseRail,
   Chev, Frame, ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
+import { useHistory, formatMakePct, formatRelativeSession } from "@/components/shotiq/ResultsBits"
 
 const TREND: [string, number][] = [
   ["APR 26", 68], ["MAY 2", 72], ["MAY 8", 76], ["MAY 14", 79], ["MAY 20", 80], ["TODAY", 82],
@@ -45,6 +46,50 @@ const SESSIONS: Session[] = [
   { when: "May 8 at 5:48 PM", title: "Mid-Range Work", shots: "20", makes: "11", acc: "55.0%", delta: "-3", deltaLabel: "NEEDS REVIEW", tone: "#D92D20", tint: "#FDE8E6", still: "086-film-4", score: "70" },
 ]
 
+/**
+ * The four ANALYSIS SESSIONS rows, from the player's own history.
+ *
+ * The list above is canonical's four sessions — "Today at 8:24 AM · Catch &
+ * Shoot · 24 / 15 / 62.5% · +6 IMPROVEMENT" — written as literals, so the phone
+ * progress tab showed the same four sessions to everyone. This is the desktop
+ * history table's defect (fixed in #37) surviving on the phone, where the
+ * differential audit had never looked because it only ever ran at 1440px.
+ *
+ * The per-row delta is DERIVED, not stored on the row: each session's score
+ * against the one before it in the same list. The oldest row therefore has
+ * nothing to compare against and reads "—/NO CHANGE" — the same mark a genuinely
+ * flat pair gets, because "there is no previous session" and "you did not move"
+ * both mean there is no rise to claim.
+ *
+ * Film stills stay canonical's: they are photography, not data, and there is no
+ * per-session thumbnail to draw from.
+ */
+function useSessionRows(): Session[] {
+  const { items } = useHistory()
+  if (!items.length) return SESSIONS
+  return items.slice(0, 4).map((it, i) => {
+    const prev = items[i + 1]
+    const d = it.score != null && prev?.score != null ? it.score - prev.score : null
+    const tone = d == null || d === 0 ? BLUE : d > 0 ? GREEN : "#D92D20"
+    const pct = formatMakePct(it.shots, it.makes)
+    return {
+      when: formatRelativeSession(it.at),
+      title: it.title,
+      // An analysis with no capture behind it counted no shots; that is an
+      // em-dash, never a zero (F5).
+      shots: it.shots != null ? String(it.shots) : "—",
+      makes: it.makes != null ? String(it.makes) : "—",
+      acc: pct || "—",
+      delta: d == null || d === 0 ? "—" : `${d > 0 ? "+" : ""}${d}`,
+      deltaLabel: d == null || d === 0 ? "NO CHANGE" : d > 0 ? "IMPROVEMENT" : "NEEDS REVIEW",
+      tone,
+      tint: tone === GREEN ? "#E4F5EA" : tone === BLUE ? "#E7EFFC" : "#FDE8E6",
+      still: SESSIONS[i % SESSIONS.length].still,
+      score: it.score != null ? String(it.score) : "—",
+    }
+  })
+}
+
 export function AnalyticsCards({
   score = 82, shots = "24", makes = "15", pct = "62.5%", delta = "+8.1%",
   name, streak, points, onDetailed,
@@ -52,6 +97,7 @@ export function AnalyticsCards({
   score?: number; shots?: string; makes?: string; pct?: string; delta?: string
   name?: string; streak?: string; points?: string; onDetailed?: () => void
 }) {
+  const rows = useSessionRows()
   return (
     <ResultsScreen
       testid="screen-ios-analytics-cards"
@@ -121,7 +167,7 @@ export function AnalyticsCards({
       </div>
 
       <div className="mt-[3px] space-y-[4px] px-[13px]">
-        {SESSIONS.map((s) => <SessionCard key={s.title} s={s} />)}
+        {rows.map((s, i) => <SessionCard key={`${s.title}-${i}`} s={s} />)}
       </div>
     </ResultsScreen>
   )

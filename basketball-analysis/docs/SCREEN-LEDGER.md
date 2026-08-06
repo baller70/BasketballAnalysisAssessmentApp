@@ -1801,6 +1801,62 @@ the screen — the join date, and "Right Hand" — so both were proved against t
 database instead: the hand was flipped to `left`, confirmed to render
 `Left Hand`, and restored to `right` (F14).
 
+### THE AUDIT HAD ONLY EVER RUN AT 1440px
+
+`audit.mjs` hardcoded a desktop viewport, so in every sweep recorded above the
+phone tree was never loaded. Those components mount only behind
+`usePhoneViewport` — a different subtree entirely — so no phone screen had ever
+been through the differential audit at all. Re-run at 393pt it flagged four
+routes immediately, all of them the same missing quantity: **WHEN your last
+session was.**
+
+`8:24 AM` is canonical's session time and it was written as a literal across
+the phone tree, so every phone screen agreed with every other phone screen and
+none of them agreed with the player's session. This is the third member of the
+`usePlayerChrome` / `useLatestSession` family — who you are, what you did, and
+now when you did it — and it was the one never wired.
+
+`useLatestSession` carries `when` (and the raw `at`) now, off the same shared
+history hook. Wired: the progress tab's four ANALYSIS SESSIONS rows, goals'
+RECENT SESSIONS row, training's RECENT WORKOUT stamp, and the shot breakdown's
+`Shot 41 • …` line — where `when` was a DEFAULT PROP its one caller never
+passed, so it could never have been anything but canonical.
+
+Two things the wiring turned up:
+
+- **The training card's FORM SCORE bar was pinned at `width: "82%"`** beside a
+  numeral already reading the real score. Half a readout wired is worse than
+  neither: the bar and the number are one statement and they disagreed.
+
+- **F16 — `useLatestSession` had TWO states where the data has THREE, and
+  reading it as two put two screens in direct contradiction.** Adding `at` made
+  it possible to tell *no session at all* from *a session that counted no
+  shots*, and those want different marks:
+
+      no session          -> canonical's 24 / 15 / 62.5%, the EMPTY STATE
+      session, no capture -> em-dashes
+      session with counts -> the player's own numbers
+
+  Collapsing the middle case into the empty state printed canonical's 24 and 15
+  beside the player's REAL date and score. The progress tab, listing actual
+  sessions, had already started em-dashing that case — so signed in,
+  `/results/demo/history` read "— SHOTS" while `/results/demo/goals` read "24
+  shots" **for the same session**. The canonical triple is the empty state for a
+  visitor; it is never a stand-in for a real session's missing capture.
+
+Verified at 393pt in both states, then again with a seeded 20-shot / 13-make
+capture: all four routes moved together to 20 / 13 / 65.0% and back to
+em-dashes when the probe capture was deleted (F14). Signed out, every screen is
+byte-for-byte the canonical it shipped with.
+
+**Left deliberately: `/results/demo/analysis`'s SHOT CONTEXT panel** — shot
+type, court location, `26:12` in-workout and result. It describes ONE shot and
+the screen is never handed one; its caller passes a score and nothing else, so
+even `Shot 41` is a constant. `ShotEvent` does store `timestampMs` and
+`detectedResult`, so two of the four become answerable once a shot is threaded
+in — court location is recorded nowhere. That is a shot-selection feature, not
+a wiring fix, and it is the one token the 393pt sweep still reports.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -1863,6 +1919,14 @@ database instead: the hand was flipped to `left`, confirmed to render
   constants hid there, including one on a page every other value of which was
   already live. For those routes, check the signed-in render against the
   canonical constant directly instead.
+- **F16.** Before collapsing "no data" and "data that is empty" into one
+  fallback, check whether the screens reading it can tell them apart. A hook
+  with two states over three-state data will make two screens contradict each
+  other the moment one of them starts distinguishing the cases on its own.
+- **F17.** The audit harness has a viewport, and a viewport is a filter. Every
+  sweep before this one ran at 1440px, so a whole component subtree behind a
+  responsive switch was reported clean without ever being loaded. Sweep at each
+  breakpoint the app actually branches on.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

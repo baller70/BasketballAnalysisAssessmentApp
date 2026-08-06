@@ -49,6 +49,32 @@ export function formatSessionDate(value: string | number | Date | null | undefin
 }
 
 /**
+ * The phone's wording for a session's time — `Today at 8:24 AM`, or
+ * `May 19, 8:24 AM` once the session is no longer today.
+ *
+ * The phone tree writes the time of your last session as a literal on a dozen
+ * components; canonical's is 8:24 AM, so every phone screen agreed with every
+ * other and none of them agreed with the session. The desktop sweep could never
+ * see it — these components only mount behind `usePhoneViewport`.
+ *
+ * "Today" is relative to the READER's clock, which is what the phone screens
+ * say, so the comparison is on local calendar day rather than on elapsed hours:
+ * a session at 11pm is still "Today" at 11:30pm and "Nov 3" at 00:30.
+ */
+export function formatRelativeSession(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return ""
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ""
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+  const now = new Date()
+  const sameDay = d.getFullYear() === now.getFullYear()
+    && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+  if (sameDay) return `Today at ${time}`
+  const day = d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  return `${day}, ${time}`
+}
+
+/**
  * The day half of that format, alone — `Jan 14, 2024`.
  *
  * The JOINED readouts on /profile and /settings want a date without a time.
