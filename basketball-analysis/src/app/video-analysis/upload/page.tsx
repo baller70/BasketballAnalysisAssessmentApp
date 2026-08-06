@@ -4,18 +4,21 @@
  * /video-analysis/upload — canonical video-upload flow, adapted from the iOS
  * screens 026-video-upload / 024-upload-quality-check (no desktop screen was
  * supplied for this flow). The preserved domain pieces are untouched:
- * VideoUpload (smart shot detection, 3-key-frame extraction) and
- * PlayerProfileForm feed the same analysis pipeline as before.
+ * VideoUpload (smart shot detection, 3-key-frame extraction) feeds the same
+ * analysis pipeline as before. The right-hand column is the canonical FRAMING
+ * GUIDE; it used to be a nine-field PlayerProfileForm, which the app already
+ * collects in onboarding. That component is untouched and still used there —
+ * it is simply no longer asked for a second time on the way to an upload.
  */
 
 import React from "react"
 import { useRouter } from "next/navigation"
 import { VideoUpload } from "@/components/upload/VideoUpload"
-import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import Link from "next/link"
 import { ArrowLeft, Video, User } from "lucide-react"
 import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
 import { VideoReview, type ClipMeta } from "@/components/shotiq/phone/VideoReview"
+import { Frame } from "@/components/shotiq/phone/results/Kit"
 import { VideoUploadPhone } from "@/components/shotiq/phone/VideoUploadPhone"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { ActionGlyph } from "@/components/shotiq/Glyphs"
@@ -131,15 +134,59 @@ export default function VideoAnalysisPage() {
             <VideoUpload />
           </Card>
 
+          {/* CANONICAL 026 PUTS THE FRAMING GUIDE HERE, NOT A PROFILE FORM.
+              Kevin: "there's another one that's there that's from the old app…
+              the tab below it."
+
+              This column used to be a nine-field data-entry form — Name, Email,
+              Age, Position, Skill Level, Body Type, Height, Weight, Wingspan —
+              asked on the way to uploading a video. Canonical 026 has none of
+              it: it shows how to frame the shot, with a GOOD / TOO CLOSE pair,
+              and a READ-ONLY profile summary. The app already collects every
+              one of those fields in onboarding and on the profile screen, so
+              the form was asking a player for them a second time.
+
+              NOTHING IS DELETED. `PlayerProfileForm` is untouched and still
+              runs where it belongs; the phone branch of this very route has
+              rendered the canonical version all along (VideoUploadPhone), so
+              desktop and phone now show the same screen instead of two
+              different ones. */}
           <Card className="p-6">
             <div className="mb-1 flex items-center gap-3">
-              <User className="h-5 w-5 text-[var(--shotiq-color-shotiqOrange)]" />
-              <SectionLabel>PLAYER PROFILE</SectionLabel>
+              <Video className="h-5 w-5 text-[var(--shotiq-color-shotiqOrange)]" />
+              <SectionLabel>FRAMING GUIDE</SectionLabel>
             </div>
-            <p className="mb-6 text-sm text-[var(--shotiq-color-graphite)]">
-              Position drives the elite-shooter match; the rest sharpens the analysis.
+            <p className="mb-4 text-sm text-[var(--shotiq-color-graphite)]">
+              Full body in frame from feet to above release.
             </p>
-            <PlayerProfileForm />
+            <div className="flex gap-[11px]">
+              {([["086-film-3", "GOOD", "var(--shotiq-color-confirmGreen)", true],
+                 ["086-film-1", "TOO CLOSE", "var(--shotiq-color-shotiqOrange)", false]] as const).map(
+                ([src, tag, tone, ok]) => (
+                  <span key={tag} className="relative block min-w-0 flex-1">
+                    <Frame src={src} w="100%" h={145} radius={4} pos={ok ? "50% 38%" : "50% 2%"} />
+                    <span
+                      className="shotiq-display absolute left-[7px] top-[7px] rounded-[3px] px-[7px] text-[13px] leading-[21px] tracking-[0.05em] text-white"
+                      style={{ background: tone }}
+                    >
+                      {tag}
+                    </span>
+                  </span>
+                ))}
+            </div>
+            <ul className="mt-5 space-y-1 text-xs text-[var(--shotiq-color-graphite)]">
+              <li>• Film from the side or 45° angle for best pose detection</li>
+              <li>• Good lighting helps the AI detect your joints accurately</li>
+              <li>• Keep the camera steady — avoid excessive movement</li>
+              <li>• Include the complete shooting motion in the video</li>
+            </ul>
+            <Link
+              href="/profile"
+              data-testid="video-upload-edit-profile"
+              className="mt-5 inline-flex items-center gap-2 text-[13px] text-[var(--shotiq-color-shotiqOrange)] hover:opacity-80"
+            >
+              <User className="h-4 w-4" /> Update your player profile
+            </Link>
           </Card>
         </div>
 
