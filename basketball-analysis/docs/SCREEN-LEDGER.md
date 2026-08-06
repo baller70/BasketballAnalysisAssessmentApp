@@ -2183,6 +2183,44 @@ card's height/wingspan/reach block and a delta. Heights are on the profile
 (`heightInches`, `wingspanInches`); the reach figures may not be derived
 anywhere. Confirm each by hand before wiring.
 
+### DONE: the player card measured every player at 6'3"
+
+The repaired numeric detector's second name. `MEASUREMENTS` on the phone player
+card was four constants — HEIGHT 6'3", WINGSPAN 6'6", SHOOTING REACH 8'2",
+STANDING REACH 8'0" — so every card described the same body.
+
+Height and wingspan are on the profile; the player enters them in onboarding and
+three stature-scaled measurements downstream already depend on the height being
+right. **Neither REACH is recorded.** Standing reach is not a column and is not
+derived anywhere, and neither is shooting reach. The pipeline does compute a
+RELEASE HEIGHT per analysis, which is related but is not the same quantity — it
+is where the ball left the hand on one shot, not a static reach — and printing
+it under a reach label would be one measurement wearing a second name (F22).
+Both read as em-dashes over "Not recorded" once a profile exists.
+
+Two more on the same card, since the screen had to be finished:
+
+- **The delta was `+8.1%` as a default prop its caller never passed**, while the
+  page already had `sessionDelta(items)` in scope — the figure the rest of the
+  app computes.
+- **The make% contradicted its own counts.** `pct` was computed from the live
+  values while `shots`/`makes` fell back to canonical, so the empty state read
+  `24 SHOTS · 15 MAKES · MAKE % —` — the card admitting it could not compute the
+  one number those two values exist to produce. All three follow one triple now.
+
+Verified at 393pt with a 5'11" / 6'5" profile and a 37-shot capture scoring 41:
+`5'11" · 180 cm`, `6'5" · 196 cm`, two em-dashed reaches, `37 SHOTS`, `41 /
+NEEDS WORK`, `21.6% MAKE %`, `8 / 37`. Signed out, and signed in after the probe
+was deleted, canonical's four measurements and `62.5%` render as shipped, and
+"Not recorded" sits inside its column with no overflow.
+
+**A note on this route and the detector.** With the probe deleted the numeric
+sweep reports every one of those tokens again, because an account with no
+profile and no sessions legitimately shows the canonical card in both states.
+That is the empty state, not a defect — the same caveat the ledger already
+records for goals and the history date range. The detector cannot tell the two
+apart; only checking whether the data exists can.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and

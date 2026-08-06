@@ -42,6 +42,38 @@ const MEASUREMENTS: [string, string, string][] = [
   ["STANDING REACH", "8'0\"", "244 cm"],
 ]
 
+/**
+ * The player's own body measurements, where the app holds any.
+ *
+ * All four were constants, so every card reported a 6'3" player with a 6'6"
+ * wingspan. HEIGHT and WINGSPAN are on the profile — the player enters them in
+ * onboarding, and three stature-scaled measurements downstream already depend
+ * on the height being right.
+ *
+ * NEITHER REACH IS RECORDED. Standing reach is not a column and is not derived
+ * anywhere; shooting reach is not either. The pipeline does compute a RELEASE
+ * HEIGHT per analysis, which is a related but different quantity — it is where
+ * the ball left the hand on one shot, not a static reach — and printing it
+ * under a reach label would be the same measurement wearing a second name
+ * (F22). Both read as em-dashes for a player who has entered a profile.
+ */
+export function playerMeasurements(
+  profile: { heightInches?: number | null; wingspanInches?: number | null } | null,
+): [string, string, string][] {
+  const known = profile && (profile.heightInches != null || profile.wingspanInches != null)
+  if (!known) return MEASUREMENTS
+  const ft = (inches?: number | null) =>
+    inches == null ? "—" : `${Math.floor(Math.round(inches) / 12)}'${Math.round(inches) % 12}"`
+  const cm = (inches?: number | null) =>
+    inches == null ? "—" : `${Math.round(inches * 2.54)} cm`
+  return [
+    ["HEIGHT", ft(profile.heightInches), cm(profile.heightInches)],
+    ["WINGSPAN", ft(profile.wingspanInches), cm(profile.wingspanInches)],
+    ["SHOOTING REACH", "—", "Not recorded"],
+    ["STANDING REACH", "—", "Not recorded"],
+  ]
+}
+
 const PHASE_SCORES: [string, string, string][] = [
   ["SETUP", "84", GREEN], ["LOAD", "78", BLUE], ["RISE", "81", BLUE],
   ["RELEASE", "78", BLUE], ["FOLLOW-THROUGH", "88", GREEN],
@@ -49,14 +81,17 @@ const PHASE_SCORES: [string, string, string][] = [
 
 export function PlayerCard({
   score = 82, shots = "24", makes = "15", pct = "62.5%", delta = "+8.1%",
-  name, streak, points,
+  name, streak, points, profile,
   onCustomize, onShare,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string; delta?: string
   name?: string; streak?: string; points?: string
+  /** The player's own body measurements, from their profile. */
+  profile?: { heightInches?: number | null; wingspanInches?: number | null } | null
   onCustomize?: () => void; onShare?: () => void
 }) {
   const band = scoreBand(typeof score === "number" ? score : null)
+  const measures = playerMeasurements(profile ?? null)
   const chrome = usePlayerChrome()
 
   return (
@@ -129,7 +164,7 @@ export function PlayerCard({
       <div className="mt-[11px] px-[15px]">
         <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">MEASUREMENTS</div>
         <div className="mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)]">
-          {MEASUREMENTS.map(([l, v, m]) => (
+          {measures.map(([l, v, m]) => (
             <div key={l} className="min-w-0 flex-1 text-center">
               <Micro size={8.4}>{l}</Micro>
               <div className="shotiq-numeric mt-[7px] text-[26px] leading-[24px]">{v}</div>

@@ -20,7 +20,7 @@ import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { PlayerCard as PhonePlayerCard } from "@/components/shotiq/phone/results/PlayerCard"
 import { CustomizeCard } from "@/components/shotiq/phone/results/CustomizeCard"
-import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useHistory, formatMakePct, formatDelta, sessionDelta } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 import { usePoints } from "@/lib/points/pointsContext"
@@ -213,9 +213,20 @@ export default function PlayerCardPage() {
     {isPhone && (view === "customize"
       ? <CustomizeCard score={score ?? 82} onCancel={() => setView(null)} onSave={() => setView(null)} />
       : <PhonePlayerCard score={score ?? 82}
-                         shots={shots != null ? String(shots) : "24"}
-                         makes={makes != null ? String(makes) : "15"}
-                         pct={formatMakePct(shots, makes)}
+                         /* Three states, not two (F16): an analysis with no
+                            capture behind it counted no shots, which is an
+                            em-dash — canonical's pair stands only with no
+                            session at all. */
+                         shots={shots != null ? String(shots) : hasData ? "—" : "24"}
+                         makes={makes != null ? String(makes) : hasData ? "—" : "15"}
+                         /* The make% has to follow the SAME triple the counts
+                            do. Left on its own it printed "—" beside canonical's
+                            24 and 15 — the card admitting it could not compute
+                            the one number those two values are for. */
+                         pct={shots != null && makes != null ? formatMakePct(shots, makes)
+                              : hasData ? "—" : "62.5%"}
+                         delta={hasData ? formatDelta(sessionDelta(items)) : undefined}
+                         profile={profile}
                          onCustomize={() => setView("customize")}
                          onShare={() => setSharing(true)} />)}
     <div className={isPhone ? "hidden" : undefined}>
