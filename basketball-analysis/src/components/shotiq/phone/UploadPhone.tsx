@@ -335,11 +335,21 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
              className="absolute cursor-move"
              onPointerDown={onPointerDown("move")}
              style={{ left: pct(rect.x), top: pct(rect.y), width: pct(rect.w), height: pct(rect.h) }}>
-          {/* rule-of-thirds guides, now tied to the frame they belong to */}
+          {/* THE MEASUREMENT LINES — the rule-of-thirds grid a player frames
+              against, and the dashed edge of the crop itself.
+              The grid is painted with an INLINE background, not `bg-white/55`.
+              That class computed to rgba(0,0,0,0) here: the spans were the
+              right size and completely invisible, so the frame had corner
+              brackets and no guides at all. The corner Ls were never affected
+              because they have always used inline borders. */}
+          <span aria-hidden="true" className="absolute inset-0"
+                style={{ border: "1px dashed rgba(255,255,255,0.9)" }} />
           {[1, 2].map((i) => (
             <React.Fragment key={i}>
-              <span aria-hidden="true" className="absolute bg-white/55" style={{ left: `${(i * 100) / 3}%`, top: 0, bottom: 0, width: 1 }} />
-              <span aria-hidden="true" className="absolute bg-white/55" style={{ top: `${(i * 100) / 3}%`, left: 0, right: 0, height: 1 }} />
+              <span aria-hidden="true" className="absolute"
+                    style={{ left: `${(i * 100) / 3}%`, top: 0, bottom: 0, width: 1, background: "rgba(255,255,255,0.55)" }} />
+              <span aria-hidden="true" className="absolute"
+                    style={{ top: `${(i * 100) / 3}%`, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.55)" }} />
             </React.Fragment>
           ))}
           {/* Canonical's corner Ls, which are now the resize handles. The hit
