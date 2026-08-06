@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { uploadMedia } from "@/lib/storage"
 import { validateCsrf } from "@/lib/csrf"
+import { recordEarn } from "@/lib/points/recordEarn"
 
 interface SaveAnalysisRequest {
   clientSessionId: string
@@ -340,12 +341,35 @@ export async function POST(request: NextRequest) {
       return { analysis, imageUrl, annotatedImageUrl }
     }, { maxWait: 10_000, timeout: 30_000 })
 
+    /* THE POINTS FEATURE HAD NO TRIGGER. The ledger table, /api/points, the
+       tier maths, the badge grid and the context's `earnPoints` all existed and
+       nothing in the app called any of them, so every points figure on every
+       screen was decoration over an empty table.
+
+       This is the earn, tied to a VERIFIED SERVER EVENT — a row actually
+       written — which is what /api/points' own docstring says the design is
+       for ("earns fired on UI clicks rather than verified activity"). Awarding
+       here rather than in the browser also means an iOS capture earns exactly
+       like a web upload; both platforms post to this one route.
+
+       Keyed on clientSessionId, which this route is already idempotent by, so
+       the upload queue retrying a shot cannot pay for it twice. `recordEarn`
+       never throws: a points failure must not turn a saved analysis into an
+       error the player sees, so the outcome is reported and nothing else. */
+    const earn = await recordEarn(
+      userProfileId,
+      body.mediaType === "video" ? "upload_video" : "upload_image",
+      { analysisId: result.analysis.id, mediaType: body.mediaType },
+      body.clientSessionId,
+    )
+
     return NextResponse.json({
       success: true,
       analysisId: result.analysis.id,
       clientSessionId: body.clientSessionId,
       imageUrl: result.imageUrl,
       annotatedImageUrl: result.annotatedImageUrl,
+      pointsEarned: earn.earned ? earn.points : 0,
       message: "Analysis saved successfully",
     })
   } catch (error) {

@@ -357,14 +357,38 @@ export default function AchievementsPointsPage() {
             {tab === "POINTS HISTORY" && (
               <div>
                 <SectionLabel>RECENT POINT EVENTS</SectionLabel>
-                <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
-                  {POINT_EVENTS.map(([d, t, xp]) => (
-                    <div key={d + t} className="flex items-center justify-between py-[10px] text-[13px]">
-                      <div><div className="font-medium">{t}</div>
-                        <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
-                      <span className="shotiq-numeric text-[15px] text-[var(--shotiq-color-confirmGreen)]">{xp}</span>
-                    </div>
-                  ))}
+                {/* YOUR ledger, when you have one. `POINT_EVENTS` below is five
+                    rows written into this file — "May 12, 2025 · 8:24 AM,
+                    Analysis session completed, +120 XP" — printed identically
+                    on every account. It stays as the empty state so a new
+                    player sees the canonical screen, and real events replace it
+                    the moment there are any. */}
+                <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]"
+                     data-testid="points-history">
+                  {points.state.history.length > 0
+                    ? points.state.history.map((e) => (
+                        <div key={e.id} className="flex items-center justify-between py-[10px] text-[13px]">
+                          <div>
+                            <div className="font-medium">{e.description}</div>
+                            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">
+                              {new Date(e.timestamp).toLocaleString("en-US", {
+                                month: "long", day: "numeric", year: "numeric",
+                                hour: "numeric", minute: "2-digit",
+                              }).replace(",", ",").replace(" at ", " · ")}
+                            </div>
+                          </div>
+                          <span className="shotiq-numeric text-[15px] text-[var(--shotiq-color-confirmGreen)]">
+                            +{e.points} XP
+                          </span>
+                        </div>
+                      ))
+                    : POINT_EVENTS.map(([d, t, xp]) => (
+                        <div key={d + t} className="flex items-center justify-between py-[10px] text-[13px]">
+                          <div><div className="font-medium">{t}</div>
+                            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
+                          <span className="shotiq-numeric text-[15px] text-[var(--shotiq-color-confirmGreen)]">{xp}</span>
+                        </div>
+                      ))}
                 </div>
               </div>
             )}
