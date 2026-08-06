@@ -2005,6 +2005,58 @@ never wired. The pattern to follow already exists in
 pipeline computes and "Not measured" for what it does not, rather than
 inventing a number with a plausible-looking source.
 
+### DONE: YOUR SIX KEY METRICS, on the phone
+
+The panel headed YOUR six key metrics was six canonical constants with six
+canonical verdicts — 7'8" EXCELLENT, 52° GOOD, 93% GOOD, 46° GOOD, 8.6 GOOD,
+92% EXCELLENT — so it read identically for an account with a hundred analyses
+and one with none. It is the PHONE counterpart of the desktop KEY MEASUREMENTS
+table wired early on, and it was never connected.
+
+`readMetric` (9 tests) answers each row from the caller's newest analysis, the
+same endpoint the desktop workspace reads. **Four of the six are answerable and
+two are not:**
+
+- **SPIN RATE** has no pipeline behind it. Nothing tracks the ball, so nothing
+  can measure its rotation.
+- **SHOT ARC is the SAME QUANTITY as RELEASE ANGLE** in this pipeline — the
+  desktop table calls `releaseAngle` "Shooting Arc" for precisely that reason.
+  Printing one measurement under two labels would assert two independent
+  readings, which is worse than admitting to one.
+
+**Two rows change unit, deliberately.** ELBOW ALIGNMENT and CENTEREDNESS are
+drawn as percentages, but what the pipeline computes is an elbow ANGLE and a
+centreline DEVIATION, both in degrees. A degree value under a % sign is a wrong
+label on a right number.
+
+**The verdicts are computed, not carried.** Each answerable metric is judged
+against the same ideal band the desktop table prints — release height 102–110in,
+release angle 45–55°, elbow 85–95°, centreline under 3° — GOOD inside, REVIEW
+outside. The old constants were tuned for canonical's values and would have
+called any real reading GOOD (F7). A metric with no source shows an em-dash
+rather than a rating, because an unmeasured thing has not earned a judgement
+(F5).
+
+**And the screen contradicted itself in its own header.** It printed
+`24 SHOTS / 15 MAKES / MAKE % —` for a real session with no capture: canonical's
+pair beside a percentage admitting it could not be computed, when 24 and 15 are
+exactly what would compute it. Three states now, per F16.
+
+Verified at 393pt with angles chosen to share no digits with canonical's and to
+straddle the bands in both directions: signed in read `9'9" REVIEW · 49° GOOD ·
+71° REVIEW · Not measured · Not measured · 1.1° GOOD`, with counts as em-dashes;
+signed out, and signed in after the probe was deleted, the canonical six render
+exactly as they shipped. "Not measured" sits 54px inside its 61px column with no
+page scroll.
+
+**NEXT on this same screen:** the ELITE MATCH card below the strip is still
+constant — KLAY THOMPSON, 88% OVERALL MATCH, and three reference readings
+(`Release Angle 51°`, `Elbow Alignment 95%`, `Shot Arc 46°`) written into the
+markup. `/api/shooters/match` already serves this and the DESKTOP is wired to
+it; the phone card was never connected. Note its "Elbow Alignment 95%" now
+disagrees in UNIT with the strip above it, which reads degrees — wiring the
+card should settle both.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -2096,6 +2148,11 @@ inventing a number with a plausible-looking source.
   (85/70/50) and `scoreVerdict` (90/70/55) sat in different files answering the
   same question about the same score, so 87 was EXCELLENT on one screen and
   GOOD on the next. When a second copy appears, delete it — do not re-tune it.
+- **F22.** When one screen lists two rows that are the same underlying
+  quantity, only one may carry the measurement. The phone metric strip has both
+  RELEASE ANGLE and SHOT ARC, and this pipeline computes one number for both;
+  filling each would assert two independent readings from a single measurement.
+  Answer one, and say the other is not measured.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

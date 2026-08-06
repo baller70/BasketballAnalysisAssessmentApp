@@ -193,8 +193,13 @@ export default function ResultsOverviewPage() {
     {isPhone && (
       <AnalysisOverview
         score={score ?? 82}
-        shots={shots != null ? String(shots) : "24"}
-        makes={makes != null ? String(makes) : "15"}
+        /* Three states, not two (F16). The two-state collapse put canonical's
+           24 and 15 beside a MAKE % of "—" — the strip contradicting itself,
+           since a make percentage is exactly what 24 and 15 would give you.
+           An analysis with no capture behind it counted no shots; that is an
+           em-dash, and canonical's pair stands only with no session at all. */
+        shots={shots != null ? String(shots) : hasData ? "—" : "24"}
+        makes={makes != null ? String(makes) : hasData ? "—" : "15"}
         pct={formatMakePct(shots, makes)}
       />
     )}

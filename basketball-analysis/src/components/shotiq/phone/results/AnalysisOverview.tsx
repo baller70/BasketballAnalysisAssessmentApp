@@ -87,6 +87,89 @@ const METRICS: [MechanicKind, string, string, string, string][] = [
   ["balance", "CENTEREDNESS", "92", "%", "EXCELLENT"],
 ]
 
+/**
+ * YOUR SIX KEY METRICS, from the shot they describe.
+ *
+ * The six above are canonical's constants — 7'8", 52°, 93% — each with its own
+ * verdict, on a panel headed YOUR six key metrics. This is the PHONE
+ * counterpart of the desktop KEY MEASUREMENTS table wired early on, and it was
+ * never connected: the strip read identically for an account with a hundred
+ * analyses and one with none.
+ *
+ * FOUR OF THE SIX ARE ANSWERABLE, and two are not:
+ *
+ *  - SPIN RATE has no pipeline behind it. Nothing tracks the ball, so nothing
+ *    can measure its rotation.
+ *  - SHOT ARC is the SAME QUANTITY as RELEASE ANGLE in this pipeline — the
+ *    desktop table calls `releaseAngle` "Shooting Arc" for exactly that reason.
+ *    Printing one measurement under two labels would assert two independent
+ *    readings, which is worse than admitting to one.
+ *
+ * Two rows change unit, and that is deliberate. ELBOW ALIGNMENT and
+ * CENTEREDNESS are drawn as percentages, but what the pipeline computes is an
+ * elbow ANGLE and a centreline DEVIATION, both in degrees. Printing a degree
+ * value under a % sign would be a wrong label on a right number.
+ */
+type MetricRead = { value: string; unit: string; verdict: string; real: boolean }
+
+/** Each answerable metric: how to read it, and the band it is judged against. */
+const METRIC_SOURCE: Record<string, {
+  read: (a: OverviewAnalysis) => number | null
+  format: (v: number) => string
+  unit: string
+  /** Inclusive ideal range, the same bands the desktop table prints. */
+  ideal: [number, number]
+}> = {
+  "RELEASE HEIGHT": {
+    read: (a) => a.measurements?.releaseHeightInches ?? null,
+    format: (v) => `${Math.floor(Math.round(v) / 12)}'${Math.round(v) % 12}"`,
+    unit: "", ideal: [102, 110],
+  },
+  "RELEASE ANGLE": {
+    read: (a) => a.angles?.release ?? null,
+    format: (v) => String(Math.round(v)), unit: "°", ideal: [45, 55],
+  },
+  "ELBOW ALIGNMENT": {
+    read: (a) => a.angles?.elbow ?? null,
+    format: (v) => String(Math.round(v)), unit: "°", ideal: [85, 95],
+  },
+  "CENTEREDNESS": {
+    read: (a) => a.measurements?.centerlineDeviationDeg ?? null,
+    format: (v) => v.toFixed(1), unit: "°", ideal: [0, 3],
+  },
+}
+
+export interface OverviewAnalysis {
+  angles?: Record<string, number | null>
+  measurements?: Record<string, number | null>
+}
+
+/**
+ * What to print for one canonical row.
+ *
+ * With no analysis the canonical constant stands — the empty state is the
+ * screen as designed. With one, a metric the pipeline cannot answer says so
+ * rather than carrying a number nobody derived (F5), and the verdict is
+ * computed against the ideal band instead of staying the constant it was: a
+ * rating tuned for canonical's value is wrong the moment the value moves (F7).
+ */
+export function readMetric(
+  label: string, demoValue: string, demoUnit: string, demoVerdict: string,
+  analysis: OverviewAnalysis | null,
+): MetricRead {
+  if (!analysis) return { value: demoValue, unit: demoUnit, verdict: demoVerdict, real: false }
+  const source = METRIC_SOURCE[label]
+  const raw = source ? source.read(analysis) : null
+  if (!source || raw == null) return { value: "Not measured", unit: "", verdict: "—", real: false }
+  const [lo, hi] = source.ideal
+  return {
+    value: source.format(raw),
+    unit: source.unit,
+    verdict: raw >= lo && raw <= hi ? "GOOD" : "REVIEW",
+    real: true,
+  }
+}
+
 export function AnalysisOverview({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
   name, streak, points,
@@ -99,6 +182,18 @@ export function AnalysisOverview({
      both come from the one shared band now — a renderer tuned for a constant
      is wrong for a real value the moment the value moves (F7). */
   const band = scoreBand(typeof score === "number" ? score : null)
+  /* The metric strip's own source. `useHistory` carries the session, not the
+     per-shot angles, so this reads the same endpoint the desktop workspace
+     does — the caller's newest analysis and exactly which angles it holds. */
+  const [analysis, setAnalysis] = React.useState<OverviewAnalysis | null>(null)
+  React.useEffect(() => {
+    let dead = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.analysis) setAnalysis(d.analysis) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
   return (
     <ResultsScreen
       testid="screen-ios-analysis-result-overview"
@@ -152,19 +247,30 @@ export function AnalysisOverview({
       {/* six key metrics ------------------------------------------------- */}
       <SectionHead cap={21} info className="mt-[6px] px-[14px]">YOUR SIX KEY METRICS</SectionHead>
       <Panel className="mx-[13px] mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)] pb-[9px] pt-[7px]">
-        {METRICS.map(([kind, label, value, unit, verdict]) => (
+        {METRICS.map(([kind, label, value, unit, verdict]) => {
+          const m = readMetric(label, value, unit, verdict, analysis)
+          return (
           <div key={label} className="min-w-0 flex-1 px-[3px] text-center">
             <span className="flex h-[36px] items-center justify-center" style={{ color: INK }}>
               <MechanicGlyph kind={kind} size={33} />
             </span>
             <div className="shotiq-microcaps mt-[8px] leading-[6px]" style={{ fontSize: 7, color: GRAPHITE }}>{label}</div>
-            <div className="shotiq-numeric mt-[8px] leading-[14px]" style={{ fontSize: 19 }}>
-              {value}{unit && <span style={{ fontSize: 12 }}>{unit}</span>}
+            {/* "Not measured" is prose, not a numeral, and drops to the body
+                face at a size that fits the 1/6 column rather than overflowing
+                it in the numeric face. */}
+            <div className={m.value === "Not measured" ? "mt-[8px] leading-[14px]" : "shotiq-numeric mt-[8px] leading-[14px]"}
+                 style={{ fontSize: m.value === "Not measured" ? 8 : 19,
+                          color: m.value === "Not measured" ? GRAPHITE : undefined }}>
+              {m.value}{m.unit && <span style={{ fontSize: 12 }}>{m.unit}</span>}
             </div>
             <div className="shotiq-microcaps mt-[6px] leading-[6px]"
-                 style={{ fontSize: 7, color: verdict === "EXCELLENT" ? GREEN : BLUE }}>{verdict}</div>
+                 style={{ fontSize: 7,
+                          color: m.verdict === "EXCELLENT" || m.verdict === "GOOD"
+                            ? (m.verdict === "EXCELLENT" ? GREEN : BLUE)
+                            : m.verdict === "REVIEW" ? ORANGE : GRAPHITE }}>{m.verdict}</div>
           </div>
-        ))}
+          )
+        })}
       </Panel>
 
       {/* elite match ----------------------------------------------------- */}
