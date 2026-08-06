@@ -31,7 +31,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"
 import UploadedPoseOverlay from "@/components/upload/UploadedPoseOverlay"
 
 interface Analysis {
@@ -132,6 +132,13 @@ export default function AnalysisResultPage() {
   ]
   const measured = mechanics.filter(([, v]) => v != null).length
   const activePhase = (analysis?.shootingPhase || "").toUpperCase().replace(/_/g, "-")
+  // The phase stills belonging to THIS analysis, matched through the client
+  // session id the upload saved them under.
+  const phaseFrames = usePhaseFrames(analysis?.clientSessionId)
+  // Uploads made before the pipeline stored a frame server-side left this panel
+  // an empty black box. The release still cut from the same clip is the same
+  // moment of the same shot, so it stands in when the record has no frame.
+  const shotFrame = media || phaseFrames["RELEASE"] || null
 
   if (state !== "ready" || !analysis) {
     return (
@@ -216,10 +223,12 @@ export default function AnalysisResultPage() {
       <div className="mt-[16px] grid gap-[16px] xl:grid-cols-[minmax(0,1fr)_300px_390px]">
         <Card className="overflow-hidden p-0">
           <div className="bg-[#1B1D20]">
-            {media ? (
+            {shotFrame ? (
               /* The same overlay the upload screen uses: MoveNet over the
-                 stored frame, so the wireframe belongs to THIS shot. */
-              <UploadedPoseOverlay src={media} alt="Analysed shot" className="w-full" />
+                 stored frame, so the wireframe belongs to THIS shot. When the
+                 server kept no frame, the release still this device cut from
+                 the clip stands in — it is the same moment, from this shot. */
+              <UploadedPoseOverlay src={shotFrame} alt="Analysed shot" className="w-full" />
             ) : (
               <div className="flex h-[330px] items-center justify-center px-6 text-center text-[13px] text-white/60">
                 No frame was stored for this analysis. Shots saved before the
@@ -233,7 +242,9 @@ export default function AnalysisResultPage() {
               const on = activePhase === p
               return (
                 <div key={p} className="flex min-w-0 flex-1 flex-col items-center gap-[6px]">
-                  <PhaseGlyph size={22} />
+                  {/* This analysis's own frame for the phase when the clip was
+                      analysed on this device; the canonical figure otherwise. */}
+                  <PhaseFrame phase={p} frames={phaseFrames} active={on} height={26} />
                   <span className={`text-[10px] tracking-[0.06em] ${on ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                     {p}
                   </span>

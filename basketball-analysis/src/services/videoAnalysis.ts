@@ -6,8 +6,10 @@
  * - Extracts frames from an uploaded video ENTIRELY IN THE BROWSER (HTMLVideo +
  *   canvas seeking) and runs the on-device MoveNet provider (services/pose) on
  *   each sampled frame. No server round-trip.
- * - Detects shot phases (Setup / Release / Follow-through) from the per-frame
- *   keypoints and produces the same result shape the results page already uses.
+ * - Detects all five shot phases (Setup / Load / Rise / Release / Follow-through)
+ *   from the per-frame keypoints and produces the same result shape the results
+ *   page already uses. It located only three of them until the phase strips'
+ *   LOAD and RISE cards were traced back to having no source of frames at all.
  * - All scoring comes from lib/scoring/biomechanicalScoring.ts via the provider.
  *
  * HISTORY:
@@ -62,7 +64,7 @@ const MAX_ANALYSIS_FRAMES = 90
 const CAPTURE_MAX_WIDTH = 720
 
 export interface KeyScreenshot {
-  label: string  // SETUP, RELEASE, FOLLOW_THROUGH
+  label: string  // SETUP, LOAD, RISE, RELEASE, FOLLOW_THROUGH
   frame_index: number
   phase: string
   /** Legacy uppercase phase label retained for old result cards. */
@@ -174,7 +176,7 @@ function seekTo(video: HTMLVideoElement, time: number): Promise<void> {
   })
 }
 
-interface SampledFrame {
+export interface SampledFrame {
   index: number
   timestamp: number
   keypoints: ProviderKeypoint[] | null
@@ -284,6 +286,86 @@ export function buildVideoFrameRecord(
 }
 
 /**
+ * y of the higher of the two confident wrists in a frame (smaller y = higher up
+ * the image), or null when neither wrist cleared the confidence floor.
+ *
+ * Factored out of findReleaseFrame so LOAD and RISE read wrist height the same
+ * way RELEASE always has — one definition of "where the hands are", not three.
+ */
+function wristHeight(frame: SampledFrame | undefined): number | null {
+  if (!frame?.keypoints) return null
+  const rw = frame.keypoints.find((k) => k.name === 'right_wrist' && k.score > 0.3)
+  const lw = frame.keypoints.find((k) => k.name === 'left_wrist' && k.score > 0.3)
+  const wrist = rw && lw ? (rw.y < lw.y ? rw : lw) : rw || lw
+  return wrist ? wrist.y : null
+}
+
+/**
+ * LOAD — the dip. Between setup and release the shooter sinks into the legs, so
+ * the load frame is the one with the *deepest knee bend*: the smallest knee
+ * angle in that window.
+ *
+ * Uses the confidence-gated knee angle first and only falls back to the raw
+ * derivation when the gate never trusted a knee in the whole window — a phase
+ * cue is a weaker claim than a printed measurement, so a raw angle is
+ * acceptable here where it would not be on a scorecard. If knees were never
+ * derived at all, falls back to the first third of the window by time, which is
+ * where the dip sits in a normal jump shot.
+ */
+export function findLoadFrame(frames: SampledFrame[], setupIdx: number, releaseIdx: number): number {
+  const window = frames.filter((f) => f.index > setupIdx && f.index < releaseIdx && f.form)
+  if (window.length === 0) return setupIdx
+
+  for (const useRaw of [false, true]) {
+    let best = -1
+    let minKnee = Infinity
+    for (const f of window) {
+      const knee = useRaw ? f.form!.angles.knee : trustedAnglesFromForm(f.form!).knee
+      if (knee != null && knee < minKnee) {
+        minKnee = knee
+        best = f.index
+      }
+    }
+    if (best >= 0) return best
+  }
+
+  return window[Math.floor((window.length - 1) / 3)].index
+}
+
+/**
+ * RISE — the lift. Between the dip and the release the ball travels up, so the
+ * rise frame is the one where the wrists sit *halfway* between where they were
+ * at load and where they end up at release.
+ *
+ * Falls back to the temporal midpoint of the window when wrist tracking is too
+ * sparse to interpolate.
+ */
+export function findRiseFrame(frames: SampledFrame[], loadIdx: number, releaseIdx: number): number {
+  const window = frames.filter((f) => f.index > loadIdx && f.index < releaseIdx && f.keypoints)
+  if (window.length === 0) return loadIdx
+
+  const yLoad = wristHeight(frames[loadIdx])
+  const yRelease = wristHeight(frames[releaseIdx])
+  if (yLoad != null && yRelease != null) {
+    const midpoint = (yLoad + yRelease) / 2
+    let best = -1
+    let bestGap = Infinity
+    for (const f of window) {
+      const y = wristHeight(f)
+      if (y == null) continue
+      const gap = Math.abs(y - midpoint)
+      if (gap < bestGap) {
+        bestGap = gap
+        best = f.index
+      }
+    }
+    if (best >= 0) return best
+  }
+
+  return window[Math.floor(window.length / 2)].index
+}
+
+/**
  * Pick the release frame: the detected frame where the shooting wrist is highest
  * relative to the shoulders (peak of the shot). Falls back to the frame with the
  * greatest elbow extension if wrists are unreliable.
@@ -292,12 +374,9 @@ function findReleaseFrame(frames: SampledFrame[]): number {
   let best = -1
   let bestWristLift = Infinity // lower y = higher up
   for (const f of frames) {
-    if (!f.keypoints) continue
-    const rw = f.keypoints.find((k) => k.name === 'right_wrist' && k.score > 0.3)
-    const lw = f.keypoints.find((k) => k.name === 'left_wrist' && k.score > 0.3)
-    const wrist = rw && lw ? (rw.y < lw.y ? rw : lw) : rw || lw
-    if (wrist && wrist.y < bestWristLift) {
-      bestWristLift = wrist.y
+    const y = wristHeight(f)
+    if (y != null && y < bestWristLift) {
+      bestWristLift = y
       best = f.index
     }
   }
@@ -432,10 +511,19 @@ export async function analyzeVideoShooting(
     const lastDetected = detected[detected.length - 1].index
     const setupIdx = firstDetected
     const followIdx = Math.max(releaseIdx, lastDetected)
+    // The shot has five phases on every screen in this app — SETUP, LOAD, RISE,
+    // RELEASE, FOLLOW-THROUGH — but this pipeline only ever located three of
+    // them, so two of the five cards could never be filled from a real upload.
+    // LOAD and RISE are found from signals already computed per frame (knee
+    // flexion and wrist ascent); nothing extra is inferred and no existing
+    // phase changed.
+    const loadIdx = findLoadFrame(frames, setupIdx, releaseIdx)
+    const riseIdx = findRiseFrame(frames, loadIdx, releaseIdx)
 
     const phaseForIndex = (i: number): string => {
       if (i <= setupIdx) return 'SETUP'
-      if (i < releaseIdx) return 'LOADING'
+      if (i < riseIdx) return 'LOAD'
+      if (i < releaseIdx) return 'RISE'
       if (i === releaseIdx) return 'RELEASE'
       return 'FOLLOW_THROUGH'
     }
@@ -508,8 +596,13 @@ export async function analyzeVideoShooting(
       }
     }
 
+    // Ordered as the shot happens, which is the order the five phase cards read
+    // in. Consumers that look screenshots up by label (convertVideoToSessionFormat
+    // finds 'RELEASE') are unaffected by the two new entries.
     const key_screenshots: KeyScreenshot[] = [
       buildScreenshot('SETUP', setupIdx),
+      buildScreenshot('LOAD', loadIdx),
+      buildScreenshot('RISE', riseIdx),
       buildScreenshot('RELEASE', releaseIdx),
       buildScreenshot('FOLLOW_THROUGH', followIdx),
     ]
@@ -523,6 +616,8 @@ export async function analyzeVideoShooting(
     })
     const phases = [
       phaseRecord('SETUP', setupIdx),
+      phaseRecord('LOAD', loadIdx),
+      phaseRecord('RISE', riseIdx),
       phaseRecord('RELEASE', releaseIdx),
       phaseRecord('FOLLOW_THROUGH', followIdx),
     ]
@@ -562,7 +657,11 @@ export async function analyzeVideoShooting(
       frame_data,
       all_keypoints,
       key_screenshots,
-      shot_range: { start: setupIdx, end: followIdx, phases: ['SETUP', 'RELEASE', 'FOLLOW_THROUGH'] },
+      shot_range: {
+        start: setupIdx,
+        end: followIdx,
+        phases: ['SETUP', 'LOAD', 'RISE', 'RELEASE', 'FOLLOW_THROUGH'],
+      },
       canonicalObservation: releaseForm.canonicalObservation,
       shot_result: latestShotResult,
     }

@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
+import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
@@ -62,6 +63,9 @@ export default function ResultsOverviewPage() {
   // The real transport: one clock behind the play button, the scrub head, the
   // readout, the filmstrip selection and the phase strip.
   const clip = useShotClip({ frames: 8 })
+  // Stills the video pipeline cut for each of the five phases, if this device
+  // has analysed a clip. Empty until then, and the strip keeps its figures.
+  const phaseFrames = usePhaseFrames(null, { fallbackToLatest: true })
   const stageRef = React.useRef<HTMLDivElement>(null)
   const full = useFullscreen(stageRef)
 
@@ -234,7 +238,9 @@ export default function ResultsOverviewPage() {
                     </div>
                   )}
                   <div className="shrink-0 text-center" style={{ width: i === 4 ? 108 : 78 }}>
-                    <PoseFigure phase={p.label} active={active} height={41} className="mx-auto" />
+                    {/* The player's own frame for this phase once a video has
+                        been analysed; the canonical figure until then. */}
+                    <PhaseFrame phase={p.label} frames={phaseFrames} active={active} height={41} className="mx-auto" />
                     {/* Canonical sets the label in the condensed display face at
                         an 11px cap and the time range in the body face, grey —
                         not the condensed numeric face at an 8px cap. */}
