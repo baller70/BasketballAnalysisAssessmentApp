@@ -41,11 +41,17 @@ import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { createPortal } from "react-dom"
 import { PhoneHeading, MiniTrend } from "@/components/shotiq/PhoneShell"
 import { PhaseTrack, MechanicGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { gradeMechanics, type ShotAngles } from "@/lib/analysis/mechanicGrades"
 
 const ORANGE = "var(--shotiq-color-shotiqOrange)"
+const GRAPHITE = "var(--shotiq-color-graphite)"
 const BLUE = "var(--shotiq-color-analysisBlue)"
 const GREEN = "var(--shotiq-color-confirmGreen)"
 
+/* Canonical's four, which stand as the EMPTY STATE for a visitor with no
+   analysis. With a real shot they are graded — see lib/analysis/mechanicGrades.
+   This is the one card a player SENDS TO OTHER PEOPLE, so a constant here has
+   an audience. */
 const HIGHLIGHTS: [string, string][] = [
   ["ELBOW STACK", "GOOD"],
   ["RELEASE ANGLE", "GOOD"],
@@ -79,6 +85,20 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
   onShare?: () => void; onSave?: () => void; onCopy?: () => void; onMore?: () => void
 }) {
   const session = useLatestSession()
+
+  /* The four grades, from this shot's own angles. Canonical's four stand only
+     when there is no analysis to grade — that is the empty state, not a pass. */
+  const [angles, setAngles] = React.useState<ShotAngles | null>(null)
+  React.useEffect(() => {
+    let dead = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.analysis?.angles) setAngles(d.analysis.angles) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+  const graded = gradeMechanics(angles)
+  const rows = graded ?? HIGHLIGHTS.map(([label, value]) => ({ label, value, state: "good" as const }))
 
   const chrome = usePlayerChrome()
 
@@ -174,14 +194,15 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
               MECHANICS HIGHLIGHTS
             </div>
             <div className="divide-y divide-[var(--shotiq-color-rule)]">
-              {HIGHLIGHTS.map(([label, verdict], i) => (
+              {rows.map(({ label, value: verdict, state }, i) => (
                 <div key={label} className="flex items-center gap-[8px] py-[6px]">
                   <span className="flex w-[36px] shrink-0 justify-center">
                     <MechanicGlyph kind={(["angle", "arc", "wrist", "balance"] as const)[i]} size={30} />
                   </span>
                   <span className="min-w-0">
                     <span className="shotiq-microcaps block text-[9.6px] leading-[11px]">{label}</span>
-                    <span className="shotiq-display mt-[3px] block text-[13px] leading-[14px]" style={{ color: BLUE }}>{verdict}</span>
+                    <span className="shotiq-display mt-[3px] block text-[13px] leading-[14px]"
+                          style={{ color: state === "good" ? BLUE : state === "review" ? ORANGE : GRAPHITE }}>{verdict}</span>
                   </span>
                 </div>
               ))}

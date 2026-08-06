@@ -2333,6 +2333,41 @@ which is the defect stated as a test.
 so the panel was verified only in its honest pending state — all rows CHECKING,
 hoop NOT CHECKED. The measurements themselves need a real device.
 
+### DONE: the share card grades the shot it is sharing
+
+Third of Kevin's feature list, and the worst place in the product to carry a
+constant. `ShareResults`' MECHANICS HIGHLIGHTS were four literals — ELBOW STACK
+GOOD, RELEASE ANGLE GOOD, WRIST SNAP GOOD, FOLLOW-THROUGH GOOD — on the one
+card in this app a player SENDS TO OTHER PEOPLE. Every other constant had an
+audience of one; this one went out to whoever the player showed it to.
+
+Two of the four grade from angles the analysis already measures, against the
+same ideal bands the metric surfaces print: elbow 85°-95°, release 45°-55°,
+wrist 15°-30°. An angle the shot did not carry reads NOT MEASURED, never GOOD.
+
+**FOLLOW-THROUGH is never graded.** It is a PHASE, and what would grade it —
+how the wrist and arm hold after release — is the wrist angle the row above
+already carries. Grading both from one number would assert two independent
+readings from a single measurement, which is F22 exactly, so the row says what
+it is instead of borrowing.
+
+**AND THE APP DISAGREES WITH ITSELF ABOUT THE ELBOW.** `angles.elbow` is graded
+85°-95° by the biomechanics KEY MEASUREMENTS table and by `readMetric` on the
+phone overview, and **160°-180°** by the MECHANICS panel on `/results/demo`.
+Those are two different quantities wearing one field name — flexion at the set
+point versus extension at release — and only one can be what the pipeline
+writes. This grades against 85°-95°, matching the two surfaces most recently
+verified against real seeded angles, and the conflict is recorded rather than
+papered over. **It must be settled before either band is trusted further: one
+of those two screens is currently mis-grading every shot.**
+
+Verified at 393pt with one shot carrying three distinct outcomes — elbow 66
+(REVIEW), release 50 (GOOD), wrist null (NOT MEASURED) — so the card read
+`REVIEW · GOOD · NOT MEASURED · NOT MEASURED`. Signed out, canonical's four
+GOODs render exactly as they shipped. Eight tests cover the bands, the edges,
+the missing angles and the defect stated directly: a shot that measured nothing
+returns no GOOD at all.
+
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
