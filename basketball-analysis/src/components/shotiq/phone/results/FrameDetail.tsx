@@ -27,6 +27,7 @@ import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, Micro, ScoreBar,
   PhaseRail, Chev, PrimaryBar, Frame, SkeletonOverlay, PHASE_STILLS, ORANGE, BLUE, GRAPHITE, RULE, INK,
 } from "./Kit"
+import { useLatestShots } from "@/components/shotiq/phone/useLatestShots"
 
 const TOGGLES: [string, "skeletonDots" | "nodeGraph" | "analyze" | "nodeClimb", boolean][] = [
   ["Skeleton", "nodeGraph", true],
@@ -37,7 +38,7 @@ const TOGGLES: [string, "skeletonDots" | "nodeGraph" | "analyze" | "nodeClimb", 
 
 export function FrameDetail({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
-  frame = 42, shot = 12, ofShots = 24,
+  frame: frameProp, shot: shotProp, ofShots: ofShotsProp,
   name, streak, points,
   onAnnotate, onMetric,
 }: {
@@ -46,6 +47,56 @@ export function FrameDetail({
   name?: string; streak?: string; points?: string
   onAnnotate?: () => void; onMetric?: () => void
 }) {
+  /* THE FRAME VIEWER DESCRIBED A FRAME NOBODY CAPTURED. "SHOT 12 OF 24",
+     "FRAME 42", the 168° over the elbow and the CONFIDENCE / KEYPOINTS /
+     TRACKING panel were all constants, so this screen reported the same shot,
+     the same frame and the same 98% for every player.
+
+     THREE OF THOSE ARE ANSWERABLE and three are not:
+       - the shot's position and the capture's total, and the frame the
+         detector opened it on, come from the shot events already served;
+       - the angle over the arm is the release angle this analysis measured;
+       - CONFIDENCE is the detector's own, recorded per shot.
+       - 120 FPS is stored NOWHERE — no column, no upload field.
+       - KEYPOINTS and TRACKING live on `capture_session_observations`
+         (poseConfidence, keypoints, stable), which has no read endpoint and is
+         only written by the live-capture readiness flow, never by an upload.
+         Serving them is a new route, not a wiring fix — see the ledger. */
+  const shotData = useLatestShots()
+  const [analysis, setAnalysis] = React.useState<{ angles?: Record<string, number | null> } | null>(null)
+  React.useEffect(() => {
+    let dead = false
+    fetch("/api/analysis/latest", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success && d.analysis) setAnalysis(d.analysis) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [])
+
+  const pick = shotData.latest
+  const shot = shotProp ?? (pick ? pick.number : 12)
+  const ofShots = ofShotsProp ?? (shotData.total || 24)
+  /* Three states, not two (F16): the detector's frame; an em-dash when a real
+     shot carries none, because a shot whose frame nobody recorded did not
+     happen on canonical's frame 42; and canonical only with no session. */
+  const frameLive = frameProp == null && pick?.frame != null
+  const frameLabel = frameProp != null ? String(frameProp)
+    : pick?.frame != null ? String(pick.frame)
+    : shotData.live ? "—" : "42"
+  const frame = frameProp ?? pick?.frame ?? 42
+  const releaseAngle = analysis?.angles?.release
+  const angleLabel = shotData.live || analysis
+    ? (releaseAngle != null ? `${Math.round(releaseAngle)}°` : "—")
+    : "168°"
+  const confidenceLabel = shotData.live
+    ? (pick?.confidence != null ? `${Math.round(pick.confidence * 100)}%` : "—")
+    : "98%"
+  const unmeasured = shotData.live || analysis
+  const readouts: [string, string, string, boolean][] = [
+    ["CONFIDENCE", confidenceLabel, BLUE, true],
+    ["KEYPOINTS", unmeasured ? "—" : "17/17", "#3ED07E", false],
+    ["TRACKING", unmeasured ? "—" : "EXCELLENT", "#3ED07E", false],
+  ]
   return (
     <ResultsScreen
       testid="screen-ios-frame-detail-skeleton"
@@ -76,18 +127,18 @@ export function FrameDetail({
         <SkeletonOverlay />
         <span className="absolute left-[10px] top-[9px] flex items-center gap-[7px] rounded-[6px] px-[10px] py-[5px] text-[12.5px] text-white"
               style={{ background: "rgba(28,28,28,.82)" }}>
-          RELEASE • FRAME {frame}
+          RELEASE • FRAME {frameLabel}
           <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="#fff" strokeWidth="1.4" /></svg>
         </span>
         <span className="absolute right-[10px] top-[9px] rounded-[6px] px-[9px] py-[5px] text-[12px] text-white"
-              style={{ background: "rgba(28,28,28,.82)" }}>120 FPS</span>
-        <span className="absolute left-[46%] top-[27%] shotiq-numeric text-[13px] text-white">168°</span>
+              style={{ background: "rgba(28,28,28,.82)" }}>{unmeasured ? "—" : "120 FPS"}</span>
+        <span className="absolute left-[46%] top-[27%] shotiq-numeric text-[13px] text-white">{angleLabel}</span>
         <span aria-hidden="true" className="absolute left-[40%] top-[24%] h-[36px] w-[26px] rounded-br-full"
               style={{ background: ORANGE, opacity: 0.92 }} />
         {/* tracking read-out */}
         <span className="absolute bottom-[74px] right-[10px] w-[128px] rounded-[6px] px-[11px] py-[8px]"
               style={{ background: "rgba(38,38,38,.86)" }}>
-          {([["CONFIDENCE", "98%", BLUE, true], ["KEYPOINTS", "17/17", "#3ED07E", false], ["TRACKING", "EXCELLENT", "#3ED07E", false]] as [string, string, string, boolean][]).map(([l, v, c, bar], i) => (
+          {readouts.map(([l, v, c, bar], i) => (
             <span key={l} className={`block ${i ? "mt-[7px] border-t pt-[7px]" : ""}`} style={{ borderColor: "rgba(255,255,255,.22)" }}>
               <span className="shotiq-microcaps block leading-[10px] text-white/70" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</span>
               <span className="mt-[2px] flex items-center gap-[6px]">
@@ -135,7 +186,7 @@ export function FrameDetail({
           <span className="flex items-center gap-[3px] whitespace-nowrap text-[12.5px] leading-[14px]">
             <span className="rotate-180"><Chev size={11} color={INK} /></span>Previous
           </span>
-          <span className="whitespace-nowrap text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>Frame {frame - 1}</span>
+          <span className="whitespace-nowrap text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>{frameLive ? `Frame ${frame - 1}` : shotData.live ? "Previous shot" : `Frame ${frame - 1}`}</span>
         </Panel>
         <div className="flex min-w-0 flex-1 gap-[3px]">
           {PHASE_STILLS.map((s, i) => (
@@ -147,7 +198,7 @@ export function FrameDetail({
         </div>
         <Panel className="flex h-[44px] w-[68px] shrink-0 flex-col items-center justify-center">
           <span className="flex items-center gap-[3px] whitespace-nowrap text-[12.5px] leading-[14px]">Next<Chev size={11} color={INK} /></span>
-          <span className="whitespace-nowrap text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>Frame {frame + 1}</span>
+          <span className="whitespace-nowrap text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>{frameLive ? `Frame ${frame + 1}` : shotData.live ? "Next shot" : `Frame ${frame + 1}`}</span>
         </Panel>
       </div>
       <ScrubRuler className="mx-[41px] mt-[4px]" />

@@ -34,10 +34,16 @@ export interface SessionShot {
   clock: string | null
   /** `Make` / `Miss`, or null when no one has said which. */
   result: "make" | "miss" | null
+  /** The frame the detector opened this shot on, when it recorded one. */
+  frame: number | null
+  /** The detector's own confidence, 0-1, when it recorded one. */
+  confidence: number | null
 }
 
 export interface LatestShots {
   shots: SessionShot[]
+  /** How many shots the capture holds, for a "SHOT n OF m" header. */
+  total: number
   /** The newest shot of the newest session — what the screen opens on. */
   latest: SessionShot | null
   /** The analysis's shot type, which every shot in one capture shares. */
@@ -46,7 +52,7 @@ export interface LatestShots {
   live: boolean
 }
 
-const EMPTY: LatestShots = { shots: [], latest: null, style: null, live: false }
+const EMPTY: LatestShots = { shots: [], total: 0, latest: null, style: null, live: false }
 
 export function useLatestShots(): LatestShots {
   const { items } = useHistory()
@@ -64,6 +70,7 @@ export function useLatestShots(): LatestShots {
         if (dead || !d?.success) return
         const rows = (d.shotEvents ?? []) as Array<{
           sequence?: number | null; timestampMs?: number | null
+          startFrame?: number | null; confidence?: number | null
           detected?: boolean | null; detectedResult?: string | null
           corrections?: { kind: string; value: unknown }[] | null
         }>
@@ -79,6 +86,8 @@ export function useLatestShots(): LatestShots {
             number: kept.length + 1,
             clock: formatWorkoutClock(row.timestampMs),
             result,
+            frame: row.startFrame ?? null,
+            confidence: typeof row.confidence === "number" ? row.confidence : null,
           })
         }
         setShots(kept)
@@ -90,6 +99,7 @@ export function useLatestShots(): LatestShots {
   if (!shots.length) return { ...EMPTY, style: session?.style ?? null }
   return {
     shots,
+    total: shots.length,
     latest: shots[shots.length - 1],
     style: session?.style ?? null,
     live: true,

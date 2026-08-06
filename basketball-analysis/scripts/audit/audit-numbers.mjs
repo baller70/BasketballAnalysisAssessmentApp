@@ -41,8 +41,19 @@ if (!ROUTES.length) {
   process.exit(1)
 }
 
-/** Percentages, clock times, dates, degrees — the shapes real data takes here. */
-const DATA = /\b(\d{1,3}\.\d%|\d{1,3}%|\d{1,2}:\d{2}|[A-Z][a-z]{2} \d{1,2}, 20\d\d|\d{2,4}°)\b/g
+/**
+ * Percentages, clock times, dates, degrees — the shapes real data takes here.
+ *
+ * F25: THIS PATTERN USED TO END IN `\b` AND THAT MADE IT BLIND TO ITS OWN TWO
+ * MOST COMMON CASES. `%` and `°` are non-word characters, so a trailing word
+ * boundary can only match if a WORD character follows them — and in rendered
+ * text a percentage or an angle is almost always at the end of its line. For
+ * the whole life of this detector it matched clock times and dates and nothing
+ * else, which is why every degree and percentage constant in the feature log
+ * was found by eye or by reading source instead. The alternation now anchors
+ * only where an anchor helps.
+ */
+const DATA = /(\d{1,3}\.\d%|\d{1,3}%|\b\d{1,2}:\d{2}\b|[A-Z][a-z]{2} \d{1,2}, 20\d\d|\d{2,4}°|\b\d+'\d+")/g
 
 const browser = await chromium.launch()
 

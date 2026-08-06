@@ -2137,6 +2137,52 @@ from 22+ feet" (a badge challenge's copy), "Right-handed · Guard" on
 "Review and track your shooting performance". Roughly half of every categorical
 run is chrome collision.
 
+### DONE: the frame viewer described a frame nobody captured — and the detector that should have caught it was broken
+
+**F25 — the numeric detector had never matched a percentage or a degree.**
+Its pattern ended in `\b`, and `%` and `°` are non-word characters: a trailing
+word boundary only matches when a WORD character follows, and in rendered text
+a percentage or an angle is almost always at the end of its line. For its whole
+life it matched clock times and dates and NOTHING ELSE. Every degree and
+percentage constant in this log — 92°, 93%, 88%, 8'10" — was found by eye or by
+reading source, and the sweeps that reported those screens "clean" were telling
+the truth about a test that could not fail. Fixed and re-run, it immediately
+named two screens the categorical detector had not.
+
+The first of those: `/results/demo/biomechanics` at 393pt. Its frame viewer
+reported `SHOT 12 OF 24`, `RELEASE • FRAME 42`, `120 FPS`, `168°` over the arm,
+and a CONFIDENCE / KEYPOINTS / TRACKING panel reading 98% / 17/17 / EXCELLENT —
+the same shot, the same frame and the same confidence for every player.
+
+**Three are answerable and three are not:**
+
+- the shot's position, the capture's total and the frame the detector opened
+  the shot on come from the shot events already served;
+- the angle over the arm is the release angle this analysis measured;
+- CONFIDENCE is the detector's own, recorded per shot.
+- **120 FPS is stored nowhere** — no column, no upload field.
+- **KEYPOINTS and TRACKING live on `capture_session_observations`**
+  (`poseConfidence`, `keypoints`, `stable`), which has NO read endpoint and is
+  written only by the live-capture readiness flow, never by an upload. Serving
+  them is a new route, not a wiring fix.
+
+Three states on the frame number, per F16: the detector's frame; an em-dash
+when a real shot carries none, because a shot whose frame nobody recorded did
+not happen on canonical's frame 42; canonical only with no session at all. The
+neighbour captions follow it — they read "Previous shot" / "Next shot" rather
+than naming frames that were never recorded.
+
+Verified at 393pt with a 37-shot capture scoring 41: `SHOT 37 OF 37`, `33°`,
+`CONFIDENCE 95%`, and em-dashes for the frame, the FPS, the keypoints and the
+tracking. Signed out, and signed in after the probe was deleted, the canonical
+readout renders exactly as it shipped.
+
+**NEXT, named by the repaired detector:** `/results/demo/player` at 393pt
+reports `6'3"`, `6'6"`, `8'2"`, `8'0"` and `8.1%` in both states — the player
+card's height/wingspan/reach block and a delta. Heights are on the profile
+(`heightInches`, `wingspanInches`); the reach figures may not be derived
+anywhere. Confirm each by hand before wiring.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -2243,6 +2289,11 @@ run is chrome collision.
   for finding most of the constants in this log, and were rebuilt from memory
   three times after container recycles. If a rule depends on a script, version
   the script.
+- **F25.** A detector that cannot fail is worse than no detector, because it
+  reports "clean". The numeric sweep's regex ended in `\b` after `%` and `°`,
+  so it never matched either — for its entire life it tested only clock times
+  and dates while appearing to test four token classes. Prove a detector FINDS
+  something known-bad before trusting a clean result from it.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it
