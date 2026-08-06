@@ -255,6 +255,13 @@ model UserAnalysis {
   shoulderAngle Decimal? @map("shoulder_angle") @db.Decimal(5, 2)
   hipAngle      Decimal? @map("hip_angle") @db.Decimal(5, 2)
   releaseAngle  Decimal? @map("release_angle") @db.Decimal(5, 2)
+  /// The DIP: the deepest knee bend anywhere in the clip, not the release
+  /// frame's. Every angle above is sampled at release, where the legs have
+  /// already extended, so none of them can answer "did this player load?".
+  /// `findLoadFrame` has always found this frame and `knee_angle_range.min`
+  /// has always held the value; it was simply never saved, which left
+  /// INSUFFICIENT_KNEE_BEND with nothing to read.
+  kneeAngleMin  Decimal? @map("knee_angle_min") @db.Decimal(5, 2)
 
   // The four KEY MEASUREMENTS the biomechanics screen displayed as constants
   // for the life of the app. Derived in lib/vision/derivedMetrics.ts from the

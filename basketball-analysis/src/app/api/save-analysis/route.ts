@@ -25,6 +25,8 @@ interface SaveAnalysisRequest {
   shoulderAngle?: number
   hipAngle?: number
   releaseAngle?: number
+  /** The dip: deepest knee bend in the clip, not the release frame's knee. */
+  kneeAngleMin?: number
   // The four derived KEY MEASUREMENTS (lib/vision/derivedMetrics.ts). Every one
   // is optional and stays NULL when the client could not measure it — a length
   // needs the player's profile height for scale, and jump needs a video.
@@ -130,6 +132,9 @@ function parseSaveAnalysisRequest(value: unknown): SaveAnalysisRequest {
     shoulderAngle: optionalNumber(body.shoulderAngle, "shoulderAngle", -360, 360),
     hipAngle: optionalNumber(body.hipAngle, "hipAngle", -360, 360),
     releaseAngle: optionalNumber(body.releaseAngle, "releaseAngle", -360, 360),
+    /* The dip. A knee joint cannot read outside 0-180 in a real pose, so a
+       value beyond that is a broken measurement rather than a deep squat. */
+    kneeAngleMin: optionalNumber(body.kneeAngleMin, "kneeAngleMin", 0, 180),
     // Ranges are generous but real: a release above 15ft or a 6ft vertical is a
     // broken measurement, not an athlete, and must be rejected at the door.
     releaseHeightInches: optionalNumber(body.releaseHeightInches, "releaseHeightInches", 0, 180),
@@ -258,6 +263,7 @@ export async function POST(request: NextRequest) {
         shoulderAngle: body.shoulderAngle,
         hipAngle: body.hipAngle,
         releaseAngle: body.releaseAngle,
+        kneeAngleMin: body.kneeAngleMin,
         releaseHeightInches: body.releaseHeightInches,
         releaseDistanceInches: body.releaseDistanceInches,
         verticalJumpInches: body.verticalJumpInches,

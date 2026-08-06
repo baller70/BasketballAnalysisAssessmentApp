@@ -45,6 +45,30 @@ describe("flaw detection on stored analysis angles", () => {
     expect(idsOf({ knee_angle_min: 142 })).toEqual([])
   })
 
+  it("judges the dip on a real shot without the release knee interfering", () => {
+    /* Both keys present, as a saved analysis now carries them. The release
+       knee is extended on EVERY shot, so it must not reach the dip rules —
+       the whole defect — and the dip must be judged on its own merit. */
+    const shot = (dip: number) => ({ ...TEXTBOOK_RELEASE, knee_angle_min: dip })
+
+    // A player who loaded properly is not faulted, however straight their
+    // legs are at release.
+    expect(idsOf(shot(138))).toEqual([])
+    expect(idsOf(shot(155))).toEqual([])
+
+    // A player who barely bent at all is — which the rule could never say
+    // before, because it was reading a release knee that is always >160.
+    expect(idsOf(shot(166))).toEqual(["INSUFFICIENT_KNEE_BEND"])
+    // And a collapse into a deep squat is caught at the other end.
+    expect(idsOf(shot(95))).toEqual(["EXCESSIVE_KNEE_BEND"])
+  })
+
+  it("says nothing about the dip on a shot analysed before it was recorded", () => {
+    // No backfill: older analyses genuinely have no dip, and inventing one
+    // would fault or clear a player on a measurement nobody took.
+    expect(idsOf(TEXTBOOK_RELEASE)).toEqual([])
+  })
+
   it("keeps reading the wrist, which IS measured at release", () => {
     // Forearm elevation below the good band means the arm never came up.
     expect(idsOf({ ...TEXTBOOK_RELEASE, wrist_angle: 30 })).toContain("NO_WRIST_SNAP")

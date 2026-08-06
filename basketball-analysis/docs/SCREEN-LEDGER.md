@@ -1463,6 +1463,51 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### INSUFFICIENT_KNEE_BEND detects insufficient knee bend now
+
+The rule abstained after the last change, because the only knee it could see
+was the release frame's - extended on every shot, so it could never answer
+"did this player load?". The measurement existed the whole time: `findLoadFrame`
+takes the minimum knee across the clip and `metrics.knee_angle_range.min`
+carries it. Nothing ever saved it.
+
+Wired end to end: a `knee_angle_min` column (migration, nullable, NO BACKFILL -
+a shot analysed before the column genuinely has no recorded dip, and a default
+would assert one), carried through `analysisSessionToSavePayload` off
+`videoData.metrics` the same way the four derived KEY MEASUREMENTS already are,
+validated 0-180 at the save route, selected by the flaws route and handed to
+the engine under its OWN key. Not merged into `knee_angle`: one key per
+quantity is exactly what stops a release knee being mistaken for a dip again.
+
+Verified through the real API with the release knee held at 172 in every case,
+so the dip alone decides:
+
+  dip 138  a proper load        -> no flaws
+  dip 166  barely bent          -> Insufficient Knee Bend, 100% of 3 shots
+  dip  95  collapsed into it    -> Excessive Knee Bend, 100% of 3 shots
+  dip null pre-migration shot   -> no flaws, nothing invented
+
+Both directions, per F28. In the browser the card reads "Insufficient Knee Bend
+/ HIGH IMPACT / Knees are too straight, not generating leg power / AFFECTS 100%
+OF 3 SHOTS / PRIORITY 8/10". Signed out is canonical. Probe account deleted,
+307 tests pass.
+
+The set-point elbow has no equivalent and is NOT done this way: there is no
+`findSetPointFrame`, and which frame counts as the set point is a design
+question rather than a wiring job. ELBOW_ANGLE_ACUTE and ELBOW_ANGLE_OBTUSE
+keep abstaining and keep accepting `elbow_angle_set_point` for whenever that
+question is answered.
+
+### On the wakeup that fired this work
+
+The trigger was the pixel-fidelity variant, and it named `$SCRATCH/
+SCREEN-LEDGER.md`, `$SCRATCH/BRIEF-002.md` and `$SCRATCH/verify-desktop` as the
+things to read, grade against and regress against. NONE of the three exist in
+this session's scratchpad. Its own instruction - "if any instruction conflicts
+with the ledger, the ledger wins" - resolves it: THIS file is the ledger, and
+it says the work is Kevin's feature program. No graders were dispatched against
+a ledger that is not there.
+
 ### The flaw engine told every player the same two things were wrong
 
 The Flaws screen runs `detectFlawsFromAngles` over the caller's own analyses.

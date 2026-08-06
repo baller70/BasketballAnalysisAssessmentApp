@@ -30,6 +30,7 @@ import { detectFlawsFromAngles, type ShootingFlaw } from "@/data/shootingFlawsDa
 function anglesOf(row: {
   elbowAngle: unknown; kneeAngle: unknown; wristAngle: unknown
   shoulderAngle: unknown; hipAngle: unknown; releaseAngle: unknown
+  kneeAngleMin: unknown
 }): Record<string, number> {
   const out: Record<string, number> = {}
   const put = (joint: string, v: unknown) => {
@@ -46,6 +47,13 @@ function anglesOf(row: {
   put("shoulder", row.shoulderAngle)
   put("hip", row.hipAngle)
   put("release", row.releaseAngle)
+  /* THE DIP, under its own key and not as `knee_angle`. The knee above is the
+     release frame's, where the legs have extended; the knee rules ask about
+     the deepest bend of the load. Handing the release knee to a rule that
+     means the dip is what made INSUFFICIENT_KNEE_BEND fire on every shot ever
+     taken. One key per quantity, so neither can be mistaken for the other. */
+  const dip = Number(row.kneeAngleMin)
+  if (row.kneeAngleMin != null && Number.isFinite(dip)) out.knee_angle_min = dip
   return out
 }
 
@@ -66,6 +74,7 @@ export async function GET(request: NextRequest) {
         id: true, createdAt: true, captureSessionId: true,
         elbowAngle: true, kneeAngle: true, wristAngle: true,
         shoulderAngle: true, hipAngle: true, releaseAngle: true,
+        kneeAngleMin: true,
       },
     })
 

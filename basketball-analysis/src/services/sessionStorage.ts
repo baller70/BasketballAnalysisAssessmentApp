@@ -194,6 +194,8 @@ export interface SaveAnalysisPayload {
   shoulderAngle?: number
   hipAngle?: number
   releaseAngle?: number
+  /** The dip — deepest knee bend in the clip, not the release frame's knee. */
+  kneeAngleMin?: number
   releaseHeightInches?: number
   releaseDistanceInches?: number
   verticalJumpInches?: number
@@ -254,6 +256,13 @@ export function analysisSessionToSavePayload(session: AnalysisSession): SaveAnal
     shoulderAngle: firstFinite(angles, ['right_shoulder_angle', 'left_shoulder_angle', 'shoulder_angle', 'shoulderAngle']),
     hipAngle: firstFinite(angles, ['right_hip_angle', 'left_hip_angle', 'hip_angle', 'hipAngle']),
     releaseAngle: firstFinite(angles, ['release_angle', 'releaseAngle']),
+    /* THE DIP, and deliberately not read from `angles`. Every key in that
+       record comes from the release frame, where the legs have extended, so
+       `knee_angle` there cannot answer whether the player loaded at all — the
+       question INSUFFICIENT_KNEE_BEND exists to ask. The pipeline has always
+       computed the deepest bend (`findLoadFrame` takes the minimum knee) and
+       never saved it. Same route as the four derived measurements below. */
+    kneeAngleMin: session.videoData?.metrics?.knee_angle_range?.min ?? undefined,
     /* The four derived KEY MEASUREMENTS, carried from the video pipeline's
        `metrics.derived` (lib/vision/derivedMetrics). Each stays undefined when
        that shot could not measure it, so the server stores NULL and the

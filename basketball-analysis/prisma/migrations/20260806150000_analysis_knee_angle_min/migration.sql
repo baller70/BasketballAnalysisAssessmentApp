@@ -1,0 +1,11 @@
+-- The dip's knee angle: the deepest bend anywhere in the clip.
+--
+-- Every angle on user_analyses is sampled at the RELEASE frame, where the legs
+-- have extended, so none of them can answer whether the player loaded. The
+-- analysis pipeline has always computed this (findLoadFrame takes the minimum
+-- knee, knee_angle_range.min carries it) and has never persisted it, leaving
+-- the INSUFFICIENT_KNEE_BEND flaw rule with nothing to read.
+--
+-- Nullable with no backfill on purpose: shots analysed before this column
+-- existed genuinely have no recorded dip, and a default would assert one.
+ALTER TABLE "user_analyses" ADD COLUMN "knee_angle_min" DECIMAL(5,2);
