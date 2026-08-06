@@ -38,7 +38,7 @@ const TOGGLES: [string, "skeletonDots" | "nodeGraph" | "analyze" | "nodeClimb", 
 export function FrameDetail({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
   frame = 42, shot = 12, ofShots = 24,
-  name = "Jordan Ellis", streak = "6", points = "2,840",
+  name, streak, points,
   onAnnotate, onMetric,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string

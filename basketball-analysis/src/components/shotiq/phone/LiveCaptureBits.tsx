@@ -11,6 +11,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { PoseFigure, PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 
 export const ORANGE = "var(--shotiq-color-shotiqOrange)"
@@ -50,20 +51,26 @@ export function usePhoneViewport() {
  * `cap` is converted to a font size on the way in.
  */
 export function CaptureIdentity({
-  cap = 24, name = "Jordan Ellis", sub = "Right-handed • Advanced",
-  streak = "6", points = "2,840", className = "",
+  cap = 24, name, sub, streak, points, className = "",
 }: {
   cap?: number; name?: string; sub?: string; streak?: string; points?: string
   className?: string
 }) {
+  // Same resolution as PhoneNameRow: the player's own record, canonical
+  // persona as the empty state, an explicit prop always wins.
+  const live = usePlayerChrome()
+  const shown = {
+    name: name ?? live.name, sub: sub ?? live.sub,
+    streak: streak ?? live.streak, points: points ?? live.points,
+  }
   return (
     <div className={`flex items-start justify-between ${className}`}>
       <div className="min-w-0">
         <div className="shotiq-display" style={{ fontSize: cap / 0.705, lineHeight: `${cap * 1.04}px`, letterSpacing: "0.04em" }}>
-          {name.toUpperCase()}
+          {shown.name.toUpperCase()}
         </div>
         <div className="mt-[8px] whitespace-nowrap text-[11px] leading-[12px] tracking-[-0.02em]" style={{ color: GRAPHITE }}>
-          {sub}
+          {shown.sub}
         </div>
       </div>
       {/* Canonical centres both marks on one row (028: glyph ink y49.3-68.6,
@@ -71,13 +78,13 @@ export function CaptureIdentity({
       <div className="flex shrink-0 items-start">
         <div className="w-[62px] text-center">
           <span className="flex h-[20px] items-center justify-center"><StreakGlyph size={36} /></span>
-          <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{streak}</div>
+          <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{shown.streak}</div>
           <div className="shotiq-microcaps mt-[5px] whitespace-nowrap text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
         </div>
         <span aria-hidden="true" className="mx-[9px] mt-[1px] h-[52px] w-px" style={{ background: RULE }} />
         <div className="w-[54px] text-center">
           <span className="flex h-[20px] items-center justify-center"><PointsGlyph size={20} /></span>
-          <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{points}</div>
+          <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{shown.points}</div>
           <div className="shotiq-microcaps mt-[5px] text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>POINTS</div>
         </div>
       </div>

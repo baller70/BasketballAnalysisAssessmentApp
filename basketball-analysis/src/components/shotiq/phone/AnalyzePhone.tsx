@@ -47,6 +47,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { PhoneScreen, MiniTrend } from "@/components/shotiq/PhoneShell"
 import {
@@ -76,10 +77,10 @@ const RECENT: [string, string, string, string][] = [
 /* --------------------------------------------------------- 021 hub ------ */
 
 export function AnalyzeHubPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   shots = "24",
   makes = "15",
   pct = "62.5%",
@@ -91,24 +92,26 @@ export function AnalyzeHubPhone({
   shots?: string; makes?: string; pct?: string; delta?: string; target?: string
   onTile?: (kind: string) => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-analyze-hub" tab="capture" pad={0} headerH={38}>
       <div style={{ paddingLeft: 17, paddingRight: 17, paddingBottom: 70 }}>
         <div className="flex items-start justify-between pt-[14px]">
           <div className="min-w-0">
-            <div className="shotiq-display text-[34px] leading[32px] tracking-[0.035em]">{name.toUpperCase()}</div>
-            <div className="mt-[3px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{sub}</div>
+            <div className="shotiq-display text-[34px] leading[32px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
+            <div className="mt-[3px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
           </div>
           <div className="flex shrink-0 items-start">
             <div className="w-[80px] text-center">
               <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="uploadVideo" height={17} /></span>
-              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{streak}</div>
+              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{streak ?? chrome.streak}</div>
               <Micro className="mt-[4px]" size={8.6}>DAY STREAK</Micro>
             </div>
             <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px" style={{ background: RULE }} />
             <div className="w-[64px] text-center">
               <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="nodeGraph" height={19} /></span>
-              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{points}</div>
+              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{points ?? chrome.points}</div>
               <Micro className="mt-[4px]" size={8.6}>POINTS</Micro>
             </div>
           </div>
@@ -252,15 +255,15 @@ const DEFAULT_QUEUE: QueueItem[] = [
 ]
 
 export function UploadQueuePhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
+  name,
+  sub,
   target = "Keep elbow stacked through release",
   score = 82,
   shots = "24",
   makes = "15",
   pct = "62.5%",
-  streak = "6",
-  points = "2,840",
+  streak,
+  points,
   items = DEFAULT_QUEUE,
   onAdd,
   onAnalyze,
@@ -276,6 +279,8 @@ export function UploadQueuePhone({
   onRemoveCompleted?: () => void
   onBack?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const uploading = items.filter((i) => i.status === "Uploading").length
   const completed = items.filter((i) => i.status === "Completed").length
   return (
@@ -283,20 +288,20 @@ export function UploadQueuePhone({
       <div style={{ paddingLeft: 19.8, paddingRight: 19.8, paddingBottom: 70 }}>
         <div className="flex items-start justify-between pt-[13px]">
           <div className="min-w-0">
-            <div className="shotiq-display text-[32px] leading-[30px] tracking-[0.035em]">{name.toUpperCase()}</div>
-            <div className="mt-[3px] text-[12.4px] leading-[14.4px]" style={{ color: GRAPHITE }}>{sub}</div>
+            <div className="shotiq-display text-[32px] leading-[30px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
+            <div className="mt-[3px] text-[12.4px] leading-[14.4px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
             <div className="mt-[3px] text-[12.4px] leading-[14.4px]">{target}</div>
           </div>
           <div className="flex shrink-0 items-start">
             <div className="w-[80px] text-center">
               <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="uploadVideo" height={17} /></span>
-              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{streak}</div>
+              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{streak ?? chrome.streak}</div>
               <Micro className="mt-[4px]" size={8.6}>DAY STREAK</Micro>
             </div>
             <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px" style={{ background: RULE }} />
             <div className="w-[64px] text-center">
               <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="nodeGraph" height={19} /></span>
-              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{points}</div>
+              <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[16px]">{points ?? chrome.points}</div>
               <Micro className="mt-[4px]" size={8.6}>POINTS</Micro>
             </div>
           </div>

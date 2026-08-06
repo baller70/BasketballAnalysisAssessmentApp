@@ -88,7 +88,7 @@ const METRICS: [MechanicKind, string, string, string, string][] = [
 
 export function AnalysisOverview({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
-  name = "Jordan Ellis", streak = "6", points = "2,840",
+  name, streak, points,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string
   name?: string; streak?: string; points?: string

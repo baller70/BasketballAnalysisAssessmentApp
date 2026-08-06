@@ -47,6 +47,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { PhoneScreen, PhoneIdentity, MiniTrend } from "@/components/shotiq/PhoneShell"
 import {
@@ -77,10 +78,10 @@ const TRENDS: [string, "setup" | "load" | "rise" | "release" | "follow", string,
 /* ------------------------------------------------------------ 019 home -- */
 
 export function HomeProfessionalPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   score = 82,
   shots = "24",
   makes = "15",
@@ -343,10 +344,10 @@ function MenuMark({ kind }: { kind: string }) {
 }
 
 export function ProfileMenuPhone({
-  name = "Jordan Ellis",
-  sub = "Right-handed • Advanced",
-  streak = "6",
-  points = "2,840",
+  name,
+  sub,
+  streak,
+  points,
   score = 82,
   shots = "24",
   makes = "15",
@@ -366,6 +367,8 @@ export function ProfileMenuPhone({
   onSignOut?: () => void
   avatar?: string
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-profile-menu" tab="home" pad={0} header={false}>
       <div style={{ paddingLeft: 20.7, paddingRight: 20.7, paddingBottom: 70 }}>
@@ -384,8 +387,8 @@ export function ProfileMenuPhone({
         <div className="mt-[7px] flex items-center gap-[15px]">
           <Frame src={avatar} w={100} h={100} radius={50} pos="50% 30%" />
           <div className="min-w-0">
-            <div className="shotiq-display text-[36px] leading-[34px] tracking-[0.035em]">{name.toUpperCase()}</div>
-            <div className="mt-[4px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub}</div>
+            <div className="shotiq-display text-[36px] leading-[34px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
+            <div className="mt-[4px] text-[13.4px] leading-[15px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>
             <Link href="/profile"
                   className="mt-[8px] flex h-[37px] w-[128px] items-center justify-center gap-[9px] rounded-[5px] text-[14px]"
                   style={{ border: `1px solid ${ORANGE}`, color: ORANGE }}>
@@ -402,14 +405,14 @@ export function ProfileMenuPhone({
             <span className="flex h-[26px] items-center justify-center">
               <ActionGlyph kind="uploadVideo" height={17} />
             </span>
-            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{streak}</div>
+            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{streak ?? chrome.streak}</div>
             <Micro className="mt-[5px]" size={8.6}>DAY STREAK</Micro>
           </div>
           <div className="flex-1" style={{ borderLeft: `1px solid ${RULE}` }}>
             <span className="flex h-[26px] items-center justify-center">
               <ActionGlyph kind="nodeGraph" height={20} />
             </span>
-            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{points}</div>
+            <div className="shotiq-numeric mt-[6px] text-[22px] leading-[22px]">{points ?? chrome.points}</div>
             <Micro className="mt-[5px]" size={8.6}>POINTS</Micro>
           </div>
           <div className="flex-1" style={{ borderLeft: `1px solid ${RULE}` }}>

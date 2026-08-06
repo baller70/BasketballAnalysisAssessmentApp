@@ -36,6 +36,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { createPortal } from "react-dom"
 import { PhoneHeading, MiniTrend } from "@/components/shotiq/PhoneShell"
 import { PhaseTrack, MechanicGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
@@ -76,6 +77,8 @@ const ACTIONS: [string, React.ReactNode][] = [
 export function ShareResults({ onShare, onSave, onCopy, onMore }: {
   onShare?: () => void; onSave?: () => void; onCopy?: () => void; onMore?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const handlers = [onShare, onSave, onCopy, onMore]
   /* Mounted into <body>: this is a sheet over the player card, and the route it
      opens from sits inside ShotIQShell's `.shotiq-phone-flow` reflow scope,
@@ -112,7 +115,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
             <div className="flex items-center gap-[8px] pl-[13px]">
               <PointsGlyph size={20} />
               <div>
-                <div className="shotiq-numeric text-[17px] leading-[17px]">2,840</div>
+                <div className="shotiq-numeric text-[17px] leading-[17px]">{chrome.points}</div>
                 <div className="shotiq-microcaps mt-[3px] leading-[8px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "8px" } as React.CSSProperties}>POINTS</div>
               </div>
             </div>
@@ -121,7 +124,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
 
         <div className="mt-[10px] flex items-start border-t border-[var(--shotiq-color-rule)] pt-[12px]">
           <div className="min-w-0 flex-1">
-            <div className="shotiq-display text-[34.4px] leading-[35px]">JORDAN ELLIS</div>
+            <div className="shotiq-display text-[34.4px] leading-[35px]">{chrome.name.toUpperCase()}</div>
             <div className="mt-[6px] text-[11.4px] leading-[13px] tracking-[-0.04em] text-[var(--shotiq-color-graphite)]">
               Right-handed • Advanced
             </div>

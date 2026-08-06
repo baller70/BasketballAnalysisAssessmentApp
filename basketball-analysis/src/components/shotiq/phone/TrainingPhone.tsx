@@ -22,6 +22,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, Check, Minus, Plus, X } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
@@ -34,6 +35,8 @@ import {
 } from "@/components/shotiq/Glyphs"
 
 function Identity({ tabTint }: { tabTint?: boolean }) {
+  const chrome = usePlayerChrome()
+
   void tabTint
   return (
     <div className="flex items-start px-[18px] pt-[13px]">
@@ -45,12 +48,12 @@ function Identity({ tabTint }: { tabTint?: boolean }) {
             51, 055 cap 44 - median 51.5, against the 46 that 30px drew. The
             outliers stay outliers by design; chasing 055 would push the other
             three off. 30 * 51.5/46 = 33.6px. */}
-        <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
+        <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
         <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
       </div>
       <div className="ml-auto flex shrink-0 items-start">
-        <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-        <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+        <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+        <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
       </div>
     </div>
   )

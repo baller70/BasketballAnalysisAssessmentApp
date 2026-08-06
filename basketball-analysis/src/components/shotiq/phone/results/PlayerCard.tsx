@@ -25,6 +25,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { PoseGlyph, PoseFigure, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, ShareIcon, DownloadIcon, Panel, Micro, ScoreBar,
@@ -47,13 +48,15 @@ const PHASE_SCORES: [string, string, string][] = [
 
 export function PlayerCard({
   score = 82, shots = "24", makes = "15", pct = "62.5%", delta = "+8.1%",
-  name = "Jordan Ellis", streak = "6", points = "2,840",
+  name, streak, points,
   onCustomize, onShare,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string; delta?: string
   name?: string; streak?: string; points?: string
   onCustomize?: () => void; onShare?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <ResultsScreen
       testid="screen-ios-player-card"
@@ -68,7 +71,7 @@ export function PlayerCard({
         <Frame src="086-card-photo" w={114} h={147} radius={6} pos="50% 8%"
                alt={`${name} at the set point`} className="shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="shotiq-display text-[47px] leading-[42px] tracking-[0.015em]">{name.toUpperCase()}</div>
+          <div className="shotiq-display text-[47px] leading-[42px] tracking-[0.015em]">{(name ?? chrome.name).toUpperCase()}</div>
           <div className="mt-[4px] text-[13.5px] leading-[15px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
           <div className="mt-[11px] flex divide-x divide-[var(--shotiq-color-rule)]">
             {([[<StreakGlyph key="a" size={42} />, streak, "DAY STREAK"],

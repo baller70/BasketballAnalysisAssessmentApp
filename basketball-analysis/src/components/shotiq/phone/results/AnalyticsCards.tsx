@@ -47,7 +47,7 @@ const SESSIONS: Session[] = [
 
 export function AnalyticsCards({
   score = 82, shots = "24", makes = "15", pct = "62.5%", delta = "+8.1%",
-  name = "Jordan Ellis", streak = "6", points = "2,840", onDetailed,
+  name, streak, points, onDetailed,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string; delta?: string
   name?: string; streak?: string; points?: string; onDetailed?: () => void

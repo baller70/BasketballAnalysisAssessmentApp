@@ -46,6 +46,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { PhoneScreen, MiniTrend } from "@/components/shotiq/PhoneShell"
 import { StreakPoints, Chev, Frame, ScoreBar, Micro, capDisplay } from "@/components/shotiq/phone/results/Kit"
@@ -190,7 +191,7 @@ function Group({ rows }: { rows: SettingsRow[] }) {
 }
 
 export function SettingsHubPhone({
-  name = "Jordan Ellis",
+  name,
   hand = "Right-handed",
   level = "Advanced",
   score = 82,
@@ -198,8 +199,8 @@ export function SettingsHubPhone({
   makes = "15",
   pct = "62.5%",
   delta = "+8.1%",
-  streak = "6",
-  points = "2,840",
+  streak,
+  points,
   avatar = "/images/canonical/096-avatar.png",
   notificationsOn = 3,
   automationActive = 2,
@@ -217,6 +218,8 @@ export function SettingsHubPhone({
   onSave?: () => void
   onSignOut?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const groupA: SettingsRow[] = [
     { key: "notifications", label: "Notifications", desc: "Manage alerts, reminders, and updates.",
       badge: `${notificationsOn} ON`, badgeTone: "blue", onClick: onNotifications },
@@ -254,7 +257,7 @@ export function SettingsHubPhone({
                  className="block h-[64px] w-[64px] shrink-0 rounded-full object-cover"
                  style={{ objectPosition: "50% 32%" }} />
             <div className="min-w-0">
-              <div className="shotiq-display text-[27px] leading-[26px] tracking-[0.035em]">{name.toUpperCase()}</div>
+              <div className="shotiq-display text-[27px] leading-[26px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
               <div className="mt-[3px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>
                 {hand} • {level}
               </div>
@@ -377,11 +380,11 @@ function BenefitMark({ kind }: { kind: string }) {
 }
 
 export function NotificationPrimerPhone({
-  name = "Jordan Ellis",
+  name,
   hand = "Right-handed",
   level = "Advanced",
-  streak = "6",
-  points = "2,840",
+  streak,
+  points,
   score = 82,
   shots = "24",
   makes = "15",
@@ -394,13 +397,15 @@ export function NotificationPrimerPhone({
   score?: number; shots?: string; makes?: string; pct?: string; target?: string
   onEnable?: () => void; onDismiss?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-notification-primer" tab="home" pad={0} headerH={38}>
       <div style={{ paddingLeft: 19.4, paddingRight: 19.4, paddingBottom: 70 }}>
         {/* identity */}
         <div className="flex items-start justify-between pt-[13px]">
           <div className="min-w-0">
-            <div className="shotiq-display text-[32.7px] leading-[31px] tracking-[0.035em]">{name.toUpperCase()}</div>
+            <div className="shotiq-display text-[32.7px] leading-[31px] tracking-[0.035em]">{(name ?? chrome.name).toUpperCase()}</div>
             <div className="mt-[3px] text-[12.4px] leading-[14px]" style={{ color: GRAPHITE }}>
               {hand} • {level}
             </div>

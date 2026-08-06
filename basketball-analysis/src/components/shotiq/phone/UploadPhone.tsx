@@ -21,6 +21,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Check, AlertCircle, ChevronRight, RotateCcw, RotateCw, Crop, Camera } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
@@ -157,6 +158,8 @@ export function PhotoUploadSource({ onLibrary, onCamera, onCancel }: {
 export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
   src: string; onRetake: () => void; onCrop: () => void; onUse: () => void; onBack: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const [angle, setAngle] = React.useState(0)
   return (
     <PhoneScreen testid="screen-ios-photo-review-crop" tab="capture" pad={0} header={false}>
@@ -178,8 +181,8 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
           </p>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
-          <MiniStat glyph={<StreakGlyph size={36} />} value="6" label="DAY STREAK" w={58} />
-          <MiniStat glyph={<PointsGlyph size={20} />} value="2,840" label="POINTS" w={54} />
+          <MiniStat glyph={<StreakGlyph size={36} />} value={chrome.streak} label="DAY STREAK" w={58} />
+          <MiniStat glyph={<PointsGlyph size={20} />} value={chrome.points} label="POINTS" w={54} />
         </div>
       </div>
 
@@ -266,18 +269,20 @@ const CHECKS: [string, string, string, boolean][] = [
 export function UploadQualityCheck({ src, fileName = "IMG_4521.MOV", onContinue, onChoose }: {
   src: string; fileName?: string; onContinue: () => void; onChoose: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-upload-quality-check" tab="capture" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<GearLink />} />
 
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
           <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
-          <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-          <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+          <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+          <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
         </div>
       </div>
 

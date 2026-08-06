@@ -42,6 +42,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { useRouter } from "next/navigation"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
 import { ReadinessGlyph, ActionGlyph, PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
@@ -78,13 +79,15 @@ const RECORDS: [string, string, string][] = [
 ]
 
 function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => void }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-camera-permission-primer" pad={23} headerH={39} tabBar={false}>
       {/* identity strip — 014 draws the whole stat cluster in the header row,
           not the two-mark cluster the rest of the family uses (y50.7-113.3) */}
       <div className="flex items-start justify-between pt-[11px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[27px] leading-[28px] tracking-[0.04em]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[27px] leading-[28px] tracking-[0.04em]">{chrome.name.toUpperCase()}</div>
           <div className="mt-[5px] whitespace-nowrap text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="flex shrink-0 items-start text-center">
@@ -111,7 +114,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
           <span aria-hidden="true" className="mx-[7px] h-[57px] w-px" style={{ background: RULE }} />
           <div className="w-[40px]">
             <span className="flex justify-center"><PointsGlyph size={19} /></span>
-            <div className="shotiq-numeric mt-[2px] text-[17px] leading-[18px]">2,840</div>
+            <div className="shotiq-numeric mt-[2px] text-[17px] leading-[18px]">{chrome.points}</div>
             <div className="shotiq-microcaps mt-[2px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
           </div>
         </div>
@@ -362,6 +365,8 @@ function Calibrate({
   onConfirm: () => void; onSkip: () => void; onSwitch: () => void
   stream: MediaStream | null; onStart: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-hoop-calibration" pad={21} headerH={40} tab="home">
       <div className="flex items-start justify-between pt-[12px]">
@@ -378,7 +383,7 @@ function Calibrate({
           <span aria-hidden="true" className="mx-[9px] mt-[1px] h-[52px] w-px" style={{ background: RULE }} />
           <div className="w-[54px]">
             <span className="flex h-[20px] items-center justify-center"><PointsGlyph size={20} /></span>
-            <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">2,840</div>
+            <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{chrome.points}</div>
             <div className="shotiq-microcaps mt-[5px] text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>POINTS</div>
           </div>
         </div>

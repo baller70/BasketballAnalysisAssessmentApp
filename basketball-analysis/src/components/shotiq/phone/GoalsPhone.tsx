@@ -23,6 +23,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import {
   ChevronRight, ChevronDown, Check, Plus, Lock, Play, Pencil, X,
 } from "lucide-react"
@@ -64,6 +65,8 @@ function Trend({ points, width, height, fill = true, badge }: {
 const SERIES = [52, 55, 53, 58, 57, 61, 60, 63, 62, 66, 65, 68, 67, 71, 70, 74, 73, 77, 76, 80, 82]
 
 export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: () => void }) {
+  const chrome = usePlayerChrome()
+
   const [tab, setTab] = React.useState(0)
   return (
     <PhoneScreen testid="screen-ios-goals" tab="progress" pad={0} header={false}>
@@ -79,7 +82,7 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
           </p>
         </div>
         <div className="ml-auto shrink-0">
-          <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+          <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
         </div>
       </div>
 
@@ -140,7 +143,7 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
                 <div className="shotiq-microcaps" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>{l}</div>
                 <div className="shotiq-numeric mt-[4px] text-[22px] leading-[22px]">{v}</div>
                 <div className="mt-[3px] text-[8px] leading-[10px]" style={{ color: i ? GREEN : GRAPHITE }}>{d}</div>
-                {sub && <div className="text-[7.5px] leading-[9px]" style={{ color: GRAPHITE }}>{sub}</div>}
+                {sub && <div className="text-[7.5px] leading-[9px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</div>}
               </div>
             ))}
           </div>
@@ -217,6 +220,8 @@ const CATEGORIES: [string, "release" | "apex" | "base" | "extension" | "tree"][]
 ]
 
 export function CreateGoal({ onCancel, onCreate }: { onCancel: () => void; onCreate: (name: string) => void }) {
+  const chrome = usePlayerChrome()
+
   const [name, setName] = React.useState("Keep elbow stacked through release")
   const [desc, setDesc] = React.useState(
     "Maintain a stacked elbow on every rep from rise through release to build repeatable form.")
@@ -229,7 +234,7 @@ export function CreateGoal({ onCancel, onCreate }: { onCancel: () => void; onCre
  <span className="flex items-center gap-[6px]">
  <PointsGlyph size={18} />
  <span className="text-right">
- <span className="shotiq-numeric block">2,840</span>
+ <span className="shotiq-numeric block">{chrome.points}</span>
  <span className="shotiq-microcaps block" style={{ fontSize: 11, lineHeight: "11px", color: GRAPHITE }}>POINTS</span>
  </span>
  </span>
@@ -250,7 +255,7 @@ export function CreateGoal({ onCancel, onCreate }: { onCancel: () => void; onCre
             </p>
           </div>
           <div className="ml-auto shrink-0">
-            <MiniStat glyph={<StreakGlyph size={36} />} value="6" label="DAY STREAK" w={58} />
+            <MiniStat glyph={<StreakGlyph size={36} />} value={chrome.streak} label="DAY STREAK" w={58} />
           </div>
         </div>
 
@@ -379,12 +384,14 @@ const MILESTONES: [string, string, "done" | "active" | "locked"][] = [
 ]
 
 export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () => void }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-goal-detail" tab="progress" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<>
         <span className="flex items-center gap-[10px]">
-          <MiniStat glyph={<StreakGlyph size={30} />} value="6" label="DAY STREAK" w={50} />
-          <MiniStat glyph={<PointsGlyph size={17} />} value="2,840" label="POINTS" w={48} />
+          <MiniStat glyph={<StreakGlyph size={30} />} value={chrome.streak} label="DAY STREAK" w={50} />
+          <MiniStat glyph={<PointsGlyph size={17} />} value={chrome.points} label="POINTS" w={48} />
         </span>
       </>} height={46} />
 

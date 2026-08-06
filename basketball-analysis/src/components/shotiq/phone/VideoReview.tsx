@@ -23,6 +23,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import {
   PhoneScreen, PhoneHeading,
@@ -41,6 +42,8 @@ export type ClipMeta = {
 export function VideoReview({
   clip, onAnalyze, onChange,
 }: { clip: ClipMeta; onAnalyze?: () => void; onChange?: () => void }) {
+  const chrome = usePlayerChrome()
+
   const DETAILS: [React.ReactNode, string, string][] = [
     [<svg key="d" width="21" height="21" viewBox="0 0 21 21" aria-hidden="true" className="block">
        <circle cx="10.5" cy="10.5" r="9.3" fill="none" stroke="#111" strokeWidth="1.4" />
@@ -102,7 +105,7 @@ export function VideoReview({
           <span aria-hidden="true" className="mx-[6px] mt-[2px] h-[52px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[62px] text-center">
             <span className="mx-auto block w-fit"><PointsGlyph size={22} /></span>
-            <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[20px]">2,840</div>
+            <div className="shotiq-numeric mt-[5px] text-[19.5px] leading-[20px]">{chrome.points}</div>
             <div className="shotiq-microcaps mt-[4px] text-[8.6px] leading-[9px] text-[var(--shotiq-color-graphite)]">POINTS</div>
           </div>
         </div>
@@ -111,7 +114,7 @@ export function VideoReview({
       {/* identity stat row */}
       <div className="mt-[5px] flex items-center">
         <div className="flex min-w-0 flex-1 items-center gap-[6px] whitespace-nowrap text-[10.5px] leading-[12px] tracking-[-0.02em]">
-          <span className="font-medium">Jordan Ellis</span>
+          <span className="font-medium">{chrome.name}</span>
           <span className="text-[var(--shotiq-color-muted)]">•</span>
           <span className="text-[var(--shotiq-color-graphite)]">Right-handed</span>
           <span className="text-[var(--shotiq-color-muted)]">•</span>

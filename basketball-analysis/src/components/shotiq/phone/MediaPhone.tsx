@@ -22,6 +22,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import {
   ChevronDown, ChevronRight, Play, Upload, SlidersHorizontal, ArrowUpDown,
@@ -55,6 +56,8 @@ export function MyMedia({ groups, onOpen, onUpload }: {
   onOpen: (id: string) => void
   onUpload: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const [tab, setTab] = React.useState(0)
   return (
     <PhoneScreen testid="screen-ios-my-media" tab="home" pad={0} header={false}>
@@ -62,12 +65,12 @@ export function MyMedia({ groups, onOpen, onUpload }: {
 
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
           <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
-          <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-          <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+          <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+          <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
         </div>
       </div>
 
@@ -174,6 +177,8 @@ export function MyMedia({ groups, onOpen, onUpload }: {
 export function MediaDetail({ item, frames, onBack }: {
   item: PhoneMedia; frames: string[]; onBack: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const [frame, setFrame] = React.useState(4)
   const [confirm, setConfirm] = React.useState(true)
   return (
@@ -240,7 +245,7 @@ export function MediaDetail({ item, frames, onBack }: {
         <Eyebrow className="mt-[10px]">SHOT EVENTS</Eyebrow>
         <div className="mt-[7px] flex">
           {([["24", "SHOTS", "angle"], ["15", "MAKES", "wrist"], ["62.5%", "MAKE %", "arc"],
-             ["6", "DAY STREAK", "impact"], ["2,840", "POINTS", "centerline"]] as const).map(([v, l, m], i) => (
+             [chrome.streak, "DAY STREAK", "impact"], [chrome.points, "POINTS", "centerline"]] as const).map(([v, l, m], i) => (
             <div key={l} className="min-w-0 flex-1 pl-[7px] text-center first:pl-0"
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <span className="flex h-[24px] items-center justify-center"><MechanicGlyph kind={m} size={22} /></span>

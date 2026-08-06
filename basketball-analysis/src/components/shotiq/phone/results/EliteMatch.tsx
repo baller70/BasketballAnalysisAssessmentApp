@@ -24,6 +24,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { FileText, Users } from "lucide-react"
 import { MechanicGlyph, PoseFigure, PointsGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
@@ -47,13 +48,15 @@ const RAIL: [string, string][] = [
 export function EliteMatch({
   score = 82, elite = 94, match = 89, shared = "5", of = "6",
   shots = "24", makes = "15", pct = "62.5%",
-  name = "Jordan Ellis", reference = "Elite Guard",
+  name, reference = "Elite Guard",
   onFrames,
 }: {
   score?: number; elite?: number; match?: number; shared?: string; of?: string
   shots?: string; makes?: string; pct?: string
   name?: string; reference?: string; onFrames?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <ResultsScreen
       testid="screen-ios-elite-match"
@@ -66,7 +69,7 @@ export function EliteMatch({
               <span className="flex items-center gap-[6px]">
                 <PointsGlyph size={20} />
                 <span className="text-center">
-                  <span className="shotiq-numeric block text-[17px] leading-[16px]">2,840</span>
+                  <span className="shotiq-numeric block text-[17px] leading-[16px]">{chrome.points}</span>
                   <Micro size={8}>POINTS</Micro>
                 </span>
               </span>

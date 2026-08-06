@@ -21,6 +21,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Bookmark, MoveHorizontal, RefreshCw } from "lucide-react"
 import { MechanicGlyph, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
@@ -38,11 +39,13 @@ const ROWS: [MechanicKind, string, string, string, string, string][] = [
 
 export function PhotoComparison({
   score = 82, elite = 94, shots = "24", makes = "15", pct = "62.5%",
-  name = "Jordan Ellis", reference = "Elite Reference", onBack,
+  name, reference = "Elite Reference", onBack,
 }: {
   score?: number; elite?: number; shots?: string; makes?: string; pct?: string
   name?: string; reference?: string; onBack?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <ResultsScreen
       testid="screen-ios-photo-comparison"
@@ -53,7 +56,7 @@ export function PhotoComparison({
       <div className="mt-[9px] flex items-center gap-[9px] px-[19px]">
         <Frame src="081-player-headshot" w={50} h={50} radius={999} alt={name} className="shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">{name.toUpperCase()}</div>
+          <div className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">{(name ?? chrome.name).toUpperCase()}</div>
           <div className="text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>You • Right • Advanced</div>
           <Micro className="mt-[3px]" size={8}>FORM SCORE</Micro>
           <div className="mt-[1px] flex items-center gap-[7px]">
@@ -120,7 +123,7 @@ export function PhotoComparison({
             <span className="shrink-0" style={{ color: INK }}><MechanicGlyph kind={kind} size={26} accent={ORANGE} /></span>
             <span className="ml-[8px] w-[92px] shrink-0">
               <span className="shotiq-display block leading-[12px] tracking-[0.04em]" style={{ fontSize: 12 }}>{label}</span>
-              <span className="block text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>{sub}</span>
+              <span className="block text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>{sub ?? chrome.sub}</span>
             </span>
             <span className="shotiq-numeric min-w-0 flex-1 text-center text-[22px] leading-[22px]" style={{ color: ORANGE }}>{you}</span>
             <span className="w-[68px] shrink-0 text-center">

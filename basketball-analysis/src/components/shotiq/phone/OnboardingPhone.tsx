@@ -35,6 +35,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Check, Lightbulb, ChevronRight, Info } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
@@ -102,6 +103,8 @@ const BENEFITS: [string, string, string][] = [
 export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }: {
   onStart: () => void; onSkip?: () => void; onSignOut?: () => void; name?: string
 }) {
+  const chrome = usePlayerChrome()
+
   void name
   return (
     <PhoneScreen testid="screen-ios-onboarding-intro" tab="home" pad={0} header={false}>
@@ -181,7 +184,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
         </div>
         <div className="w-[62px] shrink-0 text-center">
           <span className="flex h-[22px] items-center justify-center"><PointsGlyph size={22} /></span>
-          <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]">2,840</div>
+          <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]">{chrome.points}</div>
           <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>POINTS</div>
         </div>
         <div className="w-[58px] shrink-0 text-center">
@@ -376,18 +379,20 @@ export function ExperienceBodyType({
   onLevel: (v: string) => void; onBody: (v: string) => void
   onNext: () => void; onBack: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-experience-body-type" tab="home" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<GearLink />} />
 
       <div className="flex items-start gap-[10px] px-[18px] pt-[13px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[33.6px] leading-[35px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
           <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
-          <MiniStat glyph={<StreakGlyph size={38} />} value="6" label="DAY STREAK" w={62} />
-          <MiniStat glyph={<PointsGlyph size={21} />} value="2,840" label="POINTS" w={58} />
+          <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
+          <MiniStat glyph={<PointsGlyph size={21} />} value={chrome.points} label="POINTS" w={58} />
         </div>
       </div>
 
@@ -482,6 +487,8 @@ export function ShootingProfile({
   onHand: (v: string) => void; onAbility: (v: string) => void; onStyle: (v: string) => void
   onNext: () => void; onBack: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <PhoneScreen testid="screen-ios-shooting-profile" tab="home" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<GearLink />} />
@@ -506,13 +513,13 @@ export function ShootingProfile({
         <img src="/images/canonical/096-avatar.png" alt="" aria-hidden="true"
              className="h-[34px] w-[34px] shrink-0 rounded-full object-cover" />
         <div className="min-w-0">
-          <div className="shotiq-display text-[15px] leading-[16px]">JORDAN ELLIS</div>
+          <div className="shotiq-display text-[15px] leading-[16px]">{chrome.name.toUpperCase()}</div>
           <div className="mt-[2px] text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>
             Right-handed • Advanced<br />Form Score <span style={{ color: BLUE }}>82</span>
           </div>
         </div>
         <div className="ml-auto flex shrink-0">
-          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"], ["6", "DAY STREAK"], ["2,840", "POINTS"]].map(([v, l]) => (
+          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"], [chrome.streak, "DAY STREAK"], [chrome.points, "POINTS"]].map(([v, l]) => (
             <div key={l} className="w-[41px] text-center">
               <div className="shotiq-numeric text-[11px] leading-[12px]">{v}</div>
               <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 6, lineHeight: "7px", color: GRAPHITE }}>{l}</div>
@@ -633,6 +640,8 @@ export function OnboardingReview({
   onEdit: (step: PhoneStep) => void
   onFinish: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   const half = Math.ceil(summary.length / 2)
   return (
     <PhoneScreen testid="screen-ios-onboarding-review" tab="home" pad={0} header={false}>
@@ -651,7 +660,7 @@ export function OnboardingReview({
           <img src="/images/canonical/096-avatar.png" alt="" aria-hidden="true"
                className="h-[58px] w-[58px] shrink-0 rounded-full object-cover" />
           <div className="min-w-0 flex-1">
-            <div className="shotiq-display text-[22px] leading-[23px]">JORDAN ELLIS</div>
+            <div className="shotiq-display text-[22px] leading-[23px]">{chrome.name.toUpperCase()}</div>
             <div className="mt-[3px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
             <div className="mt-[6px] flex items-center gap-[6px]">
               <svg width="13" height="12" viewBox="0 0 13 12" aria-hidden="true">
@@ -678,7 +687,7 @@ export function OnboardingReview({
         <PhoneCard className="mt-[12px] flex px-[8px] py-[10px]">
           {[
             [<StreakGlyph key="s" size={38} />, "6", "DAY STREAK", undefined],
-            [<PointsGlyph key="p" size={21} />, "2,840", "POINTS", undefined],
+            [<PointsGlyph key="p" size={21} />, chrome.points, "POINTS", undefined],
             [<ActionGlyph key="a" kind="analyze" height={19} />, "82", "FORM SCORE", ORANGE],
             [<ActionGlyph key="n" kind="nodeClimb" height={19} accent={GREEN} />, "+8.1%", "VS LAST SESSION", GREEN],
           ].map(([g, v, l, tone], i) => (

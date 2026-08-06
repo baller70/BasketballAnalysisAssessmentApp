@@ -23,6 +23,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Clock, MapPin } from "lucide-react"
 import { MechanicGlyph, PoseFigure, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
@@ -42,12 +43,14 @@ const MECHANICS: [MechanicKind, string, string, string][] = [
 ]
 
 export function ShotBreakdown({
-  score = 82, shot = "41", when = "Today at 8:24 AM", streak = "6", points = "2,840",
+  score = 82, shot = "41", when = "Today at 8:24 AM", streak, points,
   onScore,
 }: {
   score?: number; shot?: string; when?: string; streak?: string; points?: string
   onScore?: () => void
 }) {
+  const chrome = usePlayerChrome()
+
   return (
     <ResultsScreen
       testid="screen-ios-shot-breakdown"
@@ -65,13 +68,13 @@ export function ShotBreakdown({
         <div className="flex shrink-0 items-start pt-[2px]">
           <div className="w-[74px] text-center">
             <span className="flex h-[19px] items-center justify-center"><StreakGlyph size={39} /></span>
-            <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{streak}</div>
+            <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{streak ?? chrome.streak}</div>
             <Micro className="mt-[4px]">DAY STREAK</Micro>
           </div>
           <span aria-hidden="true" className="mx-[6px] h-[48px] w-px" style={{ background: RULE }} />
           <div className="w-[58px] text-center">
             <span className="flex h-[19px] items-center justify-center"><PointsGlyph size={21} /></span>
-            <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{points}</div>
+            <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{points ?? chrome.points}</div>
             <Micro className="mt-[4px]">POINTS</Micro>
           </div>
         </div>

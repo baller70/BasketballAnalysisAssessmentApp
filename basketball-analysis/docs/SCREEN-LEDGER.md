@@ -1543,18 +1543,37 @@ Four defects, all on one screen:
 - **`Number(r[1]) || 0`** in the FOCUS average would have folded each of those
   em-dashes in as a ZERO (rule F11 again, in a second place).
 
+### DONE: the phone tree stopped calling everyone Jordan Ellis
+
+The persona was hardcoded across ~30 phone components — "Jordan Ellis",
+"Right-handed • Advanced", a 6-day streak and 2,840 points — as default prop
+values that nothing ever overrode. The web topbar had exactly this defect until
+`ShotIQShell` was wired to the ledger; on the phone it was worse, because these
+four appear on ten canonical screens at once, so signing in changed nothing
+anywhere.
+
+`components/shotiq/phone/usePlayerChrome.ts` resolves all four once — name and
+level from the auth store and profile, points from the ledger, streak from
+`/api/badges` behind a module-scoped deduped request so ten mounted screens make
+one call and cannot disagree. The canonical persona is the empty state, and an
+explicit prop from a call site still wins.
+
+Verified at 393pt on five routes: signed out shows the canonical 6 / 2,840 /
+Jordan Ellis exactly as designed; signed in shows a real 1-day streak, 25 points
+and the account name, with no persona string anywhere in the tree.
+
 ### NEXT
 
-No screen currently in progress. Candidates, in rough order of how much they
-lie to the player:
-1. iOS phone components still carry the persona constants — `2,840` points and a
-   `6`-day streak are hardcoded in ~10 files under `components/shotiq/phone/`,
-   the same defect the web topbar had before it was wired to the ledger.
-2. The five untracked badges (release time, shot distance, elbow height above
+No screen in progress. Candidates:
+1. The five untracked badges (release time, shot distance, elbow height above
    the shoulder, session length, game situation) each need a measurement added
-   upstream before they can ever be earned. Ask Kevin which matter.
+   upstream before they can ever be earned. Ask Kevin which matter — this is the
+   one item on the list that needs his input rather than a decision I can make.
+2. A sweep of the phone tree for the OTHER canonical constants: "24 / 15 /
+   62.5%" shot lines and "May 2025" dates are still literals in several phone
+   components, the same class of defect one level down from the chrome.
 
-### Method rules learned here### Method rules learned here### Method rules learned here
+### Method rules learned here### Method rules learned here### Method rules learned here### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)
   were complete, correct and had zero callers. Grep for the consumer before
@@ -1595,6 +1614,10 @@ lie to the player:
   the column's ordering (here `score_change`, a delta against the previous row)
   all have to be handled, or the schema change quietly produces wrong numbers
   instead of missing ones.
+- **F13.** Grep for the RENDERED form, not the source form. "Jordan Ellis" was
+  written `>JORDAN ELLIS<` in six components — already uppercased in the markup —
+  so a search for the mixed-case string reported them clean. Sweep with the
+  runtime text (walk the DOM for the string) as well as the source.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

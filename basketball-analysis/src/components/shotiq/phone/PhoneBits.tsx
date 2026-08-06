@@ -21,6 +21,7 @@
  */
 
 import React from "react"
+import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
 import { Settings } from "lucide-react"
 import { StreakGlyph, PointsGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
@@ -140,22 +141,32 @@ export function BackChevron({ onClick, href, label = "Back" }: { onClick?: () =>
  * streak / points pair right-aligned in the same row as the name.
  */
 export function PhoneNameRow({
-  name = "Jordan Ellis", sub = "Right-handed • Advanced",
-  streak = "6", points = "2,840", extra, className = "",
+  name, sub, streak, points, extra, className = "",
 }: {
   name?: string; sub?: string; streak?: string; points?: string
   extra?: React.ReactNode; className?: string
 }) {
+  /* Resolved from the player's own record, with the canonical persona as the
+     empty state — see usePlayerChrome. A call site that passes a value still
+     wins. This one cluster is the header of ten canonical screens, which is
+     why it is the right place to fix all ten. */
+  const live = usePlayerChrome()
+  const shown = {
+    name: name ?? live.name,
+    sub: sub ?? live.sub,
+    streak: streak ?? live.streak,
+    points: points ?? live.points,
+  }
   return (
     <div className={`flex items-start justify-between gap-[10px] ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-display text-[30px] leading-[31px] tracking-[0.02em]">{name.toUpperCase()}</div>
-        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{sub}</div>
+        <div className="shotiq-display text-[30px] leading-[31px] tracking-[0.02em]">{shown.name.toUpperCase()}</div>
+        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{shown.sub}</div>
       </div>
       <div className="flex shrink-0 items-start">
         {extra}
-        <MiniStat glyph={<StreakGlyph size={38} />} value={streak} label="DAY STREAK" />
-        <MiniStat glyph={<PointsGlyph size={21} />} value={points} label="POINTS" />
+        <MiniStat glyph={<StreakGlyph size={38} />} value={shown.streak} label="DAY STREAK" />
+        <MiniStat glyph={<PointsGlyph size={21} />} value={shown.points} label="POINTS" />
       </div>
     </div>
   )
