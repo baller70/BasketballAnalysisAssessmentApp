@@ -1463,6 +1463,62 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### PHOTO REVIEW: the crop button now crops
+
+Kevin, with a screenshot: "When I press crop, it doesn't fucking crop. Any
+button I press does not give me the functionality." He is right, and this screen
+was the clearest case in the app of a control describing something it did not do.
+
+WHAT WAS THERE. The heading read "Adjust crop to include your full body from
+head to toe" over a frame nothing could adjust: the corner brackets were
+`aria-hidden` decorations at a fixed 30/34px inset with no drag handling. The
+rotation dial only set a CSS `transform` on the preview. `onCrop` was wired to
+`phoneFileRef.current?.click()` - CROP OPENED THE FILE PICKER. And USE PHOTO
+called `goPhoto("quality")`, carrying the ORIGINAL image forward, so any framing
+a player did was discarded before analysis.
+
+WHAT IT DOES NOW. `lib/image/cropImage.ts` holds the geometry and the canvas
+render: rotate about the centre into a bounding box that keeps the corners, then
+cut the rect from the rotated frame - the same order the preview shows, because
+cropping first would cut a different part of the photo than the player saw. The
+frame is dragged to move and its corners to resize, holding 3:4, with everything
+outside dimmed so the frame reads as what will be KEPT. CROP applies frame and
+angle to the pixels and shows the result, so it can be cropped again. USE PHOTO
+exports what is on screen, and `/upload` keeps it in `croppedSrc` so the quality
+check and the analysis see the framed photo.
+
+THREE BUGS FOUND BY DRIVING IT, not by reading it:
+
+  1. RESIZE DID NOTHING. `setPointerCapture` on a corner retargets every later
+     pointermove to that corner, so the container's handler never fired. Moved
+     to window listeners, which also keep a drag alive off the edge of the photo.
+  2. THE TIP BANNER ATE THE BOTTOM HANDLES. `elementFromPoint` at the SE corner
+     returned the black "Tip:" box. It is advice; it is `pointer-events-none`
+     now.
+  3. 3:4 WAS 0.803. Normalised space is not square - the box is 377x352 - so a
+     3:4 normalised rect renders at 0.803. The ratio is a PIXEL ratio and is
+     converted through the measured box.
+
+And a fourth: the phone tree mounts late with an unmeasurable box, so measuring
+at mount yielded the raw fallback. A ResizeObserver did NOT fix it - the box
+never changes size once it appears, so the single callback fired while it was
+still 0. An animation-frame retry until the box measures does.
+
+Verified by driving the real screen: frame present; drag moves it (x 65 -> 25);
+resize from the SE corner gives 214x285, ratio exactly 0.750; and pressing CROP
+turns the `img` src from `/images/canonical/...` into
+`data:image/jpeg;base64,...` - real cropped pixels. 331 tests, 8 new on the
+geometry. Probe account deleted.
+
+### F37 - a control that describes an action must be driven, not read
+
+Reading this file would have shown `onCrop` opening a file picker, which is
+obvious once seen. What reading would NOT have shown: pointer capture killing
+resize, a tip banner swallowing two handles, and a ratio that is right in the
+model and wrong on screen. Three of the four defects only existed in the running
+UI. For any interactive control, drive it in a browser and assert the OUTPUT
+changed - `img.src` becoming a data URL is the whole proof that CROP crops.
+
 ### Fired sessions into the Mac and Contabo environments produce NO observable effect
 
 `list_environments` shows three active environments, two of which are exactly

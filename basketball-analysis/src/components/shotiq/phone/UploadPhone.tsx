@@ -21,6 +21,9 @@
  */
 
 import React from "react"
+import {
+  cropImage, clampRect, centredRect, resizeFromCorner, type CropRect,
+} from "@/lib/image/cropImage"
 import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { Check, AlertCircle, ChevronRight, RotateCcw, RotateCw, Crop, Camera } from "lucide-react"
@@ -154,14 +157,132 @@ export function PhotoUploadSource({ onLibrary, onCamera, onCancel }: {
   )
 }
 
+/** The ratio the crop badge has always printed on this screen. */
+const ASPECT = 3 / 4
+const pct = (n: number) => `${n * 100}%`
+
 /* --------------------------------------------------------------- 023 */
 
+/**
+ * PHOTO REVIEW — and the crop it has always claimed to offer.
+ *
+ * "Adjust crop to include your full body from head to toe" sat above a frame
+ * nothing could adjust: the corner brackets were `aria-hidden` decorations at a
+ * fixed 30/34px inset, the rotation dial only set a CSS transform on the
+ * preview, CROP opened the FILE PICKER, and USE PHOTO advanced with the
+ * original image untouched. Every control on the screen described something it
+ * did not do.
+ *
+ * Now: the frame is dragged to move and its corners to resize, holding 3:4 —
+ * the ratio the badge has always printed. The dial rotates for real. CROP
+ * applies the frame and the angle to the actual pixels and shows the result, so
+ * it can be cropped again. USE PHOTO exports whatever is on screen and hands it
+ * on, so the photo that gets analysed is the photo the player framed.
+ */
 export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
-  src: string; onRetake: () => void; onCrop: () => void; onUse: () => void; onBack: () => void
+  src: string
+  onRetake: () => void
+  /** Called with the cropped image when the player applies a crop. */
+  onCrop?: (dataUrl: string) => void
+  /** Called with the final image — cropped and rotated — not the original. */
+  onUse: (dataUrl: string) => void
+  onBack: () => void
 }) {
   const chrome = usePlayerChrome()
 
   const [angle, setAngle] = React.useState(0)
+  /** The working image: replaced when a crop is applied, so CROP is repeatable. */
+  const [working, setWorking] = React.useState(src)
+  const [rect, setRect] = React.useState<CropRect>(() => centredRect(ASPECT))
+  const [busy, setBusy] = React.useState(false)
+  const frameRef = React.useRef<HTMLDivElement | null>(null)
+
+  /* Pointer drags, in the frame's own normalised space. One handler serves the
+     body and all four corners; `grab` says which. */
+  const drag = React.useRef<null | {
+    grab: "move" | "nw" | "ne" | "sw" | "se"
+    x: number; y: number; start: CropRect
+  }>(null)
+
+  /* The crop box is 377x352, NOT square, so normalised space is not square
+     either. A 3:4 rect in normalised units renders at 0.803 on screen. The
+     ratio the badge promises is a PIXEL ratio, so convert it. */
+  const normAspect = React.useCallback(() => {
+    const box = frameRef.current?.getBoundingClientRect()
+    if (!box || !box.width || !box.height) return ASPECT
+    return ASPECT * (box.height / box.width)
+  }, [])
+
+  /* A new photo starts from a fresh centred frame at zero rotation. */
+  React.useLayoutEffect(() => {
+    setWorking(src)
+    setAngle(0)
+    /* MEASURE, THEN CENTRE. The phone tree mounts late and its crop box has no
+       width on the first layout pass, so measuring there yields the raw 3:4 —
+       which renders 0.803 once the real 377x352 box exists. Retry on animation
+       frames until the box is measurable, then set the frame once. A
+       ResizeObserver was tried first and did not help: the box never changes
+       size after it appears, so the one callback fired while it was still 0. */
+    let raf = 0
+    let tries = 0
+    const settle = () => {
+      const box = frameRef.current?.getBoundingClientRect()
+      if (box && box.width > 1 && box.height > 1) {
+        setRect(centredRect(ASPECT * (box.height / box.width)))
+        return
+      }
+      if (tries++ < 60) raf = requestAnimationFrame(settle)
+    }
+    settle()
+    return () => cancelAnimationFrame(raf)
+  }, [src])
+
+  const onPointerDown = (grab: "move" | "nw" | "ne" | "sw" | "se") =>
+    (e: React.PointerEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      drag.current = { grab, x: e.clientX, y: e.clientY, start: rect }
+    }
+
+  /* Listeners go on the WINDOW, not the frame. `setPointerCapture` on a corner
+     retargets every later pointermove to that corner, so a handler on the
+     container never fired and resizing did nothing at all; window listeners
+     also keep a drag alive when the finger leaves the photo. */
+  React.useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const d = drag.current
+      const box = frameRef.current?.getBoundingClientRect()
+      if (!d || !box) return
+      const dx = (e.clientX - d.x) / box.width
+      const dy = (e.clientY - d.y) / box.height
+      setRect(d.grab === "move"
+        ? clampRect({ ...d.start, x: d.start.x + dx, y: d.start.y + dy })
+        : resizeFromCorner(d.start, d.grab, dx, dy, normAspect()))
+    }
+    const up = () => { drag.current = null }
+    window.addEventListener("pointermove", move)
+    window.addEventListener("pointerup", up)
+    window.addEventListener("pointercancel", up)
+    return () => {
+      window.removeEventListener("pointermove", move)
+      window.removeEventListener("pointerup", up)
+      window.removeEventListener("pointercancel", up)
+    }
+  }, [normAspect])
+
+  /** Bake the frame and the angle into the pixels. */
+  const applyCrop = async (): Promise<string> => {
+    setBusy(true)
+    try {
+      const out = await cropImage(working, rect, angle)
+      setWorking(out)
+      setRect(centredRect(normAspect()))
+      setAngle(0)
+      return out
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
     <PhoneScreen testid="screen-ios-photo-review-crop" tab="capture" pad={0} header={false}>
       <PhoneTop height={44} left={<BackChevron onClick={onBack} />} center={
@@ -188,28 +309,59 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
       </div>
 
       {/* --------------------------------------------------- crop frame */}
-      <div className="relative mx-[8px] mt-[10px] overflow-hidden" style={{ height: 352 }}>
-        <Shot src={src} alt="Photo under review" className="h-full w-full" zoom={1.4}
+      <div ref={frameRef} className="relative mx-[8px] mt-[10px] touch-none overflow-hidden" style={{ height: 352 }}
+>
+        <Shot src={working} alt="Photo under review" className="h-full w-full" zoom={1.4}
               style={{ transform: `rotate(${angle}deg)` }} />
         <span className="absolute left-[9px] top-[9px] rounded-[3px] bg-black/65 px-[7px] py-[3px] text-[9px] font-medium text-white">3:4</span>
-        {/* rule-of-thirds guides */}
-        {[1, 2].map((i) => (
-          <React.Fragment key={i}>
-            <span aria-hidden="true" className="absolute bg-white/55" style={{ left: `${(i * 100) / 3}%`, top: 34, bottom: 34, width: 1 }} />
-            <span aria-hidden="true" className="absolute bg-white/55" style={{ top: `${(i * 100) / 3}%`, left: 30, right: 30, height: 1 }} />
-          </React.Fragment>
-        ))}
-        {/* Corner brackets. Canonical insets the crop frame 30 from the sides
-            and 34 from the top and bottom, and draws an L at each corner. */}
-        <span aria-hidden="true" className="absolute left-[30px] top-[34px] h-[30px] w-[30px]"
-              style={{ borderLeft: "2px solid #fff", borderTop: "2px solid #fff" }} />
-        <span aria-hidden="true" className="absolute right-[30px] top-[34px] h-[30px] w-[30px]"
-              style={{ borderRight: "2px solid #fff", borderTop: "2px solid #fff" }} />
-        <span aria-hidden="true" className="absolute bottom-[34px] left-[30px] h-[30px] w-[30px]"
-              style={{ borderLeft: "2px solid #fff", borderBottom: "2px solid #fff" }} />
-        <span aria-hidden="true" className="absolute bottom-[34px] right-[30px] h-[30px] w-[30px]"
-              style={{ borderRight: "2px solid #fff", borderBottom: "2px solid #fff" }} />
-        <div className="absolute inset-x-[9px] bottom-[9px] flex items-center gap-[8px] rounded-[4px] bg-black/60 px-[9px] py-[7px]">
+
+        {/* Everything outside the crop is dimmed, so the frame reads as the
+            part that will be kept rather than as decoration over the photo. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0"
+             style={{
+               background: "rgba(0,0,0,0.45)",
+               clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%,
+                 ${pct(rect.x)} ${pct(rect.y)},
+                 ${pct(rect.x)} ${pct(rect.y + rect.h)},
+                 ${pct(rect.x + rect.w)} ${pct(rect.y + rect.h)},
+                 ${pct(rect.x + rect.w)} ${pct(rect.y)},
+                 ${pct(rect.x)} ${pct(rect.y)})`,
+             }} />
+
+        {/* THE CROP FRAME — drag the middle to move it, a corner to resize. */}
+        <div role="group" aria-label="Crop area"
+             data-testid="upload-crop-frame"
+             data-rect={`${rect.w.toFixed(4)}x${rect.h.toFixed(4)}`}
+             className="absolute cursor-move"
+             onPointerDown={onPointerDown("move")}
+             style={{ left: pct(rect.x), top: pct(rect.y), width: pct(rect.w), height: pct(rect.h) }}>
+          {/* rule-of-thirds guides, now tied to the frame they belong to */}
+          {[1, 2].map((i) => (
+            <React.Fragment key={i}>
+              <span aria-hidden="true" className="absolute bg-white/55" style={{ left: `${(i * 100) / 3}%`, top: 0, bottom: 0, width: 1 }} />
+              <span aria-hidden="true" className="absolute bg-white/55" style={{ top: `${(i * 100) / 3}%`, left: 0, right: 0, height: 1 }} />
+            </React.Fragment>
+          ))}
+          {/* Canonical's corner Ls, which are now the resize handles. The hit
+              area is 30px so a thumb can find them on a phone. */}
+          {([
+            ["nw", { left: 0, top: 0, borderLeft: "2px solid #fff", borderTop: "2px solid #fff" }, "cursor-nwse-resize"],
+            ["ne", { right: 0, top: 0, borderRight: "2px solid #fff", borderTop: "2px solid #fff" }, "cursor-nesw-resize"],
+            ["sw", { left: 0, bottom: 0, borderLeft: "2px solid #fff", borderBottom: "2px solid #fff" }, "cursor-nesw-resize"],
+            ["se", { right: 0, bottom: 0, borderRight: "2px solid #fff", borderBottom: "2px solid #fff" }, "cursor-nwse-resize"],
+          ] as const).map(([corner, style, cursor]) => (
+            <span key={corner} role="button" tabIndex={-1}
+                  aria-label={`Resize crop from the ${corner} corner`}
+                  data-testid={`upload-crop-${corner}`}
+                  onPointerDown={onPointerDown(corner)}
+                  className={`absolute h-[30px] w-[30px] touch-none ${cursor}`}
+                  style={style} />
+          ))}
+        </div>
+        {/* The tip sits over the bottom corner handles. Without this it
+            swallowed their pointer events and the SW/SE grips did nothing —
+            it is advice, so it should never take a touch meant for the crop. */}
+        <div className="pointer-events-none absolute inset-x-[9px] bottom-[9px] flex items-center gap-[8px] rounded-[4px] bg-black/60 px-[9px] py-[7px]">
           <AlertCircle className="h-[11px] w-[11px] shrink-0 text-white" strokeWidth={1.8} />
           <span className="text-[8.5px] leading-[11px] text-white">
             Tip: Include your full body. Leave a little space above your head and below your feet.
@@ -243,10 +395,14 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
         <PhoneAction tone="outline" height={40} className="flex-1 text-[12px]" onClick={onRetake} testid="upload-retake">
           <Camera className="h-[14px] w-[14px]" strokeWidth={1.6} /> RETAKE
         </PhoneAction>
-        <PhoneAction tone="outline" height={40} className="flex-1 text-[12px]" onClick={onCrop}>
-          <Crop className="h-[14px] w-[14px]" strokeWidth={1.6} /> CROP
+        {/* CROP APPLIES THE CROP. It used to open the file picker. */}
+        <PhoneAction tone="outline" height={40} className="flex-1 text-[12px]" testid="upload-crop"
+                     onClick={() => { void applyCrop().then((out) => onCrop?.(out)) }}>
+          <Crop className="h-[14px] w-[14px]" strokeWidth={1.6} /> {busy ? "CROPPING" : "CROP"}
         </PhoneAction>
-        <PhoneAction tone="green" height={40} className="flex-1 text-[12px]" onClick={onUse} testid="upload-use-photo">
+        {/* USE PHOTO hands on the FRAMED photo, not the original. */}
+        <PhoneAction tone="green" height={40} className="flex-1 text-[12px]" testid="upload-use-photo"
+                     onClick={() => { void applyCrop().then(onUse) }}>
           <Check className="h-[14px] w-[14px]" strokeWidth={2.4} /> USE PHOTO
         </PhoneAction>
       </div>
