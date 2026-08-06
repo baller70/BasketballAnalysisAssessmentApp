@@ -710,7 +710,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — forty-five, each learned by getting something wrong
+## Method rules — forty-six, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1123,6 +1123,33 @@ string rolling over at midnight.
     other before combining them; if they disagree, the band holds more than one
     thing. This is the same class of error as the pill border in the 020 window
     and it produced the same kind of confidently wrong ratio.
+
+46. **The container exports `NODE_ENV=development`, and that silently breaks
+    `next build` — every page, not some.** Resuming 004 after a rollback, the
+    production build reported `Error occurred prerendering page` for **all 51
+    routes**, including `/terms` and `/privacy`, which import nothing anyone had
+    touched. The stack said why and it was one line up in the log: Next printed
+    `You are using a non-standard "NODE_ENV" value`, and every frame ran through
+    `react-dom-server.browser.development.js`. A dev react-dom cannot statically
+    generate an App Router page, so the error page generation falls back to the
+    pages-router document and reports `<Html> should not be imported outside of
+    pages/_document` — a message that points at markup nobody wrote and sends
+    you looking for an import that does not exist.
+
+    Two things make this worse than a normal build failure. **It prints the
+    route list at the end and exits looking successful**: `BUILD_ID` is written,
+    the closing summary scrolls past, and only `prerender-manifest.json` is
+    missing — which surfaces much later as `next start` throwing ENOENT. And
+    **`NODE_ENV=production npx next build` is not enough on its own here**; the
+    shell is re-initialised from the profile per command, so the working form is
+    `env -u NODE_ENV NODE_ENV=production ./node_modules/.bin/next build`.
+
+    The check, before reading a single pixel from any capture: the build log's
+    first lines must NOT contain "non-standard NODE_ENV", and
+    `.next-<screen>/prerender-manifest.json` must exist. A capture taken from a
+    server that never started is not a measurement, and this is the same shape
+    as rule 30 — a null that looks like data — one level further out in the
+    toolchain than any rule here had reached.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

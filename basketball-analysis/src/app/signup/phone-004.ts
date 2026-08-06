@@ -138,8 +138,19 @@ const FIELDS: Record<string, [number, number]> = {
 }
 
 export const RUNS: Record<string, Run> = {
+  /* The lockup sat 2.75 device px HIGH — a pure vertical placement error, with
+     nothing wrong with its type: dy 13.81 -> 11.06 and the band goes
+     8.7161 -> 4.1879 with no size, scale or tracking touched.
+
+     The rung, not a precision claim (rule 12): the sweep returns four flat
+     plateaux — {0.5,1.0} 6.9334, {1.5..2.2} 5.2491, {2.5,3.0} 4.1879,
+     {3.5,4.0} 5.0197 — because a text raster position quantises to whole
+     device rows. 2.75 is the centre of the winning plateau, and the minimum is
+     BRACKETED rather than sitting at the edge of the lattice: the first sweep
+     stopped at 3.0, where 2.5 and 3.0 tied, which is the shape rule 20 warns
+     about. Extending it to 6.0 showed the score climbing again. */
   wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0456, ls: 0.0123,
-              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 0 },
+              colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 11.06, tx: 0, ty: 0 },
   /* CREATE ACCOUNT. The size was right and the WIDTH was not, which is the one
      pairing rule 32 says to read together before calling anything a size error:
      cap height canonical/render came back 1.0009 — exact — while the advance
@@ -283,11 +294,35 @@ export const RUNS: Record<string, Run> = {
      quantise, so these digits are the rung, not a precision claim. */
   terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.95, ls: -0.004,
            colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0 },
-  createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.90, ls: -0.03,
+  /* "Create account" — the plate's label, and the display run's signature all
+     over again (rule 32: read the two axes together before calling anything a
+     size error). Vertical extent canonical/render 1.0004 by outer bbox and
+     1.0037 by per-column 50% crossings — exact on both estimators — against an
+     advance of 324.69 / 372.50 = 0.8717. A size change cannot produce that;
+     the whole 14.7% is horizontal scale. 0.90 x 0.87165 = 0.7845.
+
+     dy is deliberately unchanged. The joint sweep put ty 0.00 / 0.29 / 0.58
+     device px at 8.4842 to four decimals — identical, so the lattice does not
+     resolve them and moving it would record precision nobody measured. */
+  createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.7845, ls: -0.03,
                colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
            colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 0, ty: 0 },
-  signinLab: { x: 412.72, top: 1736.39, size: 21.0, weight: 480, scale: 0.90, ls: -0.03,
+  /* "Sign in" — the OPPOSITE diagnosis to createLab above, which is why the two
+     are solved apart despite having been seeded with identical numbers. Here
+     vertical extent came back 0.8913 (per-column) / 0.8905 (bbox) against an
+     advance of 0.8852: both about 11% over and within 0.7% of EACH OTHER, so
+     nearly all of it is size with a small scale trim — the helpPass signature,
+     not the display one.
+
+     Two runs sharing a token set are not thereby one defect. Rule 14 says
+     solve related runs jointly; it does not say assume they agree, and these
+     two are on the same role at the same authored size for different reasons.
+
+     21.0 -> 18.95 and 0.90 -> 0.9092 by the joint sweep with the overlay held
+     at its solved origin: 6.0673 -> 5.1898. ty unresolved again (0.00 and 0.58
+     both 5.1898), so dy stands. */
+  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.9092, ls: -0.03,
                colour: "var(--shotiq-color-ink)", dx: 1.16, dy: 8.52, tx: 0, ty: 0,
                ox: BOX_X, oy: SIGNIN.y },
 }
