@@ -1463,6 +1463,71 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### The flaw engine told every player the same two things were wrong
+
+The Flaws screen runs `detectFlawsFromAngles` over the caller's own analyses.
+Two of its rules fired on EVERY shot ever taken, by anybody:
+
+  ELBOW_ANGLE_OBTUSE      "elbow_angle greater than 110 - too straight AT SET
+                          POINT". Stored elbow is the RELEASE frame, ~150-180.
+  INSUFFICIENT_KNEE_BEND  "knee_angle greater than 160", which can only mean
+                          the DIP. Stored knee is the release frame, ~165-180,
+                          legs extended.
+
+So a textbook shot was reported as "Elbow Too Straight (no power reserve)" and
+"Insufficient Knee Bend" - the app diagnosing a player as faulty for doing
+exactly what a release frame is supposed to show. Verified before the fix by
+running the real engine on the pipeline's own textbook output: 2 flaws.
+
+`resolveFlawSignal` ALREADY REFUSED this trap twice. Its own comments say
+`shoulder_angle` is not used because "it would fire on every shot", and
+`release_angle` is not used because the canonical key "is a vertical-deviation
+angle (a different convention)". Whoever wrote it understood the problem and
+missed the same thing one case above. Both rules now abstain, and each accepts
+the key that WOULD answer it - `elbow_angle_set_point`, `knee_angle_min` - so
+the pipeline can supply the right moment without this file changing again.
+
+AND THE SCREEN HAD TO CHANGE WITH IT, or the fix would have made things worse.
+`visible` fell back to CANONICAL'S FIVE FLAWS whenever the live list was empty.
+That was nearly unreachable while two flaws always fired; with them abstaining
+it becomes the common path, and a player whose form the engine finds nothing
+wrong with would have been shown canonical's flaws as their own findings. That
+is F16 at its worst: not a missing value, a FABRICATED DIAGNOSIS. Analysed-but-
+clean is its own state now, and says which mechanics are and are not checked.
+
+One more contradiction fell out of it: "Flaws appear after your first analysis.
+Analyze a shot" was gated on `hasData` from the history timeline, while the
+engine counts analyses directly. The two can disagree, and a player with three
+analysed shots was being invited to go analyse their first one.
+
+Verified end to end, both states. Signed in on three textbook shots: API
+`analysed: 3, flaws: []`, screen reads "No flaws detected across 3 analysed
+shots" with NO canonical flaw cards. Reseeded with wrist 30 (the arm never came
+up): "No Wrist Snap (Follow-Through), 100%" - a genuine flaw still fires.
+Signed out is canonical throughout. Probe account deleted. 305 tests pass,
+7 of them new and covering the defect directly.
+
+### NEXT, and it makes INSUFFICIENT_KNEE_BEND live again
+
+`videoAnalysis` ALREADY computes the dip: `findLoadFrame` takes the minimum
+knee across the clip and `metrics.knee_angle_range.min` holds it. It is never
+persisted onto the analysis, so the flaws route cannot see it. Adding a
+`kneeAngleMin` column (migration + save-analysis + sessionStorage mapping +
+the flaws route's select, passed as `knee_angle_min`) turns "Insufficient Knee
+Bend" from an abstention into a rule that detects insufficient knee bend. The
+set-point elbow has no equivalent - no `findSetPointFrame` exists, and picking
+which frame counts as the set point is a real design question, not a wiring
+job.
+
+### F28 - a rule that ALWAYS fires is the same bug as one that never does
+
+F27 covered counters stuck at zero. This is the mirror: `ELBOW_ANGLE_OBTUSE`
+returned true for every shot in the database and looked exactly like a real
+finding, complete with a cause chain and drills. Neither failure mode raises an
+error. When wiring a rule, assert BOTH directions on realistic input - that a
+good shot does not trip it AND that a bad one does. A rule tested in only one
+direction is untested.
+
 ### Four badges nobody could ever earn
 
 Kevin's item 3 was "five badges that can never be earned". Three of them turned

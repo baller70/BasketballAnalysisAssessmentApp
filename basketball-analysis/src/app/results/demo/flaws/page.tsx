@@ -112,6 +112,16 @@ export default function FlawsPage() {
   }))
 
   const usingLive = liveFlaws.length > 0
+  /* A CLEAN SHOT IS NOT AN EMPTY SCREEN, and it must never borrow canonical's.
+     `visible` used to fall back to the canonical five whenever the live list
+     was empty, which was nearly harmless while two flaws fired on every shot —
+     ELBOW_ANGLE_OBTUSE and INSUFFICIENT_KNEE_BEND read release-frame angles
+     against set-point rules, so the live list was never empty. With those two
+     abstaining, a player whose form the engine finds nothing wrong with would
+     have been shown canonical's flaws as if they were their own findings,
+     which is the F16 violation in its worst form: not a missing value, but a
+     fabricated diagnosis. Analysed-but-clean is now its own state. */
+  const analysedClean = live != null && live.analysed > 0 && liveFlaws.length === 0
   /* The selected flaw's measured cost, or why it cannot be stated. The panel
      used to print "-8.3%", "improved 8.7% over the last 14 days" and a
      May 2025 session list, all constants, all claiming a causal effect on make
@@ -131,7 +141,15 @@ export default function FlawsPage() {
         ?? "Not enough scored shots to measure this flaw's cost yet." 
   const visible = usingLive
     ? (showLower ? liveFlaws : liveFlaws.slice(0, 3))
+    : analysedClean || live?.reason ? []
     : hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
+  /* What to say when the list is empty and the player HAS shots: either the
+     engine ran and found nothing, or it could not run and says why. */
+  const emptyNote = analysedClean
+    ? `No flaws detected across ${live!.analysed} analysed shot${live!.analysed === 1 ? "" : "s"}. `
+      + "Only the mechanics this app measures are checked — the elbow at the set point, "
+      + "the depth of your dip and the ball's flight are not among them yet."
+    : live?.reason ?? null
   /* Canonical iOS 046 and 047. The detail is addressed by the flaw's own slug,
      so every flaw in the list has its own surface rather than one shared
      "detail region" driven by selection state. The graded desktop 085 on this
@@ -213,6 +231,11 @@ export default function FlawsPage() {
             <SectionLabel>YOUR TOP FLAWS</SectionLabel>
             <span className="grid h-[13px] w-[13px] place-items-center rounded-full border border-[var(--shotiq-color-graphite)] text-[9px] text-[var(--shotiq-color-graphite)]">i</span>
           </div>
+          {visible.length === 0 && emptyNote && (
+            <p className="mt-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] p-[11px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              {emptyNote}
+            </p>
+          )}
           {visible.map((f, i) => (
             <button key={f.n} type="button" onClick={() => setSel(i)} aria-pressed={sel === i}
                     className={`mt-[10px] w-full rounded-[8px] border p-[11px] text-left ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
@@ -247,7 +270,13 @@ export default function FlawsPage() {
               </div>
             </button>
           ))}
-          {!hasData && (
+          {/* "Analyze a shot" is for someone who has none. `hasData` comes from
+              the history timeline while the engine counts analyses directly, so
+              the two can disagree — and when they do, the count of shots the
+              engine actually read is the one that decides whether this invite
+              still makes sense. Telling a player with three analysed shots to
+              go analyse their first one is worse than saying nothing. */}
+          {!hasData && !live?.analysed && (
             <Card className="mt-[10px] p-[16px] text-[13px] text-[var(--shotiq-color-graphite)]">
               Flaws appear after your first analysis. <Link className="text-[var(--shotiq-color-analysisBlue)]" href="/analyze">Analyze a shot</Link>.
             </Card>
