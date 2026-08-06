@@ -170,12 +170,23 @@ export function readMetric(
   }
 }
 
+export interface EliteMatch {
+  name: string
+  overall: number
+  photoUrl: string | null
+  team?: string | null
+  /** The shooter's own readings — a TIER ESTIMATE, never their measured video. */
+  reference?: { releaseAngle: number; elbowAngle: number; entryAngle: number } | null
+  estimated?: boolean
+}
+
 export function AnalysisOverview({
   score = 82, shots = "24", makes = "15", pct = "62.5%",
-  name, streak, points,
+  name, streak, points, match = null,
 }: {
   score?: number; shots?: string; makes?: string; pct?: string
   name?: string; streak?: string; points?: string
+  match?: EliteMatch | null
 }) {
   /* The verdict sat directly under a wired score as the literal "GOOD" in
      canonical's blue, so a 93 read GOOD and a 41 read GOOD. Label and colour
@@ -194,6 +205,18 @@ export function AnalysisOverview({
       .catch(() => {})
     return () => { dead = true }
   }, [])
+
+  /* The elite shooter's own three readings. Canonical's are 51° / 95% / 46°;
+     with a real match they are that shooter's catalog values, and Shot Arc is
+     the ENTRY angle — a distinct catalog field, not the release angle again
+     (F22 applies to the player's strip above, where the two ARE one quantity). */
+  const eliteRows: [MechanicKind, string, string][] = match?.reference
+    ? [
+        ["angle", "Release Angle", `${Math.round(match.reference.releaseAngle)}°`],
+        ["centerline", "Elbow Alignment", `${Math.round(match.reference.elbowAngle)}°`],
+        ["arc", "Shot Arc", `${Math.round(match.reference.entryAngle)}°`],
+      ]
+    : [["angle", "Release Angle", "51°"], ["centerline", "Elbow Alignment", "95%"], ["arc", "Shot Arc", "46°"]]
   return (
     <ResultsScreen
       testid="screen-ios-analysis-result-overview"
@@ -284,13 +307,48 @@ export function AnalysisOverview({
       >
         ELITE MATCH
       </SectionHead>
+      {/* KLAY THOMPSON, his club, his three readings and 88% OVERALL MATCH were
+          all written into this markup, so every player was told they shoot like
+          the same man to the same percentage. `/api/shooters/match` ranks the
+          whole 328-shooter catalog against the caller's measured angles and the
+          DESKTOP card on this route has read it for some time; the phone card
+          was never connected.
+
+          Elbow Alignment is in DEGREES here now. It read "95%" while the metric
+          strip directly above it reads the player's own elbow in degrees — the
+          two halves of a comparison have to be in the same unit or the
+          comparison is not one. */}
       <Panel className="mx-[13px] mt-[4px] flex items-center gap-[11px] p-[5px]">
-        <Frame src="083-elite" w={90} h={72} radius={3} alt="Klay Thompson at release" />
+        {/* F9/F10, exactly as the desktop card solves them: the initials sit
+            UNDER the portrait rather than replacing it on error, because a
+            blocked remote headshot hangs rather than failing; and the portrait
+            follows the NAME, so canonical's crop holds only while the card is
+            canonical. */}
+        <span className="relative grid h-[72px] w-[90px] shrink-0 place-items-center overflow-hidden rounded-[3px] text-[20px] font-bold tracking-[0.04em]"
+              style={{ background: "var(--shotiq-color-warmCanvas)", color: GRAPHITE }}>
+          {match ? match.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : null}
+          {(!match || match.photoUrl) && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={match?.photoUrl || "/images/canonical/083-elite.png"}
+                 /* EMPTY on purpose. F9 layers the initials UNDER the portrait
+                    so a hanging remote headshot never leaves a blank cell — but a
+                    BROKEN one renders its alt text, which paints over the initials
+                    and spills out of a 90x72 cell. The shooter's name is in text
+                    directly beside this image, so the portrait carries no
+                    information of its own to announce. */
+                 alt=""
+                 className="absolute inset-0 h-full w-full object-cover" width={90} height={72} />
+          )}
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="shotiq-display text-[22px] leading-[21px] tracking-[0.035em]">KLAY THOMPSON</div>
-          <div className="mt-[2px] text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>Golden State Warriors</div>
+          <div className="shotiq-display truncate text-[22px] leading-[21px] tracking-[0.035em]">
+            {(match?.name ?? "Klay Thompson").toUpperCase()}
+          </div>
+          <div className="mt-[2px] truncate text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>
+            {match ? (match.team ?? "—") : "Golden State Warriors"}
+          </div>
           <div className="mt-[4px] space-y-[2px]">
-            {([["angle", "Release Angle", "51°"], ["centerline", "Elbow Alignment", "95%"], ["arc", "Shot Arc", "46°"]] as [MechanicKind, string, string][]).map(([k, l, v]) => (
+            {eliteRows.map(([k, l, v]) => (
               <div key={l} className="flex items-center gap-[6px]">
                 <span style={{ color: INK }}><MechanicGlyph kind={k} size={13} /></span>
                 <span className="text-[11.5px] leading-[12px]">{l}</span>
@@ -300,10 +358,18 @@ export function AnalysisOverview({
           </div>
         </div>
         <div className="shrink-0 text-center">
-          <MatchArc pct={88} />
+          <MatchArc pct={match?.overall ?? 88} />
           <div className="shotiq-microcaps mt-[3px] leading-[9px]" style={{ fontSize: 8, color: INK }}>OVERALL MATCH</div>
         </div>
       </Panel>
+      {/* The catalog is explicit that these readings are tier-derived, not
+          measured from that shooter's video, and requires callers to say so.
+          The desktop compare table carries the same note. */}
+      {match && match.estimated !== false && (
+        <p className="mx-[13px] mt-[3px] text-[9px] leading-[11px]" style={{ color: GRAPHITE }}>
+          Reference readings are a tier-derived estimate for {match.name}, not a measurement of their video.
+        </p>
+      )}
 
       {/* actions --------------------------------------------------------- */}
       <div className="mt-[4px] px-[13px]">

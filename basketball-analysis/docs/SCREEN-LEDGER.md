@@ -2057,6 +2057,46 @@ it; the phone card was never connected. Note its "Elbow Alignment 95%" now
 disagrees in UNIT with the strip above it, which reads degrees — wiring the
 card should settle both.
 
+### DONE: the phone ELITE MATCH card
+
+The card told every player they shoot like KLAY THOMPSON of the Golden State
+Warriors, to 88%, with the same three reference readings — his name, club,
+portrait, percentage and readings all written into the markup.
+`/api/shooters/match` ranks the whole 328-shooter catalog against the caller's
+measured angles and the DESKTOP card on this route has read it for some time;
+the phone card was never connected.
+
+`top` now also carries the shooter's club and three reference readings, so the
+card needs no second request. Verified with a seeded 6'7" elite profile and six
+measured angles: the card moved to CHRIS MULLIN · Golden State Warriors ·
+50° / 89° / 45° · 89% OVERALL MATCH, and back to canonical when the probe was
+deleted.
+
+**The readings are labelled as estimates, because the catalog says they must
+be.** `eliteShooters.ts` carries a documented honesty flag —
+`biomechanicsEstimated` is true for every record, the block is tier-derived and
+"the UI must never present them as measured biomechanics". `estimated` rides on
+the payload and the card prints the same short note the desktop compare table
+already prints.
+
+**Elbow Alignment is in DEGREES here now.** It read "95%" while the metric strip
+directly above it reads the player's own elbow in degrees. The two halves of a
+comparison have to be in one unit or the comparison is not one.
+
+**F23 — a BROKEN image paints its ALT TEXT over whatever is layered beneath it.**
+F9 established that a blocked remote headshot HANGS rather than erroring, so the
+initials are painted UNDER the portrait instead of swapped in on failure. That
+is right, and it was not enough: this headshot did not hang, it completed with
+`naturalWidth: 0`, and the browser rendered `alt="Chris Mullin at release"` as
+text — over the initials and spilling out of a 90x72 cell. The alt is empty on
+both cards now. The portrait carries no information of its own: the shooter's
+name is in text directly beside it, so it is decorative, and an empty alt is
+both the correct accessibility answer and the only one that lets the layered
+fallback show.
+
+The desktop card had the identical alt, and was fixed with it — the defect was
+in the pattern, not in one copy of it.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -2153,6 +2193,11 @@ card should settle both.
   RELEASE ANGLE and SHOT ARC, and this pipeline computes one number for both;
   filling each would assert two independent readings from a single measurement.
   Answer one, and say the other is not measured.
+- **F23.** A BROKEN image renders its alt text; a HANGING one renders nothing.
+  F9's layered fallback only works if the image has nothing to paint when it
+  fails, so a decorative image layered over a fallback must carry `alt=""`.
+  A descriptive alt turns a failed headshot into text spilling out of its cell,
+  on top of the initials that were supposed to cover for it.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

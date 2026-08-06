@@ -155,7 +155,12 @@ export default function ResultsOverviewPage() {
     flaw: string; cue: string
     baseline: number | null; targetValue: number | null; retestValue: number | null
   }>(null)
-  const [topMatch, setTopMatch] = useState<{ name: string; overall: number; photoUrl: string | null } | null>(null)
+  const [topMatch, setTopMatch] = useState<{
+    name: string; overall: number; photoUrl: string | null
+    team?: string | null
+    reference?: { releaseAngle: number; elbowAngle: number; entryAngle: number } | null
+    estimated?: boolean
+  } | null>(null)
   useEffect(() => {
     let dead = false
     fetch("/api/coaching-targets", { credentials: "include" })
@@ -201,6 +206,7 @@ export default function ResultsOverviewPage() {
         shots={shots != null ? String(shots) : hasData ? "—" : "24"}
         makes={makes != null ? String(makes) : hasData ? "—" : "15"}
         pct={formatMakePct(shots, makes)}
+        match={topMatch}
       />
     )}
     <div className={isPhone ? "hidden" : undefined}>
@@ -486,7 +492,10 @@ export default function ResultsOverviewPage() {
                   {topMatch ? topMatch.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : null}
                   {(!topMatch || topMatch.photoUrl) && (
                     <img src={topMatch?.photoUrl || "/images/canonical/083-elite.png"}
-                         alt={`${topMatch?.name ?? "Trae Young"} shooting form`}
+                         /* Empty for the same reason as the phone card: a broken
+                            headshot paints its alt text over the initials layered
+                            beneath it, and the name is already text beside it. */
+                         alt=""
                          className="absolute inset-0 h-full w-full object-cover" width={151} height={106} />
                   )}
                 </span>

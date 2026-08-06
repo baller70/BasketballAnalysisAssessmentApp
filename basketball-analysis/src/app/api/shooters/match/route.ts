@@ -149,9 +149,22 @@ export async function GET(request: NextRequest) {
       matched: true,
       top: best ? {
         name: best.shooter.name,
+        team: bestCatalog?.team ?? null,
         overall: Math.round(best.similarityScore.overall),
         photoUrl: bestCatalog?.photoUrl ?? null,
         reason: best.matchReasons[0] ?? null,
+        /* The reference readings the phone's ELITE MATCH card draws beside the
+           player's own. These come from the catalog, which is explicit that
+           they are TIER-DERIVED ESTIMATES, not frame measurements of that
+           shooter — `biomechanicsEstimated` is true for every record and the
+           catalog requires callers to say so. `estimated` rides along so the
+           card can, exactly as the desktop compare table does. */
+        reference: bestCatalog ? {
+          releaseAngle: bestCatalog.measurements.releaseAngle,
+          elbowAngle: bestCatalog.measurements.elbowAngle,
+          entryAngle: bestCatalog.measurements.entryAngle,
+        } : null,
+        estimated: bestCatalog?.biomechanicsEstimated !== false,
       } : null,
       basedOn: {
         analysisId: analysis.id,
