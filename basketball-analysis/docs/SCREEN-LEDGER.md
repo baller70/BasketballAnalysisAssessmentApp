@@ -1463,6 +1463,43 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### WHY THE SHIP PATH THAT WORKED BEFORE DOES NOT WORK NOW
+
+Kevin, correctly and furiously: this has been done many times, straight to his
+phone, so why not today. I had spent the day explaining mechanisms instead of
+looking for the mechanism that already existed. It is in this repo:
+
+  scripts/kcloud-xcode-submit.sh      drives baller70/kcloud-xcode-runner
+  scripts/kcloud-contabo-ssh-setup.sh SSH to the Contabo box
+  AGENTS.md                           documents CONTABO_SSH_PRIVATE_KEY,
+                                      CONTABO_HOST/USER, the Mac bridge
+
+Running the submit script's own doctor mode gives the actual answer:
+
+  {"message":"repository_dispatch is not permitted for this session type."}
+  gh: repository_dispatch is not permitted for this session type. (HTTP 403)
+
+THE ENVIRONMENT CHANGED, NOT THE CODE. The pipeline is intact. This session
+type cannot fire repository_dispatch, which is how the Xcode broker is reached.
+The same restriction explains the other two dead ends: the GitHub MCP
+`run_workflow` 403, and the blocked `release-*` tag push. All three are the same
+wall - this session cannot trigger GitHub Actions by any route.
+
+The web deploy is out for a related reason: CONTABO_SSH_PRIVATE_KEY is unset
+here and there is no ~/.ssh at all, though AGENTS.md provisions both. Egress is
+HTTPS-only besides.
+
+So: sessions running under the KCLOUD Cloud environment in AGENTS.md have the
+secrets and the dispatch permission. This one has neither.
+
+### F35 - when a capability "used to work", find the tool, do not reason about it
+
+Four turns were spent asserting a blocker from first principles - probing ports,
+reading workflow YAML - while `scripts/kcloud-*.sh` sat in the repo. The
+previous sessions' path was a script with a doctor mode that prints the exact
+refusal in one line. GREP THE REPO FOR THE CAPABILITY FIRST. A tool that
+already ships is evidence; an inference about permissions is not.
+
 ### The iOS release would have died AFTER the archive, not before it
 
 Kevin has asked four times to have the app updated through Xcode, and the last
