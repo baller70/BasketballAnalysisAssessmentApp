@@ -79,7 +79,7 @@ export function PlayerBio({
       {/* ----------------------------------------------------- stat strip */}
       <div className="mt-[14px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
         {([[chrome.streak, "DAY STREAK", "streak"], [chrome.points, "POINTS", "points"],
-           ["82", "FORM SCORE", "form"], [session.pct, "MAKE %", "make"]] as const).map(([v, l, kind]) => (
+           [session.score, "FORM SCORE", "form"], [session.pct, "MAKE %", "make"]] as const).map(([v, l, kind]) => (
           <div key={l} className="min-w-0 flex-1 text-center">
             <span className="flex h-[24px] items-center justify-center">
               {kind === "streak" && <StreakGlyph size={44} />}

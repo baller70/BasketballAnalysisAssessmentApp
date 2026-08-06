@@ -124,7 +124,7 @@ export function VideoReview({
           <span className="text-[var(--shotiq-color-graphite)]">Advanced</span>
         </div>
         <div className="flex shrink-0 divide-x divide-[var(--shotiq-color-rule)] text-center">
-          {([["82", "FORM SCORE", ORANGE], [session.shots, "SHOTS", undefined], [session.makes, "MAKES", undefined], [session.pct, "%", undefined]] as
+          {([[session.score, "FORM SCORE", ORANGE], [session.shots, "SHOTS", undefined], [session.makes, "MAKES", undefined], [session.pct, "%", undefined]] as
             [string, string, string | undefined][]).map(([v, l, c]) => (
             <div key={l} className="px-[6px]">
               <div className="shotiq-numeric text-[16px] leading-[17px]" style={c ? { color: c } : undefined}>{v}</div>

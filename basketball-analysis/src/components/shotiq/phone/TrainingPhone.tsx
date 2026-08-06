@@ -157,11 +157,11 @@ export function TrainingHome({ drills, onQuickStart }: {
                   <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
                 </div>
               </div>
-              <span className="shotiq-numeric shrink-0 text-[22px] leading-[20px]" style={{ color: ORANGE }}>82</span>
+              <span className="shotiq-numeric shrink-0 text-[22px] leading-[20px]" style={{ color: ORANGE }}>{session.score}</span>
             </div>
             <div className="mt-[6px] flex items-center gap-[6px]">
               <span className="rounded-[3px] px-[5px] py-[2px] text-[7.5px] leading-[9px]"
-                    style={{ border: `1px solid ${GREEN}`, color: GREEN }}>GOOD</span>
+                    style={{ border: `1px solid ${GREEN}`, color: GREEN }}>{session.verdict}</span>
               <span className="text-[9px]" style={{ color: GRAPHITE }}>Keep building consistency.</span>
             </div>
           </div>
@@ -191,6 +191,8 @@ function Stepper({ value, onChange }: { value: number; onChange: (v: number) => 
 }
 
 export function QuickStart({ onStart }: { onStart: () => void }) {
+  const session = useLatestSession()
+
   const [shots, setShots] = React.useState(24)
   const [makes, setMakes] = React.useState(15)
   return (
@@ -216,11 +218,11 @@ export function QuickStart({ onStart }: { onStart: () => void }) {
           </div>
           <div className="min-w-0 flex-1">
             <Eyebrow>FORM SCORE</Eyebrow>
-            <div className="shotiq-numeric mt-[4px] text-[62px] leading-[58px]" style={{ color: ORANGE }}>82</div>
+            <div className="shotiq-numeric mt-[4px] text-[62px] leading-[58px]" style={{ color: ORANGE }}>{session.score}</div>
             <div className="mt-[6px] h-[4px] w-full rounded-full" style={{ background: RULE }}>
               <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
             </div>
-            <div className="shotiq-microcaps mt-[8px]" style={{ fontSize: 9, lineHeight: "10px", color: GREEN }}>GOOD</div>
+            <div className="shotiq-microcaps mt-[8px]" style={{ fontSize: 9, lineHeight: "10px", color: GREEN }}>{session.verdict}</div>
             <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>Keep building consistency.</p>
           </div>
         </div>

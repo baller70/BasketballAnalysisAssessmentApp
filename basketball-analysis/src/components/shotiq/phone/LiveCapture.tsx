@@ -95,7 +95,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
         </div>
         <div className="flex shrink-0 items-start text-center">
           <div className="w-[62px]">
-            <div className="shotiq-numeric text-[19px] leading-[19px]">82</div>
+            <div className="shotiq-numeric text-[19px] leading-[19px]">{session.score}</div>
             <div className="shotiq-microcaps mt-[3px] whitespace-nowrap leading-[9px]" style={{ "--shotiq-microcaps-size": "8px", color: GRAPHITE } as React.CSSProperties} >FORM SCORE</div>
             <div className="mt-[4px] text-[8px] leading-[9.5px]" style={{ color: GRAPHITE }}>{TARGET}</div>
           </div>
@@ -269,7 +269,7 @@ function Setup({
           <div>
             <div className="shotiq-microcaps whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
             <div className="mt-[2px] flex items-baseline gap-[2px]">
-              <span className="shotiq-numeric text-[20px] leading-[20px]" style={{ color: BLUE }}>82</span>
+              <span className="shotiq-numeric text-[20px] leading-[20px]" style={{ color: BLUE }}>{session.score}</span>
               <span className="text-[9px]" style={{ color: GRAPHITE }}>/100</span>
             </div>
           </div>

@@ -136,7 +136,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
             <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
               FORM SCORE
             </div>
-            <div className="shotiq-numeric mt-[1px] text-[48px] leading-[48px]" style={{ color: ORANGE }}>82</div>
+            <div className="shotiq-numeric mt-[1px] text-[48px] leading-[48px]" style={{ color: ORANGE }}>{session.score}</div>
             <div className="mt-[3px] h-[5px] w-[80px] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full w-[82%] rounded-full" style={{ background: ORANGE }} />
             </div>

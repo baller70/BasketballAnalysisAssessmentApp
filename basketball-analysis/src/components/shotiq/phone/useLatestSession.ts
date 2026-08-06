@@ -1,6 +1,6 @@
 "use client"
 
-import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useHistory, formatMakePct, scoreVerdict } from "@/components/shotiq/ResultsBits"
 
 /**
  * The player's newest completed session, for the stat strips the phone screens
@@ -24,24 +24,33 @@ export interface LatestSession {
   shots: string
   makes: string
   pct: string
+  /** The newest session's form score, as the strips print it. */
+  score: string
+  /** Canonical's one-word band under the score. */
+  verdict: string
   /** True when these are the player's own numbers rather than the canonical set. */
   live: boolean
 }
 
 export const CANONICAL_SESSION: LatestSession = {
-  shots: "24", makes: "15", pct: "62.5%", live: false,
+  shots: "24", makes: "15", pct: "62.5%", score: "82", verdict: "GOOD", live: false,
 }
 
 export function useLatestSession(): LatestSession {
-  const { shots, makes } = useHistory()
-  // Both counts are needed for the triple to be internally consistent — a
-  // screen showing real shots beside canonical makes would state a make% that
-  // matches neither.
-  if (shots == null || makes == null) return CANONICAL_SESSION
+  const { shots, makes, score } = useHistory()
+  /* The score and the shot counts come from DIFFERENT places — an analysis
+     always has a score, but only one with a capture behind it has shot counts —
+     so they are resolved independently. A session can honestly report a real
+     form score beside canonical shot counts; what it must never do is report
+     real shots beside canonical makes, because the make% would then match
+     neither. That pair is all-or-nothing. */
+  const haveCounts = shots != null && makes != null
   return {
-    shots: String(shots),
-    makes: String(makes),
-    pct: formatMakePct(shots, makes),
-    live: true,
+    shots: haveCounts ? String(shots) : CANONICAL_SESSION.shots,
+    makes: haveCounts ? String(makes) : CANONICAL_SESSION.makes,
+    pct: haveCounts ? formatMakePct(shots, makes) : CANONICAL_SESSION.pct,
+    score: score != null ? String(score) : CANONICAL_SESSION.score,
+    verdict: score != null ? scoreVerdict(score) : CANONICAL_SESSION.verdict,
+    live: haveCounts || score != null,
   }
 }

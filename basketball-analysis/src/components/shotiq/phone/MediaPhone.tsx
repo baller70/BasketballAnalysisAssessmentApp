@@ -87,7 +87,7 @@ export function MyMedia({ groups, onOpen, onUpload }: {
           <div className="min-w-0 flex-1">
             <StatCells valueSize={19} labelSize={7}
                        cells={[
-                         { v: "82", l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
+                         { v: session.score, l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
                          { v: session.makes, l: "MAKES" }, { v: session.pct, l: "ACCURACY", tone: BLUE },
                        ]} />
           </div>
@@ -233,7 +233,7 @@ export function MediaDetail({ item, frames, onBack }: {
             </div>
             <div className="mt-[4px] text-[8.5px]" style={{ color: GRAPHITE }}>Form Score</div>
             <div className="mt-[2px] flex items-center gap-[7px]">
-              <span className="shotiq-numeric text-[19px] leading-[18px]" style={{ color: ORANGE }}>82</span>
+              <span className="shotiq-numeric text-[19px] leading-[18px]" style={{ color: ORANGE }}>{session.score}</span>
               <span className="h-[4px] min-w-0 flex-1 rounded-full" style={{ background: RULE }}>
                 <span className="block h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
               </span>

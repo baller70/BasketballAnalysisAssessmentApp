@@ -404,7 +404,7 @@ export function ExperienceBodyType({
       <div className="mx-[18px] mt-[11px]" style={{ borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>
         <StatCells className="py-[9px]" valueSize={19} labelSize={7.5}
                    cells={[
-                     { v: "82", l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
+                     { v: session.score, l: "FORM SCORE", tone: BLUE }, { v: session.shots, l: "SHOTS" },
                      { v: session.makes, l: "MAKES" }, { v: session.pct, l: "ACCURACY", tone: BLUE },
                      { v: <span className="text-[9px] leading-[11px]">Keep elbow<br />stacked</span>, l: "PRIMARY TARGET" },
                    ]} />

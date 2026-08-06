@@ -1595,9 +1595,25 @@ analysis link were then deleted and the canonical values confirmed restored.
    the one item that needs his input rather than a decision I can make.
 2. **`LiveCapture`'s Review screen** should show the counts of the capture it is
    reviewing. Needs the capture's own shot events threaded to the component.
-3. **The "82" form score** is still a literal beside the wired stat strips in
-   several phone components (MediaPhone, UploadPhone, OnboardingPhone,
-   VideoReview, PlayerBio) — the same class again, one field over.
+3. **DONE — the "82" form score.** Wired at 13 sites across 8 components, plus
+   the two "GOOD" verdict labels sitting directly under a wired score.
+   `useLatestSession` carries `score` and `verdict` now.
+
+   The score and the shot counts are resolved INDEPENDENTLY: an analysis always
+   has a score, but only one with a capture behind it has shot counts, so a
+   screen may honestly show a real score beside canonical counts. What it must
+   never do is show real shots beside canonical makes — that pair is
+   all-or-nothing, because the make% would otherwise match neither.
+
+   Excluded on purpose, same reasoning as LiveCapture's Review: `AnalysisStates`'
+   Processing and Error screens draw a FORM SCORE while an analysis is still
+   running, so the LAST session's score there would assert that the in-progress
+   one had already scored. `HomeProPhone`'s per-phase table and `GoalsPhone`'s
+   goal-relative average are different quantities, not this one.
+
+4. **Still open:** `LiveCapture`'s Review and `AnalysisStates`' Processing/Error
+   all need the SUBJECT analysis's own numbers threaded in — one task, three
+   screens, and the last of this class.
 
 ### Method rules learned here### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
