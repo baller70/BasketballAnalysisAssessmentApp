@@ -281,7 +281,7 @@ export function UploadQualityCheck({ src, fileName = "IMG_4521.MOV", onContinue,
       <div className="flex items-start px-[18px] pt-[13px]">
         <div className="min-w-0">
           <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
-          <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
           <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />

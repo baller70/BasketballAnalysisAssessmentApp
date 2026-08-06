@@ -119,9 +119,15 @@ export function VideoReview({
         <div className="flex min-w-0 flex-1 items-center gap-[6px] whitespace-nowrap text-[10.5px] leading-[12px] tracking-[-0.02em]">
           <span className="font-medium">{chrome.name}</span>
           <span className="text-[var(--shotiq-color-muted)]">•</span>
-          <span className="text-[var(--shotiq-color-graphite)]">Right-handed</span>
-          <span className="text-[var(--shotiq-color-muted)]">•</span>
-          <span className="text-[var(--shotiq-color-graphite)]">Advanced</span>
+          {/* Canonical writes the persona as two ruled cells rather than one
+              string, so the shared `sub` is split back on its own separator
+              instead of being re-derived here — one source, two presentations. */}
+          {chrome.sub.split(" • ").map((part, i) => (
+            <React.Fragment key={part}>
+              {i > 0 && <span className="text-[var(--shotiq-color-muted)]">•</span>}
+              <span className="text-[var(--shotiq-color-graphite)]">{part}</span>
+            </React.Fragment>
+          ))}
         </div>
         <div className="flex shrink-0 divide-x divide-[var(--shotiq-color-rule)] text-center">
           {([[session.score, "FORM SCORE", ORANGE], [session.shots, "SHOTS", undefined], [session.makes, "MAKES", undefined], [session.pct, "%", undefined]] as

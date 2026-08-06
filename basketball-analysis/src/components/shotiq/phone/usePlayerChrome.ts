@@ -28,6 +28,9 @@ import { usePoints } from "@/lib/points/pointsContext"
 export interface PlayerChrome {
   name: string
   sub: string
+  /** The hand alone — some screens caption a shot "Release • Right-handed"
+   *  rather than printing the whole persona line. */
+  hand: string
   streak: string
   points: string
 }
@@ -35,6 +38,7 @@ export interface PlayerChrome {
 export const CANONICAL_CHROME: PlayerChrome = {
   name: "Jordan Ellis",
   sub: "Right-handed • Advanced",
+  hand: "Right-handed",
   streak: "6",
   points: "2,840",
 }
@@ -88,6 +92,7 @@ export function usePlayerChrome(): PlayerChrome {
   return {
     name,
     sub,
+    hand: hand ?? CANONICAL_CHROME.hand,
     streak: streak != null ? String(streak) : CANONICAL_CHROME.streak,
     points: totalPoints > 0 ? totalPoints.toLocaleString() : CANONICAL_CHROME.points,
   }

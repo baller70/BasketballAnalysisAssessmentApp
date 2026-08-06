@@ -83,7 +83,7 @@ export function AnnotationToolbar({
       <div className="mt-[10px] flex items-start justify-between px-[16px]">
         <div className="min-w-0">
           <div className="shotiq-display text-[34px] leading-[33px] tracking-[0.045em]">{(name ?? chrome.name).toUpperCase()}</div>
-          <div className="mt-[2px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="mt-[2px] text-[11.6px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <StreakPoints streak={streak} points={points} />
       </div>

@@ -33,6 +33,7 @@ import {
   ORANGE, BLUE, GREEN, GRAPHITE, RULE, INK,
 } from "./Kit"
 import { StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { scoreBand } from "@/components/shotiq/ResultsBits"
 
 const MEASUREMENTS: [string, string, string][] = [
   ["HEIGHT", "6'3\"", "190 cm"],
@@ -55,6 +56,7 @@ export function PlayerCard({
   name?: string; streak?: string; points?: string
   onCustomize?: () => void; onShare?: () => void
 }) {
+  const band = scoreBand(typeof score === "number" ? score : null)
   const chrome = usePlayerChrome()
 
   return (
@@ -72,7 +74,7 @@ export function PlayerCard({
                alt={`${name} at the set point`} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[47px] leading-[42px] tracking-[0.015em]">{(name ?? chrome.name).toUpperCase()}</div>
-          <div className="mt-[4px] text-[13.5px] leading-[15px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="mt-[4px] text-[13.5px] leading-[15px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
           <div className="mt-[11px] flex divide-x divide-[var(--shotiq-color-rule)]">
             {([[<StreakGlyph key="a" size={42} />, streak, "DAY STREAK"],
                [<PointsGlyph key="b" size={23} />, points, "POINTS"],
@@ -95,7 +97,9 @@ export function PlayerCard({
           <ScoreBar score={score} width={108} height={7} />
         </div>
         <div className="ml-[14px] w-[104px] shrink-0">
-          <div className="shotiq-display text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+          {/* The fourth of these. A literal verdict in canonical's blue under a
+              wired score reads GOOD for a 41 as readily as for an 82. */}
+          <div className="shotiq-display text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</div>
           <div className="mt-[3px] text-[12px] leading-[13.5px]">Keep building<br />consistency.</div>
         </div>
         <div className="ml-auto w-[86px] shrink-0 border-l pl-[10px] text-center" style={{ borderColor: RULE }}>

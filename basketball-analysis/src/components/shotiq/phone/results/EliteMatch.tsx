@@ -93,7 +93,7 @@ export function EliteMatch({
         <div className="w-[64px] shrink-0">
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.03em]">JORDAN</div>
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.03em]">ELLIS</div>
-          <div className="mt-[2px] text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="mt-[2px] text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
           <div className="shotiq-numeric mt-[6px] text-[27px] leading-[26px]" style={{ color: ORANGE }}>{score}</div>
           <Micro size={8}>FORM SCORE</Micro>
           {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "SHOOTING %"]] as [string, string][]).map(([v, l]) => (

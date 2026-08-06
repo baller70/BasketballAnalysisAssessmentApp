@@ -1658,7 +1658,7 @@ byte-identical in both states is a candidate constant**, because real data
 cannot survive signing in unchanged. This is the cheapest reliable detector for
 this whole class of defect and should be re-run after any batch of wiring.
 
-`scratchpad/audit.mjs`, driven by an `RT=` comma list of routes (running all 23
+`scripts/audit/audit-numbers.mjs`, driven by an `RT=` comma list of routes (running all 23
 at once exceeds the tool timeout; do them in batches of ~5).
 
 Findings so far:
@@ -2097,6 +2097,46 @@ fallback show.
 The desktop card had the identical alt, and was fixed with it — the defect was
 in the pattern, not in one copy of it.
 
+### DONE: eleven screens still described the player as right-handed and advanced
+
+**The detectors now live in the repo.** `scripts/audit/audit-numbers.mjs` and
+`scripts/audit/audit-words.mjs` were scratchpad files that the ledger cited by
+name and that died with every container recycle — they were rebuilt from scratch
+three times. They are project tooling and are versioned now, with their blind
+spots (F15, F17, F19) and the 5s settle documented in the header.
+
+Running the categorical one over the routes it had never reached found the
+persona line surviving on ELEVEN phone components. `usePlayerChrome` has
+resolved name, description, streak and points since that sweep, and each of
+these screens already read `chrome.name` — **the name followed the player and
+the line directly beneath it did not.**
+
+**F13 again, and this is why the first sweep missed them.** That sweep found
+DEFAULT PROPS (`sub = "Right-handed • Advanced"`). These eleven wrote the same
+string as inline JSX between tags, so a search for the prop form reported them
+clean. Grep for what is RENDERED, in every form it can take.
+
+Wired: live capture, training, media, drills, drill detail, upload, onboarding
+(three places), share, video review, the elite-match card, the annotation
+toolbar, the metric detail and the player card. `usePlayerChrome` carries
+`hand` as well now, for the two screens that caption a shot "Release ·
+Right-handed" rather than printing the whole line.
+
+**And a fourth verdict constant.** `PlayerCard` printed `GOOD` in canonical's
+blue under a wired score — the same defect as the three fixed in the previous
+entry, in a component the earlier grep did not reach.
+
+Verified at 393pt with a LEFT-handed BEGINNER account scoring 41: every one of
+those screens moved to "Left-handed · Beginner", and the player card's verdict
+to NEEDS WORK. Signed out, and signed in after the probe was deleted, all of
+them read "Right-handed · Advanced / GOOD" exactly as canonical ships.
+
+Confirmed-by-hand false positives this round, for the record: "Make 10 shots
+from 22+ feet" (a badge challenge's copy), "Right-handed · Guard" on
+`/elite-shooters` (the SHOOTERS' own catalog attributes, not the player's), and
+"Review and track your shooting performance". Roughly half of every categorical
+run is chrome collision.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -2198,6 +2238,11 @@ in the pattern, not in one copy of it.
   fails, so a decorative image layered over a fallback must carry `alt=""`.
   A descriptive alt turns a failed headshot into text spilling out of its cell,
   on top of the initials that were supposed to cover for it.
+- **F24.** Tooling the ledger cites by name belongs in the repo. Both
+  differential detectors lived in a scratchpad, were referenced as the method
+  for finding most of the constants in this log, and were rebuilt from memory
+  three times after container recycles. If a rule depends on a script, version
+  the script.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

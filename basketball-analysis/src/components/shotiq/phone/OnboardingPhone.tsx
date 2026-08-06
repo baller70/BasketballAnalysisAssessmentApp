@@ -393,7 +393,7 @@ export function ExperienceBodyType({
       <div className="flex items-start gap-[10px] px-[18px] pt-[13px]">
         <div className="min-w-0">
           <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
-          <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <div className="ml-auto flex shrink-0 items-start">
           <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />
@@ -520,7 +520,7 @@ export function ShootingProfile({
         <div className="min-w-0">
           <div className="shotiq-display text-[15px] leading-[16px]">{chrome.name.toUpperCase()}</div>
           <div className="mt-[2px] text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>
-            Right-handed • Advanced<br />Form Score <span style={{ color: BLUE }}>82</span>
+            {chrome.sub}<br />Form Score <span style={{ color: BLUE }}>82</span>
           </div>
         </div>
         <div className="ml-auto flex shrink-0">
@@ -666,7 +666,7 @@ export function OnboardingReview({
                className="h-[58px] w-[58px] shrink-0 rounded-full object-cover" />
           <div className="min-w-0 flex-1">
             <div className="shotiq-display text-[22px] leading-[23px]">{chrome.name.toUpperCase()}</div>
-            <div className="mt-[3px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+            <div className="mt-[3px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
             <div className="mt-[6px] flex items-center gap-[6px]">
               <svg width="13" height="12" viewBox="0 0 13 12" aria-hidden="true">
                 {[0, 1, 2].map((i) => (

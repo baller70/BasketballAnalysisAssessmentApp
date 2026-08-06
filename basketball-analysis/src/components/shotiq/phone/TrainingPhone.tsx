@@ -50,7 +50,7 @@ function Identity({ tabTint }: { tabTint?: boolean }) {
             outliers stay outliers by design; chasing 055 would push the other
             three off. 30 * 51.5/46 = 33.6px. */}
         <div className="shotiq-display text-[33.6px] leading-[35px]">{chrome.name.toUpperCase()}</div>
-        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+        <div className="mt-[2px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
       </div>
       <div className="ml-auto flex shrink-0 items-start">
         <MiniStat glyph={<StreakGlyph size={38} />} value={chrome.streak} label="DAY STREAK" w={62} />

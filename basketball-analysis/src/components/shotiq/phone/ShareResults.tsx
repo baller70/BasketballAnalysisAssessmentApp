@@ -129,7 +129,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
           <div className="min-w-0 flex-1">
             <div className="shotiq-display text-[34.4px] leading-[35px]">{chrome.name.toUpperCase()}</div>
             <div className="mt-[6px] text-[11.4px] leading-[13px] tracking-[-0.04em] text-[var(--shotiq-color-graphite)]">
-              Right-handed • Advanced
+              {chrome.sub}
             </div>
           </div>
           <div className="shrink-0 text-center">

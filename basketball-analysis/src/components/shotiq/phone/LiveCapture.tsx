@@ -91,7 +91,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
       <div className="flex items-start justify-between pt-[11px]">
         <div className="min-w-0">
           <div className="shotiq-display text-[27px] leading-[28px] tracking-[0.04em]">{chrome.name.toUpperCase()}</div>
-          <div className="mt-[5px] whitespace-nowrap text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="mt-[5px] whitespace-nowrap text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>{chrome.sub}</div>
         </div>
         <div className="flex shrink-0 items-start text-center">
           <div className="w-[62px]">
