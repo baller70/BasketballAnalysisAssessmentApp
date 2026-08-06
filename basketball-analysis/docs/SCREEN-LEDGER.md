@@ -2221,6 +2221,55 @@ That is the empty state, not a defect — the same caveat the ledger already
 records for goals and the history date range. The detector cannot tell the two
 apart; only checking whether the data exists can.
 
+### PARTLY DONE: the processing screen now watches a real run
+
+Kevin, directly: *"a placeholder portrays a feature that I told you I want to
+be real, so that the user, when they go use it, actually works."* The feature
+log up to here has made displayed VALUES real. This is the first entry that
+makes a FEATURE real, and it is the biggest of the fakes.
+
+`/video-analysis/processing` was a `setTimeout`. Its `stage` was never advanced
+— the source read `void setStage` — so the bar sat at 64% for fifteen seconds
+and then declared itself slow, for every player, whether or not anything was
+running. It never received an analysis id and it polled nothing.
+
+**There is no server-side job to poll, and that is the point.** The run is
+CLIENT-SIDE: `VideoUpload` drives the pipeline in the browser and already moves
+through five real stages — uploading, analysing frames, processing results,
+saving the session, loading results — reporting each into its own local state
+where no other screen could see it. `/api/save-analysis` writes
+`processingStatus: "completed"` in the same request, so there has never been a
+row to watch.
+
+`lib/analysis/analysisJob.ts` is the contract: the pipeline publishes the stages
+it already computes, and the canonical screen renders whichever one the run has
+actually reached. It carries STATUS ONLY and deliberately does not re-implement
+the run — one analysis pipeline, one save path, or the two routes disagree
+about the same shot, which is the defect this whole log is about.
+
+Terminal states are the job's, not a guess: finishing routes to that analysis's
+results; throwing shows 040 with the pipeline's own message; passing 15s while
+still running shows 037, measured from the RUN's start so navigating in mid-run
+cannot reset the clock. Retry returns to the uploader rather than restarting
+here, because the run's subject is a `File` this screen never held — a retry
+that quietly did nothing would be the same lie one layer down.
+
+**With no run in flight the screen says NOTHING TO ANALYSE** and offers the
+uploader. Canonical has no state for this because canonical never imagined
+arriving without a run; a progress bar with nothing behind it is exactly what
+was removed.
+
+**WHAT IS NOT DONE, and it is half the feature.** `/video-analysis/upload`'s
+"Analyze video" buttons — phone review and desktop card — still only
+`router.push` to this screen. The page reads the chosen `File` in `onPick` and
+keeps only its metadata, so the file never reaches a pipeline and no job
+starts: a user taking that path now lands on NOTHING TO ANALYSE. That is
+honest, and it is not finished. Completing it means giving `VideoUpload` an
+entry point that accepts a file from outside and runs, which is a real change
+to a 700-line component and was not something to half-wire at the end of a
+session. **The working path today is the desktop uploader's own Analyze
+button**, which runs the pipeline and now drives this screen correctly.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and

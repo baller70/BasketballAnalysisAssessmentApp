@@ -30,6 +30,9 @@ import {
   notifyUploadQueueChanged,
   uploadQueueStorage,
 } from "@/lib/upload/uploadQueue"
+import {
+  startAnalysisJob, advanceAnalysisJob, completeAnalysisJob, failAnalysisJob,
+} from "@/lib/analysis/analysisJob"
 
 interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
@@ -166,6 +169,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setIsAnalyzing(true)
     setError(null)
     setAnalysisProgress("Uploading video...")
+    // The canonical processing screen watches this run; see lib/analysis/analysisJob.
+    startAnalysisJob(Date.now())
 
     const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
       mode: 'form',
@@ -191,6 +196,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
     try {
       setAnalysisProgress("Analyzing frames...")
+      advanceAnalysisJob("pose")
       
       // Call the video analysis service
       /* The player's stature is what turns pixels into inches for release
@@ -206,6 +212,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       }
 
       setAnalysisProgress("Processing results...")
+      advanceAnalysisJob("score")
       setResult(analysisResult)
       setCurrentFrameIndex(0)
 
@@ -293,6 +300,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       // Create and save session
       setAnalysisProgress("Saving session...")
+      advanceAnalysisJob("baseline")
       
       const detectedFlaws = detectFlawsFromAngles(sessionData.angles).map(f => f.name)
       const shooterLevel = getShooterLevel(sessionData.overallScore)
@@ -434,11 +442,14 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       // Navigate to results page
       setAnalysisProgress("Loading results...")
+      advanceAnalysisJob("plan")
+      completeAnalysisJob(session.id ?? null)
       router.push("/results/demo")
 
     } catch (err) {
       console.error('Video analysis error:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze video')
+      failAnalysisJob(err instanceof Error ? err.message : 'Failed to analyze video')
 
       const failedSessionId = captureSessionId ?? await resolveCaptureSessionId()
       if (failedSessionId) {
