@@ -426,8 +426,44 @@ export const MASKS = {
      share       334.38..372.61 x 1729.87..1771.66
      checkbox     68.19..107.89 x 1472.15..1511.60 */
 const MARKS = `
+/* THE MONOGRAM'S 13.804 WAS NOT UNREACHABLE — it had been ruled unreachable by
+   the one sweep this project has since discredited. That 81-candidate run is
+   the subject of method rule 40: six different (left, top) inputs returned the
+   same number to four decimals, and re-run alone the winner reproduced WORSE
+   than baseline. "Every geometry tried scored worse" was a conclusion drawn
+   from an instrument that was not measuring, and it stood in the ledger as a
+   stated residual for as long as nobody re-tested it against a control.
+
+   Re-solved with a control that reproduces the built capture's 13.8039 exactly
+   and 17/17 distinct candidate geometries: **13.8039 -> 5.5289** on a pure
+   vertical translation of 1.20 device px, with no box scaled and no traced
+   coordinate touched.
+
+   The shape error the ledger described is REAL and is what remains. Extents,
+   render minus canonical: L +1.05, R -0.35, T -1.13, B -0.21 — a translation
+   would move L and R together and T and B together, and these do not, so the
+   render is 1.40 px too narrow and 0.92 px too tall (aspect 1.291 against
+   1.343). What was wrong was inferring from a genuine shape error that the
+   whole band was shape: T -1.13 is a translation sitting on top of it, and it
+   was worth 8.3 of the 13.8.
+
+   The residual 5.5289 is the shape, and it is left alone deliberately. Fixing
+   it means re-tracing the glyph coordinates in Marks004.tsx; a non-uniform
+   scale on this box would land the extents while distorting every stroke
+   width, which is buying one metric with another (rule 24).
+
+   dy resolves cleanly here — 1.10 -> 5.7006, 1.20 -> 5.5289, 1.30 -> 5.9348,
+   bracketed on both sides — unlike the text runs on this screen, whose values
+   land on flat plateaux. This is SVG geometry with sub-pixel AA, not a text
+   raster snapping to whole device rows (rule 12), so the digits here are
+   measured rather than a rung.
+
+   Shipped as the SAME `transform:translate` the sweep injected, per rule 47:
+   the wordmark on this screen was solved with a transform, shipped through
+   `top`, and missed by a full raster rung. 1.20 device px / 2.170483 = 0.5529
+   CSS px. */
 .s4 [data-s4="monogram"]{position:absolute;left:${u(80)};top:${u(424)};width:${u(76)};height:${u(58)};
-  display:block;pointer-events:none}
+  transform:translate(0px,0.5529px);display:block;pointer-events:none}
 /* THE TWO EYE MARKS WERE ONE DEFECT. Both rendered ~7% oversized in BOTH
    dimensions - width ratios canonical/render 0.928 and 0.931, height ratios
    0.934 and 0.946 - i.e. a uniform scale error on a shared component, not two
