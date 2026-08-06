@@ -1731,6 +1731,76 @@ except one lead below.
   anywhere, and signed out the canonical `0:07` still renders. Probe row then
   deleted and the em-dashes confirmed back.
 
+### THE SWEEP WAS NOT FINISHED, AND THE DETECTOR HAD A BLIND SPOT
+
+The sweep recorded above covered 9 routes of ~23 and read "all clean except
+one". Finishing it over the remaining routes turned up one more constant by the
+same method and — more importantly — showed that "clean" had been meaning two
+different things.
+
+**F15: a route that redirects when signed out can never fail this test.**
+`/profile`, `/settings` and `/training/calendar` all bounce to `/signin` with no
+session, so their signed-out token set is the SIGN-IN PAGE's tokens. The
+intersection with the real page is empty by construction, and the detector
+reports clean no matter what constants the page carries. The mirror image is
+just as blind: `/results/demo/biomechanics` renders NO data tokens signed out
+(its zero state is honest), so the intersection is empty there too. In both
+cases the differential has nothing to compare and silently passes.
+
+For an auth-gated or empty-state-silent route the test has to be run the other
+way round: read the SIGNED-IN render and check each data value against the
+canonical constant directly. Four constants were sitting behind that gap.
+
+- **`/training/drills` — every tile's transport read `0:07`.** Found by the
+  differential (this route does render signed out). `MediaSurface` defaults to
+  `0:07`, and the tile paints the drill's real length as a badge 8px above it,
+  so each card carried two different answers. For a drill the player CREATED it
+  contradicted their own number — badged `12:00`, transport `0:07`. Verified by
+  seeding a 12-minute custom drill: the tile read `0:00 / 12:00`, the canonical
+  rows read their own lengths, and the probe drill was then deleted.
+
+- **`/results/demo/biomechanics` described someone else's shot.** The header
+  read `PULL-UP JUMPER`, `May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand`,
+  `24 SHOTS / 15 MAKES / 62.5%` — every one behind `hasData ? <constant> : <zero>`.
+  **That gate is the wrong way round.** The zero state was honest; the constants
+  appeared ONLY for a player who had a real session, so the screen was accurate
+  until it had something true to say and then described a stranger's shot.
+
+  The session's own title, date, style and counts come from the shared history
+  hook now; the shooting hand from the profile, because nothing in an analysis
+  records which hand took the shot. Shots and makes are an EM-DASH, not a zero,
+  when the analysis has no capture behind it — "no capture was counted" is not
+  "you missed every shot" (F5 again). Verified: signed in reads
+  `SHOT ANALYSIS / Aug 6, 2026 • 4:06 AM · Catch & Shoot · Right Hand / 84 / — / — / —`;
+  signed out is byte-for-byte the empty state it shipped with.
+
+- **Every account had joined on Jan 14, 2024.** `/profile` and `/settings` each
+  wrote that date into their markup. These two cards are near-duplicates and
+  have drifted before, so the date resolves through one hook (`useJoinedDate`).
+
+  **It reads `User.createdAt`, not the profile row's.** `ensureUserProfile`
+  creates the profile lazily on first read — on this very account the profile
+  row is SEVEN MINUTES younger than the user — so dating the account from it
+  would report the day someone next opened their profile, not the day they
+  joined. Both screens now read `Aug 6, 2026`, which is the account's real
+  01:13 sign-up.
+
+- **`/training/calendar` announced the current week as a week in May 2025.**
+  `"This week · May 12 – 18, 2025"` and `{MONTHS[month]} 2025` were literals on
+  a page whose every other date was already live — so the label sat directly
+  above seven real August dates and contradicted them. Both compose from the
+  resolved week and year now (`This week · Aug 3 – 9, 2026`), and canonical's
+  string still stands when there is no live plan.
+
+  This one the differential could never have found: the route redirects signed
+  out, and the account HAS workouts, so the wrong label was showing the whole
+  time the sweep was calling the route clean.
+
+Two values here were indistinguishable from their canonical twins by reading
+the screen — the join date, and "Right Hand" — so both were proved against the
+database instead: the hand was flipped to `left`, confirmed to render
+`Left Hand`, and restored to `right` (F14).
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
@@ -1787,6 +1857,12 @@ except one lead below.
   written `>JORDAN ELLIS<` in six components — already uppercased in the markup —
   so a search for the mixed-case string reported them clean. Sweep with the
   runtime text (walk the DOM for the string) as well as the source.
+- **F15.** The differential audit is blind to any route that redirects when
+  signed out, and to any route whose empty state renders no data at all. Both
+  produce an empty intersection and read as CLEAN however wrong they are. Four
+  constants hid there, including one on a page every other value of which was
+  already live. For those routes, check the signed-in render against the
+  canonical constant directly instead.
 - **F10.** When a screen names an entity beside a picture of it, the picture
   has to follow the name. The analysis overview named the real top match while
   still showing canonical's Trae Young crop — worse than the constant it

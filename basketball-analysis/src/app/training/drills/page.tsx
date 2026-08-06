@@ -213,7 +213,13 @@ function DrillLibrary() {
           {shown.map((d) => (
             <Card key={d.title} className="flex flex-col overflow-hidden">
               <div className="relative">
-                <MediaSurface height={130} rounded={0} />
+                {/* The surface's transport defaults to `0:07`, so every tile
+                    contradicted the badge sitting 8px above it — and for a
+                    drill the player created themselves it contradicted THEIR
+                    number: a drill badged 12:00 whose transport read 0:07. The
+                    length is right here in scope; the tile has no excuse for
+                    two answers. */}
+                <MediaSurface height={130} rounded={0} duration={d.len} />
                 <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{d.len}</span>
                 <button type="button" aria-label={saved.has(d.title) ? "Remove from my drills" : "Save drill"}
                         aria-pressed={saved.has(d.title)} onClick={() => toggleSave(d.title)}

@@ -55,6 +55,9 @@ export interface UserProfile {
   profileComplete: boolean
   createdAt: string | null
   updatedAt: string | null
+  /** When the ACCOUNT was created — what the JOINED readouts print. Distinct
+   *  from `createdAt`, which dates the profile row, not the sign-up. */
+  joinedAt: string | null
 }
 
 export interface ProfileState extends UserProfile {
@@ -166,6 +169,7 @@ const initialState: Omit<ProfileState,
   profileComplete: false,
   createdAt: null,
   updatedAt: null,
+  joinedAt: null,
   
   // Wizard State
   currentStep: 1,
@@ -396,6 +400,7 @@ export const useProfileStore = create<ProfileState>()(
               profileComplete: p.profileComplete,
               createdAt: p.createdAt,
               updatedAt: p.updatedAt,
+              joinedAt: p.joinedAt ?? null,
             })
             return true
           }
@@ -468,6 +473,7 @@ export const useProfileStore = create<ProfileState>()(
         profileComplete: state.profileComplete,
         createdAt: state.createdAt,
         updatedAt: state.updatedAt,
+        joinedAt: state.joinedAt,
         currentStep: state.currentStep,
       }),
     }

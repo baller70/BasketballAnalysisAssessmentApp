@@ -10,7 +10,8 @@ import {
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { formatFeetInches } from "@/lib/vision/derivedMetrics"
-import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
+import { useHistory, CoachingTarget, sessionDelta, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useProfileStore } from "@/stores/profileStore"
 import { useShotClip, ClipFrame } from "@/components/shotiq/ShotClip"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
@@ -130,6 +131,10 @@ interface LatestAnalysis {
 
 export default function BiomechanicsWorkspacePage() {
   const { hasData, score, items } = useHistory()
+  // The shooting hand named in the header comes from the player's profile —
+  // there is nothing in an analysis that says which hand took the shot.
+  const profile = useProfileStore()
+  useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
 
   /** The caller's own most recent shot, and exactly which angles it carries. */
   const [latest, setLatest] = useState<LatestAnalysis | null>(null)
@@ -154,6 +159,35 @@ export default function BiomechanicsWorkspacePage() {
   // Same session-over-session delta the rest of the app prints — this readout
   // used to be a hard-coded +8.1%.
   const delta = sessionDelta(items)
+
+  /* WHICH SESSION THIS WORKSPACE IS DESCRIBING.
+     The header named it "PULL-UP JUMPER · May 12, 2025 at 8:24 AM · Catch &
+     Shoot · Right Hand" with 24 SHOTS / 15 MAKES / 62.5% beside it, every one
+     of them behind `hasData ? <constant> : <zero>`. That gate is the wrong way
+     round: the zero state was honest, and the constants only ever appeared for
+     a player who HAD a session — so the screen was accurate until it had
+     something real to say, then described someone else's shot. */
+  const session = items[0] ?? null
+  const hand = profile.dominantHand
+    ? `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1).toLowerCase()} Hand`
+    : null
+  const caption = session
+    ? [session.when, session.style, hand].filter(Boolean).join(" · ")
+    : "Run an analysis to populate this workspace."
+  /* The breadcrumb and the H1 both name the shot. With nothing analysed,
+     canonical's PULL-UP JUMPER stands as the empty state; with a real session
+     the workspace has to be headed by the session it is actually showing. */
+  const heading = (session?.title ?? "Pull-Up Jumper").toUpperCase()
+  /* Shots and makes come from the capture behind the analysis, and an analysis
+     can exist without one (an uploaded still, an iOS run with no session). Then
+     the honest mark is an em-dash, NOT a zero — "no capture was counted" is not
+     "you missed every shot". The no-data column keeps the zeros it already
+     shipped with. */
+  const counts = session?.shots != null && session.makes != null
+    ? { shots: String(session.shots), makes: String(session.makes), pct: formatMakePct(session.shots, session.makes) }
+    : hasData
+      ? { shots: "—", makes: "—", pct: "—" }
+      : { shots: "0", makes: "0", pct: "—" }
   const [tab, setTab] = useState("METRICS")
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Annotations: true })
   // Annotation ink tools live behind the fourth toggle (canonical toolbar).
@@ -257,11 +291,11 @@ export default function BiomechanicsWorkspacePage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[11px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
-            <Link href="/results/demo/history">ANALYSES</Link>&ensp;›&ensp;PULL-UP JUMPER
+            <Link href="/results/demo/history">ANALYSES</Link>&ensp;›&ensp;{heading}
           </div>
-          <PageTitle size={52} className="mt-[2px]">ANALYSIS — PULL-UP JUMPER</PageTitle>
+          <PageTitle size={52} className="mt-[2px]">ANALYSIS — {heading}</PageTitle>
           <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
-            {hasData ? "May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand" : "Run an analysis to populate this workspace."}
+            {caption}
           </p>
         </div>
         {/* Canonical runs this strip 464px wide (FORM SCORE x843 to VS LAST x1307)
@@ -276,15 +310,15 @@ export default function BiomechanicsWorkspacePage() {
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "24" : "0"}</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{counts.shots}</div>
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "15" : "0"}</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{counts.makes}</div>
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "62.5%" : "—"}</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{counts.pct}</div>
           </div>
           <div className="px-[29px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST</div>

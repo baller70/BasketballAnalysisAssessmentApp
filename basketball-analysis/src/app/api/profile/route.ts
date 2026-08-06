@@ -189,13 +189,25 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.user.findUnique({ where: { id: user.userId }, select: { displayName: true, email: true } }),
+      prisma.user.findUnique({
+        where: { id: user.userId },
+        // `createdAt` is the ACCOUNT's birthday. The profile row's own
+        // createdAt is not the same thing — `ensureUserProfile` above creates
+        // it lazily on first read, so for anyone who signed up before that row
+        // existed it would date the account to their next visit.
+        select: { displayName: true, email: true, createdAt: true },
+      }),
     ])
 
     return NextResponse.json({
       success: true,
       profile: profile
-        ? { ...profile, displayName: userRow?.displayName ?? null, email: userRow?.email ?? null }
+        ? {
+            ...profile,
+            displayName: userRow?.displayName ?? null,
+            email: userRow?.email ?? null,
+            joinedAt: userRow?.createdAt?.toISOString() ?? null,
+          }
         : profile,
     })
   } catch (error) {

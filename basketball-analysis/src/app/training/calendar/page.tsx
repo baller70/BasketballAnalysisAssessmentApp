@@ -148,6 +148,20 @@ export default function TrainingCalendarPage() {
 
   /* The month grid's shape follows the month being shown once there is real
      data; without it, canonical's May 2025 (Thursday start, 31 days) stands. */
+  /* The week strip's own label. It read "This week · May 12 – 18, 2025" as a
+     literal, so an account whose sessions were all in August still had its
+     current week announced as a week in May 2025 — sitting directly above the
+     seven real dates it contradicted. `dates` already holds this week's days;
+     the label is composed from them, and drops the repeated month exactly the
+     way canonical writes it. Without live data canonical's own string stands. */
+  const weekLabel = live
+    ? (() => {
+        const [a, b] = [dates[0] ?? "", dates[6] ?? ""]
+        const sameMonth = a.split(" ")[0] === b.split(" ")[0]
+        return `This week · ${a} – ${sameMonth ? b.split(" ")[1] : b}, ${year}`
+      })()
+    : "This week · May 12 – 18, 2025"
+
   const gridOffset = live ? mondayIndex(new Date(year, month, 1)) : MAY_OFFSET
   const gridDays = live ? new Date(year, month + 1, 0).getDate() : MAY_DAYS
 
@@ -227,7 +241,7 @@ export default function TrainingCalendarPage() {
                 <ChevronLeft className="h-[15px] w-[15px]" />
               </button>
               <span className="text-[13px] font-medium">
-                {week === 0 ? "This week · May 12 – 18, 2025" : week > 0 ? `${week} week${week > 1 ? "s" : ""} ahead` : `${-week} week${week < -1 ? "s" : ""} ago`}
+                {week === 0 ? weekLabel : week > 0 ? `${week} week${week > 1 ? "s" : ""} ahead` : `${-week} week${week < -1 ? "s" : ""} ago`}
               </span>
               <button type="button" aria-label="Next week" onClick={() => setWeek((w) => w + 1)}
                       className="grid h-[36px] w-[36px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)]">
@@ -248,7 +262,7 @@ export default function TrainingCalendarPage() {
               </button>
             </div>
           )}
-          {view === "Month" && <span className="text-[13px] font-medium">{MONTHS[month]} 2025</span>}
+          {view === "Month" && <span className="text-[13px] font-medium">{MONTHS[month]} {year}</span>}
         </div>
 
         {/* view switcher */}

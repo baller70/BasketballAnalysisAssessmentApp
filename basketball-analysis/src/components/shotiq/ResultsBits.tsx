@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
+import { useProfileStore } from "@/stores/profileStore"
 
 export interface HistoryStats {
   totalAnalyses: number
@@ -45,6 +46,36 @@ export function formatSessionDate(value: string | number | Date | null | undefin
   const day = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
   const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
   return `${day} • ${time}`
+}
+
+/**
+ * The day half of that format, alone — `Jan 14, 2024`.
+ *
+ * The JOINED readouts on /profile and /settings want a date without a time.
+ * They share the month/day/year options above so a day printed on its own can
+ * never drift from the same day printed beside a time.
+ */
+export function formatDayDate(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return ""
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
+/**
+ * The JOINED date both /profile and /settings print.
+ *
+ * Each had `Jan 14, 2024` written into its markup, so every account was told it
+ * had joined on the same January afternoon. These two cards are near-duplicates
+ * of one another and have drifted before, so the date resolves in one place:
+ * the server now returns the ACCOUNT's creation time (not the profile row's,
+ * which is created lazily on first read), and the canonical date remains the
+ * empty state for a visitor with no account behind the screen.
+ */
+export function useJoinedDate(): string {
+  const joinedAt = useProfileStore((s) => s.joinedAt)
+  useEffect(() => { void useProfileStore.getState().fetchProfile() }, [])
+  return formatDayDate(joinedAt) || "Jan 14, 2024"
 }
 
 /** Make percentage from a shots/makes pair, or null when either is missing. */

@@ -11,7 +11,7 @@ import {
 import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { useAuthStore } from "@/stores/authStore"
 import {
-  useHistory, FormScoreCell, StatStrip, TrendDelta, formatMakePct, scoreSeries,
+  useHistory, FormScoreCell, StatStrip, TrendDelta, formatMakePct, scoreSeries, useJoinedDate,
 } from "@/components/shotiq/ResultsBits"
 import { ProfileOverviewPhone } from "@/components/shotiq/phone/ProfileOverviewPhone"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
@@ -30,6 +30,7 @@ export default function ProfileAccountPage() {
   // Score, shot counts and the session-over-session delta all come from the one
   // shared history hook.
   const { items, score, shots, makes, delta } = useHistory()
+  const joined = useJoinedDate()
   const [form, setForm] = useState({ name: "", email: "", hand: "Right", level: "Advanced", height: "6' 4\"", weight: "195 lbs", wingspan: "6' 8\"", pref: "Catch & Shoot" })
   const [saved, setSaved] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(null)
@@ -143,7 +144,7 @@ export default function ProfileAccountPage() {
           <Card className="min-w-0 flex-1 p-[16px]">
             <div className="flex items-start justify-between">
               <SectionLabel>PROFILE INFORMATION</SectionLabel>
-              <div className="text-right"><div className={lbl}>JOINED</div><div className="text-[12px]">Jan 14, 2024</div></div>
+              <div className="text-right"><div className={lbl}>JOINED</div><div className="text-[12px]">{joined}</div></div>
             </div>
             <div className="mt-[10px] flex gap-[18px]">
               <div className="w-[120px] shrink-0 text-center">
