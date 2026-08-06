@@ -104,6 +104,8 @@ export default function UploadPage() {
     window.history.replaceState(null, "", u.toString())
   }, [])
   const phoneFileRef = useRef<HTMLInputElement | null>(null)
+  /** The cropped/rotated photo, once the player has framed one. */
+  const [croppedSrc, setCroppedSrc] = useState<string | null>(null)
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -199,7 +201,10 @@ export default function UploadPage() {
     // The still under review is the file the player picked; with none picked
     // yet (a deep link straight to `?step=review`) it is their most recent
     // capture, which is what "review your shot" means with an empty picker.
-    const reviewSrc = previewUrls[0] || "/images/canonical/094-t1.png"
+    /* The photo as the player framed it. PhotoReviewCrop hands back the
+       cropped, rotated pixels; before this the crop was thrown away and the
+       ORIGINAL went on to the quality check and the analysis. */
+    const reviewSrc = croppedSrc || previewUrls[0] || "/images/canonical/094-t1.png"
     return (
       <div className="md:hidden" data-testid="screen-ios-upload-flow">
         <input ref={phoneFileRef} type="file" accept="image/*,video/*" className="hidden"
@@ -216,9 +221,9 @@ export default function UploadPage() {
         )}
         {photoStep === "review" && (
           <PhotoReviewCrop src={reviewSrc}
-                           onRetake={() => { handleRetake(); goPhoto("source") }}
-                           onCrop={() => phoneFileRef.current?.click()}
-                           onUse={() => goPhoto("quality")}
+                           onRetake={() => { setCroppedSrc(null); handleRetake(); goPhoto("source") }}
+                           onCrop={(out) => setCroppedSrc(out)}
+                           onUse={(out) => { setCroppedSrc(out); goPhoto("quality") }}
                            onBack={() => goPhoto("source")} />
         )}
         {photoStep === "quality" && (

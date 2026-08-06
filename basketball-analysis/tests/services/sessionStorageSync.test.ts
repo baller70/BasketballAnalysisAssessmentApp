@@ -97,3 +97,38 @@ describe('analysisSessionToSavePayload', () => {
     expect(payload.elbowAngle).toBeUndefined()
   })
 })
+
+describe('the dip reaches the save payload', () => {
+  /* THE LAST LINK OF THE CHAIN, asserted rather than read (F30).
+     `videoAnalysis` finds the deepest knee bend (`findLoadFrame`) and puts it
+     in `metrics.knee_angle_range.min`; `toVideoSessionData` preserves it;
+     `saveSession` -> `syncSessionToServer` -> this function is what actually
+     carries it to the server. Every earlier test of the dip seeded the database
+     directly, which would have passed just as happily if a real upload never
+     sent the column at all. */
+  const withDip = (min: number | null): AnalysisSession => {
+    const s = session()
+    s.videoData!.metrics!.knee_angle_range = { min, max: 178 }
+    return s
+  }
+
+  it('sends the dip a real analysis measured', () => {
+    expect(analysisSessionToSavePayload(withDip(138)).kneeAngleMin).toBe(138)
+  })
+
+  it('sends the DIP, not the release knee, when the two differ', () => {
+    // The defect the column exists to prevent: `angles.right_knee_angle` here
+    // is 143 at release, while the dip is 112. Sending the release knee would
+    // make INSUFFICIENT_KNEE_BEND judge the wrong moment all over again.
+    const payload = analysisSessionToSavePayload(withDip(112))
+    expect(payload.kneeAngleMin).toBe(112)
+    expect(payload.kneeAngle).toBe(143)
+  })
+
+  it('omits the dip entirely when the clip never measured one', () => {
+    // undefined, so Prisma stores NULL and the flaw rule abstains, rather than
+    // a 0 that would read as a shooter folded flat on the floor.
+    expect(analysisSessionToSavePayload(withDip(null)).kneeAngleMin).toBeUndefined()
+    expect(analysisSessionToSavePayload(session()).kneeAngleMin).toBeUndefined()
+  })
+})

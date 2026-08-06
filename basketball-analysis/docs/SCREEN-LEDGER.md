@@ -1463,6 +1463,307 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### PHOTO REVIEW: the crop button now crops
+
+Kevin, with a screenshot: "When I press crop, it doesn't fucking crop. Any
+button I press does not give me the functionality." He is right, and this screen
+was the clearest case in the app of a control describing something it did not do.
+
+WHAT WAS THERE. The heading read "Adjust crop to include your full body from
+head to toe" over a frame nothing could adjust: the corner brackets were
+`aria-hidden` decorations at a fixed 30/34px inset with no drag handling. The
+rotation dial only set a CSS `transform` on the preview. `onCrop` was wired to
+`phoneFileRef.current?.click()` - CROP OPENED THE FILE PICKER. And USE PHOTO
+called `goPhoto("quality")`, carrying the ORIGINAL image forward, so any framing
+a player did was discarded before analysis.
+
+WHAT IT DOES NOW. `lib/image/cropImage.ts` holds the geometry and the canvas
+render: rotate about the centre into a bounding box that keeps the corners, then
+cut the rect from the rotated frame - the same order the preview shows, because
+cropping first would cut a different part of the photo than the player saw. The
+frame is dragged to move and its corners to resize, holding 3:4, with everything
+outside dimmed so the frame reads as what will be KEPT. CROP applies frame and
+angle to the pixels and shows the result, so it can be cropped again. USE PHOTO
+exports what is on screen, and `/upload` keeps it in `croppedSrc` so the quality
+check and the analysis see the framed photo.
+
+THREE BUGS FOUND BY DRIVING IT, not by reading it:
+
+  1. RESIZE DID NOTHING. `setPointerCapture` on a corner retargets every later
+     pointermove to that corner, so the container's handler never fired. Moved
+     to window listeners, which also keep a drag alive off the edge of the photo.
+  2. THE TIP BANNER ATE THE BOTTOM HANDLES. `elementFromPoint` at the SE corner
+     returned the black "Tip:" box. It is advice; it is `pointer-events-none`
+     now.
+  3. 3:4 WAS 0.803. Normalised space is not square - the box is 377x352 - so a
+     3:4 normalised rect renders at 0.803. The ratio is a PIXEL ratio and is
+     converted through the measured box.
+
+And a fourth: the phone tree mounts late with an unmeasurable box, so measuring
+at mount yielded the raw fallback. A ResizeObserver did NOT fix it - the box
+never changes size once it appears, so the single callback fired while it was
+still 0. An animation-frame retry until the box measures does.
+
+Verified by driving the real screen: frame present; drag moves it (x 65 -> 25);
+resize from the SE corner gives 214x285, ratio exactly 0.750; and pressing CROP
+turns the `img` src from `/images/canonical/...` into
+`data:image/jpeg;base64,...` - real cropped pixels. 331 tests, 8 new on the
+geometry. Probe account deleted.
+
+### F37 - a control that describes an action must be driven, not read
+
+Reading this file would have shown `onCrop` opening a file picker, which is
+obvious once seen. What reading would NOT have shown: pointer capture killing
+resize, a tip banner swallowing two handles, and a ratio that is right in the
+model and wrong on screen. Three of the four defects only existed in the running
+UI. For any interactive control, drive it in a browser and assert the OUTPUT
+changed - `img.src` becoming a data URL is the whole proof that CROP crops.
+
+### Fired sessions into the Mac and Contabo environments produce NO observable effect
+
+`list_environments` shows three active environments, two of which are exactly
+what was needed all day:
+
+  env_01EL18zvADbWj96aypV9E6Qi  Kevins-Mac-mini:codex-cloud-control:c202 (bridge)
+  env_01KUKVN75rocgiZohZPFKdDZ  Contabo Production
+
+`create_trigger` + `fire_trigger` against both returns a session_id every time.
+FIVE fires - four at the Mac, one at Contabo - produced zero observable effect:
+
+  - the box still serves 160deg - 180deg, so `deploy.sh` never ran
+  - no comment on PR #56 and no `device-install-report` branch, though the last
+    Mac fire was told to post the log to one or the other as its ONLY job
+  - `list_triggers` exposes no last_run_at, last_status or ended_reason, so
+    there is no way from here to tell "did not execute" from "executed and
+    failed silently"
+
+THE REPORTING CHANNEL WAS THE POINT OF THE LAST FIRE and it also produced
+nothing, which is the strongest signal: a session that had run far enough to
+fail would still have been able to post the failure.
+
+WHAT WAS FOUND THAT IS REAL AND USEFUL: `scripts/install-on-device.sh` is the
+proven lane. Its own header - "Build ShotIQ for a physical iPhone and install it
+straight onto it. Ported from the hooptrack lane that put HoopTrack on the
+phone... builds Debug with a development identity... and hands the result to
+devicectl. It never touches the archive, the upload, or anything in review." It
+knows team DD9G8RP575, the project, the scheme, and takes an optional
+DEVICE_UDID. Run on Kevin's Mac with the phone attached, it is a single command.
+
+### F36 - a fire-and-forget channel is not a capability
+
+`fire_trigger` returning a session_id was treated as "the work is running" and
+reported to Kevin that way, three times. It is not evidence of anything except
+that a message was accepted. Never describe dispatched work as running without
+a return path that can be READ. If the only available channel is one-way, say
+so before firing, not after the third silent attempt - and prefer handing the
+user the one command over firing blind again.
+
+### WHY THE SHIP PATH THAT WORKED BEFORE DOES NOT WORK NOW
+
+Kevin, correctly and furiously: this has been done many times, straight to his
+phone, so why not today. I had spent the day explaining mechanisms instead of
+looking for the mechanism that already existed. It is in this repo:
+
+  scripts/kcloud-xcode-submit.sh      drives baller70/kcloud-xcode-runner
+  scripts/kcloud-contabo-ssh-setup.sh SSH to the Contabo box
+  AGENTS.md                           documents CONTABO_SSH_PRIVATE_KEY,
+                                      CONTABO_HOST/USER, the Mac bridge
+
+Running the submit script's own doctor mode gives the actual answer:
+
+  {"message":"repository_dispatch is not permitted for this session type."}
+  gh: repository_dispatch is not permitted for this session type. (HTTP 403)
+
+THE ENVIRONMENT CHANGED, NOT THE CODE. The pipeline is intact. This session
+type cannot fire repository_dispatch, which is how the Xcode broker is reached.
+The same restriction explains the other two dead ends: the GitHub MCP
+`run_workflow` 403, and the blocked `release-*` tag push. All three are the same
+wall - this session cannot trigger GitHub Actions by any route.
+
+The web deploy is out for a related reason: CONTABO_SSH_PRIVATE_KEY is unset
+here and there is no ~/.ssh at all, though AGENTS.md provisions both. Egress is
+HTTPS-only besides.
+
+So: sessions running under the KCLOUD Cloud environment in AGENTS.md have the
+secrets and the dispatch permission. This one has neither.
+
+### F35 - when a capability "used to work", find the tool, do not reason about it
+
+Four turns were spent asserting a blocker from first principles - probing ports,
+reading workflow YAML - while `scripts/kcloud-*.sh` sat in the repo. The
+previous sessions' path was a script with a doctor mode that prints the exact
+refusal in one line. GREP THE REPO FOR THE CAPABILITY FIRST. A tool that
+already ships is evidence; an inference about permissions is not.
+
+### The iOS release would have died AFTER the archive, not before it
+
+Kevin has asked four times to have the app updated through Xcode, and the last
+attempt from here failed on permissions: `actions/workflows/.../dispatches`
+returns 403 for this token, and pushing a `release-*` tag - the path the
+workflow documents for exactly that case - is blocked by the sandbox classifier.
+So he has to start the run himself. The one useful thing left is making sure it
+does not waste his time when he does.
+
+It would have. `ios-appstore.yml`'s preflight checked two secrets,
+APPLE_DIST_CERT_P12_BASE64 and ASC_KEY_P8_BASE64. `appstore-release.sh` needs
+ASC_ISSUER_ID to upload - it dies on "ASC_ISSUER_ID is not set" at line 196 -
+and NOTHING asked for it until that moment. A release with it unset would have:
+started the macOS runner, installed XcodeGen, generated the project, imported
+the signing certificate, installed the API key, run the FULL ARCHIVE (twenty to
+forty minutes), and only then failed on the last step. ASC_KEY_ID was checked,
+but inside the macOS job, after the runner had already started.
+
+The config job runs on ubuntu in seconds. It now checks all four required
+secrets there and NAMES each missing one; the old message was "Release secrets
+are missing. Run the iOS Release Preflight workflow to see which", which sends
+the reader to a second workflow to learn what a single line could have said.
+APPLE_DIST_CERT_PASSWORD is deliberately not required - a .p12 may carry no
+password and demanding one would block a valid setup.
+
+Verified by dry-running the guard both ways: ASC_ISSUER_ID absent exits 1 and
+names it; all four present exits 0 and proceeds. YAML parses.
+
+ALSO CONFIRMED, since the instruction given to Kevin depended on it: the TAG
+path resolves correctly. `release-2` on main gives build_number 2 and stage
+upload-and-submit, and `--build N` reaches the archive as a real
+`CURRENT_PROJECT_VERSION=N` xcodebuild override. So `git push origin release-2`
+does what he was told it does.
+
+### F34 - check a preflight covers every secret its own script dies on
+
+A guard that checks SOME of the required inputs is worse than none: it reads as
+"the credentials were verified" and then fails deep inside an expensive job.
+Grep the scripts a workflow calls for what they `die` on, and make the cheap
+early job assert exactly that set.
+
+### A clean shooter was recommended three hardcoded drills
+
+Continuing the F16 sweep. RECOMMENDED FOR YOUR GOAL fell back to `RECOMMENDED`
+- "Footwork Into Release", "Elbow Stack Holds", "High Elbow Release", written
+into the page with canonical photography - whenever the route returned
+`personalised: false`. The screen gated on that flag:
+
+    const liveRecs = rec?.personalised && rec.drills.length ? rec.drills : null
+
+MY OWN CHANGE MADE THIS THE COMMON PATH. While ELBOW_ANGLE_OBTUSE and
+INSUFFICIENT_KNEE_BEND fired on every shot ever taken, every account was
+"personalised" and this branch was nearly unreachable. Now that both abstain, a
+player whose form is clean lands here EVERY TIME - and gets three hardcoded
+cards presented as their own recommendations.
+
+Nothing to train OUT is not nothing to train. `getRecommendedDrills(level, [])`
+already returns real catalogue drills for the player's own level - the same
+function the flaw path calls, just with nothing to prioritise - and the route
+was throwing that away to return `drills: []`. It now returns them, tagged
+`basis: "level"`, and the screen's caption already had the branch for it.
+
+`recBecause` also fell through to `primaryGoal`, so a level-matched list would
+have been captioned "Based on <the player's goal>" - crediting the pick to
+something with no part in it. It keys off `basis` now.
+
+Canonical still stands for a caller with NO analyses at all: that is the only
+case the route sends an empty list, and it is exactly who canonical is for.
+
+Verified against the real API and the real screen, three ways:
+  dip 166 (a real flaw)  personalised, basis=flaw, Knee Bend Power / Shot Load
+                         Optimization / Knee Bend Bounce, each why="Insufficient
+                         Knee Bend"; caption "Based on Insufficient Knee Bend"
+  dip 138 (clean)        basis=level, Game-Situation Shooting / Consistency
+                         Challenge / Pressure Free Throws, why=null; caption
+                         "Matched to your level"
+  no analyses            basis=none, drills [], canonical three stand
+Signed out is canonical. Probe account deleted. 323 tests, tsc clean, 0 lint.
+
+### F33 - fixing a rule that always fired promotes its fallback to the main path
+
+Every one of these has been a second-order consequence of the flaw fix. Making
+two always-true rules abstain turned `personalised: false` from an edge case
+into the default, and whatever sat behind that flag - here, three canonical
+cards - became what most players see. When a rule stops firing, go and look at
+what the screens do in its absence; that branch has never carried real traffic
+and has never been examined.
+
+### The history table showed canonical's twelve sessions as a real player's own
+
+An F16 sweep - what a screen falls back to when a live list comes back EMPTY -
+turned up the history table, and it had the contract exactly inverted:
+
+    : hasData || items.length ? DEMO_ROWS : []
+
+`hasData || items.length` is true precisely when the caller HAS analyses. So a
+player who picked a 7- or 14-day range with no sessions in it was shown
+canonical's TWELVE ROWS - dates, form scores, verdicts, make %, shots/makes -
+plus a "12 sessions" count, as their own history. Nothing on the screen said
+otherwise: `demoMode` existed only to print that 12. Meanwhile a signed-out
+visitor, who is exactly who canonical is for, got an EMPTY TABLE.
+
+The file's own comment stated the intent: "junk rows ... fall back to the
+canonical demo sessions so the table always mirrors the 093 screen". Cosmetic
+fidelity bought with a fabricated record of sessions the player never shot.
+
+Inverted to the contract: nothing at all -> canonical, the screen as designed;
+real analyses with none in this window -> no rows and a line saying so. And the
+pre-existing "No sessions yet - run your first analysis" is now gated too, since
+it was telling a player with three analyses to go run their first.
+
+Verified in a browser, three states, after `rm -rf .next` (see below):
+  signed in, sessions 2 days old   3 sessions, Aug 4/3/2 2026, real scores
+  signed in, sessions 90 days old  0 sessions, "No sessions in the last 14
+                                   days. Widen the range to see your earlier
+                                   ones." - no canonical rows, no contradiction
+  signed out                       12 sessions, canonical May 2025 rows
+Probe account deleted. 323 tests pass, tsc clean, 0 lint errors.
+
+### F32 - the stale .next trap has a second trigger, and it fakes THIS defect
+
+The first three verification runs showed canonical rows to a signed-in player
+with seeded data - the exact defect being fixed, apparently still present after
+the fix. It was not: `scripts/build-pages-static.mjs` does `rmSync('.next')`
+mid-run, and a dev server started around it serves a half-built tree whose CSS
+and chunks 404, so the page never hydrates and the SSR pass renders the
+canonical default. `rm -rf .next` and a clean restart showed the real rows
+immediately.
+
+Two lessons. Any turn that has run the Pages export must clear `.next` before
+believing a browser check. And when a screenshot shows exactly the bug you are
+fixing, check hydration before concluding the fix failed - a 404 sweep for
+`_next/static` costs one Playwright run and settles it.
+
+### Closing the dip chain at the link that was never asserted
+
+An F1 sweep over the domain modules - every exported function with no importer -
+flagged `analysisSessionToSavePayload` and `syncSessionToServer` as orphans.
+That was MY DETECTOR being wrong, not the code: it excluded same-file callers,
+and the chain is `saveSession` -> `syncSessionToServer` -> the payload builder,
+all three inside sessionStorage.ts. Worth recording, because a sweep that
+reports a live save path as dead is worse than no sweep.
+
+But chasing it down exposed a real gap. Every earlier test of the dip seeded
+the DATABASE directly, so all of them would have passed just as happily if a
+real upload never sent the column. The last link - a finished analysis actually
+carrying `knee_angle_range.min` into the save payload - was read and believed,
+never asserted. That is precisely what F30 was written about, one turn after
+writing it.
+
+Traced and now pinned: `findLoadFrame` takes the minimum knee ->
+`metrics.knee_angle_range.min` -> `toVideoSessionData` preserves it ->
+VideoUpload spreads it into `videoData` -> `saveSession` ->
+`syncSessionToServer` -> `analysisSessionToSavePayload` reads
+`videoData.metrics.knee_angle_range.min` -> POST. Three tests hold it:
+the dip is sent; the DIP is sent rather than the release knee when they differ
+(112 vs 143 in the same session); and it is `undefined`, not 0, when the clip
+measured none.
+
+323 tests pass, tsc clean, 0 lint errors.
+
+### F31 - an orphan sweep must count same-file callers
+
+The detector walked `src/lib`, `src/services` and `src/data` for exported
+functions, then grepped for each name excluding its own file. Everything called
+only by a sibling in the same module reads as dead - including the live
+client-to-server save path for every analysis in the app. If a sweep says a
+central function has no caller, read the file before believing it.
+
 ### Recommended drills now address the flaw they name
 
 Finishing the dip work properly turned up three more breaks in the same chain -

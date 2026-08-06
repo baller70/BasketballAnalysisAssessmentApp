@@ -125,16 +125,39 @@ export async function GET(request: NextRequest) {
       .map(([area]) => area)
 
     if (weakAreas.length === 0) {
+      /* NOTHING TO TRAIN OUT IS NOT NOTHING TO TRAIN. This used to return an
+         empty list, and the screen answered an empty list by drawing THREE
+         CANONICAL CARDS — "Footwork Into Release", "Elbow Stack Holds", "High
+         Elbow Release", with canonical photography — under the heading
+         RECOMMENDED FOR YOUR GOAL. Hardcoded drills presented as a real
+         player's recommendations.
+
+         That path was rare while two flaw rules fired on every shot ever
+         taken. Now that they abstain, a clean shooter lands here EVERY TIME,
+         which makes it the common case rather than an edge one.
+
+         `getRecommendedDrills(level, [])` already returns real catalogue drills
+         for the player's own level — it is the same function the flaw path
+         uses, just with nothing to prioritise. So the answer is real drills,
+         matched to their level, flagged `basis: "level"` so the screen says
+         what they are instead of implying they target a flaw. */
+      const general = getRecommendedDrills(level, [], limit)
       return NextResponse.json({
         success: true,
         personalised: false,
+        /** What the list was built from: the player's LEVEL, not their flaws. */
+        basis: evaluated ? "level" : "none",
         reason: evaluated
           ? "No flaws detected in your shots yet, so there is nothing specific to train out."
           : "Analyze a shot and these become the drills for what it finds.",
         analysed: evaluated,
         level, levelSource,
         primaryGoal: profile?.primaryGoal ?? null,
-        drills: [],
+        weakAreas: [],
+        /* Only when a shot was actually evaluated. A caller with no analyses at
+           all has not told us their level from anything they did, so canonical
+           remains their empty state rather than a level-derived guess. */
+        drills: evaluated ? general.map((d) => shape(d, null)) : [],
       })
     }
 
@@ -142,6 +165,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       personalised: true,
+      /** Built from measured flaws, so the screen may say which. */
+      basis: "flaw",
       analysed: evaluated,
       level, levelSource,
       primaryGoal: profile?.primaryGoal ?? null,

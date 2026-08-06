@@ -61,15 +61,43 @@ jobs:
             echo "stage=${{ inputs.stage }}"               >> "$GITHUB_OUTPUT"
           fi
 
+      # Every secret the run will need, checked here — in seconds, on a free
+      # ubuntu runner — rather than partway through the macOS job.
+      #
+      # ASC_ISSUER_ID WAS GUARDED NOWHERE. `appstore-release.sh` needs it to
+      # upload ("ASC_ISSUER_ID is not set" at line 196) and nothing asked for it
+      # until that moment, so a release with it missing spun up the macOS
+      # runner, installed XcodeGen, imported the signing certificate and ran the
+      # full archive — twenty to forty minutes — before dying on the last step.
+      # ASC_KEY_ID was only checked inside the macOS job, which is cheaper to
+      # fail but still after the runner has started.
+      #
+      # Each missing name is printed. "Release secrets are missing" sent the
+      # reader to another workflow to find out which one.
       - name: Verify release secrets are configured
         env:
           HAS_CERT: ${{ secrets.APPLE_DIST_CERT_P12_BASE64 != '' }}
+          HAS_KEY_ID: ${{ secrets.ASC_KEY_ID != '' }}
           HAS_P8: ${{ secrets.ASC_KEY_P8_BASE64 != '' }}
+          HAS_ISSUER: ${{ secrets.ASC_ISSUER_ID != '' }}
         run: |
-          if [ "$HAS_CERT" != "true" ] || [ "$HAS_P8" != "true" ]; then
-            echo "::error::Release secrets are missing. Run the iOS Release Preflight workflow to see which." >&2
-            exit 1
-          fi
+          missing=0
+          for pair in \
+            "APPLE_DIST_CERT_P12_BASE64:$HAS_CERT" \
+            "ASC_KEY_ID:$HAS_KEY_ID" \
+            "ASC_KEY_P8_BASE64:$HAS_P8" \
+            "ASC_ISSUER_ID:$HAS_ISSUER"; do
+            name="${pair%%:*}"; present="${pair##*:}"
+            if [ "$present" != "true" ]; then
+              echo "::error::Repository secret $name is not set. See ios-native/APP_STORE_SUBMISSION.md." >&2
+              missing=1
+            fi
+          done
+          # APPLE_DIST_CERT_PASSWORD is deliberately NOT required: a .p12 may
+          # legitimately carry no password, and demanding one would block a
+          # valid setup.
+          [ "$missing" = "0" ] || exit 1
+          echo "All required release secrets are present."
 
   release:
     needs: config
