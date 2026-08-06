@@ -2368,6 +2368,34 @@ GOODs render exactly as they shipped. Eight tests cover the bands, the edges,
 the missing angles and the defect stated directly: a shot that measured nothing
 returns no GOOD at all.
 
+### DONE: the capture's observations are readable, and the frame viewer uses them
+
+`capture_session_observations` has been written since capture was built — pose
+confidence, keypoints, full-body visibility, stability, lighting, hoop and ball
+visibility — by BOTH the live-capture readiness flow AND every video upload,
+which posts a pose confidence averaged across its frames. **Nothing had ever
+read it back.** F1 again: complete, correct, no caller.
+
+That is why the frame viewer's KEYPOINTS and TRACKING became em-dashes when the
+constants were removed — not because the data was missing, but because there was
+no route to ask for it. `GET /api/capture-sessions/[id]/observations` is that
+route, scoped through `resolveProfileId` with the capture re-checked against the
+caller's profile before anything is returned.
+
+`keypointCount` is derived rather than the landmarks served: the panel prints
+"13/17" and has no use for the coordinates, which are large. A `keypoints`
+payload that is not a countable list yields null — "no count recorded" — never
+a zero, which would read as "the detector found no joints".
+
+Verified with a seeded capture at 13/17 keypoints and `stable: false`: the
+endpoint returned them, a fabricated session id returned **404** and a
+signed-out request **401**, and the panel read `FRAME 103 · — FPS · 47° ·
+CONFIDENCE 88% · KEYPOINTS 13/17 · TRACKING UNSTABLE`. Signed out, canonical's
+`FRAME 42 · 120 FPS · 168° · 98% · 17/17 · EXCELLENT` renders as shipped.
+
+FPS is still an em-dash on a real capture. Nothing anywhere records a frame
+rate; that one needs a column before it can need a route.
+
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
   (`detectFlawsFromAngles`, `findTopMatches`, `/api/badges`, `getRecommendedDrills`)

@@ -42,6 +42,9 @@ export interface SessionShot {
 
 export interface LatestShots {
   shots: SessionShot[]
+  /** The capture behind the newest analysis, for callers that need to ask
+   *  about the CAMERA rather than the shots — see the observations route. */
+  captureSessionId: string | null
   /** How many shots the capture holds, for a "SHOT n OF m" header. */
   total: number
   /** The newest shot of the newest session — what the screen opens on. */
@@ -52,7 +55,7 @@ export interface LatestShots {
   live: boolean
 }
 
-const EMPTY: LatestShots = { shots: [], total: 0, latest: null, style: null, live: false }
+const EMPTY: LatestShots = { shots: [], total: 0, captureSessionId: null, latest: null, style: null, live: false }
 
 export function useLatestShots(): LatestShots {
   const { items } = useHistory()
@@ -96,10 +99,11 @@ export function useLatestShots(): LatestShots {
     return () => { dead = true }
   }, [captureSessionId])
 
-  if (!shots.length) return { ...EMPTY, style: session?.style ?? null }
+  if (!shots.length) return { ...EMPTY, captureSessionId, style: session?.style ?? null }
   return {
     shots,
     total: shots.length,
+    captureSessionId,
     latest: shots[shots.length - 1],
     style: session?.style ?? null,
     live: true,

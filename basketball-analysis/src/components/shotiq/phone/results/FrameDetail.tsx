@@ -74,6 +74,23 @@ export function FrameDetail({
   }, [])
 
   const pick = shotData.latest
+
+  /* The capture's observation, for the two rows that describe the CAMERA
+     rather than the shot. Keyed off the analysis's capture session. */
+  const [observation, setObservation] = React.useState<
+    { keypointCount: number | null; stable: boolean | null; poseConfidence: number | null } | null
+  >(null)
+  const captureSessionId = shotData.captureSessionId
+  React.useEffect(() => {
+    if (!captureSessionId) { setObservation(null); return }
+    let dead = false
+    fetch(`/api/capture-sessions/${encodeURIComponent(captureSessionId)}/observations`,
+          { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!dead && d?.success) setObservation(d.observation) })
+      .catch(() => {})
+    return () => { dead = true }
+  }, [captureSessionId])
   const shot = shotProp ?? (pick ? pick.number : 12)
   const ofShots = ofShotsProp ?? (shotData.total || 24)
   /* Three states, not two (F16): the detector's frame; an em-dash when a real
@@ -92,10 +109,23 @@ export function FrameDetail({
     ? (pick?.confidence != null ? `${Math.round(pick.confidence * 100)}%` : "—")
     : "98%"
   const unmeasured = shotData.live || analysis
+  /* KEYPOINTS and TRACKING come from the capture's own observation, which has
+     been written by both live capture and every upload since capture was built
+     and had no route to read it back until now. A capture with no observation
+     — an iOS run predating the table, or an upload whose post was dropped by
+     its 2s timeout — keeps the em-dash rather than a fabricated 17/17. */
+  const keypointLabel = observation?.keypointCount != null
+    ? `${observation.keypointCount}/17`
+    : unmeasured ? "—" : "17/17"
+  const trackingLabel = observation
+    ? (observation.stable === true ? "STABLE"
+       : observation.stable === false ? "UNSTABLE"
+       : "—")
+    : unmeasured ? "—" : "EXCELLENT"
   const readouts: [string, string, string, boolean][] = [
     ["CONFIDENCE", confidenceLabel, BLUE, true],
-    ["KEYPOINTS", unmeasured ? "—" : "17/17", "#3ED07E", false],
-    ["TRACKING", unmeasured ? "—" : "EXCELLENT", "#3ED07E", false],
+    ["KEYPOINTS", keypointLabel, "#3ED07E", false],
+    ["TRACKING", trackingLabel, "#3ED07E", false],
   ]
   return (
     <ResultsScreen
