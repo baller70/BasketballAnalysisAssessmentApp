@@ -1463,6 +1463,53 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## FEATURE WORK LOG
 
+### A clean shooter was recommended three hardcoded drills
+
+Continuing the F16 sweep. RECOMMENDED FOR YOUR GOAL fell back to `RECOMMENDED`
+- "Footwork Into Release", "Elbow Stack Holds", "High Elbow Release", written
+into the page with canonical photography - whenever the route returned
+`personalised: false`. The screen gated on that flag:
+
+    const liveRecs = rec?.personalised && rec.drills.length ? rec.drills : null
+
+MY OWN CHANGE MADE THIS THE COMMON PATH. While ELBOW_ANGLE_OBTUSE and
+INSUFFICIENT_KNEE_BEND fired on every shot ever taken, every account was
+"personalised" and this branch was nearly unreachable. Now that both abstain, a
+player whose form is clean lands here EVERY TIME - and gets three hardcoded
+cards presented as their own recommendations.
+
+Nothing to train OUT is not nothing to train. `getRecommendedDrills(level, [])`
+already returns real catalogue drills for the player's own level - the same
+function the flaw path calls, just with nothing to prioritise - and the route
+was throwing that away to return `drills: []`. It now returns them, tagged
+`basis: "level"`, and the screen's caption already had the branch for it.
+
+`recBecause` also fell through to `primaryGoal`, so a level-matched list would
+have been captioned "Based on <the player's goal>" - crediting the pick to
+something with no part in it. It keys off `basis` now.
+
+Canonical still stands for a caller with NO analyses at all: that is the only
+case the route sends an empty list, and it is exactly who canonical is for.
+
+Verified against the real API and the real screen, three ways:
+  dip 166 (a real flaw)  personalised, basis=flaw, Knee Bend Power / Shot Load
+                         Optimization / Knee Bend Bounce, each why="Insufficient
+                         Knee Bend"; caption "Based on Insufficient Knee Bend"
+  dip 138 (clean)        basis=level, Game-Situation Shooting / Consistency
+                         Challenge / Pressure Free Throws, why=null; caption
+                         "Matched to your level"
+  no analyses            basis=none, drills [], canonical three stand
+Signed out is canonical. Probe account deleted. 323 tests, tsc clean, 0 lint.
+
+### F33 - fixing a rule that always fired promotes its fallback to the main path
+
+Every one of these has been a second-order consequence of the flaw fix. Making
+two always-true rules abstain turned `personalised: false` from an edge case
+into the default, and whatever sat behind that flag - here, three canonical
+cards - became what most players see. When a rule stops firing, go and look at
+what the screens do in its absence; that branch has never carried real traffic
+and has never been examined.
+
 ### The history table showed canonical's twelve sessions as a real player's own
 
 An F16 sweep - what a screen falls back to when a live list comes back EMPTY -

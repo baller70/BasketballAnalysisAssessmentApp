@@ -83,6 +83,9 @@ export default function TrainingHubPage() {
      personalise from it says so and the canonical three stand. */
   const [rec, setRec] = useState<null | {
     personalised: boolean
+    /** What the list was ranked on: measured flaws, the player's level, or
+     *  nothing at all. Decides whether the caption may name a cause. */
+    basis?: "flaw" | "level" | "none"
     primaryGoal: string | null
     weakAreas?: { focus: string; flaw: string | null; shots: number }[]
     drills: { id: string; title: string; time: string; level: string; focus: string; desc: string; why: string | null }[]
@@ -129,16 +132,27 @@ export default function TrainingHubPage() {
   /** The three cards to draw. Canonical photography rides along by position —
    *  the catalogue carries no imagery, and a drill card with no image is a
    *  worse screen than one whose photograph is decorative. */
-  const liveRecs = rec?.personalised && rec.drills.length ? rec.drills : null
+  /* REAL DRILLS WHENEVER THE ROUTE HAS ANY, flaw-driven or level-matched.
+     Gating on `personalised` meant a clean shooter — the common case now that
+     the two always-firing flaw rules abstain — fell through to RECOMMENDED,
+     three hardcoded canonical cards drawn under "RECOMMENDED FOR YOUR GOAL" as
+     if they were that player's own. Canonical stays the empty state for a
+     visitor with no analyses at all, which is the only caller the route now
+     sends an empty list. */
+  const liveRecs = rec?.drills?.length ? rec.drills : null
   const recCards = liveRecs
     ? liveRecs.map((d, i) => ({
         len: d.time, title: d.title, time: d.time, level: d.level, focus: d.focus,
         desc: d.desc, img: RECOMMENDED[i % RECOMMENDED.length].img, why: d.why,
       }))
     : RECOMMENDED.map((r) => ({ ...r, why: null as string | null }))
-  /** What the row is answering — the measured flaw, or the stated goal. */
-  const recBecause = liveRecs
-    ? rec?.weakAreas?.[0]?.flaw ?? rec?.primaryGoal ?? null
+  /* WHAT THE ROW IS ANSWERING, decided by what the route actually ranked on.
+     This used to fall through to `primaryGoal`, so a level-matched list was
+     captioned "Based on <the player's goal>" — crediting the pick to something
+     that had no part in it. Only a flaw-driven list names a cause; a
+     level-matched one says so, and the caption already has that branch. */
+  const recBecause = liveRecs && rec?.basis === "flaw"
+    ? rec?.weakAreas?.[0]?.flaw ?? null
     : null
 
   /* Monday-first week, from the player's own scheduled workouts. */
