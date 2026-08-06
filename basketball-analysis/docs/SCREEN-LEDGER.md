@@ -1687,6 +1687,31 @@ Findings so far:
   parked at the real release. With no clip, canonical's windows and 0:07 / 0:12
   render exactly as they shipped.
 
+**CAVEAT — THE DETECTOR CRIES WOLF IF YOU RUSH IT.** Its first run used a
+1.6s settle per route and flagged `/results/demo` and `/results/demo/player` as
+still carrying May-2025 dates. Both were FALSE POSITIVES: the history fetch had
+simply not resolved, so the signed-in pass was still rendering the empty state.
+Re-checked at 6s, both show real data and zero May-2025 tokens. Acting on that
+output would have meant "fixing" two correct screens and deleting canonical
+empty states for nothing. **Settle at least 5s before reading**, and confirm any
+hit by hand before touching code.
+
+A canonical value present in BOTH states is also NOT a defect when the signed-in
+account genuinely lacks that data — `/results/demo/goals` shows canonical
+milestones because the account has no goals, and `/results/demo/history`'s date
+range is computed from today so it is identical by design. Check whether the
+data exists before calling it a constant.
+
+Sweep at the corrected settle time: `/dashboard`, `/results/demo`,
+`/results/demo/history`, `/results/demo/player`, `/results/demo/goals`,
+`/results/demo/training`, `/media`, `/points`, `/elite-shooters` — all clean
+except one lead below.
+
+- **`/media` reports `0:00` and `0:07` in both states.** The clip transport's
+  canonical defaults on a screen listing real uploads. Whether the stored media
+  rows carry a duration at all is the first thing to check; if they do not, this
+  is a persistence gap rather than a wiring one. NOT yet investigated.
+
 6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
    DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
    timer simulation with no analysis behind it — it never receives an id and
