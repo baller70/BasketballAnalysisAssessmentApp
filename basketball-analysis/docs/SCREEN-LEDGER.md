@@ -1487,8 +1487,8 @@ verified at BOTH states in a browser before it is committed.
 | onboarding | DONE | 4 answers persisted (new columns); real bio enhancement |
 | player card | DONE | identity, streak, points, coaching target, 7-day deltas |
 | training hub | DONE | `/api/training/recommended` (new); week plan from workouts |
-| `/results/demo/goals` | NEXT | |
-| `/results/demo` (overview) | pending | |
+| `/results/demo/goals` | DONE | `lib/goals/progress.ts` — goals measure themselves (15 tests) |
+| `/results/demo` (overview) | DONE | MECHANICS AT RELEASE from the derived measurements; elite match, form score, coaching target, key insight |
 
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines
@@ -1514,3 +1514,15 @@ verified at BOTH states in a browser before it is committed.
 - **F7.** A renderer tuned for canonical constants can be wrong for real ones.
   The player card greened its delta's first token unconditionally — correct for
   four hardcoded rises, wrong the moment a real decline could appear.
+- **F8.** `a ?? b` is the wrong operator for "measured, or nothing". A goal the
+  server had explicitly declined to measure fell through the `??` to the stored
+  0 and rendered "0%" — turning "nobody has checked" into "you have made no
+  progress". Branch on the SOURCE, never on the value's nullness.
+- **F9.** A blocked remote image HANGS; it does not error. `complete:false`,
+  no error event, forever — so an `onError` fallback leaves an empty box. Layer
+  the fallback UNDER the image instead of swapping it in, and nothing has to
+  detect a failure that never announces itself.
+- **F10.** When a screen names an entity beside a picture of it, the picture
+  has to follow the name. The analysis overview named the real top match while
+  still showing canonical's Trae Young crop — worse than the constant it
+  replaced, because it asserts something false about a real person.

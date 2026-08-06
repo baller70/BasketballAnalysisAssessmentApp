@@ -135,9 +135,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    /* The closest match, with its portrait. The analysis overview draws an
+       ELITE MATCH card with a PHOTOGRAPH beside the name; without the URL here
+       the screen would name one shooter and show a picture of another, which
+       is worse than the constant it replaced. */
+    const best = ranked[0]
+    const bestCatalog = best
+      ? ALL_ELITE_SHOOTERS.find((s) => s.name === best.shooter.name)
+      : undefined
+
     return NextResponse.json({
       success: true,
       matched: true,
+      top: best ? {
+        name: best.shooter.name,
+        overall: Math.round(best.similarityScore.overall),
+        photoUrl: bestCatalog?.photoUrl ?? null,
+        reason: best.matchReasons[0] ?? null,
+      } : null,
       basedOn: {
         analysisId: analysis.id,
         recordedAt: analysis.createdAt.toISOString(),
