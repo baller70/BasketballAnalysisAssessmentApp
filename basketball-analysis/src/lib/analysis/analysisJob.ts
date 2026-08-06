@@ -40,6 +40,10 @@ export const STAGE_PROGRESS: Record<JobStage, number> = {
 export interface AnalysisJob {
   /** Running, or the terminal state it reached. */
   status: "running" | "done" | "failed"
+  /** The clip being analysed. The processing screen mounts the pipeline over
+   *  it — a `File` cannot cross a route boundary any other way, and the run is
+   *  client-side, so it has to travel with the job. */
+  file: File | null
   stage: JobStage
   /** Set when the run finished and the analysis was saved. */
   analysisId: string | null
@@ -66,9 +70,25 @@ export function getAnalysisJob(): AnalysisJob | null {
   return job
 }
 
-/** Called by the pipeline when a run begins. */
+/** Called by the pipeline when a run begins. Keeps any file already queued. */
 export function startAnalysisJob(startedAt: number): void {
-  job = { status: "running", stage: "upload", analysisId: null, error: null, startedAt }
+  job = { status: "running", file: job?.file ?? null, stage: "upload", analysisId: null, error: null, startedAt }
+  emit()
+}
+
+/**
+ * Queue a clip for analysis and hand the caller off to the processing screen.
+ *
+ * The upload flow used to `router.push` to that screen having kept only the
+ * clip's METADATA — the `File` itself was read in `onPick` and dropped — so no
+ * run ever started and the screen had nothing to show. The file rides on the
+ * job now, and the processing screen mounts the one existing pipeline over it.
+ */
+export function queueAnalysisFile(file: File): void {
+  job = {
+    status: "running", file, stage: "upload",
+    analysisId: null, error: null, startedAt: Date.now(),
+  }
   emit()
 }
 

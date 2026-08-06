@@ -2259,22 +2259,34 @@ uploader. Canonical has no state for this because canonical never imagined
 arriving without a run; a progress bar with nothing behind it is exactly what
 was removed.
 
-**WHAT IS NOT DONE, and it is half the feature.** `/video-analysis/upload`'s
-"Analyze video" buttons — phone review and desktop card — still only
-`router.push` to this screen. The page reads the chosen `File` in `onPick` and
-keeps only its metadata, so the file never reaches a pipeline and no job
-starts: a user taking that path now lands on NOTHING TO ANALYSE. That is
-honest, and it is not finished. Completing it means giving `VideoUpload` an
-entry point that accepts a file from outside and runs, which is a real change
-to a 700-line component and was not something to half-wire at the end of a
-session. **The working path today is the desktop uploader's own Analyze
-button**, which runs the pipeline and now drives this screen correctly.
+**AND THE HANDOFF IS DONE.** `/video-analysis/upload` read the chosen `File`
+in `onPick`, kept only its metadata for the review screen, and let the file go
+— so "Analyze video" navigated here with nothing to process. The page holds the
+file now and `queueAnalysisFile` carries it to the job.
 
-6. **Still open, needs Kevin:** the capture flow tracks no NEED REVIEW,
-   DISCARDED or PRACTICE TIME counters, and `/video-analysis/processing` is a
-   timer simulation with no analysis behind it — it never receives an id and
-   polls nothing. Making that route real is a feature (a processing pipeline
-   with status), not a wiring fix, and should be scoped with him first.
+**The run had to move screens with it.** It is client-side, so it dies with
+whichever component hosts it; leaving it on the upload page and navigating away
+would kill it mid-analysis. The processing screen therefore MOUNTS the existing
+pipeline headlessly over the queued clip — `VideoUpload` gained `initialFile`,
+`autoAnalyze` and `headless` — rather than re-implementing it. One analysis
+path and one save path: a second copy would be two routes disagreeing about one
+shot, which is the defect this whole log is about. Every route into that
+component funnels through one `acceptFile`, so a clip handed in from outside
+gets the same type and size checks as a picked one.
+
+Two effects, not one, and both idempotent: `analyzeVideo` reads `videoFile`
+from state, which `acceptFile` cannot have applied in the same tick, so
+starting the run from inside the accept would analyse `null`. Separate refs
+guard the accept and the run — the first version shared one ref, re-accepted on
+every render, and put React into "Maximum update depth exceeded".
+
+Verified end to end at 393pt with a real 1.1MB clip: pick -> review -> Analyze
+-> `/video-analysis/processing`, and the bar reads a real **64%**, the `pose`
+stage published by the actual pipeline. **What could NOT be exercised here:**
+this headless Chromium has no WebGL, so TensorFlow cannot run pose detection
+and the run stalls at that stage — an environment limit, not a code path. The
+stages past `pose`, and the success navigation, are verified by construction
+and by the desktop uploader's own flow, not by this harness.
 
 ### Method rules learned here
 - **F1.** An endpoint existing is not an endpoint wired. Four separate engines

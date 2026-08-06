@@ -13,6 +13,7 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
+import { queueAnalysisFile } from "@/lib/analysis/analysisJob"
 import { VideoUpload } from "@/components/upload/VideoUpload"
 import Link from "next/link"
 import { ArrowLeft, Video, User } from "lucide-react"
@@ -37,10 +38,23 @@ export default function VideoAnalysisPage() {
      falls back to the clip defaults the review screen documents. */
   const isPhone = usePhoneViewport()
   const [clip, setClip] = React.useState<ClipMeta | null>(null)
+  /* THE FILE ITSELF, which this page used to drop on the floor. `onPick` read
+     it, kept its metadata for the review screen, and let the `File` go — so
+     "Analyze video" navigated to the processing screen with nothing to
+     process. It is held now and handed to the job the processing screen runs. */
+  const [file, setFile] = React.useState<File | null>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
+
+  /** Start the real run and follow it on canonical's processing screen. */
+  const analyze = () => {
+    if (!file) return
+    queueAnalysisFile(file)
+    router.push("/video-analysis/processing")
+  }
 
   const onPick = (f: File | undefined) => {
     if (!f) return
+    setFile(f)
     setClip({
       durationLabel: "00:06.00",
       resolution: "1080 × 1920",
@@ -59,8 +73,8 @@ export default function VideoAnalysisPage() {
         {isPhone && (
           <VideoReview
             clip={clip}
-            onChange={() => setClip(null)}
-            onAnalyze={() => router.push("/video-analysis/processing")}
+            onChange={() => { setClip(null); setFile(null) }}
+            onAnalyze={analyze}
           />
         )}
         <div className={isPhone ? "hidden" : undefined}>
@@ -75,7 +89,7 @@ export default function VideoAnalysisPage() {
               <p className="mt-[8px] text-[14px]">
                 {clip.resolution} · {clip.durationLabel} · {clip.sizeLabel} · {clip.fps}
               </p>
-              <button type="button" onClick={() => router.push("/video-analysis/processing")}
+              <button type="button" onClick={analyze}
                       className="mt-[16px] flex h-[46px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
                 <ActionGlyph kind="analyze" height={20} accent="#fff" /> Analyze video
               </button>

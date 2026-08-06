@@ -39,6 +39,7 @@ import React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { AnalysisProcessing, AnalysisTakingLonger, AnalysisError } from "@/components/shotiq/phone/AnalysisStates"
+import { VideoUpload } from "@/components/upload/VideoUpload"
 import {
   subscribeToAnalysisJob, clearAnalysisJob, STAGE_PROGRESS, type AnalysisJob,
 } from "@/lib/analysis/analysisJob"
@@ -68,14 +69,20 @@ export default function AnalysisProcessingPage() {
     return () => clearTimeout(t)
   }, [job?.status, job?.startedAt])
 
-  // A finished run belongs on its results, not on a full progress bar.
+  /* A finished run belongs on its results. The pipeline performs that
+     navigation itself at the end of its own routine, so this only clears the
+     job — two pushes would race each other. */
   React.useEffect(() => {
     if (job?.status !== "done") return
-    clearAnalysisJob()
-    router.push(job.analysisId ? `/results/${job.analysisId}` : "/results/demo")
-  }, [job?.status, job?.analysisId, router])
+    const t = setTimeout(() => clearAnalysisJob(), 1200)
+    return () => clearTimeout(t)
+  }, [job?.status])
 
   const toUploader = () => { clearAnalysisJob(); router.push("/video-analysis/upload") }
+
+  /* One key per run, so mounting the pipeline is tied to THIS job and a later
+     job cannot reuse a spent runner. */
+  const runnerKey = job ? String(job.startedAt) : "none"
 
   if (forced === "error" || job?.status === "failed") {
     /* Retry returns to the uploader rather than restarting here: the run's
@@ -95,7 +102,20 @@ export default function AnalysisProcessingPage() {
   }
 
   if (job?.status === "running") {
-    return <AnalysisProcessing pct={STAGE_PROGRESS[job.stage]} />
+    return (
+      <>
+        {/* THE RUN LIVES HERE. It is client-side, so it dies with whichever
+            component hosts it — leaving it on the upload page and navigating
+            away would kill it mid-analysis. This screen mounts the existing
+            pipeline headlessly over the queued clip instead of re-implementing
+            it: one analysis path, one save path. `runner` is keyed to the file
+            so a re-render cannot start a second pipeline over the same shot. */}
+        {job.file && (
+          <VideoUpload key={runnerKey} headless initialFile={job.file} autoAnalyze />
+        )}
+        <AnalysisProcessing pct={STAGE_PROGRESS[job.stage]} />
+      </>
+    )
   }
 
   /* No run in flight. Canonical has no screen for this because canonical never
