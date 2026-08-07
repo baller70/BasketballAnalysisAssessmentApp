@@ -1128,6 +1128,36 @@ Evidence captured on the laptop:
   simulators, `xcdevice` lists only `My Mac` as a physical device, and the
   installer exited with `INSTALL_STATUS=1`.
 
+### 2026-08-07 Desktop Bridge Device Install
+
+After the phone was connected to the Mac desktop, the GitHub Xcode broker
+installed the current ShotIQ branch on Kevin's iPhone:
+
+- Target repo/ref: `baller70/BasketballAnalysisAssessmentApp` /
+  `claude/shotiq-production-build-txi5pl`.
+- Installed commit: `b15e2b7` (`Use host external DerivedData for ShotIQ device
+  installs`), which includes the approved native icon/capture work from
+  `0ddb540`.
+- Broker run: `31228342427` completed with conclusion `success`.
+- Device: Kevin's iPhone, hardware UDID `00008030-001E4D203A80802E`.
+- The first desktop bridge attempt, run `31228245377`, proved the old installer
+  default was wrong for mirrored hosts: it tried to write DerivedData to the
+  laptop-only `/Volumes/TBF SKILLZ.INC/...` path and failed on permissions.
+- `scripts/install-on-device.sh` now chooses a writable external DerivedData
+  location per host. On the desktop bridge, the successful build used
+  `/Volumes/APPLICATIONS/06_XCODE_TESTING/kcloud-runner-jobs/DerivedData/shotiq-device`.
+
+Evidence captured:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/icon-redesign-20260807-build/desktop-device-install-31228342427.log`
+  contains `KCLOUD_XCODE_REF=claude/shotiq-production-build-txi5pl`,
+  `** BUILD SUCCEEDED **`, `ShotIQ is on the phone.`, and
+  `KCLOUD_XCODE_READY: device install`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/icon-redesign-20260807-build/desktop-device-install-31228342427-artifacts-v2/xcode-evidence-31228342427/`
+  contains the uploaded broker artifact files: `summary.txt`,
+  `target-head.txt`, `device-install.log`, `xcode-version.txt`, and
+  `macos-version.txt`.
+
 ### 2026-08-07 Analytics, Pose Feedback, and Upload Progress Proof
 
 Tenth laptop functionality slice after local Xcode setup:
