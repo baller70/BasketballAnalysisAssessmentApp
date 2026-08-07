@@ -267,14 +267,25 @@ Laptop doctor proof:
 - `xcodebuild -version`: Xcode 26.2 / build 17C52.
 - App Store Connect env/key: set/readable.
 - `xcodegen --version`: 2.46.0.
+- Xcode license: accepted locally after Kevin entered the Mac admin password.
+- iOS simulator runtime: iOS 26.3.1 / build 23D8133 installed locally.
+- Local simulator: iPhone 17,
+  `44811BE6-7BFE-424D-B677-FAE7442373F3`, booted for proof.
 
-Remaining laptop-only admin step: accept the local Xcode license once with:
+Laptop evidence captured:
 
-```sh
-sudo DEVELOPER_DIR="/Volumes/TBF SKILLZ.INC/xcode-archive/Xcode.app/Contents/Developer" \
-  xcodebuild -license accept
-```
+- Debug simulator build:
+  `~/CodexWork/shotiq-evidence/local-xcode-build-20260807-102900.log`
+  ran from `basketball-analysis/ios-native` after `xcodegen generate` and
+  ended with `** BUILD SUCCEEDED **`.
+- Focused native XCTest:
+  `~/CodexWork/shotiq-evidence/local-xcode-contract-test-20260807-102900.log`
+  ran `ShotIQTests/AnalysisResultContractTests` on the local iPhone 17 simulator
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
 
-Without that password-protected step, CoreSimulator/native test commands on this
-laptop return Apple's Xcode license error even though the mirrored toolchain and
-ShotIQ credentials are present.
+Laptop reproducibility fix: local proof exposed that `project.yml`, the
+XcodeGen source of truth used by `scripts/install-on-device.sh`, was missing
+build settings that only survived in the previously generated `.xcodeproj`.
+`project.yml` now explicitly carries app product name, Swift version, Debug
+testability/active-arch settings, launch-screen background, and unit/UI test
+host/runpath settings so regenerating the project is safe on any machine.

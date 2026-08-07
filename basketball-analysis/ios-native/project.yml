@@ -21,7 +21,8 @@ targets:
         # Standard HTTPS only — answers the export-compliance question at upload
         # time so TestFlight can hand the build out without a manual step.
         ITSAppUsesNonExemptEncryption: false
-        UILaunchScreen: {}
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         UIStatusBarHidden: true            # canonical screens hide the system status bar
         UIViewControllerBasedStatusBarAppearance: false
         NSCameraUsageDescription: ShotIQ analyzes your shooting form from live camera capture.
@@ -38,27 +39,80 @@ targets:
           - tungsten_bold.otf
           - tungsten_black.otf
     settings:
-      TARGETED_DEVICE_FAMILY: "1"
-      # App Store validation requires an asset-catalog app icon + CFBundleIconName;
-      # the compiler injects CFBundleIconName when this points at the AppIcon set.
-      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-      # Automatic signing with Kevin's team (same team as HoopTrack), so both a
-      # local Xcode run and the CI release pipeline sign without manual profiles.
-      CODE_SIGN_STYLE: Automatic
-      DEVELOPMENT_TEAM: DD9G8RP575
-      PRODUCT_BUNDLE_IDENTIFIER: com.baller70.shotiq
-      MARKETING_VERSION: "1.0"
-      CURRENT_PROJECT_VERSION: "1"
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
+        # App Store validation requires an asset-catalog app icon + CFBundleIconName;
+        # the compiler injects CFBundleIconName when this points at the AppIcon set.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Automatic signing with Kevin's team (same team as HoopTrack), so both a
+        # local Xcode run and the CI release pipeline sign without manual profiles.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: DD9G8RP575
+        PRODUCT_BUNDLE_IDENTIFIER: com.baller70.shotiq
+        PRODUCT_NAME: "$(TARGET_NAME)"
+        SDKROOT: iphoneos
+        SWIFT_VERSION: "5.0"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_IDENTITY: iPhone Developer
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/Frameworks"
+      configs:
+        Debug:
+          DEBUG_INFORMATION_FORMAT: dwarf
+          ENABLE_TESTABILITY: YES
+          GCC_OPTIMIZATION_LEVEL: 0
+          ONLY_ACTIVE_ARCH: YES
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+        Release:
+          DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+          ENABLE_NS_ASSERTIONS: NO
+          SWIFT_COMPILATION_MODE: wholemodule
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
   ShotIQTests:
     type: bundle.unit-test
     platform: iOS
     sources: [ShotIQ/Tests]
     dependencies: [{target: ShotIQ}]
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ShotIQ.app/ShotIQ"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        PRODUCT_NAME: "$(TARGET_NAME)"
+        SDKROOT: iphoneos
+        SWIFT_VERSION: "5.0"
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/Frameworks"
+          - "@loader_path/Frameworks"
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        Debug:
+          ONLY_ACTIVE_ARCH: YES
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
   ShotIQUITests:
     type: bundle.ui-testing
     platform: iOS
     sources: [ShotIQ/UITests]
     dependencies: [{target: ShotIQ}]
+    settings:
+      base:
+        TEST_TARGET_NAME: ShotIQ
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        PRODUCT_NAME: "$(TARGET_NAME)"
+        SDKROOT: iphoneos
+        SWIFT_VERSION: "5.0"
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/Frameworks"
+          - "@loader_path/Frameworks"
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        Debug:
+          ONLY_ACTIVE_ARCH: YES
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
 
 # Explicit shared scheme so xcodebuild -scheme ShotIQ works headlessly on CI
 # (the release script requires xcshareddata/xcschemes/ShotIQ.xcscheme).

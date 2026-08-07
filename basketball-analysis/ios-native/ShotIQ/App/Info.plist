@@ -39,14 +39,6 @@
 		<string>tungsten_black.otf</string>
 	</array>
 	<key>UILaunchScreen</key>
-	<!-- An EMPTY <dict/> here does not mean "no launch screen" — it means iOS
-	     paints the DEFAULT SYSTEM BACKGROUND, which follows the SYSTEM
-	     appearance. The app forces .preferredColorScheme(.light), but a launch
-	     screen renders before any app code runs and cannot be told that, so on a
-	     phone set to dark mode the first thing a player saw was a BLACK flash
-	     before the white splash. Pinning it to a colour set with a single
-	     universal (appearance-independent) entry makes it paper white always,
-	     which is what canonical 001 opens on. -->
 	<dict>
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>

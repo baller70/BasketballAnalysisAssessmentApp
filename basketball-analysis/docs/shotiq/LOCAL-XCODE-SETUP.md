@@ -28,20 +28,20 @@ Mirrored to this laptop:
 
 Do not commit any of those user-home files. The repo helper only loads them.
 
-## One-Time Laptop Admin Step
+## Laptop Admin Step
 
-This laptop's mirrored Xcode is present and `xcodebuild -version` works, but
-CoreSimulator/native test commands still require the local Xcode license to be
-accepted once by an admin user:
+This laptop's mirrored Xcode is present, `xcodebuild -version` works, and the
+local Xcode license has been accepted. If this setup is recreated on another
+Mac, accept the mirrored Xcode license once with:
 
 ```sh
 sudo DEVELOPER_DIR="/Volumes/TBF SKILLZ.INC/xcode-archive/Xcode.app/Contents/Developer" \
   xcodebuild -license accept
 ```
 
-Codex cannot complete this step without the Mac admin password. After it is run
-once, keep using the sourceable helper below; do not switch global
-`xcode-select` unless you want the whole machine to use the mirrored Xcode.
+After it is run once, keep using the sourceable helper below; do not switch
+global `xcode-select` unless you want the whole machine to use the mirrored
+Xcode.
 
 ## Use It
 
@@ -66,6 +66,10 @@ Verified on this laptop on 2026-08-07:
 - `xcodebuild -version`: Xcode 26.2 / build 17C52.
 - App Store Connect env/key: set/readable.
 - `xcodegen --version`: 2.46.0.
+- Xcode license: accepted.
+- iOS simulator runtime: iOS 26.3.1 / build 23D8133.
+- Local simulator: iPhone 17,
+  `44811BE6-7BFE-424D-B677-FAE7442373F3`.
 
 ## Native Contract Test
 
@@ -77,7 +81,7 @@ xcodebuild \
   -project ShotIQ.xcodeproj \
   -scheme ShotIQ \
   -configuration Debug \
-  -destination 'platform=iOS Simulator,id=C7AFD127-ADF3-47CE-8C90-C8C6E5116A9E' \
+  -destination 'platform=iOS Simulator,id=44811BE6-7BFE-424D-B677-FAE7442373F3' \
   -derivedDataPath "$HOME/CodexWork/DerivedData/shotiq-contract" \
   CODE_SIGNING_ALLOWED=NO \
   -only-testing:ShotIQTests/AnalysisResultContractTests \
@@ -106,6 +110,16 @@ Evidence logs:
 
 - `~/CodexWork/shotiq-evidence/xcode-contract-test-20260807-091549.log`
 - `~/CodexWork/shotiq-evidence/device-install-20260807-091929.log`
+- `~/CodexWork/shotiq-evidence/local-xcode-build-20260807-102900.log`
+- `~/CodexWork/shotiq-evidence/local-xcode-contract-test-20260807-102900.log`
 
-Those logs show the focused native contract XCTest passed and the current branch
-installed on Kevin's iPhone.
+Those logs show the focused native contract XCTest passed on the Mac mini, the
+current branch installed on Kevin's iPhone, the laptop Debug simulator app build
+succeeded, and the laptop focused native contract XCTest passed.
+
+## Source Of Truth Note
+
+`scripts/install-on-device.sh` regenerates `ShotIQ.xcodeproj` from
+`basketball-analysis/ios-native/project.yml` before building. Keep Xcode build
+settings in `project.yml`; do not rely on hand edits in the generated
+`.xcodeproj`.
