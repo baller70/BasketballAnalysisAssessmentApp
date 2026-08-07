@@ -49,7 +49,35 @@ team_id="DD9G8RP575"
 project_dir="basketball-analysis/ios-native"
 project="ShotIQ.xcodeproj"
 scheme="ShotIQ"
-derived_data="${SHOTIQ_DERIVED_DATA:-/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-device}"
+
+choose_derived_data() {
+  if [ -n "${SHOTIQ_DERIVED_DATA:-}" ]; then
+    printf '%s\n' "$SHOTIQ_DERIVED_DATA"
+    return
+  fi
+
+  local candidates=()
+  if [ -n "${XCODE_WORK_ROOT:-}" ]; then
+    candidates+=("${XCODE_WORK_ROOT}/DerivedData/shotiq-device")
+  fi
+  candidates+=(
+    "/Volumes/APPLICATIONS/06_XCODE_TESTING/DerivedData/shotiq-device"
+    "/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-device"
+  )
+
+  local candidate parent
+  for candidate in "${candidates[@]}"; do
+    parent="$(dirname "$candidate")"
+    if mkdir -p "$parent" 2>/dev/null && [ -w "$parent" ]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+
+  die 'no writable external DerivedData location found; set SHOTIQ_DERIVED_DATA to an external-drive path'
+}
+
+derived_data="$(choose_derived_data)"
 
 # ---------------------------------------------------------------- the device --
 
