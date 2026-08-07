@@ -18,6 +18,7 @@ struct AnalysisResultPresentation: Equatable {
     var scoreVerdict: String
     var scoreCaption: String
     var mediaURL: URL?
+    var videoURL: URL?
     var mediaLabel: String
     var recordedLabel: String
     var phaseText: String
@@ -37,6 +38,7 @@ struct AnalysisResultPresentation: Equatable {
         mediaURL = Self.url(result.media.displayImageUrl)
             ?? Self.url(result.media.annotatedImageUrl)
             ?? Self.url(result.media.imageUrl)
+        videoURL = Self.url(result.media.videoUrl)
         mediaLabel = result.media.type?.capitalized ?? "Analysis media"
         recordedLabel = Self.recordedLabel(result.recordedAt)
         phaseText = result.phase.value?.replacingOccurrences(of: "-", with: " ").capitalized ?? "Unavailable"
@@ -82,6 +84,7 @@ struct AnalysisResultPresentation: Equatable {
         scoreVerdict: "GOOD",
         scoreCaption: "Keep building consistency.",
         mediaURL: nil,
+        videoURL: nil,
         mediaLabel: "Demo media",
         recordedLabel: "Shot 41 • Today at 8:24 AM",
         phaseText: "Release",
@@ -103,6 +106,7 @@ struct AnalysisResultPresentation: Equatable {
         scoreVerdict: "UNAVAILABLE",
         scoreCaption: "No saved analysis result has been loaded.",
         mediaURL: nil,
+        videoURL: nil,
         mediaLabel: "No saved media",
         recordedLabel: "No saved analysis",
         phaseText: "Unavailable",
@@ -118,7 +122,7 @@ struct AnalysisResultPresentation: Equatable {
         provenanceSummary: "0 measured • 6 unavailable")
 
     private init(id: String, scoreText: String, scorePct: Double, scoreVerdict: String,
-                 scoreCaption: String, mediaURL: URL?, mediaLabel: String,
+                 scoreCaption: String, mediaURL: URL?, videoURL: URL?, mediaLabel: String,
                  recordedLabel: String, phaseText: String, coachingTarget: String,
                  metrics: [AnalysisMetricTile], provenanceSummary: String) {
         self.id = id
@@ -127,6 +131,7 @@ struct AnalysisResultPresentation: Equatable {
         self.scoreVerdict = scoreVerdict
         self.scoreCaption = scoreCaption
         self.mediaURL = mediaURL
+        self.videoURL = videoURL
         self.mediaLabel = mediaLabel
         self.recordedLabel = recordedLabel
         self.phaseText = phaseText

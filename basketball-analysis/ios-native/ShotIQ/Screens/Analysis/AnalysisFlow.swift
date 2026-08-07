@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import AVKit
 
 // Analysis flow — screens 036-047. Pose overlays and gauges are Canvas/Path.
 
@@ -111,7 +112,10 @@ fileprivate struct AnalysisResultMediaSurface: View {
 
     var body: some View {
         ZStack {
-            if let url = presentation.mediaURL {
+            if let url = presentation.videoURL {
+                VideoPlayer(player: AVPlayer(url: url))
+                    .accessibilityLabel("Saved analysis video")
+            } else if let url = presentation.mediaURL {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
@@ -154,13 +158,15 @@ struct AnalysisProcessingView: View { // 036
     /// One route out of processing. Two `navigationDestination(isPresented:)`
     /// modifiers on the same view conflict — the second silently wins — so the
     /// screen drives a single item-based destination instead.
-    enum ProcessingRoute: Hashable { case results, takingLonger }
+    enum ProcessingRoute: Hashable { case results, takingLonger, failed }
     /// Processing that is still running after this is no longer "a moment":
     /// canonical 037 takes over and offers notify / keep waiting / cancel.
     private static let longRunningThreshold: Duration = .seconds(12)
     var initialResult: ShotIQAnalysisResultDTO? = nil
+    var videoJob: VideoAnalysisJob? = nil
     @State private var pct = 0.12
     @State private var route: ProcessingRoute?
+    @State private var completedResult: ShotIQAnalysisResultDTO?
     private let steps: [(String, String, Int)] = [ // icon, label, state: 0 done, 1 active, 2 queued
         ("viewfinder", "Upload complete", 0),
         ("point.3.connected.trianglepath.dotted", "Detecting pose & landmarks", 1),
@@ -184,7 +190,7 @@ struct AnalysisProcessingView: View { // 036
                                 VStack(alignment: .leading, spacing: 0) {
                                     Text("PROCESSING VIDEO").font(.custom("Tungsten-Medium", size: 19))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("1080p • 24s • 30fps").shotiqBody(13)
+                                    Text(processingSummary).shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                                     HStack(spacing: 12) {
                                         ScoreBar(pct: pct, color: ShotIQColor.analysisBlue)
@@ -221,8 +227,16 @@ struct AnalysisProcessingView: View { // 036
                             HStack(alignment: .top, spacing: 16) {
                                 // Canonical live-frame preview: the pose overlay is already
                                 // burned into this crop, so no SkeletonOverlay on top.
-                                CanonicalMediaSurface(key: "036-visual-001", height: 200)
-                                    .frame(maxWidth: .infinity)
+                                Group {
+                                    if let videoJob {
+                                        VideoPlayer(player: AVPlayer(url: videoJob.clip.url))
+                                            .frame(height: 200)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    } else {
+                                        CanonicalMediaSurface(key: "036-visual-001", height: 200)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
                                 FormScorePanel(numeralSize: 56, barWidth: 90)
                                     .frame(width: 110, alignment: .leading)
                             }
@@ -252,6 +266,10 @@ struct AnalysisProcessingView: View { // 036
             }
         }
         .task {
+            if let videoJob {
+                await processVideo(job: videoJob)
+                return
+            }
             // Watchdog: if the pipeline is still going when the threshold passes,
             // hand over to the analysis-taking-longer screen (canonical 037).
             let watchdog = Task { @MainActor in
@@ -268,9 +286,79 @@ struct AnalysisProcessingView: View { // 036
         }
         .navigationDestination(item: $route) { r in
             switch r {
-            case .results: AnalysisResultOverviewView(initialResult: initialResult)
+            case .results: AnalysisResultOverviewView(initialResult: completedResult ?? initialResult)
             case .takingLonger: AnalysisTakingLongerView()
+            case .failed: AnalysisErrorView()
             }
+        }
+    }
+
+    private var processingSummary: String {
+        guard let videoJob else { return "1080p • 24s • 30fps" }
+        return "\(videoJob.clip.orientationText) • \(videoJob.trimWindowText) • \(videoJob.clip.frameRateText)"
+    }
+
+    private func processVideo(job: VideoAnalysisJob) async {
+        do {
+            pct = 0.18
+            let uploadedURL = try await APIClient.shared.uploadVideo(
+                job.clip.url,
+                filename: job.clip.filename,
+                contentType: job.clip.contentType,
+                sizeBytes: job.clip.fileSizeBytes,
+                clientSessionId: job.clientSessionId,
+                durationSeconds: job.clip.durationSeconds)
+            pct = 0.72
+
+            struct VideoVisionAnalysis: Codable {
+                var source: String
+                var filename: String
+                var contentType: String
+                var fileSizeBytes: Int
+                var durationSeconds: Double
+                var trimStartSeconds: Double
+                var trimEndSeconds: Double
+                var trimmedDurationSeconds: Double
+                var uploadedVideoUrl: String?
+                var note: String
+            }
+            struct SaveBody: Codable {
+                var clientSessionId: String
+                var recordedAt: String
+                var mediaType: String
+                var visionAnalysis: VideoVisionAnalysis
+                var coachingNotes: String
+            }
+            struct SaveResp: Codable {
+                var success: Bool?
+                var analysisId: String?
+                var analysisResult: ShotIQAnalysisResultDTO?
+                var analysis: ShotIQAnalysisResultDTO?
+            }
+
+            let saved: SaveResp = try await APIClient.shared.call(
+                "/api/save-analysis", method: "POST",
+                body: SaveBody(
+                    clientSessionId: job.clientSessionId,
+                    recordedAt: ISO8601DateFormatter().string(from: Date()),
+                    mediaType: "video",
+                    visionAnalysis: VideoVisionAnalysis(
+                        source: "ios-native-video-upload",
+                        filename: job.clip.filename,
+                        contentType: job.clip.contentType,
+                        fileSizeBytes: job.clip.fileSizeBytes,
+                        durationSeconds: job.clip.durationSeconds,
+                        trimStartSeconds: job.trimStartSeconds,
+                        trimEndSeconds: job.trimEndSeconds,
+                        trimmedDurationSeconds: job.trimmedDurationSeconds,
+                        uploadedVideoUrl: uploadedURL,
+                        note: "Native iOS saved the selected clip and trim window. Pose/frame analysis is pending."),
+                    coachingNotes: "Video uploaded and saved. ShotIQ still needs frame-level pose analysis before biomechanical scores are shown."))
+            completedResult = saved.analysisResult ?? saved.analysis
+            pct = 0.94
+            route = .results
+        } catch {
+            route = .failed
         }
     }
 }

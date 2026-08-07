@@ -1322,6 +1322,7 @@ struct PickedVideoClip: Identifiable, Equatable {
     var id: String { url.path }
     var url: URL
     var filename: String
+    var contentType: String
     var fileSizeBytes: Int
     var durationSeconds: Double
     var dimensions: CGSize?
@@ -1355,11 +1356,44 @@ struct PickedVideoClip: Identifiable, Equatable {
         let hundredths = Int(((seconds - floor(seconds)) * 100).rounded())
         return String(format: "%02d:%02d.%02d", minutes, wholeSeconds, min(hundredths, 99))
     }
+
+    static func contentType(forExtension ext: String) -> String {
+        switch ext.lowercased() {
+        case "mov": return "video/quicktime"
+        case "webm": return "video/webm"
+        case "m4v": return "video/x-m4v"
+        default: return "video/mp4"
+        }
+    }
+}
+
+struct VideoAnalysisJob: Equatable {
+    var clientSessionId: String
+    var clip: PickedVideoClip
+    var trimStartFraction: Double
+    var trimEndFraction: Double
+
+    var trimStartSeconds: Double {
+        clip.durationSeconds * min(max(trimStartFraction, 0), 1)
+    }
+
+    var trimEndSeconds: Double {
+        clip.durationSeconds * min(max(trimEndFraction, 0), 1)
+    }
+
+    var trimmedDurationSeconds: Double {
+        max(0, trimEndSeconds - trimStartSeconds)
+    }
+
+    var trimWindowText: String {
+        "\(PickedVideoClip.timeText(trimStartSeconds))-\(PickedVideoClip.timeText(trimEndSeconds))"
+    }
 }
 
 private func loadPickedVideoClip(from item: PhotosPickerItem) async -> PickedVideoClip? {
     guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
     let ext = item.supportedContentTypes.first?.preferredFilenameExtension ?? "mov"
+    let contentType = PickedVideoClip.contentType(forExtension: ext)
     let filename = "shotiq-\(UUID().uuidString).\(ext)"
     let url = FileManager.default.temporaryDirectory.appending(path: filename)
     do {
@@ -1386,6 +1420,7 @@ private func loadPickedVideoClip(from item: PhotosPickerItem) async -> PickedVid
 
     return PickedVideoClip(url: url,
                            filename: filename,
+                           contentType: contentType,
                            fileSizeBytes: data.count,
                            durationSeconds: rawDuration.isFinite ? rawDuration : 0,
                            dimensions: dimensions,
@@ -1758,7 +1793,17 @@ struct VideoReviewView: View {      // 027
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    NavigationLink { AnalysisProcessingView() } label: {
+                    NavigationLink {
+                        if let video {
+                            AnalysisProcessingView(videoJob: VideoAnalysisJob(
+                                clientSessionId: "ios-video-\(UUID().uuidString)",
+                                clip: video,
+                                trimStartFraction: trimStart,
+                                trimEndFraction: trimEnd))
+                        } else {
+                            AnalysisErrorView()
+                        }
+                    } label: {
                         captureCTA("Analyze video", icon: "camera.metering.center.weighted")
                     }
                     .padding(.horizontal, 20).padding(.top, 18)

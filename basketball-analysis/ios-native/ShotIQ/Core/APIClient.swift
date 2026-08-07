@@ -352,6 +352,94 @@ actor APIClient {
         _ = try? await request(path, method: method, body: body) as Anything?
     }
 
+    /// Resumable-compatible video upload matching the web `/api/media-uploads`
+    /// flow. Native sends every part in this foreground pass; the server keeps
+    /// the same durable `clientSessionId` join used by `/api/save-analysis`.
+    func uploadVideo(_ fileURL: URL,
+                     filename: String,
+                     contentType: String,
+                     sizeBytes: Int,
+                     clientSessionId: String,
+                     durationSeconds: Double?) async throws -> String? {
+        struct InitiateBody: Codable {
+            var clientSessionId: String
+            var fileName: String
+            var contentType: String
+            var sizeBytes: Int
+        }
+        struct UploadDTO: Codable {
+            var id: String?
+            var status: String?
+            var mediaUrl: String?
+        }
+        struct InitiateResp: Codable {
+            var success: Bool?
+            var upload: UploadDTO?
+        }
+        struct PartBody: Codable { var partNumber: Int }
+        struct PartResp: Codable {
+            var success: Bool?
+            var partNumber: Int?
+            var url: String?
+        }
+        struct CompletedPart: Codable {
+            var partNumber: Int
+            var eTag: String
+        }
+        struct CompleteBody: Codable {
+            var parts: [CompletedPart]
+            var durationSeconds: Double?
+        }
+        struct CompleteResp: Codable {
+            var success: Bool?
+            var upload: UploadDTO?
+        }
+
+        let initiated: InitiateResp = try await request(
+            "/api/media-uploads", method: "POST",
+            body: InitiateBody(clientSessionId: clientSessionId,
+                               fileName: filename,
+                               contentType: contentType,
+                               sizeBytes: sizeBytes))
+        guard let upload = initiated.upload, let uploadId = upload.id else { throw APIError.decode }
+        if upload.status == "complete" { return upload.mediaUrl }
+
+        let fileData = try Data(contentsOf: fileURL)
+        let partSize = 8 * 1_024 * 1_024
+        var completedParts: [CompletedPart] = []
+        var offset = 0
+        var partNumber = 1
+        while offset < fileData.count {
+            let next = min(fileData.count, offset + partSize)
+            let signed: PartResp = try await request(
+                "/api/media-uploads/\(uploadId)/parts", method: "POST",
+                body: PartBody(partNumber: partNumber))
+            guard let signedURLString = signed.url, let signedURL = URL(string: signedURLString) else {
+                throw APIError.decode
+            }
+
+            var put = URLRequest(url: signedURL)
+            put.httpMethod = "PUT"
+            put.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            let partData = fileData.subdata(in: offset..<next)
+            let (_, response) = try await URLSession.shared.upload(for: put, from: partData)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                throw APIError.http((response as? HTTPURLResponse)?.statusCode ?? 0)
+            }
+            guard let eTag = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "ETag") else {
+                throw APIError.decode
+            }
+            completedParts.append(CompletedPart(partNumber: partNumber, eTag: eTag))
+            offset = next
+            partNumber += 1
+        }
+
+        let completed: CompleteResp = try await request(
+            "/api/media-uploads/\(uploadId)/complete", method: "POST",
+            body: CompleteBody(parts: completedParts, durationSeconds: durationSeconds))
+        return completed.upload?.mediaUrl
+    }
+
     /// Multipart image upload matching POST /api/upload (field "image").
     func uploadImage(_ imageData: Data, filename: String = "shot.jpg",
                      uploadType: String = "user") async throws -> Data {

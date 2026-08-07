@@ -122,6 +122,7 @@ final class AnalysisResultContractTests: XCTestCase {
 
         XCTAssertEqual(presentation.scoreText, "82")
         XCTAssertEqual(presentation.mediaURL?.absoluteString, "https://media.test/shot-annotated.jpg")
+        XCTAssertEqual(presentation.videoURL?.absoluteString, "https://media.test/shot.mov")
         XCTAssertEqual(presentation.metrics.first(where: { $0.label == "RELEASE HEIGHT" })?.value, "7'8\"")
         XCTAssertEqual(presentation.metrics.first(where: { $0.label == "RELEASE OFFSET" })?.value, "-3°")
         XCTAssertEqual(presentation.metrics.first(where: { $0.label == "ELBOW ANGLE" })?.value, "161°")
@@ -160,6 +161,7 @@ final class PickedVideoClipTests: XCTestCase {
     func testPickedVideoClipFormatsMetadataFromActualAssetValues() {
         let clip = PickedVideoClip(url: URL(fileURLWithPath: "/tmp/shot.mov"),
                                    filename: "shot.mov",
+                                   contentType: "video/quicktime",
                                    fileSizeBytes: 24_800_000,
                                    durationSeconds: 6.5,
                                    dimensions: CGSize(width: 1080, height: 1920),
@@ -170,6 +172,25 @@ final class PickedVideoClipTests: XCTestCase {
         XCTAssertEqual(clip.orientationText, "1080 x 1920")
         XCTAssertEqual(clip.fileSizeText, "24.8 MB")
         XCTAssertEqual(clip.frameRateText, "60 FPS")
+    }
+
+    func testVideoAnalysisJobCarriesTrimWindowInSeconds() {
+        let clip = PickedVideoClip(url: URL(fileURLWithPath: "/tmp/shot.mp4"),
+                                   filename: "shot.mp4",
+                                   contentType: "video/mp4",
+                                   fileSizeBytes: 12_000_000,
+                                   durationSeconds: 10,
+                                   dimensions: nil,
+                                   frameRate: nil)
+        let job = VideoAnalysisJob(clientSessionId: "ios-video-test",
+                                   clip: clip,
+                                   trimStartFraction: 0.2,
+                                   trimEndFraction: 0.75)
+
+        XCTAssertEqual(job.trimStartSeconds, 2, accuracy: 0.0001)
+        XCTAssertEqual(job.trimEndSeconds, 7.5, accuracy: 0.0001)
+        XCTAssertEqual(job.trimmedDurationSeconds, 5.5, accuracy: 0.0001)
+        XCTAssertEqual(job.trimWindowText, "00:02.00-00:07.50")
     }
 }
 

@@ -63,7 +63,7 @@ The first pass should fix root causes before polishing dependent screens:
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
 | P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, and native overview presentation are implemented; Mac-mini native XCTest/device install and laptop native XCTest proof are captured. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
-| P0-002 | FIXING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review/metadata slice is implemented and simulator-tested; trim/analyze/save path remains open. |
+| P0-002 | FIXING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, trim propagation, multipart upload, save-analysis handoff, and video result rendering are implemented and simulator-tested. Frame-level pose analysis over the trimmed range remains open. |
 | P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
@@ -96,8 +96,8 @@ The first pass should fix root causes before polishing dependent screens:
 | G016 | VERIFYING | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | `VideoUploadView` now loads the selected `PhotosPickerItem` into a retained temporary video URL before navigation; focused laptop XCTest confirms the retained clip model. Still needs real picker/device-media recording before `DONE`. |
 | G017 | VERIFYING | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | `VideoReviewView` now renders `VideoPlayer` for the selected clip and keeps canonical media only for explicit fallback/staged paths. Still needs real picker/device-media recording before `DONE`. |
 | G018 | VERIFYING | P1 | `#media` `#analytics` | 027 | Read real duration, size, orientation, and FPS. | `PickedVideoClip` reads duration, dimensions, file size, and FPS from the selected asset; focused laptop XCTest proves the metadata formatting. Still needs real selected file proof before `DONE`. |
-| G019 | OPEN | P0 | `#control` `#media` | 027 | Make trim controls affect analysis input. | Analysis receives and stores selected trim start/end; frames outside trim are not used. |
-| G020 | OPEN | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Real video produces measured frames, phases, pose metrics, saved result, and result UI. |
+| G019 | VERIFYING | P0 | `#control` `#media` | 027 | Make trim controls affect analysis input. | `VideoReviewView` now builds a `VideoAnalysisJob` with selected clip plus trim fractions, and tests prove trim seconds/duration are computed from the real clip. Still needs device recording proving the backend payload contains the selected trim before `DONE`. |
+| G020 | FIXING | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Native now uploads selected videos through `/api/media-uploads`, completes multipart storage, calls `/api/save-analysis` with the same `clientSessionId`, and renders saved `videoUrl` in result UI. Still open: run pose/frame analysis over the trimmed range and persist measured frames/phases/metrics. |
 
 ## Live Camera And Shot Detection Items
 
@@ -188,14 +188,18 @@ The first pass should fix root causes before polishing dependent screens:
 
 ## Current Next Item
 
-Continue `P0-001`. The shared result contract now exists in backend TypeScript
-and native Swift DTOs, and `/api/save-analysis` plus `/api/analysis/latest`
-return it as `analysisResult` while preserving legacy `analysis` for current web
-screens. Native iOS now decodes both fields, carries the save response into
-processing, and renders analysis overview values from the shared contract rather
-than screen constants. Mac mini XCTest/device install and laptop XCTest proof are
-captured. Remaining proof before `DONE`: real iOS-created analysis visible on web
-with matching values.
+Continue `P0-002`, then finish the remaining `P0-001` web-sync proof once a real
+iOS-created analysis is available. The shared result contract now exists in
+backend TypeScript and native Swift DTOs, and `/api/save-analysis` plus
+`/api/analysis/latest` return it as `analysisResult` while preserving legacy
+`analysis` for current web screens. Native iOS decodes both fields, carries the
+save response into processing, and renders analysis overview values from the
+shared contract rather than screen constants. The video path now carries a real
+selected clip into review, derives metadata, propagates trim, uploads via the
+backend media-upload flow, saves analysis with the matching `clientSessionId`,
+and renders saved video media. Remaining proof before `P0-002` can move to
+`DONE`: frame-level pose analysis over the selected trimmed range, then real
+device/video backend proof and web/iOS round trip.
 
 ### 2026-08-07 Mac Mini Setup And Evidence
 
@@ -343,3 +347,28 @@ Evidence captured on the laptop:
   external DerivedData
   `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-video-20260807-113500`
   and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+
+### 2026-08-07 Native Video Upload/Save Handoff
+
+Third laptop functionality slice after local Xcode setup:
+
+- Added native multipart video upload support in `APIClient` using the web
+  `/api/media-uploads`, signed part, and complete routes.
+- Added `VideoAnalysisJob` so screen 027 passes the selected clip and trim
+  window into processing instead of dropping them.
+- Updated screen 036 to process a video job by uploading the clip, completing
+  storage, saving `/api/save-analysis` with the same `clientSessionId`, and
+  routing to results only after the backend save succeeds.
+- Updated screen 036 failure behavior so video upload/save errors go to the
+  canonical analysis error screen instead of generating fake results.
+- Updated result presentation and media rendering so saved `videoUrl` displays
+  as video media in native results.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-video-pipeline-test-20260807-120500.log`
+  ran `ShotIQTests/AnalysisResultContractTests` and
+  `ShotIQTests/PickedVideoClipTests` on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-video-pipeline-20260807-120500`
+  and ended with `** TEST SUCCEEDED **`, `Executed 5 tests, with 0 failures`.
