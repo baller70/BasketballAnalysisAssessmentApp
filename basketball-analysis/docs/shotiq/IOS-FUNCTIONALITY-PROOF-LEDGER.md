@@ -399,3 +399,40 @@ Evidence captured on the laptop:
   external DerivedData
   `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-video-pose-20260807-122000`
   and ended with `** TEST SUCCEEDED **`, `Executed 7 tests, with 0 failures`.
+
+### 2026-08-07 Native Simulator Smoke + Harness Handoff
+
+Fifth laptop functionality slice after local Xcode setup:
+
+- Added generated Info.plists for both native XCTest bundles in `project.yml`,
+  then regenerated `ShotIQ.xcodeproj`, so signed simulator tests survive a clean
+  XcodeGen project rebuild on this laptop.
+- Added `-uiTestSignedOut` to clear stored auth tokens and launch the signed-out
+  auth stack deterministically.
+- Updated the UI smoke tests to use explicit launch arguments, current tab
+  labels (`Capture`, `Train`, `Progress`, `Profile`, `Home`), current auth CTA
+  text (`Sign in`), and the current discover catalog drill (`STACK & SHOOT`).
+- Hardened the canonical click-test harness by relaunching between the new-player
+  home CTA branches and retrying a found tap once before reporting a dead tap.
+- Confirmed the native placeholder paths exist and route correctly: the new
+  player `GET AI ANALYSIS` CTA opens `screen-ios-no-analysis-yet`, and `See
+  capture guide` opens `screen-ios-capture-guide`.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-full-signed-20260807-132000.log`
+  ran the full `ShotIQTests` target on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-full-signed-20260807-132000`
+  and ended with `** TEST SUCCEEDED **`, `Executed 22 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-targeted-retry-20260807-140000.log`
+  reran `CanonicalScreenshotTests/test03HomeScreens`,
+  `CanonicalScreenshotTests/test99Manifest`, and the then-current UI smoke tests
+  after the canonical harness fix. The canonical home walk passed with 11
+  captured screens and 0 click-test failures. Later stale smoke-label failures in
+  that mixed run are superseded by the clean smoke log below.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-full-clean-20260807-145500.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-full-clean-20260807-145500`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.

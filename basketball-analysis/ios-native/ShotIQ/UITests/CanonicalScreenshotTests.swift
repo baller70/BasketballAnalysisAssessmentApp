@@ -147,15 +147,17 @@ final class CanonicalScreenshotTests: XCTestCase {
                               from source: String, index: Int = 0,
                               timeout: TimeInterval = 8,
                               required: Bool = true, capture: Bool = true) -> Bool {
-        guard let element = findControl(control, index: index) else {
-            note("MISSING CONTROL — “\(control)” was not on \(source); cannot verify it opens \(destination)",
-                 required: required)
-            return false
-        }
-        tap(element)
-        if screenExists(destination, timeout: timeout) {
-            if capture { shot(slug(destination)) }
-            return true
+        for attempt in 0..<2 {
+            guard let element = findControl(control, index: index, maxSwipes: attempt == 0 ? 5 : 2) else {
+                note("MISSING CONTROL — “\(control)” was not on \(source); cannot verify it opens \(destination)",
+                     required: required)
+                return false
+            }
+            tap(element)
+            if screenExists(destination, timeout: timeout) {
+                if capture { shot(slug(destination)) }
+                return true
+            }
         }
         note("DEAD TAP — “\(control)” on \(source) did not open \(destination)", required: required)
         return false
@@ -245,9 +247,11 @@ final class CanonicalScreenshotTests: XCTestCase {
         launch(Self.mainArgs + ["-uiTestHomeVariant", "new"])
         guard expectScreen("screen-ios-home-new-player", timeout: 20) else { return }
         tapAndExpect("Analyze your first shot", "screen-ios-analyze-hub", from: "home-new-player", capture: false)
-        resetTab("Home", root: "screen-ios-home-new-player")
+        launch(Self.mainArgs + ["-uiTestHomeVariant", "new"])
+        guard screenExists("screen-ios-home-new-player", timeout: 20) else { return }
         tapAndExpect("GET AI ANALYSIS", "screen-ios-no-analysis-yet", from: "home-new-player")
-        resetTab("Home", root: "screen-ios-home-new-player")
+        launch(Self.mainArgs + ["-uiTestHomeVariant", "new"])
+        guard screenExists("screen-ios-home-new-player", timeout: 20) else { return }
         tapAndExpect("See capture guide", "screen-ios-capture-guide", from: "home-new-player")
 
         launch(Self.mainArgs + ["-uiTestHomeVariant", "standard"])

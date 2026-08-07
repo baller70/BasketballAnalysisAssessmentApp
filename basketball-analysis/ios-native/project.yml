@@ -81,6 +81,7 @@ targets:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ShotIQ.app/ShotIQ"
         BUNDLE_LOADER: "$(TEST_HOST)"
         PRODUCT_NAME: "$(TARGET_NAME)"
+        GENERATE_INFOPLIST_FILE: YES
         SDKROOT: iphoneos
         SWIFT_VERSION: "5.0"
         LD_RUNPATH_SEARCH_PATHS:
@@ -102,6 +103,7 @@ targets:
         TEST_TARGET_NAME: ShotIQ
         BUNDLE_LOADER: "$(TEST_HOST)"
         PRODUCT_NAME: "$(TARGET_NAME)"
+        GENERATE_INFOPLIST_FILE: YES
         SDKROOT: iphoneos
         SWIFT_VERSION: "5.0"
         LD_RUNPATH_SEARCH_PATHS:

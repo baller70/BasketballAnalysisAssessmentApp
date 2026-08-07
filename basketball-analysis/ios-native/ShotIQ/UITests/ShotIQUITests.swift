@@ -8,43 +8,51 @@ final class ShotIQUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
+    }
+
+    private func launch(_ args: [String] = []) {
+        app.launchArguments = args
         app.launch()
     }
 
     func testSplashLeadsToWelcomeOrHome() {
-        // splash auto-advances; either the welcome CTA or the home tab bar must appear
-        let started = app.buttons["Get started"].waitForExistence(timeout: 6)
-            || app.buttons["Home"].waitForExistence(timeout: 2)
-        XCTAssertTrue(started)
+        launch(["-uiTestHoldSplash"])
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-splash").firstMatch.waitForExistence(timeout: 20))
+        app.tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-welcome").firstMatch.waitForExistence(timeout: 15))
     }
 
     func testSignInValidation() throws {
-        guard app.buttons["I already have an account"].waitForExistence(timeout: 6) else {
-            throw XCTSkip("Session already signed in")
-        }
-        app.buttons["I already have an account"].tap()
+        launch(["-uiTestSignedOut"])
+        XCTAssertTrue(app.buttons["Sign in"].waitForExistence(timeout: 8))
+        app.buttons["Sign in"].tap()
         app.buttons["signin-submit"].tap()
         XCTAssertTrue(app.staticTexts["signin-error"].waitForExistence(timeout: 3))
     }
 
     func testTabBarReachesEveryRootScreen() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData"])
         guard app.buttons["Home"].waitForExistence(timeout: 8) else {
             throw XCTSkip("Not signed in — auth-gated run")
         }
-        for tab in ["Analyze", "Training", "Progress", "Profile", "Home"] {
+        for tab in ["Capture", "Train", "Progress", "Profile", "Home"] {
             app.buttons[tab].tap()
         }
         XCTAssertTrue(app.buttons["Home"].isSelected || app.buttons["Home"].exists)
     }
 
     func testDrillMarkMakeUpdatesCount() throws {
-        guard app.buttons["Training"].waitForExistence(timeout: 8) else {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData"])
+        guard app.buttons["Train"].waitForExistence(timeout: 8) else {
             throw XCTSkip("Not signed in")
         }
-        app.buttons["Training"].tap()
-        app.staticTexts["Discover drills"].tap()
-        app.staticTexts["Pound Crossover Foundation"].tap()
+        app.buttons["Train"].tap()
+        app.buttons["Discover"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-discover-drills").firstMatch.waitForExistence(timeout: 8))
+        app.staticTexts["STACK & SHOOT"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-drill-detail").firstMatch.waitForExistence(timeout: 8))
         app.buttons["Start drill"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-drill-execution").firstMatch.waitForExistence(timeout: 8))
         app.buttons["mark-make"].tap()
         app.buttons["mark-make"].tap()
         app.buttons["mark-miss"].tap()

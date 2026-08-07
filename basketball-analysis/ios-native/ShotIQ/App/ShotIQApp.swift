@@ -84,6 +84,9 @@ enum UITestHooks {
     /// Skip splash/auth and drop straight into the signed-in tab shell.
     static var bypassAuth: Bool { args.contains("-uiTestBypassAuth") }
 
+    /// Clear stored tokens and drop straight into the signed-out auth stack.
+    static var signedOut: Bool { args.contains("-uiTestSignedOut") }
+
     /// Land in the onboarding flow instead of the main tabs (implies bypass).
     static var startOnboarding: Bool { args.contains("-uiTestOnboarding") }
 
@@ -155,7 +158,7 @@ enum UITestHooks {
 
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
-        bypassAuth || startOnboarding || demoData || holdSplash || homeVariant != nil || stage != nil
+        bypassAuth || signedOut || startOnboarding || demoData || holdSplash || homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",
@@ -177,6 +180,16 @@ final class AppState: ObservableObject {
         // live inside the signed-out stack, so hand straight to it rather than
         // waiting out the splash hold. See UITestHooks.stage.
         if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
+            phase = .welcome
+            return
+        }
+        // Test-only: force a signed-out auth shell regardless of simulator
+        // keychain state, so smoke tests do not depend on earlier app launches.
+        if UITestHooks.signedOut {
+            KeychainStore.delete(key: "accessToken")
+            KeychainStore.delete(key: "refreshToken")
+            user = nil
+            onboardingComplete = false
             phase = .welcome
             return
         }
