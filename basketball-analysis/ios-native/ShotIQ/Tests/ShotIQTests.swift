@@ -33,6 +33,69 @@ final class KeychainStoreTests: XCTestCase {
     }
 }
 
+final class AnalysisResultContractTests: XCTestCase {
+    func testSharedAnalysisResultDecodesWithoutInventingMissingMetrics() throws {
+        let json = """
+        {
+          "id": "analysis-1",
+          "clientSessionId": "ios-shot-1",
+          "captureSessionId": "capture-1",
+          "recordedAt": "2026-08-07T12:00:00.000Z",
+          "source": "ios",
+          "media": {
+            "type": "video",
+            "imageUrl": "https://media.test/shot.jpg",
+            "annotatedImageUrl": "https://media.test/shot-annotated.jpg",
+            "displayImageUrl": "https://media.test/shot-annotated.jpg",
+            "videoUrl": "https://media.test/shot.mov"
+          },
+          "scores": {
+            "overall": { "value": 84, "unit": "score", "source": "measured" },
+            "form": { "value": 82, "unit": "score", "source": "measured" },
+            "balance": { "value": null, "unit": "score", "source": "missing" },
+            "release": { "value": 80, "unit": "score", "source": "measured" },
+            "consistency": { "value": null, "unit": "score", "source": "missing" }
+          },
+          "angles": {
+            "elbow": { "value": 161, "unit": "deg", "source": "measured" },
+            "knee": { "value": null, "unit": "deg", "source": "missing" },
+            "wrist": { "value": 72, "unit": "deg", "source": "measured" },
+            "shoulder": { "value": null, "unit": "deg", "source": "missing" },
+            "hip": { "value": null, "unit": "deg", "source": "missing" },
+            "release": { "value": -3, "unit": "deg", "source": "measured" },
+            "kneeMin": { "value": 88, "unit": "deg", "source": "measured" }
+          },
+          "measurements": {
+            "releaseHeightInches": { "value": 92, "unit": "in", "source": "measured" },
+            "releaseDistanceInches": { "value": null, "unit": "in", "source": "missing" },
+            "verticalJumpInches": { "value": null, "unit": "in", "source": "missing" },
+            "centerlineDeviationDeg": { "value": 4, "unit": "deg", "source": "measured" }
+          },
+          "phase": { "value": "release", "unit": null, "source": "measured" },
+          "provenance": {
+            "measured": ["scores.form", "angles.elbow", "phase"],
+            "missing": ["scores.balance", "angles.knee"],
+            "estimated": [],
+            "demo": []
+          }
+        }
+        """.data(using: .utf8)!
+
+        let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self, from: json)
+
+        XCTAssertEqual(result.source, "ios")
+        XCTAssertEqual(result.media.videoUrl, "https://media.test/shot.mov")
+        XCTAssertEqual(result.scores.form.value, 82)
+        XCTAssertEqual(result.scores.balance.value, nil)
+        XCTAssertEqual(result.scores.balance.source, "missing")
+        XCTAssertEqual(result.angles.elbow.value, 161)
+        XCTAssertEqual(result.angles.release.value, -3)
+        XCTAssertTrue(result.provenance.measured.contains("angles.elbow"))
+        XCTAssertTrue(result.provenance.missing.contains("scores.balance"))
+        XCTAssertEqual(result.provenance.demo, [])
+    }
+}
+
 final class PoseOverlayAlignmentTests: XCTestCase {
     /// Sidecar contract: normalized keypoints must transform through the actual
     /// surface size so joints stay aligned after resizing.

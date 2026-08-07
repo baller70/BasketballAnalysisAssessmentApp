@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   historyUpdate: vi.fn(),
   mediaUploadFindUnique: vi.fn(),
   mediaUploadUpdate: vi.fn(),
+  recordEarn: vi.fn(),
 }))
 
 vi.mock('@/lib/auth/currentUser', () => ({
@@ -23,6 +24,7 @@ vi.mock('@/lib/auth/currentUser', () => ({
 }))
 vi.mock('@/lib/csrf', () => ({ validateCsrf: mocks.validateCsrf }))
 vi.mock('@/lib/storage', () => ({ uploadMedia: mocks.uploadMedia }))
+vi.mock('@/lib/points/recordEarn', () => ({ recordEarn: mocks.recordEarn }))
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: mocks.transaction,
@@ -75,6 +77,7 @@ describe('POST /api/save-analysis', () => {
     mocks.historyUpdate.mockResolvedValue({ id: 'history-1' })
     mocks.mediaUploadFindUnique.mockResolvedValue(null)
     mocks.mediaUploadUpdate.mockResolvedValue({ id: 'upload-1' })
+    mocks.recordEarn.mockResolvedValue({ earned: false, points: 0 })
   })
 
   it('requires CSRF before writing', async () => {
@@ -92,7 +95,16 @@ describe('POST /api/save-analysis', () => {
 
   it('upserts by signed-in user and exact client session id', async () => {
     const response = await POST(request(valid))
+    const payload = await response.json()
     expect(response.status).toBe(200)
+    expect(payload.analysisResult).toMatchObject({
+      id: 'analysis-1',
+      clientSessionId: null,
+      scores: expect.objectContaining({
+        overall: { value: null, unit: 'score', source: 'missing' },
+      }),
+      provenance: expect.objectContaining({ demo: [] }),
+    })
     expect(mocks.analysisUpsert).toHaveBeenCalledWith(expect.objectContaining({
       where: {
         userProfileId_clientSessionId: {

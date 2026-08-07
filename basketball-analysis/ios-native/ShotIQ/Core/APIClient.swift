@@ -103,6 +103,72 @@ struct GoalDTO: Codable, Identifiable {
     var status: String?
 }
 
+struct AnalysisMetricDTO: Codable, Equatable {
+    var value: Double?
+    var unit: String?
+    var source: String
+}
+
+struct AnalysisTextMetricDTO: Codable, Equatable {
+    var value: String?
+    var unit: String?
+    var source: String
+}
+
+struct AnalysisMediaDTO: Codable, Equatable {
+    var type: String?
+    var imageUrl: String?
+    var annotatedImageUrl: String?
+    var displayImageUrl: String?
+    var videoUrl: String?
+}
+
+struct AnalysisScoresDTO: Codable, Equatable {
+    var overall: AnalysisMetricDTO
+    var form: AnalysisMetricDTO
+    var balance: AnalysisMetricDTO
+    var release: AnalysisMetricDTO
+    var consistency: AnalysisMetricDTO
+}
+
+struct AnalysisAnglesDTO: Codable, Equatable {
+    var elbow: AnalysisMetricDTO
+    var knee: AnalysisMetricDTO
+    var wrist: AnalysisMetricDTO
+    var shoulder: AnalysisMetricDTO
+    var hip: AnalysisMetricDTO
+    var release: AnalysisMetricDTO
+    var kneeMin: AnalysisMetricDTO
+}
+
+struct AnalysisMeasurementsDTO: Codable, Equatable {
+    var releaseHeightInches: AnalysisMetricDTO
+    var releaseDistanceInches: AnalysisMetricDTO
+    var verticalJumpInches: AnalysisMetricDTO
+    var centerlineDeviationDeg: AnalysisMetricDTO
+}
+
+struct AnalysisProvenanceDTO: Codable, Equatable {
+    var measured: [String]
+    var missing: [String]
+    var estimated: [String]
+    var demo: [String]
+}
+
+struct ShotIQAnalysisResultDTO: Codable, Identifiable, Equatable {
+    var id: String
+    var clientSessionId: String?
+    var captureSessionId: String?
+    var recordedAt: String
+    var source: String
+    var media: AnalysisMediaDTO
+    var scores: AnalysisScoresDTO
+    var angles: AnalysisAnglesDTO
+    var measurements: AnalysisMeasurementsDTO
+    var phase: AnalysisTextMetricDTO
+    var provenance: AnalysisProvenanceDTO
+}
+
 // MARK: - API client (async/await, URLSession, rotating token refresh)
 
 actor APIClient {
@@ -251,6 +317,12 @@ actor APIClient {
         struct Resp: Codable { var goals: [GoalDTO]? }
         let r: Resp = try await request("/api/goals")
         return r.goals ?? []
+    }
+
+    func latestAnalysis() async throws -> ShotIQAnalysisResultDTO? {
+        struct Resp: Codable { var success: Bool; var analysis: ShotIQAnalysisResultDTO? }
+        let r: Resp = try await request("/api/analysis/latest")
+        return r.analysis
     }
 
     func recordShotEvent(drillId: String, made: Bool) async {

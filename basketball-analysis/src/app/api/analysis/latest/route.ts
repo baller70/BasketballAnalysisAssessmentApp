@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
+import { toShotIQAnalysisResult } from "@/lib/analysis/resultContract"
 
 /**
  * GET /api/analysis/latest — the caller's most recent analysis, with its angles.
@@ -26,12 +27,6 @@ import { resolveProfileId, isError } from "@/lib/auth/currentUser"
  * gets nothing back and must say so.
  */
 
-const num = (v: unknown): number | null => {
-  if (v == null) return null
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
-}
-
 export async function GET(request: NextRequest) {
   const resolved = await resolveProfileId(request)
   if (isError(resolved)) return resolved.error
@@ -42,61 +37,62 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
       select: {
         id: true, createdAt: true, mediaType: true, overallScore: true,
-        shootingPhase: true, coachingNotes: true, clientSessionId: true,
-        imageUrl: true, annotatedImageUrl: true,
+        formScore: true, balanceScore: true, releaseScore: true,
+        consistencyScore: true, shootingPhase: true, coachingNotes: true,
+        clientSessionId: true, captureSessionId: true,
+        imageUrl: true, annotatedImageUrl: true, videoUrl: true,
         elbowAngle: true, kneeAngle: true, wristAngle: true,
         shoulderAngle: true, hipAngle: true, releaseAngle: true,
+        kneeAngleMin: true,
         releaseHeightInches: true, releaseDistanceInches: true,
         verticalJumpInches: true, centerlineDeviationDeg: true,
-        strengths: true, improvements: true,
+        roboflowPoseData: true, roboflowDetection: true, visualOverlays: true,
+        strengths: true, improvements: true, drills: true,
+        matchedShooterId: true, matchConfidence: true, similarShooters: true,
       },
     })
 
     if (!row) {
-      return NextResponse.json({ success: true, analysis: null })
+      return NextResponse.json({ success: true, analysis: null, analysisResult: null })
     }
 
-    const angles = {
-      elbow: num(row.elbowAngle),
-      knee: num(row.kneeAngle),
-      wrist: num(row.wristAngle),
-      shoulder: num(row.shoulderAngle),
-      hip: num(row.hipAngle),
-      release: num(row.releaseAngle),
-    }
-
-    /* The four derived KEY MEASUREMENTS. Kept apart from `angles` because they
-       are a different kind of quantity — three lengths in inches and one angle
-       in degrees, each of which can be absent for its own reason — and because
-       a screen needs to know which it may print. */
-    const measurements = {
-      releaseHeightInches: num(row.releaseHeightInches),
-      releaseDistanceInches: num(row.releaseDistanceInches),
-      verticalJumpInches: num(row.verticalJumpInches),
-      centerlineDeviationDeg: num(row.centerlineDeviationDeg),
-    }
-
+    const result = toShotIQAnalysisResult(row)
+    const legacy = {
+        id: result.id,
+        recordedAt: result.recordedAt,
+        mediaType: result.media.type,
+        overallScore: result.scores.overall.value,
+        shootingPhase: result.phase.value,
+        coachingNotes: result.feedback.coachingNotes,
+        source: result.source === "ios" ? "iOS Capture" : result.source === "web" ? "Web Upload" : "Unknown",
+        imageUrl: result.media.displayImageUrl,
+        angles: {
+          elbow: result.angles.elbow.value,
+          knee: result.angles.knee.value,
+          wrist: result.angles.wrist.value,
+          shoulder: result.angles.shoulder.value,
+          hip: result.angles.hip.value,
+          release: result.angles.release.value,
+        },
+        measured: result.provenance.measured
+          .filter((key) => key.startsWith("angles."))
+          .map((key) => key.replace("angles.", "")),
+        measurements: {
+          releaseHeightInches: result.measurements.releaseHeightInches.value,
+          releaseDistanceInches: result.measurements.releaseDistanceInches.value,
+          verticalJumpInches: result.measurements.verticalJumpInches.value,
+          centerlineDeviationDeg: result.measurements.centerlineDeviationDeg.value,
+        },
+        measurementsPresent: result.provenance.measured
+          .filter((key) => key.startsWith("measurements."))
+          .map((key) => key.replace("measurements.", "")),
+        strengths: result.feedback.strengths,
+        improvements: result.feedback.improvements,
+      }
     return NextResponse.json({
       success: true,
-      analysis: {
-        id: row.id,
-        recordedAt: row.createdAt.toISOString(),
-        mediaType: row.mediaType,
-        overallScore: num(row.overallScore),
-        shootingPhase: row.shootingPhase,
-        coachingNotes: row.coachingNotes,
-        source: row.clientSessionId?.startsWith("ios-") ? "iOS Capture" : "Web Upload",
-        imageUrl: row.annotatedImageUrl || row.imageUrl || null,
-        angles,
-        /** Exactly the angles this shot really carries — the caller's licence
-         *  to print a number, and its instruction to print nothing otherwise. */
-        measured: Object.entries(angles).filter(([, v]) => v != null).map(([k]) => k),
-        measurements,
-        measurementsPresent: Object.entries(measurements)
-          .filter(([, v]) => v != null).map(([k]) => k),
-        strengths: Array.isArray(row.strengths) ? row.strengths : [],
-        improvements: Array.isArray(row.improvements) ? row.improvements : [],
-      },
+      analysis: legacy,
+      analysisResult: result,
     })
   } catch (error) {
     console.error("Latest analysis error:", error)

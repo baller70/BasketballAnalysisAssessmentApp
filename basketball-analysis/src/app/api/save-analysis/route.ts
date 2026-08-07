@@ -6,6 +6,7 @@ import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { uploadMedia } from "@/lib/storage"
 import { validateCsrf } from "@/lib/csrf"
 import { recordEarn } from "@/lib/points/recordEarn"
+import { toShotIQAnalysisResult } from "@/lib/analysis/resultContract"
 
 interface SaveAnalysisRequest {
   clientSessionId: string
@@ -415,6 +416,7 @@ export async function POST(request: NextRequest) {
       success: true,
       analysisId: result.analysis.id,
       clientSessionId: body.clientSessionId,
+      analysisResult: toShotIQAnalysisResult(result.analysis),
       imageUrl: result.imageUrl,
       annotatedImageUrl: result.annotatedImageUrl,
       pointsEarned: earn.earned ? earn.points : 0,
@@ -463,7 +465,11 @@ export async function GET(request: NextRequest) {
     if (!analysis) {
       return NextResponse.json({ success: false, error: "Analysis not found" }, { status: 404 })
     }
-    return NextResponse.json({ success: true, analysis })
+    return NextResponse.json({
+      success: true,
+      analysis,
+      analysisResult: toShotIQAnalysisResult(analysis),
+    })
   } catch (error) {
     console.error("Get analysis error:", error)
     return NextResponse.json({ success: false, error: "Failed to retrieve analysis" }, { status: 500 })

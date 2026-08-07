@@ -62,7 +62,7 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
-| P0-001 | OPEN | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. |
+| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract and native decode slice implemented; still needs native UI render and real device/web round-trip proof before `DONE`. |
 | P0-002 | OPEN | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. |
 | P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
@@ -188,7 +188,8 @@ The first pass should fix root causes before polishing dependent screens:
 
 ## Current Next Item
 
-Start with `P0-001`. Without a shared result contract, every downstream screen
-will keep inventing its own numbers. `P0-001` should define the data shape,
-source formulas, and web/iOS rendering contract before replacing individual
-screens.
+Continue `P0-001`. The shared result contract now exists in backend TypeScript
+and native Swift DTOs, and `/api/save-analysis` plus `/api/analysis/latest`
+return it as `analysisResult` while preserving legacy `analysis` for current web
+screens. Remaining proof before `DONE`: Mac mini Xcode test, native UI consuming
+the contract, and real iOS-created analysis visible on web with matching values.
