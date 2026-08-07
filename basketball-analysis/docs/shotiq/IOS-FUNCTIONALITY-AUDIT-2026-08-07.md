@@ -8,6 +8,19 @@ Kevin's rule for this audit: do not believe a feature is real because the code
 or the screen says it is. Mark it real only after a running-app test, automated
 test, or device/simulator evidence proves it.
 
+Correction after Kevin review: this document is not a complete page-by-page
+functionality audit yet. The six findings below are only the first issues found
+from the initial evidence. A staged canonical screenshot is the answer key, not
+proof of the user journey that should produce that state. For every screen, the
+audit must separately prove:
+
+1. The real user path can reach the screen without a test-only stage hook.
+2. The controls on that path actually do the thing their labels/screens imply.
+3. The final placeholder/canonical-looking state is produced by real app state,
+   media, camera, analysis, and backend data where the screen claims that.
+
+Until those three checks are done, no screen should be treated as working.
+
 ## Evidence Status
 
 | Status | Meaning |
@@ -37,7 +50,10 @@ the audit-relevant screenshots into
 Important evidence boundary: these screenshots prove the app can render staged
 or click-walk screens on Kevin's Mac mini. They do not prove real media selection,
 real crop mutation, real video trim, live camera pose tracking, upload, analysis,
-or web/iOS backend sync.
+or web/iOS backend sync. They also do not prove that every canonical/placeholder
+screen is reachable through the real production user flow. A test-only
+`-uiTestStage` screenshot must be treated as a visual fixture unless the real
+path to that state is also tested.
 
 | Screenshot | Evidence Type | What It Proves | What It Does Not Prove |
 | --- | --- | --- | --- |
@@ -61,6 +77,9 @@ Remaining screenshot slots for real-media/functionality proof:
 | 034 Shot Detected | After recording/ending a live session | Still needed on physical iPhone. Proves whether the recorded clip is replayed and whether skeleton/release arc are generated for it. |
 
 ## Findings So Far
+
+This list is incomplete by design. It is the beginning of the audit, not the
+answer to the page-by-page review. Screens not listed here are not cleared.
 
 ### F001 - iOS Video Upload Does Not Prove It Analyzes The Selected Video
 
