@@ -312,6 +312,7 @@ struct CreateGoalView: View {       // 064
     @State private var showTargetPicker = false
     @State private var busy = false
     @State private var errorText: String?
+    @State private var toast: ShotIQToast?
 
     // POST /api/goals — shape per src/app/api/goals/route.ts.
     private struct CreateGoalBody: Encodable {
@@ -325,23 +326,32 @@ struct CreateGoalView: View {       // 064
     private struct CreateGoalResp: Codable { var success: Bool }
 
     private func createGoal() {
-        guard !title.trimmingCharacters(in: .whitespaces).isEmpty, !busy else { return }
+        guard !busy else { return }
+        let cleanTitle = title.trimmingCharacters(in: .whitespaces)
+        guard !cleanTitle.isEmpty else {
+            toast = .info("Add a goal name", "Name the target so ShotIQ can track it.")
+            return
+        }
         busy = true
         errorText = nil
+        toast = .progress("Creating goal", "Saving your target and XP reward.", progress: 0.45)
         Task {
             do {
                 let _: CreateGoalResp = try await APIClient.shared.call(
                     "/api/goals", method: "POST",
-                    body: CreateGoalBody(name: title.trimmingCharacters(in: .whitespaces),
+                    body: CreateGoalBody(name: cleanTitle,
                                          description: desc,
                                          category: category.lowercased(),
                                          unit: unit.lowercased(),
                                          targetValue: Int(target),
                                          xpReward: 150))
+                toast = .success("Goal created", "Your goal list is refreshing now.")
                 await onCreated?()
+                try? await Task.sleep(nanoseconds: 650_000_000)
                 dismiss()
             } catch {
                 errorText = "Couldn't create the goal. Check your connection and try again."
+                toast = .error("Goal not saved", "Check your connection and try again.")
             }
             busy = false
         }
@@ -423,7 +433,10 @@ struct CreateGoalView: View {       // 064
                             ForEach(["Keep elbow stacked through release",
                                      "Hold follow-through to the rim",
                                      "Quiet the off-hand at release"], id: \.self) { t in
-                                Button(t) { linkedTarget = t }
+                                Button(t) {
+                                    linkedTarget = t
+                                    toast = .success("Target linked", t)
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
@@ -511,6 +524,7 @@ struct CreateGoalView: View {       // 064
                 }
             }
         }
+        .shotiqToast($toast)
     }
     private func categoryCard(_ icon: String, _ label: String) -> some View {
         Button { category = label } label: {
@@ -556,6 +570,7 @@ struct GoalDetailView: View {       // 065
     @State private var showEdit = false
     @State private var logValue: Double = 0
     @State private var addedDrills: Set<String> = []
+    @State private var toast: ShotIQToast?
 
     private struct GoalPatchBody: Encodable {
         var name: String? = nil
@@ -566,20 +581,37 @@ struct GoalDetailView: View {       // 065
     private struct GoalPatchResp: Codable { var success: Bool }
 
     /// PATCH /api/goals/[id] and mirror the change locally + refresh the list.
-    private func patch(_ body: GoalPatchBody, then apply: @escaping () -> Void) {
+    private func patch(_ body: GoalPatchBody,
+                       progressTitle: String = "Saving goal",
+                       successTitle: String = "Goal updated",
+                       successMessage: String? = nil,
+                       then apply: @escaping () -> Void) {
         guard !busy else { return }
         busy = true
         errorText = nil
+        toast = .progress(progressTitle, "Syncing the change to ShotIQ.", progress: 0.55)
         Task {
             do {
                 let _: GoalPatchResp = try await APIClient.shared.call(
                     "/api/goals/\(goal.id)", method: "PATCH", body: body)
                 apply()
                 await onChanged?()
+                toast = .success(successTitle, successMessage)
             } catch {
                 errorText = "Couldn't update the goal. Try again."
+                toast = .error("Goal update failed", "Check your connection and try again.")
             }
             busy = false
+        }
+    }
+
+    private func saveDrill(_ name: String) {
+        guard !addedDrills.contains(name) else { return }
+        addedDrills.insert(name)
+        toast = .progress("Adding drill", "Saving \(name) to your workouts.", progress: 0.5)
+        Task {
+            await APIClient.shared.send("/api/saved-workouts", body: SavedWorkoutBody(name: name))
+            toast = .success("Drill added", "\(name) is in your saved workouts.")
         }
     }
     private var targetValue: Int { goal.targetValue ?? 100 }
@@ -758,10 +790,7 @@ struct GoalDetailView: View {       // 065
                                     }
                                     Spacer(minLength: 4)
                                     Button {
-                                        guard !addedDrills.contains(d) else { return }
-                                        addedDrills.insert(d)
-                                        Task { await APIClient.shared.send("/api/saved-workouts",
-                                                                           body: SavedWorkoutBody(name: d)) }
+                                        saveDrill(d)
                                     } label: {
                                         HStack(spacing: 4) {
                                             if addedDrills.contains(d) {
@@ -822,7 +851,10 @@ struct GoalDetailView: View {       // 065
                         } else {
                             SecondaryButton(title: busy ? "Saving…" : "Mark goal complete", icon: "checkmark.circle") {
                                 patch(GoalPatchBody(currentValue: targetValue,
-                                                    completedAt: ISO8601DateFormatter().string(from: Date()))) {
+                                                    completedAt: ISO8601DateFormatter().string(from: Date())),
+                                      progressTitle: "Completing goal",
+                                      successTitle: "Goal completed",
+                                      successMessage: "Nice work. Your progress is saved.") {
                                     completed = true
                                     pct = 1
                                 }
@@ -836,6 +868,7 @@ struct GoalDetailView: View {       // 065
                 }
             }
         }
+        .shotiqToast($toast)
         .onAppear {
             if name.isEmpty {
                 name = goal.name
@@ -852,11 +885,13 @@ struct GoalDetailView: View {       // 065
             logProgressSheet
                 .presentationDetents([.height(320)])
                 .modifier(CanonicalTypeScale())
+                .shotiqToast($toast)
         }
         .sheet(isPresented: $showEdit) {
             editGoalSheet
                 .presentationDetents([.medium])
                 .modifier(CanonicalTypeScale())
+                .shotiqToast($toast)
         }
     }
 
@@ -875,7 +910,10 @@ struct GoalDetailView: View {       // 065
             Slider(value: $logValue, in: 0...Double(max(targetValue, 1)), step: 1)
                 .tint(ShotIQColor.shotiqOrange)
             PrimaryButton(title: busy ? "Saving…" : "Save progress") {
-                patch(GoalPatchBody(currentValue: Int(logValue))) {
+                patch(GoalPatchBody(currentValue: Int(logValue)),
+                      progressTitle: "Saving progress",
+                      successTitle: "Progress saved",
+                      successMessage: "\(Int(logValue)) of \(targetValue) \(goal.unit ?? "").") {
                     pct = Double(logValue) / Double(max(targetValue, 1))
                     showLogProgress = false
                 }
@@ -901,7 +939,9 @@ struct GoalDetailView: View {       // 065
                 .padding(14)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
             PrimaryButton(title: busy ? "Saving…" : "Save changes") {
-                patch(GoalPatchBody(name: name, description: desc)) { showEdit = false }
+                patch(GoalPatchBody(name: name, description: desc),
+                      progressTitle: "Saving changes",
+                      successTitle: "Goal changes saved") { showEdit = false }
             }
             .disabled(busy || name.trimmingCharacters(in: .whitespaces).isEmpty)
             Spacer(minLength: 0)
@@ -990,6 +1030,7 @@ struct AnalyticsCardsView: View {   // 066
     @State private var mediaFilter = "All media"
     @State private var showTimePicker = false
     @State private var showMediaPicker = false
+    @State private var toast: ShotIQToast?
     private struct AnalysisSession: Identifiable {
         let id = UUID()
         let date, name: String
@@ -1048,13 +1089,19 @@ struct AnalyticsCardsView: View {   // 066
                         .padding(.top, 16)
                         .confirmationDialog("Time range", isPresented: $showTimePicker, titleVisibility: .visible) {
                             ForEach(["All time", "Last 30 days", "Last 7 days"], id: \.self) { r in
-                                Button(r) { timeRange = r }
+                                Button(r) {
+                                    timeRange = r
+                                    toast = .success("Filter applied", "Showing \(r.lowercased()) analysis.")
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
                         .confirmationDialog("Media type", isPresented: $showMediaPicker, titleVisibility: .visible) {
                             ForEach(["All media", "Video", "Photo", "Live"], id: \.self) { k in
-                                Button(k) { mediaFilter = k }
+                                Button(k) {
+                                    mediaFilter = k
+                                    toast = .success("Media filter applied", "\(filteredSessions.count) sessions visible.")
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
@@ -1120,6 +1167,7 @@ struct AnalyticsCardsView: View {   // 066
                 }
             }
         }
+        .shotiqToast($toast)
     }
     private func filterChip(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -1787,6 +1835,7 @@ struct MediaDetailView: View {      // 069
     @State private var deleting = false
     @State private var confirmDelete = false
     @State private var showDownloadInfo = false
+    @State private var toast: ShotIQToast?
     private let speeds = ["SLOW 0.5x", "SLOW 1.0x", "SLOW 2.0x"]
     private let shareText = "My ShotIQ session — 15/24 makes (62.5%), form score 82. 🏀"
 
@@ -1796,27 +1845,40 @@ struct MediaDetailView: View {      // 069
     private func deleteMedia() {
         guard !deleting else { return }
         deleting = true
+        toast = .progress("Deleting media", "Removing this clip from ShotIQ.", progress: 0.45)
         Task {
-            defer { Task { @MainActor in deleting = false; dismiss() } }
-            guard let analysisId else { return }   // sample tile: nothing server-side to remove
-            let base = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"]
-                           ?? "https://shotiq.194-146-12-139.sslip.io")!
-            struct Csrf: Codable { let csrfToken: String }
-            var csrfReq = URLRequest(url: base.appending(path: "/api/auth/csrf"))
-            csrfReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            guard let (csrfData, _) = try? await URLSession.shared.data(for: csrfReq),
-                  let csrf = try? JSONDecoder().decode(Csrf.self, from: csrfData),
-                  var comps = URLComponents(url: base.appending(path: "/api/media"),
-                                            resolvingAgainstBaseURL: false) else { return }
-            comps.queryItems = [URLQueryItem(name: "analysisId", value: analysisId)]
-            guard let url = comps.url else { return }
-            var req = URLRequest(url: url)
-            req.httpMethod = "DELETE"
-            req.setValue(csrf.csrfToken, forHTTPHeaderField: "x-csrf-token")
-            if let token = KeychainStore.read(key: "accessToken") {
-                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            defer { deleting = false }
+            guard let analysisId else {
+                toast = .info("Sample media only", "There is no server item to delete yet.")
+                return
             }
-            _ = try? await URLSession.shared.data(for: req)
+            do {
+                let base = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"]
+                               ?? "https://shotiq.194-146-12-139.sslip.io")!
+                struct Csrf: Codable { let csrfToken: String }
+                var csrfReq = URLRequest(url: base.appending(path: "/api/auth/csrf"))
+                csrfReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let (csrfData, _) = try await URLSession.shared.data(for: csrfReq)
+                let csrf = try JSONDecoder().decode(Csrf.self, from: csrfData)
+                guard var comps = URLComponents(url: base.appending(path: "/api/media"),
+                                                resolvingAgainstBaseURL: false) else {
+                    throw URLError(.badURL)
+                }
+                comps.queryItems = [URLQueryItem(name: "analysisId", value: analysisId)]
+                guard let url = comps.url else { throw URLError(.badURL) }
+                var req = URLRequest(url: url)
+                req.httpMethod = "DELETE"
+                req.setValue(csrf.csrfToken, forHTTPHeaderField: "x-csrf-token")
+                if let token = KeychainStore.read(key: "accessToken") {
+                    req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+                _ = try await URLSession.shared.data(for: req)
+                toast = .success("Media deleted", "Returning to your library.")
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                dismiss()
+            } catch {
+                toast = .error("Delete failed", "Check your connection and try again.")
+            }
         }
     }
     var body: some View {
@@ -1846,7 +1908,11 @@ struct MediaDetailView: View {      // 069
                     VStack(alignment: .leading, spacing: 0) {
                         ZStack {
                             CanonicalMediaSurface(key: "069-visual-002", height: 310, duration: "6:12")
-                            Button { playing.toggle() } label: {
+                            Button {
+                                playing.toggle()
+                                toast = .info(playing ? "Playing clip" : "Clip paused",
+                                              playing ? "Reviewing your shot media." : "Playback paused.")
+                            } label: {
                                 Circle().fill(.white.opacity(0.9)).frame(width: 52, height: 52)
                                     .overlay(Image(systemName: playing ? "pause.fill" : "play.fill")
                                         .font(.system(size: 19))
@@ -1861,7 +1927,10 @@ struct MediaDetailView: View {      // 069
                                 .padding(10)
                         }
                         .overlay(alignment: .topTrailing) {
-                            Button { speedIndex = (speedIndex + 1) % speeds.count } label: {
+                            Button {
+                                speedIndex = (speedIndex + 1) % speeds.count
+                                toast = .success("Playback speed changed", speeds[speedIndex])
+                            } label: {
                                 Text(speeds[speedIndex]).shotiqBody(10, weight: .bold).kerning(0.4)
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 8).padding(.vertical, 5)
@@ -1882,7 +1951,10 @@ struct MediaDetailView: View {      // 069
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
                                 ForEach(0..<8, id: \.self) { i in
-                                    Button { selectedFrame = i } label: {
+                                    Button {
+                                        selectedFrame = i
+                                        toast = .info("Frame selected", "Frame \(i + 1) is ready for review.")
+                                    } label: {
                                         CanonicalPhoto("069-visual-004", width: 48, height: 38, cornerRadius: 5)
                                             .overlay(RoundedRectangle(cornerRadius: 5)
                                                 .stroke(i == selectedFrame ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
@@ -1978,12 +2050,19 @@ struct MediaDetailView: View {      // 069
                         SectionLabel(text: "ACTIONS").padding(.top, 16)
                         HStack(spacing: 8) {
                             actionButton(playing ? "pause.fill" : "play.fill",
-                                         playing ? "Pause" : "Play", ShotIQColor.ink) { playing.toggle() }
+                                         playing ? "Pause" : "Play", ShotIQColor.ink) {
+                                playing.toggle()
+                                toast = .info(playing ? "Playing clip" : "Clip paused")
+                            }
                             ShareLink(item: shareText) {
                                 actionLabel("square.and.arrow.up", "Share", ShotIQColor.ink)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening share sheet", "Your ShotIQ summary is ready.")
+                            })
                             actionButton("arrow.down.to.line", "Download", ShotIQColor.ink) {
                                 showDownloadInfo = true
+                                toast = .info("Download unavailable", "On-device downloads are coming soon.")
                             }
                             actionButton("trash", "Delete", ShotIQColor.reviewRed) { confirmDelete = true }
                         }
@@ -2024,6 +2103,7 @@ struct MediaDetailView: View {      // 069
                 }
             }
         }
+        .shotiqToast($toast)
         .confirmationDialog("Delete this media? This cannot be undone.",
                             isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete media", role: .destructive) { deleteMedia() }
@@ -2055,12 +2135,14 @@ struct ProfileView: View {          // 070
     @State private var bio = "Dedicated to the details. Constantly working to build a repeatable, efficient shot with elite consistency."
     @State private var enhancingBio = false
     @State private var bioError: String?
+    @State private var toast: ShotIQToast?
 
     /// POST /api/enhance-bio — LLM-expanded bio (shape per src/app/api/enhance-bio/route.ts).
     private func enhanceBio() {
         guard !enhancingBio else { return }
         enhancingBio = true
         bioError = nil
+        toast = .progress("Enhancing bio", "ShotIQ is rewriting your profile bio.", progress: 0.55)
         Task {
             struct Body: Encodable { var bio: String }
             struct Resp: Codable { var success: Bool; var enhancedBio: String? }
@@ -2068,8 +2150,10 @@ struct ProfileView: View {          // 070
                 let r: Resp = try await APIClient.shared.call("/api/enhance-bio", method: "POST",
                                                               body: Body(bio: bio))
                 if let enhanced = r.enhancedBio, !enhanced.isEmpty { bio = enhanced }
+                toast = .success("Bio enhanced", "Your profile copy was updated.")
             } catch {
                 bioError = "Couldn't enhance the bio right now."
+                toast = .error("Bio enhancement failed", "Try again when the connection is steady.")
             }
             enhancingBio = false
         }
@@ -2295,6 +2379,7 @@ struct ProfileView: View {          // 070
         }
         .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
         .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
+        .shotiqToast($toast)
     }
     private func profileStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
@@ -2402,6 +2487,7 @@ struct EditProfileSheet: View {
     @AppStorage("profileLevel") private var level = "advanced"
     @State private var busy = false
     @State private var errorText: String?
+    @State private var toast: ShotIQToast?
 
     private struct ProfileBody: Encodable {
         var heightInches: Int
@@ -2416,6 +2502,7 @@ struct EditProfileSheet: View {
         guard !busy else { return }
         busy = true
         errorText = nil
+        toast = .progress("Saving profile", "Updating your player measurements.", progress: 0.55)
         Task {
             do {
                 let _: ProfileResp = try await APIClient.shared.call(
@@ -2423,9 +2510,12 @@ struct EditProfileSheet: View {
                     body: ProfileBody(heightInches: heightIn, weightLbs: weightLbs,
                                       wingspanInches: wingspanIn, dominantHand: hand,
                                       experienceLevel: level))
+                toast = .success("Profile saved", "Your player details are up to date.")
+                try? await Task.sleep(nanoseconds: 650_000_000)
                 dismiss()
             } catch {
                 errorText = "Couldn't save your profile. Try again."
+                toast = .error("Profile not saved", "Check your connection and try again.")
             }
             busy = false
         }
@@ -2480,6 +2570,7 @@ struct EditProfileSheet: View {
             }
             .background(ShotIQColor.paper)
         }
+        .shotiqToast($toast)
     }
     private func measureRow(_ label: String, _ value: String,
                             down: @escaping () -> Void, up: @escaping () -> Void) -> some View {

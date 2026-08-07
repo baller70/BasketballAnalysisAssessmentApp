@@ -1339,6 +1339,7 @@ struct DrillExecutionView: View {   // 060
     @StateObject private var m = DrillSessionModel()
     @State private var viewAngle = "FRONT VIEW"
     @State private var showCompletion = false
+    @State private var toast: ShotIQToast?
     private let target = 15
     var body: some View {
         CanonicalScreen(testID: "screen-ios-drill-execution") {
@@ -1411,7 +1412,10 @@ struct DrillExecutionView: View {   // 060
                             HStack {
                                 Menu {
                                     ForEach(["FRONT VIEW", "SIDE VIEW", "REAR VIEW"], id: \.self) { v in
-                                        Button(v) { viewAngle = v }
+                                        Button(v) {
+                                            viewAngle = v
+                                            toast = .success("Camera view changed", v)
+                                        }
                                     }
                                 } label: {
                                     HStack(spacing: 5) {
@@ -1436,7 +1440,10 @@ struct DrillExecutionView: View {   // 060
                         .padding(.top, 12)
                         PhaseStrip().padding(.top, 16)
                         HStack(spacing: 10) {
-                            Button { m.mark(true, drillId: drillName) } label: {
+                            Button {
+                                m.mark(true, drillId: drillName)
+                                toast = .success("Make recorded", "\(m.makes) makes • \(m.shots.count) shots")
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "checkmark.circle")
                                     Text("Mark make").shotiqBody(15, weight: .semibold)
@@ -1446,7 +1453,10 @@ struct DrillExecutionView: View {   // 060
                                 .foregroundStyle(.white)
                             }
                             .accessibilityIdentifier("mark-make")
-                            Button { m.mark(false, drillId: drillName) } label: {
+                            Button {
+                                m.mark(false, drillId: drillName)
+                                toast = .info("Miss recorded", "\(m.makes) makes • \(m.shots.count) shots")
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "xmark.circle")
                                     Text("Mark miss").shotiqBody(15, weight: .semibold)
@@ -1459,7 +1469,10 @@ struct DrillExecutionView: View {   // 060
                         }
                         .padding(.top, 16)
                         HStack(spacing: 10) {
-                            Button { m.undo() } label: {
+                            Button {
+                                m.undo()
+                                toast = .info("Last shot removed", "\(m.shots.count) shots remaining")
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "arrow.uturn.backward")
                                     Text("Undo").shotiqBody(15)
@@ -1469,7 +1482,11 @@ struct DrillExecutionView: View {   // 060
                                 .foregroundStyle(ShotIQColor.ink)
                             }
                             .accessibilityLabel("Undo last shot")
-                            Button { m.paused.toggle() } label: {
+                            Button {
+                                m.paused.toggle()
+                                toast = .info(m.paused ? "Workout paused" : "Workout resumed",
+                                              m.paused ? "Timer is paused." : "Keep tracking your makes.")
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: m.paused ? "play" : "pause")
                                     Text(m.paused ? "Resume" : "Pause").shotiqBody(15)
@@ -1482,7 +1499,10 @@ struct DrillExecutionView: View {   // 060
                         .padding(.top, 10)
                         Button {
                             Task {
+                                toast = .progress("Saving workout", "Syncing shots and workout summary.", progress: 0.65)
                                 await m.finish(drillName: drillName)   // persist shots + workout
+                                toast = .success("Workout saved", "Opening your completion summary.")
+                                try? await Task.sleep(nanoseconds: 650_000_000)
                                 showCompletion = true
                             }
                         } label: {
@@ -1503,6 +1523,7 @@ struct DrillExecutionView: View {   // 060
                 }
             }
         }
+        .shotiqToast($toast)
         .navigationDestination(isPresented: $showCompletion) {
             WorkoutCompletionView(shots: m.shots.count, makes: m.makes, drillName: drillName)
         }
@@ -1524,6 +1545,7 @@ struct ShotTrackerView: View {      // 061
     @EnvironmentObject var app: AppState
     @StateObject private var m = DrillSessionModel()
     @State private var showCompletion = false
+    @State private var toast: ShotIQToast?
     private let baseShots = 24, baseMakes = 15, sessionTarget = 25
     private let baseMisses: Set<Int> = [2, 4, 5, 8, 11, 14, 17, 20, 21]
     private var shots: Int { baseShots + m.shots.count }
@@ -1547,7 +1569,10 @@ struct ShotTrackerView: View {      // 061
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                         VRule(height: 26)
-                        Button { m.paused.toggle() } label: {
+                        Button {
+                            m.paused.toggle()
+                            toast = .info(m.paused ? "Workout paused" : "Workout resumed")
+                        } label: {
                             HStack(spacing: 5) {
                                 Image(systemName: m.paused ? "play.fill" : "pause.fill").font(.system(size: 10))
                                 Text(m.paused ? "RESUME" : "PAUSE WORKOUT")
@@ -1691,18 +1716,30 @@ struct ShotTrackerView: View {      // 061
                         .padding(.top, 8)
                         ScoreBar(pct: 0.96).padding(.top, 8)
                         HStack(spacing: 8) {
-                            Button { m.mark(true, drillId: "shot-tracker") } label: {
+                            Button {
+                                m.mark(true, drillId: "shot-tracker")
+                                toast = .success("Make recorded", "\(makes) of \(shots) shots made")
+                            } label: {
                                 trackerButton("checkmark.circle", "MARK MAKE", .white, ShotIQColor.confirmGreen)
                             }
-                            Button { m.mark(false, drillId: "shot-tracker") } label: {
+                            Button {
+                                m.mark(false, drillId: "shot-tracker")
+                                toast = .info("Miss recorded", "\(makes) of \(shots) shots made")
+                            } label: {
                                 trackerButton("xmark.circle", "MARK MISS", .white, ShotIQColor.shotiqOrange)
                             }
-                            Button { m.undo() } label: {
+                            Button {
+                                m.undo()
+                                toast = .info("Last shot removed", "\(shots) shots tracked")
+                            } label: {
                                 trackerButton("arrow.uturn.backward", "UNDO", ShotIQColor.ink, nil)
                             }
                             Button {
                                 Task {
+                                    toast = .progress("Saving workout", "Syncing shot tracker results.", progress: 0.65)
                                     await m.finish(drillName: "Shot Tracker Session")
+                                    toast = .success("Workout saved", "Opening your completion summary.")
+                                    try? await Task.sleep(nanoseconds: 650_000_000)
                                     showCompletion = true
                                 }
                             } label: {
@@ -1717,6 +1754,7 @@ struct ShotTrackerView: View {      // 061
                 }
             }
         }
+        .shotiqToast($toast)
         .navigationDestination(isPresented: $showCompletion) {
             WorkoutCompletionView(shots: shots, makes: makes, drillName: "Shot Tracker Session")
         }

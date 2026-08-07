@@ -381,6 +381,138 @@ struct SecondaryButton: View {
     }
 }
 
+// MARK: - Customer feedback
+
+enum ShotIQToastKind: Equatable {
+    case progress
+    case success
+    case error
+    case info
+
+    var icon: String {
+        switch self {
+        case .progress: return "hourglass"
+        case .success: return "checkmark.circle.fill"
+        case .error: return "exclamationmark.triangle.fill"
+        case .info: return "info.circle.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .progress: return ShotIQColor.analysisBlue
+        case .success: return ShotIQColor.confirmGreen
+        case .error: return ShotIQColor.reviewRed
+        case .info: return ShotIQColor.shotiqOrange
+        }
+    }
+}
+
+struct ShotIQToast: Equatable, Identifiable {
+    var id = UUID()
+    var kind: ShotIQToastKind
+    var title: String
+    var message: String? = nil
+    var progress: Double? = nil
+    var autoDismissSeconds: Double? = 2.2
+
+    static func progress(_ title: String, _ message: String? = nil,
+                         progress: Double? = nil) -> ShotIQToast {
+        ShotIQToast(kind: .progress, title: title, message: message,
+                    progress: progress, autoDismissSeconds: nil)
+    }
+
+    static func success(_ title: String, _ message: String? = nil) -> ShotIQToast {
+        ShotIQToast(kind: .success, title: title, message: message)
+    }
+
+    static func error(_ title: String, _ message: String? = nil) -> ShotIQToast {
+        ShotIQToast(kind: .error, title: title, message: message, autoDismissSeconds: 3.0)
+    }
+
+    static func info(_ title: String, _ message: String? = nil) -> ShotIQToast {
+        ShotIQToast(kind: .info, title: title, message: message)
+    }
+}
+
+private struct ShotIQToastView: View {
+    let toast: ShotIQToast
+
+    var body: some View {
+        VStack(spacing: 7) {
+            HStack(spacing: 10) {
+                if toast.kind == .progress {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(toast.kind.tint)
+                } else {
+                    Image(systemName: toast.kind.icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(toast.kind.tint)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(toast.title)
+                        .shotiqBody(13, weight: .bold)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    if let message = toast.message, !message.isEmpty {
+                        Text(message)
+                            .shotiqBody(11)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.75)
+                    }
+                }
+                Spacer(minLength: 4)
+            }
+            if toast.kind == .progress {
+                ProgressView(value: toast.progress ?? 0.55)
+                    .tint(toast.kind.tint)
+                    .accessibilityLabel("Action progress")
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("shotiq-toast")
+    }
+}
+
+private struct ShotIQToastOverlay: ViewModifier {
+    @Binding var toast: ShotIQToast?
+
+    func body(content: Content) -> some View {
+        ZStack(alignment: .top) {
+            content
+            if let toast {
+                ShotIQToastView(toast: toast)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(20)
+            }
+        }
+        .animation(.spring(response: 0.25, dampingFraction: 0.9), value: toast)
+        .task(id: toast?.id) {
+            guard let current = toast, let seconds = current.autoDismissSeconds else { return }
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            await MainActor.run {
+                if toast?.id == current.id { toast = nil }
+            }
+        }
+    }
+}
+
+extension View {
+    func shotiqToast(_ toast: Binding<ShotIQToast?>) -> some View {
+        modifier(ShotIQToastOverlay(toast: toast))
+    }
+}
+
 // MARK: - Card
 
 struct ShotIQCard<Content: View>: View {

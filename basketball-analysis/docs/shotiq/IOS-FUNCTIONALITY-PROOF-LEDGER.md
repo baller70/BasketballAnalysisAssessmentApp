@@ -79,6 +79,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G004 | OPEN | P0 | `#backend` `#web-sync` | auth/data sync | Prove native write/read and web read/write with configured secrets. | Auth-chain test passes in staging/prod. |
 | G005 | OPEN | P1 | `#demo` | app-wide | Label intentional sample states. | Any sample screen visibly says demo/example and cannot be mistaken for player data. |
 | G006 | OPEN | P0 | `#analytics` | app-wide | Build analytics provenance matrix. | Every visible number on cleared screens has source, formula, and test. |
+| G074 | VERIFYING | P0 | `#control` | goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch now covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Focused UI proof verifies make/miss toasts; full native smoke is clean. Remaining app-wide action sweep still needs proof before `DONE`. |
 
 ## Capture And Upload Items
 
@@ -209,9 +210,66 @@ key now fall back to bundled basketball imagery instead of gray icon-only
 placeholders, with explicit photos added to the screenshot-backed goal and media
 cards. This is visual/media-surface proof only; backend history, aggregate
 analytics, and real iOS device round-trip proof remain open.
+Customer-visible feedback now exists for the first high-friction native action
+batch: shared toast/progress overlay, goal mutations, training shot entry,
+workout save, analytics filters, media actions, and profile edits. This proves
+the "tap did something" pattern for the tested drill path, but app-wide feedback
+coverage still needs a screen-by-screen sweep.
 Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
+
+### 2026-08-07 Native Customer Feedback Toast Handoff
+
+Eleventh laptop functionality slice after local Xcode setup:
+
+- User clarified a product requirement: every meaningful feature should show a
+  toast or progress bar so the customer knows the action is working and they are
+  doing it correctly.
+- Added shared `ShotIQToast`, `ShotIQToastKind`, and `.shotiqToast(...)`
+  overlay support with progress, success, error, and info states. The toast has
+  a stable `shotiq-toast` accessibility identifier and exposes visible text for
+  UI proof.
+- Wired the first production batch:
+  - Create goal validates empty names with an info toast, shows a progress toast
+    while saving, then a success or error toast before returning to Goals.
+  - Goal detail shows progress/success/error toasts for save progress, edit
+    goal, mark complete, target selection, and add-drill save.
+  - Analytics card filters show applied-filter success feedback.
+  - Media detail now confirms play/pause, playback speed, frame selection,
+    share-sheet opening, download-unavailable state, sample-delete state,
+    delete progress, delete success, and delete failure.
+  - Profile bio enhancement and profile-save show progress, success, and error
+    feedback.
+  - Drill execution and shot tracker now confirm make, miss, undo, pause/resume,
+    camera-view selection, and workout-save progress before opening completion.
+- This is the first feedback batch, not a claim that every iOS action is now
+  covered. The app-wide screen-by-screen action sweep remains open.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-build-feedback-toasts-20260807-135612.log`
+  ran a simulator Debug build using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-build-feedback-toasts-20260807-135612`
+  and ended with `** BUILD SUCCEEDED **`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-feedback-toasts-20260807-135720.log`
+  ran the full `ShotIQTests` target on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-feedback-toasts-20260807-135720`
+  and ended with `** TEST SUCCEEDED **`, `Executed 27 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-feedback-toasts-20260807-135839.log`
+  ran the focused `ShotIQUITests/ShotIQUITests/testDrillMarkMakeUpdatesCount`
+  UI path on the local iPhone 17 simulator. It tapped `mark-make`, verified the
+  `shotiq-toast` element and `Make recorded` text, then tapped `mark-miss` and
+  verified `Miss recorded`. It ended with `** TEST SUCCEEDED **`, `Executed 1
+  test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-feedback-toasts-20260807-140021.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-feedback-toasts-20260807-140021`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- Physical iPhone proof is still not available on this laptop until macOS/Xcode
+  enumerates the connected phone.
 
 ### 2026-08-07 Native Local Media Result Handoff
 

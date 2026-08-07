@@ -56,8 +56,11 @@ final class ShotIQUITests: XCTestCase {
         app.buttons["Start drill"].tap()
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-drill-execution").firstMatch.waitForExistence(timeout: 8))
         app.buttons["mark-make"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Make recorded"].exists)
         app.buttons["mark-make"].tap()
         app.buttons["mark-miss"].tap()
+        XCTAssertTrue(app.staticTexts["Miss recorded"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["67%"].exists || app.staticTexts["3"].exists)
     }
 }
