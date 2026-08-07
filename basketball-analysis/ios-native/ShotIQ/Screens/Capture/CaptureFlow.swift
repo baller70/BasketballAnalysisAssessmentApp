@@ -1477,6 +1477,20 @@ struct VideoAnalysisJob: Equatable {
 private func loadPickedVideoClip(from item: PhotosPickerItem) async -> PickedVideoClip? {
     guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
     let ext = item.supportedContentTypes.first?.preferredFilenameExtension ?? "mov"
+    return await loadVideoClip(data: data, ext: ext)
+}
+
+private func loadVideoClip(fromFileURL sourceURL: URL) async -> PickedVideoClip? {
+    let didAccess = sourceURL.startAccessingSecurityScopedResource()
+    defer {
+        if didAccess { sourceURL.stopAccessingSecurityScopedResource() }
+    }
+    guard let data = try? Data(contentsOf: sourceURL) else { return nil }
+    let ext = sourceURL.pathExtension.isEmpty ? "mov" : sourceURL.pathExtension
+    return await loadVideoClip(data: data, ext: ext)
+}
+
+private func loadVideoClip(data: Data, ext: String) async -> PickedVideoClip? {
     let contentType = PickedVideoClip.contentType(forExtension: ext)
     let filename = "shotiq-\(UUID().uuidString).\(ext)"
     let url = FileManager.default.temporaryDirectory.appending(path: filename)
@@ -1516,6 +1530,7 @@ struct VideoUploadView: View {      // 026
     @State private var selectedVideo: PickedVideoClip?
     @State private var loadingVideo = false
     @State private var videoError: String?
+    @State private var showFileImporter = false
     @State private var go = false
     @State private var toast: ShotIQToast?
     var body: some View {
@@ -1529,21 +1544,54 @@ struct VideoUploadView: View {      // 026
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
+                    SectionLabel(text: "VIDEO SOURCE")
+                        .padding(.horizontal, 20).padding(.top, 22)
+                    Text("Choose how you want to add footage. Each option opens a real next step.")
+                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 3)
+
                     PhotosPicker(selection: $pick, matching: .videos) {
-                        VStack(spacing: 8) {
-                            Image(systemName: loadingVideo ? "hourglass" : "film")
-                                .font(.system(size: 34)).foregroundStyle(ShotIQColor.ink)
-                            Text(loadingVideo ? "Loading video" : "Choose video").shotiqBody(20, weight: .semibold)
-                                .foregroundStyle(ShotIQColor.shotiqOrange)
-                            Text("MP4 • 3–45 seconds").shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
-                            Text("Best results in portrait orientation.")
-                                .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                        }
-                        .frame(maxWidth: .infinity).frame(height: 210)
-                        .overlay(RoundedRectangle(cornerRadius: 10)
-                            .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.5, dash: [7, 6])))
+                        videoSourceRow(loadingVideo ? "hourglass" : "photo.on.rectangle",
+                                       loadingVideo ? "Loading video" : "Video library",
+                                       "Choose a clip from Photos",
+                                       tint: ShotIQColor.shotiqOrange)
                     }
-                    .padding(.horizontal, 20).padding(.top, 18)
+                    .disabled(loadingVideo)
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    Button {
+                        showFileImporter = true
+                    } label: {
+                        videoSourceRow("folder", "Browse files", "Import MP4, MOV, or M4V from Files",
+                                       tint: ShotIQColor.analysisBlue)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(loadingVideo)
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    NavigationLink { LiveCameraSetupView() } label: {
+                        videoSourceRow("camera.metering.center.weighted", "Record video", "Use your camera",
+                                       tint: ShotIQColor.confirmGreen)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    NavigationLink { UploadQueueView() } label: {
+                        videoSourceRow("tray.full", "Upload queue", "Manage pending videos and retry uploads",
+                                       tint: ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    NavigationLink { CaptureGuideView() } label: {
+                        videoSourceRow("point.topleft.down.curvedto.point.bottomright.up",
+                                       "View filming tips",
+                                       "Learn the best way to film your shot",
+                                       tint: ShotIQColor.analysisBlue)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 10)
+
                     if let selectedVideo {
                         HStack(spacing: 12) {
                             Image(systemName: "checkmark.circle.fill")
@@ -1566,67 +1614,6 @@ struct VideoUploadView: View {      // 026
                         Text(videoError).shotiqBody(12).foregroundStyle(ShotIQColor.reviewRed)
                             .padding(.horizontal, 20).padding(.top, 8)
                     }
-
-                    // THE EQUAL SHARE IS CORRECT HERE; THE TYPE AND THE CHROME
-                    // INSIDE IT WERE NOT.
-                    //
-                    // Canonical 026 runs the same two cards at the same equal
-                    // share — 17.5..191.7pt and 199.1..373.6pt, ~174.5pt each
-                    // against the 171.5pt these get — and fits "View filming
-                    // tips" on one line with its caption on two. So the row is
-                    // not the defect; the right card's text column is.
-                    //
-                    // Measured on the same string on both sides: "Record video"
-                    // is 63.12pt wide in canonical and 86.00pt in the render —
-                    // 1.362x — while the ink height ratio is only 1.134. The
-                    // type is ~13% too large AND ~20% wider per unit height, so
-                    // "View filming tips" needs ~108pt where the column offers
-                    // 85.5pt (171.5 less 14 lead pad, 22 icon, 12 gap, 12 gap,
-                    // 12 chevron, 14 trail pad) and breaks into three lines,
-                    // with the caption falling into four. That is the layout
-                    // audit's "4 consecutive short lines, narrowest 65px".
-                    //
-                    // Two changes, both toward canonical rather than away from
-                    // it: the title drops to 13pt, which puts its cap at 9.53pt
-                    // against canonical's measured 9.70pt (it was 11.0pt), and
-                    // the card's own inset drops from 14pt to 10pt, canonical's
-                    // being 9.1pt. The caption follows the title down. Column
-                    // becomes 101.5pt against a 93.6pt title.
-                    HStack(alignment: .top, spacing: 10) {
-                        NavigationLink { LiveCameraSetupView() } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "camera.metering.center.weighted").font(.system(size: 18))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Record video").shotiqBody(13, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                    Text("Use your camera").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .padding(10)
-                            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                        }
-                        .buttonStyle(.plain)
-                        NavigationLink { CaptureGuideView() } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                                    .font(.system(size: 18)).foregroundStyle(ShotIQColor.analysisBlue)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("View filming tips").shotiqBody(13, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                    Text("Learn the best way to film your shot")
-                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                }
-                                Spacer(minLength: 0)
-                                Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            .padding(10)
-                            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 20).padding(.top, 12)
 
                     SectionLabel(text: "FRAMING GUIDE").padding(.horizontal, 20).padding(.top, 22)
                     Text("Full body in frame from feet to above release.")
@@ -1688,27 +1675,74 @@ struct VideoUploadView: View {      // 026
         }
         .onChange(of: pick) { _, item in
             guard let item else { return }
-            loadingVideo = true
-            videoError = nil
-            toast = .progress("Loading video", "Reading duration, size, and frame rate.", progress: 0.35)
+            beginLoadingVideo()
             Task {
                 let clip = await loadPickedVideoClip(from: item)
-                await MainActor.run {
-                    loadingVideo = false
-                    pick = nil
-                    if let clip {
-                        selectedVideo = clip
-                        toast = .success("Video ready", "\(clip.durationText) • \(clip.orientationText)")
-                        go = true
-                    } else {
-                        videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
-                        toast = .error("Video not loaded", "Choose a local MP4 or MOV and try again.")
-                    }
+                await MainActor.run { finishLoadingVideo(clip) }
+            }
+        }
+        .fileImporter(isPresented: $showFileImporter,
+                      allowedContentTypes: [.movie, .mpeg4Movie, .quickTimeMovie],
+                      allowsMultipleSelection: false) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                beginLoadingVideo()
+                Task {
+                    let clip = await loadVideoClip(fromFileURL: url)
+                    await MainActor.run { finishLoadingVideo(clip) }
                 }
+            case .failure:
+                videoError = "Couldn't open that file. Choose a local MP4 or MOV and try again."
+                toast = .error("File not opened", "Choose a local MP4 or MOV and try again.")
             }
         }
         .navigationDestination(isPresented: $go) { VideoReviewView(video: selectedVideo) }
         .shotiqToast($toast)
+    }
+
+    @MainActor
+    private func beginLoadingVideo() {
+        loadingVideo = true
+        videoError = nil
+        toast = .progress("Loading video", "Reading duration, size, and frame rate.", progress: 0.35)
+    }
+
+    @MainActor
+    private func finishLoadingVideo(_ clip: PickedVideoClip?) {
+        loadingVideo = false
+        pick = nil
+        if let clip {
+            selectedVideo = clip
+            toast = .success("Video ready", "\(clip.durationText) • \(clip.orientationText)")
+            go = true
+        } else {
+            videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
+            toast = .error("Video not loaded", "Choose a local MP4 or MOV and try again.")
+        }
+    }
+
+    private func videoSourceRow(_ icon: String, _ title: String, _ subtitle: String, tint: Color) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundStyle(tint)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).shotiqBody(16, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1).minimumScaleFactor(0.78)
+                Text(subtitle).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(2).minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+        .background(.white, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
 
     private func framingCard(_ badge: String, photo: String? = nil, good: Bool) -> some View {

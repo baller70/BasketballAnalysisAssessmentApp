@@ -65,6 +65,27 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["67%"].exists || app.staticTexts["3"].exists)
     }
 
+    func testVideoUploadShowsFullScreenSourceOptions() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData"])
+        guard app.buttons["Capture"].waitForExistence(timeout: 8) else {
+            throw XCTSkip("Not signed in")
+        }
+        app.buttons["Capture"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-analyze-hub").firstMatch.waitForExistence(timeout: 8))
+        let uploadVideo = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Upload video")).firstMatch
+        XCTAssertTrue(uploadVideo.waitForExistence(timeout: 8))
+        uploadVideo.tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-video-upload").firstMatch.waitForExistence(timeout: 8))
+
+        XCTAssertTrue(app.staticTexts["VIDEO SOURCE"].exists)
+        XCTAssertTrue(app.staticTexts["Video library"].exists)
+        XCTAssertTrue(app.staticTexts["Browse files"].exists)
+        XCTAssertTrue(app.staticTexts["Record video"].exists)
+        XCTAssertTrue(app.staticTexts["Upload queue"].exists)
+        XCTAssertTrue(app.staticTexts["View filming tips"].exists)
+        XCTAssertFalse(app.staticTexts["Choose video"].exists)
+    }
+
     func testCaptureNoMediaShowsCustomerFeedback() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "photo-review-crop"])
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-photo-review-crop").firstMatch.waitForExistence(timeout: 8))

@@ -27,19 +27,36 @@ struct GoalRecord: Codable, Identifiable {
 @MainActor
 final class GoalsViewModel: ObservableObject {
     @Published var goals: [GoalRecord] = []
+    @Published var loading = true
+    @Published var loadError: String?
+
     func load() async {
+        loading = true
+        loadError = nil
+        defer { loading = false }
+
+        if UITestHooks.demoData {
+            goals = Self.samples
+            return
+        }
+
         struct Resp: Codable { var goals: [GoalRecord]? }
-        if let r: Resp = try? await APIClient.shared.call("/api/goals") {
+        do {
+            let r: Resp = try await APIClient.shared.call("/api/goals")
             goals = r.goals ?? []
+        } catch {
+            goals = []
+            loadError = "Goals could not load. Check your connection and try again."
         }
     }
+
     private static let samples = [
         GoalRecord(id: "g1", name: "Keep elbow stacked through release", targetValue: 100, currentValue: 68),
         GoalRecord(id: "g2", name: "Raise make % to 65", targetValue: 100, currentValue: 40)
     ]
-    var display: [GoalRecord] { goals.isEmpty ? Self.samples : goals }
-    var active: [GoalRecord] { display.filter { $0.completedAt == nil } }
-    var completed: [GoalRecord] { display.filter { $0.completedAt != nil } }
+
+    var active: [GoalRecord] { goals.filter { $0.completedAt == nil } }
+    var completed: [GoalRecord] { goals.filter { $0.completedAt != nil } }
 }
 
 struct GoalsView: View {            // 063
@@ -84,16 +101,25 @@ struct GoalsView: View {            // 063
                         }
                         .padding(.top, 18)
                         let shown = tab == 0 ? vm.active : vm.completed
-                        if shown.isEmpty {
+                        if vm.loading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 34)
+                        } else if shown.isEmpty {
                             ShotIQCard {
                                 VStack(spacing: 8) {
                                     Image(systemName: tab == 0 ? "target" : "checkmark.circle")
                                         .font(.system(size: 26)).foregroundStyle(ShotIQColor.graphite)
-                                    Text(tab == 0 ? "No active goals" : "No completed goals yet")
+                                    Text(vm.loadError == nil
+                                         ? (tab == 0 ? "No active goals" : "No completed goals yet")
+                                         : "Goals unavailable")
                                         .shotiqBody(15, weight: .semibold)
-                                    Text(tab == 0 ? "Create a goal to start tracking progress."
-                                                  : "Goals you finish will appear here.")
+                                    Text(vm.loadError
+                                         ?? (tab == 0 ? "Create a goal to start tracking progress."
+                                                      : "Goals you finish will appear here."))
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                        .multilineTextAlignment(.center)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                                 .frame(maxWidth: .infinity).padding(.vertical, 28)
                             }

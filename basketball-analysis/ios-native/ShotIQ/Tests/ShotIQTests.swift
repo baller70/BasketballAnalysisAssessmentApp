@@ -310,6 +310,17 @@ final class DrillSessionTests: XCTestCase {
     }
 }
 
+final class GoalsViewModelTests: XCTestCase {
+    @MainActor
+    func testProductionGoalsDoNotStartWithSampleProgress() {
+        XCTAssertFalse(UITestHooks.demoData)
+        let vm = GoalsViewModel()
+
+        XCTAssertTrue(vm.active.isEmpty)
+        XCTAssertTrue(vm.completed.isEmpty)
+    }
+}
+
 final class PickedVideoClipTests: XCTestCase {
     func testPickedVideoClipFormatsMetadataFromActualAssetValues() {
         let clip = PickedVideoClip(url: URL(fileURLWithPath: "/tmp/shot.mov"),
