@@ -333,8 +333,10 @@ struct AnalysisProcessingView: View { // 036
                 var shootingPhase: String?
                 var elbowAngle: Double?
                 var kneeAngle: Double?
+                var wristAngle: Double?
                 var shoulderAngle: Double?
                 var hipAngle: Double?
+                var releaseAngle: Double?
                 var kneeAngleMin: Double?
                 var overallScore: Double?
                 var formScore: Double?
@@ -370,8 +372,10 @@ struct AnalysisProcessingView: View { // 036
                     shootingPhase: poseAnalysis.summary.releaseFrameIndex == nil ? nil : "release",
                     elbowAngle: poseAnalysis.summary.releaseElbowAngle,
                     kneeAngle: poseAnalysis.summary.releaseKneeAngle,
+                    wristAngle: poseAnalysis.summary.releaseWristAngle,
                     shoulderAngle: poseAnalysis.summary.releaseShoulderAngle,
                     hipAngle: poseAnalysis.summary.releaseHipAngle,
+                    releaseAngle: poseAnalysis.summary.releaseAngle,
                     kneeAngleMin: poseAnalysis.summary.kneeAngleMin,
                     overallScore: poseAnalysis.summary.overallScore,
                     formScore: poseAnalysis.summary.formScore,

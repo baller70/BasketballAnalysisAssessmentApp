@@ -62,8 +62,8 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
-| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, and native overview presentation are implemented; Mac-mini native XCTest/device install and laptop native XCTest proof are captured. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
-| P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, and video result rendering are implemented and simulator-tested. Needs real selected-video device/backend/web proof before `DONE`. |
+| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, native overview presentation, and save/latest web API contract proof are captured. Native video now computes and persists the same release-from-vertical and wrist/forearm-elevation semantics the web pose pipeline uses. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
+| P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, and video result rendering are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
 | P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
@@ -97,7 +97,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G017 | VERIFYING | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | `VideoReviewView` now renders `VideoPlayer` for the selected clip and keeps canonical media only for explicit fallback/staged paths. Still needs real picker/device-media recording before `DONE`. |
 | G018 | VERIFYING | P1 | `#media` `#analytics` | 027 | Read real duration, size, orientation, and FPS. | `PickedVideoClip` reads duration, dimensions, file size, and FPS from the selected asset; focused laptop XCTest proves the metadata formatting. Still needs real selected file proof before `DONE`. |
 | G019 | VERIFYING | P0 | `#control` `#media` | 027 | Make trim controls affect analysis input. | `VideoReviewView` now builds a `VideoAnalysisJob` with selected clip plus trim fractions, and tests prove trim seconds/duration are computed from the real clip. Still needs device recording proving the backend payload contains the selected trim before `DONE`. |
-| G020 | VERIFYING | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Native now samples frames inside the selected trim window, runs Vision pose detection, computes measured release/knee/shoulder/hip angles and scores when joints are found, uploads selected videos through `/api/media-uploads`, completes multipart storage, calls `/api/save-analysis` with the same `clientSessionId`, and renders saved `videoUrl` in result UI. Needs real selected-video device/backend/web proof before `DONE`. |
+| G020 | VERIFYING | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Native now samples frames inside the selected trim window, runs Vision pose detection, computes measured elbow/knee/wrist/shoulder/hip/release angles and scores when joints are found, uploads selected videos through `/api/media-uploads`, completes multipart storage, calls `/api/save-analysis` with the same `clientSessionId`, and renders saved `videoUrl` in result UI. Needs real selected-video device/backend/web proof before `DONE`. |
 
 ## Live Camera And Shot Detection Items
 
@@ -198,7 +198,9 @@ shared contract rather than screen constants. The video path now carries a real
 selected clip into review, derives metadata, propagates trim, samples frames
 inside the trim window, runs Vision pose detection, uploads via the backend
 media-upload flow, saves measured pose fields with the matching
-`clientSessionId`, and renders saved video media. Remaining proof before
+`clientSessionId`, and renders saved video media. The native pose analysis now
+also persists wrist/forearm elevation and release-from-vertical values matching
+the web pose pipeline semantics. Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
 
@@ -435,4 +437,40 @@ Evidence captured on the laptop:
   ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
   simulator using external DerivedData
   `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-full-clean-20260807-145500`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+
+### 2026-08-07 Native Video Release/Wrist Contract Handoff
+
+Sixth laptop functionality slice after local Xcode setup:
+
+- Found and fixed a native/web measurement gap: native video pose analysis
+  calculated elbow/knee/shoulder/hip but did not calculate or persist the web
+  pipeline's release-from-vertical or wrist/forearm-elevation metrics.
+- Added `releaseAngle(elbow:wrist:)` and `wristAngle(elbow:wrist:)` to the native
+  analyzer using the same vector semantics as `src/services/poseDetection.ts`.
+- Added `wristAngle` and `releaseAngle` to each sampled frame record, the
+  release-frame summary, and the `/api/save-analysis` request body created by
+  `AnalysisProcessingView`.
+- Folded wrist and release-vector scores into the native video form score when
+  those metrics are actually measured.
+- Hardened the backend save-analysis test so the mocked persisted row returns
+  real saved values, and the route proof now asserts `analysisResult` carries
+  client session identity plus measured score/elbow/wrist/release provenance.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/web-api-ios-contract-20260807-125456.log`
+  ran `tests/api/saveAnalysis.test.ts`,
+  `tests/api/analysisLatestResult.test.ts`, and
+  `tests/api/mediaUploads.test.ts` with npm cache on the external volume and
+  ended with `Test Files 3 passed`, `Tests 16 passed`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-all-20260807-125112.log`
+  ran the full `ShotIQTests` target on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-all-20260807-125112`
+  and ended with `** TEST SUCCEEDED **`, `Executed 24 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-all-20260807-125235.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-all-20260807-125235`
   and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.

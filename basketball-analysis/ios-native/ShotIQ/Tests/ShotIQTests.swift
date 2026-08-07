@@ -211,6 +211,32 @@ final class VideoPoseAnalyzerTests: XCTestCase {
 
         XCTAssertEqual(measured ?? 0, 90, accuracy: 0.0001)
     }
+
+    func testReleaseAngleMatchesWebForearmDeviationFromVertical() {
+        XCTAssertEqual(
+            VideoPoseAnalyzer.releaseAngle(elbow: CGPoint(x: 0, y: 1),
+                                           wrist: CGPoint(x: 0, y: 0)) ?? 999,
+            0,
+            accuracy: 0.0001)
+        XCTAssertEqual(
+            VideoPoseAnalyzer.releaseAngle(elbow: CGPoint(x: 0, y: 1),
+                                           wrist: CGPoint(x: 1, y: 0)) ?? 999,
+            45,
+            accuracy: 0.0001)
+    }
+
+    func testWristAngleMatchesWebForearmElevationFromHorizontal() {
+        XCTAssertEqual(
+            VideoPoseAnalyzer.wristAngle(elbow: CGPoint(x: 0, y: 1),
+                                         wrist: CGPoint(x: 0, y: 0)) ?? 999,
+            90,
+            accuracy: 0.0001)
+        XCTAssertEqual(
+            VideoPoseAnalyzer.wristAngle(elbow: CGPoint(x: 0, y: 0),
+                                         wrist: CGPoint(x: 1, y: 0)) ?? 999,
+            0,
+            accuracy: 0.0001)
+    }
 }
 
 /// The pose overlay's two silent-failure modes: a skeleton drawn against the

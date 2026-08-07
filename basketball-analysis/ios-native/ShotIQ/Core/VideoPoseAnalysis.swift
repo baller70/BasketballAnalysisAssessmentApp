@@ -15,8 +15,10 @@ struct VideoPoseFrameRecord: Codable, Equatable {
     var keypoints: [String: VideoPosePoint]
     var elbowAngle: Double?
     var kneeAngle: Double?
+    var wristAngle: Double?
     var shoulderAngle: Double?
     var hipAngle: Double?
+    var releaseAngle: Double?
 }
 
 struct VideoPoseAnalysisSummary: Codable, Equatable {
@@ -27,8 +29,10 @@ struct VideoPoseAnalysisSummary: Codable, Equatable {
     var releaseTimestampSeconds: Double?
     var releaseElbowAngle: Double?
     var releaseKneeAngle: Double?
+    var releaseWristAngle: Double?
     var releaseShoulderAngle: Double?
     var releaseHipAngle: Double?
+    var releaseAngle: Double?
     var kneeAngleMin: Double?
     var averageConfidence: Double?
     var overallScore: Double?
@@ -94,6 +98,26 @@ enum VideoPoseAnalyzer {
         return acos(cosine) * 180 / Double.pi
     }
 
+    /// Same vector metric as the web pose pipeline:
+    /// 0 = straight up, positive = forward lean from vertical.
+    static func releaseAngle(elbow: CGPoint?, wrist: CGPoint?) -> Double? {
+        guard let elbow, let wrist else { return nil }
+        let dx = Double(wrist.x - elbow.x)
+        let dy = Double(elbow.y - wrist.y)
+        return (atan2(dx, dy) * 180 / Double.pi).rounded()
+    }
+
+    /// Same display metric as the web pose pipeline: forearm elevation from
+    /// horizontal, normalized to 0...180 and stored as `wristAngle`.
+    static func wristAngle(elbow: CGPoint?, wrist: CGPoint?) -> Double? {
+        guard let elbow, let wrist else { return nil }
+        let dx = Double(wrist.x - elbow.x)
+        let dy = Double(wrist.y - elbow.y)
+        var armAngle = (atan2(-dy, dx) * 180 / Double.pi).rounded()
+        if armAngle < 0 { armAngle += 180 }
+        return armAngle
+    }
+
     private static func frameRecord(index: Int, timestamp: Double, pose: DetectedPose) -> VideoPoseFrameRecord {
         let j = pose.joints
         let side = shootingSide(in: pose)
@@ -116,8 +140,10 @@ enum VideoPoseAnalyzer {
             keypoints: keypoints,
             elbowAngle: angle(shoulder, elbow, wrist),
             kneeAngle: angle(hip, knee, ankle),
+            wristAngle: wristAngle(elbow: elbow, wrist: wrist),
             shoulderAngle: angle(hip, shoulder, elbow),
-            hipAngle: angle(shoulder, hip, knee))
+            hipAngle: angle(shoulder, hip, knee),
+            releaseAngle: releaseAngle(elbow: elbow, wrist: wrist))
     }
 
     private enum Side { case left, right }
@@ -161,7 +187,14 @@ enum VideoPoseAnalyzer {
             ? nil
             : frames.map(\.confidence).reduce(0, +) / Double(frames.count)
         let releaseScore = score(value: release?.elbowAngle, idealMin: 150, idealMax: 180)
-        let formScore = average([releaseScore, score(value: kneeMin, idealMin: 70, idealMax: 120)])
+        let wristScore = score(value: release?.wristAngle, idealMin: 50, idealMax: 100)
+        let verticalReleaseScore = score(value: release?.releaseAngle, idealMin: -5, idealMax: 5)
+        let formScore = average([
+            releaseScore,
+            wristScore,
+            verticalReleaseScore,
+            score(value: kneeMin, idealMin: 70, idealMax: 120),
+        ])
         let consistencyScore = averageConfidence.map { min(max($0 * 100, 0), 100) }
         let overallScore = average([formScore, consistencyScore])
 
@@ -173,8 +206,10 @@ enum VideoPoseAnalyzer {
             releaseTimestampSeconds: release?.timestampSeconds,
             releaseElbowAngle: release?.elbowAngle,
             releaseKneeAngle: release?.kneeAngle,
+            releaseWristAngle: release?.wristAngle,
             releaseShoulderAngle: release?.shoulderAngle,
             releaseHipAngle: release?.hipAngle,
+            releaseAngle: release?.releaseAngle,
             kneeAngleMin: kneeMin,
             averageConfidence: averageConfidence,
             overallScore: overallScore,

@@ -94,17 +94,70 @@ describe('POST /api/save-analysis', () => {
   })
 
   it('upserts by signed-in user and exact client session id', async () => {
+    mocks.analysisUpsert.mockResolvedValue({
+      id: 'analysis-1',
+      clientSessionId: 'session-1',
+      captureSessionId: 'capture-1',
+      createdAt: new Date('2026-07-16T12:00:00.000Z'),
+      mediaType: 'video',
+      videoUrl: 'https://media.test/shot.mov',
+      overallScore: 82,
+      formScore: 80,
+      balanceScore: null,
+      releaseScore: 78,
+      consistencyScore: null,
+      elbowAngle: 161,
+      kneeAngle: 170,
+      wristAngle: 72,
+      shoulderAngle: 156,
+      hipAngle: 176,
+      releaseAngle: -3,
+      kneeAngleMin: 88,
+      releaseHeightInches: null,
+      releaseDistanceInches: null,
+      verticalJumpInches: null,
+      centerlineDeviationDeg: null,
+      shootingPhase: 'release',
+      roboflowPoseData: { frames: [] },
+      roboflowDetection: null,
+      visualOverlays: null,
+      strengths: ['High release'],
+      improvements: ['Elbow drift'],
+      drills: [],
+      coachingNotes: 'Video uploaded and analyzed.',
+      matchedShooterId: null,
+      matchConfidence: null,
+      similarShooters: null,
+    })
     const response = await POST(request(valid))
     const payload = await response.json()
     expect(response.status).toBe(200)
     expect(payload.analysisResult).toMatchObject({
       id: 'analysis-1',
-      clientSessionId: null,
+      clientSessionId: 'session-1',
+      captureSessionId: 'capture-1',
+      source: 'web',
+      media: {
+        type: 'video',
+        videoUrl: 'https://media.test/shot.mov',
+      },
       scores: expect.objectContaining({
-        overall: { value: null, unit: 'score', source: 'missing' },
+        overall: { value: 82, unit: 'score', source: 'measured' },
+        balance: { value: null, unit: 'score', source: 'missing' },
+      }),
+      angles: expect.objectContaining({
+        elbow: { value: 161, unit: 'deg', source: 'measured' },
+        wrist: { value: 72, unit: 'deg', source: 'measured' },
+        release: { value: -3, unit: 'deg', source: 'measured' },
       }),
       provenance: expect.objectContaining({ demo: [] }),
     })
+    expect(payload.analysisResult.provenance.measured).toEqual(expect.arrayContaining([
+      'scores.overall',
+      'angles.elbow',
+      'angles.wrist',
+      'angles.release',
+    ]))
     expect(mocks.analysisUpsert).toHaveBeenCalledWith(expect.objectContaining({
       where: {
         userProfileId_clientSessionId: {
