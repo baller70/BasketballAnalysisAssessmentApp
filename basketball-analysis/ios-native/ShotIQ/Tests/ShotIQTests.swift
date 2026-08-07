@@ -149,6 +149,28 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertEqual(presentation.metricShareText(metric: "Elbow", valueText: presentation.elbowAngleText),
                        "My ShotIQ elbow metric: 161° - form score 82 (GOOD).")
     }
+
+    func testFormScoreBreakdownUsesSavedContractScoresAndMissingState() throws {
+        let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self,
+                                              from: sampleAnalysisJSON().data(using: .utf8)!)
+
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(presentation.scoreBreakdown.map(\.metric),
+                       ["Form", "Balance", "Release", "Consistency", "Overall"])
+        XCTAssertEqual(presentation.scoreBreakdown.map(\.scoreText),
+                       ["82", "--", "80", "--", "84"])
+        XCTAssertEqual(presentation.scoreBreakdown.first(where: { $0.metric == "Balance" })?.verdict,
+                       "UNAVAILABLE")
+        XCTAssertEqual(presentation.scoreBreakdown.first(where: { $0.metric == "Consistency" })?.caption,
+                       "Unavailable in this saved analysis.")
+        XCTAssertFalse(presentation.scoreBreakdown.contains { $0.metric == "Power" && $0.source != "demo" })
+        XCTAssertEqual(presentation.weakestScoreItem.metric, "Release")
+        XCTAssertEqual(presentation.weakestScoreItem.scoreText, "80")
+        XCTAssertEqual(presentation.sourceCoverageText, "3")
+        XCTAssertEqual(presentation.sourceCoverageVerdict, "PARTIAL")
+        XCTAssertTrue(presentation.sourceCoverageCaption.contains("2 fields are unavailable"))
+    }
 }
 
 final class PoseOverlayAlignmentTests: XCTestCase {

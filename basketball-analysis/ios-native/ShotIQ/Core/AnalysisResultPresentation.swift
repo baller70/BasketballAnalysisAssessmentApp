@@ -11,6 +11,19 @@ struct AnalysisMetricTile: Equatable {
     var source: String
 }
 
+struct AnalysisScoreBreakdownItem: Equatable {
+    var metric: String
+    var scoreText: String
+    var scorePct: Double
+    var verdict: String
+    var caption: String
+    var detail: String
+    var impact: String
+    var source: String
+
+    var isUnavailable: Bool { source == "missing" || scoreText == "--" }
+}
+
 struct AnalysisResultPresentation: Equatable {
     var id: String
     var scoreText: String
@@ -24,7 +37,22 @@ struct AnalysisResultPresentation: Equatable {
     var phaseText: String
     var coachingTarget: String
     var metrics: [AnalysisMetricTile]
+    var scoreBreakdown: [AnalysisScoreBreakdownItem]
     var provenanceSummary: String
+    var sourceCoverageText: String
+    var sourceCoverageVerdict: String
+    var sourceCoverageCaption: String
+    var weakestScoreItem: AnalysisScoreBreakdownItem {
+        let measured = scoreBreakdown.filter { !$0.isUnavailable }
+        return measured.min { $0.scorePct < $1.scorePct }
+            ?? scoreBreakdown.first
+            ?? AnalysisScoreBreakdownItem(metric: "Form", scoreText: "--", scorePct: 0,
+                                          verdict: "UNAVAILABLE",
+                                          caption: "No trusted score available.",
+                                          detail: "Missing score source",
+                                          impact: "High",
+                                          source: "missing")
+    }
     var releaseHeightText: String { metricValue(label: "RELEASE HEIGHT") }
     var releaseOffsetText: String { metricValue(label: "RELEASE OFFSET") }
     var elbowAngleText: String { metricValue(label: "ELBOW ANGLE") }
@@ -89,6 +117,28 @@ struct AnalysisResultPresentation: Equatable {
                           value: result.phase),
         ]
         provenanceSummary = "\(result.provenance.measured.count) measured • \(result.provenance.missing.count) unavailable"
+        scoreBreakdown = [
+            Self.scoreItem(metric: "Form", value: result.scores.form,
+                           caption: "Overall shooting mechanics from this analysis.",
+                           detail: "Alignment, posture, release efficiency", impact: "High"),
+            Self.scoreItem(metric: "Balance", value: result.scores.balance,
+                           caption: "Stability and control through the shot.",
+                           detail: "Stability, control, body position", impact: "Medium"),
+            Self.scoreItem(metric: "Release", value: result.scores.release,
+                           caption: "Release quality from measured shot mechanics.",
+                           detail: "Release path, timing, arm position", impact: "High"),
+            Self.scoreItem(metric: "Consistency", value: result.scores.consistency,
+                           caption: "Repeatability across trusted measurements.",
+                           detail: "Repeatability, release control", impact: "High"),
+            Self.scoreItem(metric: "Overall", value: result.scores.overall,
+                           caption: "Combined result returned by the shared contract.",
+                           detail: "Weighted saved analysis score", impact: "High"),
+        ]
+        sourceCoverageText = "\(result.provenance.measured.count)"
+        sourceCoverageVerdict = result.provenance.missing.isEmpty ? "COMPLETE" : "PARTIAL"
+        sourceCoverageCaption = result.provenance.missing.isEmpty
+            ? "All returned fields in this saved analysis are measured."
+            : "\(result.provenance.missing.count) fields are unavailable, so ShotIQ leaves them blank instead of filling demo values."
     }
 
     static let canonicalDemo = AnalysisResultPresentation(
@@ -111,6 +161,16 @@ struct AnalysisResultPresentation: Equatable {
             AnalysisMetricTile(icon: "scope", label: "SPIN RATE", value: "8.6", verdict: "GOOD", isPositive: true, detailMetric: "Spin Rate", detailValue: 0.86, source: "demo"),
             AnalysisMetricTile(icon: "viewfinder", label: "CENTEREDNESS", value: "92%", verdict: "EXCELLENT", isPositive: true, detailMetric: "Centeredness", detailValue: 0.92, source: "demo"),
         ],
+        scoreBreakdown: [
+            AnalysisScoreBreakdownItem(metric: "Form", scoreText: "84", scorePct: 0.84, verdict: "GOOD", caption: "Solid mechanics overall.", detail: "Alignment, posture, efficiency", impact: "High", source: "demo"),
+            AnalysisScoreBreakdownItem(metric: "Balance", scoreText: "78", scorePct: 0.78, verdict: "GOOD", caption: "Slight lean on the rise.", detail: "Stability, control, body position", impact: "Medium", source: "demo"),
+            AnalysisScoreBreakdownItem(metric: "Elbow", scoreText: "72", scorePct: 0.72, verdict: "NEEDS WORK", caption: "Elbow drifts out at load.", detail: "Stack, path, separation", impact: "High", source: "demo"),
+            AnalysisScoreBreakdownItem(metric: "Power", scoreText: "86", scorePct: 0.86, verdict: "GOOD", caption: "Strong lower body drive.", detail: "Lower body drive, force transfer", impact: "Medium", source: "demo"),
+            AnalysisScoreBreakdownItem(metric: "Consistency", scoreText: "81", scorePct: 0.81, verdict: "GOOD", caption: "Release point is repeatable.", detail: "Repeatability, release control", impact: "High", source: "demo"),
+        ],
+        sourceCoverageText: "76%",
+        sourceCoverageVerdict: "MODERATE",
+        sourceCoverageCaption: "Form is repeatable in games, with room to tighten elbow.",
         provenanceSummary: "canonical screenshot demo")
 
     static let noResult = AnalysisResultPresentation(
@@ -133,12 +193,27 @@ struct AnalysisResultPresentation: Equatable {
             AnalysisMetricTile(icon: "scope", label: "CENTERLINE", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Centerline", detailValue: 0, source: "missing"),
             AnalysisMetricTile(icon: "viewfinder", label: "PHASE", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Phase", detailValue: 0, source: "missing"),
         ],
+        scoreBreakdown: [
+            AnalysisScoreBreakdownItem(metric: "Form", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
+            AnalysisScoreBreakdownItem(metric: "Balance", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "Medium", source: "missing"),
+            AnalysisScoreBreakdownItem(metric: "Release", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
+            AnalysisScoreBreakdownItem(metric: "Consistency", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
+            AnalysisScoreBreakdownItem(metric: "Overall", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
+        ],
+        sourceCoverageText: "0",
+        sourceCoverageVerdict: "UNAVAILABLE",
+        sourceCoverageCaption: "No saved analysis result has been loaded.",
         provenanceSummary: "0 measured • 6 unavailable")
 
     private init(id: String, scoreText: String, scorePct: Double, scoreVerdict: String,
                  scoreCaption: String, mediaURL: URL?, videoURL: URL?, mediaLabel: String,
                  recordedLabel: String, phaseText: String, coachingTarget: String,
-                 metrics: [AnalysisMetricTile], provenanceSummary: String) {
+                 metrics: [AnalysisMetricTile],
+                 scoreBreakdown: [AnalysisScoreBreakdownItem],
+                 sourceCoverageText: String,
+                 sourceCoverageVerdict: String,
+                 sourceCoverageCaption: String,
+                 provenanceSummary: String) {
         self.id = id
         self.scoreText = scoreText
         self.scorePct = scorePct
@@ -151,6 +226,10 @@ struct AnalysisResultPresentation: Equatable {
         self.phaseText = phaseText
         self.coachingTarget = coachingTarget
         self.metrics = metrics
+        self.scoreBreakdown = scoreBreakdown
+        self.sourceCoverageText = sourceCoverageText
+        self.sourceCoverageVerdict = sourceCoverageVerdict
+        self.sourceCoverageCaption = sourceCoverageCaption
         self.provenanceSummary = provenanceSummary
     }
 
@@ -210,6 +289,21 @@ struct AnalysisResultPresentation: Equatable {
                                   detailMetric: metric,
                                   detailValue: hasValue ? 1 : 0,
                                   source: value.source)
+    }
+
+    private static func scoreItem(metric: String, value: AnalysisMetricDTO,
+                                  caption: String, detail: String, impact: String) -> AnalysisScoreBreakdownItem {
+        let text = scoreText(value.value)
+        let pct = percent(value.value)
+        let unavailable = value.value == nil || value.source == "missing"
+        return AnalysisScoreBreakdownItem(metric: metric,
+                                          scoreText: text,
+                                          scorePct: pct,
+                                          verdict: scoreVerdict(value.value, source: value.source),
+                                          caption: unavailable ? "Unavailable in this saved analysis." : caption,
+                                          detail: unavailable ? "Missing score source" : detail,
+                                          impact: impact,
+                                          source: value.source)
     }
 
     private static func feetInches(_ inches: Double) -> String {

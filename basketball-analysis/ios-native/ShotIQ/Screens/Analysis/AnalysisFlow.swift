@@ -1826,20 +1826,6 @@ struct FormScoreView: View {        // 044
     @Environment(\.dismiss) private var dismiss
     var presentation: AnalysisResultPresentation = .canonicalDemo
     @State private var info: AnalysisInfoNote?
-    private let breakdown: [(String, Double, String, String)] = [
-        ("Form", 0.84, "GOOD", "Solid mechanics overall."),
-        ("Balance", 0.78, "GOOD", "Slight lean on the rise."),
-        ("Elbow", 0.72, "NEEDS WORK", "Elbow drifts out at load."),
-        ("Power", 0.86, "GOOD", "Strong lower body drive."),
-        ("Consistency", 0.81, "GOOD", "Release point is repeatable."),
-    ]
-    private let details: [(String, Double, String, String)] = [
-        ("Form", 0.84, "Alignment, posture, efficiency", "High"),
-        ("Balance", 0.78, "Stability, control, body position", "Medium"),
-        ("Elbow", 0.72, "Stack, path, separation", "High"),
-        ("Power", 0.86, "Lower body drive, force transfer", "Medium"),
-        ("Consistency", 0.81, "Repeatability, release control", "High"),
-    ]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-form-score") {
             VStack(spacing: 0) {
@@ -1884,13 +1870,14 @@ struct FormScoreView: View {        // 044
                                 .padding(.top, 12)
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 3) {
-                                    TrendLine(points: [58, 66, 61, 70]).frame(width: 110, height: 34)
+                                    TrendLine(points: presentation.scoreBreakdown.map { $0.scorePct * 100 }).frame(width: 110, height: 34)
                                     HStack(spacing: 3) {
-                                        Text("+8.1%").shotiqBody(12, weight: .bold)
-                                            .foregroundStyle(ShotIQColor.confirmGreen)
-                                        Text("vs last session").shotiqBody(12)
+                                        Text(presentation.provenanceSummary).shotiqBody(12, weight: .bold)
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                        Text(presentation.recordedLabel).shotiqBody(12)
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
+                                    .lineLimit(1).minimumScaleFactor(0.65)
                                 }
                                 .padding(.top, 12)
                             }
@@ -1911,22 +1898,27 @@ struct FormScoreView: View {        // 044
                             .padding(.top, 16)
                             SectionLabel(text: "FORM BREAKDOWN").padding(.top, 22)
                             HStack(spacing: 8) {
-                                ForEach(breakdown, id: \.0) { m, v, verdict, caption in
-                                    NavigationLink { MetricDetailView(metric: m, value: v) } label: {
+                                ForEach(presentation.scoreBreakdown, id: \.metric) { item in
+                                    NavigationLink {
+                                        MetricDetailView(metric: item.metric,
+                                                         value: item.scorePct,
+                                                         valueText: item.scoreText,
+                                                         presentation: presentation)
+                                    } label: {
                                         VStack(spacing: 4) {
-                                            Text(m.uppercased()).shotiqBody(9, weight: .bold).kerning(0.4)
+                                            Text(item.metric.uppercased()).shotiqBody(9, weight: .bold).kerning(0.4)
                                                 .foregroundStyle(ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.5)
-                                            MechanicGlyph(kind: .init(metricLabel: m), size: 30,
-                                                          accent: verdict == "NEEDS WORK"
+                                            MechanicGlyph(kind: .init(metricLabel: item.metric), size: 30,
+                                                          accent: item.verdict == "NEEDS WORK"
                                                               ? ShotIQColor.reviewRed : ShotIQColor.shotiqOrange)
                                                 .foregroundStyle(ShotIQColor.ink)
-                                            Text("\(Int(v * 100))").font(.custom("Tungsten-Medium", size: 30))
+                                            Text(item.scoreText).font(.custom("Tungsten-Medium", size: 30))
                                                 .foregroundStyle(ShotIQColor.shotiqOrange)
-                                            Text(verdict).shotiqBody(8, weight: .bold).kerning(0.3)
-                                                .foregroundStyle(verdict == "NEEDS WORK" ? ShotIQColor.reviewRed : ShotIQColor.analysisBlue)
+                                            Text(item.verdict).shotiqBody(8, weight: .bold).kerning(0.3)
+                                                .foregroundStyle(item.verdict == "NEEDS WORK" ? ShotIQColor.reviewRed : ShotIQColor.analysisBlue)
                                                 .lineLimit(1).minimumScaleFactor(0.5)
-                                            Text(caption).shotiqBody(8).foregroundStyle(ShotIQColor.graphite)
+                                            Text(item.caption).shotiqBody(8).foregroundStyle(ShotIQColor.graphite)
                                                 .multilineTextAlignment(.center)
                                                 .lineLimit(2).minimumScaleFactor(0.7)
                                         }
@@ -1938,20 +1930,20 @@ struct FormScoreView: View {        // 044
                             }
                             .padding(.top, 8)
                             HStack(spacing: 6) {
-                                SectionLabel(text: "CONFIDENCE")
-                                infoButton("Confidence",
-                                           "How reliably the AI could track your body and the ball in this clip. Higher confidence means more trustworthy metrics.")
+                                SectionLabel(text: "SOURCE COVERAGE")
+                                infoButton("Source coverage",
+                                           "How many fields in the saved analysis contract were measured. Missing fields stay unavailable instead of being replaced by demo values.")
                             }
                             .padding(.top, 22)
                             HStack(alignment: .center, spacing: 14) {
-                                Text("76%").font(.custom("Tungsten-Medium", size: 44))
+                                Text(presentation.sourceCoverageText).font(.custom("Tungsten-Medium", size: 44))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
-                                Text("MODERATE").shotiqBody(12, weight: .bold).kerning(0.6)
+                                Text(presentation.sourceCoverageVerdict).shotiqBody(12, weight: .bold).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.analysisBlue)
-                                Text("Form is repeatable in games, with room to tighten elbow.")
+                                Text(presentation.sourceCoverageCaption)
                                     .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                 Spacer(minLength: 0)
-                                TrendLine(points: [40, 55, 42, 60, 48, 70, 66, 82], stroke: ShotIQColor.analysisBlue)
+                                TrendLine(points: presentation.scoreBreakdown.map { $0.scorePct * 100 }, stroke: ShotIQColor.analysisBlue)
                                     .frame(width: 100, height: 36)
                             }
                             .padding(.top, 6)
@@ -1959,10 +1951,10 @@ struct FormScoreView: View {        // 044
                             HStack(alignment: .top, spacing: 14) {
                                 CueGlyph(kind: .extensionLine, size: 44).foregroundStyle(ShotIQColor.ink)
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Elbow separation at load is causing inconsistency at release.")
+                                    Text(presentation.coachingTarget)
                                         .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                         .fixedSize(horizontal: false, vertical: true)
-                                    Text("Focus on keeping your elbow stacked over your hip through the rise and into release.")
+                                    Text("Generated from the lowest trusted saved score and measured angle sources in this analysis.")
                                         .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -1970,9 +1962,9 @@ struct FormScoreView: View {        // 044
                                 VStack(alignment: .trailing, spacing: 2) {
                                     Text("IMPACT").shotiqBody(10, weight: .semibold).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("+11%").font(.custom("Tungsten-Medium", size: 30))
+                                    Text(presentation.weakestScoreItem.verdict).font(.custom("Tungsten-Medium", size: 18))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Text("Consistency").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                    Text(presentation.weakestScoreItem.metric).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
                             }
                             .padding(14)
@@ -1993,28 +1985,38 @@ struct FormScoreView: View {        // 044
                             .font(.system(size: 9, weight: .semibold)).kerning(0.5)
                             .foregroundStyle(ShotIQColor.graphite)
                             .padding(.top, 10)
-                            ForEach(details, id: \.0) { m, v, desc, impact in
-                                NavigationLink { MetricDetailView(metric: m, value: v) } label: {
+                            ForEach(presentation.scoreBreakdown, id: \.metric) { item in
+                                NavigationLink {
+                                    MetricDetailView(metric: item.metric,
+                                                     value: item.scorePct,
+                                                     valueText: item.scoreText,
+                                                     presentation: presentation)
+                                } label: {
                                     HStack {
-                                        Text(m).shotiqBody(13).frame(maxWidth: .infinity, alignment: .leading)
+                                        Text(item.metric).shotiqBody(13).frame(maxWidth: .infinity, alignment: .leading)
                                         HStack(spacing: 6) {
-                                            Text("\(Int(v * 100))").font(.custom("Tungsten-Medium", size: 17))
+                                            Text(item.scoreText).font(.custom("Tungsten-Medium", size: 17))
                                                 .foregroundStyle(ShotIQColor.ink)
-                                            ScoreBar(pct: v, color: v < 0.75 ? ShotIQColor.shotiqOrange : ShotIQColor.analysisBlue)
+                                            ScoreBar(pct: item.scorePct, color: item.scorePct < 0.75 ? ShotIQColor.shotiqOrange : ShotIQColor.analysisBlue)
                                                 .frame(width: 74)
                                         }
                                         .frame(width: 110, alignment: .leading)
-                                        Text(desc).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        Text(item.detail).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                             .lineLimit(2).minimumScaleFactor(0.7)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                        Text(impact).shotiqBody(11).foregroundStyle(ShotIQColor.ink)
+                                        Text(item.impact).shotiqBody(11).foregroundStyle(ShotIQColor.ink)
                                             .frame(width: 52, alignment: .trailing)
                                     }
                                     .padding(.vertical, 9)
                                     .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                                 }
                             }
-                            NavigationLink { MetricDetailView(metric: "Elbow", value: 0.72) } label: {
+                            NavigationLink {
+                                MetricDetailView(metric: presentation.weakestScoreItem.metric,
+                                                 value: presentation.weakestScoreItem.scorePct,
+                                                 valueText: presentation.weakestScoreItem.scoreText,
+                                                 presentation: presentation)
+                            } label: {
                                 HStack(spacing: 10) {
                                     Text("Review weakest metric").shotiqBody(17, weight: .medium)
                                     Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold))

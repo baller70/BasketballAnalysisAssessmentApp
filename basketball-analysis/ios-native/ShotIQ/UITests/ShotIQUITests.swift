@@ -47,6 +47,8 @@ final class ShotIQUITests: XCTestCase {
             throw XCTSkip("Not signed in")
         }
         app.buttons["Train"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-training-home").firstMatch.waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["Discover"].waitForExistence(timeout: 8))
         app.buttons["Discover"].tap()
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-discover-drills").firstMatch.waitForExistence(timeout: 8))
         app.staticTexts["STACK & SHOOT"].tap()
