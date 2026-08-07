@@ -6,26 +6,27 @@ import SwiftUI
 // MARK: - Shared training helpers (canonical 054 look)
 
 /// Court photography slot. `photo` is a canonical crop key (see
-/// `CanonicalPhoto`); without one the slot keeps the light placeholder it used
-/// before, so thumbnails with no canonical frame degrade instead of vanishing.
+/// `CanonicalPhoto`). Older screens left this nil and showed a gray icon box;
+/// production paths now fall back to bundled basketball imagery so list/detail
+/// cards still have a visible shot-related frame.
 struct PhotoThumb: View {
     var width: CGFloat? = nil
     var height: CGFloat
     var icon: String = "figure.basketball"
     var photo: String? = nil
     var body: some View {
-        Group {
-            if let photo {
-                CanonicalPhoto(photo, width: width, height: height, cornerRadius: 6)
-            } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(ShotIQColor.warmCanvas)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
-                    .overlay(Image(systemName: icon).font(.system(size: min(height, 44) * 0.42))
-                        .foregroundStyle(ShotIQColor.muted))
-                    .frame(width: width, height: height)
-            }
+        CanonicalPhoto(resolvedPhoto, width: width, height: height, cornerRadius: 6)
+            .accessibilityLabel("Shot media thumbnail")
+    }
+    private var resolvedPhoto: String {
+        if let photo { return photo }
+        if icon.contains("play") { return "068-visual-002" }
+        if icon.contains("chart") { return "069-visual-004" }
+        if icon.contains("target") { return "065-visual-001" }
+        if icon.contains("viewfinder") || icon.contains("camera") {
+            return "054-visual-001"
         }
+        return "054-visual-003"
     }
 }
 
@@ -85,8 +86,9 @@ struct TrainingHomeView: View {     // 054
          ("Elbow Alignment Series", ["15 min", "Form Focus", "All Levels"], "Train a stacked elbow and straight line."),
          ("Catch & Shoot Flow", ["12 min", "Game Speed", "All Levels"], "Smooth rhythm from catch to follow-through.")]
     }
-    /// Canonical 054 carries a court frame on the first two saved-drill rows.
-    private let savedDrillPhotos = ["054-visual-003", "054-visual-002"]
+    /// Each saved-drill row should carry a real court frame; the third row used
+    /// to fall through to PhotoThumb's gray placeholder.
+    private let savedDrillPhotos = ["054-visual-003", "054-visual-002", "054-visual-001"]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-training-home") {
             ScrollView {
@@ -153,7 +155,8 @@ struct TrainingHomeView: View {     // 054
                                         // the row was leaving them 166.
                                         HStack(spacing: 8) {
                                             PhotoThumb(width: 84, height: 76,
-                                                       photo: i < savedDrillPhotos.count ? savedDrillPhotos[i] : nil)
+                                                       photo: savedDrillPhotos.indices.contains(i)
+                                                       ? savedDrillPhotos[i] : nil)
                                             WorkoutGlyph(kind: .init(drillName: d.0), size: 28)
                                                 .foregroundStyle(i == 0 ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             VStack(alignment: .leading, spacing: 5) {

@@ -67,7 +67,7 @@ The first pass should fix root causes before polishing dependent screens:
 | P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, and 045 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, missing-score state, source coverage, weakest-score CTA, and app-local selected photo/video fallback instead of their old demo constants when server media URLs are absent. Still needs the remaining result/flaw/frame/detail screens, true confidence/trend/history fields, real pose frames, and real device/backend/web proof before `DONE`. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
-| P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. |
+| P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. Thumbnail placeholder imagery on affected training/goals/media/profile cards now falls back to bundled basketball media, but aggregate values are still unproved. |
 
 ## Cross-Cutting Items
 
@@ -137,11 +137,11 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| G045 | OPEN | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Seeded weakness/goal changes recommended drill and progress stats. |
+| G045 | OPEN | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Seeded weakness/goal changes recommended drill and progress stats. Training saved-drill thumbnail placeholders are fixed with bundled shot imagery; recommendation data still needs backend/history proof. |
 | G046 | OPEN | P1 | `#analytics` | 055 | Quick start values from current user data. | Different user history changes form score/session context. |
 | G047 | OPEN | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Filter/save/drill selection persists and syncs. |
 | G048 | OPEN | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill detail target changes from selected real flaw/goal. |
-| G049 | OPEN | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | Save/remove drill changes list after reload and web sync if applicable. |
+| G049 | OPEN | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | Save/remove drill changes list after reload and web sync if applicable. Shared drill thumbnail fallback now prevents gray icon-only cards, but persistence/backend proof is still open. |
 | G050 | OPEN | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Workout API seed changes calendar percentages/streaks. |
 | G051 | OPEN | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Chosen drill displays correct media/cue and measured/live data where claimed. |
 | G052 | OPEN | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | New session starts from zero or real history; phase/correction values have source. |
@@ -151,13 +151,13 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| G054 | OPEN | P1 | `#backend` `#demo` | 063 | Remove fake fallback goals or label them. | Empty backend does not silently show fake personal goals. |
-| G055 | OPEN | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal card numbers reproduce from backend history and goal progress. |
+| G054 | OPEN | P1 | `#backend` `#demo` | 063 | Remove fake fallback goals or label them. | Empty backend does not silently show fake personal goals. Goal card media placeholders are fixed with bundled basketball imagery; fake fallback goal data is still open. |
+| G055 | OPEN | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal card numbers reproduce from backend history and goal progress. Goal/session thumbnails are fixed, but numbers and trends still need real history proof. |
 | G056 | OPEN | P1 | `#backend` `#analytics` | 064 | Created goals affect recommendations/analytics. | New goal changes goals list and downstream training/analytics surfaces. |
 | G057 | OPEN | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Linked sessions/trends/angles match saved workout and analysis records. |
 | G058 | OPEN | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | API seed changes cards, trends, share values, and deltas exactly. |
 | G059 | OPEN | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Range/filter changes recompute rows, confidence, trends, and phase values. |
-| G060 | OPEN | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Upload/capture appears in media library after reload. |
+| G060 | OPEN | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Upload/capture appears in media library after reload. Stock thumbnail placeholders on My Media tiles are fixed, but real uploaded/captured media listing remains open. |
 | G061 | OPEN | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Selecting item opens matching media and saved metrics. |
 | G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
 | G063 | OPEN | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings persist; any analytics displayed have provenance. |
@@ -204,6 +204,11 @@ the web pose pipeline semantics. The result path now also preserves and renders
 app-local selected photo/video media when the backend save response has no
 remote media URL, which prevents the immediate result and shot breakdown screens
 from falling back to stock/canonical pictures after a real picker/crop flow.
+Training, goals, and media/profile thumbnail cards that forgot to pass an image
+key now fall back to bundled basketball imagery instead of gray icon-only
+placeholders, with explicit photos added to the screenshot-backed goal and media
+cards. This is visual/media-surface proof only; backend history, aggregate
+analytics, and real iOS device round-trip proof remain open.
 Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
@@ -247,6 +252,53 @@ Evidence captured on the laptop:
   `xcrun devicectl list devices` still returned `No devices found` on this
   laptop. Real iPhone install/proof remains blocked until macOS enumerates the
   unlocked/trusted phone.
+
+### 2026-08-07 Native Thumbnail Placeholder Handoff
+
+Tenth laptop functionality slice after local Xcode setup:
+
+- User screenshots still showed gray thumbnail placeholders in training, goals,
+  media, and profile-adjacent paths after the local result media fix.
+- `PhotoThumb` now resolves nil image keys to bundled basketball imagery instead
+  of a gray icon-only rectangle, with icon-aware fallbacks for video, target,
+  camera, and chart-style cards.
+- Training home now assigns a court frame to all saved-drill rows, including the
+  previous "Catch & Shoot Flow" placeholder.
+- Goal, create-goal, goal-detail, recent-session, linked-drill, My Media, and
+  yesterday-row cards now pass explicit canonical shot imagery where screenshots
+  showed blank stock slots.
+- This slice only fixes visible media placeholders. It does not mark backend
+  goals, history aggregates, analytics provenance, media sync, or device proof
+  as complete.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-thumbnail-fallback-20260807-133922.log`
+  ran the full `ShotIQTests` target on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-thumbnail-fallback-20260807-133922`
+  and ended with `** TEST SUCCEEDED **`, `Executed 27 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-thumbnail-fallback-20260807-134057.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-thumbnail-fallback-20260807-134057`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-simshots-thumbnail-fallback-20260807-134337.log`
+  ran `CanonicalScreenshotTests/test06TrainingScreens` and
+  `CanonicalScreenshotTests/test07ProgressAndProfileScreens` on the local iPhone
+  17 simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-simshots-thumbnail-fallback-20260807-134337`
+  and ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`.
+  The run captured training screens `001-training-home` through
+  `009-shot-tracker`, plus progress/profile screens `010-analytics-cards`
+  through `019-settings-hub`, and exercised share-results navigation.
+- The screenshot result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-simshots-thumbnail-fallback-20260807-134337/Logs/Test/Test-ShotIQ-2026.08.07_13-43-39--0400.xcresult`.
+- With `scripts/shotiq-xcode-env.sh` loaded after the user connected the phone,
+  `xcrun devicectl list devices` still returned `No devices found`, and
+  `system_profiler SPUSBDataType` showed the SanDisk external drive but no
+  iPhone or Apple Mobile device. Physical iPhone install/proof remains blocked
+  until macOS enumerates the unlocked/trusted phone.
 
 ### 2026-08-07 Native Result Detail Contract Handoff
 

@@ -143,7 +143,7 @@ struct GoalsView: View {            // 063
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    PhotoThumb(width: 116, height: 128)
+                    PhotoThumb(width: 116, height: 128, photo: "065-visual-001")
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     MicroLabel(text: "GOAL PROGRESS")
@@ -206,7 +206,7 @@ struct GoalsView: View {            // 063
                     }
                     NavigationLink { AnalyticsDetailedView(metric: "Form Score") } label: {
                         HStack(spacing: 10) {
-                            PhotoThumb(width: 62, height: 46, icon: "play.circle")
+                            PhotoThumb(width: 62, height: 46, icon: "play.circle", photo: "066-visual-001")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("May 19, 8:24 AM").shotiqBody(14, weight: .bold)
                                     .foregroundStyle(ShotIQColor.ink)
@@ -403,7 +403,7 @@ struct CreateGoalView: View {       // 064
                         SectionLabel(text: "TARGET").padding(.top, 18)
                         Button { showTargetPicker = true } label: {
                             HStack(spacing: 0) {
-                                PhotoThumb(width: 150, height: 110)
+                                PhotoThumb(width: 150, height: 110, photo: "065-visual-001")
                                 HStack {
                                     Text(linkedTarget).shotiqBody(15, weight: .bold)
                                         .foregroundStyle(ShotIQColor.ink)
@@ -612,7 +612,7 @@ struct GoalDetailView: View {       // 065
                                     .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            PhotoThumb(width: 128, height: 150)
+                            PhotoThumb(width: 128, height: 150, photo: "065-visual-001")
                         }
                         .padding(.top, 12)
                         ShotIQCard {
@@ -709,7 +709,7 @@ struct GoalDetailView: View {       // 065
                         ForEach(sessions, id: \.1) { s in
                             NavigationLink { AnalyticsDetailedView(metric: s.2) } label: {
                             HStack(spacing: 10) {
-                                PhotoThumb(width: 46, height: 34, icon: "play.circle")
+                                PhotoThumb(width: 46, height: 34, icon: "play.circle", photo: "066-visual-002")
                                 VStack(spacing: 1) {
                                     Text(s.0).font(.custom("Tungsten-Medium", size: 16))
                                     Text("SHOTS").shotiqBody(6.5, weight: .medium)
@@ -749,7 +749,7 @@ struct GoalDetailView: View {       // 065
                         ForEach(["Quick Release Builder", "Wall Elbow Alignment"], id: \.self) { d in
                             NavigationLink { DrillDetailView(name: d) } label: {
                                 HStack(spacing: 12) {
-                                    PhotoThumb(width: 56, height: 44)
+                                    PhotoThumb(width: 56, height: 44, photo: "066-visual-003")
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(d).shotiqBody(14, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.8)
@@ -1538,9 +1538,10 @@ struct MyMediaView: View {          // 068
         .init(title: "Cone Progression", time: "7:28 AM", score: "90", grade: "EXCELLENT",
               color: ShotIQColor.confirmGreen, kind: "Images")
     ]
-    /// Canonical 068 grid frames, in the tile order above; the second tile has
-    /// no canonical crop and keeps the placeholder.
-    private let todayPhotos: [String?] = ["068-visual-002", nil, "068-visual-001",
+    /// Canonical 068 grid frames, in the tile order above. The second tile used
+    /// to keep a gray placeholder because no crop was assigned; reuse a nearby
+    /// shot frame so every media item has visible basketball imagery.
+    private let todayPhotos: [String?] = ["068-visual-002", "068-visual-003", "068-visual-001",
                                           "068-visual-005", "068-visual-004", "068-visual-003"]
     private var filteredToday: [(Int, MediaItem)] {
         var items = Array(today.enumerated()).filter { pair in
@@ -1690,7 +1691,9 @@ struct MyMediaView: View {          // 068
                             HStack(spacing: 8) {
                                 ForEach(0..<4, id: \.self) { i in
                                     NavigationLink { MediaDetailView() } label: {
-                                        PhotoThumb(height: 66)
+                                        PhotoThumb(height: 66,
+                                                   photo: ["068-visual-002", "068-visual-001",
+                                                           "068-visual-005", "068-visual-004"][i])
                                             .overlay(alignment: .bottomLeading) {
                                                 Text("0:0\((i + 4) % 9)")
                                                     .font(.custom("Tungsten-Medium", size: 10))
