@@ -64,7 +64,7 @@ The first pass should fix root causes before polishing dependent screens:
 | --- | --- | --- | --- | --- |
 | P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, native overview presentation, and save/latest web API contract proof are captured. Native video now computes and persists the same release-from-vertical and wrist/forearm-elevation semantics the web pose pipeline uses. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
 | P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, and video result rendering are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
-| P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
+| P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, and 045 render/share the saved score and measured release/height/elbow/wrist values instead of their old demo constants. Still needs the remaining result/flaw/frame/detail screens, confidence/breakdown/trend/history fields, real pose frames, and real device/backend/web proof before `DONE`. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
 | P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. |
@@ -125,11 +125,11 @@ The first pass should fix root causes before polishing dependent screens:
 | G035 | OPEN | P0 | `#analytics` `#backend` | 038 | Replace fixed player/session/elite summary values. | Overview loads user/session/match values from backend and formulas. |
 | G036 | OPEN | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Empty user shows no-analysis; fetch failure shows error, not empty state. |
 | G037 | OPEN | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Failed upload/analyze opens error and retry preserves or reselects media correctly. |
-| G038 | OPEN | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Breakdown frames, score, angles, and phase values match saved frame analysis. |
+| G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. Filmstrip frames, per-frame phase coaching, and context still need saved frame-analysis data before `DONE`. |
 | G039 | OPEN | P0 | `#pose` `#analytics` | 042 | Frame detail uses real pose and metrics. | Toggling overlay shows real saved joints/ball for selected frame. |
 | G040 | OPEN | P2 | `#control` `#media` `#backend` | 043 | Make annotations real and persistent. | Draw annotation, save/share/export, reopen and see it on same media. |
-| G041 | OPEN | P0 | `#analytics` | 044 | Replace fixed form score screen. | Score, confidence, breakdown, trend, insight, and impact come from saved result/history. |
-| G042 | OPEN | P0 | `#analytics` | 045 | Replace fixed metric detail. | Metric detail receives measured metric object with value/range/confidence/source. |
+| G041 | VERIFYING | P0 | `#analytics` | 044 | Replace fixed form score screen. | Top score/verdict/caption/bar and share text now consume the saved presentation passed by screen 038. Confidence, breakdown cards, trend, insight, and impact still need saved result/history sources before `DONE`. |
+| G042 | VERIFYING | P0 | `#analytics` | 045 | Replace fixed metric detail. | Metric detail now receives the selected metric value text plus parent saved presentation from screen 038, and its share/top score/measured value are no longer hardcoded to form score 82. Range, confidence, explainer copy, and drill-plan linkage still need metric-source proof before `DONE`. |
 | G043 | OPEN | P0 | `#analytics` `#pose` | 046 | Generate flaws from analysis. | Flaw list changes based on measured weak metrics and confidence thresholds. |
 | G044 | OPEN | P0 | `#analytics` `#pose` `#media` | 047 | Generate flaw detail from real evidence frames. | Detail frames, angles, ideal range, and trend match selected flaw data. |
 
@@ -203,6 +203,49 @@ also persists wrist/forearm elevation and release-from-vertical values matching
 the web pose pipeline semantics. Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
+
+### 2026-08-07 Native Result Detail Contract Handoff
+
+Seventh laptop functionality slice after local Xcode setup:
+
+- Added saved-analysis display helpers to `AnalysisResultPresentation` for
+  release height, release offset, elbow angle, wrist angle, and share text.
+- Threaded the saved presentation from screen 038 into the immediate native
+  result-detail branch: shot breakdown 041, form score 044, and metric detail
+  045.
+- Removed the old player-facing demo copy from that branch's top score/share
+  path: the shot-breakdown share text no longer uses the fixed 52-degree
+  release angle or 7.5 ft arc, the form-score share text no longer claims a
+  fixed +8.1% trend, and metric detail share/top-score/measured-value text uses
+  the selected saved metric.
+- Updated `scripts/install-on-device.sh` so its default device-build
+  DerivedData lives on the external drive at
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-device` instead of
+  `${HOME}/Library/Developer/Xcode/DerivedData/shotiq-device`.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-p003-result-screens-20260807-130115.log`
+  ran `ShotIQTests/AnalysisResultContractTests` on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-p003-result-screens-20260807-130115`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-all-p003-result-screens-20260807-130250.log`
+  ran the full `ShotIQTests` target on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-all-p003-result-screens-20260807-130250`
+  and ended with `** TEST SUCCEEDED **`, `Executed 25 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-p003-result-screens-20260807-130413.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-p003-result-screens-20260807-130413`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- After the user connected the phone, this laptop still reported no physical
+  iOS device: with `scripts/shotiq-xcode-env.sh` loaded, `xcrun devicectl list
+  devices` returned `No devices found`, and `system_profiler SPUSBDataType`
+  showed the external SanDisk drive but no iPhone/Apple Mobile USB device.
+  Real-device install and selected-video proof remain pending until macOS can
+  enumerate the unlocked/trusted phone.
 
 ### 2026-08-07 Mac Mini Setup And Evidence
 

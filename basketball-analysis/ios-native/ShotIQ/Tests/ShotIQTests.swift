@@ -128,6 +128,27 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertEqual(presentation.metrics.first(where: { $0.label == "ELBOW ANGLE" })?.value, "161°")
         XCTAssertFalse(presentation.metrics.contains { $0.value == "52°" && $0.source != "demo" })
     }
+
+    func testAnalysisPresentationFeedsDownstreamResultScreensWithoutDemoConstants() throws {
+        let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self,
+                                              from: sampleAnalysisJSON().data(using: .utf8)!)
+
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(presentation.releaseHeightText, "7'8\"")
+        XCTAssertEqual(presentation.releaseOffsetText, "-3°")
+        XCTAssertEqual(presentation.elbowAngleText, "161°")
+        XCTAssertEqual(presentation.wristAngleText, "72°")
+        XCTAssertTrue(presentation.shotBreakdownShareText.contains("form score 82 (GOOD)"))
+        XCTAssertTrue(presentation.shotBreakdownShareText.contains("release offset -3°"))
+        XCTAssertTrue(presentation.shotBreakdownShareText.contains("release height 7'8\""))
+        XCTAssertFalse(presentation.shotBreakdownShareText.contains("52°"))
+        XCTAssertFalse(presentation.shotBreakdownShareText.contains("7.5 ft"))
+        XCTAssertTrue(presentation.formScoreShareText.contains("form score: 82 (GOOD)"))
+        XCTAssertFalse(presentation.formScoreShareText.contains("+8.1%"))
+        XCTAssertEqual(presentation.metricShareText(metric: "Elbow", valueText: presentation.elbowAngleText),
+                       "My ShotIQ elbow metric: 161° - form score 82 (GOOD).")
+    }
 }
 
 final class PoseOverlayAlignmentTests: XCTestCase {

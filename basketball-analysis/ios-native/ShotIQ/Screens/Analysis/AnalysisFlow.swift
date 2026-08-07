@@ -574,7 +574,7 @@ struct AnalysisResultOverviewView: View { // 038
                                 }
                                 .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 0) {
-                                    NavigationLink { FormScoreView() } label: {
+                                    NavigationLink { FormScoreView(presentation: p) } label: {
                                         FormScorePanel(numeralSize: 62, barWidth: 96,
                                                        score: p.scoreText,
                                                        pct: p.scorePct,
@@ -639,7 +639,7 @@ struct AnalysisResultOverviewView: View { // 038
                             .padding(.top, 22)
                             eliteMatchCard(p)
                             .padding(.top, 8)
-                            NavigationLink { ShotBreakdownView() } label: {
+                            NavigationLink { ShotBreakdownView(presentation: p) } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "film")
                                     Text("View shot breakdown").shotiqBody(17, weight: .medium)
@@ -711,7 +711,12 @@ struct AnalysisResultOverviewView: View { // 038
     private func metricRow(_ row: [AnalysisMetricTile]) -> some View {
         HStack(spacing: 0) {
             ForEach(row, id: \.label) { tile in
-                NavigationLink { MetricDetailView(metric: tile.detailMetric, value: tile.detailValue) } label: {
+                NavigationLink {
+                    MetricDetailView(metric: tile.detailMetric,
+                                     value: tile.detailValue,
+                                     valueText: tile.value,
+                                     presentation: presentation)
+                } label: {
                     VStack(spacing: 5) {
                         // Six measurements, six diagrams — chosen from the metric
                         // caption so two of them can never resolve alike.
@@ -1094,6 +1099,7 @@ struct AnalysisErrorView: View {    // 040
 
 struct ShotBreakdownView: View {    // 041
     @Environment(\.dismiss) private var dismiss
+    var presentation: AnalysisResultPresentation = .canonicalDemo
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
     /// Canonical filmstrip crops, matched to their column on the 853x1844 render.
     /// LOAD has no crop in the asset set, so that cell keeps the dark surface.
@@ -1118,7 +1124,7 @@ struct ShotBreakdownView: View {    // 041
                     Spacer()
                     Wordmark(size: 30)
                     Spacer()
-                    ShareLink(item: "My ShotIQ shot breakdown — form score 82 (GOOD), 52° release angle, 7.5 ft arc. 🏀") {
+                    ShareLink(item: presentation.shotBreakdownShareText) {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 18))
                             .foregroundStyle(ShotIQColor.ink)
                     }
@@ -1131,7 +1137,7 @@ struct ShotBreakdownView: View {    // 041
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("SHOT BREAKDOWN").shotiqDisplay(36)
-                                Text("Shot 41 • Today at 8:24 AM").shotiqBody(14)
+                                Text(presentation.recordedLabel).shotiqBody(14)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer(minLength: 8)
@@ -1178,18 +1184,18 @@ struct ShotBreakdownView: View {    // 041
                                         // its own digits — "8" over "2" on 041.
                                         // The numeral is now unbreakable and the
                                         // bar is the elastic half of the row.
-                                        Text("82").font(.custom("Tungsten-Medium", size: 62))
+                                        Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 62))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                             .lineLimit(1)
                                             .fixedSize(horizontal: true, vertical: false)
-                                        ScoreBar(pct: 0.82).frame(maxWidth: 110)
+                                        ScoreBar(pct: presentation.scorePct).frame(maxWidth: 110)
                                     }
                                 }
                                 Spacer()
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 20))
+                                    Text(presentation.scoreVerdict).font(.custom("Tungsten-Medium", size: 20))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("Keep building\nconsistency.").shotiqBody(13)
+                                    Text(presentation.scoreCaption).shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                             }
@@ -1198,13 +1204,13 @@ struct ShotBreakdownView: View {    // 041
                         .padding(.top, 16)
                         ShotIQCard {
                             HStack(spacing: 0) {
-                                breakdownStat("point.3.connected.trianglepath.dotted", "ARC HEIGHT", "7.5", "FT")
+                                breakdownStat("figure.basketball", "RELEASE HEIGHT", presentation.releaseHeightText, nil)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 12)
-                                breakdownStat("angle", "RELEASE ANGLE", "52°", nil)
+                                breakdownStat("angle", "RELEASE OFFSET", presentation.releaseOffsetText, nil)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 12)
-                                breakdownStat("basketball", "SIDE SPIN", "6°", "R")
+                                breakdownStat("point.3.filled.connected.trianglepath.dotted", "ELBOW ANGLE", presentation.elbowAngleText, nil)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 12)
-                                breakdownStat("point.bottomleft.forward.to.point.topright.scurvepath", "FLIGHT TIME", "0.79", "SEC")
+                                breakdownStat("point.bottomleft.forward.to.point.topright.scurvepath", "WRIST ANGLE", presentation.wristAngleText, nil)
                             }
                         }
                         .padding(.top, 12)
@@ -1243,7 +1249,7 @@ struct ShotBreakdownView: View {    // 041
                                     VStack(spacing: 4) {
                                         ReleaseHandGlyph(size: 44)
                                             .foregroundStyle(ShotIQColor.ink)
-                                        Text("161°").font(.custom("Tungsten-Medium", size: 20))
+                                        Text(presentation.elbowAngleText).font(.custom("Tungsten-Medium", size: 20))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         Text("Release\nAngle").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                                             .multilineTextAlignment(.center)
@@ -1818,6 +1824,7 @@ struct AnnotationToolbarView: View { // 043
 
 struct FormScoreView: View {        // 044
     @Environment(\.dismiss) private var dismiss
+    var presentation: AnalysisResultPresentation = .canonicalDemo
     @State private var info: AnalysisInfoNote?
     private let breakdown: [(String, Double, String, String)] = [
         ("Form", 0.84, "GOOD", "Solid mechanics overall."),
@@ -1851,7 +1858,7 @@ struct FormScoreView: View {        // 044
                                 }
                                 .buttonStyle(.plain)
                                 Spacer()
-                                ShareLink(item: "My ShotIQ form score: 82 (GOOD) — trending +8.1% vs last session. 🏀") {
+                                ShareLink(item: presentation.formScoreShareText) {
                                     Image(systemName: "square.and.arrow.up").font(.system(size: 17))
                                         .foregroundStyle(ShotIQColor.ink)
                                 }
@@ -1866,12 +1873,12 @@ struct FormScoreView: View {        // 044
                             }
                             .padding(.top, 18)
                             HStack(alignment: .top, spacing: 14) {
-                                Text("82").font(.custom("Tungsten-Medium", size: 76))
+                                Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 76))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 19))
+                                    Text(presentation.scoreVerdict).font(.custom("Tungsten-Medium", size: 19))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("Keep building\nconsistency.").shotiqBody(13)
+                                    Text(presentation.scoreCaption).shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .padding(.top, 12)
@@ -1887,7 +1894,7 @@ struct FormScoreView: View {        // 044
                                 }
                                 .padding(.top, 12)
                             }
-                            ScoreBar(pct: 0.82).padding(.top, 2)
+                            ScoreBar(pct: presentation.scorePct).padding(.top, 2)
                             HStack(spacing: 12) {
                                 Button {
                                     info = AnalysisInfoNote(title: "How the form score works",
@@ -2055,6 +2062,8 @@ struct FormScoreView: View {        // 044
 
 struct MetricDetailView: View {     // 045
     var metric = "Release"; var value = 0.88
+    var valueText: String? = nil
+    var presentation: AnalysisResultPresentation = .canonicalDemo
     @Environment(\.dismiss) private var dismiss
     @State private var addingPlan = false
     @State private var addedPlan = false
@@ -2075,7 +2084,7 @@ struct MetricDetailView: View {     // 045
                             .foregroundStyle(ShotIQColor.graphite)
                     }
                     Spacer()
-                    ShareLink(item: "My ShotIQ \(metric.lowercased()) metric: \(Int(value * 100)) — form score 82 (GOOD). 🏀") {
+                    ShareLink(item: presentation.metricShareText(metric: metric, valueText: measuredText)) {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
                     }
                 }
@@ -2107,9 +2116,9 @@ struct MetricDetailView: View {     // 045
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Medium", size: 28))
+                                    Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 28))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 74)
+                                    ScoreBar(pct: presentation.scorePct).frame(width: 74)
                                 }
                                 .padding(12)
                             }
@@ -2136,7 +2145,7 @@ struct MetricDetailView: View {     // 045
                                 VStack(alignment: .leading, spacing: 0) {
                                     Text("MEASURED").shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("\(Int(value * 100))°").font(.custom("Tungsten-Medium", size: 54))
+                                    Text(measuredText).font(.custom("Tungsten-Medium", size: 54))
                                         .foregroundStyle(ShotIQColor.ink)
                                     Text(metric.uppercased()).shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -2263,6 +2272,9 @@ struct MetricDetailView: View {     // 045
             }
             addingPlan = false
         }
+    }
+    private var measuredText: String {
+        valueText ?? "\(Int(value * 100))°"
     }
     private func cueFigure(_ icon: String, _ label: String, _ tint: Color) -> some View {
         VStack(spacing: 5) {

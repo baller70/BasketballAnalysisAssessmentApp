@@ -22,7 +22,7 @@ team_id="DD9G8RP575"
 project_dir="basketball-analysis/ios-native"
 project="ShotIQ.xcodeproj"
 scheme="ShotIQ"
-derived_data="${HOME}/Library/Developer/Xcode/DerivedData/shotiq-device"
+derived_data="${SHOTIQ_DERIVED_DATA:-/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-device}"
 
 # ---------------------------------------------------------------- the device --
 

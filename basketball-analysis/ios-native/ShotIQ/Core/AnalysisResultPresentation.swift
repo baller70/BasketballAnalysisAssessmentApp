@@ -25,6 +25,20 @@ struct AnalysisResultPresentation: Equatable {
     var coachingTarget: String
     var metrics: [AnalysisMetricTile]
     var provenanceSummary: String
+    var releaseHeightText: String { metricValue(label: "RELEASE HEIGHT") }
+    var releaseOffsetText: String { metricValue(label: "RELEASE OFFSET") }
+    var elbowAngleText: String { metricValue(label: "ELBOW ANGLE") }
+    var wristAngleText: String { metricValue(label: "WRIST ANGLE") }
+    var formScoreShareText: String {
+        "My ShotIQ form score: \(scoreText) (\(scoreVerdict)) from \(mediaLabel.lowercased()) recorded \(recordedLabel)."
+    }
+    var shotBreakdownShareText: String {
+        "My ShotIQ shot breakdown: form score \(scoreText) (\(scoreVerdict)), release offset \(releaseOffsetText), release height \(releaseHeightText)."
+    }
+
+    func metricShareText(metric: String, valueText: String) -> String {
+        "My ShotIQ \(metric.lowercased()) metric: \(valueText) - form score \(scoreText) (\(scoreVerdict))."
+    }
 
     init(result: ShotIQAnalysisResultDTO) {
         id = result.id
@@ -232,5 +246,9 @@ struct AnalysisResultPresentation: Equatable {
             return "Keep release closer to your centerline"
         }
         return "Keep elbow stacked through release"
+    }
+
+    private func metricValue(label: String) -> String {
+        metrics.first(where: { $0.label == label })?.value ?? "--"
     }
 }
