@@ -129,6 +129,63 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertFalse(presentation.metrics.contains { $0.value == "52°" && $0.source != "demo" })
     }
 
+    func testAnalysisPresentationKeepsLocalMediaFallbackWhenServerUrlIsMissing() throws {
+        let json = """
+        {
+          "id": "local-photo",
+          "clientSessionId": "ios-shot-local",
+          "captureSessionId": null,
+          "recordedAt": "2026-08-07T12:00:00.000Z",
+          "source": "ios",
+          "media": {
+            "type": "image",
+            "imageUrl": null,
+            "annotatedImageUrl": null,
+            "displayImageUrl": null,
+            "videoUrl": null,
+            "localImageUrl": "file:///tmp/shotiq-local-photo.jpg",
+            "localVideoUrl": null
+          },
+          "scores": {
+            "overall": { "value": 84, "unit": "score", "source": "measured" },
+            "form": { "value": 82, "unit": "score", "source": "measured" },
+            "balance": { "value": null, "unit": "score", "source": "missing" },
+            "release": { "value": 80, "unit": "score", "source": "measured" },
+            "consistency": { "value": null, "unit": "score", "source": "missing" }
+          },
+          "angles": {
+            "elbow": { "value": 161, "unit": "deg", "source": "measured" },
+            "knee": { "value": null, "unit": "deg", "source": "missing" },
+            "wrist": { "value": 72, "unit": "deg", "source": "measured" },
+            "shoulder": { "value": null, "unit": "deg", "source": "missing" },
+            "hip": { "value": null, "unit": "deg", "source": "missing" },
+            "release": { "value": -3, "unit": "deg", "source": "measured" },
+            "kneeMin": { "value": 88, "unit": "deg", "source": "measured" }
+          },
+          "measurements": {
+            "releaseHeightInches": { "value": 92, "unit": "in", "source": "measured" },
+            "releaseDistanceInches": { "value": null, "unit": "in", "source": "missing" },
+            "verticalJumpInches": { "value": null, "unit": "in", "source": "missing" },
+            "centerlineDeviationDeg": { "value": 4, "unit": "deg", "source": "measured" }
+          },
+          "phase": { "value": "release", "unit": null, "source": "measured" },
+          "provenance": {
+            "measured": ["scores.form", "angles.elbow", "phase"],
+            "missing": ["scores.balance", "angles.knee"],
+            "estimated": [],
+            "demo": []
+          }
+        }
+        """.data(using: .utf8)!
+
+        let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self, from: json)
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(result.media.localImageUrl, "file:///tmp/shotiq-local-photo.jpg")
+        XCTAssertEqual(presentation.mediaURL?.absoluteString, "file:///tmp/shotiq-local-photo.jpg")
+        XCTAssertNil(presentation.videoURL)
+    }
+
     func testAnalysisPresentationFeedsDownstreamResultScreensWithoutDemoConstants() throws {
         let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self,
                                               from: sampleAnalysisJSON().data(using: .utf8)!)

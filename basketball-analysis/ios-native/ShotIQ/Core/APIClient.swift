@@ -121,6 +121,8 @@ struct AnalysisMediaDTO: Codable, Equatable {
     var annotatedImageUrl: String?
     var displayImageUrl: String?
     var videoUrl: String?
+    var localImageUrl: String?
+    var localVideoUrl: String?
 }
 
 struct AnalysisScoresDTO: Codable, Equatable {

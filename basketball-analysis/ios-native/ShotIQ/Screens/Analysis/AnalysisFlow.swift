@@ -116,14 +116,22 @@ fileprivate struct AnalysisResultMediaSurface: View {
                 VideoPlayer(player: AVPlayer(url: url))
                     .accessibilityLabel("Saved analysis video")
             } else if let url = presentation.mediaURL {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .failure:
+                if url.isFileURL {
+                    if let image = UIImage(contentsOfFile: url.path) {
+                        Image(uiImage: image).resizable().scaledToFill()
+                    } else {
                         mediaPlaceholder("Media unavailable")
-                    default:
-                        mediaPlaceholder("Loading media")
+                    }
+                } else {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .failure:
+                            mediaPlaceholder("Media unavailable")
+                        default:
+                            mediaPlaceholder("Loading media")
+                        }
                     }
                 }
             } else if presentation.id == "canonical-demo" {
@@ -384,7 +392,11 @@ struct AnalysisProcessingView: View { // 036
                     coachingNotes: poseAnalysis.frames.isEmpty
                         ? "Video uploaded and saved, but no usable body pose was detected in the selected trim window."
                         : "Video uploaded and analyzed from sampled frames inside the selected trim window."))
-            completedResult = saved.analysisResult ?? saved.analysis
+            var analysis = saved.analysisResult ?? saved.analysis
+            if analysis?.media.localVideoUrl == nil {
+                analysis?.media.localVideoUrl = job.clip.url.absoluteString
+            }
+            completedResult = analysis
             pct = 0.94
             route = .results
         } catch {
@@ -1148,10 +1160,15 @@ struct ShotBreakdownView: View {    // 041
                         .padding(.top, 14)
                         // Five-frame phase filmstrip — each frame opens the frame detail.
                         HStack(spacing: 2) {
-                            ForEach(phases, id: \.self) { p in
+                            ForEach(phases, id: \.self) { phase in
                                 NavigationLink { FrameDetailSkeletonView() } label: {
                                     VStack(spacing: 8) {
-                                        if let key = Self.phaseFrameKey(p) {
+                                        if presentation.id != "canonical-demo",
+                                           presentation.mediaURL != nil || presentation.videoURL != nil {
+                                            AnalysisResultMediaSurface(presentation: presentation,
+                                                                       fallbackKey: "041-visual-002",
+                                                                       height: 190)
+                                        } else if let key = Self.phaseFrameKey(phase) {
                                             // Canonical phase frame — pose overlay already in the pixels.
                                             CanonicalPhoto(key, height: 190, cornerRadius: 2)
                                         } else {
@@ -1162,9 +1179,9 @@ struct ShotBreakdownView: View {    // 041
                                             }
                                             .frame(height: 190)
                                         }
-                                        Text(p).shotiqBody(9, weight: p == "RELEASE" ? .bold : .regular)
+                                        Text(phase).shotiqBody(9, weight: phase == "RELEASE" ? .bold : .regular)
                                             .kerning(0.4)
-                                            .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                            .foregroundStyle(phase == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             .lineLimit(1).minimumScaleFactor(0.6)
                                     }
                                 }

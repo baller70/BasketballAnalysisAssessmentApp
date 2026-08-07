@@ -63,8 +63,8 @@ The first pass should fix root causes before polishing dependent screens:
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
 | P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, native overview presentation, and save/latest web API contract proof are captured. Native video now computes and persists the same release-from-vertical and wrist/forearm-elevation semantics the web pose pipeline uses. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
-| P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, and video result rendering are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
-| P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, and 045 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, missing-score state, source coverage, and weakest-score CTA instead of their old demo constants. Still needs the remaining result/flaw/frame/detail screens, true confidence/trend/history fields, real pose frames, and real device/backend/web proof before `DONE`. |
+| P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, server video rendering, and app-local selected-video fallback are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
+| P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, and 045 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, missing-score state, source coverage, weakest-score CTA, and app-local selected photo/video fallback instead of their old demo constants when server media URLs are absent. Still needs the remaining result/flaw/frame/detail screens, true confidence/trend/history fields, real pose frames, and real device/backend/web proof before `DONE`. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
 | P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. |
@@ -91,13 +91,13 @@ The first pass should fix root causes before polishing dependent screens:
 | G011 | OPEN | P1 | `#analytics` `#media` | 024 | Measure or relabel lighting and resolution checks. | Bad lighting/low-res sample produces failed checks, or rows are not presented as measured. |
 | G012 | OPEN | P0 | `#path` `#backend` | 024/036 | Block no-image route from pretending analysis started. | Continue without selected media cannot open analysis processing as a real analysis. |
 | G013 | OPEN | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | Saved score is reproducible from measured analysis fields. |
-| G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. Still needs end-to-end device/web round-trip proof before `DONE`. |
+| G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. If the backend returns no remote image URL, the selected/cropped local photo is preserved and rendered in the result path. Still needs end-to-end device/web round-trip proof before `DONE`. |
 | G015 | OPEN | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Queue starts empty or from backend, adding media creates real item and status updates. |
 | G016 | VERIFYING | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | `VideoUploadView` now loads the selected `PhotosPickerItem` into a retained temporary video URL before navigation; focused laptop XCTest confirms the retained clip model. Still needs real picker/device-media recording before `DONE`. |
 | G017 | VERIFYING | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | `VideoReviewView` now renders `VideoPlayer` for the selected clip and keeps canonical media only for explicit fallback/staged paths. Still needs real picker/device-media recording before `DONE`. |
 | G018 | VERIFYING | P1 | `#media` `#analytics` | 027 | Read real duration, size, orientation, and FPS. | `PickedVideoClip` reads duration, dimensions, file size, and FPS from the selected asset; focused laptop XCTest proves the metadata formatting. Still needs real selected file proof before `DONE`. |
 | G019 | VERIFYING | P0 | `#control` `#media` | 027 | Make trim controls affect analysis input. | `VideoReviewView` now builds a `VideoAnalysisJob` with selected clip plus trim fractions, and tests prove trim seconds/duration are computed from the real clip. Still needs device recording proving the backend payload contains the selected trim before `DONE`. |
-| G020 | VERIFYING | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Native now samples frames inside the selected trim window, runs Vision pose detection, computes measured elbow/knee/wrist/shoulder/hip/release angles and scores when joints are found, uploads selected videos through `/api/media-uploads`, completes multipart storage, calls `/api/save-analysis` with the same `clientSessionId`, and renders saved `videoUrl` in result UI. Needs real selected-video device/backend/web proof before `DONE`. |
+| G020 | VERIFYING | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Native now samples frames inside the selected trim window, runs Vision pose detection, computes measured elbow/knee/wrist/shoulder/hip/release angles and scores when joints are found, uploads selected videos through `/api/media-uploads`, completes multipart storage, calls `/api/save-analysis` with the same `clientSessionId`, and renders saved `videoUrl` or app-local selected clip in result UI. Needs real selected-video device/backend/web proof before `DONE`. |
 
 ## Live Camera And Shot Detection Items
 
@@ -125,7 +125,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G035 | OPEN | P0 | `#analytics` `#backend` | 038 | Replace fixed player/session/elite summary values. | Overview loads user/session/match values from backend and formulas. |
 | G036 | OPEN | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Empty user shows no-analysis; fetch failure shows error, not empty state. |
 | G037 | OPEN | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Failed upload/analyze opens error and retry preserves or reselects media correctly. |
-| G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. Filmstrip frames, per-frame phase coaching, and context still need saved frame-analysis data before `DONE`. |
+| G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. The phase filmstrip now uses selected local/server media for non-demo saved results instead of falling back to canonical stock frames when no frame set exists. Per-frame phase coaching and true saved frame-analysis data still need proof before `DONE`. |
 | G039 | OPEN | P0 | `#pose` `#analytics` | 042 | Frame detail uses real pose and metrics. | Toggling overlay shows real saved joints/ball for selected frame. |
 | G040 | OPEN | P2 | `#control` `#media` `#backend` | 043 | Make annotations real and persistent. | Draw annotation, save/share/export, reopen and see it on same media. |
 | G041 | VERIFYING | P0 | `#analytics` | 044 | Replace fixed form score screen. | Top score/verdict/caption/bar/share text, breakdown cards, metric detail rows, source coverage, key insight, and weakest-score CTA now consume the saved presentation passed by screen 038, including missing-score unavailable state. True confidence and history/trend calculations still need saved result/history sources before `DONE`. |
@@ -200,9 +200,53 @@ inside the trim window, runs Vision pose detection, uploads via the backend
 media-upload flow, saves measured pose fields with the matching
 `clientSessionId`, and renders saved video media. The native pose analysis now
 also persists wrist/forearm elevation and release-from-vertical values matching
-the web pose pipeline semantics. Remaining proof before
+the web pose pipeline semantics. The result path now also preserves and renders
+app-local selected photo/video media when the backend save response has no
+remote media URL, which prevents the immediate result and shot breakdown screens
+from falling back to stock/canonical pictures after a real picker/crop flow.
+Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
+
+### 2026-08-07 Native Local Media Result Handoff
+
+Ninth laptop functionality slice after local Xcode setup:
+
+- User phone screenshots exposed a real production-path problem: Photo Review
+  could show the selected image, but saved result/breakdown screens could still
+  show stock or placeholder media if the backend returned no remote image URL.
+- Added app-local media URL fields to the native analysis media DTO and
+  presentation layer.
+- Photo analysis now writes the selected/cropped JPEG to the app cache before
+  upload and carries that local file URL into the saved analysis object when the
+  server image URL is absent.
+- Video analysis now carries the selected local clip URL into the saved analysis
+  object when the server video URL is absent.
+- Result overview media rendering now supports `file://` images directly, and
+  shot breakdown uses the selected saved media for non-demo results instead of
+  canonical stock phase frames when no true frame set exists yet.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-local-media-fallback-20260807-132908.log`
+  ran `ShotIQTests/AnalysisResultContractTests` on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-local-media-fallback-20260807-132908`
+  and ended with `** TEST SUCCEEDED **`, `Executed 6 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-full-local-media-20260807-133137.log`
+  ran the full `ShotIQTests` target on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-unit-full-local-media-20260807-133137`
+  and ended with `** TEST SUCCEEDED **`, `Executed 27 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-local-media-20260807-133412.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the local iPhone 17
+  simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-smoke-local-media-20260807-133412`
+  and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- With `scripts/shotiq-xcode-env.sh` loaded after the user connected the phone,
+  `xcrun devicectl list devices` still returned `No devices found` on this
+  laptop. Real iPhone install/proof remains blocked until macOS enumerates the
+  unlocked/trusted phone.
 
 ### 2026-08-07 Native Result Detail Contract Handoff
 

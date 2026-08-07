@@ -173,6 +173,19 @@ private func shotiqCropped34(_ image: UIImage) -> UIImage {
     }
 }
 
+private func shotiqPersistLocalJPEG(_ data: Data, prefix: String = "shotiq-photo") -> URL? {
+    guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+        return nil
+    }
+    let url = dir.appendingPathComponent("\(prefix)-\(UUID().uuidString).jpg")
+    do {
+        try data.write(to: url, options: [.atomic])
+        return url
+    } catch {
+        return nil
+    }
+}
+
 // MARK: - Shared canonical chrome for the capture screens
 
 /// TopBar + PlayerHeader stack shown at the top of most capture screens.
@@ -1032,6 +1045,7 @@ struct UploadQualityCheckView: View { // 024
         defer { busy = false }
 
         // 1. Upload the raw frame (field "image", uploadType "user").
+        let localImageURL = shotiqPersistLocalJPEG(jpeg)
         var imageUrl: String?
         if let respData = try? await APIClient.shared.uploadImage(jpeg) {
             struct UploadResp: Codable { var success: Bool?; var url: String?; var imageUrl: String? }
@@ -1092,7 +1106,11 @@ struct UploadQualityCheckView: View { // 024
                                imageUrl: imageUrl,
                                overallScore: overallScore,
                                coachingNotes: coachingNotes))
-            savedAnalysis = saved.analysisResult ?? saved.analysis
+            var analysis = saved.analysisResult ?? saved.analysis
+            if analysis?.media.localImageUrl == nil {
+                analysis?.media.localImageUrl = localImageURL?.absoluteString
+            }
+            savedAnalysis = analysis
             route = .processing
         } catch {
             // Canonical 040: a failed analyze/upload round trip opens the

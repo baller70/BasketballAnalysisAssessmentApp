@@ -80,7 +80,9 @@ struct AnalysisResultPresentation: Equatable {
         mediaURL = Self.url(result.media.displayImageUrl)
             ?? Self.url(result.media.annotatedImageUrl)
             ?? Self.url(result.media.imageUrl)
+            ?? Self.url(result.media.localImageUrl)
         videoURL = Self.url(result.media.videoUrl)
+            ?? Self.url(result.media.localVideoUrl)
         mediaLabel = result.media.type?.capitalized ?? "Analysis media"
         recordedLabel = Self.recordedLabel(result.recordedAt)
         phaseText = result.phase.value?.replacingOccurrences(of: "-", with: " ").capitalized ?? "Unavailable"
