@@ -83,10 +83,10 @@ const STEPS: [string, string, string][] = [
 const EQUIPMENT: [string, string][] = [
   ["Basketball", "1"], ["Cones", "2–3"], ["Spot", "Free throw line"], ["Location", "Any court"],
 ]
-const MECHANICS: [string, string, "angle" | "wrist" | "centerline"][] = [
+const MECHANICS: [string, string, "angle" | "wrist" | "releasePath"][] = [
   ["Elbow Under Ball", "Keep elbow under the ball from load to release.", "angle"],
   ["Wrist Over Elbow", "Snap wrist over elbow at the top of release.", "wrist"],
-  ["Straight Release Path", "Drive straight up with minimal lateral drift.", "centerline"],
+  ["Straight Release Path", "Drive straight up with minimal lateral drift.", "releasePath"],
 ]
 
 export function DrillDetail({ title, onStart, saved, onSave }: {
@@ -142,7 +142,7 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
               release mechanics.
             </p>
             <div className="flex min-w-0 flex-1 items-start justify-between">
-              {([["ELBOW STACK", "angle"], ["WRIST ALIGNMENT", "wrist"], ["RELEASE PATH", "arc"]] as const).map(([l, m]) => (
+              {([["ELBOW STACK", "angle"], ["WRIST ALIGNMENT", "wrist"], ["RELEASE PATH", "releasePath"]] as const).map(([l, m]) => (
                 <span key={l} className="flex min-w-0 flex-col items-center text-center">
                   <MechanicGlyph kind={m} size={30} />
                   <span className="shotiq-microcaps mt-[5px]" style={{ fontSize: 6, lineHeight: "7px", color: GRAPHITE }}>{l}</span>

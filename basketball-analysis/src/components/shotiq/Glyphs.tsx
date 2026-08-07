@@ -45,6 +45,19 @@ function Svg({
   )
 }
 
+function BasketballMark({
+  cx, cy, r = 2.2, stroke = "currentColor",
+}: { cx: number; cy: number; r?: number; stroke?: string }) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} stroke={stroke} />
+      <path d={`M${cx - r} ${cy}H${cx + r}`} stroke={stroke} />
+      <path d={`M${cx} ${cy - r} Q${cx + r * 0.58} ${cy} ${cx} ${cy + r}`} stroke={stroke} />
+      <path d={`M${cx} ${cy - r} Q${cx - r * 0.58} ${cy} ${cx} ${cy + r}`} stroke={stroke} />
+    </>
+  )
+}
+
 /* ------------------------------------------------------------------ poses */
 
 export type ShotPhase = "setup" | "load" | "rise" | "release" | "follow"
@@ -67,8 +80,8 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
       <path d="M9.8 6.4 L10.4 13.4" />
       <path d="M10.4 13.4 L8.4 17.4 L8 21.4" />
       <path d="M10.4 13.4 L12.6 17.4 L13.2 21.4" />
-      <path d="M10 8.4 L12.6 11.4" />
-      <circle cx="14.8" cy="12.8" r="2.55" />
+      <path d="M10 8.4 L12.6 11.4 L14.4 12.2" />
+      <BasketballMark cx={15.4} cy={12.5} r={2.3} />
     </>
   ),
   // Deep knee bend, ball low and in front — gathering.
@@ -78,8 +91,8 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
       <path d="M8.6 8.4 L10.8 13" />
       <path d="M10.8 13 L7.8 16.2 L8.6 21.4" />
       <path d="M10.8 13 L13.6 16.4 L13.6 21.4" />
-      <path d="M9.5 10.4 L12.2 12.4" />
-      <circle cx="14.4" cy="13.6" r="2.55" />
+      <path d="M9.5 10.4 L12.2 12.4 L14 13.2" />
+      <BasketballMark cx={15.2} cy={13.8} r={2.3} />
     </>
   ),
   // Extending upward, ball at the forehead — the lift.
@@ -89,8 +102,8 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
       <path d="M10.6 7.6 L10.6 13.6" />
       <path d="M10.6 13.6 L8.2 17.4 L8.6 21.4" />
       <path d="M10.6 13.6 L12.8 17.2 L13.8 20.8" />
-      <path d="M10.6 9 L12.8 7.2" />
-      <circle cx="15.4" cy="6" r="2.55" />
+      <path d="M10.6 9 L12.8 7.2 L14.4 6.5" />
+      <BasketballMark cx={15.7} cy={5.8} r={2.3} />
     </>
   ),
   // Full extension, ball leaving the hand overhead.
@@ -101,7 +114,8 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
       <path d="M10.4 15.2 L8.4 18.6 L8 21.6" />
       <path d="M10.4 15.2 L12.8 18.4 L13.8 21.4" />
       <path d="M9.9 11 L12.4 7.8 L13.2 5.4" />
-      <circle cx="14.4" cy="2.8" r="2.55" />
+      <path d="M13.2 5.4 L14.1 6.6" stroke={ORANGE} />
+      <BasketballMark cx={15.1} cy={2.8} r={2.2} stroke={ORANGE} />
     </>
   ),
   // Arm held out long with the wrist relaxed — the ball is gone.
@@ -112,7 +126,9 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
       <path d="M10.4 14.8 L8.4 18.6 L8 21.4" />
       <path d="M10.4 14.8 L13 18.4 L14 21.2" />
       <path d="M9.9 10.2 L13.2 6.4 L16.6 4.8" />
-      <path d="M16.6 4.8 L17.2 7.2" />
+      <path d="M16.6 4.8 L17.2 7.2" stroke={ORANGE} />
+      <path d="M17.6 3.2 Q20.2 2.2 20.6 5" stroke={ORANGE} strokeDasharray="1.4 1.6" />
+      <BasketballMark cx={21.1} cy={4.7} r={1.5} stroke={ORANGE} />
     </>
   ),
 }
@@ -203,27 +219,29 @@ export function PoseFigure({
 
 export type MechanicKind =
   | "angle" | "wrist" | "height" | "distance" | "jump" | "arc"
-  | "centerline" | "balance" | "drift" | "impact"
+  | "centerline" | "balance" | "drift" | "impact" | "tempo" | "consistency"
+  | "arcHeight" | "releaseAngle" | "spin" | "flightTime" | "shotShape" | "releasePath"
 
 const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
   // Two limb segments meeting at a joint with the measured sweep dotted in.
   angle: (a) => (
     <>
-      <path d="M4.5 16.5 L11 8 L19.5 14.5" />
-      <path d="M8 13.4 A6 6 0 0 0 15 12.6" strokeDasharray="1.4 1.8" stroke={a} />
-      <circle cx="4.5" cy="16.5" r="1.5" />
-      <circle cx="11" cy="8" r="1.5" stroke={a} />
-      <circle cx="19.5" cy="14.5" r="1.5" />
+      <path d="M12 4.2V19.8" stroke={a} strokeDasharray="1.5 1.8" />
+      <BasketballMark cx={12} cy={4.6} r={2.1} stroke={a} />
+      <path d="M7.4 19 L11 13.2 L12 7.2" />
+      <circle cx="11" cy="13.2" r="1.6" stroke={a} />
+      <circle cx="7.4" cy="19" r="1.4" />
     </>
   ),
   // Forearm into a cocked hand, flexion dotted at the joint.
   wrist: (a) => (
     <>
-      <path d="M4.5 19 L10.5 11.5 L16 9" />
-      <path d="M16 9 L18.5 11" />
-      <path d="M12.4 9.6 A4 4 0 0 0 9.4 13.6" strokeDasharray="1.4 1.8" stroke={a} />
-      <circle cx="10.5" cy="11.5" r="1.5" stroke={a} />
-      <circle cx="4.5" cy="19" r="1.5" />
+      <path d="M12 5V19" stroke={a} strokeDasharray="1.5 1.8" />
+      <BasketballMark cx={12} cy={5.2} r={2.1} stroke={a} />
+      <path d="M8.2 19 L11.5 12.8 L12 7.4" />
+      <circle cx="11.5" cy="12.8" r="1.5" stroke={a} />
+      <path d="M12.8 7.2 Q16.4 8.3 16.9 11.5" stroke={a} />
+      <path d="M15.5 10.2 L16.9 11.7 L17.5 9.8" stroke={a} />
     </>
   ),
   // Floor-to-hand ruler beside a standing figure.
@@ -262,6 +280,15 @@ const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
       <circle cx="19.5" cy="11.5" r="1.5" />
     </>
   ),
+  releasePath: (a) => (
+    <>
+      <path d="M12 5.2V18.8" stroke={a} strokeDasharray="1.5 1.8" />
+      <path d="M10.3 6.7 L12 4.8 L13.7 6.7" stroke={a} />
+      <BasketballMark cx={12} cy={10.5} r={2.2} stroke={a} />
+      <path d="M8.6 20 L11.2 16 L12 13" />
+      <circle cx="11.2" cy="16" r="1.4" />
+    </>
+  ),
   // Body midline with the measured lateral offset arrowed off it.
   centerline: (a) => (
     <>
@@ -277,7 +304,7 @@ const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
       <circle cx="12" cy="4.6" r="1.9" />
       <path d="M12 6.5 V13" />
       <path d="M12 13 L9.2 18.6 M12 13 L14.8 18.6" />
-      <path d="M5.5 9.6 H18.5" />
+      <path d="M5.5 9.6 H18.5" stroke={ORANGE} />
       <path d="M7.5 20.6 H16.5" strokeDasharray="2 2" />
     </>
   ),
@@ -297,6 +324,69 @@ const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
       <path d="M12 3.5 V11.5 M10.2 9.7 L12 11.8 L13.8 9.7" stroke={a} />
       <circle cx="12" cy="16" r="3" stroke={a} />
       <path d="M5 20.5 H19" />
+    </>
+  ),
+  tempo: (a) => (
+    <>
+      <path d="M3 16.5H21" />
+      <path d="M6 16.5V11.5M12 16.5V7M18 16.5V11.5" />
+      <circle cx="6" cy="10.2" r="1.4" />
+      <circle cx="12" cy="5.8" r="1.6" fill={a} stroke={a} />
+      <circle cx="18" cy="10.2" r="1.4" />
+    </>
+  ),
+  consistency: (a) => (
+    <>
+      <path d="M3.5 8.5H20.5M3.5 15.5H20.5" strokeDasharray="2 2" />
+      <path d="M7 12.6 L11 11.2 L15 12.9 L18.6 11.6" />
+      <circle cx="7" cy="12.6" r="1.4" />
+      <circle cx="11" cy="11.2" r="1.4" stroke={a} />
+      <circle cx="15" cy="12.9" r="1.4" />
+      <circle cx="18.6" cy="11.6" r="1.4" />
+    </>
+  ),
+  arcHeight: (a) => (
+    <>
+      <path d="M3.6 15.4 L7.2 17.6 L12 8.2 L16.8 13.2 L20.4 11" strokeDasharray="1.6 1.8" />
+      <circle cx="3.6" cy="15.4" r="1.3" />
+      <circle cx="7.2" cy="17.6" r="1.3" fill={a} stroke={a} />
+      <circle cx="12" cy="8.2" r="1.5" fill={a} stroke={a} />
+      <circle cx="16.8" cy="13.2" r="1.3" fill={a} stroke={a} />
+      <circle cx="20.4" cy="11" r="1.3" />
+    </>
+  ),
+  releaseAngle: (a) => (
+    <>
+      <path d="M5 18.5H20M5 18.5V6M5 18.5L18.5 7.5" />
+      <path d="M11 18.5 A7.2 7.2 0 0 0 10.6 14" stroke={a} strokeDasharray="1.4 1.8" />
+      <circle cx="5" cy="18.5" r="1.4" fill={a} stroke={a} />
+    </>
+  ),
+  spin: (a) => (
+    <>
+      <BasketballMark cx={12} cy={12} r={4.6} stroke={a} />
+      <path d="M6.3 7.3 A7.6 7.6 0 0 0 4.7 14.5" stroke={a} />
+      <path d="M7.5 9 L4.9 7.4 L5.1 10.5" stroke={a} />
+      <path d="M17.7 16.7 A7.6 7.6 0 0 0 19.3 9.5" stroke={a} />
+      <path d="M16.5 15 L19.1 16.6 L18.9 13.5" stroke={a} />
+    </>
+  ),
+  flightTime: (a) => (
+    <>
+      <path d="M4.5 15.5 Q12 3 19.5 15.5" strokeDasharray="1.5 2" />
+      <circle cx="4.5" cy="15.5" r="1.8" fill="currentColor" />
+      <circle cx="19.5" cy="15.5" r="1.8" fill="currentColor" />
+      <path d="M4.5 19.6H19.5M4.5 18.4V20.8M19.5 18.4V20.8" stroke={a} />
+    </>
+  ),
+  shotShape: (a) => (
+    <>
+      <path d="M4 19.5H20" />
+      <circle cx="6.5" cy="19.5" r="1.4" fill={a} stroke={a} />
+      <circle cx="17.5" cy="19.5" r="1.4" fill={a} stroke={a} />
+      <path d="M12 3.5V14" strokeDasharray="2 2" />
+      <path d="M12 5 L10.4 10.6 L12.6 14.4" stroke={a} strokeDasharray="1.4 1.8" />
+      <circle cx="12" cy="3.5" r="1.5" />
     </>
   ),
 }
@@ -713,7 +803,8 @@ export function ActionGlyph({
       {kind === "analyze" && (
         <>
           <path d="M2.5 11 V5 A2.5 2.5 0 0 1 5 2.5 H11 M23 2.5 H29 A2.5 2.5 0 0 1 31.5 5 V11 M31.5 23 V29 A2.5 2.5 0 0 1 29 31.5 H23 M11 31.5 H5 A2.5 2.5 0 0 1 2.5 29 V23" />
-          <circle cx="17" cy="17" r="4.4" fill="currentColor" stroke="none" />
+          <circle cx="17" cy="17" r="4.4" />
+          <path d="M12.6 17H21.4M17 12.6Q19.6 17 17 21.4M17 12.6Q14.4 17 17 21.4" />
         </>
       )}
       {kind === "uploadImage" && (
@@ -731,8 +822,9 @@ export function ActionGlyph({
           <rect x="1.2" y="2" width="57.6" height="21.6" />
           <path d="M20.4 2 V23.6 M39.6 2 V23.6" />
           <path d="M10.8 9.6 V16 M30 9.6 V16 M49.2 9.6 V16" strokeWidth={sw * 1.5} />
-          <path d="M39.6 0.8 V25.2" stroke={accent} strokeWidth={sw * 1.2} />
-          <circle cx="39.6" cy="6.4" r="2.9" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
+          <circle cx="30" cy="13" r="4.1" fill={paper} stroke={accent} strokeWidth={sw * 1.25} />
+          <path d="M25.9 13H34.1M30 8.9Q32.4 13 30 17.1M30 8.9Q27.6 13 30 17.1" stroke={accent} strokeWidth={sw * 1.05} />
+          <path d="M30 24.2V26" stroke={accent} strokeWidth={sw * 1.2} />
         </>
       )}
       {kind === "liveCamera" && (
@@ -742,6 +834,7 @@ export function ActionGlyph({
             <circle key={`${x}-${y}`} cx={x} cy={y} r="2.7" fill={paper} stroke="currentColor" />
           ))}
           <circle cx="39.6" cy="22.5" r="5.4" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
+          <path d="M34.2 22.5H45M39.6 17.1Q42.7 22.5 39.6 27.9M39.6 17.1Q36.5 22.5 39.6 27.9" stroke={accent} strokeWidth={sw} />
         </>
       )}
       {kind === "chooseMedia" && (
