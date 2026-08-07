@@ -62,7 +62,7 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
-| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract and native decode slice implemented; still needs native UI render and real device/web round-trip proof before `DONE`. |
+| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract and native decode slice implemented; Mac-mini native XCTest passed and the current branch installed on Kevin's iPhone; still needs native UI render and real device/web round-trip proof before `DONE`. |
 | P0-002 | OPEN | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. |
 | P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
@@ -191,5 +191,90 @@ The first pass should fix root causes before polishing dependent screens:
 Continue `P0-001`. The shared result contract now exists in backend TypeScript
 and native Swift DTOs, and `/api/save-analysis` plus `/api/analysis/latest`
 return it as `analysisResult` while preserving legacy `analysis` for current web
-screens. Remaining proof before `DONE`: Mac mini Xcode test, native UI consuming
-the contract, and real iOS-created analysis visible on web with matching values.
+screens. Mac mini XCTest and device install proof are captured. Remaining proof
+before `DONE`: native UI consuming the contract, plus real iOS-created analysis
+visible on web with matching values.
+
+### 2026-08-07 Mac Mini Setup And Evidence
+
+Codex can now reach Kevin's Mac mini directly over SSH:
+
+- Host: `kevins-mac-mini.local`
+- User: `kevinhouston`
+- Key from this Codex host: `~/.ssh/shotiq_ios`
+- Persistent checkout on the Mac: `~/CodexWork/BasketballAnalysisAssessmentApp`
+- Branch/head there: `claude/shotiq-production-build-txi5pl` at `19fe19b`
+- Xcode path: `/Volumes/APPLICATIONS/02_STORAGE_AND_RUNTIME/mac-storage/xcode-archive/Xcode.app/Contents/Developer`
+
+The Mac's global `xcode-select` still points at
+`/Library/Developer/CommandLineTools`, and passwordless `sudo xcode-select` is
+not available. Native commands must export:
+
+```sh
+export DEVELOPER_DIR=/Volumes/APPLICATIONS/02_STORAGE_AND_RUNTIME/mac-storage/xcode-archive/Xcode.app/Contents/Developer
+export PATH="/opt/homebrew/bin:/Users/kevinhouston/.local/bin:$PATH"
+```
+
+Setup completed:
+
+- `xcodebuild -version` through `DEVELOPER_DIR`: Xcode 26.2 / build 17C52.
+- `xcodegen --version`: 2.46.0.
+- `xcodegen generate` in `basketball-analysis/ios-native` completed cleanly.
+- `xcrun devicectl list devices` sees Kevin's iPhone 11 Pro Max as paired:
+  CoreDevice identifier `37711652-37E7-57D1-9C76-8E028428D01B`, hardware UDID
+  `00008030-001E4D203A80802E`.
+
+Evidence captured on the Mac:
+
+- Native XCTest:
+  `~/CodexWork/shotiq-evidence/xcode-contract-test-20260807-091549.log`
+  ran `AnalysisResultContractTests` with `** TEST SUCCEEDED **` and
+  `Executed 1 test, with 0 failures`.
+- Device install:
+  `~/CodexWork/shotiq-evidence/device-install-20260807-091929.log` regenerated
+  the Xcode project, found App Store Connect credentials on the Mac, built with
+  `** BUILD SUCCEEDED **`, and installed `com.baller70.shotiq` onto Kevin's
+  iPhone.
+
+Broker note: generic `scripts/kcloud-xcode-submit.sh test` is not the right
+proof for `P0-001`. Run `31181372954` failed because the broker passed
+`platform=iOS Simulator,name=iPhone 16 Pro`, which Xcode resolved as
+`OS:latest` and did not match the available simulator. Run `31180499110` got
+farther with a simulator id but ran the full scheme, including unrelated UI
+tests; it failed `testSplashLeadsToWelcomeOrHome` in a signed-in/auth state.
+For this contract gate, use the direct Mac checkout and focused
+`-only-testing:ShotIQTests/AnalysisResultContractTests` command above.
+
+### 2026-08-07 Laptop Mirror Setup
+
+Mirrored from the Mac mini to this laptop so ShotIQ native work can run away
+from the desktop/Mac mini:
+
+- App Store Connect env: `~/.shotiq/asc.env`.
+- App Store Connect private key: `~/.private_keys/AuthKey_<key-id>.p8`.
+- Apple tool key copy: `~/.appstoreconnect/private_keys/AuthKey_<key-id>.p8`.
+- Provisioning profiles:
+  `~/Library/Developer/Xcode/UserData/Provisioning Profiles`.
+- Xcode mirror: `/Volumes/TBF SKILLZ.INC/xcode-archive/Xcode.app`.
+- XcodeGen mirror: `~/.local/bin/xcodegen`.
+- Repo helper: `scripts/shotiq-xcode-env.sh`.
+
+Laptop doctor proof:
+
+- Xcode mirror size: 12 GB.
+- `DEVELOPER_DIR` resolves to
+  `/Volumes/TBF SKILLZ.INC/xcode-archive/Xcode.app/Contents/Developer`.
+- `xcodebuild -version`: Xcode 26.2 / build 17C52.
+- App Store Connect env/key: set/readable.
+- `xcodegen --version`: 2.46.0.
+
+Remaining laptop-only admin step: accept the local Xcode license once with:
+
+```sh
+sudo DEVELOPER_DIR="/Volumes/TBF SKILLZ.INC/xcode-archive/Xcode.app/Contents/Developer" \
+  xcodebuild -license accept
+```
+
+Without that password-protected step, CoreSimulator/native test commands on this
+laptop return Apple's Xcode license error even though the mirrored toolchain and
+ShotIQ credentials are present.
