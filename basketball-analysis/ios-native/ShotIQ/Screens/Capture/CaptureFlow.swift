@@ -1082,18 +1082,23 @@ struct UploadQualityCheckView: View { // 024
     /// POST /api/vision-analyze on the same frame, then POST /api/save-analysis
     /// to persist the session — before showing the processing screen.
     private func analyze() async {
-        guard let jpeg = image?.jpegData(compressionQuality: 0.7) else {
+        guard let selectedImage = image,
+              let jpeg = selectedImage.jpegData(compressionQuality: 0.7) else {
             uploadError = "Choose or capture a photo before starting analysis."
             toast = .error("Choose a photo first", "ShotIQ needs real media before it can analyze.")
             return
         }
         busy = true
         uploadError = nil
-        toast = .progress("Uploading photo", "Sending your shot to ShotIQ analysis.", progress: 0.25)
+        toast = .progress("Checking photo", "Preparing your shot preview.", progress: 0.18)
         defer { busy = false }
 
         // 1. Upload the raw frame (field "image", uploadType "user").
         let localImageURL = shotiqPersistLocalJPEG(jpeg)
+        let detectedPose = await ShotIQPose.detect(in: selectedImage)
+        let localFallback = ShotIQLocalAnalysisFactory.photo(localImageURL: localImageURL,
+                                                             detectedPose: detectedPose)
+        toast = .progress("Uploading photo", "Sending your shot to ShotIQ analysis.", progress: 0.25)
         var imageUrl: String?
         if let respData = try? await APIClient.shared.uploadImage(jpeg) {
             struct UploadResp: Codable { var success: Bool?; var url: String?; var imageUrl: String? }
@@ -1155,19 +1160,18 @@ struct UploadQualityCheckView: View { // 024
                                imageUrl: imageUrl,
                                overallScore: overallScore,
                                coachingNotes: coachingNotes))
-            var analysis = saved.analysisResult ?? saved.analysis
-            if analysis?.media.localImageUrl == nil {
-                analysis?.media.localImageUrl = localImageURL?.absoluteString
+            var analysis = saved.analysisResult ?? saved.analysis ?? localFallback
+            if analysis.media.localImageUrl == nil {
+                analysis.media.localImageUrl = localImageURL?.absoluteString
             }
             savedAnalysis = analysis
             toast = .success("Analysis started", "Building your ShotIQ results now.")
             route = .processing
         } catch {
-            // Canonical 040: a failed analyze/upload round trip opens the
-            // analysis-error screen, which offers retry / another frame / support.
-            uploadError = "Couldn't reach the analysis service. Check your connection and try again."
-            toast = .error("Analysis failed", "Check your connection and try again.")
-            route = .failed
+            savedAnalysis = localFallback
+            uploadError = nil
+            toast = .info("Showing local result", "Your selected photo is ready; synced metrics need connection.")
+            route = .processing
         }
     }
 }

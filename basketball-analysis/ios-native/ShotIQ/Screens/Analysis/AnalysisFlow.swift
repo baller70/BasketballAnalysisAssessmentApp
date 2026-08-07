@@ -307,9 +307,10 @@ struct AnalysisProcessingView: View { // 036
     }
 
     private func processVideo(job: VideoAnalysisJob) async {
+        pct = 0.18
+        let poseAnalysis = await VideoPoseAnalyzer.analyze(job: job)
+        let localFallback = ShotIQLocalAnalysisFactory.video(job: job, poseAnalysis: poseAnalysis)
         do {
-            pct = 0.18
-            let poseAnalysis = await VideoPoseAnalyzer.analyze(job: job)
             pct = 0.42
             let uploadedURL = try await APIClient.shared.uploadVideo(
                 job.clip.url,
@@ -392,15 +393,17 @@ struct AnalysisProcessingView: View { // 036
                     coachingNotes: poseAnalysis.frames.isEmpty
                         ? "Video uploaded and saved, but no usable body pose was detected in the selected trim window."
                         : "Video uploaded and analyzed from sampled frames inside the selected trim window."))
-            var analysis = saved.analysisResult ?? saved.analysis
-            if analysis?.media.localVideoUrl == nil {
-                analysis?.media.localVideoUrl = job.clip.url.absoluteString
+            var analysis = saved.analysisResult ?? saved.analysis ?? localFallback
+            if analysis.media.localVideoUrl == nil {
+                analysis.media.localVideoUrl = job.clip.url.absoluteString
             }
             completedResult = analysis
             pct = 0.94
             route = .results
         } catch {
-            route = .failed
+            completedResult = localFallback
+            pct = 0.94
+            route = .results
         }
     }
 }

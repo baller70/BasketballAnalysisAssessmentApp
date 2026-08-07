@@ -10,6 +10,7 @@
 		17D66724B6DE42A8B812C14A /* tungsten_semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 868BDC6C6FC52670A10F9CD3 /* tungsten_semibold.otf */; };
 		19A14ABDC8E02B386C9A714C /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C7558F26B7588AA0972272 /* CameraService.swift */; };
 		1E79D017333BFCCC91057A30 /* ShotIQComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */; };
+		26489780A49CE2C69990E042 /* LocalAnalysisFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11703140EA8A1BD2B4986259 /* LocalAnalysisFallback.swift */; };
 		3653FF1C1DFF8CAB00BD2BD5 /* CanonicalPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52E59E41C43AE18E51BBC33 /* CanonicalPhoto.swift */; };
 		36F3277E8B2C123CBABE7D98 /* ShotIQApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */; };
 		3EC1BBCF0000069613305A3D /* AuthFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90F9DD369D1CDE90145B5003 /* AuthFlow.swift */; };
@@ -59,6 +60,7 @@
 /* Begin PBXFileReference section */
 		0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQComponents.swift; sourceTree = "<group>"; };
 		10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
+		11703140EA8A1BD2B4986259 /* LocalAnalysisFallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnalysisFallback.swift; sourceTree = "<group>"; };
 		173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_black.otf; sourceTree = "<group>"; };
 		1C9565C5B753FA3F5E15C920 /* VideoPoseAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPoseAnalysis.swift; sourceTree = "<group>"; };
 		1E03A277539C261467FFECE8 /* AnalysisFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisFlow.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 				D1D8C157DBB2712C38D8EAB1 /* AnalysisResultPresentation.swift */,
 				A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */,
 				D2C7558F26B7588AA0972272 /* CameraService.swift */,
+				11703140EA8A1BD2B4986259 /* LocalAnalysisFallback.swift */,
 				BF62F67029758541852E4C92 /* PoseDetection.swift */,
 				D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */,
 				1C9565C5B753FA3F5E15C920 /* VideoPoseAnalysis.swift */,
@@ -415,6 +418,7 @@
 				4A9E83E6C305639F91F88F6C /* EliteFlow.swift in Sources */,
 				D366CF3B9BB408E1674F1F8D /* GoalsAnalyticsMediaProfile.swift in Sources */,
 				881767E47EDBF3F5B38CC679 /* HomeFlow.swift in Sources */,
+				26489780A49CE2C69990E042 /* LocalAnalysisFallback.swift in Sources */,
 				7A0A5793869314120915A127 /* OnboardingFlow.swift in Sources */,
 				807855623D793964D3151A04 /* PoseDetection.swift in Sources */,
 				36F3277E8B2C123CBABE7D98 /* ShotIQApp.swift in Sources */,

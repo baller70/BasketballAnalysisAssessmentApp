@@ -186,6 +186,59 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertNil(presentation.videoURL)
     }
 
+    func testLocalPhotoFallbackCarriesSelectedImageWithoutDemoScores() throws {
+        let url = URL(fileURLWithPath: "/tmp/shotiq-selected-photo.jpg")
+        let result = ShotIQLocalAnalysisFactory.photo(localImageURL: url, detectedPose: nil)
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(result.source, "ios-native-local-photo-preview")
+        XCTAssertEqual(presentation.mediaURL?.absoluteString, url.absoluteString)
+        XCTAssertEqual(presentation.scoreText, "--")
+        XCTAssertTrue(result.provenance.missing.contains("scores.form"))
+        XCTAssertTrue(result.provenance.demo.isEmpty)
+    }
+
+    func testLocalVideoFallbackCarriesSelectedVideoAndMeasuredPoseSummary() throws {
+        let url = URL(fileURLWithPath: "/tmp/shotiq-selected-video.mov")
+        let clip = PickedVideoClip(url: url,
+                                   filename: "shotiq-selected-video.mov",
+                                   contentType: "video/quicktime",
+                                   fileSizeBytes: 24_800_000,
+                                   durationSeconds: 6,
+                                   dimensions: CGSize(width: 1080, height: 1920),
+                                   frameRate: 60)
+        let job = VideoAnalysisJob(clientSessionId: "unit-local-video",
+                                   clip: clip,
+                                   trimStartFraction: 0.1,
+                                   trimEndFraction: 0.9)
+        let summary = VideoPoseAnalysisSummary(source: "unit-test",
+                                               frameCount: 3,
+                                               detectedFrameCount: 3,
+                                               releaseFrameIndex: 1,
+                                               releaseTimestampSeconds: 3,
+                                               releaseElbowAngle: 161,
+                                               releaseKneeAngle: 92,
+                                               releaseWristAngle: 72,
+                                               releaseShoulderAngle: nil,
+                                               releaseHipAngle: nil,
+                                               releaseAngle: -3,
+                                               kneeAngleMin: 88,
+                                               averageConfidence: 0.83,
+                                               overallScore: 84,
+                                               formScore: 82,
+                                               releaseScore: 80,
+                                               consistencyScore: 83)
+        let result = ShotIQLocalAnalysisFactory.video(job: job,
+                                                      poseAnalysis: VideoPoseAnalysis(summary: summary, frames: []))
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(result.source, "ios-native-local-video-preview")
+        XCTAssertEqual(presentation.videoURL?.absoluteString, url.absoluteString)
+        XCTAssertEqual(presentation.scoreText, "82")
+        XCTAssertEqual(presentation.metrics.first(where: { $0.label == "ELBOW ANGLE" })?.value, "161°")
+        XCTAssertTrue(result.provenance.demo.isEmpty)
+    }
+
     func testAnalysisPresentationFeedsDownstreamResultScreensWithoutDemoConstants() throws {
         let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self,
                                               from: sampleAnalysisJSON().data(using: .utf8)!)
