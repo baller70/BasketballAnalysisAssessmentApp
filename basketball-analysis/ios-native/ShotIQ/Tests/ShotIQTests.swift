@@ -156,6 +156,23 @@ final class DrillSessionTests: XCTestCase {
     }
 }
 
+final class PickedVideoClipTests: XCTestCase {
+    func testPickedVideoClipFormatsMetadataFromActualAssetValues() {
+        let clip = PickedVideoClip(url: URL(fileURLWithPath: "/tmp/shot.mov"),
+                                   filename: "shot.mov",
+                                   fileSizeBytes: 24_800_000,
+                                   durationSeconds: 6.5,
+                                   dimensions: CGSize(width: 1080, height: 1920),
+                                   frameRate: 59.94)
+
+        XCTAssertEqual(clip.durationText, "00:06.50")
+        XCTAssertEqual(clip.timeText(at: 0.8), "00:05.20")
+        XCTAssertEqual(clip.orientationText, "1080 x 1920")
+        XCTAssertEqual(clip.fileSizeText, "24.8 MB")
+        XCTAssertEqual(clip.frameRateText, "60 FPS")
+    }
+}
+
 /// The pose overlay's two silent-failure modes: a skeleton drawn against the
 /// wrong rectangle, and a framing verdict asserted rather than measured. Both
 /// look fine in a screenshot and are wrong on a phone, so both are pinned here.

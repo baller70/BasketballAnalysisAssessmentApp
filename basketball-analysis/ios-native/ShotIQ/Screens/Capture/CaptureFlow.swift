@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import AVFoundation
 import AVKit
+import UniformTypeIdentifiers
 
 // Capture & upload flow — screens 021-035. PhotosUI for library import,
 // AVFoundation capture session for live camera (permission-gated).
@@ -1317,8 +1318,85 @@ struct UploadQueueView: View {      // 025
     }
 }
 
+struct PickedVideoClip: Identifiable, Equatable {
+    var id: String { url.path }
+    var url: URL
+    var filename: String
+    var fileSizeBytes: Int
+    var durationSeconds: Double
+    var dimensions: CGSize?
+    var frameRate: Float?
+
+    var durationText: String { Self.timeText(durationSeconds) }
+
+    var orientationText: String {
+        guard let dimensions else { return "Unknown" }
+        return "\(Int(dimensions.width.rounded())) x \(Int(dimensions.height.rounded()))"
+    }
+
+    var fileSizeText: String {
+        let mb = Double(fileSizeBytes) / 1_000_000
+        return "\(String(format: "%.1f", mb)) MB"
+    }
+
+    var frameRateText: String {
+        guard let frameRate, frameRate > 0 else { return "Unknown" }
+        return "\(Int(frameRate.rounded())) FPS"
+    }
+
+    func timeText(at fraction: Double) -> String {
+        Self.timeText(durationSeconds * min(max(fraction, 0), 1))
+    }
+
+    static func timeText(_ seconds: Double) -> String {
+        guard seconds.isFinite, seconds >= 0 else { return "00:00.00" }
+        let minutes = Int(seconds / 60)
+        let wholeSeconds = Int(seconds) % 60
+        let hundredths = Int(((seconds - floor(seconds)) * 100).rounded())
+        return String(format: "%02d:%02d.%02d", minutes, wholeSeconds, min(hundredths, 99))
+    }
+}
+
+private func loadPickedVideoClip(from item: PhotosPickerItem) async -> PickedVideoClip? {
+    guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
+    let ext = item.supportedContentTypes.first?.preferredFilenameExtension ?? "mov"
+    let filename = "shotiq-\(UUID().uuidString).\(ext)"
+    let url = FileManager.default.temporaryDirectory.appending(path: filename)
+    do {
+        try data.write(to: url, options: [.atomic])
+    } catch {
+        return nil
+    }
+
+    let asset = AVURLAsset(url: url)
+    let durationTime = (try? await asset.load(.duration)) ?? .zero
+    let rawDuration = CMTimeGetSeconds(durationTime)
+    let tracks = (try? await asset.loadTracks(withMediaType: .video)) ?? []
+    let track = tracks.first
+
+    var dimensions: CGSize?
+    var frameRate: Float?
+    if let track {
+        let naturalSize = (try? await track.load(.naturalSize)) ?? .zero
+        let transform = (try? await track.load(.preferredTransform)) ?? .identity
+        let transformedSize = naturalSize.applying(transform)
+        dimensions = CGSize(width: abs(transformedSize.width), height: abs(transformedSize.height))
+        frameRate = try? await track.load(.nominalFrameRate)
+    }
+
+    return PickedVideoClip(url: url,
+                           filename: filename,
+                           fileSizeBytes: data.count,
+                           durationSeconds: rawDuration.isFinite ? rawDuration : 0,
+                           dimensions: dimensions,
+                           frameRate: frameRate)
+}
+
 struct VideoUploadView: View {      // 026
     @State private var pick: PhotosPickerItem?
+    @State private var selectedVideo: PickedVideoClip?
+    @State private var loadingVideo = false
+    @State private var videoError: String?
     @State private var go = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-upload") {
@@ -1333,8 +1411,9 @@ struct VideoUploadView: View {      // 026
 
                     PhotosPicker(selection: $pick, matching: .videos) {
                         VStack(spacing: 8) {
-                            Image(systemName: "film").font(.system(size: 34)).foregroundStyle(ShotIQColor.ink)
-                            Text("Choose video").shotiqBody(20, weight: .semibold)
+                            Image(systemName: loadingVideo ? "hourglass" : "film")
+                                .font(.system(size: 34)).foregroundStyle(ShotIQColor.ink)
+                            Text(loadingVideo ? "Loading video" : "Choose video").shotiqBody(20, weight: .semibold)
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             Text("MP4 • 3–45 seconds").shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             Text("Best results in portrait orientation.")
@@ -1345,6 +1424,28 @@ struct VideoUploadView: View {      // 026
                             .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.5, dash: [7, 6])))
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
+                    if let selectedVideo {
+                        HStack(spacing: 12) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(ShotIQColor.confirmGreen)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(selectedVideo.filename).shotiqBody(13, weight: .semibold)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                Text("\(selectedVideo.durationText) • \(selectedVideo.orientationText) • \(selectedVideo.fileSizeText)")
+                                    .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                        }
+                        .padding(12)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        .padding(.horizontal, 20).padding(.top, 10)
+                    }
+                    if let videoError {
+                        Text(videoError).shotiqBody(12).foregroundStyle(ShotIQColor.reviewRed)
+                            .padding(.horizontal, 20).padding(.top, 8)
+                    }
 
                     // THE EQUAL SHARE IS CORRECT HERE; THE TYPE AND THE CHROME
                     // INSIDE IT WERE NOT.
@@ -1465,8 +1566,25 @@ struct VideoUploadView: View {      // 026
                 }
             }
         }
-        .onChange(of: pick) { _, v in if v != nil { go = true } }
-        .navigationDestination(isPresented: $go) { VideoReviewView() }
+        .onChange(of: pick) { _, item in
+            guard let item else { return }
+            loadingVideo = true
+            videoError = nil
+            Task {
+                let clip = await loadPickedVideoClip(from: item)
+                await MainActor.run {
+                    loadingVideo = false
+                    pick = nil
+                    if let clip {
+                        selectedVideo = clip
+                        go = true
+                    } else {
+                        videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
+                    }
+                }
+            }
+        }
+        .navigationDestination(isPresented: $go) { VideoReviewView(video: selectedVideo) }
     }
 
     private func framingCard(_ badge: String, photo: String? = nil, good: Bool) -> some View {
@@ -1493,6 +1611,7 @@ struct VideoUploadView: View {      // 026
 }
 
 struct VideoReviewView: View {      // 027
+    var video: PickedVideoClip? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var trimStart: Double = 0.1
     @State private var trimEnd: Double = 0.8
@@ -1555,8 +1674,24 @@ struct VideoReviewView: View {      // 027
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 12)
 
-                    CanonicalMediaSurface(key: "027-visual-001", height: 300, duration: "0:06")
-                        .padding(.horizontal, 20).padding(.top, 14)
+                    Group {
+                        if let video {
+                            VideoPlayer(player: AVPlayer(url: video.url))
+                                .frame(height: 300)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(alignment: .bottomTrailing) {
+                                    Text(video.durationText)
+                                        .font(.custom("Tungsten-Medium", size: 13))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 8).padding(.vertical, 4)
+                                        .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
+                                        .padding(8)
+                                }
+                        } else {
+                            CanonicalMediaSurface(key: "027-visual-001", height: 300, duration: "0:06")
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
 
                     Text("Drag the handles to trim your clip")
                         .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
@@ -1594,20 +1729,20 @@ struct VideoReviewView: View {      // 027
                     .frame(height: 54).padding(.horizontal, 20).padding(.top, 8)
 
                     HStack {
-                        Text("00:00.50").font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        Text(video?.timeText(at: trimStart) ?? "00:00.50").font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(ShotIQColor.graphite)
                         Spacer()
-                        Text("00:06.00").font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text(video?.timeText(at: trimEnd) ?? "00:06.00").font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
                         Spacer()
-                        Text("00:06.50").font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        Text(video?.durationText ?? "00:06.50").font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(ShotIQColor.graphite)
                     }
                     .padding(.horizontal, 20).padding(.top, 6)
 
                     SectionLabel(text: "VIDEO DETAILS").padding(.horizontal, 20).padding(.top, 20)
                     HStack(alignment: .top, spacing: 0) {
-                        detailCol("clock", "00:06.00", "DURATION")
-                        detailCol("iphone", "1080 × 1920", "ORIENTATION")
-                        detailCol("doc", "24.8 MB", "FILE SIZE")
-                        detailCol("film", "60 FPS", "FRAME RATE")
+                        detailCol("clock", video?.durationText ?? "00:06.00", "DURATION")
+                        detailCol("iphone", video?.orientationText ?? "1080 x 1920", "ORIENTATION")
+                        detailCol("doc", video?.fileSizeText ?? "24.8 MB", "FILE SIZE")
+                        detailCol("film", video?.frameRateText ?? "60 FPS", "FRAME RATE")
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 

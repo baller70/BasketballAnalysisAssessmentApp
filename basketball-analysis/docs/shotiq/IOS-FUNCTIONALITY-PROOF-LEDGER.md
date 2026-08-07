@@ -63,7 +63,7 @@ The first pass should fix root causes before polishing dependent screens:
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
 | P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, and native overview presentation are implemented; Mac-mini native XCTest/device install and laptop native XCTest proof are captured. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
-| P0-002 | OPEN | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. |
+| P0-002 | FIXING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review/metadata slice is implemented and simulator-tested; trim/analyze/save path remains open. |
 | P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
@@ -93,9 +93,9 @@ The first pass should fix root causes before polishing dependent screens:
 | G013 | OPEN | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | Saved score is reproducible from measured analysis fields. |
 | G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. Still needs end-to-end device/web round-trip proof before `DONE`. |
 | G015 | OPEN | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Queue starts empty or from backend, adding media creates real item and status updates. |
-| G016 | OPEN | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | Test confirms selected video URL/data is retained after picker. |
-| G017 | OPEN | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | Video review displays the selected clip and fails if no clip exists. |
-| G018 | OPEN | P1 | `#media` `#analytics` | 027 | Read real duration, size, orientation, and FPS. | Video details match selected file metadata. |
+| G016 | VERIFYING | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | `VideoUploadView` now loads the selected `PhotosPickerItem` into a retained temporary video URL before navigation; focused laptop XCTest confirms the retained clip model. Still needs real picker/device-media recording before `DONE`. |
+| G017 | VERIFYING | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | `VideoReviewView` now renders `VideoPlayer` for the selected clip and keeps canonical media only for explicit fallback/staged paths. Still needs real picker/device-media recording before `DONE`. |
+| G018 | VERIFYING | P1 | `#media` `#analytics` | 027 | Read real duration, size, orientation, and FPS. | `PickedVideoClip` reads duration, dimensions, file size, and FPS from the selected asset; focused laptop XCTest proves the metadata formatting. Still needs real selected file proof before `DONE`. |
 | G019 | OPEN | P0 | `#control` `#media` | 027 | Make trim controls affect analysis input. | Analysis receives and stores selected trim start/end; frames outside trim are not used. |
 | G020 | OPEN | P0 | `#media` `#pose` `#analytics` `#backend` | 027 to 038 | Implement native video analysis/save path. | Real video produces measured frames, phases, pose metrics, saved result, and result UI. |
 
@@ -277,11 +277,11 @@ Laptop doctor proof:
 Laptop evidence captured:
 
 - Debug simulator build:
-  `~/CodexWork/shotiq-evidence/local-xcode-build-20260807-102900.log`
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/local-xcode-build-20260807-102900.log`
   ran from `basketball-analysis/ios-native` after `xcodegen generate` and
   ended with `** BUILD SUCCEEDED **`.
 - Focused native XCTest:
-  `~/CodexWork/shotiq-evidence/local-xcode-contract-test-20260807-102900.log`
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/local-xcode-contract-test-20260807-102900.log`
   ran `ShotIQTests/AnalysisResultContractTests` on the local iPhone 17 simulator
   and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
 
@@ -314,6 +314,32 @@ First laptop functionality slice after local Xcode setup:
 
 Evidence captured on the laptop:
 
-- `~/CodexWork/shotiq-evidence/ios-functionality-contract-test-rerun-20260807-111500.log`
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-functionality-contract-test-rerun-20260807-111500.log`
   ran `ShotIQTests/AnalysisResultContractTests` on the local iPhone 17 simulator
   and ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0 failures`.
+
+### 2026-08-07 Native Video Picker Handoff
+
+Second laptop functionality slice after local Xcode setup:
+
+- Removed the screen 026 to 027 placeholder jump for selected videos.
+  `VideoUploadView` now loads the picked `PhotosPickerItem` into a retained
+  temporary video file before navigation.
+- Added `PickedVideoClip`, which carries the selected clip URL, filename, byte
+  size, duration, dimensions, and frame rate.
+- Updated `VideoReviewView` so real selected clips render in `VideoPlayer`.
+  Canonical placeholder media remains available only when no selected clip is
+  supplied, which preserves staged pixel-capture screens without pretending the
+  picker produced media.
+- Replaced fixed video detail text with metadata derived from the picked clip.
+- Moved laptop ShotIQ build products and evidence off the internal disk. Current
+  laptop proof uses external DerivedData and evidence under
+  `/Volumes/TBF SKILLZ.INC/CodexWork`.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-video-clip-test-20260807-113500.log`
+  ran `ShotIQTests/PickedVideoClipTests` on the local iPhone 17 simulator using
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-video-20260807-113500`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
