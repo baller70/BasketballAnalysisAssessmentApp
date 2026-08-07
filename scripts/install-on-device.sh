@@ -15,6 +15,33 @@ die() { printf 'INSTALL_ERROR: %s\n' "$*" >&2; exit 1; }
 note() { printf '  %s\n' "$*"; }
 step() { printf '\n==> %s\n' "$*"; }
 
+diagnose_device_visibility() {
+  step 'Device visibility diagnostics'
+  note "DEVELOPER_DIR=${DEVELOPER_DIR:-<unset>}"
+
+  if system_profiler SPUSBDataType 2>/dev/null | grep -Eiq 'iPhone|iPad|Apple Mobile'; then
+    note 'macOS USB can see an Apple mobile device:'
+    system_profiler SPUSBDataType 2>/dev/null \
+      | grep -Ei -C 4 'iPhone|iPad|Apple Mobile' \
+      | sed 's/^/    /' || true
+  else
+    note 'macOS USB does not show an iPhone/iPad/Apple Mobile device.'
+    note 'That is below Xcode: unlock the phone, use a data-capable cable,'
+    note 'tap Trust This Computer, and confirm it appears in Finder first.'
+  fi
+
+  note 'devicectl currently reports:'
+  xcrun devicectl list devices --verbose 2>&1 | sed -n '1,80p' | sed 's/^/    /' || true
+
+  note 'xctrace currently reports:'
+  xcrun xctrace list devices 2>&1 | sed -n '1,120p' | sed 's/^/    /' || true
+
+  note 'xcdevice currently reports physical devices as:'
+  xcrun xcdevice list 2>/dev/null \
+    | python3 -c 'import json,sys; data=json.load(sys.stdin); phys=[d for d in data if not d.get("simulator")]; print("\n".join("    {name} ({identifier}) available={available} interface={interface}".format(**{**{"name":"?","identifier":"?","available":"?","interface":"?"}, **d}) for d in phys) or "    (none)")' \
+    || note 'xcdevice list was unavailable or unreadable.'
+}
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
@@ -101,7 +128,10 @@ else:
 PY
 )"
 
-[ -n "${device_id:-}" ] || die 'no paired iPhone at all — pair it with the Mac in Xcode first'
+if [ -z "${device_id:-}" ]; then
+  diagnose_device_visibility
+  die 'no paired iPhone visible to this Mac — make the phone appear in Finder/Xcode, then rerun'
+fi
 note "Device: ${device_name//_/ } (${device_udid})"
 note "Connection state: ${device_state}"
 

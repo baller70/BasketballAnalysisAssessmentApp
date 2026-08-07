@@ -936,3 +936,28 @@ Evidence captured on the laptop, all external-drive backed:
   It verified `VIDEO SOURCE`, `Video library`, `Browse files`, `Record video`,
   `Upload queue`, `View filming tips`, verified `Choose video` is absent, and
   ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+
+### 2026-08-07 Native Device Install Diagnostic Handoff
+
+Ninth laptop functionality slice after local Xcode setup:
+
+- Improved `scripts/install-on-device.sh` so a missing phone no longer stops at
+  the vague `no paired iPhone` message. The script now prints a device
+  visibility diagnostic before failing.
+- The diagnostic distinguishes the layers that matter for Kevin's laptop:
+  macOS USB visibility, `devicectl`, `xctrace`, and `xcdevice`.
+- This keeps the real-device proof honest. If macOS USB does not show an
+  iPhone/iPad/Apple Mobile device, the blocker is below Xcode and the app
+  cannot be installed from this laptop until the phone appears in Finder/Xcode.
+- The installer still defaults device build output to the external drive:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-device`.
+
+Evidence captured on the laptop:
+
+- `bash -n scripts/install-on-device.sh` passed.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/device-install-diagnostics-20260807-153238.log`
+  ran the device installer with the local Xcode environment. It reported:
+  macOS USB does not show an iPhone/iPad/Apple Mobile device, `devicectl`
+  reports `No devices found`, `xctrace` lists only Kevin's MacBook Air plus
+  simulators, `xcdevice` lists only `My Mac` as a physical device, and the
+  installer exited with `INSTALL_STATUS=1`.
