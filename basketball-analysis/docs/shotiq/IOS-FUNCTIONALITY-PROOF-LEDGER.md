@@ -393,6 +393,64 @@ Evidence captured on the laptop, all external-drive backed:
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-full-local-media-fallback-20260807-144721.xcresult`
   is the matching full-unit result bundle.
 
+### 2026-08-07 Native Simulator Capture Regression Handoff
+
+Fourteenth laptop functionality slice after local Xcode setup:
+
+- Restored and re-proved the richer full-screen video upload source screen. The
+  simulator flow now sees Video library, Browse files, Record video, Upload
+  queue, and View filming tips instead of the old medium-size choose-video box.
+- Fixed a simulator-discovered customer-feedback bug in Video Review: tapping
+  Analyze video with no real clip now shows the `Choose a video first` error
+  toast and stays out of analysis processing.
+- Hardened the canonical screenshot tab helper so the Capture screen can be
+  reached reliably through the app's custom tab/home capture path before taking
+  screenshots.
+- Reconfirmed the placeholder rule visually: guide media remains present on the
+  default capture/upload surfaces, and selected/staged media replaces the guide
+  only inside the active review/result path.
+- This slice is simulator proof only. It does not close the real selected-video
+  device/backend/web proof gate.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/video-toast-regression-20260807-154435.log`
+  ran the focused
+  `ShotIQUITests/ShotIQUITests/testCaptureNoMediaShowsCustomerFeedback`
+  regression on the iPhone 17 Pro simulator and ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`. The matching
+  result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/video-toast-regression-20260807-154435.xcresult`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-smoke-full-20260807-154702.log`
+  ran the full `ShotIQUITests/ShotIQUITests` smoke suite on the iPhone 17 Pro
+  simulator with external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-smoke-full-20260807-154702`
+  and ended with `** TEST SUCCEEDED **`, `Executed 6 tests, with 0 failures`.
+  The smoke pass includes sign-in validation, splash, tab navigation, drill
+  make feedback, capture no-media feedback, and the full-screen video upload
+  source-options check.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-155811.log`
+  ran `CanonicalScreenshotTests/test04CaptureScreens` on the iPhone 17 Pro
+  simulator with external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-capture-canonical-20260807-155811`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-155811-attachments`
+  contains 15 exported screenshots covering analyze hub, photo upload source,
+  full-screen video upload, media detail, live camera setup/calibration/ready,
+  recording, feedback, shot detected, capture review, upload queue, processing,
+  and analysis overview. A contact sheet is saved at
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-155811-contact.png`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/staged-canonical-20260807-160700b.log`
+  ran `CanonicalScreenshotTests/test08StagedScreens` on the iPhone 17 Pro
+  simulator with external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-staged-canonical-20260807-160700b`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/staged-canonical-20260807-160700b-attachments`
+  contains 7 exported screenshots covering verify email, reset password, photo
+  review crop, upload quality check, video review, analysis taking longer, and
+  analysis error. A contact sheet is saved at
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/staged-canonical-20260807-160700b-contact.png`.
+
 ### 2026-08-07 Native Local Media Result Handoff
 
 Ninth laptop functionality slice after local Xcode setup:

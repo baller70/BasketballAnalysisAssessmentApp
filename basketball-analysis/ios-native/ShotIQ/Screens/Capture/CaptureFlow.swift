@@ -1919,26 +1919,13 @@ struct VideoReviewView: View {      // 027
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    Button {
-                        guard let video else {
-                            toast = .error("Choose a video first", "ShotIQ needs a real clip before analysis.")
-                            return
-                        }
-                        let job = VideoAnalysisJob(
-                            clientSessionId: "ios-video-\(UUID().uuidString)",
-                            clip: video,
-                            trimStartFraction: trimStart,
-                            trimEndFraction: trimEnd)
-                        pendingJob = job
-                        toast = .progress("Preparing analysis", "Trim window \(job.trimWindowText).", progress: 0.35)
-                        Task {
-                            try? await Task.sleep(for: .milliseconds(250))
-                            await MainActor.run { goProcessing = true }
-                        }
-                    } label: {
-                        captureCTA("Analyze video", icon: "camera.metering.center.weighted")
-                    }
-                    .buttonStyle(.plain)
+                    captureCTA("Analyze video", icon: "camera.metering.center.weighted")
+                        .contentShape(RoundedRectangle(cornerRadius: 8))
+                        .onTapGesture { analyzeVideo() }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityLabel("Analyze video")
+                        .accessibilityAction { analyzeVideo() }
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     HStack(spacing: 10) {
@@ -1982,6 +1969,28 @@ struct VideoReviewView: View {      // 027
             Text(l).shotiqBody(9, weight: .medium).kerning(0.5).foregroundStyle(ShotIQColor.graphite)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func analyzeVideo() {
+        guard let video else {
+            showMissingVideoToast()
+            return
+        }
+        let job = VideoAnalysisJob(
+            clientSessionId: "ios-video-\(UUID().uuidString)",
+            clip: video,
+            trimStartFraction: trimStart,
+            trimEndFraction: trimEnd)
+        pendingJob = job
+        toast = .progress("Preparing analysis", "Trim window \(job.trimWindowText).", progress: 0.35)
+        Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            await MainActor.run { goProcessing = true }
+        }
+    }
+
+    private func showMissingVideoToast() {
+        toast = .error("Choose a video first", "ShotIQ needs a real clip before analysis.")
     }
 }
 

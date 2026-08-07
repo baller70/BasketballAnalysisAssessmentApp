@@ -164,14 +164,23 @@ final class CanonicalScreenshotTests: XCTestCase {
     }
 
     /// Tab bar buttons carry the canonical short labels.
-    private func selectTab(_ label: String) {
+    private func selectTab(_ label: String, expecting expectedRoot: String? = nil) {
         let tabButton = app.tabBars.buttons[label]
         if tabButton.waitForExistence(timeout: 8) {
             tap(tabButton)
-            return
+            if expectedRoot == nil || screenExists(expectedRoot!, timeout: 4) { return }
         }
         let button = app.buttons[label]
-        if button.waitForExistence(timeout: 8) { tap(button) }
+        if button.waitForExistence(timeout: 8) {
+            tap(button)
+            if expectedRoot == nil || screenExists(expectedRoot!, timeout: 4) { return }
+        }
+        if label == "Capture", expectedRoot == "screen-ios-analyze-hub",
+           let newCapture = findControl("New capture", maxSwipes: 0) {
+            tap(newCapture)
+            _ = screenExists("screen-ios-analyze-hub", timeout: 8)
+            return
+        }
     }
 
     /// Navigation reset for independent click paths. SwiftUI preserves each
@@ -289,7 +298,7 @@ final class CanonicalScreenshotTests: XCTestCase {
 
     func test04CaptureScreens() {
         launch(Self.mainArgs)
-        selectTab("Capture")
+        selectTab("Capture", expecting: "screen-ios-analyze-hub")
         guard expectScreen("screen-ios-analyze-hub", timeout: 20) else { return }
 
         tapAndExpect("Upload image", "screen-ios-photo-upload-source", from: "analyze-hub")
