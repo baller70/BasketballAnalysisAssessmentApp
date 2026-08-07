@@ -821,6 +821,7 @@ struct UploadQualityCheckView: View { // 024
     @Environment(\.dismiss) private var dismiss
     @State private var busy = false
     @State private var uploadError: String?
+    @State private var savedAnalysis: ShotIQAnalysisResultDTO?
     /// One route out of this screen: analysis processing on success, the
     /// canonical analysis-error screen (040) when the upload/analyze call fails.
     enum UploadRoute: Hashable { case processing, failed }
@@ -1007,7 +1008,7 @@ struct UploadQualityCheckView: View { // 024
         }
         .navigationDestination(item: $route) { r in
             switch r {
-            case .processing: AnalysisProcessingView()
+            case .processing: AnalysisProcessingView(initialResult: savedAnalysis)
             case .failed: AnalysisErrorView()
             }
         }
@@ -1018,7 +1019,11 @@ struct UploadQualityCheckView: View { // 024
     /// to persist the session — before showing the processing screen.
     private func analyze() async {
         guard let jpeg = image?.jpegData(compressionQuality: 0.7) else {
-            route = .processing // nothing picked (placeholder path) — just proceed
+            if UITestHooks.active {
+                route = .processing
+            } else {
+                uploadError = "Choose or capture a photo before starting analysis."
+            }
             return
         }
         busy = true
@@ -1071,9 +1076,14 @@ struct UploadQualityCheckView: View { // 024
             var clientSessionId: String; var recordedAt: String; var mediaType: String
             var imageUrl: String?; var overallScore: Double?; var coachingNotes: String?
         }
-        struct SaveResp: Codable { var success: Bool?; var analysisId: String? }
+        struct SaveResp: Codable {
+            var success: Bool?
+            var analysisId: String?
+            var analysisResult: ShotIQAnalysisResultDTO?
+            var analysis: ShotIQAnalysisResultDTO?
+        }
         do {
-            let _: SaveResp = try await APIClient.shared.call(
+            let saved: SaveResp = try await APIClient.shared.call(
                 "/api/save-analysis", method: "POST",
                 body: SaveBody(clientSessionId: "ios-\(UUID().uuidString)",
                                recordedAt: ISO8601DateFormatter().string(from: Date()),
@@ -1081,6 +1091,7 @@ struct UploadQualityCheckView: View { // 024
                                imageUrl: imageUrl,
                                overallScore: overallScore,
                                coachingNotes: coachingNotes))
+            savedAnalysis = saved.analysisResult ?? saved.analysis
             route = .processing
         } catch {
             // Canonical 040: a failed analyze/upload round trip opens the

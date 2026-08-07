@@ -37,13 +37,14 @@ fileprivate extension View {
 /// "PRIMARY COACHING TARGET / Keep elbow stacked through release" row (037-040).
 fileprivate struct CoachTargetCard: View {
     var bordered = true
+    var title = "Keep elbow stacked through release"
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("PRIMARY COACHING TARGET")
                     .shotiqBody(11, weight: .semibold).kerning(0.8)
                     .foregroundStyle(ShotIQColor.graphite)
-                Text("Keep elbow stacked through release")
+                Text(title)
                     .shotiqBody(19, weight: .semibold)
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1).minimumScaleFactor(0.7)
@@ -83,20 +84,69 @@ fileprivate struct SessionStatsStrip: View {
 fileprivate struct FormScorePanel: View {
     var numeralSize: CGFloat = 64
     var barWidth: CGFloat = 130
+    var score = "82"
+    var pct = 0.82
+    var verdict = "GOOD"
     var caption = "Keep building consistency."
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("FORM SCORE").shotiqBody(12, weight: .semibold).kerning(0.8)
                 .foregroundStyle(ShotIQColor.graphite)
-            Text("82").font(.custom("Tungsten-Medium", size: numeralSize))
+            Text(score).font(.custom("Tungsten-Medium", size: numeralSize))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
                 .lineLimit(1)
-            ScoreBar(pct: 0.82).frame(width: barWidth)
-            Text("GOOD").font(.custom("Tungsten-Medium", size: 18))
+            ScoreBar(pct: pct).frame(width: barWidth)
+            Text(verdict).font(.custom("Tungsten-Medium", size: 18))
                 .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 6)
             Text(caption).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+}
+
+fileprivate struct AnalysisResultMediaSurface: View {
+    var presentation: AnalysisResultPresentation
+    var fallbackKey: String
+    var height: CGFloat
+
+    var body: some View {
+        ZStack {
+            if let url = presentation.mediaURL {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    case .failure:
+                        mediaPlaceholder("Media unavailable")
+                    default:
+                        mediaPlaceholder("Loading media")
+                    }
+                }
+            } else if presentation.id == "canonical-demo" {
+                CanonicalMediaSurface(key: fallbackKey, height: height)
+            } else {
+                mediaPlaceholder(presentation.mediaLabel)
+            }
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .accessibilityLabel(presentation.mediaLabel)
+    }
+
+    private func mediaPlaceholder(_ label: String) -> some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+            .overlay {
+                VStack(spacing: 8) {
+                    Image(systemName: "photo")
+                        .font(.system(size: 26, weight: .light))
+                    Text(label)
+                        .shotiqBody(12, weight: .medium)
+                }
+                .foregroundStyle(.white.opacity(0.85))
+                .multilineTextAlignment(.center)
+                .padding(12)
+            }
     }
 }
 
@@ -108,6 +158,7 @@ struct AnalysisProcessingView: View { // 036
     /// Processing that is still running after this is no longer "a moment":
     /// canonical 037 takes over and offers notify / keep waiting / cancel.
     private static let longRunningThreshold: Duration = .seconds(12)
+    var initialResult: ShotIQAnalysisResultDTO? = nil
     @State private var pct = 0.12
     @State private var route: ProcessingRoute?
     private let steps: [(String, String, Int)] = [ // icon, label, state: 0 done, 1 active, 2 queued
@@ -217,7 +268,7 @@ struct AnalysisProcessingView: View { // 036
         }
         .navigationDestination(item: $route) { r in
             switch r {
-            case .results: AnalysisResultOverviewView()
+            case .results: AnalysisResultOverviewView(initialResult: initialResult)
             case .takingLonger: AnalysisTakingLongerView()
             }
         }
@@ -354,17 +405,21 @@ struct AnalysisTakingLongerView: View { // 037
 }
 
 struct AnalysisResultOverviewView: View { // 038
-    private let metrics: [(String, String, String, String, Bool)] = [
-        // icon, label, value, verdict, excellent
-        ("figure.basketball", "RELEASE HEIGHT", "7'8\"", "EXCELLENT", true),
-        ("angle", "RELEASE ANGLE", "52°", "GOOD", false),
-        ("point.3.filled.connected.trianglepath.dotted", "ELBOW ALIGNMENT", "93%", "GOOD", false),
-        ("point.bottomleft.forward.to.point.topright.scurvepath", "SHOT ARC", "46°", "GOOD", false),
-        ("scope", "SPIN RATE", "8.6", "GOOD", false),
-        ("viewfinder", "CENTEREDNESS", "92%", "EXCELLENT", true),
-    ]
+    private let initialResult: ShotIQAnalysisResultDTO?
+    @State private var presentation: AnalysisResultPresentation
+    @State private var isLoadingLatest = false
+    @State private var loadError: String?
     @State private var info: AnalysisInfoNote?
+
+    init(initialResult: ShotIQAnalysisResultDTO? = nil) {
+        self.initialResult = initialResult
+        let seeded = initialResult.map(AnalysisResultPresentation.init)
+            ?? (UITestHooks.active ? .canonicalDemo : .noResult)
+        _presentation = State(initialValue: seeded)
+    }
+
     var body: some View {
+        let p = presentation
         CanonicalScreen(testID: "screen-ios-analysis-result-overview") {
             VStack(spacing: 0) {
                 AnalysisTopBar()
@@ -392,21 +447,26 @@ struct AnalysisResultOverviewView: View { // 038
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .top, spacing: 18) {
-                                // This crop covers the gym behind the shooter and carries no
-                                // baked-in pose, so the app's overlay still draws on top.
+                                // Real production path: display the media URL returned by
+                                // /api/save-analysis or /api/analysis/latest. Canonical
+                                // bitmap fallback is only for the screenshot harness.
                                 ZStack {
-                                    CanonicalMediaSurface(key: "038-visual-001", height: 220)
-                                    SkeletonOverlay()
+                                    AnalysisResultMediaSurface(presentation: p, fallbackKey: "038-visual-001", height: 220)
+                                    if p.id == "canonical-demo" { SkeletonOverlay() }
                                 }
                                 .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 0) {
                                     NavigationLink { FormScoreView() } label: {
-                                        FormScorePanel(numeralSize: 62, barWidth: 96)
+                                        FormScorePanel(numeralSize: 62, barWidth: 96,
+                                                       score: p.scoreText,
+                                                       pct: p.scorePct,
+                                                       verdict: p.scoreVerdict,
+                                                       caption: p.scoreCaption)
                                     }
                                     HStack(spacing: 14) {
-                                        miniStat("24", "SHOTS")
-                                        miniStat("15", "MAKES")
-                                        miniStat("62.5%", "MAKE %")
+                                        miniStat(p.phaseText.uppercased(), "PHASE")
+                                        miniStat(p.mediaLabel.uppercased(), "MEDIA")
+                                        miniStat(p.provenanceSummary, "SOURCES")
                                     }
                                     .padding(.top, 14)
                                 }
@@ -414,13 +474,13 @@ struct AnalysisResultOverviewView: View { // 038
                             }
                             .padding(.top, 16)
                             PhaseStrip().padding(.top, 16)
-                            NavigationLink { FlawsOverviewView() } label: { CoachTargetCard() }
+                            NavigationLink { FlawsOverviewView() } label: { CoachTargetCard(title: p.coachingTarget) }
                                 .padding(.top, 16)
                             HStack(spacing: 6) {
                                 SectionLabel(text: "YOUR SIX KEY METRICS")
                                 Button {
                                     info = AnalysisInfoNote(title: "Your six key metrics",
-                                                            message: "Release height, release angle, elbow alignment, shot arc, spin rate and centeredness are measured on every analyzed shot and graded against elite ranges.")
+                                                            message: "These values are read from the shared saved analysis contract. Missing values stay unavailable instead of being filled with demo numbers.")
                                 } label: {
                                     Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -429,9 +489,9 @@ struct AnalysisResultOverviewView: View { // 038
                             .padding(.top, 22)
                             ShotIQCard {
                                 VStack(spacing: 0) {
-                                    metricRow(Array(metrics.prefix(3)))
+                                    metricRow(Array(p.metrics.prefix(3)))
                                     Rectangle().fill(ShotIQColor.rule).frame(height: 1)
-                                    metricRow(Array(metrics.suffix(3)))
+                                    metricRow(Array(p.metrics.suffix(3)))
                                 }
                             }
                             .padding(.top, 8)
@@ -459,30 +519,7 @@ struct AnalysisResultOverviewView: View { // 038
                                 .buttonStyle(.plain)
                             }
                             .padding(.top, 22)
-                            NavigationLink { EliteMatchView() } label: {
-                                ShotIQCard {
-                                    HStack(spacing: 14) {
-                                        // Elite reference shooter photo from the canonical render.
-                                        CanonicalPhoto("038-visual-002", width: 84, height: 104, cornerRadius: 6)
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text("KLAY THOMPSON").shotiqDisplay(22)
-                                            Text("Golden State Warriors").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                                            matchLine("point.3.connected.trianglepath.dotted", "Release Angle", "51°")
-                                            matchLine("figure.basketball", "Elbow Alignment", "95%")
-                                            matchLine("point.bottomleft.forward.to.point.topright.scurvepath", "Shot Arc", "46°")
-                                        }
-                                        Spacer()
-                                        VStack(spacing: 4) {
-                                            Ring(pct: 0.88, color: ShotIQColor.analysisBlue, lineWidth: 7)
-                                                .frame(width: 74, height: 74)
-                                                .overlay(Text("88%").font(.custom("Tungsten-Medium", size: 24)))
-                                            Text("OVERALL MATCH").shotiqBody(9, weight: .semibold).kerning(0.5)
-                                                .foregroundStyle(ShotIQColor.graphite)
-                                        }
-                                    }
-                                    .padding(14)
-                                }
-                            }
+                            eliteMatchCard(p)
                             .padding(.top, 8)
                             NavigationLink { ShotBreakdownView() } label: {
                                 HStack(spacing: 10) {
@@ -522,6 +559,22 @@ struct AnalysisResultOverviewView: View { // 038
             }
         }
         .analysisInfoAlert($info)
+        .task {
+            guard initialResult == nil, !UITestHooks.active else { return }
+            isLoadingLatest = true
+            defer { isLoadingLatest = false }
+            do {
+                if let latest = try await APIClient.shared.latestAnalysis() {
+                    presentation = AnalysisResultPresentation(result: latest)
+                } else {
+                    presentation = .noResult
+                    loadError = "No saved analysis result found."
+                }
+            } catch {
+                presentation = .noResult
+                loadError = "Couldn't load your latest saved analysis."
+            }
+        }
     }
     private func stripLink(_ t: String, _ dest: some View) -> some View {
         NavigationLink { dest } label: {
@@ -531,35 +584,81 @@ struct AnalysisResultOverviewView: View { // 038
     }
     private func miniStat(_ v: String, _ l: String) -> some View {
         VStack(spacing: 2) {
-            Text(v).font(.custom("Tungsten-Medium", size: 22)).foregroundStyle(ShotIQColor.ink)
+            Text(v).font(.custom("Tungsten-Medium", size: v.count > 10 ? 13 : 22)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(l).shotiqBody(8, weight: .medium).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
         }
     }
-    private func metricRow(_ row: [(String, String, String, String, Bool)]) -> some View {
+    private func metricRow(_ row: [AnalysisMetricTile]) -> some View {
         HStack(spacing: 0) {
-            ForEach(row, id: \.1) { icon, label, value, verdict, excellent in
-                NavigationLink { MetricDetailView(metric: label.capitalized) } label: {
+            ForEach(row, id: \.label) { tile in
+                NavigationLink { MetricDetailView(metric: tile.detailMetric, value: tile.detailValue) } label: {
                     VStack(spacing: 5) {
                         // Six measurements, six diagrams — chosen from the metric
                         // caption so two of them can never resolve alike.
-                        ShotIQConceptGlyph(concept: label, fallback: icon, size: 22)
+                        ShotIQConceptGlyph(concept: tile.label, fallback: tile.icon, size: 22)
                             .foregroundStyle(ShotIQColor.ink).frame(height: 30)
-                        Text(label).shotiqBody(8, weight: .semibold).kerning(0.4)
+                        Text(tile.label).shotiqBody(8, weight: .semibold).kerning(0.4)
                             .foregroundStyle(ShotIQColor.graphite)
                             .lineLimit(1).minimumScaleFactor(0.6)
-                        Text(value).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(ShotIQColor.ink)
-                        Text(verdict).shotiqBody(9, weight: .bold).kerning(0.4)
-                            .foregroundStyle(excellent ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                        Text(tile.value).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(ShotIQColor.ink)
+                        Text(tile.verdict).shotiqBody(9, weight: .bold).kerning(0.4)
+                            .foregroundStyle(tile.isPositive ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                            .lineLimit(1).minimumScaleFactor(0.55)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                 }
                 .buttonStyle(.plain)
-                if label != row.last?.1 {
+                if tile.label != row.last?.label {
                     Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 10)
                 }
+            }
+        }
+    }
+    @ViewBuilder private func eliteMatchCard(_ p: AnalysisResultPresentation) -> some View {
+        if p.id == "canonical-demo" {
+            NavigationLink { EliteMatchView() } label: {
+                ShotIQCard {
+                    HStack(spacing: 14) {
+                        // Elite reference shooter photo from the canonical render.
+                        CanonicalPhoto("038-visual-002", width: 84, height: 104, cornerRadius: 6)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("KLAY THOMPSON").shotiqDisplay(22)
+                            Text("Golden State Warriors").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                            matchLine("point.3.connected.trianglepath.dotted", "Release Angle", "51°")
+                            matchLine("figure.basketball", "Elbow Alignment", "95%")
+                            matchLine("point.bottomleft.forward.to.point.topright.scurvepath", "Shot Arc", "46°")
+                        }
+                        Spacer()
+                        VStack(spacing: 4) {
+                            Ring(pct: 0.88, color: ShotIQColor.analysisBlue, lineWidth: 7)
+                                .frame(width: 74, height: 74)
+                                .overlay(Text("88%").font(.custom("Tungsten-Medium", size: 24)))
+                            Text("OVERALL MATCH").shotiqBody(9, weight: .semibold).kerning(0.5)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                    }
+                    .padding(14)
+                }
+            }
+        } else {
+            ShotIQCard {
+                HStack(spacing: 14) {
+                    Image(systemName: isLoadingLatest ? "clock" : "point.3.connected.trianglepath.dotted")
+                        .font(.system(size: 30, weight: .light))
+                        .foregroundStyle(ShotIQColor.analysisBlue)
+                        .frame(width: 54)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(isLoadingLatest ? "LOADING ANALYSIS" : "ELITE MATCH PENDING").shotiqDisplay(21)
+                        Text(loadError ?? "Elite comparison will run after a measured result is loaded from your saved analysis.")
+                            .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(14)
             }
         }
     }

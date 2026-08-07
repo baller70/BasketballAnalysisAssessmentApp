@@ -62,7 +62,7 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Tags | Scope | Proof Gate |
 | --- | --- | --- | --- | --- |
-| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract and native decode slice implemented; Mac-mini native XCTest passed and the current branch installed on Kevin's iPhone; still needs native UI render and real device/web round-trip proof before `DONE`. |
+| P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, and native overview presentation are implemented; Mac-mini native XCTest/device install and laptop native XCTest proof are captured. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
 | P0-002 | OPEN | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. |
 | P0-003 | OPEN | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Change the input media/result and prove all visible scores, angles, confidence, skeleton, phase, and flaws change correctly. |
 | P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
@@ -91,7 +91,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G011 | OPEN | P1 | `#analytics` `#media` | 024 | Measure or relabel lighting and resolution checks. | Bad lighting/low-res sample produces failed checks, or rows are not presented as measured. |
 | G012 | OPEN | P0 | `#path` `#backend` | 024/036 | Block no-image route from pretending analysis started. | Continue without selected media cannot open analysis processing as a real analysis. |
 | G013 | OPEN | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | Saved score is reproducible from measured analysis fields. |
-| G014 | OPEN | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Saved still-photo analysis opens overview with matching saved values. |
+| G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. Still needs end-to-end device/web round-trip proof before `DONE`. |
 | G015 | OPEN | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Queue starts empty or from backend, adding media creates real item and status updates. |
 | G016 | OPEN | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | Test confirms selected video URL/data is retained after picker. |
 | G017 | OPEN | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | Video review displays the selected clip and fails if no clip exists. |
@@ -191,9 +191,11 @@ The first pass should fix root causes before polishing dependent screens:
 Continue `P0-001`. The shared result contract now exists in backend TypeScript
 and native Swift DTOs, and `/api/save-analysis` plus `/api/analysis/latest`
 return it as `analysisResult` while preserving legacy `analysis` for current web
-screens. Mac mini XCTest and device install proof are captured. Remaining proof
-before `DONE`: native UI consuming the contract, plus real iOS-created analysis
-visible on web with matching values.
+screens. Native iOS now decodes both fields, carries the save response into
+processing, and renders analysis overview values from the shared contract rather
+than screen constants. Mac mini XCTest/device install and laptop XCTest proof are
+captured. Remaining proof before `DONE`: real iOS-created analysis visible on web
+with matching values.
 
 ### 2026-08-07 Mac Mini Setup And Evidence
 
@@ -289,3 +291,29 @@ build settings that only survived in the previously generated `.xcodeproj`.
 `project.yml` now explicitly carries app product name, Swift version, Debug
 testability/active-arch settings, launch-screen background, and unit/UI test
 host/runpath settings so regenerating the project is safe on any machine.
+
+### 2026-08-07 Native Analysis Result UI Handoff
+
+First laptop functionality slice after local Xcode setup:
+
+- Fixed `APIClient.latestAnalysis()` to accept the backend's real
+  `analysisResult` field, while preserving the legacy `analysis` fallback.
+- Added `AnalysisResultPresentation`, the native display model that formats the
+  saved shared contract for screen 038. Measured fields render from the DTO;
+  missing fields render as `--` / `UNAVAILABLE` instead of canonical constants.
+- Updated photo upload/save flow so `/api/save-analysis`'s returned
+  `analysisResult` is retained, passed into `AnalysisProcessingView`, and then
+  rendered by `AnalysisResultOverviewView`.
+- Blocked the normal no-photo production path from starting a fake analysis.
+  The screenshot harness can still stage canonical placeholder screens through
+  `UITestHooks`.
+- Replaced screen 038's primary fake values (`82`, six fixed metrics, canned
+  media, Klay match card) with either saved-contract values or explicit
+  unavailable/pending states. Canonical demo values remain gated to UI-test
+  launches only.
+
+Evidence captured on the laptop:
+
+- `~/CodexWork/shotiq-evidence/ios-functionality-contract-test-rerun-20260807-111500.log`
+  ran `ShotIQTests/AnalysisResultContractTests` on the local iPhone 17 simulator
+  and ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0 failures`.

@@ -24,6 +24,7 @@
 		7EED063E1BFD716CAD2A465E /* CanonicalScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2922EDBAAE9683357EA3C29D /* CanonicalScreenshotTests.swift */; };
 		807855623D793964D3151A04 /* PoseDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF62F67029758541852E4C92 /* PoseDetection.swift */; };
 		881767E47EDBF3F5B38CC679 /* HomeFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */; };
+		8CF980A623D6B387FA9E00C1 /* AnalysisResultPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1D8C157DBB2712C38D8EAB1 /* AnalysisResultPresentation.swift */; };
 		A8A844B65564DDBBCFB71D30 /* tungsten_medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */; };
 		ABEC9459F6FBA7FC1292117C /* boxedmedium.otf in Resources */ = {isa = PBXBuildFile; fileRef = FD571752957BF2990F80DC2C /* boxedmedium.otf */; };
 		AF255EAEE75CB55ABA2B10C0 /* tungsten_bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = ED1132515D54BB1F7C7EB36F /* tungsten_bold.otf */; };
@@ -76,6 +77,7 @@
 		BFD80AB08FF5E5D07D90CCFB /* EliteFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EliteFlow.swift; sourceTree = "<group>"; };
 		C52E59E41C43AE18E51BBC33 /* CanonicalPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalPhoto.swift; sourceTree = "<group>"; };
 		C6E323EC1FF54EEA33E1E0DD /* ShotIQGlyphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQGlyphs.swift; sourceTree = "<group>"; };
+		D1D8C157DBB2712C38D8EAB1 /* AnalysisResultPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisResultPresentation.swift; sourceTree = "<group>"; };
 		D2C7558F26B7588AA0972272 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTokens.swift; sourceTree = "<group>"; };
 		D6DF21163E007DAC625258DE /* boxedsemibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = boxedsemibold.otf; sourceTree = "<group>"; };
@@ -172,6 +174,7 @@
 		90CA5E6D0EBD56BAEEDCCFA8 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				D1D8C157DBB2712C38D8EAB1 /* AnalysisResultPresentation.swift */,
 				A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */,
 				D2C7558F26B7588AA0972272 /* CameraService.swift */,
 				BF62F67029758541852E4C92 /* PoseDetection.swift */,
@@ -400,6 +403,7 @@
 			files = (
 				BAEA068CA76742A517947F56 /* APIClient.swift in Sources */,
 				4B8B9E9003777D6A4B234B5F /* AnalysisFlow.swift in Sources */,
+				8CF980A623D6B387FA9E00C1 /* AnalysisResultPresentation.swift in Sources */,
 				3EC1BBCF0000069613305A3D /* AuthFlow.swift in Sources */,
 				19A14ABDC8E02B386C9A714C /* CameraService.swift in Sources */,
 				3653FF1C1DFF8CAB00BD2BD5 /* CanonicalPhoto.swift in Sources */,

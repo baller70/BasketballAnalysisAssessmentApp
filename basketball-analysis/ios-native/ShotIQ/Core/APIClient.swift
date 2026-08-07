@@ -169,6 +169,14 @@ struct ShotIQAnalysisResultDTO: Codable, Identifiable, Equatable {
     var provenance: AnalysisProvenanceDTO
 }
 
+struct LatestAnalysisResponseDTO: Codable, Equatable {
+    var success: Bool
+    var analysis: ShotIQAnalysisResultDTO?
+    var analysisResult: ShotIQAnalysisResultDTO?
+
+    var result: ShotIQAnalysisResultDTO? { analysisResult ?? analysis }
+}
+
 // MARK: - API client (async/await, URLSession, rotating token refresh)
 
 actor APIClient {
@@ -320,9 +328,8 @@ actor APIClient {
     }
 
     func latestAnalysis() async throws -> ShotIQAnalysisResultDTO? {
-        struct Resp: Codable { var success: Bool; var analysis: ShotIQAnalysisResultDTO? }
-        let r: Resp = try await request("/api/analysis/latest")
-        return r.analysis
+        let r: LatestAnalysisResponseDTO = try await request("/api/analysis/latest")
+        return r.result
     }
 
     func recordShotEvent(drillId: String, made: Bool) async {

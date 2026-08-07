@@ -34,10 +34,10 @@ final class KeychainStoreTests: XCTestCase {
 }
 
 final class AnalysisResultContractTests: XCTestCase {
-    func testSharedAnalysisResultDecodesWithoutInventingMissingMetrics() throws {
-        let json = """
+    private func sampleAnalysisJSON(id: String = "analysis-1") -> String {
+        """
         {
-          "id": "analysis-1",
+          "id": "\(id)",
           "clientSessionId": "ios-shot-1",
           "captureSessionId": "capture-1",
           "recordedAt": "2026-08-07T12:00:00.000Z",
@@ -79,7 +79,11 @@ final class AnalysisResultContractTests: XCTestCase {
             "demo": []
           }
         }
-        """.data(using: .utf8)!
+        """
+    }
+
+    func testSharedAnalysisResultDecodesWithoutInventingMissingMetrics() throws {
+        let json = sampleAnalysisJSON().data(using: .utf8)!
 
         let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self, from: json)
 
@@ -93,6 +97,35 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertTrue(result.provenance.measured.contains("angles.elbow"))
         XCTAssertTrue(result.provenance.missing.contains("scores.balance"))
         XCTAssertEqual(result.provenance.demo, [])
+    }
+
+    func testLatestAnalysisEnvelopeAcceptsAnalysisResultField() throws {
+        let json = """
+        {
+          "success": true,
+          "analysis": null,
+          "analysisResult": \(sampleAnalysisJSON(id: "from-analysis-result"))
+        }
+        """.data(using: .utf8)!
+
+        let envelope = try JSONDecoder().decode(LatestAnalysisResponseDTO.self, from: json)
+
+        XCTAssertEqual(envelope.result?.id, "from-analysis-result")
+        XCTAssertEqual(envelope.result?.scores.overall.value, 84)
+    }
+
+    func testAnalysisPresentationUsesContractValuesAndMissingSentinels() throws {
+        let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self,
+                                              from: sampleAnalysisJSON().data(using: .utf8)!)
+
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(presentation.scoreText, "82")
+        XCTAssertEqual(presentation.mediaURL?.absoluteString, "https://media.test/shot-annotated.jpg")
+        XCTAssertEqual(presentation.metrics.first(where: { $0.label == "RELEASE HEIGHT" })?.value, "7'8\"")
+        XCTAssertEqual(presentation.metrics.first(where: { $0.label == "RELEASE OFFSET" })?.value, "-3°")
+        XCTAssertEqual(presentation.metrics.first(where: { $0.label == "ELBOW ANGLE" })?.value, "161°")
+        XCTAssertFalse(presentation.metrics.contains { $0.value == "52°" && $0.source != "demo" })
     }
 }
 
