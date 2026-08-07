@@ -3,6 +3,7 @@
 Date: 2026-08-07
 Repo: `https://github.com/baller70/BasketballAnalysisAssessmentApp.git`
 Branch: `claude/shotiq-production-build-txi5pl`
+Branch head at this update: `1bb025b` (`Add shared ShotIQ analysis result contract`)
 Primary app path: `basketball-analysis/`
 
 ## Current gate
@@ -14,6 +15,11 @@ is committed, and is pushed.
 Screen 004 is `004-create-account`. It is still IN PROGRESS. Screens 001-003
 are DONE at A/A+.
 
+The previous autonomous continuation attempts were blocked by Anthropic's weekly
+usage cap, not by a code issue. The observed reset time was 2026-08-11 12:00
+UTC. After that reset, resume from this document and the ledger; do not restart
+the project or begin screen 005.
+
 Durable source of truth:
 
 - `basketball-analysis/docs/SCREEN-LEDGER.md`
@@ -22,6 +28,7 @@ Durable source of truth:
 - `basketball-analysis/docs/shotiq/measure/report004.py`
 - `basketball-analysis/src/app/signup/phone-004.ts`
 - `basketball-analysis/src/app/signup/Marks004.tsx`
+- `basketball-analysis/docs/shotiq/IOS-FUNCTIONALITY-PROOF-LEDGER.md`
 
 Do not use scratchpad paths as source of truth. The previous `scratchpad/BRIEF-004.md`
 was not present in this checkout, and earlier stale scratchpad copies caused
@@ -41,6 +48,21 @@ The native iOS install is done. The device install scripts were fixed, the
 Xcode project is regenerated before builds, the stale project exclusion of
 `PoseDetection.swift` and `CapturedPoseImage.swift` was caught and fixed, and
 the app installed on Kevin's iPhone 11 Pro Max as `com.baller70.shotiq`.
+
+After the screen-004 handoff was first committed, this branch also added a
+separate iOS functionality audit/proof stream:
+
+- `f854d0d`, `eb8b955`, `850e879`: iOS functionality audit evidence and
+  stricter evidence standards.
+- `5227b0b`: robust iOS functionality analytics gap audit.
+- `f1c718d`: `IOS-FUNCTIONALITY-PROOF-LEDGER.md`.
+- `1bb025b`: shared `AnalysisResult` contract in backend TypeScript and native
+  Swift DTOs. The proof ledger has `P0-001` at VERIFYING, not DONE.
+
+Keep these two boards distinct. The pixel-fidelity board is still gated on
+screen 004 only. The functionality board's current next item is `P0-001`, but
+do not let it pull work onto multiple screens unless Kevin explicitly redirects
+from the one-screen fidelity gate.
 
 ## Screen 004 status
 
