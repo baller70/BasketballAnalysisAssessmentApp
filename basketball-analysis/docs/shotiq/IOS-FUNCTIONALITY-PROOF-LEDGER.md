@@ -79,7 +79,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G004 | OPEN | P0 | `#backend` `#web-sync` | auth/data sync | Prove native write/read and web read/write with configured secrets. | Auth-chain test passes in staging/prod. |
 | G005 | OPEN | P1 | `#demo` | app-wide | Label intentional sample states. | Any sample screen visibly says demo/example and cannot be mistaken for player data. |
 | G006 | OPEN | P0 | `#analytics` | app-wide | Build analytics provenance matrix. | Every visible number on cleared screens has source, formula, and test. |
-| G074 | VERIFYING | P0 | `#control` | goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch now covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Focused UI proof verifies make/miss toasts; full native smoke is clean. Remaining app-wide action sweep still needs proof before `DONE`. |
+| G074 | VERIFYING | P0 | `#control` | capture/goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Capture now adds toast/progress feedback for photo load/capture/rotate/crop/use-photo, photo analysis upload/analyze/error, upload queue add/analyze/remove, video load/error, video review trim/change/analyze, and no-media guards. Focused UI proof verifies make/miss toasts plus capture no-media feedback on iPhone 17 Pro simulator with external-backed CoreSimulator storage. Remaining app-wide action sweep still needs proof before `DONE`. |
 
 ## Capture And Upload Items
 
@@ -90,7 +90,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G009 | OPEN | P1 | `#analytics` `#demo` | 023 | Remove or source analysis context from pre-analysis crop screen. | No measured-looking analytics appear before analysis unless sourced from history or demo-labeled. |
 | G010 | OPEN | P0 | `#analytics` `#pose` | 024 | Replace fixed header analytics on quality check. | Header values come from prior history or are hidden/demo-labeled before new analysis. |
 | G011 | OPEN | P1 | `#analytics` `#media` | 024 | Measure or relabel lighting and resolution checks. | Bad lighting/low-res sample produces failed checks, or rows are not presented as measured. |
-| G012 | OPEN | P0 | `#path` `#backend` | 024/036 | Block no-image route from pretending analysis started. | Continue without selected media cannot open analysis processing as a real analysis. |
+| G012 | VERIFYING | P0 | `#path` `#backend` | 023/024/036 | Block no-image route from pretending analysis started. | Photo Review `USE PHOTO` and Upload Quality Check `Continue to analysis` now require a real picked/captured image and show `Choose a photo first` toast instead of opening processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-image device/backend/web proof before `DONE`. |
 | G013 | OPEN | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | Saved score is reproducible from measured analysis fields. |
 | G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. If the backend returns no remote image URL, the selected/cropped local photo is preserved and rendered in the result path. Still needs end-to-end device/web round-trip proof before `DONE`. |
 | G015 | OPEN | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Queue starts empty or from backend, adding media creates real item and status updates. |
@@ -119,7 +119,7 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| G031 | OPEN | P0 | `#path` `#backend` | 036 | Processing only appears for real analysis jobs. | No-media/video-placeholder paths cannot create a fake processing/result flow. |
+| G031 | VERIFYING | P0 | `#path` `#backend` | 027/036 | Processing only appears for real analysis jobs. | Video Review now uses a state-driven analyze button: a real `PickedVideoClip` creates the `VideoAnalysisJob`; nil/staged video shows `Choose a video first` toast and does not open processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-video device/backend proof before `DONE`. |
 | G032 | OPEN | P2 | `#path` | 037 | Prove real long-running analysis timeout. | Slow analysis job opens taking-longer state and later resolves correctly. |
 | G033 | OPEN | P0 | `#analytics` | 038 | Replace hard-coded six key metrics. | Metrics match saved analysis values and update when saved result changes. |
 | G034 | OPEN | P0 | `#pose` `#media` | 038 | Replace demo skeleton on overview with real pose. | Skeleton overlay uses saved pose points from current analysis. |
@@ -215,7 +215,16 @@ batch: shared toast/progress overlay, goal mutations, training shot entry,
 workout save, analytics filters, media actions, and profile edits. This proves
 the "tap did something" pattern for the tested drill path, but app-wide feedback
 coverage still needs a screen-by-screen sweep.
-Remaining proof before
+Capture feedback and no-media guards now cover the upload/review/queue/analyze
+paths most likely to confuse customers: photo load/capture/rotate/crop/use,
+photo upload/analyze, video load/review/trim/change/analyze, upload queue
+add/analyze/remove, and nil-media attempts. The laptop host storage issue is now
+cleared: CoreSimulator staging lives on an external APFS sparsebundle mounted at
+`/Volumes/ShotIQCoreSimulator`, DerivedData and evidence live under
+`/Volumes/TBF SKILLZ.INC/CodexWork`, and the focused capture no-media UI proof
+passes on the iPhone 17 Pro simulator. The connected iPhone still does not
+enumerate in `devicectl`, so physical-device proof remains blocked by
+host/device visibility, not by disk space. Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
 
@@ -270,6 +279,72 @@ Evidence captured on the laptop:
   and ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
 - Physical iPhone proof is still not available on this laptop until macOS/Xcode
   enumerates the connected phone.
+
+### 2026-08-07 Native Capture Feedback + No-Media Guard Handoff
+
+Twelfth laptop functionality slice after local Xcode setup:
+
+- Extended the shared toast/progress requirement into capture upload flows:
+  photo library/camera load, photo rotate/crop/use-photo, upload-quality
+  analysis, upload queue add/analyze/remove, video library load, video review
+  trim reset/change-video/analyze.
+- Removed the UI-test no-image bypass from `UploadQualityCheckView`. Missing
+  photo now shows `Choose a photo first` and cannot open processing.
+- Converted `PhotoReviewCropView` use-photo and `VideoReviewView` analyze-video
+  to state-driven buttons so nil media shows a customer-facing toast instead of
+  creating a fake analysis route.
+- Added `ShotIQUITests/testCaptureNoMediaShowsCustomerFeedback`, covering
+  staged photo review, upload quality check, and video review no-media attempts.
+
+Evidence captured on the laptop:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-build-capture-feedback-20260807-141043.log`
+  ran a simulator Debug build against `iPhone 17 Pro` with external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-build-capture-feedback-20260807-141043`
+  and ended with `** BUILD SUCCEEDED **`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-build-for-testing-capture-feedback-20260807-141347.log`
+  ran `build-for-testing` for the app, unit-test target, and UI-test target with
+  external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-build-for-testing-capture-feedback-20260807-141347`
+  and ended with `** TEST BUILD SUCCEEDED **`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-capture-feedback-20260807-141128.log`
+  attempted the focused `ShotIQUITests/ShotIQUITests/testCaptureNoMediaShowsCustomerFeedback`
+  runtime UI proof, but simulator installation failed before app launch because
+  CoreSimulator could not create
+  `/Users/tbfinc/Library/Developer/CoreSimulator/.../PromiseStaging`: `No space
+  left on device`. The result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-capture-feedback-20260807-141128.xcresult`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-capture-feedback-mac-20260807-141334.log`
+  confirmed the `My Mac` destination cannot run the iOS UI-test target:
+  `UI tests are not supported on My Mac (Designed for iPad)`.
+- Host storage correction after the failed runtime attempt:
+  `/Users/tbfinc/Library/Developer/CoreSimulator` now symlinks to
+  `/Volumes/ShotIQCoreSimulator/CoreSimulator`, backed by
+  `/Volumes/TBF SKILLZ.INC/CodexWork/ShotIQCoreSimulator.sparsebundle`.
+  Heavy Codex/npm caches also moved under
+  `/Volumes/TBF SKILLZ.INC/CodexWork/InternalHomeRelocated`. Audit after
+  relocation: `/System/Volumes/Data` had 21 GiB free,
+  `/Volumes/ShotIQCoreSimulator` had 75 GiB free, and
+  `/Volumes/TBF SKILLZ.INC` had 1.6 TiB free.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-host-storage-device-audit-20260807-143437.log`
+  captured the post-fix host audit: `/System/Volumes/Data` had 23 GiB free,
+  the external CoreSimulator sparsebundle had 75 GiB free, external
+  `CodexWork` paths were symlinked, `/Users/tbfinc/CodexWork` was absent,
+  `devicectl` still returned `No devices found`, `xctrace` listed only the Mac
+  and simulators, and `system_profiler SPUSBDataType` had no iPhone/iPad/Apple
+  Mobile USB entry.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-capture-feedback-accessible-toast-20260807-142640.log`
+  reran the focused
+  `ShotIQUITests/ShotIQUITests/testCaptureNoMediaShowsCustomerFeedback` UI
+  proof on the iPhone 17 Pro simulator with external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-ui-capture-feedback-accessible-toast-20260807-142640`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+  The proof verifies `Choose a photo first` toast feedback from Photo Review and
+  Upload Quality Check, plus `Choose a video first` toast feedback from Video
+  Review, without opening analysis processing from nil media.
+- `xcrun devicectl list devices` still returned `No devices found`; real iPhone
+  install/proof remains blocked until macOS/Xcode enumerates the unlocked and
+  trusted phone.
 
 ### 2026-08-07 Native Local Media Result Handoff
 

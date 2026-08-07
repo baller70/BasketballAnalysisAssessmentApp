@@ -11,6 +11,7 @@ final class ShotIQUITests: XCTestCase {
     }
 
     private func launch(_ args: [String] = []) {
+        app.terminate()
         app.launchArguments = args
         app.launch()
     }
@@ -62,5 +63,28 @@ final class ShotIQUITests: XCTestCase {
         app.buttons["mark-miss"].tap()
         XCTAssertTrue(app.staticTexts["Miss recorded"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["67%"].exists || app.staticTexts["3"].exists)
+    }
+
+    func testCaptureNoMediaShowsCustomerFeedback() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "photo-review-crop"])
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-photo-review-crop").firstMatch.waitForExistence(timeout: 8))
+        app.buttons["USE PHOTO"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Choose a photo first"].exists)
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "screen-ios-upload-quality-check").firstMatch.waitForExistence(timeout: 1))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "upload-quality-check"])
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-upload-quality-check").firstMatch.waitForExistence(timeout: 8))
+        app.buttons["Continue to analysis"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Choose a photo first"].exists)
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "screen-ios-analysis-processing").firstMatch.waitForExistence(timeout: 1))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "video-review"])
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-video-review").firstMatch.waitForExistence(timeout: 8))
+        app.buttons["Analyze video"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Choose a video first"].exists)
+        XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "screen-ios-analysis-processing").firstMatch.waitForExistence(timeout: 1))
     }
 }

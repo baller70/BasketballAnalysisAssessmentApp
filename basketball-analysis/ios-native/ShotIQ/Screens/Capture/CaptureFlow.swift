@@ -515,6 +515,7 @@ struct PhotoUploadSourceView: View { // 022
     @State private var image: UIImage?
     @State private var goReview = false
     @State private var showCamera = false
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-upload-source") {
             ScrollView {
@@ -583,16 +584,33 @@ struct PhotoUploadSourceView: View { // 022
             }
         }
         .onChange(of: pick) { _, item in
+            guard let item else { return }
+            toast = .progress("Loading photo", "Preparing your shot for review.", progress: 0.35)
             Task {
-                if let data = try? await item?.loadTransferable(type: Data.self),
-                   let img = UIImage(data: data) { image = img; goReview = true }
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let img = UIImage(data: data) {
+                    await MainActor.run {
+                        image = img
+                        toast = .success("Photo ready", "Adjust the crop before analysis.")
+                        goReview = true
+                    }
+                } else {
+                    await MainActor.run {
+                        toast = .error("Photo not loaded", "Choose a JPG, PNG, or HEIC from your library.")
+                    }
+                }
             }
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPhotoCaptureView { img in image = img; goReview = true }
+            CameraPhotoCaptureView { img in
+                image = img
+                toast = .success("Photo captured", "Adjust the crop before analysis.")
+                goReview = true
+            }
                 .modifier(CanonicalTypeScale())
         }
         .navigationDestination(isPresented: $goReview) { PhotoReviewCropView(image: image) }
+        .shotiqToast($toast)
     }
 
     /// Canonical 022 gives each container its own bracketed mark. The shipped
@@ -661,6 +679,8 @@ struct PhotoReviewCropView: View {  // 023
     @Environment(\.dismiss) private var dismiss
     @State private var image: UIImage?
     @State private var showCamera = false
+    @State private var goQuality = false
+    @State private var toast: ShotIQToast?
     init(image: UIImage?) { _image = State(initialValue: image) }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-review-crop") {
@@ -753,7 +773,12 @@ struct PhotoReviewCropView: View {  // 023
                     // Rotation dial
                     HStack(spacing: 14) {
                         Button {
-                            if let img = image { image = shotiqRotated(img, clockwise: false) }
+                            if let img = image {
+                                image = shotiqRotated(img, clockwise: false)
+                                toast = .success("Photo rotated", "Review the framing before analysis.")
+                            } else {
+                                toast = .error("Choose a photo first", "A real image is required before cropping.")
+                            }
                         } label: {
                             Image(systemName: "arrow.counterclockwise").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                         }
@@ -775,7 +800,12 @@ struct PhotoReviewCropView: View {  // 023
                             .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                         }
                         Button {
-                            if let img = image { image = shotiqRotated(img, clockwise: true) }
+                            if let img = image {
+                                image = shotiqRotated(img, clockwise: true)
+                                toast = .success("Photo rotated", "Review the framing before analysis.")
+                            } else {
+                                toast = .error("Choose a photo first", "A real image is required before cropping.")
+                            }
                         } label: {
                             Image(systemName: "rotate.right").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                         }
@@ -796,7 +826,12 @@ struct PhotoReviewCropView: View {  // 023
                         }
                         .buttonStyle(.plain)
                         Button {
-                            if let img = image { image = shotiqCropped34(img) }
+                            if let img = image {
+                                image = shotiqCropped34(img)
+                                toast = .success("Crop applied", "Your shot frame is ready.")
+                            } else {
+                                toast = .error("Choose a photo first", "A real image is required before cropping.")
+                            }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "crop").font(.system(size: 15))
@@ -807,7 +842,14 @@ struct PhotoReviewCropView: View {  // 023
                             .foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
-                        NavigationLink { UploadQualityCheckView(image: image) } label: {
+                        Button {
+                            guard image != nil else {
+                                toast = .error("Choose a photo first", "A real image is required before analysis.")
+                                return
+                            }
+                            toast = .success("Photo selected", "Checking upload quality next.")
+                            goQuality = true
+                        } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark").font(.system(size: 15, weight: .bold))
                                 Text("USE PHOTO").shotiqCondensed(13, weight: .heavy).kerning(0.5)
@@ -816,6 +858,7 @@ struct PhotoReviewCropView: View {  // 023
                             .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
                             .foregroundStyle(.white)
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
@@ -824,9 +867,14 @@ struct PhotoReviewCropView: View {  // 023
             }
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPhotoCaptureView { img in image = img }
+            CameraPhotoCaptureView { img in
+                image = img
+                toast = .success("Photo captured", "Adjust the crop before analysis.")
+            }
                 .modifier(CanonicalTypeScale())
         }
+        .navigationDestination(isPresented: $goQuality) { UploadQualityCheckView(image: image) }
+        .shotiqToast($toast)
     }
 }
 
@@ -836,6 +884,7 @@ struct UploadQualityCheckView: View { // 024
     @State private var busy = false
     @State private var uploadError: String?
     @State private var savedAnalysis: ShotIQAnalysisResultDTO?
+    @State private var toast: ShotIQToast?
     /// One route out of this screen: analysis processing on success, the
     /// canonical analysis-error screen (040) when the upload/analyze call fails.
     enum UploadRoute: Hashable { case processing, failed }
@@ -1026,6 +1075,7 @@ struct UploadQualityCheckView: View { // 024
             case .failed: AnalysisErrorView()
             }
         }
+        .shotiqToast($toast)
     }
 
     /// Mirrors the web upload flow: multipart POST /api/upload, then
@@ -1033,15 +1083,13 @@ struct UploadQualityCheckView: View { // 024
     /// to persist the session — before showing the processing screen.
     private func analyze() async {
         guard let jpeg = image?.jpegData(compressionQuality: 0.7) else {
-            if UITestHooks.active {
-                route = .processing
-            } else {
-                uploadError = "Choose or capture a photo before starting analysis."
-            }
+            uploadError = "Choose or capture a photo before starting analysis."
+            toast = .error("Choose a photo first", "ShotIQ needs real media before it can analyze.")
             return
         }
         busy = true
         uploadError = nil
+        toast = .progress("Uploading photo", "Sending your shot to ShotIQ analysis.", progress: 0.25)
         defer { busy = false }
 
         // 1. Upload the raw frame (field "image", uploadType "user").
@@ -1052,6 +1100,7 @@ struct UploadQualityCheckView: View { // 024
             let r = try? JSONDecoder().decode(UploadResp.self, from: respData)
             imageUrl = r?.url ?? r?.imageUrl
         }
+        toast = .progress("Analyzing mechanics", "Detecting pose and shot form.", progress: 0.55)
 
         // 2. Coach-centric vision analysis (same contract the web client uses).
         struct VisionBody: Codable {
@@ -1111,11 +1160,13 @@ struct UploadQualityCheckView: View { // 024
                 analysis?.media.localImageUrl = localImageURL?.absoluteString
             }
             savedAnalysis = analysis
+            toast = .success("Analysis started", "Building your ShotIQ results now.")
             route = .processing
         } catch {
             // Canonical 040: a failed analyze/upload round trip opens the
             // analysis-error screen, which offers retry / another frame / support.
             uploadError = "Couldn't reach the analysis service. Check your connection and try again."
+            toast = .error("Analysis failed", "Check your connection and try again.")
             route = .failed
         }
     }
@@ -1128,6 +1179,7 @@ struct UploadQueueView: View {      // 025
                                 Item(name: "transition-pullup.mov", pct: 0, state: "Queued")]
     @State private var addPick: PhotosPickerItem?
     @State private var goAnalyze = false
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-queue") {
             ScrollView {
@@ -1205,11 +1257,19 @@ struct UploadQueueView: View {      // 025
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    Button { goAnalyze = true } label: { captureCTA("Analyze selected (1)") }
+                    Button {
+                        toast = .progress("Starting analysis", "Preparing the selected queue item.", progress: 0.45)
+                        goAnalyze = true
+                    } label: { captureCTA("Analyze selected (1)") }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("Analyze now")
                         .padding(.horizontal, 20).padding(.top, 16)
                     Button {
+                        let removed = items.filter { $0.state == "Complete" }.count
                         withAnimation { items.removeAll { $0.state == "Complete" } }
+                        toast = removed > 0
+                            ? .success("Completed uploads removed", "\(removed) item\(removed == 1 ? "" : "s") cleared.")
+                            : .info("Nothing to remove", "No completed uploads are in the queue.")
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "trash").font(.system(size: 14))
@@ -1228,9 +1288,11 @@ struct UploadQueueView: View {      // 025
             withAnimation {
                 items.append(Item(name: "new-capture-\(items.count + 1).mov", pct: 0, state: "Queued"))
             }
+            toast = .success("Media queued", "ShotIQ will upload it when ready.")
             addPick = nil
         }
         .navigationDestination(isPresented: $goAnalyze) { AnalysisProcessingView() }
+        .shotiqToast($toast)
     }
 
     private var queueSummary: String {
@@ -1451,6 +1513,7 @@ struct VideoUploadView: View {      // 026
     @State private var loadingVideo = false
     @State private var videoError: String?
     @State private var go = false
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-upload") {
             ScrollView {
@@ -1623,6 +1686,7 @@ struct VideoUploadView: View {      // 026
             guard let item else { return }
             loadingVideo = true
             videoError = nil
+            toast = .progress("Loading video", "Reading duration, size, and frame rate.", progress: 0.35)
             Task {
                 let clip = await loadPickedVideoClip(from: item)
                 await MainActor.run {
@@ -1630,14 +1694,17 @@ struct VideoUploadView: View {      // 026
                     pick = nil
                     if let clip {
                         selectedVideo = clip
+                        toast = .success("Video ready", "\(clip.durationText) • \(clip.orientationText)")
                         go = true
                     } else {
                         videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
+                        toast = .error("Video not loaded", "Choose a local MP4 or MOV and try again.")
                     }
                 }
             }
         }
         .navigationDestination(isPresented: $go) { VideoReviewView(video: selectedVideo) }
+        .shotiqToast($toast)
     }
 
     private func framingCard(_ badge: String, photo: String? = nil, good: Bool) -> some View {
@@ -1668,6 +1735,9 @@ struct VideoReviewView: View {      // 027
     @Environment(\.dismiss) private var dismiss
     @State private var trimStart: Double = 0.1
     @State private var trimEnd: Double = 0.8
+    @State private var pendingJob: VideoAnalysisJob?
+    @State private var goProcessing = false
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-review") {
             ScrollView {
@@ -1811,27 +1881,38 @@ struct VideoReviewView: View {      // 027
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    NavigationLink {
-                        if let video {
-                            AnalysisProcessingView(videoJob: VideoAnalysisJob(
-                                clientSessionId: "ios-video-\(UUID().uuidString)",
-                                clip: video,
-                                trimStartFraction: trimStart,
-                                trimEndFraction: trimEnd))
-                        } else {
-                            AnalysisErrorView()
+                    Button {
+                        guard let video else {
+                            toast = .error("Choose a video first", "ShotIQ needs a real clip before analysis.")
+                            return
+                        }
+                        let job = VideoAnalysisJob(
+                            clientSessionId: "ios-video-\(UUID().uuidString)",
+                            clip: video,
+                            trimStartFraction: trimStart,
+                            trimEndFraction: trimEnd)
+                        pendingJob = job
+                        toast = .progress("Preparing analysis", "Trim window \(job.trimWindowText).", progress: 0.35)
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(250))
+                            await MainActor.run { goProcessing = true }
                         }
                     } label: {
                         captureCTA("Analyze video", icon: "camera.metering.center.weighted")
                     }
+                    .buttonStyle(.plain)
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     HStack(spacing: 10) {
                         Button {
                             // Snap the handles back to the AI-detected shot window.
                             withAnimation(.easeInOut(duration: 0.25)) { trimStart = 0.1; trimEnd = 0.8 }
+                            toast = .success("Trim reset", "Using ShotIQ's suggested shot window.")
                         } label: { captureOutline("Trim", icon: "crop") }.buttonStyle(.plain)
-                        Button { dismiss() } label: { captureOutline("Change video", icon: "square.and.arrow.up") }.buttonStyle(.plain)
+                        Button {
+                            toast = .info("Choose another video", "Returning to upload source.")
+                            dismiss()
+                        } label: { captureOutline("Change video", icon: "square.and.arrow.up") }.buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 
@@ -1850,6 +1931,8 @@ struct VideoReviewView: View {      // 027
                 }
             }
         }
+        .navigationDestination(isPresented: $goProcessing) { AnalysisProcessingView(videoJob: pendingJob) }
+        .shotiqToast($toast)
     }
 
     private func detailCol(_ icon: String, _ v: String, _ l: String) -> some View {

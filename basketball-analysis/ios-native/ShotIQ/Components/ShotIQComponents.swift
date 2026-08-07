@@ -477,7 +477,8 @@ private struct ShotIQToastView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
         .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
-        .accessibilityElement(children: .contain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel([toast.title, toast.message].compactMap { $0 }.joined(separator: ". "))
         .accessibilityIdentifier("shotiq-toast")
     }
 }
