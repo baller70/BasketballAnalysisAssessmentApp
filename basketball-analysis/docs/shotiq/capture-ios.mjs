@@ -37,6 +37,7 @@ import { chromium } from 'playwright'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
 
 const S = process.env.S
 const OUT = process.env.OUT
@@ -63,7 +64,7 @@ const SETTLE = Number(process.env.SETTLE || 2600)
  * `S` stays what its name says: scratch. Outputs go to `OUT`. Inputs come from
  * the repo, so what runs is what was reviewed and committed.
  */
-const HERE = path.dirname(new URL(import.meta.url).pathname)
+const HERE = path.dirname(fileURLToPath(import.meta.url))
 const MAP_PATH = process.env.ROUTE_MAP || path.join(HERE, 'ios-route-map.json')
 const map = JSON.parse(fs.readFileSync(MAP_PATH, 'utf8'))
 console.log(`map   ${MAP_PATH}`)
