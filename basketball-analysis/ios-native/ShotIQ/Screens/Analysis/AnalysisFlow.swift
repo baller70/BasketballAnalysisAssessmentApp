@@ -301,6 +301,8 @@ struct AnalysisProcessingView: View { // 036
     private func processVideo(job: VideoAnalysisJob) async {
         do {
             pct = 0.18
+            let poseAnalysis = await VideoPoseAnalyzer.analyze(job: job)
+            pct = 0.42
             let uploadedURL = try await APIClient.shared.uploadVideo(
                 job.clip.url,
                 filename: job.clip.filename,
@@ -320,13 +322,24 @@ struct AnalysisProcessingView: View { // 036
                 var trimEndSeconds: Double
                 var trimmedDurationSeconds: Double
                 var uploadedVideoUrl: String?
-                var note: String
+                var pose: VideoPoseAnalysisSummary
             }
             struct SaveBody: Codable {
                 var clientSessionId: String
                 var recordedAt: String
                 var mediaType: String
                 var visionAnalysis: VideoVisionAnalysis
+                var bodyPositions: [VideoPoseFrameRecord]
+                var shootingPhase: String?
+                var elbowAngle: Double?
+                var kneeAngle: Double?
+                var shoulderAngle: Double?
+                var hipAngle: Double?
+                var kneeAngleMin: Double?
+                var overallScore: Double?
+                var formScore: Double?
+                var releaseScore: Double?
+                var consistencyScore: Double?
                 var coachingNotes: String
             }
             struct SaveResp: Codable {
@@ -352,8 +365,21 @@ struct AnalysisProcessingView: View { // 036
                         trimEndSeconds: job.trimEndSeconds,
                         trimmedDurationSeconds: job.trimmedDurationSeconds,
                         uploadedVideoUrl: uploadedURL,
-                        note: "Native iOS saved the selected clip and trim window. Pose/frame analysis is pending."),
-                    coachingNotes: "Video uploaded and saved. ShotIQ still needs frame-level pose analysis before biomechanical scores are shown."))
+                        pose: poseAnalysis.summary),
+                    bodyPositions: poseAnalysis.frames,
+                    shootingPhase: poseAnalysis.summary.releaseFrameIndex == nil ? nil : "release",
+                    elbowAngle: poseAnalysis.summary.releaseElbowAngle,
+                    kneeAngle: poseAnalysis.summary.releaseKneeAngle,
+                    shoulderAngle: poseAnalysis.summary.releaseShoulderAngle,
+                    hipAngle: poseAnalysis.summary.releaseHipAngle,
+                    kneeAngleMin: poseAnalysis.summary.kneeAngleMin,
+                    overallScore: poseAnalysis.summary.overallScore,
+                    formScore: poseAnalysis.summary.formScore,
+                    releaseScore: poseAnalysis.summary.releaseScore,
+                    consistencyScore: poseAnalysis.summary.consistencyScore,
+                    coachingNotes: poseAnalysis.frames.isEmpty
+                        ? "Video uploaded and saved, but no usable body pose was detected in the selected trim window."
+                        : "Video uploaded and analyzed from sampled frames inside the selected trim window."))
             completedResult = saved.analysisResult ?? saved.analysis
             pct = 0.94
             route = .results

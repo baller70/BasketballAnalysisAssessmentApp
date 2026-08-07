@@ -25,6 +25,7 @@
 		807855623D793964D3151A04 /* PoseDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF62F67029758541852E4C92 /* PoseDetection.swift */; };
 		881767E47EDBF3F5B38CC679 /* HomeFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */; };
 		8CF980A623D6B387FA9E00C1 /* AnalysisResultPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1D8C157DBB2712C38D8EAB1 /* AnalysisResultPresentation.swift */; };
+		9409D544A17698A5BB503D22 /* VideoPoseAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C9565C5B753FA3F5E15C920 /* VideoPoseAnalysis.swift */; };
 		A8A844B65564DDBBCFB71D30 /* tungsten_medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */; };
 		ABEC9459F6FBA7FC1292117C /* boxedmedium.otf in Resources */ = {isa = PBXBuildFile; fileRef = FD571752957BF2990F80DC2C /* boxedmedium.otf */; };
 		AF255EAEE75CB55ABA2B10C0 /* tungsten_bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = ED1132515D54BB1F7C7EB36F /* tungsten_bold.otf */; };
@@ -59,6 +60,7 @@
 		0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQComponents.swift; sourceTree = "<group>"; };
 		10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_black.otf; sourceTree = "<group>"; };
+		1C9565C5B753FA3F5E15C920 /* VideoPoseAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPoseAnalysis.swift; sourceTree = "<group>"; };
 		1E03A277539C261467FFECE8 /* AnalysisFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisFlow.swift; sourceTree = "<group>"; };
 		2922EDBAAE9683357EA3C29D /* CanonicalScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalScreenshotTests.swift; sourceTree = "<group>"; };
 		38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQApp.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 				D2C7558F26B7588AA0972272 /* CameraService.swift */,
 				BF62F67029758541852E4C92 /* PoseDetection.swift */,
 				D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */,
+				1C9565C5B753FA3F5E15C920 /* VideoPoseAnalysis.swift */,
 			);
 			name = Core;
 			path = ShotIQ/Core;
@@ -419,6 +422,7 @@
 				BEE885BAB8DCB5A40D763F22 /* ShotIQGlyphs.swift in Sources */,
 				71060C0C6C15EF00043BDC4C /* ShotIQTokens.swift in Sources */,
 				494D3F0BB975462D2C699BB0 /* TrainingFlow.swift in Sources */,
+				9409D544A17698A5BB503D22 /* VideoPoseAnalysis.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

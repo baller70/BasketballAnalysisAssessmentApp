@@ -194,6 +194,25 @@ final class PickedVideoClipTests: XCTestCase {
     }
 }
 
+final class VideoPoseAnalyzerTests: XCTestCase {
+    func testSampleTimesStayInsideTrimWindow() {
+        let times = VideoPoseAnalyzer.sampleTimes(start: 2, end: 7.5, maxCount: 4)
+
+        XCTAssertEqual(times.count, 4)
+        XCTAssertEqual(times.first, 2)
+        XCTAssertEqual(times.last, 7.5)
+        XCTAssertTrue(times.allSatisfy { $0 >= 2 && $0 <= 7.5 })
+    }
+
+    func testAngleMeasuresMiddleJoint() {
+        let measured = VideoPoseAnalyzer.angle(CGPoint(x: 0, y: 0),
+                                               CGPoint(x: 1, y: 0),
+                                               CGPoint(x: 1, y: 1))
+
+        XCTAssertEqual(measured ?? 0, 90, accuracy: 0.0001)
+    }
+}
+
 /// The pose overlay's two silent-failure modes: a skeleton drawn against the
 /// wrong rectangle, and a framing verdict asserted rather than measured. Both
 /// look fine in a screenshot and are wrong on a phone, so both are pinned here.
