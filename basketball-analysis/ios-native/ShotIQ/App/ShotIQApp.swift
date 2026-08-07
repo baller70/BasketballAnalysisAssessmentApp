@@ -120,6 +120,12 @@ enum UITestHooks {
     /// and the real cause is still out there.
     static var noTypeClamp: Bool { args.contains("-uiTestNoTypeClamp") }
 
+    /// Feed the staged media screens with the bundled full-body shooter photo
+    /// instead of their empty canonical placeholders. This lets the simulator
+    /// prove the real-image path, including pose/framing feedback, without
+    /// needing to operate the system photo picker.
+    static var useSampleMedia: Bool { args.contains("-uiTestSampleMedia") }
+
     /// `-uiTestHomeVariant new|standard|pro` forces one of the three canonical
     /// home states (017/018/019) instead of inferring it from history data.
     static var homeVariant: String? {
@@ -127,7 +133,16 @@ enum UITestHooks {
         return args[i + 1]
     }
 
-    /// `-uiTestStage <slug>` roots the app at one of the seven canonical screens
+    /// Optional asset name paired with `-uiTestSampleMedia`, so the simulator can
+    /// prove the pose path with a sample that Vision recognizes on iOS.
+    static var sampleMediaName: String {
+        guard let i = args.firstIndex(of: "-uiTestSampleMediaName"), args.indices.contains(i + 1) else {
+            return "photo-068-visual-004"
+        }
+        return args[i + 1]
+    }
+
+    /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
     ///
@@ -135,9 +150,16 @@ enum UITestHooks {
     /// |--------------------------|--------|-------------------------------------|
     /// | `verify-email`           | 005    | a real network account sign-up       |
     /// | `reset-password`         | 007    | a reset token from an emailed link   |
+    /// | `photo-upload-source`    | 022    | signed-in photo intake               |
     /// | `photo-review-crop`      | 023    | a photo picked from the library      |
     /// | `upload-quality-check`   | 024    | a picked photo/video to inspect      |
     /// | `video-review`           | 027    | a video picked from the library      |
+    /// | `live-camera-setup`      | 028    | camera permission / live capture     |
+    /// | `hoop-calibration`       | 029    | camera setup                         |
+    /// | `readiness-check`        | 030    | hoop/camera setup                    |
+    /// | `capture-ready`          | 031    | readiness confirmation               |
+    /// | `live-recording`         | 032    | camera capture session               |
+    /// | `shot-detected`          | 034    | live detector event                  |
     /// | `analysis-taking-longer` | 037    | analysis slower than the watchdog    |
     /// | `analysis-error`         | 040    | an analyze/upload round trip failing |
     ///
@@ -152,13 +174,19 @@ enum UITestHooks {
         return args[i + 1]
     }
 
-    /// The five `stage` slugs that are rendered inside the signed-in tab shell.
-    static let mainShellStages = ["photo-review-crop", "upload-quality-check", "video-review",
-                                  "analysis-taking-longer", "analysis-error"]
+    /// The `stage` slugs that are rendered inside the signed-in tab shell.
+    static let mainShellStages = ["photo-upload-source", "photo-review-crop", "upload-quality-check", "video-review",
+                                  "live-camera-setup", "hoop-calibration", "readiness-check",
+                                  "capture-ready", "live-recording", "shot-detected",
+                                  "analysis-taking-longer", "analysis-error",
+                                  "analytics-cards", "analytics-detailed", "profile",
+                                  "player-card", "customize-player-card", "my-media",
+                                  "media-detail", "goals", "goal-detail"]
 
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
-        bypassAuth || signedOut || startOnboarding || demoData || holdSplash || homeVariant != nil || stage != nil
+        bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
+        useSampleMedia || homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",
@@ -250,10 +278,12 @@ struct RootView: View {
 struct MainTabView: View {
     @EnvironmentObject var app: AppState
 
-    /// Test-only: true when `-uiTestStage` names one of the five canonical
+    /// Test-only: true when `-uiTestStage` names one of the canonical
     /// screens that live inside this shell but can only be reached from a photo
-    /// or video the harness cannot pick (023/024/027) or from an analysis that
-    /// runs long or fails (037/040). Always false in a shipped build, because
+    /// or video the harness cannot pick (023/024/027), from a camera/hoop
+    /// state (028-034), from an analysis that runs long or fails (037/040), or
+    /// from long-scroll profile/progress surfaces that need direct proof entry.
+    /// Always false in a shipped build, because
     /// `UITestHooks.stage` is nil unless a launch argument set it.
     private var isStaged: Bool {
         guard let stage = UITestHooks.stage else { return false }
@@ -261,15 +291,41 @@ struct MainTabView: View {
     }
 
     /// The staged screen, rooted in its own stack so its pushes still work. The
-    /// tab bar below it is untouched, which is what canonical 023/024/027/037/040
+    /// tab bar below it is untouched, which is what canonical staged screens
     /// show. `image: nil` and the no-argument initialisers are the exact states
     /// those renders depict: the canonical review frame, the canonical clip.
     @ViewBuilder private var stagedRoot: some View {
         switch UITestHooks.stage ?? "" {
-        case "photo-review-crop": PhotoReviewCropView(image: nil)
-        case "upload-quality-check": UploadQualityCheckView()
+        case "photo-upload-source": PhotoUploadSourceView()
+        case "photo-review-crop": PhotoReviewCropView(image: UITestHooks.sampleShotImage)
+        case "upload-quality-check": UploadQualityCheckView(image: UITestHooks.sampleShotImage)
         case "video-review": VideoReviewView()
+        case "live-camera-setup": LiveCameraSetupView()
+        case "hoop-calibration": HoopCalibrationView()
+        case "readiness-check": ReadinessCheckView()
+        case "capture-ready": CaptureReadyView()
+        case "live-recording": LiveRecordingView()
+        case "shot-detected": ShotDetectedView()
         case "analysis-taking-longer": AnalysisTakingLongerView()
+        case "analytics-cards": AnalyticsCardsView()
+        case "analytics-detailed": AnalyticsDetailedView()
+        case "profile": ProfileView()
+        case "player-card": PlayerCardView()
+        case "customize-player-card": CustomizePlayerCardView()
+        case "my-media": MyMediaView()
+        case "media-detail": MediaDetailView()
+        case "goals": GoalsView()
+        case "goal-detail":
+            GoalDetailView(goal: GoalRecord(
+                id: "uitest-goal",
+                name: "Keep elbow stacked through release",
+                description: "Keep your shooting elbow stacked under the ball through release for a repeatable shot.",
+                targetValue: 100,
+                currentValue: 72,
+                unit: "%",
+                category: "Form",
+                xpReward: 250
+            ))
         // "analysis-error" is the only slug left; a `default` arm keeps the
         // ViewBuilder's conditional chain one branch shorter.
         default: AnalysisErrorView()
@@ -296,5 +352,11 @@ struct MainTabView: View {
         }
         .background(ShotIQColor.paper)
         .statusBarHidden(true)
+    }
+}
+
+extension UITestHooks {
+    static var sampleShotImage: UIImage? {
+        useSampleMedia ? UIImage(named: sampleMediaName) : nil
     }
 }

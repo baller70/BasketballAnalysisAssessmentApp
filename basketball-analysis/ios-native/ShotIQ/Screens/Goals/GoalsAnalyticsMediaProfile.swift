@@ -2949,6 +2949,15 @@ private struct ShareCardExportView: View {
     }
 }
 
+enum ShareResultsImageRenderer {
+    @MainActor
+    static func render(name: String) -> UIImage? {
+        let renderer = ImageRenderer(content: ShareCardExportView(name: name))
+        renderer.scale = 3
+        return renderer.uiImage
+    }
+}
+
 struct ShareResultsView: View {     // 072
     @EnvironmentObject var app: AppState
     @State private var renderedCard: UIImage?
@@ -2961,9 +2970,7 @@ struct ShareResultsView: View {     // 072
     /// nothing here displays the bitmap until the reader asks to share it.
     @MainActor private func renderCard() {
         guard renderedCard == nil else { return }
-        let renderer = ImageRenderer(content: ShareCardExportView(name: app.user?.displayName ?? "Jordan Ellis"))
-        renderer.scale = 3
-        renderedCard = renderer.uiImage
+        renderedCard = ShareResultsImageRenderer.render(name: app.user?.displayName ?? "Jordan Ellis")
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-share-results") {

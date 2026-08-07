@@ -38,6 +38,7 @@ struct CapturedPoseImage: View {
 
     @State private var pose: DetectedPose?
     @State private var detectionFinished = false
+    @State private var detectionUnavailable = false
 
     var body: some View {
         GeometryReader { geo in
@@ -59,12 +60,17 @@ struct CapturedPoseImage: View {
         .frame(height: height)
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(poseAccessibilityID)
+        .accessibilityLabel(poseAccessibilityLabel)
         .overlay(alignment: .bottomLeading) {
             // Say plainly when nothing was found rather than leaving the player
             // to guess whether the app looked. Silence here reads as "your form
             // was analysed", which would be the same lie the constant figure told.
             if showsPose && detectionFinished && pose == nil {
-                Text("No shooter detected — reframe with your full body in view.")
+                Text(detectionUnavailable
+                     ? "Pose detector unavailable on this simulator/device."
+                     : "No shooter detected — reframe with your full body in view.")
                     .shotiqBody(11)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8).padding(.vertical, 5)
@@ -74,10 +80,35 @@ struct CapturedPoseImage: View {
         }
         .task(id: image) {
             detectionFinished = false
-            let found = await ShotIQPose.detect(in: image)
-            pose = found
+            detectionUnavailable = false
+            let result = await ShotIQPose.detectResult(in: image)
+            switch result {
+            case .detected(let found):
+                pose = found
+                onPose?(found)
+            case .noPose:
+                pose = nil
+                onPose?(nil)
+            case .unavailable:
+                pose = nil
+                detectionUnavailable = true
+                onPose?(nil)
+            }
             detectionFinished = true
-            onPose?(found)
         }
+    }
+
+    private var poseAccessibilityID: String {
+        guard showsPose else { return "captured-pose-image" }
+        if !detectionFinished { return "captured-pose-detecting" }
+        if detectionUnavailable { return "captured-pose-unavailable" }
+        return pose == nil ? "captured-pose-no-shooter" : "captured-pose-detected"
+    }
+
+    private var poseAccessibilityLabel: String {
+        guard showsPose else { return "Selected shot image" }
+        if !detectionFinished { return "Detecting shooter pose" }
+        if detectionUnavailable { return "Pose detector unavailable" }
+        return pose == nil ? "No shooter pose detected" : "Shooter pose detected"
     }
 }

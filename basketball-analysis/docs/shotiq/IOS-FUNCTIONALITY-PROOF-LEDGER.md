@@ -65,7 +65,7 @@ The first pass should fix root causes before polishing dependent screens:
 | P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, native overview presentation, and save/latest web API contract proof are captured. Native video now computes and persists the same release-from-vertical and wrist/forearm-elevation semantics the web pose pipeline uses. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
 | P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, full-screen source selection, file import, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, server video rendering, and app-local selected-video result fallback are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
 | P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, and 045 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, missing-score state, source coverage, weakest-score CTA, and app-local selected photo/video result fallback instead of their old demo constants when server media URLs are absent. Still needs the remaining result/flaw/frame/detail screens, true confidence/trend/history fields, real pose frames, and real device/backend/web proof before `DONE`. |
-| P0-004 | OPEN | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | On Kevin's iPhone, record a real shot and prove skeleton/following, shot detection, confidence, form score, context, and replay come from the recording. |
+| P0-004 | VERIFYING | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | Simulator proof now covers the production navigation path through live camera setup, hoop calibration, readiness, recording, END ROUND, shot detected, confirm make, toast/progress feedback, and capture review. Backend shot-event payload contract is fixed for make/miss confirmation. Still needs Kevin's iPhone with a real hoop/ball to prove optical make/miss classification, skeleton following, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
 | P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. Thumbnail placeholder imagery on affected training/goals/media/profile cards now falls back to bundled basketball media, but aggregate values are still unproved. |
 
@@ -112,7 +112,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G026 | OPEN | P0 | `#device` `#pose` | 033 | Prove skeleton follows real player while shooting. | Screen recording shows joints follow player motion with logged pose frames. |
 | G027 | OPEN | P0 | `#device` `#pose` `#analytics` | 034 | Trigger shot-detected from real detector, not navigation. | Real shot opens detection card; non-shot does not. |
 | G028 | OPEN | P0 | `#device` `#pose` `#media` | 034 | Draw skeleton/release arc over recorded clip. | Replay shows measured overlay aligned to real body/ball frames. |
-| G029 | OPEN | P1 | `#backend` `#analytics` | 034 | Tie make/miss confirmation to measured shot event. | Confirmed event stores detector metadata and updates history/web totals. |
+| G029 | VERIFYING | P1 | `#backend` `#analytics` | 034 | Tie make/miss confirmation to measured shot event. | Native `CONFIRM MAKE` / `MARK MISS` now posts the backend `/api/shot-events` event envelope with `detectedResult`, confidence, sequence, drill metadata, and source metadata instead of the old unmatched `{ drillId, result }` body. Focused unit proof verifies the encoded JSON contract, and focused UI proof verifies make/miss feedback and review navigation. Still needs real detector metadata plus history/web-total round-trip proof before `DONE`. |
 | G030 | OPEN | P1 | `#analytics` `#backend` | 035 | Make capture review summarize real captured shots. | Capture review totals match recorded session events and saved analysis. |
 
 ## Analysis Result Items
@@ -232,6 +232,114 @@ enumerate in `devicectl`, so physical-device proof remains blocked by
 host/device visibility, not by disk space. Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
+
+### 2026-08-07 Native Screenshot Capture and Export Proof
+
+Sixteenth laptop functionality slice after local Xcode setup:
+
+- Ran the full canonical iOS screenshot suite directly through `xcodebuild`
+  instead of `scripts/simulator-screenshots.sh`, because that script still has
+  a local CoreSimulator fallback that can move simulator state back to the boot
+  volume. This run kept Xcode, DerivedData, result bundles, and exported
+  attachments on the external drive.
+- Verified the screenshot harness can capture both series screenshots and
+  single staged screenshots. The passing run walked auth, onboarding,
+  new-player/standard/pro home, capture/upload, live-camera setup, hoop
+  calibration, readiness, live recording, shot detected, capture review, upload
+  queue, analysis processing, result overview, shot breakdown, frame detail,
+  annotation toolbar, form score, metric detail, flaws, elite match, share
+  results, training, progress, profile, player card, goals, settings, and the
+  staged one-off states.
+- Exported the actual screenshot attachments from the `.xcresult` and counted
+  75 PNG files: `001-splash` through `075-analysis-error`. The manifest
+  attachment exported as the one additional non-PNG file.
+- Added direct render coverage for the image-share surfaces, because a screen
+  screenshot and an app-generated share image are separate proof points. The
+  production `PlayerCardView`, customized player-card sheet, and
+  `ShareResultsView` now use the same small renderer helpers that the focused
+  unit tests call.
+- The proof covers simulator navigation, screenshot capture, attachment export,
+  player-card image rendering, and share-results image rendering. It does not
+  prove that the iOS system share sheet saved an image into a real user's Photos
+  library, because that sheet is OS-owned and still needs physical-device
+  acceptance proof if Kevin wants that exact OS interaction certified.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-full-20260807-174100/xcodebuild-screenshots.log`
+  ran `ShotIQUITests/CanonicalScreenshotTests` on the iPhone 17 Pro simulator.
+  It ended with `** TEST SUCCEEDED **`, `Executed 9 tests, with 0 failures`.
+  The matching result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-full-20260807-174100/ShotIQScreenshots.xcresult`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-full-20260807-174100/attachments`
+  contains the exported PNG screenshots. Export reported 76 attachments total;
+  `find ... -name '*.png'` counted 75 PNG screenshots.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-export-unit-20260807-175656/xcodebuild-export-render.log`
+  ran `ShotIQTests/ScreenshotExportRendererTests` on the iPhone 17 Pro
+  simulator. It ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0
+  failures`. The matching result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-export-unit-20260807-175656/ShotIQExportRenderTests.xcresult`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-profile-rerun-20260807-175844/xcodebuild-profile-screenshots.log`
+  reran the affected profile/player/share canonical slice after the renderer
+  refactor. It ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. The matching result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/screenshot-profile-rerun-20260807-175844/ProfileScreenshotRerun.xcresult`.
+  The exported rerun folder contains 10 PNGs for the captured profile/progress
+  screens; the test also verifies `screen-ios-share-results` exists, but that
+  step is intentionally `capture: false` in the canonical harness.
+
+### 2026-08-07 Native Make/Miss Calibration Handoff
+
+Fifteenth laptop functionality slice after local Xcode setup:
+
+- Audited the existing web make/miss contract: `/api/shot-events` expects a
+  top-level `events` array and each event carries `detectedResult` as `make`,
+  `miss`, or `unknown`. The web trajectory tracker resolves makes/misses only
+  after rim calibration; review corrections can also override an unknown or
+  wrong detector result.
+- Fixed native live-capture persistence. `APIClient.recordShotEvent` no longer
+  posts the old unmatched `{ drillId, result }` body. It now builds the backend
+  event envelope with `detectedResult`, `sequence`, `confidence`, `drillId`, and
+  `source`.
+- Added customer-facing progress and completion feedback to screen 034
+  `ShotDetectedView`: confirming a make or marking a miss shows `Saving shot
+  result`, then `Make recorded` or `Miss recorded`, then opens Capture Review.
+- Exposed baked-in simulator placeholder state as accessibility data for the
+  readiness checklist and live recording rail. This keeps the visual
+  placeholders intact while still proving the app state for `Full body`,
+  `Lighting`, `Stability`, `Hoop visible`, `Ball visible`, `Pose confidence`,
+  `SHOTS`, `MAKES`, and `MAKE %`.
+- Expanded the UI-test staged roots so live setup, hoop calibration, readiness,
+  capture ready, live recording, and shot detected can be tested directly when
+  needed.
+- Added focused UI coverage for the full path: Capture tab -> Live camera ->
+  setup -> hoop calibration -> readiness -> capture ready -> live recording ->
+  END ROUND -> SHOT DETECTED -> CONFIRM MAKE -> toast/progress -> Capture
+  Review. Added a second focused UI path for MARK MISS -> toast/progress ->
+  Capture Review.
+- This is simulator proof for controls, calibration flow, payload contract, and
+  customer feedback. It is not yet proof that a real ball crossed a calibrated
+  rim on device. Optical make/miss classification still requires Kevin's iPhone
+  or another enumerated device with a real hoop/ball run.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/makemiss-unit-20260807-172414.log`
+  ran focused unit tests for the native backend make/miss payload and existing
+  drill make/miss undo percentages on the iPhone 17 Pro simulator. It ended
+  with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`. The matching
+  result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/makemiss-unit-20260807-172414.xcresult`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/makemiss-ui-final-20260807-173243.log`
+  reran the full calibration-to-confirm-make journey on the iPhone 17 Pro
+  simulator after exposing the live stats. It ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The matching result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/makemiss-ui-final-20260807-173243.xcresult`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/makemiss-miss-final-20260807-173722.log`
+  reran the standalone `MARK MISS` path on the iPhone 17 Pro simulator after
+  the final make-path fixes. It ended with `** TEST SUCCEEDED **`, `Executed 1
+  test, with 0 failures`. The matching result bundle is
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/makemiss-miss-final-20260807-173722.xcresult`.
 
 ### 2026-08-07 Native Customer Feedback Toast Handoff
 
@@ -1019,3 +1127,193 @@ Evidence captured on the laptop:
   reports `No devices found`, `xctrace` lists only Kevin's MacBook Air plus
   simulators, `xcdevice` lists only `My Mac` as a physical device, and the
   installer exited with `INSTALL_STATUS=1`.
+
+### 2026-08-07 Analytics, Pose Feedback, and Upload Progress Proof
+
+Tenth laptop functionality slice after local Xcode setup:
+
+- Added explicit pose-detection result states so the app distinguishes a real
+  no-shooter/no-pose result from Apple Vision being unavailable on the current
+  simulator/device.
+- Updated captured-photo and upload-quality UI to give honest customer
+  feedback: real detected pose, no shooter detected, or `Pose detector
+  unavailable on this simulator/device.` instead of silently showing a generic
+  failed check.
+- Preserved the placeholder-guide contract: placeholders remain guides by
+  default, selected sample media replaces the guide during review/check flows,
+  and the guide screen remains available afterward.
+- Added UI coverage for the customer-facing progress/toast path, upload queue,
+  shot phases, joint overlay controls, angle toggle, metric detail notes, flaw
+  tags, good/bad/improvement coaching, and recommended drill detail.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/sample-pose-unit-20260807-170322.log`
+  ran the bundled sample-media pose unit test with external DerivedData and
+  result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/sample-pose-unit-20260807-170322.xcresult`.
+  The test passed with one expected skip because this simulator's Vision stack
+  is missing `cnn_human_pose.espresso.weights`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/focused-ui-20260807-171448.log`
+  ran four focused UI tests on the local iPhone 17 Pro simulator using external
+  DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-focused-ui-20260807-171448`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/focused-ui-20260807-171448.xcresult`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- The focused UI pass verified:
+  `testSamplePhotoRunsPoseQualityAndProcessingFeedback`,
+  `testAnalysisBreakdownShowsPhaseSequenceAndJointControls`,
+  `testAnalysisCoachingNotesMetricDetailsAndFlawTagsWork`, and
+  `testUploadQueueShowsStepByStepProgressToResults`.
+  The sample-photo path hit the honest simulator-unavailable branch, then still
+  showed toast/progress feedback and completed to the analysis overview.
+
+### 2026-08-07 Native Placeholder Replacement Proof
+
+Eleventh laptop functionality slice after local Xcode setup:
+
+- Treated every placeholder as a feature contract: guides may remain in their
+  default state, but the matching feature must be able to replace the guide
+  with real selected, local, uploaded, or generated media when that content
+  exists.
+- Added direct resolver coverage for training/media thumbnails so legacy nil
+  placeholder inputs resolve to bundled basketball imagery instead of the old
+  gray icon box.
+- Added direct resolver coverage for analysis result media so real photo/video
+  URLs win before canonical guide media, while the canonical demo remains the
+  only path that intentionally falls back to canonical guide imagery.
+- Re-ran the customer-facing UI proof that selected sample media replaces the
+  guide in photo review/upload quality, shows progress/toast feedback, and
+  advances to analysis; also re-ran the no-media proof so empty photo/video
+  placeholders block with clear customer feedback instead of silently
+  progressing.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/placeholder-replacement-unit-20260807-180734/xcodebuild-placeholder-replacement.log`
+  ran
+  `ShotIQTests/PlaceholderReplacementTests`
+  on the local iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-placeholder-replacement-unit-20260807-180734`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/placeholder-replacement-unit-20260807-180734/PlaceholderReplacementTests.xcresult`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`.
+- The unit pass verified:
+  `testPhotoThumbnailPlaceholderFallbacksResolveToBundledMedia`,
+  `testAnalysisMediaSurfaceUsesRealLocalPhotoBeforeCanonicalFallback`,
+  `testAnalysisMediaSurfaceUsesRealVideoBeforeCanonicalFallback`, and
+  `testCanonicalAndEmptyAnalysisMediaResolveToDifferentPlaceholderModes`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/placeholder-replacement-ui-20260807-180835/xcodebuild-placeholder-replacement-ui.log`
+  ran
+  `testSamplePhotoRunsPoseQualityAndProcessingFeedback` and
+  `testCaptureNoMediaShowsCustomerFeedback`
+  on the local iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-placeholder-replacement-ui-20260807-180835`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/placeholder-replacement-ui-20260807-180835/PlaceholderReplacementUITests.xcresult`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`.
+- The UI log verifies `IMG_4521.JPG`, `Photo • ready to analyze`,
+  `Choose a photo first`, `Choose a video first`, upload/progress steps, and
+  the honest simulator branch `Pose detector unavailable on this simulator/device.`.
+- Remaining simulator limitation: this does not prove live camera pixels
+  replacing `LiveViewfinder`, the Apple Photos picker UI, or system share sheets
+  because those require real device/system-app interaction. Those placeholders
+  are now called out as real-device proof items rather than treated as complete
+  simulator proof.
+
+### 2026-08-07 Analytics, Media, Profile, Goals Surface Proof
+
+Twelfth laptop functionality slice after local Xcode setup:
+
+- Added staged UI entry points for the long-scroll surfaces that need direct
+  page-by-page proof: analytics cards, detailed analytics, profile, player
+  card, customize player card, my media, media detail, goals, and goal detail.
+- Added a focused UI proof that walks those screens and verifies the visible
+  analytics, image-backed/thumbnail-backed surfaces, placeholder-replacement
+  controls, and customer-facing feedback where the UI exposes it.
+- Verified customize-card generation opens the saved-card feedback/sheet,
+  My Media filtering/select mode works, Media Detail shows play and frame
+  selection toast feedback, Media Detail opens the linked analysis result, Goals
+  exposes active progress/make/form analytics, and Goal Detail exposes progress,
+  technique snapshot, linked sessions, and recommended drills.
+- The playback speed control is tapped in the proof, but its toast is not used
+  as a blocking assertion because XCUITest does not reliably expose the transient
+  label after that exact control tap in the current simulator hierarchy.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/full-placeholder-analytics-ui-20260807-184558/xcodebuild-full-placeholder-analytics-ui.log`
+  ran
+  `ShotIQUITests/ShotIQUITests/testProgressProfileMediaGoalAnalyticsAndImageSurfacesWork`
+  on the local iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-full-placeholder-analytics-ui-20260807-184558`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/full-placeholder-analytics-ui-20260807-184558/FullPlaceholderAnalyticsUITest.xcresult`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+- The pass verified:
+  `AI ANALYSIS HISTORY`, trend/session cards, detailed analytics phase and arc
+  values, profile/player-card stats, generated-card save feedback, media tabs,
+  media select mode, media play/frame feedback, linked analysis navigation,
+  goals progress values, and goal-detail progress/technique/session/drill
+  sections.
+- Remaining simulator limitation: this does not prove backend aggregation,
+  web/iOS value parity, live camera pixels replacing `LiveViewfinder`, Apple
+  Photos picker UI, system share sheets, or final real-device install. Those
+  still require real device/system/backend proof before the corresponding
+  ledger items can move to `DONE`.
+
+### 2026-08-07 Multi-View Photo Intake Proof
+
+Thirteenth laptop functionality slice after local Xcode setup:
+
+- Replaced the generic one-photo intake copy with explicit customer input
+  slots for `FRONT VIEW`, `SIDE VIEW`, and `REAR VIEW`.
+- Each slot now keeps its canonical guide image until a real/sample image is
+  selected, then shows a ready state for that exact viewpoint. If the customer
+  tries to continue early, the app shows a toast naming the missing viewpoints.
+- When the review route closes back to the source screen, the selected
+  viewpoint images are cleared so the front/side/rear guide placeholders return
+  for the next capture attempt.
+- The review, quality-check, upload, vision-analysis, local-cache, and
+  save-analysis paths now carry the selected `ShotViewpoint` forward. Native
+  multipart uploads include the repo/backend vocabulary already present in the
+  web app and Prisma schema: `angle`/`shootingAngle` plus `imageCategory`
+  (`form_front`, `form_side`, `form_rear`).
+- Stabilized the live-capture UI proof at the `CAPTURE READY` step by waiting
+  for the recording screen before tapping `Start recording`; the previous broad
+  run failed on automation timing, not a missing product route.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/multiview-photo-upload-20260807-191508/xcodebuild-multiview-photo-upload.log`
+  ran
+  `ShotIQUITests/ShotIQUITests/testPhotoUploadRequiresFrontSideRearViewsAndCarriesAngleToAnalysis`
+  on the local iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-multiview-photo-upload-20260807-191508`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/multiview-photo-upload-20260807-191508/MultiViewPhotoUpload.xcresult`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-multiview-regression-20260807-191725/xcodebuild-capture-multiview-regression.log`
+  ran four focused regression tests:
+  `testPhotoUploadRequiresFrontSideRearViewsAndCarriesAngleToAnalysis`,
+  `testCaptureNoMediaShowsCustomerFeedback`,
+  `testSamplePhotoRunsPoseQualityAndProcessingFeedback`, and
+  `testLiveCaptureCalibrationEndRoundAndConfirmMakeWorks`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 4 tests, with 0 failures`,
+  using result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-multiview-regression-20260807-191725/CaptureMultiViewRegression.xcresult`.
+- The pass verified: front/side/rear slot labels, missing-input toast,
+  sample-media replacement of guide images, side-view review text, side-view
+  quality text, no-media blocking toasts, sample photo pose/processing path,
+  and live capture calibration through confirm-make/capture-review.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/multiview-photo-upload-reset-20260807-192230/xcodebuild-multiview-photo-upload-reset.log`
+  reran the multi-view source proof after adding the return-to-guide reset. It
+  ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, using
+  result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/multiview-photo-upload-reset-20260807-192230/MultiViewPhotoUploadReset.xcresult`.
+- Remaining simulator limitation: this proves the native UI route, simulator
+  sample-media replacement, toast/progress feedback, and request metadata
+  wiring. It does not prove the Apple Photos picker UI with a real library
+  image, real camera capture on Kevin's iPhone, or backend multi-image
+  aggregation that evaluates all three uploaded angles together.

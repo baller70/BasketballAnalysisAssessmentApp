@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 @testable import ShotIQ
 
 final class ShotIQTokenTests: XCTestCase {
@@ -21,6 +22,20 @@ final class ShotIQTokenTests: XCTestCase {
     func testCanonicalCanvas() {
         XCTAssertEqual(ShotIQCanvas.ios, CGSize(width: 853, height: 1844))
         XCTAssertEqual(ShotIQCanvas.desktop, CGSize(width: 1440, height: 900))
+    }
+}
+
+final class ShotIQGlyphResolverTests: XCTestCase {
+    func testApprovedMechanicsAndEquipmentIconsResolveToBespokeGlyphs() {
+        guard case .mechanic(.releasePath)? = ShotIQConcept.resolve("Straight Release Path") else {
+            return XCTFail("Straight Release Path should use the vertical release-path glyph")
+        }
+
+        for label in ["Basketball", "Cones", "Spot", "Location"] {
+            guard case .equipment? = ShotIQConcept.resolve(label) else {
+                return XCTFail("\(label) should use a ShotIQ equipment glyph")
+            }
+        }
     }
 }
 
@@ -308,6 +323,116 @@ final class DrillSessionTests: XCTestCase {
         XCTAssertEqual(m.shots.count, 2)
         XCTAssertEqual(m.pct, 1.0, accuracy: 0.0001)
     }
+
+    func testLiveCaptureShotEventPayloadMatchesBackendContract() throws {
+        let makeBody = APIClient.shotEventRecordBody(drillId: "live-capture", made: true)
+        XCTAssertEqual(makeBody.events.count, 1)
+        XCTAssertEqual(makeBody.events[0].detectedResult, "make")
+        XCTAssertEqual(makeBody.events[0].metadata["drillId"], "live-capture")
+        XCTAssertEqual(makeBody.events[0].metadata["source"], "ios-live-capture")
+
+        let missBody = APIClient.shotEventRecordBody(drillId: "live-capture", made: false)
+        XCTAssertEqual(missBody.events[0].detectedResult, "miss")
+
+        let data = try JSONEncoder().encode(makeBody)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let events = try XCTUnwrap(object["events"] as? [[String: Any]])
+        XCTAssertEqual(events.first?["detectedResult"] as? String, "make")
+        XCTAssertNil(object["result"])
+    }
+}
+
+final class ScreenshotExportRendererTests: XCTestCase {
+    @MainActor
+    func testPlayerCardExportRendersShareableImage() throws {
+        let image = try XCTUnwrap(PlayerCardImageRenderer.render(name: "Jordan Ellis"))
+
+        XCTAssertGreaterThanOrEqual(image.size.width, 360)
+        XCTAssertGreaterThan(image.size.height, 120)
+        XCTAssertGreaterThanOrEqual(image.cgImage?.width ?? 0, 1_000)
+        XCTAssertGreaterThan(image.cgImage?.height ?? 0, 350)
+    }
+
+    @MainActor
+    func testCustomizedPlayerCardExportRendersShareableImage() throws {
+        let image = try XCTUnwrap(PlayerCardImageRenderer.render(name: "Kevin Houston",
+                                                                 accent: ShotIQColor.analysisBlue,
+                                                                 jersey: 70))
+
+        XCTAssertGreaterThanOrEqual(image.size.width, 360)
+        XCTAssertGreaterThan(image.size.height, 120)
+        XCTAssertGreaterThanOrEqual(image.cgImage?.width ?? 0, 1_000)
+    }
+
+    @MainActor
+    func testShareResultsExportRendersShareableImage() throws {
+        let image = try XCTUnwrap(ShareResultsImageRenderer.render(name: "Jordan Ellis"))
+
+        XCTAssertGreaterThanOrEqual(image.size.width, 340)
+        XCTAssertGreaterThan(image.size.height, 120)
+        XCTAssertGreaterThanOrEqual(image.cgImage?.width ?? 0, 1_000)
+        XCTAssertGreaterThan(image.cgImage?.height ?? 0, 350)
+    }
+}
+
+final class PlaceholderReplacementTests: XCTestCase {
+    func testPhotoThumbnailPlaceholderFallbacksResolveToBundledMedia() {
+        let cases: [(explicit: String?, icon: String, expected: String)] = [
+            (nil, "figure.basketball", "054-visual-003"),
+            (nil, "play.circle", "068-visual-002"),
+            (nil, "chart.xyaxis.line", "069-visual-004"),
+            (nil, "target", "065-visual-001"),
+            (nil, "camera.viewfinder", "054-visual-001"),
+            ("072-visual-001", "figure.basketball", "072-visual-001"),
+        ]
+
+        for item in cases {
+            let key = PhotoThumbMediaResolver.photoKey(explicit: item.explicit, icon: item.icon)
+            XCTAssertEqual(key, item.expected)
+            XCTAssertNotNil(UIImage(named: "photo-\(key)"),
+                            "Missing bundled replacement media for \(key)")
+        }
+    }
+
+    func testAnalysisMediaSurfaceUsesRealLocalPhotoBeforeCanonicalFallback() {
+        let url = URL(fileURLWithPath: "/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-fixtures/placeholder-proof.jpg")
+        let result = ShotIQLocalAnalysisFactory.photo(localImageURL: url, detectedPose: nil)
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(AnalysisResultMediaSurfaceResolver.source(for: presentation,
+                                                                 fallbackKey: "038-visual-001"),
+                       .image(url))
+    }
+
+    func testAnalysisMediaSurfaceUsesRealVideoBeforeCanonicalFallback() {
+        let url = URL(fileURLWithPath: "/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-fixtures/placeholder-proof.mov")
+        let clip = PickedVideoClip(url: url,
+                                   filename: "shotiq-placeholder-proof.mov",
+                                   contentType: "video/quicktime",
+                                   fileSizeBytes: 1,
+                                   durationSeconds: 6,
+                                   dimensions: CGSize(width: 1080, height: 1920),
+                                   frameRate: 60)
+        let job = VideoAnalysisJob(clientSessionId: "placeholder-video",
+                                   clip: clip,
+                                   trimStartFraction: 0,
+                                   trimEndFraction: 1)
+        let result = ShotIQLocalAnalysisFactory.video(job: job, poseAnalysis: nil)
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(AnalysisResultMediaSurfaceResolver.source(for: presentation,
+                                                                 fallbackKey: "038-visual-001"),
+                       .video(url))
+    }
+
+    func testCanonicalAndEmptyAnalysisMediaResolveToDifferentPlaceholderModes() {
+        XCTAssertEqual(AnalysisResultMediaSurfaceResolver.source(for: .canonicalDemo,
+                                                                 fallbackKey: "038-visual-001"),
+                       .canonicalFallback("038-visual-001"))
+        XCTAssertEqual(AnalysisResultMediaSurfaceResolver.source(for: .noResult,
+                                                                 fallbackKey: "038-visual-001"),
+                       .placeholder("No saved media"))
+    }
 }
 
 final class GoalsViewModelTests: XCTestCase {
@@ -407,6 +532,21 @@ final class VideoPoseAnalyzerTests: XCTestCase {
 /// wrong rectangle, and a framing verdict asserted rather than measured. Both
 /// look fine in a screenshot and are wrong on a phone, so both are pinned here.
 final class PoseDetectionTests: XCTestCase {
+    func testBundledSampleMediaProvidesDrawablePose() async throws {
+        let image = try XCTUnwrap(UIImage(named: "photo-068-visual-004"))
+        let result = await ShotIQPose.detectResult(in: image)
+        guard case .detected(let pose) = result else {
+            if case .unavailable(let reason) = result {
+                throw XCTSkip(reason)
+            }
+            XCTFail("Bundled full-body sample did not produce a usable pose.")
+            return
+        }
+
+        XCTAssertTrue(pose.isUsable)
+        XCTAssertTrue(pose.hasWrist)
+        XCTAssertGreaterThanOrEqual(pose.joints.count, 6)
+    }
 
     /// A pose with every joint of a shooter standing in the middle of frame.
     private func fullBody() -> DetectedPose {

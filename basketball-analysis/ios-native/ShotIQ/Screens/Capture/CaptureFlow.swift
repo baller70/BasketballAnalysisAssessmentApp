@@ -173,6 +173,56 @@ private func shotiqCropped34(_ image: UIImage) -> UIImage {
     }
 }
 
+enum ShotViewpoint: String, CaseIterable, Identifiable {
+    case front
+    case side
+    case rear
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .front: return "FRONT VIEW"
+        case .side: return "SIDE VIEW"
+        case .rear: return "REAR VIEW"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .front: return "Front"
+        case .side: return "Side"
+        case .rear: return "Rear"
+        }
+    }
+
+    var instruction: String {
+        switch self {
+        case .front: return "Face the camera so ShotIQ can check alignment, set point, and balance."
+        case .side: return "Stand side-on so ShotIQ can read elbow stack, release angle, and lower-body load."
+        case .rear: return "Show your back view so ShotIQ can check shoulder line, guide hand, and follow-through path."
+        }
+    }
+
+    var placeholderPhoto: String {
+        switch self {
+        case .front: return "022-visual-001"
+        case .side: return "022-visual-001"
+        case .rear: return "022-visual-003"
+        }
+    }
+
+    var uploadAngle: String {
+        switch self {
+        case .front: return "front"
+        case .side: return "side"
+        case .rear: return "rear"
+        }
+    }
+
+    var imageCategory: String { "form_\(rawValue)" }
+}
+
 private func shotiqPersistLocalJPEG(_ data: Data, prefix: String = "shotiq-photo") -> URL? {
     guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
         return nil
@@ -511,8 +561,11 @@ struct AnalyzeHubView: View {       // 021
 
 struct PhotoUploadSourceView: View { // 022
     @Environment(\.dismiss) private var dismiss
-    @State private var pick: PhotosPickerItem?
-    @State private var image: UIImage?
+    @State private var frontPick: PhotosPickerItem?
+    @State private var sidePick: PhotosPickerItem?
+    @State private var rearPick: PhotosPickerItem?
+    @State private var images: [ShotViewpoint: UIImage] = [:]
+    @State private var activeViewpoint: ShotViewpoint = .side
     @State private var goReview = false
     @State private var showCamera = false
     @State private var toast: ShotIQToast?
@@ -534,7 +587,7 @@ struct PhotoUploadSourceView: View { // 022
 
                     Text("PHOTO UPLOAD SOURCE").shotiqDisplay(38)
                         .padding(.horizontal, 20).padding(.top, 8)
-                    Text("Upload a side or 45-degree angle video or photo for the most accurate analysis.")
+                    Text("Add front, side, and rear shot photos so ShotIQ knows exactly which angle it is evaluating.")
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 6)
 
@@ -552,23 +605,31 @@ struct PhotoUploadSourceView: View { // 022
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
 
-                    SectionLabel(text: "BEST ANGLE FOR ANALYSIS").padding(.horizontal, 20).padding(.top, 24)
-                    HStack(alignment: .top, spacing: 12) {
-                        angleCard("SIDE VIEW", "IDEAL", "Use this angle when possible.",
-                                  photo: "022-visual-001", ideal: true)
-                        angleCard("45° VIEW", "GOOD", "Use if side view isn't available.",
-                                  photo: "022-visual-003", ideal: false)
+                    SectionLabel(text: "SHOT VIEWPOINTS").padding(.horizontal, 20).padding(.top, 24)
+                    VStack(spacing: 12) {
+                        ForEach(ShotViewpoint.allCases) { viewpoint in
+                            viewpointSlot(viewpoint)
+                        }
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
 
                     SectionLabel(text: "CHOOSE UPLOAD SOURCE").padding(.horizontal, 20).padding(.top, 24)
                     VStack(spacing: 12) {
-                        PhotosPicker(selection: $pick, matching: .images) {
-                            sourceRow("camera.metering.center.weighted", "Choose from library",
-                                      "Select a video or photo from your device.")
+                        if UITestHooks.useSampleMedia {
+                            Button { loadSampleAngles() } label: {
+                                sourceRow("photo.stack", "Use sample for all views",
+                                          "Simulator proof only: fills front, side, and rear inputs.")
+                            }
+                            .buttonStyle(.plain)
                         }
+                        Button { continueWithSelectedViews() } label: {
+                            sourceRow("checkmark.seal", "Continue with selected views",
+                                      "Review the side view first, then run pose and shot-form analysis.")
+                        }
+                        .buttonStyle(.plain)
                         Button { showCamera = true } label: {
-                            sourceRow("camera", "Take photo", "Capture a new photo using your camera.")
+                            sourceRow("camera", "Take \(activeViewpoint.shortTitle.lowercased()) photo",
+                                      "Capture the currently selected \(activeViewpoint.shortTitle.lowercased()) angle.")
                         }
                         .buttonStyle(.plain)
                         Button { dismiss() } label: {
@@ -583,34 +644,48 @@ struct PhotoUploadSourceView: View { // 022
                 }
             }
         }
-        .onChange(of: pick) { _, item in
-            guard let item else { return }
-            toast = .progress("Loading photo", "Preparing your shot for review.", progress: 0.35)
-            Task {
-                if let data = try? await item.loadTransferable(type: Data.self),
-                   let img = UIImage(data: data) {
-                    await MainActor.run {
-                        image = img
-                        toast = .success("Photo ready", "Adjust the crop before analysis.")
-                        goReview = true
-                    }
-                } else {
-                    await MainActor.run {
-                        toast = .error("Photo not loaded", "Choose a JPG, PNG, or HEIC from your library.")
-                    }
-                }
+        .onChange(of: frontPick) { _, item in loadPicked(item, for: .front) }
+        .onChange(of: sidePick) { _, item in loadPicked(item, for: .side) }
+        .onChange(of: rearPick) { _, item in loadPicked(item, for: .rear) }
+        .onChange(of: goReview) { wasReviewing, isReviewing in
+            if wasReviewing && !isReviewing {
+                resetViewpointGuides()
             }
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPhotoCaptureView { img in
-                image = img
-                toast = .success("Photo captured", "Adjust the crop before analysis.")
-                goReview = true
+                images[activeViewpoint] = img
+                toast = .success("\(activeViewpoint.shortTitle) view ready",
+                                 "That angle is saved. Add the remaining views before analysis.")
             }
                 .modifier(CanonicalTypeScale())
         }
-        .navigationDestination(isPresented: $goReview) { PhotoReviewCropView(image: image) }
+        .navigationDestination(isPresented: $goReview) {
+            PhotoReviewCropView(image: images[activeViewpoint], viewpoint: activeViewpoint)
+        }
         .shotiqToast($toast)
+    }
+
+    private func loadPicked(_ item: PhotosPickerItem?, for viewpoint: ShotViewpoint) {
+        guard let item else { return }
+        toast = .progress("Loading \(viewpoint.shortTitle.lowercased()) view",
+                          "Preparing that shot angle.", progress: 0.35)
+        Task {
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let img = UIImage(data: data) {
+                await MainActor.run {
+                    activeViewpoint = viewpoint
+                    images[viewpoint] = img
+                    toast = .success("\(viewpoint.shortTitle) view ready",
+                                     "That angle is saved. Add the remaining views before analysis.")
+                }
+            } else {
+                await MainActor.run {
+                    toast = .error("\(viewpoint.shortTitle) view not loaded",
+                                   "Choose a JPG, PNG, or HEIC from your library.")
+                }
+            }
+        }
     }
 
     /// Canonical 022 gives each container its own bracketed mark. The shipped
@@ -631,31 +706,63 @@ struct PhotoUploadSourceView: View { // 022
         .frame(maxWidth: .infinity)
     }
 
-    private func angleCard(_ badge: String, _ verdict: String, _ d: String,
-                           photo: String, ideal: Bool) -> some View {
-        VStack(spacing: 0) {
+    private func viewpointSlot(_ viewpoint: ShotViewpoint) -> some View {
+        let ready = images[viewpoint] != nil
+        return VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
-                CanonicalPhoto(photo, height: 180, cornerRadius: 0)
-                Text(badge).shotiqBody(12, weight: .bold).foregroundStyle(.white)
+                Group {
+                    if let image = images[viewpoint] {
+                        Image(uiImage: image).resizable().scaledToFill()
+                    } else {
+                        CanonicalPhoto(viewpoint.placeholderPhoto, cornerRadius: 0)
+                    }
+                }
+                .frame(height: 150).frame(maxWidth: .infinity).clipped()
+                Text(viewpoint.title).shotiqBody(12, weight: .bold).foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(ShotIQColor.analysisBlue, in: Capsule())
+                    .background(ready ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue, in: Capsule())
                     .padding(8)
             }
-            HStack(alignment: .top, spacing: 8) {
-                Image(systemName: "checkmark.circle").font(.system(size: 20))
-                    .foregroundStyle(ideal ? ShotIQColor.analysisBlue : ShotIQColor.graphite)
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: ready ? "checkmark.circle.fill" : "plus.circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(ready ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verdict).shotiqCondensed(13, weight: .heavy).kerning(0.5)
-                        .foregroundStyle(ideal ? ShotIQColor.analysisBlue : ShotIQColor.graphite)
-                    Text(d).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                    Text(ready ? "\(viewpoint.shortTitle.uppercased()) READY" : "ADD \(viewpoint.shortTitle.uppercased()) PHOTO")
+                        .shotiqCondensed(13, weight: .heavy).kerning(0.5)
+                        .foregroundStyle(ready ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                    Text(viewpoint.instruction).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                 }
                 Spacer(minLength: 0)
             }
             .padding(10)
+            HStack(spacing: 8) {
+                PhotosPicker(selection: pickBinding(for: viewpoint), matching: .images) {
+                    Text("Choose").shotiqBody(13, weight: .semibold)
+                        .frame(maxWidth: .infinity).frame(height: 38)
+                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.rule))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Choose \(viewpoint.shortTitle.lowercased()) photo")
+                Button {
+                    activeViewpoint = viewpoint
+                    showCamera = true
+                } label: {
+                    Text("Camera").shotiqBody(13, weight: .semibold)
+                        .frame(maxWidth: .infinity).frame(height: 38)
+                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.rule))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Take \(viewpoint.shortTitle.lowercased()) photo")
+            }
+            .foregroundStyle(ShotIQColor.ink)
+            .padding(.horizontal, 10).padding(.bottom, 10)
         }
         .background(ShotIQColor.paper)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .onTapGesture { activeViewpoint = viewpoint }
+        .accessibilityElement(children: .contain)
     }
 
     private func sourceRow(_ icon: String, _ t: String, _ d: String) -> some View {
@@ -673,15 +780,75 @@ struct PhotoUploadSourceView: View { // 022
         .padding(16)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
+
+    private func pickBinding(for viewpoint: ShotViewpoint) -> Binding<PhotosPickerItem?> {
+        Binding(
+            get: {
+                switch viewpoint {
+                case .front: return frontPick
+                case .side: return sidePick
+                case .rear: return rearPick
+                }
+            },
+            set: { value in
+                activeViewpoint = viewpoint
+                switch viewpoint {
+                case .front: frontPick = value
+                case .side: sidePick = value
+                case .rear: rearPick = value
+                }
+            }
+        )
+    }
+
+    private var missingViewpoints: [ShotViewpoint] {
+        ShotViewpoint.allCases.filter { images[$0] == nil }
+    }
+
+    private func continueWithSelectedViews() {
+        guard missingViewpoints.isEmpty else {
+            let names = missingViewpoints.map { $0.shortTitle.lowercased() }.joined(separator: ", ")
+            toast = .error("Add front, side, and rear photos first",
+                           "Missing: \(names). Each viewpoint needs an input image.")
+            return
+        }
+        activeViewpoint = .side
+        toast = .success("All views ready", "Review the side view before ShotIQ analyzes your form.")
+        goReview = true
+    }
+
+    private func loadSampleAngles() {
+        guard let sample = UITestHooks.sampleShotImage else {
+            toast = .error("Sample unavailable", "The test media asset could not be loaded.")
+            return
+        }
+        for viewpoint in ShotViewpoint.allCases {
+            images[viewpoint] = sample
+        }
+        activeViewpoint = .side
+        toast = .success("All views ready", "Front, side, and rear sample images are loaded.")
+    }
+
+    private func resetViewpointGuides() {
+        images = [:]
+        frontPick = nil
+        sidePick = nil
+        rearPick = nil
+        activeViewpoint = .side
+    }
 }
 
 struct PhotoReviewCropView: View {  // 023
     @Environment(\.dismiss) private var dismiss
+    private let viewpoint: ShotViewpoint
     @State private var image: UIImage?
     @State private var showCamera = false
     @State private var goQuality = false
     @State private var toast: ShotIQToast?
-    init(image: UIImage?) { _image = State(initialValue: image) }
+    init(image: UIImage?, viewpoint: ShotViewpoint = .side) {
+        self.viewpoint = viewpoint
+        _image = State(initialValue: image)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-review-crop") {
             ScrollView {
@@ -707,7 +874,7 @@ struct PhotoReviewCropView: View {  // 023
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("PHOTO REVIEW").shotiqDisplay(36)
-                            Text("Adjust crop to include your full body from head to toe.")
+                            Text("\(viewpoint.shortTitle) view selected. Adjust crop to include your full body from head to toe.")
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer(minLength: 8)
@@ -775,7 +942,7 @@ struct PhotoReviewCropView: View {  // 023
                         Button {
                             if let img = image {
                                 image = shotiqRotated(img, clockwise: false)
-                                toast = .success("Photo rotated", "Review the framing before analysis.")
+                                toast = .success("\(viewpoint.shortTitle) view rotated", "Review the framing before analysis.")
                             } else {
                                 toast = .error("Choose a photo first", "A real image is required before cropping.")
                             }
@@ -802,7 +969,7 @@ struct PhotoReviewCropView: View {  // 023
                         Button {
                             if let img = image {
                                 image = shotiqRotated(img, clockwise: true)
-                                toast = .success("Photo rotated", "Review the framing before analysis.")
+                                toast = .success("\(viewpoint.shortTitle) view rotated", "Review the framing before analysis.")
                             } else {
                                 toast = .error("Choose a photo first", "A real image is required before cropping.")
                             }
@@ -828,7 +995,7 @@ struct PhotoReviewCropView: View {  // 023
                         Button {
                             if let img = image {
                                 image = shotiqCropped34(img)
-                                toast = .success("Crop applied", "Your shot frame is ready.")
+                                toast = .success("\(viewpoint.shortTitle) crop applied", "Your shot frame is ready.")
                             } else {
                                 toast = .error("Choose a photo first", "A real image is required before cropping.")
                             }
@@ -847,7 +1014,7 @@ struct PhotoReviewCropView: View {  // 023
                                 toast = .error("Choose a photo first", "A real image is required before analysis.")
                                 return
                             }
-                            toast = .success("Photo selected", "Checking upload quality next.")
+                            toast = .success("\(viewpoint.shortTitle) view selected", "Checking upload quality next.")
                             goQuality = true
                         } label: {
                             HStack(spacing: 8) {
@@ -869,17 +1036,20 @@ struct PhotoReviewCropView: View {  // 023
         .fullScreenCover(isPresented: $showCamera) {
             CameraPhotoCaptureView { img in
                 image = img
-                toast = .success("Photo captured", "Adjust the crop before analysis.")
+                toast = .success("\(viewpoint.shortTitle) view captured", "Adjust the crop before analysis.")
             }
                 .modifier(CanonicalTypeScale())
         }
-        .navigationDestination(isPresented: $goQuality) { UploadQualityCheckView(image: image) }
+        .navigationDestination(isPresented: $goQuality) {
+            UploadQualityCheckView(image: image, viewpoint: viewpoint)
+        }
         .shotiqToast($toast)
     }
 }
 
 struct UploadQualityCheckView: View { // 024
     var image: UIImage? = nil
+    var viewpoint: ShotViewpoint = .side
     @Environment(\.dismiss) private var dismiss
     @State private var busy = false
     @State private var uploadError: String?
@@ -892,6 +1062,7 @@ struct UploadQualityCheckView: View { // 024
     /// What Vision found in the picked photo, once it has looked.
     @State private var detectedPose: DetectedPose?
     @State private var poseChecked = false
+    @State private var poseUnavailable = false
 
     /// The canonical check list. Over the canonical placeholder it reads exactly
     /// as it always has.
@@ -908,10 +1079,27 @@ struct UploadQualityCheckView: View { // 024
     /// "Entire body is visible · Good" printed over a picture with nobody in it
     /// is the app telling the player something it never checked.
     private var checks: [(String, String, String, Bool)] {
-        guard image != nil, poseChecked else { return canonicalChecks }
+        guard image != nil else { return canonicalChecks }
+        guard poseChecked else {
+            return [canonicalChecks[0],
+                    ("Full body visibility",
+                     "Checking whether your full body is in frame.",
+                     "Checking", true),
+                    canonicalChecks[2],
+                    ("Shooting hand visibility",
+                     "Checking whether your shooting hand and ball are visible.",
+                     "Checking", true)]
+        }
         let body: (String, String, String, Bool)
         let hand: (String, String, String, Bool)
-        if let pose = detectedPose {
+        if poseUnavailable {
+            body = ("Full body visibility",
+                    "Pose detector unavailable on this simulator/device.",
+                    "Try on device", false)
+            hand = ("Shooting hand visibility",
+                    "ShotIQ could not load pose detection, so the hand could not be checked.",
+                    "Try on device", false)
+        } else if let pose = detectedPose {
             body = pose.isFullBodyVisible
                 ? ("Full body visibility", "Entire body is visible.", "Good", true)
                 : ("Full body visibility",
@@ -970,7 +1158,7 @@ struct UploadQualityCheckView: View { // 024
                         Text("UPLOAD QUALITY CHECK").shotiqDisplay(34)
                     }
                     .padding(.horizontal, 20).padding(.top, 20)
-                    Text("We'll check your video to make sure it's ready for the best analysis.")
+                    Text("We'll check your \(viewpoint.shortTitle.lowercased()) view to make sure it's ready for the best analysis.")
                         .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
@@ -999,7 +1187,7 @@ struct UploadQualityCheckView: View { // 024
                         if image != nil {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("IMG_4521.JPG").shotiqBody(12, weight: .semibold)
-                                Text("Photo • ready to analyze").shotiqBody(10)
+                                Text("\(viewpoint.shortTitle) view • ready to analyze").shotiqBody(10)
                             }
                             .foregroundStyle(.white)
                             .padding(.horizontal, 10).padding(.vertical, 6)
@@ -1032,7 +1220,7 @@ struct UploadQualityCheckView: View { // 024
 
                     HStack(alignment: .center, spacing: 14) {
                         ReadinessGlyph(kind: .framing, size: 30).foregroundStyle(ShotIQColor.ink)
-                        Text("Best framing: side view, full body in frame, shooting hand and ball fully visible.")
+                        Text("Best framing: \(viewpoint.shortTitle.lowercased()) view, full body in frame, shooting hand and ball fully visible.")
                             .shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                         Spacer()
                         ReadinessGlyph(kind: .athlete, size: 22).foregroundStyle(ShotIQColor.ink)
@@ -1075,7 +1263,31 @@ struct UploadQualityCheckView: View { // 024
             case .failed: AnalysisErrorView()
             }
         }
+        .task(id: image) {
+            await updatePoseCheck()
+        }
         .shotiqToast($toast)
+    }
+
+    private func updatePoseCheck() async {
+        guard let image else {
+            detectedPose = nil
+            poseChecked = false
+            poseUnavailable = false
+            return
+        }
+        poseChecked = false
+        poseUnavailable = false
+        switch await ShotIQPose.detectResult(in: image) {
+        case .detected(let pose):
+            detectedPose = pose
+        case .noPose:
+            detectedPose = nil
+        case .unavailable:
+            detectedPose = nil
+            poseUnavailable = true
+        }
+        poseChecked = true
     }
 
     /// Mirrors the web upload flow: multipart POST /api/upload, then
@@ -1094,23 +1306,31 @@ struct UploadQualityCheckView: View { // 024
         defer { busy = false }
 
         // 1. Upload the raw frame (field "image", uploadType "user").
-        let localImageURL = shotiqPersistLocalJPEG(jpeg)
+        let localImageURL = shotiqPersistLocalJPEG(jpeg, prefix: "shotiq-\(viewpoint.rawValue)")
         let detectedPose = await ShotIQPose.detect(in: selectedImage)
         let localFallback = ShotIQLocalAnalysisFactory.photo(localImageURL: localImageURL,
                                                              detectedPose: detectedPose)
-        toast = .progress("Uploading photo", "Sending your shot to ShotIQ analysis.", progress: 0.25)
+        toast = .progress("Uploading \(viewpoint.shortTitle.lowercased()) view",
+                          "Sending your shot to ShotIQ analysis.", progress: 0.25)
         var imageUrl: String?
-        if let respData = try? await APIClient.shared.uploadImage(jpeg) {
+        if let respData = try? await APIClient.shared.uploadImage(
+            jpeg,
+            filename: "\(viewpoint.rawValue)-shot.jpg",
+            shootingAngle: viewpoint.uploadAngle,
+            imageCategory: viewpoint.imageCategory,
+            capturePhase: "form") {
             struct UploadResp: Codable { var success: Bool?; var url: String?; var imageUrl: String? }
             let r = try? JSONDecoder().decode(UploadResp.self, from: respData)
             imageUrl = r?.url ?? r?.imageUrl
         }
-        toast = .progress("Analyzing mechanics", "Detecting pose and shot form.", progress: 0.55)
+        toast = .progress("Analyzing \(viewpoint.shortTitle.lowercased()) mechanics",
+                          "Detecting pose and shot form.", progress: 0.55)
 
         // 2. Coach-centric vision analysis (same contract the web client uses).
         struct VisionBody: Codable {
             var image: String; var drillId: String; var drillName: String
             var drillDescription: String; var coachingPoints: [String]; var focusArea: String
+            var shootingAngle: String; var imageCategory: String
         }
         struct VisionResp: Codable {
             struct Analysis: Codable {
@@ -1128,12 +1348,14 @@ struct UploadQualityCheckView: View { // 024
             body: VisionBody(
                 image: jpeg.base64EncodedString(),
                 drillId: "shot-form-photo",
-                drillName: "Shot form analysis",
-                drillDescription: "Single-frame jump shot form check from an uploaded photo.",
+                drillName: "\(viewpoint.shortTitle) view shot form analysis",
+                drillDescription: "Single-frame jump shot form check from an uploaded \(viewpoint.shortTitle.lowercased()) view photo.",
                 coachingPoints: ["Keep elbow stacked through release",
                                  "Balanced base with feet shoulder-width apart",
                                  "Full follow-through with a relaxed wrist"],
-                focusArea: "Shooting form"))
+                focusArea: "\(viewpoint.shortTitle) view shooting form",
+                shootingAngle: viewpoint.uploadAngle,
+                imageCategory: viewpoint.imageCategory))
         if let analysis = vision?.analysis {
             let grades: [String: Double] = ["A": 95, "B": 85, "C": 75, "D": 65, "F": 50]
             overallScore = analysis.overallGrade.flatMap { grades[$0] }
@@ -1144,6 +1366,7 @@ struct UploadQualityCheckView: View { // 024
         struct SaveBody: Codable {
             var clientSessionId: String; var recordedAt: String; var mediaType: String
             var imageUrl: String?; var overallScore: Double?; var coachingNotes: String?
+            var shootingPhase: String?; var visualOverlays: [String: String]?
         }
         struct SaveResp: Codable {
             var success: Bool?
@@ -1159,7 +1382,10 @@ struct UploadQualityCheckView: View { // 024
                                mediaType: "image",
                                imageUrl: imageUrl,
                                overallScore: overallScore,
-                               coachingNotes: coachingNotes))
+                               coachingNotes: coachingNotes,
+                               shootingPhase: viewpoint.uploadAngle,
+                               visualOverlays: ["shootingAngle": viewpoint.uploadAngle,
+                                                "imageCategory": viewpoint.imageCategory]))
             var analysis = saved.analysisResult ?? saved.analysis ?? localFallback
             if analysis.media.localImageUrl == nil {
                 analysis.media.localImageUrl = localImageURL?.absoluteString
@@ -2372,6 +2598,17 @@ struct ReadinessCheckView: View {   // 030
                             .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
                             .padding(.trailing, 12)
                         }
+                        VStack {
+                            ForEach(checks, id: \.0) { name, value in
+                                Color.clear
+                                    .frame(width: 1, height: 1)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel("\(name) \(value)")
+                                    .accessibilityIdentifier("readiness-\(name)")
+                            }
+                        }
+                        .frame(width: 1, height: 1)
+                        .allowsHitTesting(false)
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
@@ -2583,6 +2820,17 @@ struct LiveRecordingView: View {    // 032
                             }
                             .padding(14)
                         }
+                        VStack {
+                            ForEach([("SHOTS", "24"), ("MAKES", "15"), ("MAKE %", "62.5%")], id: \.0) { label, value in
+                                Color.clear
+                                    .frame(width: 1, height: 1)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel("\(label) \(value)")
+                                    .accessibilityIdentifier("live-stat-\(label)")
+                            }
+                        }
+                        .frame(width: 1, height: 1)
+                        .allowsHitTesting(false)
                     }
                     .overlay(alignment: .topTrailing) {
                         if camera.isLive {
@@ -2888,14 +3136,28 @@ struct ShotDetectedView: View {     // 034
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var camera = CameraService.live
     @State private var goReview = false
+    @State private var toast: ShotIQToast?
     private let context = [("Catch & Shoot", "Off the Dribble"), ("Top of Key", "17.5 ft"),
                            ("Release Height", "7.6 ft"), ("Defender", "4.2 ft Away")]
 
     /// Shared by CONFIRM MAKE / MARK MISS: record the real shot event, then
     /// move on to the capture review.
     private func record(made: Bool) {
-        Task { await APIClient.shared.recordShotEvent(drillId: "live-capture", made: made) }
-        goReview = true
+        toast = .progress("Saving shot result", made ? "Recording this attempt as a make." : "Recording this attempt as a miss.", progress: 0.7)
+        Task {
+            let saved = UITestHooks.active
+                ? true
+                : await APIClient.shared.recordShotEvent(drillId: "live-capture", made: made)
+            await MainActor.run {
+                if saved {
+                    toast = .success(made ? "Make recorded" : "Miss recorded", "Opening capture review.")
+                } else {
+                    toast = .info(made ? "Make noted" : "Miss noted", "Opening capture review; sync may require connection.")
+                }
+            }
+            try? await Task.sleep(for: .milliseconds(900))
+            await MainActor.run { goReview = true }
+        }
     }
 
     var body: some View {
@@ -3061,6 +3323,7 @@ struct ShotDetectedView: View {     // 034
                 }
             }
         }
+        .shotiqToast($toast)
         .navigationDestination(isPresented: $goReview) { CaptureReviewView() }
     }
 }

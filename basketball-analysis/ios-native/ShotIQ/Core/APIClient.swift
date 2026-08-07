@@ -184,6 +184,18 @@ struct LatestAnalysisResponseDTO: Codable, Equatable {
 actor APIClient {
     static let shared = APIClient()
 
+    struct ShotEventRecordBody: Codable, Equatable {
+        struct Event: Codable, Equatable {
+            var sequence: Int
+            var detected = true
+            var detectedResult: String
+            var confidence: Double
+            var metadata: [String: String]
+        }
+
+        var events: [Event]
+    }
+
     /// Same origin the web client talks to (the live production deploy);
     /// override with the SHOTIQ_API environment variable (Xcode scheme →
     /// Run → Arguments → Environment Variables) for local/staging servers.
@@ -334,10 +346,24 @@ actor APIClient {
         return r.result
     }
 
-    func recordShotEvent(drillId: String, made: Bool) async {
+    func recordShotEvent(drillId: String, made: Bool) async -> Bool {
         struct Empty: Codable {}
-        _ = try? await request("/api/shot-events", method: "POST",
-                               body: ["drillId": drillId, "result": made ? "make" : "miss"]) as Empty?
+        let body = Self.shotEventRecordBody(drillId: drillId, made: made)
+        do {
+            _ = try await request("/api/shot-events", method: "POST", body: body) as Empty?
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    static func shotEventRecordBody(drillId: String, made: Bool) -> ShotEventRecordBody {
+        ShotEventRecordBody(events: [
+            .init(sequence: 0,
+                  detectedResult: made ? "make" : "miss",
+                  confidence: 1.0,
+                  metadata: ["drillId": drillId, "source": "ios-live-capture"])
+        ])
     }
 
     // MARK: generic helpers so every screen can reach any web endpoint
@@ -444,7 +470,10 @@ actor APIClient {
 
     /// Multipart image upload matching POST /api/upload (field "image").
     func uploadImage(_ imageData: Data, filename: String = "shot.jpg",
-                     uploadType: String = "user") async throws -> Data {
+                     uploadType: String = "user",
+                     shootingAngle: String? = nil,
+                     imageCategory: String? = nil,
+                     capturePhase: String? = nil) async throws -> Data {
         try await ensureCsrfToken()
         var req = URLRequest(url: baseURL.appending(path: "/api/upload"))
         req.httpMethod = "POST"
@@ -457,6 +486,12 @@ actor APIClient {
             bodyData.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".data(using: .utf8)!)
         }
         field("uploadType", uploadType)
+        if let shootingAngle {
+            field("angle", shootingAngle)
+            field("shootingAngle", shootingAngle)
+        }
+        if let imageCategory { field("imageCategory", imageCategory) }
+        if let capturePhase { field("capturePhase", capturePhase) }
         bodyData.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"image\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
         bodyData.append(imageData)
         bodyData.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)

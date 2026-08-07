@@ -105,6 +105,29 @@ fileprivate struct FormScorePanel: View {
     }
 }
 
+enum AnalysisResultMediaSource: Equatable {
+    case video(URL)
+    case image(URL)
+    case canonicalFallback(String)
+    case placeholder(String)
+}
+
+enum AnalysisResultMediaSurfaceResolver {
+    static func source(for presentation: AnalysisResultPresentation,
+                       fallbackKey: String) -> AnalysisResultMediaSource {
+        if let url = presentation.videoURL {
+            return .video(url)
+        }
+        if let url = presentation.mediaURL {
+            return .image(url)
+        }
+        if presentation.id == "canonical-demo" {
+            return .canonicalFallback(fallbackKey)
+        }
+        return .placeholder(presentation.mediaLabel)
+    }
+}
+
 fileprivate struct AnalysisResultMediaSurface: View {
     var presentation: AnalysisResultPresentation
     var fallbackKey: String
@@ -112,10 +135,11 @@ fileprivate struct AnalysisResultMediaSurface: View {
 
     var body: some View {
         ZStack {
-            if let url = presentation.videoURL {
+            switch AnalysisResultMediaSurfaceResolver.source(for: presentation, fallbackKey: fallbackKey) {
+            case .video(let url):
                 VideoPlayer(player: AVPlayer(url: url))
                     .accessibilityLabel("Saved analysis video")
-            } else if let url = presentation.mediaURL {
+            case .image(let url):
                 if url.isFileURL {
                     if let image = UIImage(contentsOfFile: url.path) {
                         Image(uiImage: image).resizable().scaledToFill()
@@ -134,10 +158,10 @@ fileprivate struct AnalysisResultMediaSurface: View {
                         }
                     }
                 }
-            } else if presentation.id == "canonical-demo" {
-                CanonicalMediaSurface(key: fallbackKey, height: height)
-            } else {
-                mediaPlaceholder(presentation.mediaLabel)
+            case .canonicalFallback(let key):
+                CanonicalMediaSurface(key: key, height: height)
+            case .placeholder(let label):
+                mediaPlaceholder(label)
             }
         }
         .frame(height: height)

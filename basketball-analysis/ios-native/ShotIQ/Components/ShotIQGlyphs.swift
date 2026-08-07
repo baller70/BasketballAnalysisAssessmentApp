@@ -70,6 +70,16 @@ struct ShotIQGlyphPen {
         marks.append(ShotIQGlyphMark(path: p, accent: accent, dash: dash))
     }
 
+    mutating func basketball(_ x: CGFloat, _ y: CGFloat, r: CGFloat = 2.2,
+                             accent: Bool = true) {
+        circle(x, y, r: r, accent: accent)
+        line(x - r, y, x + r, y, accent: accent)
+        quad(CGPoint(x: x, y: y - r), CGPoint(x: x + r * 0.58, y: y),
+             CGPoint(x: x, y: y + r), accent: accent)
+        quad(CGPoint(x: x, y: y - r), CGPoint(x: x - r * 0.58, y: y),
+             CGPoint(x: x, y: y + r), accent: accent)
+    }
+
     mutating func rect(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat,
                        radius: CGFloat = 1, accent: Bool = false, dash: [CGFloat] = []) {
         let p = Path(roundedRect: CGRect(x: x, y: y, width: w, height: h), cornerRadius: radius)
@@ -202,24 +212,24 @@ enum ShotPhase: String, CaseIterable {
             p.line(9.8, 6.4, 10.4, 13.4)
             p.poly([CGPoint(x: 10.4, y: 13.4), CGPoint(x: 8.4, y: 17.4), CGPoint(x: 8, y: 21.4)])
             p.poly([CGPoint(x: 10.4, y: 13.4), CGPoint(x: 12.6, y: 17.4), CGPoint(x: 13.2, y: 21.4)])
-            p.line(10, 8.4, 12.6, 11.4)
-            p.node(14.8, 12.8, r: 2.2, accent: active, filled: active, knockout: false)
+            p.poly([CGPoint(x: 10, y: 8.4), CGPoint(x: 12.6, y: 11.4), CGPoint(x: 14.4, y: 12.2)])
+            p.basketball(15.4, 12.5, r: 2.3, accent: active)
         case .load:
             // Deep knee bend, ball low and in front — gathering.
             p.circle(8.6, 6.4, r: 2)
             p.line(8.6, 8.4, 10.8, 13)
             p.poly([CGPoint(x: 10.8, y: 13), CGPoint(x: 7.8, y: 16.2), CGPoint(x: 8.6, y: 21.4)])
             p.poly([CGPoint(x: 10.8, y: 13), CGPoint(x: 13.6, y: 16.4), CGPoint(x: 13.6, y: 21.4)])
-            p.line(9.5, 10.4, 12.2, 12.4)
-            p.node(14.4, 13.6, r: 2.2, accent: active, filled: active, knockout: false)
+            p.poly([CGPoint(x: 9.5, y: 10.4), CGPoint(x: 12.2, y: 12.4), CGPoint(x: 14, y: 13.2)])
+            p.basketball(15.2, 13.8, r: 2.3, accent: active)
         case .rise:
             // Extending upward, ball at the forehead — the lift.
             p.circle(10.6, 5.6, r: 2)
             p.line(10.6, 7.6, 10.6, 13.6)
             p.poly([CGPoint(x: 10.6, y: 13.6), CGPoint(x: 8.2, y: 17.4), CGPoint(x: 8.6, y: 21.4)])
             p.poly([CGPoint(x: 10.6, y: 13.6), CGPoint(x: 12.8, y: 17.2), CGPoint(x: 13.8, y: 20.8)])
-            p.line(10.6, 9, 12.8, 7.2)
-            p.node(15.4, 6, r: 2.2, accent: active, filled: active, knockout: false)
+            p.poly([CGPoint(x: 10.6, y: 9), CGPoint(x: 12.8, y: 7.2), CGPoint(x: 14.4, y: 6.5)])
+            p.basketball(15.7, 5.8, r: 2.3, accent: active)
         case .release:
             // Full extension, ball leaving the hand overhead.
             p.circle(9.6, 8, r: 2)
@@ -227,7 +237,8 @@ enum ShotPhase: String, CaseIterable {
             p.poly([CGPoint(x: 10.4, y: 15.2), CGPoint(x: 8.4, y: 18.6), CGPoint(x: 8, y: 21.6)])
             p.poly([CGPoint(x: 10.4, y: 15.2), CGPoint(x: 12.8, y: 18.4), CGPoint(x: 13.8, y: 21.4)])
             p.poly([CGPoint(x: 9.9, y: 11), CGPoint(x: 12.4, y: 7.8), CGPoint(x: 13.2, y: 5.4)])
-            p.node(14.4, 2.8, r: 2.2, accent: active, filled: active, knockout: false)
+            p.line(13.2, 5.4, 14.1, 6.6, accent: active)
+            p.basketball(15.1, 2.8, r: 2.2, accent: active)
         case .follow:
             // Arm held out long with the wrist relaxed — the ball is gone.
             p.circle(9.6, 7, r: 2)
@@ -238,6 +249,7 @@ enum ShotPhase: String, CaseIterable {
             p.line(16.6, 4.8, 17.2, 7.2, accent: active)
             p.quad(CGPoint(x: 17.6, y: 3.2), CGPoint(x: 20.2, y: 2.2), CGPoint(x: 20.6, y: 5),
                    accent: active, dash: [1.4, 1.6])
+            p.basketball(21.1, 4.7, r: 1.5, accent: active)
         }
     }
 }
@@ -303,8 +315,10 @@ struct CaptureSourceGlyph: View {
                 p.line(15, 7, 15, 17)
                 p.line(6, 10.6, 6, 13.4)
                 p.line(18, 10.6, 18, 13.4)
-                p.line(12, 5.4, 12, 18.6, accent: true)
-                p.node(12, 12, r: 1.7, accent: true, filled: true)
+                p.basketball(12, 12, r: 2.1, accent: true)
+                p.line(12, 18, 12, 21, accent: true)
+                p.arrowHead(at: CGPoint(x: 12, y: 17.6), from: CGPoint(x: 12, y: 21),
+                            span: 1.5, accent: true)
             case .liveCamera:
                 p.captureBrackets()
                 p.circle(11.2, 8.6, r: 1.5)
@@ -312,7 +326,7 @@ struct CaptureSourceGlyph: View {
                 p.poly([CGPoint(x: 11.6, y: 14), CGPoint(x: 9.6, y: 16.8)])
                 p.poly([CGPoint(x: 11.6, y: 14), CGPoint(x: 13.6, y: 16.6)])
                 p.poly([CGPoint(x: 11.3, y: 11.2), CGPoint(x: 14, y: 9.4)])
-                p.node(15.4, 8.6, r: 1.5, accent: true, filled: true)
+                p.basketball(16, 8.4, r: 1.6, accent: true)
             }
         }
     }
@@ -339,7 +353,7 @@ struct CaptureReticleGlyph: View {
     var body: some View {
         ShotIQGlyph(size: size, label: label) { p in
             p.captureBrackets(inset: 3.5, arm: 4, radius: 1.4)
-            p.node(12, 12, r: 2.2, filled: true)
+            p.basketball(12, 12, r: 2.3, accent: true)
         }
     }
 }
@@ -362,6 +376,8 @@ enum MechanicKind {
     case flightTime
     /// Plan-view left/right deviation of the shot — canonical 070 "Shot shape".
     case shotShape
+    /// Straight vertical release path, distinct from flight arc.
+    case releasePath
 }
 
 struct MechanicGlyph: View {
@@ -374,21 +390,24 @@ struct MechanicGlyph: View {
         ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch kind {
             case .elbowAngle:
-                // Two limb segments meeting at a joint, measured sweep dotted in.
-                p.poly([CGPoint(x: 4.5, y: 16.5), CGPoint(x: 11, y: 8), CGPoint(x: 19.5, y: 14.5)])
-                p.quad(CGPoint(x: 8, y: 13.4), CGPoint(x: 11.4, y: 16.2), CGPoint(x: 15, y: 12.6),
-                       accent: true, dash: [1.4, 1.8])
-                p.node(4.5, 16.5, r: 1.5)
-                p.node(11, 8, r: 1.5, accent: true)
-                p.node(19.5, 14.5, r: 1.5)
+                // Elbow directly under the ball, with the alignment guide visible.
+                p.line(12, 4.2, 12, 19.8, accent: true, dash: [1.5, 1.8])
+                p.basketball(12, 4.6, r: 2.1, accent: true)
+                p.poly([CGPoint(x: 7.4, y: 19), CGPoint(x: 11, y: 13.2),
+                        CGPoint(x: 12, y: 7.2)])
+                p.node(11, 13.2, r: 1.6, accent: true)
+                p.node(7.4, 19, r: 1.4)
             case .wristArc:
-                // Forearm into a cocked hand, flexion dotted at the joint.
-                p.poly([CGPoint(x: 4.5, y: 19), CGPoint(x: 10.5, y: 11.5), CGPoint(x: 16, y: 9)])
-                p.line(16, 9, 18.5, 11)
-                p.quad(CGPoint(x: 12.4, y: 9.6), CGPoint(x: 9.4, y: 9.8), CGPoint(x: 9.4, y: 13.6),
-                       accent: true, dash: [1.4, 1.8])
-                p.node(10.5, 11.5, r: 1.5, accent: true)
-                p.node(4.5, 19, r: 1.5)
+                // Wrist stacked above the elbow with a small snap cue.
+                p.line(12, 5, 12, 19, accent: true, dash: [1.5, 1.8])
+                p.basketball(12, 5.2, r: 2.1, accent: true)
+                p.poly([CGPoint(x: 8.2, y: 19), CGPoint(x: 11.5, y: 12.8),
+                        CGPoint(x: 12, y: 7.4)])
+                p.node(11.5, 12.8, r: 1.5, accent: true)
+                p.quad(CGPoint(x: 12.8, y: 7.2), CGPoint(x: 16.4, y: 8.3),
+                       CGPoint(x: 16.9, y: 11.5), accent: true)
+                p.arrowHead(at: CGPoint(x: 16.9, y: 11.7), from: CGPoint(x: 15.2, y: 9.2),
+                            span: 1.4, accent: true)
             case .releaseHeight:
                 // Floor-to-hand ruler beside a standing figure.
                 p.line(4, 4.5, 4, 19.5)
@@ -423,6 +442,15 @@ struct MechanicGlyph: View {
                 p.line(4.5, 18.5, 8.5, 9, accent: true)
                 p.node(4.5, 18.5, r: 1.5, accent: true)
                 p.node(19.5, 11.5, r: 1.5)
+            case .releasePath:
+                // Straight path out of the hand, not the later flight arc.
+                p.line(12, 5.2, 12, 18.8, accent: true, dash: [1.5, 1.8])
+                p.arrowHead(at: CGPoint(x: 12, y: 4.8), from: CGPoint(x: 12, y: 9),
+                            accent: true)
+                p.basketball(12, 10.5, r: 2.2, accent: true)
+                p.poly([CGPoint(x: 8.6, y: 20), CGPoint(x: 11.2, y: 16),
+                        CGPoint(x: 12, y: 13)])
+                p.node(11.2, 16, r: 1.4)
             case .centerline:
                 // Body midline with the measured lateral offset arrowed off it.
                 p.line(12, 3, 12, 21, dash: [2, 2])
@@ -494,9 +522,7 @@ struct MechanicGlyph: View {
             case .spin:
                 // Canonical 041: the ball with its two rotation arrows. The ball
                 // seams are what separate it from `.accuracy`'s concentric target.
-                p.circle(12, 12, r: 4.6)
-                p.quad(CGPoint(x: 12, y: 7.4), CGPoint(x: 14.9, y: 12), CGPoint(x: 12, y: 16.6))
-                p.quad(CGPoint(x: 12, y: 7.4), CGPoint(x: 9.1, y: 12), CGPoint(x: 12, y: 16.6))
+                p.basketball(12, 12, r: 4.6, accent: true)
                 p.arc(12, 12, r: 7.6, from: 128, to: 202, accent: true)
                 p.arrowHead(at: CGPoint(x: 7.5, y: 9), from: CGPoint(x: 5.6, y: 11.4),
                             span: 1.7, accent: true)
@@ -546,6 +572,8 @@ extension MechanicKind {
         case k.contains("wrist") || k.contains("snap"): self = .wristArc
         case k.contains("release angle") || k.contains("launch"): self = .releaseAngle
         case k.contains("height"): self = .releaseHeight
+        case k.contains("release path") || k.contains("shot path") || k.contains("straight path"):
+            self = .releasePath
         case k.contains("angle") || k.contains("arc"): self = .ballArc
         // Before the balance arm: "distance" *contains* "stance", so
         // "RELEASE DISTANCE" on 051 was resolving to the balance diagram and
@@ -837,10 +865,7 @@ struct StatMarkGlyph: View {
                 p.poly([CGPoint(x: 12, y: 2.6), CGPoint(x: 20.2, y: 7.3), CGPoint(x: 20.2, y: 16.7),
                         CGPoint(x: 12, y: 21.4), CGPoint(x: 3.8, y: 16.7), CGPoint(x: 3.8, y: 7.3),
                         CGPoint(x: 12, y: 2.6)])
-                p.circle(12, 12, r: 4)
-                p.line(8, 12, 16, 12)
-                p.quad(CGPoint(x: 12, y: 8), CGPoint(x: 14.6, y: 12), CGPoint(x: 12, y: 16))
-                p.quad(CGPoint(x: 12, y: 8), CGPoint(x: 9.4, y: 12), CGPoint(x: 12, y: 16))
+                p.basketball(12, 12, r: 4, accent: true)
             case .formScore:
                 p.arc(12, 14.5, r: 8.2, from: 180, to: 360, dash: [1.5, 2])
                 p.line(12, 14.5, 17.2, 9.4, accent: true)
@@ -855,7 +880,7 @@ struct StatMarkGlyph: View {
                 p.line(5.2, 13.8, 5.2, 15)
                 p.line(18.8, 9, 18.8, 10.2)
                 p.line(18.8, 13.8, 18.8, 15)
-                p.node(12, 12, r: 1.7, accent: true, filled: true)
+                p.basketball(12, 12, r: 1.9, accent: true)
             case .volume:
                 p.line(4, 19.5, 20, 19.5)
                 p.line(7, 19.5, 7, 13)
@@ -962,13 +987,13 @@ struct ReadinessGlyph: View {
                 p.line(11.4, 13.6, 13.4, 16.2)
                 p.line(11.1, 10.8, 13.4, 12.4)
             case .framing:
-                p.rect(8.5, 6.5, 7, 11, radius: 1, accent: true)
-                p.circle(12, 9.4, r: 1.1)
-                p.line(12, 10.5, 12, 14)
-                p.line(12, 11.6, 10.3, 12.6)
-                p.line(12, 11.6, 13.7, 12.6)
-                p.line(12, 14, 10.6, 16.2)
-                p.line(12, 14, 13.4, 16.2)
+                p.circle(12, 7.3, r: 1.3)
+                p.line(12, 8.6, 12, 14.2)
+                p.line(12, 10.4, 9.6, 12.2)
+                p.line(12, 10.4, 14.4, 12.2)
+                p.line(12, 14.2, 10.2, 18)
+                p.line(12, 14.2, 13.8, 18)
+                p.line(9.4, 19, 14.6, 19, accent: true)
             case .lighting:
                 p.circle(12, 12, r: 4, accent: true)
                 p.line(12, 3.5, 12, 5.5)
@@ -980,10 +1005,71 @@ struct ReadinessGlyph: View {
                 p.line(17.8, 6.2, 16.4, 7.6)
                 p.line(7.6, 16.4, 6.2, 17.8)
             case .stability:
-                p.rect(6.5, 8.5, 11, 7, radius: 1)
-                p.line(12, 14, 12, 10, accent: true)
-                p.arrowHead(at: CGPoint(x: 12, y: 9.6), from: CGPoint(x: 12, y: 13), accent: true)
+                p.rect(7, 7.2, 10, 5.8, radius: 1)
+                p.node(15.2, 10.1, r: 0.8, filled: true)
+                p.line(12, 13, 12, 19)
+                p.line(12, 15.4, 8.8, 20.4)
+                p.line(12, 15.4, 15.2, 20.4)
+                p.line(5.5, 18.6, 18.5, 18.6, accent: true, dash: [1.4, 1.8])
             }
+        }
+    }
+}
+
+// MARK: - Equipment and setup
+
+enum EquipmentKind { case basketball, cones, spot, location }
+
+struct EquipmentGlyph: View {
+    var kind: EquipmentKind
+    var size: CGFloat = 24
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .basketball:
+                p.basketball(12, 12, r: 5.6, accent: true)
+                p.line(5.5, 17, 3.8, 18.2, dash: [1.4, 1.8])
+                p.line(18.5, 6.8, 20.2, 5.6, dash: [1.4, 1.8])
+            case .cones:
+                p.poly([CGPoint(x: 12, y: 5), CGPoint(x: 7, y: 18),
+                        CGPoint(x: 17, y: 18), CGPoint(x: 12, y: 5)])
+                p.line(8.4, 14.4, 15.6, 14.4, accent: true)
+                p.line(6, 20, 18, 20)
+            case .spot:
+                p.line(4, 13, 20, 13)
+                p.line(4, 10.2, 4, 15.8)
+                p.line(20, 10.2, 20, 15.8)
+                for i in 0...5 {
+                    let x = 6.7 + CGFloat(i) * 2.1
+                    p.line(x, 13, x, 16.2)
+                }
+                p.node(12, 13, r: 1.5, accent: true, filled: true)
+            case .location:
+                p.quad(CGPoint(x: 12, y: 21), CGPoint(x: 5.8, y: 12.8),
+                       CGPoint(x: 8.2, y: 6.8))
+                p.quad(CGPoint(x: 8.2, y: 6.8), CGPoint(x: 12, y: 2.8),
+                       CGPoint(x: 15.8, y: 6.8))
+                p.quad(CGPoint(x: 15.8, y: 6.8), CGPoint(x: 18.2, y: 12.8),
+                       CGPoint(x: 12, y: 21))
+                p.circle(12, 10.3, r: 2.4, accent: true)
+                p.arc(12, 21, r: 5.4, from: 205, to: 335)
+            }
+        }
+    }
+}
+
+extension EquipmentKind {
+    init?(equipmentLabel: String) {
+        let k = equipmentLabel.lowercased()
+        switch true {
+        case k.contains("basketball") || shotiqLabelHasWord(k, "ball"): self = .basketball
+        case k.contains("cone"): self = .cones
+        case k.contains("spot") || k.contains("free throw") || k.contains("line"): self = .spot
+        case k.contains("location") || k.contains("court"): self = .location
+        default: return nil
         }
     }
 }
@@ -1005,7 +1091,7 @@ struct NavGlyph: View {
             switch mark {
             case .home:
                 p.captureBrackets(inset: 3.5, arm: 4, radius: 1.4)
-                p.node(12, 12, r: 2.2, accent: active, filled: active)
+                p.basketball(12, 12, r: 2.3, accent: active)
             case .capture:
                 p.line(6.5, 15.5, 12, 9.5)
                 p.line(12, 9.5, 18, 14)
@@ -1013,11 +1099,14 @@ struct NavGlyph: View {
                 p.node(12, 9.5, r: 2.2, accent: active, filled: active)
                 p.node(18, 14, r: 2)
             case .train:
-                p.line(3.5, 8.5, 20.5, 8.5)
-                p.line(3.5, 15.5, 20.5, 15.5)
-                p.node(7.5, 12, r: 1.9)
-                p.node(12, 12, r: 1.9, accent: active, filled: active)
-                p.node(16.5, 12, r: 1.9)
+                p.line(4.5, 5.5, 4.5, 18.5)
+                p.line(19.5, 5.5, 19.5, 18.5)
+                p.line(4.5, 8, 19.5, 8)
+                p.line(4.5, 12, 19.5, 12)
+                p.line(4.5, 16, 19.5, 16)
+                p.node(8.3, 12, r: 1.5)
+                p.basketball(12, 12, r: 1.8, accent: active)
+                p.node(15.7, 12, r: 1.5)
             case .progress:
                 p.quad(CGPoint(x: 3.5, y: 18), CGPoint(x: 9, y: 5.5), CGPoint(x: 20.5, y: 7.5))
                 p.node(3.5, 18, r: 1.8)
@@ -1466,15 +1555,16 @@ struct CoachingTargetGlyph: View {
 
     var body: some View {
         ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            p.captureBrackets(inset: 2.5, arm: 4.2, radius: 1.4)
-            p.poly([CGPoint(x: 7, y: 16.4), CGPoint(x: 10.4, y: 12.6),
-                    CGPoint(x: 14.6, y: 13.4)])
-            p.quad(CGPoint(x: 10.4, y: 12.6), CGPoint(x: 13.6, y: 7.4),
-                   CGPoint(x: 16.4, y: 9.6), accent: true, dash: [1.5, 1.8])
-            p.node(7, 16.4, r: 1.5)
-            p.node(10.4, 12.6, r: 1.5, accent: true, filled: true)
-            p.node(14.6, 13.4, r: 1.5)
-            p.node(16.4, 9.6, r: 1.5, accent: true)
+            p.circle(9.2, 8.2, r: 1.9)
+            p.line(9.2, 10.1, 9.2, 15.8)
+            p.line(9.2, 15.8, 7.2, 21)
+            p.line(9.2, 15.8, 11.4, 21)
+            p.line(14.2, 3.8, 14.2, 18.6, accent: true, dash: [1.5, 1.8])
+            p.basketball(14.2, 4.2, r: 2.1, accent: true)
+            p.poly([CGPoint(x: 9.4, y: 11.2), CGPoint(x: 12.2, y: 8.2),
+                    CGPoint(x: 14.2, y: 6.4)])
+            p.node(12.2, 8.2, r: 1.5, accent: true)
+            p.line(6.6, 21.4, 12.2, 21.4)
         }
     }
 }
@@ -1509,6 +1599,7 @@ enum ShotIQConcept {
     case nav(NavMark)
     case workout(WorkoutKind)
     case cue(CueKind)
+    case equipment(EquipmentKind)
     case coachingTarget
     case captureReticle
 
@@ -1540,7 +1631,9 @@ enum ShotIQConcept {
         // 3b. Ball path. 057's TARGET MECHANICS lists ELBOW STACK, WRIST
         //     ALIGNMENT and RELEASE PATH side by side, so the third needs its
         //     own diagram rather than falling through to a system symbol.
-        if k.contains("release path") || k.contains("shot path") { return .mechanic(.ballArc) }
+        if k.contains("release path") || k.contains("shot path") || k.contains("straight path") {
+            return .mechanic(.releasePath)
+        }
 
         // 4. Where media comes from. "Take photo" is a live capture and
         //    "Choose from library" is a stored still — matching on the word
@@ -1565,6 +1658,9 @@ enum ShotIQConcept {
         if k.contains("stable") || k.contains("steady") || k.contains("tripod")
             || k.contains("camera position") { return .readiness(.stability) }
         if k.contains("routine") || k.contains("athlete visible") { return .readiness(.athlete) }
+
+        // 5b. Drill equipment and setup cards.
+        if let e = EquipmentKind(equipmentLabel: caption) { return .equipment(e) }
 
         // 6. Navigation and the four product pillars canonical draws on 002/017.
         if k == "home" { return .nav(.home) }
@@ -1615,6 +1711,7 @@ struct ShotIQConceptGlyph: View {
         case .nav(let k): NavGlyph(mark: k, size: size)
         case .workout(let k): WorkoutGlyph(kind: k, size: size, accent: accent)
         case .cue(let k): CueGlyph(kind: k, size: size, accent: accent)
+        case .equipment(let k): EquipmentGlyph(kind: k, size: size, accent: accent)
         case .coachingTarget: CoachingTargetGlyph(size: size, accent: accent)
         case .captureReticle: CaptureReticleGlyph(size: size)
         case .none: Image(systemName: fallback).font(.system(size: size * 0.8))

@@ -31,6 +31,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     private static let mainArgs = ["-uiTestBypassAuth", "-uiTestDemoData"]
 
     private var app: XCUIApplication!
+    private var lastLaunchArguments: [String] = []
 
     override func setUp() {
         // Collect every dead tap in one run instead of stopping at the first.
@@ -47,6 +48,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     @discardableResult
     private func launch(_ args: [String]) -> XCUIApplication {
         app?.terminate()
+        lastLaunchArguments = args
         let a = XCUIApplication()
         a.launchArguments = args + Self.extraLaunchArguments
         a.launch()
@@ -187,7 +189,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     /// tab's pushed NavigationStack, so relaunch the deterministic signed-in
     /// shell before each route branch.
     private func resetTab(_ label: String, root: String) {
-        launch(Self.mainArgs)
+        launch(lastLaunchArguments.isEmpty ? Self.mainArgs : lastLaunchArguments)
         selectTab(label)
         _ = screenExists(root, timeout: 8)
     }

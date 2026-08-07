@@ -77,6 +77,19 @@ fileprivate struct PlayerCardExportView: View {
     }
 }
 
+enum PlayerCardImageRenderer {
+    @MainActor
+    static func render(name: String,
+                       accent: Color = ShotIQColor.shotiqOrange,
+                       jersey: Int? = nil) -> UIImage? {
+        let renderer = ImageRenderer(content: PlayerCardExportView(name: name,
+                                                                   accent: accent,
+                                                                   jersey: jersey))
+        renderer.scale = 3
+        return renderer.uiImage
+    }
+}
+
 /// Career shooting rates arrive from /api/shooters already scaled 0-100 —
 /// `src/data/eliteShooters.ts` carries `careerPct: 43.0`, and the route passes
 /// it through untouched. The UITest seed below used to carry 0-1 fractions
@@ -298,9 +311,9 @@ struct PlayerCardView: View {       // 048
     }
     private func renderCard() {
         guard cardImage == nil else { return }
-        let renderer = ImageRenderer(content: PlayerCardExportView(name: playerName))
-        renderer.scale = 3
-        if let ui = renderer.uiImage { cardImage = Image(uiImage: ui) }
+        if let ui = PlayerCardImageRenderer.render(name: playerName) {
+            cardImage = Image(uiImage: ui)
+        }
     }
     private func archetypeCol(_ label: String, _ icon: String, _ title: String, _ caption: String) -> some View {
         VStack(spacing: 8) {
@@ -575,10 +588,9 @@ struct CustomizePlayerCardView: View { // 049
     /// Renders the customized card to a bitmap; ShareLink's sheet handles saving
     /// (no photo-library permission key ships in Info.plist).
     private func saveCard() {
-        let renderer = ImageRenderer(content: PlayerCardExportView(
-            name: "\(firstName) \(lastName)", accent: bannerColor, jersey: jersey))
-        renderer.scale = 3
-        if let ui = renderer.uiImage {
+        if let ui = PlayerCardImageRenderer.render(name: "\(firstName) \(lastName)",
+                                                   accent: bannerColor,
+                                                   jersey: jersey) {
             savedImage = Image(uiImage: ui)
             showSaveSheet = true
         }

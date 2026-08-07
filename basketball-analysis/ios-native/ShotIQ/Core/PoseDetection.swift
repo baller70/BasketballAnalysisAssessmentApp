@@ -33,6 +33,12 @@ import CoreGraphics
 import UIKit
 import Vision
 
+enum PoseDetectionResult: Equatable {
+    case detected(DetectedPose)
+    case noPose
+    case unavailable(String)
+}
+
 /// A body pose located in one still, in top-left-origin unit coordinates so it
 /// can be drawn straight into a SwiftUI Canvas without a second flip.
 struct DetectedPose: Equatable {
@@ -155,22 +161,27 @@ enum ShotIQPose {
     /// Runs off the main thread: on a full-resolution iPhone photo the request
     /// takes long enough to stutter the UI if it runs during a view update.
     static func detect(in image: UIImage) async -> DetectedPose? {
-        guard let cgImage = image.cgImage else { return nil }
+        if case .detected(let pose) = await detectResult(in: image) { return pose }
+        return nil
+    }
+
+    static func detectResult(in image: UIImage) async -> PoseDetectionResult {
+        guard let cgImage = image.cgImage else { return .unavailable("Image could not be read.") }
         let orientation = cgOrientation(image.imageOrientation)
 
-        return await withCheckedContinuation { (continuation: CheckedContinuation<DetectedPose?, Never>) in
+        return await withCheckedContinuation { (continuation: CheckedContinuation<PoseDetectionResult, Never>) in
             DispatchQueue.global(qos: .userInitiated).async {
                 let request = VNDetectHumanBodyPoseRequest()
                 let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
                 do {
                     try handler.perform([request])
                 } catch {
-                    continuation.resume(returning: nil)
+                    continuation.resume(returning: .unavailable("Pose detector unavailable on this simulator/device."))
                     return
                 }
 
                 guard let observations = request.results, !observations.isEmpty else {
-                    continuation.resume(returning: nil)
+                    continuation.resume(returning: .noPose)
                     return
                 }
 
@@ -182,7 +193,7 @@ enum ShotIQPose {
                 }
                 guard let observation = best,
                       let points = try? observation.recognizedPoints(.all) else {
-                    continuation.resume(returning: nil)
+                    continuation.resume(returning: .noPose)
                     return
                 }
 
@@ -199,7 +210,7 @@ enum ShotIQPose {
                         ? 0
                         : confidences.reduce(0, +) / Float(confidences.count)
                 )
-                continuation.resume(returning: pose.isUsable ? pose : nil)
+                continuation.resume(returning: pose.isUsable ? .detected(pose) : .noPose)
             }
         }
     }

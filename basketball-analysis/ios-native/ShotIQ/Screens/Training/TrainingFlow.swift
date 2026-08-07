@@ -9,6 +9,19 @@ import SwiftUI
 /// `CanonicalPhoto`). Older screens left this nil and showed a gray icon box;
 /// production paths now fall back to bundled basketball imagery so list/detail
 /// cards still have a visible shot-related frame.
+enum PhotoThumbMediaResolver {
+    static func photoKey(explicit photo: String?, icon: String) -> String {
+        if let photo { return photo }
+        if icon.contains("play") { return "068-visual-002" }
+        if icon.contains("chart") { return "069-visual-004" }
+        if icon.contains("target") { return "065-visual-001" }
+        if icon.contains("viewfinder") || icon.contains("camera") {
+            return "054-visual-001"
+        }
+        return "054-visual-003"
+    }
+}
+
 struct PhotoThumb: View {
     var width: CGFloat? = nil
     var height: CGFloat
@@ -19,14 +32,7 @@ struct PhotoThumb: View {
             .accessibilityLabel("Shot media thumbnail")
     }
     private var resolvedPhoto: String {
-        if let photo { return photo }
-        if icon.contains("play") { return "068-visual-002" }
-        if icon.contains("chart") { return "069-visual-004" }
-        if icon.contains("target") { return "065-visual-001" }
-        if icon.contains("viewfinder") || icon.contains("camera") {
-            return "054-visual-001"
-        }
-        return "054-visual-003"
+        PhotoThumbMediaResolver.photoKey(explicit: photo, icon: icon)
     }
 }
 
@@ -823,7 +829,9 @@ struct DrillDetailView: View {      // 057
     }
     private func equipCard(_ icon: String, _ title: String, _ caption: String) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: icon).font(.system(size: 18)).foregroundStyle(ShotIQColor.ink).frame(width: 26)
+            ShotIQConceptGlyph(concept: title, fallback: icon, size: 26)
+                .foregroundStyle(ShotIQColor.ink)
+                .frame(width: 26)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).shotiqBody(13, weight: .semibold)
                 Text(caption).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
