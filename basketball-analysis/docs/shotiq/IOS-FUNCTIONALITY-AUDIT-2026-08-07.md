@@ -21,6 +21,20 @@ audit must separately prove:
 
 Until those three checks are done, no screen should be treated as working.
 
+Analytics correction: the app is not just showing screens. It is showing shot
+analytics: form scores, make percentages, confidence values, body/ball angles,
+release phase, elbow/wrist/release measurements, flaw labels, trend lines, and
+training/history totals. Those numbers must be audited as data, not decoration.
+For every analytic number or label on a screen, the audit must prove:
+
+1. The displayed value has a source: camera/pose/video measurement, backend
+   analysis result, saved history, shot-event total, profile input, or clearly
+   marked demo fixture.
+2. The calculation is reproducible from that source.
+3. iOS and web use the same contract/ranges/meaning for the same value.
+4. The UI updates when the underlying input changes.
+5. Placeholder/demo analytics are not presented as measured player analytics.
+
 ## Evidence Status
 
 | Status | Meaning |
@@ -29,6 +43,7 @@ Until those three checks are done, no screen should be treated as working.
 | Failed | A command or running-app test failed in this session. |
 | Blocked | The correct test could not run in this environment yet. |
 | Code-only suspicion | The code strongly indicates a defect, but it still needs a running-app proof. |
+| Analytics-unproven | The screen renders an analytic value, but the source/calculation/update path has not been proved. |
 
 ## Tests Run This Session
 
@@ -53,7 +68,9 @@ real crop mutation, real video trim, live camera pose tracking, upload, analysis
 or web/iOS backend sync. They also do not prove that every canonical/placeholder
 screen is reachable through the real production user flow. A test-only
 `-uiTestStage` screenshot must be treated as a visual fixture unless the real
-path to that state is also tested.
+path to that state is also tested. A screenshot with `82`, `97%`, `179°`,
+`62.5%`, or any other analytic value is not analytics proof until the value's
+source and calculation are traced.
 
 | Screenshot | Evidence Type | What It Proves | What It Does Not Prove |
 | --- | --- | --- | --- |
@@ -80,6 +97,37 @@ Remaining screenshot slots for real-media/functionality proof:
 
 This list is incomplete by design. It is the beginning of the audit, not the
 answer to the page-by-page review. Screens not listed here are not cleared.
+
+### F000 - Analytics Values Need Provenance Before Any Screen Can Be Cleared
+
+Status: Analytics-unproven across the iOS app.
+
+What the app promises: ShotIQ is a basketball shot-analysis app. The numbers on
+the screens are not decorative. A form score, confidence percent, release angle,
+elbow angle, wrist measurement, make percentage, flaw label, trend, or phase
+score implies the app measured or loaded something meaningful.
+
+What must be tested screen by screen: for every analytic value, record whether it
+comes from native pose/video processing, the shared backend, saved analysis
+history, training shot events, player profile inputs, or a demo/canonical
+fixture. Then change the input and prove the output changes correctly.
+
+Why the current evidence is not enough: the simulator screenshots show many
+analytics-like values, but they do not prove the calculation path. A screen that
+prints `82` from a constant and a screen that prints `82` from a measured shot
+look identical in a screenshot.
+
+Initial code evidence: native still-image pose detection exists in
+`PoseDetection.swift` and can produce joint confidence/full-body/hand visibility
+for a real photo, and the API client can fetch history/shooter/goals and send
+shot events. Separately, many screens render fixed values such as `82`, `62.5%`,
+phase labels, confidence values, and angle labels directly in SwiftUI. Each use
+must be classified before the screen can be approved.
+
+Fix direction after approval: build an analytics provenance matrix for all 72
+iOS screens and the matching web screens. Replace unmarked constants with real
+data paths where the screen claims analysis, or visibly label demo/example data
+where the product is intentionally showing a sample.
 
 ### F001 - iOS Video Upload Does Not Prove It Analyzes The Selected Video
 
