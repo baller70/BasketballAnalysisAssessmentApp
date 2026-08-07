@@ -870,3 +870,69 @@ Evidence captured on the laptop, all external-drive backed:
   It opened Capture, tapped Upload video, reached `screen-ios-video-upload`,
   verified the full-screen source options, verified `Choose video` is absent,
   and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+
+### 2026-08-07 Native User Screenshot Follow-Up
+
+Eighth laptop functionality slice after local Xcode setup:
+
+- Rechecked the screens the user flagged from phone screenshots against a clean
+  local simulator build. The current branch already had the Training, Goals,
+  My Media, and saved-drill placeholder fallbacks, but Analysis History still
+  had one real gap: the top `Catch & Shoot` session did not have an explicit
+  canonical basketball thumbnail.
+- Added a `Catch & Shoot` image mapping in `AnalyticsCardsView` so filtering
+  or sorting keeps every analysis-session card paired with real basketball
+  imagery instead of falling back to a gray tile.
+- Hardened the canonical screenshot harness reset path. SwiftUI keeps each
+  tab's `NavigationStack` alive, so the harness now relaunches between route
+  branches and prefers the actual tab-bar button before falling back to a
+  normal button lookup. This removes false "missing control" reports caused by
+  stale pushed screens or ambiguous Home-page buttons.
+- Reconfirmed the restored screen 026 behavior visually and with assertions:
+  Upload video is a full-screen source/options page, not the old medium
+  `Choose video` box, and it exposes Video library, Browse files, Record video,
+  Upload queue, View filming tips, plus the framing guide.
+- Kept the placeholder-guide rule intact: guide imagery remains available by
+  default, while selected/imported media replaces the guide only in active
+  review/result contexts.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-user-screens-clickwalk-20260807-151236.log`
+  ran
+  `CanonicalScreenshotTests/test06TrainingScreens` and
+  `CanonicalScreenshotTests/test07ProgressAndProfileScreens` on the local
+  iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-user-screens-20260807-151236`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-user-screens-clickwalk-20260807-151236.xcresult`.
+  It ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`.
+- Exported screenshot proof:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-user-screens-clickwalk-20260807-151236-attachments-v2`
+  and contact sheet
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-user-screens-clickwalk-20260807-151236-contact.png`.
+  Visual check showed real basketball imagery on the user-flagged Training,
+  Analytics Cards, My Media, Goals, Goal Detail, and player/profile screens.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-152227.log`
+  ran `CanonicalScreenshotTests/test04CaptureScreens` on the local iPhone 17
+  Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-capture-canonical-20260807-152227`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-152227.xcresult`.
+  It captured `003-video-upload` and the rest of the Capture route through
+  queue, processing, and results, ending with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+- Exported capture screenshot proof:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-152227-attachments`
+  and contact sheet
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/capture-canonical-20260807-152227-contact.png`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/video-upload-smoke-20260807-152731.log`
+  ran
+  `ShotIQUITests/ShotIQUITests/testVideoUploadShowsFullScreenSourceOptions`
+  on the local iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-video-upload-smoke-20260807-152731`
+  and result bundle
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/video-upload-smoke-20260807-152731.xcresult`.
+  It verified `VIDEO SOURCE`, `Video library`, `Browse files`, `Record video`,
+  `Upload queue`, `View filming tips`, verified `Choose video` is absent, and
+  ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.

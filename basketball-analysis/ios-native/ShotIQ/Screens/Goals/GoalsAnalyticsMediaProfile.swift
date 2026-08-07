@@ -1083,10 +1083,11 @@ struct AnalyticsCardsView: View {   // 066
                daysAgo: 16, kind: "Photo")]
     }
     /// Canonical 066 frames, keyed by session so filtering keeps each card
-    /// with the photograph the design pairs it with. The top card has none.
-    private let sessionPhotos = ["Off the Dribble": "066-visual-001",
-                                 "Pull-Up Jumper": "066-visual-002",
-                                 "Mid-Range Work": "066-visual-003"]
+    /// with a real basketball photograph instead of a gray placeholder tile.
+    private let sessionPhotos = ["Catch & Shoot": "066-visual-001",
+                                 "Off the Dribble": "066-visual-002",
+                                 "Pull-Up Jumper": "066-visual-003",
+                                 "Mid-Range Work": "066-visual-001"]
     private var filteredSessions: [AnalysisSession] {
         sessions.filter { s in
             let inRange: Bool

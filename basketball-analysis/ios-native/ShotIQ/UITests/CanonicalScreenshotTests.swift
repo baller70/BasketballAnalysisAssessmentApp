@@ -165,14 +165,20 @@ final class CanonicalScreenshotTests: XCTestCase {
 
     /// Tab bar buttons carry the canonical short labels.
     private func selectTab(_ label: String) {
+        let tabButton = app.tabBars.buttons[label]
+        if tabButton.waitForExistence(timeout: 8) {
+            tap(tabButton)
+            return
+        }
         let button = app.buttons[label]
         if button.waitForExistence(timeout: 8) { tap(button) }
     }
 
-    /// Cheap navigation reset: leaving a tab tears its NavigationStack down, so
-    /// bouncing off another tab returns the tab to its root screen.
+    /// Navigation reset for independent click paths. SwiftUI preserves each
+    /// tab's pushed NavigationStack, so relaunch the deterministic signed-in
+    /// shell before each route branch.
     private func resetTab(_ label: String, root: String) {
-        selectTab(label == "Progress" ? "Home" : "Progress")
+        launch(Self.mainArgs)
         selectTab(label)
         _ = screenExists(root, timeout: 8)
     }
