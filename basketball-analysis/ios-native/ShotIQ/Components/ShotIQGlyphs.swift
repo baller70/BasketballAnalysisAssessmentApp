@@ -1,5 +1,24 @@
 import SwiftUI
 
+// MARK: - Approved ImageGen icons
+
+struct ShotIQApprovedRasterIcon: View {
+    var assetName: String
+    var size: CGFloat
+    var label: String? = nil
+
+    var body: some View {
+        Image(assetName)
+            .resizable()
+            .renderingMode(.original)
+            .scaledToFit()
+            .accessibilityLabel(label ?? assetName)
+            .frame(width: size, height: size)
+    }
+}
+
+enum ShotIQApprovedIconAsset {}
+
 // ShotIQ bespoke line-art glyph family — the iOS half of the vocabulary that
 // lives on the web at `src/components/shotiq/Glyphs.tsx`.
 //
@@ -272,10 +291,21 @@ struct PhaseGlyph: View {
     }
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: ShotIQColor.shotiqOrange) { p in
-            phase.draw(&p, active: active)
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: phase),
+                                 size: size,
+                                 label: phase.title)
+    }
+}
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for phase: ShotPhase) -> String {
+        switch phase {
+        case .setup: return "shotiq-approved-phase-setup"
+        case .load: return "shotiq-approved-phase-load"
+        case .rise: return "shotiq-approved-phase-rise"
+        case .release: return "shotiq-approved-phase-release"
+        case .follow: return "shotiq-approved-phase-follow"
         }
-        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
     }
 }
 
@@ -299,7 +329,12 @@ struct CaptureSourceGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 18 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: source),
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch source {
             case .uploadImage:
                 p.captureBrackets()
@@ -329,6 +364,17 @@ struct CaptureSourceGlyph: View {
                 p.basketball(16, 8.4, r: 1.6, accent: true)
             }
         }
+        }
+    }
+}
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for source: CaptureSource) -> String {
+        switch source {
+        case .liveCamera: return "shotiq-approved-ui-live-camera"
+        case .uploadVideo: return "shotiq-approved-ui-upload-video"
+        case .uploadImage: return "shotiq-approved-ui-analytics-upload"
+        }
     }
 }
 
@@ -351,10 +397,9 @@ struct CaptureReticleGlyph: View {
     var size: CGFloat = 22
     var label: String? = nil
     var body: some View {
-        ShotIQGlyph(size: size, label: label) { p in
-            p.captureBrackets(inset: 3.5, arm: 4, radius: 1.4)
-            p.basketball(12, 12, r: 2.3, accent: true)
-        }
+        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-target-reticle",
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -380,6 +425,45 @@ enum MechanicKind {
     case releasePath
 }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: MechanicKind) -> String {
+        switch kind {
+        case .elbowAngle:
+            return "shotiq-approved-mechanics-elbow-under-ball"
+        case .wristArc:
+            return "shotiq-approved-mechanics-wrist-over-elbow"
+        case .releasePath:
+            return "shotiq-approved-mechanics-elbow-stack"
+        case .releaseHeight:
+            return "shotiq-approved-mechanics-release-height"
+        case .distance:
+            return "shotiq-approved-mechanics-spot-ruler"
+        case .impact:
+            return "shotiq-approved-ui-target-reticle"
+        case .jump:
+            return "shotiq-approved-mechanics-shot-path-runner"
+        case .ballArc, .arcHeight, .flightTime:
+            return "shotiq-approved-mechanics-ball-speed"
+        case .releaseAngle:
+            return "shotiq-approved-mechanics-release-angle"
+        case .shotShape:
+            return "shotiq-approved-mechanics-shot-path-bounce"
+        case .centerline:
+            return "shotiq-approved-mechanics-body-centerline"
+        case .balance:
+            return "shotiq-approved-mechanics-balance-archetype"
+        case .drift:
+            return "shotiq-approved-mechanics-shot-path-bounce"
+        case .tempo:
+            return "shotiq-approved-ui-performance-gauge"
+        case .consistency:
+            return "shotiq-approved-ui-progress-line"
+        case .spin:
+            return "shotiq-approved-mechanics-backspin"
+        }
+    }
+}
+
 struct MechanicGlyph: View {
     var kind: MechanicKind
     var size: CGFloat = 22
@@ -387,7 +471,12 @@ struct MechanicGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 18 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch kind {
             case .elbowAngle:
                 // Elbow directly under the ball, with the alignment guide visible.
@@ -550,6 +639,7 @@ struct MechanicGlyph: View {
                         CGPoint(x: 12.6, y: 14.4)], accent: true, dash: [1.4, 1.8])
                 p.node(12, 3.5, r: 1.5)
             }
+        }
         }
     }
 }
@@ -716,6 +806,16 @@ struct CueGlyph: View {
 /// A figure demonstrating the fix, not the fault.
 enum CorrectionKind { case stack, square, drive }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: CorrectionKind) -> String {
+        switch kind {
+        case .stack: return "shotiq-approved-mechanics-elbow-stack"
+        case .square: return "shotiq-approved-ui-target-reticle"
+        case .drive: return "shotiq-approved-mechanics-shot-path-runner"
+        }
+    }
+}
+
 struct CorrectionGlyph: View {
     var kind: CorrectionKind
     var size: CGFloat = 22
@@ -723,7 +823,12 @@ struct CorrectionGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 18 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch kind {
             case .stack:
                 p.circle(12, 9.4, r: 2)
@@ -751,6 +856,7 @@ struct CorrectionGlyph: View {
                 p.line(17, 20, 17, 4.6, accent: true, dash: [2, 2])
                 p.arrowHead(at: CGPoint(x: 17, y: 4.4), from: CGPoint(x: 17, y: 8.4), accent: true)
             }
+        }
         }
     }
 }
@@ -858,8 +964,24 @@ struct StatMarkGlyph: View {
         }
     }
 
+    private var approvedAssetName: String {
+        switch kind {
+        case .points: return "shotiq-approved-ui-badge-target"
+        case .formScore: return "shotiq-approved-ui-performance-gauge"
+        case .dayStreak: return "shotiq-approved-ui-calendar-heat"
+        case .volume: return "shotiq-approved-ui-ladder-balls"
+        case .accuracy, .makes, .makePercent: return "shotiq-approved-ui-target-reticle"
+        case .pointsEarned: return "shotiq-approved-ui-progress-line"
+        }
+    }
+
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 14 {
+            ShotIQApprovedRasterIcon(assetName: approvedAssetName,
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch kind {
             case .points:
                 p.poly([CGPoint(x: 12, y: 2.6), CGPoint(x: 20.2, y: 7.3), CGPoint(x: 20.2, y: 16.7),
@@ -925,6 +1047,7 @@ struct StatMarkGlyph: View {
                 p.node(20.4, 11.4, r: 1.4)
             }
         }
+        }
     }
 }
 
@@ -933,6 +1056,16 @@ struct StatMarkGlyph: View {
 /// Scheduled-workout marks — one shape per drill family.
 enum WorkoutKind { case release, ladder, flow }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: WorkoutKind) -> String {
+        switch kind {
+        case .release: return "shotiq-approved-phase-release"
+        case .ladder: return "shotiq-approved-ui-ladder-balls"
+        case .flow: return "shotiq-approved-mechanics-routine-refresh"
+        }
+    }
+}
+
 struct WorkoutGlyph: View {
     var kind: WorkoutKind
     var size: CGFloat = 20
@@ -940,7 +1073,12 @@ struct WorkoutGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 16 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch kind {
             case .release:
                 p.line(12, 4.5, 6, 12.5)
@@ -962,6 +1100,7 @@ struct WorkoutGlyph: View {
                 p.node(15.5, 9, r: 2, accent: true)
             }
         }
+        }
     }
 }
 
@@ -970,6 +1109,17 @@ struct WorkoutGlyph: View {
 /// Capture-readiness checks — bracketed framing marks, one per check.
 enum ReadinessKind { case athlete, framing, lighting, stability }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: ReadinessKind) -> String {
+        switch kind {
+        case .athlete: return "shotiq-approved-mechanics-routine-refresh"
+        case .framing: return "shotiq-approved-mechanics-capture-frame"
+        case .lighting: return "shotiq-approved-mechanics-environment-light"
+        case .stability: return "shotiq-approved-mechanics-camera-position"
+        }
+    }
+}
+
 struct ReadinessGlyph: View {
     var kind: ReadinessKind
     var size: CGFloat = 24
@@ -977,7 +1127,12 @@ struct ReadinessGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 18 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             if kind != .lighting { p.captureBrackets() }
             switch kind {
             case .athlete:
@@ -1013,12 +1168,24 @@ struct ReadinessGlyph: View {
                 p.line(5.5, 18.6, 18.5, 18.6, accent: true, dash: [1.4, 1.8])
             }
         }
+        }
     }
 }
 
 // MARK: - Equipment and setup
 
 enum EquipmentKind { case basketball, cones, spot, location }
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: EquipmentKind) -> String {
+        switch kind {
+        case .basketball: return "shotiq-approved-mechanics-ball-speed"
+        case .cones: return "shotiq-approved-mechanics-cones"
+        case .spot: return "shotiq-approved-mechanics-spot-ruler"
+        case .location: return "shotiq-approved-mechanics-location-pin"
+        }
+    }
+}
 
 struct EquipmentGlyph: View {
     var kind: EquipmentKind
@@ -1027,7 +1194,12 @@ struct EquipmentGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+        if size >= 18 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                     size: size,
+                                     label: label)
+        } else {
+            ShotIQGlyph(size: size, accent: accent, label: label) { p in
             switch kind {
             case .basketball:
                 p.basketball(12, 12, r: 5.6, accent: true)
@@ -1058,6 +1230,7 @@ struct EquipmentGlyph: View {
                 p.arc(12, 21, r: 5.4, from: 205, to: 335)
             }
         }
+        }
     }
 }
 
@@ -1081,13 +1254,29 @@ extension EquipmentKind {
 /// player's initials for Profile — five unrelated shapes.
 enum NavMark { case home, capture, train, progress }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for mark: NavMark) -> String {
+        switch mark {
+        case .home: return "shotiq-approved-ui-target-reticle"
+        case .capture: return "shotiq-approved-ui-pose-shooter"
+        case .train: return "shotiq-approved-ui-ladder-balls"
+        case .progress: return "shotiq-approved-ui-progress-line"
+        }
+    }
+}
+
 struct NavGlyph: View {
     var mark: NavMark
     var size: CGFloat = 22
     var active = false
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: ShotIQColor.shotiqOrange) { p in
+        if size >= 14 {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: mark),
+                                     size: size,
+                                     label: nil)
+        } else {
+            ShotIQGlyph(size: size, accent: ShotIQColor.shotiqOrange) { p in
             switch mark {
             case .home:
                 p.captureBrackets(inset: 3.5, arm: 4, radius: 1.4)
@@ -1114,7 +1303,8 @@ struct NavGlyph: View {
                 p.node(20.5, 7.5, r: 1.8, accent: active, filled: active)
             }
         }
-        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+            .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+        }
     }
 }
 
@@ -1554,18 +1744,9 @@ struct CoachingTargetGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            p.circle(9.2, 8.2, r: 1.9)
-            p.line(9.2, 10.1, 9.2, 15.8)
-            p.line(9.2, 15.8, 7.2, 21)
-            p.line(9.2, 15.8, 11.4, 21)
-            p.line(14.2, 3.8, 14.2, 18.6, accent: true, dash: [1.5, 1.8])
-            p.basketball(14.2, 4.2, r: 2.1, accent: true)
-            p.poly([CGPoint(x: 9.4, y: 11.2), CGPoint(x: 12.2, y: 8.2),
-                    CGPoint(x: 14.2, y: 6.4)])
-            p.node(12.2, 8.2, r: 1.5, accent: true)
-            p.line(6.6, 21.4, 12.2, 21.4)
-        }
+        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-mechanics-node-target",
+                                 size: size,
+                                 label: label)
     }
 }
 
