@@ -21,7 +21,7 @@ import {
   ChevronDown,
   Check,
   MoreVertical,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 
 interface HistoricalCoachingTarget {
   id: string

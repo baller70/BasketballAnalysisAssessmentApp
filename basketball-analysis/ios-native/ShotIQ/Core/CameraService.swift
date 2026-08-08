@@ -134,7 +134,7 @@ struct CameraPreviewView: UIViewRepresentable {
 struct CameraDeniedView: View {
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: "video.slash").font(.system(size: 30)).foregroundStyle(ShotIQColor.graphite)
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "video.slash"), size: 32).font(.system(size: 30)).foregroundStyle(ShotIQColor.graphite)
             Text("Camera access is off").shotiqBody(16, weight: .semibold)
             Text("ShotIQ needs the camera to record your shot. Turn it on in Settings.")
                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)

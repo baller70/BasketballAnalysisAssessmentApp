@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion'
 import { usePoints } from '@/lib/points/pointsContext'
-import { Zap, Trophy, Flame, Circle, Target, Gem, Crown, Brain } from 'lucide-react'
+import { Zap, Trophy, Flame, Circle, Target, Gem, Crown, Brain } from '@/components/shotiq/ApprovedLucide'
 import type { TierLevel } from '@/lib/points/pointsConfig'
 import { TierMilestonesPopup } from './TierMilestonesPopup'
 

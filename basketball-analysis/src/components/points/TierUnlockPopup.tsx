@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trophy, Sparkles, ChevronRight, Gift, Zap } from 'lucide-react'
+import { X, Trophy, Sparkles, ChevronRight, Gift, Zap } from '@/components/shotiq/ApprovedLucide'
 import { usePoints } from '@/lib/points/pointsContext'
 import { TIERS } from '@/lib/points/pointsConfig'
 import { TierIcon } from './PointsDisplay'

@@ -20,7 +20,7 @@ import {
   ZoomIn,
   RotateCcw,
   Download
-} from "lucide-react";
+} from "@/components/shotiq/ApprovedLucide";
 import { ALL_ELITE_SHOOTERS, EliteShooter } from "@/data/eliteShooters";
 import { csrfFetch } from "@/lib/api/csrfFetch";
 

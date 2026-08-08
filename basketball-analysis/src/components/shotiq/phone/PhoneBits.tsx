@@ -23,7 +23,7 @@
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
-import { Settings } from "lucide-react"
+import { Settings } from "@/components/shotiq/ApprovedLucide"
 import { StreakGlyph, PointsGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 
 /**

@@ -37,7 +37,7 @@
 import React from "react"
 import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { Check, ChevronRight, Info } from "lucide-react"
+import { Check, ChevronRight, Info } from "@/components/shotiq/ApprovedLucide"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneCard, PhoneAction, Eyebrow, StepMeter,
@@ -528,8 +528,8 @@ export function ShootingProfile({
             return (
               <Tile key={t} on={on} radio onClick={() => onHand(t)} className="flex-1 py-[13px]"
                     testid={`phone-hand-${t.slice(0, 5).toLowerCase()}`}>
-                <span className="flex h-[36px] items-center">
-                  <HandChoiceGlyph kind={t.startsWith("RIGHT") ? "right" : "left"} size={34} />
+                <span className="flex h-[50px] items-center">
+                  <HandChoiceGlyph kind={t.startsWith("RIGHT") ? "right" : "left"} size={48} />
                 </span>
                 <TileLabel on={on}>{t}</TileLabel>
               </Tile>

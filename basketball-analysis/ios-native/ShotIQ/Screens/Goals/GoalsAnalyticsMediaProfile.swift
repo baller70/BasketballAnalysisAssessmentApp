@@ -255,7 +255,7 @@ struct GoalsView: View {            // 063
                     HRule()
                     NavigationLink { AnalyticsDetailedView(metric: "Elbow Alignment") } label: {
                         HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: "sparkles").font(.system(size: 14))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 32).font(.system(size: 14))
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             (Text("Tip: ").fontWeight(.bold)
                                 + Text("Your release improved when your elbow stayed stacked in the load and rise phases."))
@@ -2322,7 +2322,7 @@ struct ProfileView: View {          // 070
                                             if enhancingBio {
                                                 ProgressView().controlSize(.mini)
                                             } else {
-                                                Image(systemName: "sparkles").font(.system(size: 12))
+                                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 32).font(.system(size: 12))
                                             }
                                             Text(enhancingBio ? "Enhancing…" : "Enhance bio")
                                                 .shotiqBody(13, weight: .medium)
@@ -2754,7 +2754,7 @@ struct SettingsHubView: View {      // 071
                                 HRule()
                                 Button { showEditProfile = true } label: {
                                     HStack(spacing: 12) {
-                                        Image(systemName: "person.crop.square")
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.crop.square"), size: 32)
                                             .font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
                                         Text("Edit profile").shotiqBody(15, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.ink)

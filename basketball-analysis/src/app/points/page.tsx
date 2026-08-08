@@ -4,7 +4,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { ChevronDown, Check, Lock, ArrowUpDown, X } from "lucide-react"
+import { ChevronDown, Check, Lock, ArrowUpDown, X } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"

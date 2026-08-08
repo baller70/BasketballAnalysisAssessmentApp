@@ -446,7 +446,7 @@ struct AnalyzeHubView: View {       // 021
 
                     NavigationLink { CaptureGuideView() } label: {
                         HStack(spacing: 12) {
-                            Image(systemName: "doc.text").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "doc.text"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                             Text("View capture guide").shotiqBody(16, weight: .medium)
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
@@ -511,7 +511,7 @@ struct AnalyzeHubView: View {       // 021
                     .padding(.top, 10)
 
                     HStack(alignment: .center, spacing: 14) {
-                        Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "point.topleft.down.curvedto.point.bottomright.up"), size: 32)
                             .font(.system(size: 24)).foregroundStyle(ShotIQColor.analysisBlue)
                         Text("Film from the side at chest height, showing your full body from feet to fingertips with good lighting and a clear background.")
                             .shotiqBody(13).foregroundStyle(ShotIQColor.ink)
@@ -974,7 +974,7 @@ struct PhotoReviewCropView: View {  // 023
                                 toast = .error("Choose a photo first", "A real image is required before cropping.")
                             }
                         } label: {
-                            Image(systemName: "rotate.right").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "rotate.right"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Rotate right")
@@ -984,7 +984,7 @@ struct PhotoReviewCropView: View {  // 023
                     HStack(spacing: 10) {
                         Button { showCamera = true } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "camera").font(.system(size: 15))
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 32).font(.system(size: 15))
                                 Text("RETAKE").shotiqCondensed(13, weight: .heavy).kerning(0.5)
                             }
                             .frame(maxWidth: .infinity).frame(height: 52)
@@ -1001,7 +1001,7 @@ struct PhotoReviewCropView: View {  // 023
                             }
                         } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "crop").font(.system(size: 15))
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "crop"), size: 32).font(.system(size: 15))
                                 Text("CROP").shotiqCondensed(13, weight: .heavy).kerning(0.5)
                             }
                             .frame(maxWidth: .infinity).frame(height: 52)
@@ -1437,7 +1437,7 @@ struct UploadQueueView: View {      // 025
                         PhotosPicker(selection: $addPick, matching: .any(of: [.images, .videos])) {
                             VStack(spacing: 5) {
                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
-                                                         size: 24,
+                                                         size: 32,
                                                          label: nil)
                                 Text("Add media").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                             }
@@ -1462,7 +1462,7 @@ struct UploadQueueView: View {      // 025
                     ShotIQCard {
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(spacing: 14) {
-                                Image(systemName: "wifi").font(.system(size: 20)).foregroundStyle(ShotIQColor.analysisBlue)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "wifi"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.analysisBlue)
                                     .frame(width: 30)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Uploads will continue in the background")
@@ -1474,7 +1474,7 @@ struct UploadQueueView: View {      // 025
                             .padding(.bottom, 12)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                             HStack(spacing: 14) {
-                                Image(systemName: "icloud.slash").font(.system(size: 20)).foregroundStyle(ShotIQColor.graphite)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "icloud.slash"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.graphite)
                                     .frame(width: 30)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Connection protection")
@@ -2173,7 +2173,7 @@ struct VideoReviewView: View {      // 027
 
                     NavigationLink { ProfileView() } label: {
                         HStack(spacing: 12) {
-                            Image(systemName: "person").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person"), size: 32).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
                             Text("Edit player profile").shotiqBody(15).foregroundStyle(ShotIQColor.ink)
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
@@ -2319,7 +2319,7 @@ struct LiveCameraSetupView: View {  // 028
                         }
                         if camera.status == .unknown {
                             VStack(spacing: 10) {
-                                Image(systemName: "camera").font(.system(size: 30)).foregroundStyle(.white)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 32).font(.system(size: 30)).foregroundStyle(.white)
                                 Text("Camera permission needed").shotiqBody(14).foregroundStyle(.white)
                                 Button("Allow camera") { camera.start() }
                                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.shotiqOrange)
@@ -2960,7 +2960,7 @@ struct LiveRecordingView: View {    // 032
                         } label: {
                             VStack(spacing: 8) {
                                 Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
-                                    .overlay(Image(systemName: "flag.fill").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
+                                    .overlay(ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "flag.fill"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
                                 Text("END ROUND").shotiqBody(10, weight: .medium).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
@@ -3191,7 +3191,7 @@ struct ShotDetectedView: View {     // 034
                             }
                             HStack(spacing: 0) {
                                 HStack(spacing: 10) {
-                                    Image(systemName: "clock").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("8:24:10 AM").font(.custom("Tungsten-Medium", size: 19)).foregroundStyle(ShotIQColor.ink)
                                         Text("Today").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -3200,7 +3200,7 @@ struct ShotDetectedView: View {     // 034
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
                                 HStack(spacing: 10) {
-                                    Image(systemName: "waveform.path.ecg").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "waveform.path.ecg"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("97%").font(.custom("Tungsten-Medium", size: 19)).foregroundStyle(ShotIQColor.ink)
                                         Text("CONFIDENCE").shotiqBody(10, weight: .medium).kerning(0.6)
@@ -3463,7 +3463,7 @@ struct CaptureReviewView: View {    // 035
                                             .lineLimit(1).fixedSize()
                                     }
                                     HStack(spacing: 6) {
-                                        Image(systemName: "gauge.with.needle").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gauge.with.needle"), size: 32).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
                                         Text("Low confidence").shotiqBody(12).foregroundStyle(ShotIQColor.ink)
                                             .lineLimit(1).fixedSize()
                                     }

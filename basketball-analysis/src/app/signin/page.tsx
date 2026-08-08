@@ -19,7 +19,7 @@ import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
 import { UnifiedSidebar, PageTitle, ResponsiveTitle } from "@/components/shotiq/ShotIQShell"
-import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize } from "lucide-react"
+import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-003"
 import { Marks003, EyeMark, FocusMark } from "./Marks003"
 

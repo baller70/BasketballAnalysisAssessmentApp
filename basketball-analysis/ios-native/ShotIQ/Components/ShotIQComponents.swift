@@ -247,7 +247,7 @@ struct TopBar: View {
             Wordmark(size: 30)
             Spacer()
             Button { if let onSettings { onSettings() } else { showMenu = true } } label: {
-                Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
             }
             .buttonStyle(.plain)
             // "Menu", not "Settings": this gear opens the profile menu (021),

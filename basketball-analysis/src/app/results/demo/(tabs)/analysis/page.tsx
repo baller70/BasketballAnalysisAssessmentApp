@@ -4,7 +4,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Maximize2 } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Maximize2 } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 import {

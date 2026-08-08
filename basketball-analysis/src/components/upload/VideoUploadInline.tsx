@@ -28,7 +28,7 @@
 "use client"
 
 import React, { useRef, useState, useEffect, useCallback } from "react"
-import { AlertTriangle, X, Video } from "lucide-react"
+import { AlertTriangle, X, Video } from "@/components/shotiq/ApprovedLucide"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { FILE_LIMITS } from "@/lib/constants"
 

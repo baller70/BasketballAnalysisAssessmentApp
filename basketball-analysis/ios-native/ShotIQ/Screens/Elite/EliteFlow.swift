@@ -681,7 +681,7 @@ struct EliteMatchView: View {       // 050
                     Spacer()
                     HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                     Button { showSettings = true } label: {
-                        Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                     }
                     .buttonStyle(.plain)
                     .padding(.leading, 14)

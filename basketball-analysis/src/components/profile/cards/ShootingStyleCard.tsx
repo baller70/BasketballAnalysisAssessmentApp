@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import { ProfileCard } from "../ProfileCard"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown } from "@/components/shotiq/ApprovedLucide"
 
 // Shooting style options with illustrations
 const SHOOTING_STYLES = [

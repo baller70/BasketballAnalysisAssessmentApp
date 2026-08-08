@@ -21,7 +21,7 @@ import {
   Camera, CameraOff, Circle,
   Settings, AlertCircle,
   CheckCircle, Activity, Volume2, VolumeX
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 
 // ============================================
 // TYPES

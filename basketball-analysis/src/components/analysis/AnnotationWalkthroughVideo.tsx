@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useRef, useState, useEffect, useCallback } from "react"
-import { Play, Pause, RotateCcw } from "lucide-react"
+import { Play, Pause, RotateCcw } from "@/components/shotiq/ApprovedLucide"
 
 interface Annotation {
   id: string

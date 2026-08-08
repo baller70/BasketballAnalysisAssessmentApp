@@ -10,12 +10,17 @@ struct ShotIQApprovedRasterIcon: View {
     var label: String? = nil
 
     var body: some View {
+        let baseWidth = width ?? size
+        let baseHeight = height ?? size
+        let renderedHeight = max(baseHeight, 32)
+        let renderedWidth = baseWidth * renderedHeight / max(baseHeight, 1)
+
         Image(assetName)
             .resizable()
             .renderingMode(.original)
             .scaledToFit()
             .accessibilityLabel(label ?? assetName)
-            .frame(width: width ?? size, height: height ?? size)
+            .frame(width: renderedWidth, height: renderedHeight)
     }
 }
 
@@ -1167,8 +1172,24 @@ extension ShotIQApprovedIconAsset {
         switch true {
         case k.contains("film") || k.contains("video") || k.contains("play"):
             return "shotiq-approved-ui-upload-video"
+        case k.contains("photo") || k.contains("image") || k.contains("doc"):
+            return "shotiq-approved-ui-analytics-upload"
         case k.contains("camera") || k.contains("viewfinder") || k.contains("scope"):
             return "shotiq-approved-ui-target-reticle"
+        case k.contains("crop"):
+            return "shotiq-approved-mechanics-capture-frame"
+        case k.contains("clock") || k.contains("stopwatch"):
+            return "shotiq-approved-v2-ui-stopwatch"
+        case k.contains("wifi") || k.contains("icloud") || k.contains("sync"):
+            return "shotiq-approved-v2-ui-upload"
+        case k.contains("sparkle"):
+            return "shotiq-approved-v2-ui-coaching-tip"
+        case k.contains("shield") || k.contains("privacy"):
+            return "shotiq-approved-v2-ui-privacy-info"
+        case k.contains("flag"):
+            return "shotiq-approved-v2-ui-flag"
+        case k.contains("waveform"):
+            return "shotiq-approved-ui-performance-gauge"
         case k.contains("chart") || k.contains("trend") || k.contains("progress"):
             return "shotiq-approved-ui-progress-line"
         case k.contains("point.3") || k.contains("connected") || k.contains("node"):
@@ -1189,6 +1210,8 @@ extension ShotIQApprovedIconAsset {
             return "shotiq-approved-v2-ui-upload"
         case k.contains("gear") || k.contains("setting") || k.contains("slider"):
             return "shotiq-approved-v2-ui-settings"
+        case k.contains("rotate"):
+            return "shotiq-approved-mechanics-routine-refresh"
         case k.contains("check"):
             return "shotiq-approved-v2-ui-check-ring"
         case k.contains("warning") || k.contains("exclamation"):

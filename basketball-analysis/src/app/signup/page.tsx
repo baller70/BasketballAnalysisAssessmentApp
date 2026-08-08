@@ -25,7 +25,7 @@ import React, { useState, useRef } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
 import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
-import { Eye, EyeOff, Loader2, ChevronDown } from "lucide-react"
+import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
 

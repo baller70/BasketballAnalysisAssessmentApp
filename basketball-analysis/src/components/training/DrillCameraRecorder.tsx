@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useCallback } from "react"
-import { Video, X, Circle, Square, RotateCcw, Check, AlertTriangle } from "lucide-react"
+import { Video, X, Circle, Square, RotateCcw, Check, AlertTriangle } from "@/components/shotiq/ApprovedLucide"
 
 interface DrillCameraRecorderProps {
   open: boolean

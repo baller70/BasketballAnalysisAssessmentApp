@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { 
   Play, ChevronRight, ChevronLeft, Check, Lightbulb,
   Flame, Trophy, Lock, Bookmark
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 
 // ============================================
 // STORAGE

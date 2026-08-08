@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Maximize2, X } from "@/components/shotiq/ApprovedLucide"
 
 interface FrameMetrics {
   elbowAngle?: number

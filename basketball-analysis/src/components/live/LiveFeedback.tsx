@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, AlertTriangle, XCircle, Lightbulb, Target } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Lightbulb, Target } from '@/components/shotiq/ApprovedLucide';
 import { type ShootingFormFeedback } from '@/services/poseDetection';
 
 // ============================================

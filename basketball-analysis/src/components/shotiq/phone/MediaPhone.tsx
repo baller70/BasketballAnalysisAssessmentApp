@@ -28,7 +28,7 @@ import Link from "next/link"
 import {
   ChevronDown, ChevronRight, Play, Upload, SlidersHorizontal, ArrowUpDown,
   MoreHorizontal, Share2, Download, Trash2, Check, X,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhoneCard,

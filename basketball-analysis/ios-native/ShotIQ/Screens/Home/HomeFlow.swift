@@ -365,7 +365,7 @@ struct HomeStandardView: View {    // 018
 
                     NavigationLink { AnalysisResultOverviewView() } label: {
                         HStack(spacing: 12) {
-                            Image(systemName: "doc.text").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "doc.text"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                             Text("View latest analysis").shotiqBody(16, weight: .medium)
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
@@ -545,12 +545,12 @@ struct HomeProfessionalView: View { // 019
                         SectionLabel(text: "MECHANICS TRENDS")
                         Spacer()
                         HStack(spacing: 8) {
-                            Image(systemName: "arrowtriangle.up.fill").font(.system(size: 8))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrowtriangle.up.fill"), size: 32).font(.system(size: 8))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                             Text("Improved").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                             Text("—").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                             Text("Stable").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                            Image(systemName: "arrowtriangle.down.fill").font(.system(size: 8))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrowtriangle.down.fill"), size: 32).font(.system(size: 8))
                                 .foregroundStyle(ShotIQColor.reviewRed)
                             Text("Needs work").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                         }
@@ -724,7 +724,7 @@ struct ProfileMenuView: View {      // 020
                         HeaderStat(icon: "camera.metering.center.weighted", value: "82", label: "FORM SCORE").frame(maxWidth: .infinity)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 48)
                         VStack(spacing: 3) {
-                            Image(systemName: "arrow.up.right").font(.system(size: 15)).foregroundStyle(ShotIQColor.confirmGreen)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrow.up.right"), size: 32).font(.system(size: 15)).foregroundStyle(ShotIQColor.confirmGreen)
                             Text("+8.1%").font(.custom("Tungsten-Medium", size: 24))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                                 .lineLimit(1).minimumScaleFactor(0.7)
@@ -759,7 +759,7 @@ struct ProfileMenuView: View {      // 020
                     // DASHBOARD MODE selector
                     HStack(spacing: 14) {
                         ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
-                                                 size: 24,
+                                                 size: 32,
                                                  label: nil)
                         // NO Spacer HERE, AND THE LABEL COLUMN CLAIMS THE SLACK
                         // ITSELF. A Spacer and a Text are both flexible, so an
@@ -913,7 +913,7 @@ struct PointsSystemView: View {
 
                     ShotIQCard {
                         HStack(alignment: .center, spacing: 16) {
-                            Image(systemName: "circle.hexagongrid").font(.system(size: 28))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "circle.hexagongrid"), size: 32).font(.system(size: 28))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("TOTAL POINTS").shotiqBody(10, weight: .medium).kerning(0.6)

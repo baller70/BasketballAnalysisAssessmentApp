@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion } from "framer-motion"
-import { Play, ChevronRight, ChevronLeft, Check, Flame, Trophy, Lock, Bookmark, Info, Users, TrendingUp, X, Target } from "lucide-react"
+import { Play, ChevronRight, ChevronLeft, Check, Flame, Trophy, Lock, Bookmark, Info, Users, TrendingUp, X, Target } from "@/components/shotiq/ApprovedLucide"
 import { useProfileStore } from "@/stores/profileStore"
 import { StatPopup } from "@/components/dashboard/StatPopup"
 import { usePoints } from "@/lib/points/pointsContext"

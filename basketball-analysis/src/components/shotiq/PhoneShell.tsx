@@ -28,7 +28,7 @@
 import React from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
-import { Settings } from "lucide-react"
+import { Settings } from "@/components/shotiq/ApprovedLucide"
 import { ActionGlyph, ApprovedRasterIcon, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 

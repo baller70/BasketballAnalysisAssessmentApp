@@ -22,7 +22,7 @@
  */
 
 import React from "react"
-import { CalendarDays, SlidersHorizontal, MoreVertical } from "lucide-react"
+import { CalendarDays, SlidersHorizontal, MoreVertical } from "@/components/shotiq/ApprovedLucide"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, Micro, PhaseRail,

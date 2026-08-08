@@ -4,7 +4,7 @@ import React, { useRef, useState, useCallback, useEffect } from "react"
 import { 
   Play, Pause, SkipBack, SkipForward, Camera, Download, 
   Trash2, ChevronLeft, ChevronRight, ZoomIn 
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { addWatermarkToCanvas } from "@/lib/watermark"
 
 interface CapturedFrame {

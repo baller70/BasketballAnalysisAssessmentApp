@@ -25,7 +25,7 @@
 
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { FileText, Users } from "lucide-react"
+import { FileText, Users } from "@/components/shotiq/ApprovedLucide"
 import { MechanicGlyph, PoseFigure, PointsGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, Panel, Micro, Chev, Frame, TickDisc,

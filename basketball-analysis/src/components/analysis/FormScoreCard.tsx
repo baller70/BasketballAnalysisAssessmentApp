@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { CheckCircle, AlertTriangle, XCircle, TrendingUp, Target } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, TrendingUp, Target } from '@/components/shotiq/ApprovedLucide'
 
 export interface MetricScore {
   name: string

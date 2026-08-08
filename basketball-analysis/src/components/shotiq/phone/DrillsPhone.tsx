@@ -27,7 +27,7 @@
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
-import { Search, SlidersHorizontal, Bookmark, ChevronDown, MoreHorizontal, ChevronRight, ArrowUpDown } from "lucide-react"
+import { Search, SlidersHorizontal, Bookmark, ChevronDown, MoreHorizontal, ChevronRight, ArrowUpDown } from "@/components/shotiq/ApprovedLucide"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneAction, Eyebrow, PhaseRail, PhoneCard,

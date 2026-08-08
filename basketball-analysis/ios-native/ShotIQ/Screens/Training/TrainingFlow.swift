@@ -1191,7 +1191,7 @@ struct WorkoutCalendarView: View {  // 059
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text("COMBO LADDER").shotiqDisplay(22)
                                         HStack(spacing: 5) {
-                                            Image(systemName: "clock").font(.system(size: 11))
+                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 11))
                                             Text("Day 4 of 7 • 17 min").shotiqBody(12, weight: .semibold)
                                         }
                                         Text("Layer catch-and-shoot reps with movement progressions to reinforce release timing and alignment under fatigue.")
@@ -1915,7 +1915,7 @@ struct WorkoutCompletionView: View { // 062
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 12) {
                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
-                                                         size: 24,
+                                                         size: 32,
                                                          label: nil)
                                 VStack(alignment: .leading, spacing: 5) {
                                     MicroLabel(text: "COACHING TAKEAWAY")

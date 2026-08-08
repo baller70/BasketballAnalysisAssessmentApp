@@ -22,7 +22,7 @@
 
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { Bookmark, MoveHorizontal, RefreshCw } from "lucide-react"
+import { Bookmark, MoveHorizontal, RefreshCw } from "@/components/shotiq/ApprovedLucide"
 import { MechanicGlyph, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, ShareIcon, Panel, Micro, PhaseRail, PrimaryBar,

@@ -174,7 +174,7 @@ fileprivate struct AnalysisResultMediaSurface: View {
             .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
             .overlay {
                 VStack(spacing: 8) {
-                    Image(systemName: "photo")
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "photo"), size: 32)
                         .font(.system(size: 26, weight: .light))
                     Text(label)
                         .shotiqBody(12, weight: .medium)
@@ -276,7 +276,7 @@ struct AnalysisProcessingView: View { // 036
                             PhaseStrip().padding(.top, 16)
                             ShotIQCard {
                                 HStack(alignment: .top, spacing: 14) {
-                                    Image(systemName: "clock").font(.system(size: 28, weight: .light))
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 28, weight: .light))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Keep app open").shotiqBody(17, weight: .semibold)
@@ -453,7 +453,7 @@ struct AnalysisTakingLongerView: View { // 037
                                             .stroke(ShotIQColor.analysisBlue,
                                                     style: StrokeStyle(lineWidth: 5, lineCap: .round))
                                             .rotationEffect(.degrees(-60))
-                                        Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "point.topleft.down.to.point.bottomright.curvepath"), size: 32)
                                             .font(.system(size: 24)).foregroundStyle(ShotIQColor.analysisBlue)
                                     }
                                     .frame(width: 96, height: 96)
@@ -472,7 +472,7 @@ struct AnalysisTakingLongerView: View { // 037
                                     .padding(.top, 22)
                                     Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 20)
                                     HStack(alignment: .top, spacing: 14) {
-                                        Image(systemName: "clock").font(.system(size: 30, weight: .light))
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 30, weight: .light))
                                             .foregroundStyle(ShotIQColor.ink)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("We'll notify you when it's ready")
@@ -522,7 +522,7 @@ struct AnalysisTakingLongerView: View { // 037
                                         Text("Set 1 • 24 shots").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                     }
                                     Spacer()
-                                    Image(systemName: "clock").font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
                                     Text("Estimated\n2–4 min").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .padding(12)
@@ -1039,7 +1039,7 @@ struct AnalysisErrorView: View {    // 040
                                     ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
                                                              size: 42,
                                                              label: nil)
-                                    Image(systemName: "exclamationmark.triangle")
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "exclamationmark.triangle"), size: 32)
                                         .font(.system(size: 18)).foregroundStyle(ShotIQColor.reviewRed)
                                         .offset(x: 6, y: 6)
                                 }

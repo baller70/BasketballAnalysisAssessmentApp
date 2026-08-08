@@ -16,7 +16,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import {
   ChevronLeft, ChevronRight, Bookmark, GitCompare, Check, Play,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { TrendLine, SectionLabel, Card, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"

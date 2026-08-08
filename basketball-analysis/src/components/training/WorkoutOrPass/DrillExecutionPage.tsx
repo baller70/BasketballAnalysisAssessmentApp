@@ -18,7 +18,7 @@ import {
   Trash2, Star, Sparkles, Timer, Crosshair, Flame, Camera, Hand,
   Zap, Trophy, CircleDot, CheckCircle, XCircle,
   Type, Move, Grip, MapPin, Edit2, ArrowRight
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { Drill, DrillFocusArea } from "@/data/drillDatabase"
 import { createWorkout } from "@/lib/api/workoutsClient"
 import { HybridShotDetector } from "../HybridShotDetector"

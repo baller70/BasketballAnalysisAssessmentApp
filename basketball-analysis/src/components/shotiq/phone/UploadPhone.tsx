@@ -26,7 +26,7 @@ import {
 } from "@/lib/image/cropImage"
 import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { Check, AlertCircle, ChevronRight, RotateCcw, RotateCw, Crop, Camera } from "lucide-react"
+import { Check, AlertCircle, ChevronRight, RotateCcw, RotateCw, Crop, Camera } from "@/components/shotiq/ApprovedLucide"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, StatCells,

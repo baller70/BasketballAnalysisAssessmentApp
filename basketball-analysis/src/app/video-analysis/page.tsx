@@ -12,7 +12,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "lucide-react"
+import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FormScoreCell, useHistory } from "@/components/shotiq/ResultsBits"
 import { PoseGlyph, PoseFigure } from "@/components/shotiq/Glyphs"

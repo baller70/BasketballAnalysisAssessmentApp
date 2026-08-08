@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Zap, Trophy, Star, ChevronRight, Sparkles } from 'lucide-react'
+import { X, Zap, Trophy, Star, ChevronRight, Sparkles } from '@/components/shotiq/ApprovedLucide'
 import { usePoints } from '@/lib/points/pointsContext'
 import { useAuthStore } from '@/stores/authStore'
 

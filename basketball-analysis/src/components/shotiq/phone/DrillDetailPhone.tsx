@@ -37,7 +37,7 @@ import Link from "next/link"
 import {
   Bookmark, Share2, ChevronRight, ChevronDown, Check, X, Undo2, Square,
   Pause, Maximize, Play, CalendarPlus, Film, SlidersHorizontal,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhaseRail,

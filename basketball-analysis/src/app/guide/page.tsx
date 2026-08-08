@@ -10,11 +10,9 @@
 import React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-  BookOpen, Check, X, Camera, Video, Radio, Image as ImageIcon,
-  Target, Sparkles, ChevronRight,
-} from "lucide-react"
+import { ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { ActionGlyph, ConceptGlyph } from "@/components/shotiq/Glyphs"
 
 type GuideItem = { title: string; description: string; points: string[]; tip: string }
 
@@ -50,7 +48,7 @@ const UPLOAD_DONTS: GuideItem[] = [
 
 const CAPTURE_MODES: { label: string; icon: React.ReactNode; sub: string; items: GuideItem[] }[] = [
   { label: "IMAGE UPLOADS", sub: "Quick single-frame or phase-by-phase analysis.",
-    icon: <ImageIcon className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />, items: [
+    icon: <ActionGlyph kind="uploadImage" height={18} />, items: [
     { title: "Single image upload", description: "Upload one photo of your shooting form for quick analysis.",
       points: ["Best for release-point analysis", "Capture at the peak of the shot", "High resolution preferred", "JPEG, PNG, or HEIC format"],
       tip: "Capture the moment just as the ball leaves your fingertips." },
@@ -59,7 +57,7 @@ const CAPTURE_MODES: { label: string; icon: React.ReactNode; sub: string; items:
       tip: "More phases mean a more comprehensive analysis." },
   ]},
   { label: "VIDEO UPLOADS", sub: "Complete motion analysis from real footage.",
-    icon: <Video className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />, items: [
+    icon: <ActionGlyph kind="uploadVideo" height={18} />, items: [
     { title: "Video upload", description: "Upload a video to analyze your complete shooting motion.",
       points: ["Maximum 90 seconds", "1–2 complete shot attempts", "MP4, MOV, or WebM format", "Maximum 500MB file size"],
       tip: "Video captures the full motion for detailed analysis." },
@@ -68,7 +66,7 @@ const CAPTURE_MODES: { label: string; icon: React.ReactNode; sub: string; items:
       tip: "Quality over quantity — one good shot beats five blurry ones." },
   ]},
   { label: "LIVE ANALYSIS", sub: "Real-time feedback while you practice.",
-    icon: <Radio className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />, items: [
+    icon: <ActionGlyph kind="liveCamera" height={18} />, items: [
     { title: "Live analysis mode", description: "Get real-time feedback as you shoot using your device camera.",
       points: ["Instant form feedback", "See keypoints in real time", "Adjust form on the fly", "Perfect for practice sessions"],
       tip: "Set up your device where you can see the screen while shooting." },
@@ -117,8 +115,8 @@ function GuideBlock({ item, tone }: { item: GuideItem; tone?: "good" | "bad" }) 
   return (
     <div className="rounded-[6px] border border-[var(--shotiq-color-rule)] p-[12px]">
       <div className="flex items-center gap-[8px]">
-        {tone === "good" && <Check className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" />}
-        {tone === "bad" && <X className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-reviewRed)]" />}
+        {tone === "good" && <ConceptGlyph concept="Success complete" size={14} className="shrink-0" />}
+        {tone === "bad" && <ConceptGlyph concept="Warning error" size={14} className="shrink-0" />}
         <span className="text-[14px] font-semibold">{item.title}</span>
       </div>
       <p className="mt-[4px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">{item.description}</p>
@@ -162,7 +160,7 @@ export default function GuidePage() {
           </div>
           <Link href="/upload"
                 className="mb-[4px] flex h-[40px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[16px] text-[13px] font-medium text-white">
-            <Camera className="h-[15px] w-[15px]" /> Start upload
+            <ActionGlyph kind="uploadImage" height={15} /> Start upload
           </Link>
         </div>
 
@@ -179,7 +177,7 @@ export default function GuidePage() {
 
         {/* Getting started */}
         <Card id="guide-start" className="mt-[16px] scroll-mt-[76px] p-[18px]">
-          <SectionHead icon={<Sparkles className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />}
+          <SectionHead icon={<ConceptGlyph concept="AI analysis" size={18} />}
                        label="GETTING STARTED" sub="Your personal AI shooting coach." />
           <div className="mt-[10px] grid gap-[16px] md:grid-cols-2">
             <div>
@@ -189,7 +187,7 @@ export default function GuidePage() {
               <ul className="mt-[8px] space-y-[5px]">
                 {["AI-powered form analysis", "Compare with elite shooters", "Track your progress over time", "Get personalized tips"].map((p) => (
                   <li key={p} className="flex items-center gap-[8px] text-[13px]">
-                    <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" /> {p}
+                    <ConceptGlyph concept="Success complete" size={13} /> {p}
                   </li>
                 ))}
               </ul>
@@ -212,14 +210,14 @@ export default function GuidePage() {
         {/* Do's & don'ts */}
         <div id="guide-dos-donts" className="mt-[16px] grid scroll-mt-[76px] gap-[16px] lg:grid-cols-2">
           <Card className="p-[18px]">
-            <SectionHead icon={<Check className="h-[18px] w-[18px] text-[var(--shotiq-color-confirmGreen)]" />}
+            <SectionHead icon={<ConceptGlyph concept="Success complete" size={18} />}
                          label="UPLOAD DO'S" sub="Set up your capture like this." />
             <div className="mt-[10px] grid gap-[10px] sm:grid-cols-2">
               {UPLOAD_DOS.map((item) => <GuideBlock key={item.title} item={item} tone="good" />)}
             </div>
           </Card>
           <Card className="p-[18px]">
-            <SectionHead icon={<X className="h-[18px] w-[18px] text-[var(--shotiq-color-reviewRed)]" />}
+            <SectionHead icon={<ConceptGlyph concept="Warning error" size={18} />}
                          label="UPLOAD DON'TS" sub="Avoid these common capture mistakes." />
             <div className="mt-[10px] grid gap-[10px] sm:grid-cols-2">
               {UPLOAD_DONTS.map((item) => <GuideBlock key={item.title} item={item} tone="bad" />)}
@@ -242,14 +240,14 @@ export default function GuidePage() {
         {/* Shooting form */}
         <div id="guide-form" className="mt-[16px] grid scroll-mt-[76px] gap-[16px] lg:grid-cols-2">
           <Card className="p-[18px]">
-            <SectionHead icon={<Target className="h-[18px] w-[18px] text-[var(--shotiq-color-confirmGreen)]" />}
+            <SectionHead icon={<ConceptGlyph concept="Elbow aligned shooting form" size={18} />}
                          label="CORRECT FORM" sub="What great shooting mechanics look like." />
             <div className="mt-[10px] grid gap-[10px] sm:grid-cols-2">
               {FORM_CORRECT.map((item) => <GuideBlock key={item.title} item={item} tone="good" />)}
             </div>
           </Card>
           <Card className="p-[18px]">
-            <SectionHead icon={<Target className="h-[18px] w-[18px] text-[var(--shotiq-color-reviewRed)]" />}
+            <SectionHead icon={<ConceptGlyph concept="Flaws detected" size={18} />}
                          label="COMMON MISTAKES" sub="Flaws the analysis looks out for." />
             <div className="mt-[10px] grid gap-[10px] sm:grid-cols-2">
               {FORM_MISTAKES.map((item) => <GuideBlock key={item.title} item={item} tone="bad" />)}
@@ -259,7 +257,7 @@ export default function GuidePage() {
 
         {/* Ready to start */}
         <Card id="guide-ready" className="mt-[16px] scroll-mt-[76px] p-[18px]">
-          <SectionHead icon={<BookOpen className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />}
+          <SectionHead icon={<ConceptGlyph concept="Help guide" size={18} />}
                        label="YOU'RE READY" sub="Everything you need to get the most out of ShotIQ." />
           <div className="mt-[10px] grid items-center gap-[16px] lg:grid-cols-[minmax(0,1fr)_auto]">
             <ul className="space-y-[5px]">
@@ -273,15 +271,15 @@ export default function GuidePage() {
             <div className="flex flex-wrap gap-[10px]">
               <button type="button" onClick={() => router.push("/upload?mode=image")}
                       className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[16px] text-[13px] font-medium hover:border-[var(--shotiq-color-ink)]">
-                <Camera className="h-[15px] w-[15px] text-[var(--shotiq-color-analysisBlue)]" /> Upload image
+                <ActionGlyph kind="uploadImage" height={15} /> Upload image
               </button>
               <button type="button" onClick={() => router.push("/upload?mode=video")}
                       className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[16px] text-[13px] font-medium hover:border-[var(--shotiq-color-ink)]">
-                <Video className="h-[15px] w-[15px] text-[var(--shotiq-color-shotiqOrange)]" /> Upload video
+                <ActionGlyph kind="uploadVideo" height={15} /> Upload video
               </button>
               <button type="button" onClick={() => router.push("/video-analysis")}
                       className="flex h-[44px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[16px] text-[13px] font-medium text-white">
-                <Radio className="h-[15px] w-[15px]" /> Go live
+                <ActionGlyph kind="liveCamera" height={15} /> Go live
               </button>
             </div>
           </div>

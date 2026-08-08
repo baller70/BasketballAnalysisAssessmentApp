@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation"
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Maximize,
   Share2, Download, Check,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"

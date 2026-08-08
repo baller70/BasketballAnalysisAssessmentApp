@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { X, TrendingUp, MapPin, Users, ChevronRight, Info } from 'lucide-react'
+import { X, TrendingUp, MapPin, Users, ChevronRight, Info } from '@/components/shotiq/ApprovedLucide'
 import { usePoints } from '@/lib/points/pointsContext'
 import { InlinePointsBurst } from '@/components/points/PointsBurst'
 

@@ -480,7 +480,7 @@ struct CreateAccountView: View {   // 004 · ios.create-account
                         .shotiqBody(16).foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
 
                     HStack(spacing: 14) {
-                        Image(systemName: "laptopcomputer.and.iphone")
+                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "laptopcomputer.and.iphone"), size: 32)
                             .font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
                         Text("One account across web and iOS.")
                             .shotiqBody(16)

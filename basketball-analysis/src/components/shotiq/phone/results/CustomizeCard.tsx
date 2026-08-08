@@ -31,7 +31,7 @@
 
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { Info } from "lucide-react"
+import { Info } from "@/components/shotiq/ApprovedLucide"
 import {
   ResultsScreen, ResultsBar, Panel, Micro, ScoreBar, PhaseRail, Frame,
   SkeletonOverlay, ORANGE, BLUE, GRAPHITE, RULE, } from "./Kit"

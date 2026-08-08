@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   Pencil, MoreVertical, MoreHorizontal, Check, CircleCheck, ChevronRight, X,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { WorkoutGlyph, type WorkoutKind, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {

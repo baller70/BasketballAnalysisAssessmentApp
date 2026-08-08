@@ -210,21 +210,21 @@ private struct OptionCard: View {
                     // one dot cluster apart from each other.
                     Group {
                         if let hand = OptionCard.handKind(for: label) {
-                            HandGlyph(kind: hand, size: 34)
+                            HandGlyph(kind: hand, size: 48)
                         } else if let ability = AbilityKind(abilityLabel: label) {
-                            AbilityGlyph(kind: ability, size: 34)
+                            AbilityGlyph(kind: ability, size: 42)
                         } else if let shot = ShotTypeKind(shotTypeLabel: label) {
-                            ShotTypeGlyph(kind: shot, size: 30)
+                            ShotTypeGlyph(kind: shot, size: 40)
                         } else if let body = bodyTypeAsset(for: label) {
-                            ShotIQApprovedRasterIcon(assetName: body, size: 34, label: nil)
+                            ShotIQApprovedRasterIcon(assetName: body, size: 42, label: nil)
                         } else if !icon.isEmpty {
                             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                                     size: 34,
+                                                     size: 42,
                                                      label: nil)
                         }
                     }
                     .foregroundStyle(ShotIQColor.ink)
-                    .frame(height: 36)
+                    .frame(height: 50)
                     Text(label)
                         .shotiqCondensed(14, weight: .heavy)
                         .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
@@ -1028,7 +1028,7 @@ struct PlayerBioView: View {
                             }
                             ZStack {
                                 RoundedRectangle(cornerRadius: 10).fill(ShotIQColor.warmCanvas)
-                                Image(systemName: "person.fill")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.fill"), size: 32)
                                     .font(.system(size: 50))
                                     .foregroundStyle(ShotIQColor.muted)
                             }
@@ -1103,7 +1103,7 @@ struct PlayerBioView: View {
                                         if enhanceBusy {
                                             ProgressView().controlSize(.small).tint(ShotIQColor.shotiqOrange)
                                         } else {
-                                            Image(systemName: "sparkles").font(.system(size: 13))
+                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 32).font(.system(size: 13))
                                         }
                                         Text(enhanceBusy ? "Enhancing…" : "Enhance bio")
                                             .shotiqBody(14, weight: .medium)
@@ -1274,7 +1274,7 @@ struct OnboardingReviewView: View {
                                     .frame(maxWidth: .infinity)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
                                 VStack(spacing: 3) {
-                                    Image(systemName: "arrow.up.right")
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrow.up.right"), size: 32)
                                         .font(.system(size: 15))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                     Text("+8.1%").font(.custom("Tungsten-Medium", size: 24))
@@ -1453,7 +1453,7 @@ struct CameraPermissionPrimerView: View {
                         .padding(.top, 12)
 
                         HStack(alignment: .top, spacing: 14) {
-                            Image(systemName: "shield")
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "shield"), size: 32)
                                 .font(.system(size: 28, weight: .light))
                                 .foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 4) {
@@ -1734,7 +1734,7 @@ struct PhotoLibraryPermissionView: View {
 
                         Button { Task { await useCameraInstead() } } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "camera")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 32)
                                 Text("Use camera instead").shotiqBody(17, weight: .medium)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)

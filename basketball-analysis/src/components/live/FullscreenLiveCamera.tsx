@@ -30,7 +30,7 @@ import {
   Zap,
   BarChart3,
   Activity,
-} from 'lucide-react'
+} from '@/components/shotiq/ApprovedLucide'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
 import { useObjectTracking } from '@/hooks/useObjectTracking'
 import type { Pose, ShootingFormFeedback } from '@/services/poseDetection'

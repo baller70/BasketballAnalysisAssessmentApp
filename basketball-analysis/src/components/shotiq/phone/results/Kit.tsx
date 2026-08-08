@@ -23,7 +23,7 @@
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Settings, Share, Download, Info } from "lucide-react"
+import { ChevronLeft, ChevronRight, Settings, Share, Download, Info } from "@/components/shotiq/ApprovedLucide"
 import { PhaseTrack, PointsGlyph, StreakGlyph } from "@/components/shotiq/Glyphs"
 import { PhoneScreen, type PhoneTab } from "@/components/shotiq/PhoneShell"
 

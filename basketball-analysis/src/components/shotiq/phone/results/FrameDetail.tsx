@@ -21,7 +21,7 @@
  */
 
 import React from "react"
-import { Play, Maximize2 } from "lucide-react"
+import { Play, Maximize2 } from "@/components/shotiq/ApprovedLucide"
 import { ActionGlyph, MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, Micro, ScoreBar,

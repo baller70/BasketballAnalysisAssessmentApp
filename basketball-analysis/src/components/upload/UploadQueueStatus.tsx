@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, CloudOff, Loader2, RefreshCw, UploadCloud } from 'lucide-react'
+import { CheckCircle2, CloudOff, Loader2, RefreshCw, UploadCloud } from '@/components/shotiq/ApprovedLucide'
 
 import type { UploadQueueEntry } from '@/lib/upload/uploadQueue'
 

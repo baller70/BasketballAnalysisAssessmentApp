@@ -25,7 +25,7 @@
 "use client"
 
 import React, { useCallback, useEffect, useState, useMemo } from "react"
-import { AlertTriangle, Loader2 } from "lucide-react"
+import { AlertTriangle, Loader2 } from "@/components/shotiq/ApprovedLucide"
 import { cn } from "@/lib/utils"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { ShotBreakdownStrip } from "@/components/analysis/ShotBreakdownStrip"

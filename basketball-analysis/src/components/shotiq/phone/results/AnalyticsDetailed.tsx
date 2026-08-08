@@ -20,7 +20,7 @@
  */
 
 import React from "react"
-import { CalendarDays, Info } from "lucide-react"
+import { CalendarDays, Info } from "@/components/shotiq/ApprovedLucide"
 import { PoseFigure, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, Panel, Micro, Frame, ORANGE, BLUE, GREEN, RED, GRAPHITE, RULE, INK,

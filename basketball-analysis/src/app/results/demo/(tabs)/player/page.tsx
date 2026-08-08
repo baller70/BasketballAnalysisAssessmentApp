@@ -12,7 +12,7 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
+import { Pencil, Share2, Download, Check, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
 import { ShareResults } from "@/components/shotiq/phone/ShareResults"
