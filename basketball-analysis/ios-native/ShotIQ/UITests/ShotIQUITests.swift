@@ -74,6 +74,30 @@ final class ShotIQUITests: XCTestCase {
         XCTFail("Missing exact control: \(text)", file: file, line: line)
     }
 
+    private func tapButton(id: String, file: StaticString = #filePath, line: UInt = #line) {
+        let element = app.buttons[id]
+        let scroll = app.scrollViews.firstMatch
+        for attempt in 0...6 {
+            if element.waitForExistence(timeout: 1), element.isHittable {
+                element.tap()
+                return
+            }
+            if attempt < 6 {
+                scroll.exists ? scroll.swipeUp() : app.swipeUp()
+            }
+        }
+        for attempt in 0...6 {
+            if element.exists, element.isHittable {
+                element.tap()
+                return
+            }
+            if attempt < 6 {
+                scroll.exists ? scroll.swipeDown() : app.swipeDown()
+            }
+        }
+        XCTFail("Missing hittable button id: \(id)", file: file, line: line)
+    }
+
     private func toastContains(_ text: String) -> Bool {
         let toast = screen("shotiq-toast")
         return toast.exists && toast.label.localizedCaseInsensitiveContains(text)
@@ -91,6 +115,16 @@ final class ShotIQUITests: XCTestCase {
     private func assertVisible(_ text: String, maxSwipes: Int = 4,
                                file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertNotNil(findControl(text, maxSwipes: maxSwipes), "Missing visible item: \(text)", file: file, line: line)
+    }
+
+    private func dismissKeyboardIfPresent() {
+        if app.keyboards.buttons["Done"].exists {
+            app.keyboards.buttons["Done"].tap()
+        } else if app.keyboards.buttons["Return"].exists {
+            app.keyboards.buttons["Return"].tap()
+        } else if app.keyboards.firstMatch.exists {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        }
     }
 
     private func tapDialogOption(_ text: String,
@@ -539,5 +573,85 @@ final class ShotIQUITests: XCTestCase {
                      "LINKED SESSIONS", "RECOMMENDED DRILLS", "Quick Release Builder"] {
             assertVisible(item)
         }
+    }
+
+    func testSecondaryControlsShowFeedbackAndDialogs() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "create-goal"])
+        XCTAssertTrue(screen("screen-ios-create-goal").waitForExistence(timeout: 8))
+        for control in ["Shooting", "Footwork", "Range", "Minimum", "Degrees", "Reps", "Learn how"] {
+            assertVisible(control)
+        }
+        tapControl("Shooting")
+        tapControl("Minimum")
+        tapControl("Reps")
+        tapControl("Keep elbow stacked through release")
+        tapDialogOption("Hold follow-through to the rim")
+        XCTAssertTrue(waitForToastContaining("Target linked"))
+        tapAndExpect("Learn how", destination: "screen-ios-metric-detail")
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
+        XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
+        tapControl("Log progress")
+        XCTAssertTrue(app.staticTexts["LOG PROGRESS"].waitForExistence(timeout: 4))
+        assertVisible("Save progress", maxSwipes: 1)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
+        XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
+        tapControl("Edit goal")
+        XCTAssertTrue(app.staticTexts["EDIT GOAL"].waitForExistence(timeout: 4))
+        assertVisible("Save changes", maxSwipes: 1)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
+        XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
+        tapControl("Quick Release Builder")
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+        let editProfileLink = app.buttons["settings-edit-profile-link"]
+        XCTAssertTrue(editProfileLink.waitForExistence(timeout: 2))
+        editProfileLink.coordinate(withNormalizedOffset: CGVector(dx: 0.18, dy: 0.5)).tap()
+        XCTAssertTrue(app.staticTexts["EDIT PLAYER PROFILE"].waitForExistence(timeout: 4))
+        assertVisible("Save profile", maxSwipes: 1)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+        tapControl("Automation")
+        assertVisible("Auto-analysis refresh")
+        assertVisible("Data backup")
+        tapControl("Data and privacy")
+        assertVisible("Anonymous analytics")
+        assertVisible("Peer comparisons")
+        tapControl("Coaching audio cues")
+        tapControl("Metric units")
+        tapControl("About ShotIQ")
+        XCTAssertTrue(app.alerts["ShotIQ 1.0.0"].waitForExistence(timeout: 4))
+        app.alerts.buttons["OK"].tap()
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "share-results"])
+        XCTAssertTrue(screen("screen-ios-share-results").waitForExistence(timeout: 8))
+        for control in ["Share image", "Save image", "Copy", "More"] {
+            assertVisible(control)
+        }
+        tapControl("Copy")
+        XCTAssertTrue(app.staticTexts["Copied"].waitForExistence(timeout: 3))
+        tapControl("Share image")
+        XCTAssertTrue(app.buttons["Share image"].waitForExistence(timeout: 3))
+        tapControl("Save image")
+        XCTAssertTrue(app.buttons["Save image"].waitForExistence(timeout: 3))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "media-detail"])
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+        tapButton(id: "media-detail-download-button")
+        XCTAssertTrue(waitForToastContaining("Download unavailable"))
+        XCTAssertTrue(app.alerts["Download unavailable"].waitForExistence(timeout: 4))
+        app.alerts.buttons["OK"].tap()
+        tapButton(id: "media-detail-delete-button")
+        XCTAssertTrue(waitForToastContaining("Delete confirmation"))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "media-detail"])
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+        tapButton(id: "media-detail-delete-media-button")
+        XCTAssertTrue(waitForToastContaining("Sample media only"))
     }
 }

@@ -342,6 +342,19 @@ struct CaptureGuideView: View {
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
+                    CanonicalPhoto("029-visual-003", height: 168, cornerRadius: 8)
+                        .overlay(alignment: .topLeading) {
+                            Text("SIDE VIEW EXAMPLE")
+                                .shotiqCondensed(13, weight: .heavy)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.62), in: RoundedRectangle(cornerRadius: 3))
+                                .padding(10)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+
                     ShotIQCard {
                         VStack(spacing: 0) {
                             ForEach(tips, id: \.1) { icon, t, d in

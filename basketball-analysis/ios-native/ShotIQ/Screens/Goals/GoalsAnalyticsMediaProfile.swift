@@ -1874,14 +1874,14 @@ struct MediaDetailView: View {      // 069
     /// and the Keychain token with APIClient).
     private func deleteMedia() {
         guard !deleting else { return }
+        guard let analysisId else {
+            toast = .info("Sample media only", "There is no server item to delete yet.")
+            return
+        }
         deleting = true
         toast = .progress("Deleting media", "Removing this clip from ShotIQ.", progress: 0.45)
         Task {
             defer { deleting = false }
-            guard let analysisId else {
-                toast = .info("Sample media only", "There is no server item to delete yet.")
-                return
-            }
             do {
                 let base = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"]
                                ?? "https://shotiq.194-146-12-139.sslip.io")!
@@ -2090,11 +2090,18 @@ struct MediaDetailView: View {      // 069
                             .simultaneousGesture(TapGesture().onEnded {
                                 toast = .info("Opening share sheet", "Your ShotIQ summary is ready.")
                             })
-                            actionButton("arrow.down.to.line", "Download", ShotIQColor.ink) {
-                                showDownloadInfo = true
+                            actionButton("arrow.down.to.line", "Download", ShotIQColor.ink,
+                                         identifier: "media-detail-download-button") {
                                 toast = .info("Download unavailable", "On-device downloads are coming soon.")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                                    showDownloadInfo = true
+                                }
                             }
-                            actionButton("trash", "Delete", ShotIQColor.reviewRed) { confirmDelete = true }
+                            actionButton("trash", "Delete", ShotIQColor.reviewRed,
+                                         identifier: "media-detail-delete-button") {
+                                toast = .info("Delete confirmation", "Choose Delete media to remove this clip.")
+                                confirmDelete = true
+                            }
                         }
                         .padding(.top, 8)
                         .alert("Download unavailable", isPresented: $showDownloadInfo) {
@@ -2123,9 +2130,14 @@ struct MediaDetailView: View {      // 069
                                 .foregroundStyle(.white)
                             }
                             .disabled(deleting)
+                            .accessibilityIdentifier("media-detail-delete-media-button")
                         }
                         .padding(12)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.reviewRed.opacity(0.5)))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(ShotIQColor.reviewRed.opacity(0.5))
+                                .allowsHitTesting(false)
+                        )
                         .padding(.vertical, 16)
                         Spacer(minLength: 20)
                     }
@@ -2147,12 +2159,18 @@ struct MediaDetailView: View {      // 069
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity).frame(height: 46)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(ShotIQColor.rule)
+                .allowsHitTesting(false)
+        )
         .foregroundStyle(color)
     }
     private func actionButton(_ icon: String, _ label: String, _ color: Color,
+                              identifier: String? = nil,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) { actionLabel(icon, label, color) }
+            .accessibilityIdentifier(identifier ?? label)
     }
 }
 
@@ -2557,6 +2575,7 @@ struct EditProfileSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("EDIT PLAYER PROFILE").shotiqDisplay(28).padding(.top, 8)
+                        .accessibilityIdentifier("profile-edit-title")
                     measureRow("HEIGHT", inchesLabel(heightIn)) { heightIn = max(48, heightIn - 1) } up: { heightIn = min(96, heightIn + 1) }
                     measureRow("WEIGHT", "\(weightLbs) lbs") { weightLbs = max(80, weightLbs - 1) } up: { weightLbs = min(350, weightLbs + 1) }
                     measureRow("WINGSPAN", inchesLabel(wingspanIn)) { wingspanIn = max(48, wingspanIn - 1) } up: { wingspanIn = min(100, wingspanIn + 1) }
@@ -2600,6 +2619,7 @@ struct EditProfileSheet: View {
             }
             .background(ShotIQColor.paper)
         }
+        .accessibilityIdentifier("profile-edit-sheet")
         .shotiqToast($toast)
     }
     private func measureRow(_ label: String, _ value: String,
@@ -2654,7 +2674,6 @@ struct SettingsHubView: View {      // 071
     @AppStorage("dataBackup") private var dataBackup = true
     @AppStorage("anonAnalytics") private var anonAnalytics = true
     @AppStorage("peerComparisons") private var peerComparisons = true
-    @State private var showEditProfile = false
     @State private var showAutomation = false
     @State private var showPrivacy = false
     @State private var showAbout = false
@@ -2752,7 +2771,9 @@ struct SettingsHubView: View {      // 071
                                 }
                                 .padding(14)
                                 HRule()
-                                Button { showEditProfile = true } label: {
+                                NavigationLink {
+                                    EditProfileSheet().modifier(CanonicalTypeScale())
+                                } label: {
                                     HStack(spacing: 12) {
                                         ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.crop.square"), size: 32)
                                             .font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
@@ -2764,6 +2785,8 @@ struct SettingsHubView: View {      // 071
                                     }
                                     .padding(14)
                                 }
+                                .accessibilityIdentifier("settings-edit-profile-link")
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 16)
@@ -2863,7 +2886,6 @@ struct SettingsHubView: View {      // 071
                 }
             }
         }
-        .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
     }
     private func settingsStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {

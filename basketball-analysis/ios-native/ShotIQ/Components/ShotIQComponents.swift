@@ -531,7 +531,11 @@ struct ShotIQCard<Content: View>: View {
         content
             .background(ShotIQColor.paper)
             .clipShape(RoundedRectangle(cornerRadius: ShotIQRadius.card))
-            .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.card).stroke(ShotIQColor.rule))
+            .overlay(
+                RoundedRectangle(cornerRadius: ShotIQRadius.card)
+                    .stroke(ShotIQColor.rule)
+                    .allowsHitTesting(false)
+            )
     }
 }
 

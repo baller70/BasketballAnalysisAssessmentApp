@@ -79,7 +79,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G004 | OPEN | P0 | `#backend` `#web-sync` | auth/data sync | Prove native write/read and web read/write with configured secrets. | Auth-chain test passes in staging/prod. |
 | G005 | OPEN | P1 | `#demo` | app-wide | Label intentional sample states. | Any sample screen visibly says demo/example and cannot be mistaken for player data. |
 | G006 | OPEN | P0 | `#analytics` | app-wide | Build analytics provenance matrix. | Every visible number on cleared screens has source, formula, and test. |
-| G074 | VERIFYING | P0 | `#control` | capture/goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Capture now adds toast/progress feedback for photo load/capture/rotate/crop/use-photo, photo analysis upload/analyze/error, upload queue add/analyze/remove, video load/error, video review trim/change/analyze, and no-media guards. Focused UI proof verifies make/miss toasts plus capture no-media feedback on iPhone 17 Pro simulator with external-backed CoreSimulator storage. Remaining app-wide action sweep still needs proof before `DONE`. |
+| G074 | VERIFYING | P0 | `#control` | capture/goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Capture now adds toast/progress feedback for photo load/capture/rotate/crop/use-photo, photo analysis upload/analyze/error, upload queue add/analyze/remove, video load/error, video review trim/change/analyze, and no-media guards. Focused UI proof verifies make/miss toasts, capture no-media feedback, create-goal target-link toast, settings/about controls, share-results copy feedback, and media detail download/delete feedback on iPhone 17 Pro simulator with external-backed CoreSimulator storage. Remaining app-wide action sweep still needs proof before `DONE`. |
 
 ## Capture And Upload Items
 
@@ -1420,3 +1420,52 @@ Follow-up audit after the full UI regression:
 Result: simulator page/screenshot proof is complete for the 72-page map, but
 the real-device Vision/camera/system-picker/share-sheet proof remains open
 until macOS/Xcode can see Kevin's physical iPhone.
+
+### 2026-08-08 Secondary Controls And No-Image Surface Follow-Up
+
+Fifteenth laptop functionality slice after local Xcode setup:
+
+- Added direct test-stage entries for `create-goal`, `settings-hub`, and
+  `share-results` so secondary controls can be tested from a clean production
+  app launch instead of being inferred from screenshots.
+- Converted the Settings Hub Edit profile action from a sheet-only control into
+  a route-backed profile edit view with stable accessibility IDs. The test now
+  proves the route opens and the save-profile surface is reachable.
+- Fixed Media Detail action hit targets by making decorative card/button border
+  overlays non-hit-testing, and by adding stable accessibility IDs for Download,
+  top Delete, and destructive Delete media.
+- Made sample-media delete feedback immediate: when a staged/demo media detail
+  has no `analysisId`, the app now tells the customer `Sample media only`
+  instead of showing fake async deletion progress.
+- Delayed the Media Detail download alert until after the toast is visible, so
+  the customer sees clear feedback before the system-style unavailable dialog.
+- Added a real capture-example image to the non-map `capture-guide` helper
+  screen. A static Swift screen-body audit now reports `NO_VISUAL_COUNT=0`
+  across the iOS screen files, meaning the 72 canonical pages plus extra staged
+  helper states have a photo/media surface, pose/frame visual, or approved
+  raster icon surface rather than a blank text-only placeholder.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-SecondaryControls-2026-08-08-v20.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSecondaryControlsShowFeedbackAndDialogs`
+  on the iPhone 17 Pro simulator. The `xcresulttool` summary reports `Passed`,
+  `totalTestCount: 1`, `passedTests: 1`, `failedTests: 0`, and
+  `skippedTests: 0`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-Capture-Harness-2026-08-08-v2.xcresult`
+  reran
+  `ShotIQUITests/CanonicalScreenshotTests/test04CaptureScreens`
+  after the capture-guide visual fill. The `xcresulttool` summary reports
+  `Passed`, `totalTestCount: 1`, `passedTests: 1`, `failedTests: 0`, and
+  `skippedTests: 0`.
+- That focused test verifies Create Goal category/type/unit controls, target
+  selection dialog, `Target linked` toast, and Learn how route; Goal Detail log
+  progress/edit goal sheets and drill route; Settings Hub edit-profile route,
+  Automation/Data privacy expanders, toggles, and About alert; Share Results
+  Copy feedback plus share/save controls; and Media Detail download toast/alert,
+  delete-confirmation toast, and sample-delete toast.
+
+Remaining limitations: this is still simulator proof. Real iPhone proof remains
+required for Apple media pickers, camera permission/capture, Vision pose
+wireframe output, iOS share sheets, and backend/web parity.

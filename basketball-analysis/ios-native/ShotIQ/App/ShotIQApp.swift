@@ -181,7 +181,8 @@ enum UITestHooks {
                                   "analysis-taking-longer", "analysis-error",
                                   "analytics-cards", "analytics-detailed", "profile",
                                   "player-card", "customize-player-card", "my-media",
-                                  "media-detail", "goals", "goal-detail"]
+                                  "media-detail", "goals", "create-goal", "goal-detail",
+                                  "settings-hub", "share-results"]
 
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
@@ -316,6 +317,7 @@ struct MainTabView: View {
         case "my-media": MyMediaView()
         case "media-detail": MediaDetailView()
         case "goals": GoalsView()
+        case "create-goal": CreateGoalView()
         case "goal-detail":
             GoalDetailView(goal: GoalRecord(
                 id: "uitest-goal",
@@ -327,6 +329,8 @@ struct MainTabView: View {
                 category: "Form",
                 xpReward: 250
             ))
+        case "settings-hub": SettingsHubView()
+        case "share-results": ShareResultsView()
         // "analysis-error" is the only slug left; a `default` arm keeps the
         // ViewBuilder's conditional chain one branch shorter.
         default: AnalysisErrorView()

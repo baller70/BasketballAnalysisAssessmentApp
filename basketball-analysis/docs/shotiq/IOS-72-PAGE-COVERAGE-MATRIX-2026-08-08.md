@@ -11,20 +11,28 @@ content/actions were asserted by a focused feature test.
 
 - Full UI result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UITests-2026-08-08-post-image-surfaces-v2.xcresult`
+- Capture screenshot result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-Capture-Harness-2026-08-08-v2.xcresult`
 - Screenshot export:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UITests-2026-08-08-post-image-surfaces-v2-attachments-named-export2`
 - Contact sheets:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UITests-2026-08-08-post-image-surfaces-v2-contact-sheets`
 - Unit result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UnitTests-2026-08-08-post-image-surfaces.xcresult`
+- Focused secondary-control result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-SecondaryControls-2026-08-08-v20.xcresult`
 
 Current proof totals:
 
 - Canonical iOS map entries: 72
 - Canonical iOS pages with screenshot proof by slug: 72 / 72
 - Full UI target: 23 tests passed, 0 failed, 0 skipped
+- Capture screenshot target: 1 passed, 0 failed, 0 skipped
 - Unit target: 39 passed, 0 failed, 1 skipped
+- Focused secondary-control target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
+- No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
+  capture-example photo to the extra `capture-guide` helper screen
 
 ## Matrix
 
@@ -93,15 +101,15 @@ Current proof totals:
 | 61 | Shot Tracker | Yes | Recent workout card opens tracker | Real shot-session persistence |
 | 62 | Workout Completion | Yes | End workout reaches completion | Backend completion save |
 | 63 | Goals | Yes | Active goals, progress, create goal, goal-detail route asserted | Backend goal CRUD |
-| 64 | Create Goal | Yes | Create-goal page rendered from Goals; metric tabs/target image asserted | Backend create goal |
-| 65 | Goal Detail | Yes | Progress, technique snapshot, linked sessions, drills asserted | Backend goal updates |
+| 64 | Create Goal | Yes | Create-goal page rendered from Goals; metric tabs/target image asserted; category/type/unit controls, target dialog, target-linked toast, and Learn how route tested | Backend create goal |
+| 65 | Goal Detail | Yes | Progress, technique snapshot, linked sessions, drills asserted; log-progress sheet, edit-goal sheet, and recommended-drill route tested | Backend goal updates |
 | 66 | Analytics Cards | Yes | Filters, trends, session cards, shot type stats asserted | Backend aggregation parity |
 | 67 | Analytics Detailed | Yes | Mechanics scorecard, comparison, arc range, shot rail asserted | Backend aggregation parity |
 | 68 | My Media | Yes | Tabs, filtering, select/done workflow asserted | Real media library backend |
-| 69 | Media Detail | Yes | Play toast, frame select toast, actions, linked analysis route asserted | Real playback/share/delete |
+| 69 | Media Detail | Yes | Play toast, frame select toast, actions, linked analysis route asserted; download toast/alert, delete-confirmation toast, and sample-delete toast tested | Real playback/share/delete |
 | 70 | Profile | Yes | Profile stats, physical/shooting/card/completion surfaces asserted | Backend profile edit/save |
-| 71 | Settings Hub | Yes | Settings route asserted | Backend settings persistence |
-| 72 | Share Results | Yes | Share-results page route asserted from analysis/profile | iOS system share sheet |
+| 71 | Settings Hub | Yes | Settings route asserted; edit-profile route, Automation/Data privacy expanders, toggles, and About alert tested | Backend settings persistence |
+| 72 | Share Results | Yes | Share-results page route asserted from analysis/profile; Copy feedback plus share/save controls tested | iOS system share sheet |
 
 ## Current Physical-Device Blocker
 
