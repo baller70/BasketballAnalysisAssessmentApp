@@ -168,6 +168,24 @@ final class ShotIQUITests: XCTestCase {
                       "Expected \(id) to contain \(text), got \(element.label)", file: file, line: line)
     }
 
+    private func assertVisibleElement(id: String, contains text: String,
+                                      maxSwipes: Int = 4,
+                                      file: StaticString = #filePath, line: UInt = #line) {
+        let element = screen(id)
+        let scroll = app.scrollViews.firstMatch
+        for attempt in 0...maxSwipes {
+            if element.exists {
+                XCTAssertTrue(element.label.localizedCaseInsensitiveContains(text),
+                              "Expected \(id) to contain \(text), got \(element.label)", file: file, line: line)
+                return
+            }
+            if attempt < maxSwipes {
+                scroll.exists ? scroll.swipeUp() : app.swipeUp()
+            }
+        }
+        XCTFail("Missing element id: \(id)", file: file, line: line)
+    }
+
     private func assertSwitch(id: String, isOn: Bool,
                               file: StaticString = #filePath, line: UInt = #line) {
         let element = app.switches[id]
@@ -677,6 +695,26 @@ final class ShotIQUITests: XCTestCase {
         tapControl("Save card")
         XCTAssertTrue(app.staticTexts["CARD SAVED"].waitForExistence(timeout: 8))
         assertVisible("Save or share image", maxSwipes: 2)
+    }
+
+    func testWeakMeasuredAnalysisFeedsEliteMatchComparison() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestHomeVariant", "standard"])
+        XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
+        tapControl("View latest analysis")
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 8))
+        tapControl("COMPARE")
+        XCTAssertTrue(screen("screen-ios-elite-match").waitForExistence(timeout: 8))
+
+        assertStaticText(id: "elite-match-score", contains: "82")
+        assertStaticText(id: "elite-match-similarity", contains: "100%")
+        assertStaticText(id: "elite-match-shared-mechanics", contains: "5 OF 5")
+        assertStaticText(id: "elite-match-you-Release Offset", contains: "+14°")
+        assertStaticText(id: "elite-match-you-Elbow Angle", contains: "118°")
+        assertStaticText(id: "elite-match-you-Wrist Angle", contains: "72°")
+        assertStaticText(id: "elite-match-release-alignment", contains: "+14°")
+        assertVisibleElement(id: "elite-match-target", contains: "Stack elbow higher")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
     }
 
     func testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces() throws {

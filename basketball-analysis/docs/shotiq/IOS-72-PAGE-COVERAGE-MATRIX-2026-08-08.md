@@ -89,6 +89,10 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testPlayerCardRenderers-20260808-150000.xcresult`
 - Focused player-card canonical regression result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testPlayerCardCanonicalRegression-20260808-150000.xcresult`
+- Focused elite-match measured-vector result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWeakMeasuredAnalysisFeedsEliteMatchComparison-20260808-151500-v2.xcresult`
+- Focused canonical analysis/elite-route regression result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalAnalysisEliteRoute-20260808-151500.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -196,7 +200,7 @@ even when the page has no upload/photo feature.
 | 47 | Flaw Detail | Yes | Evidence, impact, angles, fix cues, drill recommendation asserted; generated release-path flaw now opens detail with selected flaw title, description, saved score, offset value, ideal band, fix checklist, recommended drill, and no old elbow-flare demo angle/copy | Live backend/video evidence frames; web parity |
 | 48 | Player Card | Yes | Stats, measurements, mechanics, customize/share/download labels asserted; focused proof now walks selected photo analysis into Player Card and verifies `--`/`UNAVAILABLE` placeholders, latest coaching target, source coverage, and no old `62.5%` demo make rate | Backend reload/history aggregates; system share/download completion |
 | 49 | Customize Player Card | Yes | Details, banner color, save card, saved sheet asserted; focused proof verifies the customize preview/export uses the same latest selected-analysis payload, persists customization values locally, and shows card-saved feedback | Relaunch persistence proof; backend/shared-profile sync; real system share completion |
-| 50 | Elite Match | Yes | Analysis route to elite match and choose shooter route asserted | Backend elite comparison |
+| 50 | Elite Match | Yes | Analysis route to elite match and choose shooter route asserted; focused proof now verifies a weak measured analysis drives form score, similarity, shared mechanics, release offset, elbow, wrist, release alignment, target text, and suppresses the old `62.5%` demo stat while canonical analysis screenshot regression still captures `008-elite-match` | Backend nearest-shooter vector selection; multiple elite-vector changes; web parity |
 | 51 | Photo Comparison | Yes | Elite shooter detail to comparison route asserted | Real uploaded user photo comparison |
 | 52 | Elite Shooters | Yes | Profile menu and elite-match chooser routes asserted | Live catalog updates |
 | 53 | Elite Shooter Detail | Yes | Klay detail and compare route asserted | Live catalog/video assets |

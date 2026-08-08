@@ -685,7 +685,7 @@ struct AnalysisResultOverviewView: View { // 038
                                 .fixedSize()
                                 stripLink("FLAWS", FlawsOverviewView(presentation: p))
                                 stripLink("PLAYER", PlayerCardView())
-                                stripLink("COMPARE", EliteMatchView())
+                                stripLink("COMPARE", EliteMatchView(presentation: p))
                                 stripLink("TRAINING", TrainingHomeView())
                                 stripLink("GOALS", GoalsView())
                             }

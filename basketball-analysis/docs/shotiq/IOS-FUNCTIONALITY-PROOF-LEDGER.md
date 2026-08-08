@@ -173,7 +173,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G067 | OPEN | P0 | `#analytics` `#backend` | 017-020 | Home/profile-menu stats from real backend. | New/standard/pro user dashboard changes from seeded history. |
 | G068 | VERIFYING | P1 | `#analytics` `#media` | 048 | Player card generated from real history/profile. | Player Card now consumes the latest remembered native analysis through `AnalysisResultPresentation` instead of always showing canned 82/24/15/62.5% values. Focused UI proof walks selected photo -> native pose analysis -> Profile -> Player Card and verifies unavailable-score placeholders, coaching target, source coverage, and no `62.5%` demo make rate. Backend reload and real history aggregate proof remain before `DONE`. |
 | G069 | VERIFYING | P2 | `#control` `#analytics` | 049 | Player-card customization persists over real data. | Customize Player Card now uses the same latest-analysis card payload, persists accent/name/jersey through `@AppStorage`, renders/export the selected analysis placeholders without mutating analytics, and shows customer-visible save feedback. Focused UI and renderer proof passed; relaunch persistence proof and backend/shared-profile sync remain before `DONE`. |
-| G070 | OPEN | P1 | `#analytics` `#backend` | 050 | Elite match from measured metric vectors. | Different analysis result changes closest elite match and similarity score. |
+| G070 | VERIFYING | P1 | `#analytics` `#backend` | 050 | Elite match from measured metric vectors. | Elite Match now receives the current `AnalysisResultPresentation` from the Analysis Result `COMPARE` route, falls back to latest remembered analysis outside that route, and derives player score, placeholders, similarity, shared mechanics, comparison rows, release alignment, and coaching target from that payload instead of always showing the 89%/82/24/15/62.5% demo state. Focused UI proof verifies a weak measured analysis changes similarity to `100%`, shared mechanics to `5 OF 5`, release offset to `+14°`, elbow to `118°`, wrist to `72°`, target to `Stack elbow higher through release`, and removes old `62.5%`; canonical analysis screenshot regression still passes. Backend elite-vector selection and web parity remain before `DONE`. |
 | G071 | OPEN | P1 | `#analytics` `#pose` `#media` | 051 | Photo comparison from user's measured shot. | Comparison overlays and angle differences match user result and selected elite profile. |
 | G072 | OPEN | P2 | `#backend` | 052 | Prove elite shooters list/detail navigation. | Shooter list loads from backend and selected shooter opens correct detail. |
 | G073 | OPEN | P1 | `#analytics` `#backend` | 053 | Elite shooter detail from selected shooter profile. | Detail stats/media load from shooter object and compare correctly with user data. |
@@ -2343,3 +2343,44 @@ and customer-visible save feedback on the simulator. It does not yet prove
 backend history reload, real make/miss aggregates, or shared-profile sync across
 iOS/web; those remain required before G068/G069 can move from `VERIFYING` to
 `DONE`.
+
+### 2026-08-08 Elite Match Measured-Vector Proof
+
+Implementation:
+
+- Added an Elite Match presentation payload for screen 050. The canonical demo
+  launch path still renders the screenshot baseline, but the Analysis Result
+  `COMPARE` route now passes the current `AnalysisResultPresentation` into
+  `EliteMatchView`.
+- Non-demo Elite Match rows now derive player score, shot-history placeholders,
+  similarity, shared mechanics, release alignment, measured metric rows, and
+  coaching target from the saved analysis presentation instead of fixed
+  `89%`, `82`, `24`, `15`, `62.5%`, and static mechanics rows.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWeakMeasuredAnalysisFeedsEliteMatchComparison-20260808-151500-v2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testWeakMeasuredAnalysisFeedsEliteMatchComparison`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test opens Home -> View latest
+  analysis -> COMPARE and verifies the weak measured analysis drives Elite Match:
+  form score `82`, similarity `100%`, shared mechanics `5 OF 5`, release offset
+  `+14°`, elbow `118°`, wrist `72°`, release alignment `+14°`, target
+  `Stack elbow higher through release`, and no old `62.5%` session stat.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalAnalysisEliteRoute-20260808-151500.xcresult`
+  ran `CanonicalScreenshotTests/test05AnalysisScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and captured the
+  canonical analysis sequence including `008-elite-match`.
+
+Superseded failed attempt:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWeakMeasuredAnalysisFeedsEliteMatchComparison-20260808-151500.xcresult`
+  failed because the test expected the old demo target text instead of the
+  measured weak-analysis target. It is not used as passing evidence.
+
+Remaining limitations: this proves native screen 050 responds to a measured
+analysis presentation and keeps the canonical screenshot route stable. It does
+not yet prove backend nearest-shooter selection, multiple elite vectors changing
+the closest match, real iPhone capture data, or web parity; those remain required
+before G070 can move from `VERIFYING` to `DONE`.

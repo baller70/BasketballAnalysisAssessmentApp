@@ -255,6 +255,123 @@ fileprivate struct PlayerCardData {
     }
 }
 
+fileprivate struct EliteMatchMetricData {
+    var icon: String
+    var name: String
+    var unit: String
+    var you: String
+    var elite: String
+    var diff: String
+    var markerPct: Double
+}
+
+fileprivate struct EliteMatchData {
+    var playerName: String
+    var playerSubtitle: String
+    var formScore: String
+    var formPct: Double
+    var shots: String
+    var makes: String
+    var accuracy: String
+    var eliteName: String
+    var eliteSubtitle: String
+    var eliteScore: String
+    var similarity: String
+    var sharedMechanics: String
+    var releaseAlignment: String
+    var target: String
+    var targetState: String
+    var targetMatch: String
+    var comparisonRows: [EliteMatchMetricData]
+
+    static func make(user: APIUser?,
+                     shooter: EliteShooterDTO?,
+                     presentation explicitPresentation: AnalysisResultPresentation?,
+                     latestAnalysis: ShotIQAnalysisResultDTO?,
+                     hand: String,
+                     level: String) -> EliteMatchData {
+        let playerName = user?.displayName?.isEmpty == false ? (user?.displayName ?? "Jordan Ellis") : "Jordan Ellis"
+        let shooterName = shooter?.name ?? "Elite Guard"
+        let shooterSubtitle = shooter.map { "\($0.team) • \($0.position)" } ?? "Reference Profile"
+        let isCanonicalDemo = explicitPresentation == nil && latestAnalysis == nil && UITestHooks.demoData
+        let presentation = explicitPresentation
+            ?? latestAnalysis.map(AnalysisResultPresentation.init)
+            ?? (isCanonicalDemo ? .canonicalDemo : .noResult)
+        if isCanonicalDemo {
+            return EliteMatchData(
+                playerName: playerName,
+                playerSubtitle: "Right-handed • Advanced",
+                formScore: "82",
+                formPct: 0.82,
+                shots: "24",
+                makes: "15",
+                accuracy: "62.5%",
+                eliteName: shooterName,
+                eliteSubtitle: shooterSubtitle,
+                eliteScore: "94",
+                similarity: "89%",
+                sharedMechanics: "5 OF 6",
+                releaseAlignment: "±2°",
+                target: "Keep elbow stacked through release",
+                targetState: "ON TRACK",
+                targetMatch: "91% match",
+                comparisonRows: Self.canonicalRows)
+        }
+        let measured = max(presentation.scoreBreakdown.filter { !$0.isUnavailable }.count,
+                           presentation.sourceCoverageText == "0" ? 0 : 1)
+        let total = max(presentation.scoreBreakdown.count, 1)
+        let similarity = Int(round((Double(measured) / Double(total)) * 100))
+        let targetState = presentation.scoreVerdict == "UNAVAILABLE" ? "NEEDS DATA" : presentation.scoreVerdict
+        let releaseAlignment = presentation.releaseOffsetText == "--" ? "--" : presentation.releaseOffsetText
+        return EliteMatchData(
+            playerName: playerName,
+            playerSubtitle: "\(hand.capitalized)-handed • \(level.capitalized)",
+            formScore: presentation.scoreText,
+            formPct: presentation.scorePct,
+            shots: "--",
+            makes: "--",
+            accuracy: "--",
+            eliteName: shooterName,
+            eliteSubtitle: shooterSubtitle,
+            eliteScore: "94",
+            similarity: "\(similarity)%",
+            sharedMechanics: "\(measured) OF \(total)",
+            releaseAlignment: releaseAlignment,
+            target: presentation.coachingTarget,
+            targetState: targetState,
+            targetMatch: presentation.sourceCoverageVerdict,
+            comparisonRows: Self.rows(from: presentation))
+    }
+
+    private static let canonicalRows: [EliteMatchMetricData] = [
+        EliteMatchMetricData(icon: "figure.basketball", name: "Release Height", unit: "inches", you: "78.2", elite: "78.6", diff: "0.4\"", markerPct: 0.46),
+        EliteMatchMetricData(icon: "angle", name: "Release Angle", unit: "degrees", you: "52°", elite: "51°", diff: "1°", markerPct: 0.48),
+        EliteMatchMetricData(icon: "point.3.connected.trianglepath.dotted", name: "Elbow Flexion", unit: "degrees", you: "92°", elite: "93°", diff: "1°", markerPct: 0.48),
+        EliteMatchMetricData(icon: "person.crop.rectangle", name: "Shot Pocket", unit: "inches", you: "12.1\"", elite: "12.4\"", diff: "0.3\"", markerPct: 0.47),
+        EliteMatchMetricData(icon: "arrow.up.and.down", name: "Vertical Jump", unit: "inches", you: "18.7\"", elite: "19.1\"", diff: "0.4\"", markerPct: 0.46),
+        EliteMatchMetricData(icon: "stopwatch", name: "Release Time", unit: "sec", you: "0.52", elite: "0.50", diff: "0.02", markerPct: 0.48),
+    ]
+
+    private static func rows(from presentation: AnalysisResultPresentation) -> [EliteMatchMetricData] {
+        [
+            EliteMatchMetricData(icon: "figure.basketball", name: "Release Height", unit: "saved analysis", you: presentation.releaseHeightText, elite: "7'8\"", diff: diffText(presentation.releaseHeightText), markerPct: marker(for: presentation.releaseHeightText)),
+            EliteMatchMetricData(icon: "angle", name: "Release Offset", unit: "-5° to +5° target", you: presentation.releaseOffsetText, elite: "0°", diff: diffText(presentation.releaseOffsetText), markerPct: marker(for: presentation.releaseOffsetText)),
+            EliteMatchMetricData(icon: "point.3.connected.trianglepath.dotted", name: "Elbow Angle", unit: "150°-180° target", you: presentation.elbowAngleText, elite: "165°", diff: diffText(presentation.elbowAngleText), markerPct: marker(for: presentation.elbowAngleText)),
+            EliteMatchMetricData(icon: "point.bottomleft.forward.to.point.topright.scurvepath", name: "Wrist Angle", unit: "50°-100° target", you: presentation.wristAngleText, elite: "75°", diff: diffText(presentation.wristAngleText), markerPct: marker(for: presentation.wristAngleText)),
+            EliteMatchMetricData(icon: "viewfinder", name: "Phase", unit: "detected phase", you: presentation.phaseText.uppercased(), elite: "RELEASE", diff: presentation.phaseText == "Unavailable" ? "--" : "phase", markerPct: 0.5),
+            EliteMatchMetricData(icon: "number", name: "Sources", unit: "measured fields", you: presentation.sourceCoverageText, elite: "complete", diff: presentation.provenanceSummary, markerPct: 0.5),
+        ]
+    }
+
+    private static func diffText(_ value: String) -> String {
+        value == "--" ? "--" : "measured"
+    }
+
+    private static func marker(for value: String) -> Double {
+        value == "--" ? 0.08 : 0.48
+    }
+}
+
 /// Career shooting rates arrive from /api/shooters already scaled 0-100 —
 /// `src/data/eliteShooters.ts` carries `careerPct: 43.0`, and the route passes
 /// it through untouched. The UITest seed below used to carry 0-1 fractions
@@ -901,25 +1018,28 @@ final class EliteViewModel: ObservableObject {
 }
 
 struct EliteMatchView: View {       // 050
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @State private var showSettings = false
     @StateObject private var vm = EliteViewModel()
-    private let comparisons: [(String, String, String, String, String, String)] = [
-        // icon, name, unit, you, elite, diff
-        ("figure.basketball", "Release Height", "inches", "78.2", "78.6", "0.4\""),
-        ("angle", "Release Angle", "degrees", "52°", "51°", "1°"),
-        ("point.3.connected.trianglepath.dotted", "Elbow Flexion", "degrees", "92°", "93°", "1°"),
-        ("person.crop.rectangle", "Shot Pocket", "inches", "12.1\"", "12.4\"", "0.3\""),
-        ("arrow.up.and.down", "Vertical Jump", "inches", "18.7\"", "19.1\"", "0.4\""),
-        ("stopwatch", "Release Time", "sec", "0.52", "0.50", "0.02"),
-    ]
+    var presentation: AnalysisResultPresentation? = nil
+    private var match: EliteMatchData {
+        EliteMatchData.make(user: app.user,
+                            shooter: vm.shooters.first,
+                            presentation: presentation,
+                            latestAnalysis: app.recentMedia.first?.analysis,
+                            hand: hand,
+                            level: level)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-elite-match") {
             VStack(spacing: 0) {
                 HStack {
                     Wordmark(size: 30)
                     Spacer()
-                    HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                    HeaderStat(icon: "circle.hexagongrid", value: UITestHooks.demoData && presentation == nil && app.recentMedia.isEmpty ? "2,840" : "--", label: "POINTS")
                     Button { showSettings = true } label: {
                         ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                     }
@@ -946,43 +1066,49 @@ struct EliteMatchView: View {       // 050
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 10) {
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("JORDAN ELLIS").shotiqDisplay(22)
-                                    Text("Right-handed • Advanced").shotiqBody(11)
+                                    Text(match.playerName.uppercased()).shotiqDisplay(22)
+                                    Text(match.playerSubtitle).shotiqBody(11)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    StatBlock(value: "82", label: "FORM SCORE", color: ShotIQColor.shotiqOrange, valueSize: ShotIQType.numeric)
+                                    StatBlock(value: match.formScore, label: "FORM SCORE", color: ShotIQColor.shotiqOrange, valueSize: ShotIQType.numeric)
                                         .padding(.top, 6)
-                                    StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
-                                    StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
-                                    StatBlock(value: "62.5%", label: "SHOOTING %", valueSize: ShotIQType.numeric)
+                                        .accessibilityElement(children: .combine)
+                                        .accessibilityIdentifier("elite-match-score")
+                                    StatBlock(value: match.shots, label: "SHOTS", valueSize: ShotIQType.numeric)
+                                    StatBlock(value: match.makes, label: "MAKES", valueSize: ShotIQType.numeric)
+                                    StatBlock(value: match.accuracy, label: "SHOOTING %", valueSize: ShotIQType.numeric)
+                                        .accessibilityElement(children: .combine)
+                                        .accessibilityIdentifier("elite-match-accuracy")
                                 }
                                 Spacer(minLength: 4)
                                 VStack(spacing: 6) {
                                     Text("ELITE MATCH").shotiqBody(12, weight: .bold).kerning(0.8)
                                         .foregroundStyle(ShotIQColor.ink)
-                                    Text("89%").font(.custom("Tungsten-Medium", size: 58))
+                                    Text(match.similarity).font(.custom("Tungsten-Medium", size: 58))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
+                                        .accessibilityIdentifier("elite-match-similarity")
                                     Text("OVERALL\nSIMILARITY").shotiqBody(10, weight: .medium).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.graphite)
                                         .multilineTextAlignment(.center)
                                     HStack(spacing: 3) {
                                         ForEach(0..<6, id: \.self) { i in
-                                            Rectangle().fill(i < 5 ? ShotIQColor.analysisBlue : ShotIQColor.rule)
+                                            Rectangle().fill(i < matchedMechanicBars ? ShotIQColor.analysisBlue : ShotIQColor.rule)
                                                 .frame(width: 18, height: 6)
                                         }
                                     }
                                     Text("SHARED MECHANICS").shotiqBody(9, weight: .bold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.ink).padding(.top, 4)
-                                    Text("5 OF 6").font(.custom("Tungsten-Medium", size: 18))
+                                    Text(match.sharedMechanics).font(.custom("Tungsten-Medium", size: 18))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
+                                        .accessibilityIdentifier("elite-match-shared-mechanics")
                                 }
                                 Spacer(minLength: 4)
                                 VStack(alignment: .trailing, spacing: 3) {
-                                    Text((vm.shooters.first?.name ?? "Elite Guard").uppercased()).shotiqDisplay(22)
+                                    Text(match.eliteName.uppercased()).shotiqDisplay(22)
                                         .multilineTextAlignment(.trailing)
-                                    Text(vm.shooters.first.map { "\($0.team) • \($0.position)" } ?? "Reference Profile")
+                                    Text(match.eliteSubtitle)
                                         .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.7)
-                                    Text("94").font(.custom("Tungsten-Medium", size: 28))
+                                    Text(match.eliteScore).font(.custom("Tungsten-Medium", size: 28))
                                         .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 6)
                                     Text("FORM SCORE").shotiqBody(10, weight: .medium).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1023,20 +1149,22 @@ struct EliteMatchView: View {       // 050
                         }
                         .padding(.top, 22)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
-                        ForEach(comparisons, id: \.1) { icon, name, unit, you, elite, diff in
+                        ForEach(match.comparisonRows, id: \.name) { row in
                             HStack(spacing: 10) {
                                 // Six mechanics compared side by side: six diagrams.
-                                ShotIQConceptGlyph(concept: name, fallback: icon, size: 20)
+                                ShotIQConceptGlyph(concept: row.name, fallback: row.icon, size: 20)
                                     .foregroundStyle(ShotIQColor.ink).frame(width: 30)
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text(name).shotiqBody(14, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                    Text(row.name).shotiqBody(14, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.7)
-                                    Text(unit).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                    Text(row.unit).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .frame(width: 96, alignment: .leading)
-                                Text(you).font(.custom("Tungsten-Medium", size: 17))
+                                Text(row.you).font(.custom("Tungsten-Medium", size: 17))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .frame(width: 38, alignment: .trailing)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
+                                    .accessibilityIdentifier("elite-match-you-\(row.name)")
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         Rectangle().fill(ShotIQColor.rule).frame(height: 1)
@@ -1048,15 +1176,17 @@ struct EliteMatchView: View {       // 050
                                             .frame(width: geo.size.width * 0.3, height: 4)
                                             .offset(x: geo.size.width * 0.5, y: 5)
                                         Rectangle().fill(ShotIQColor.ink).frame(width: 2, height: 18)
-                                            .offset(x: geo.size.width * 0.48)
+                                            .offset(x: geo.size.width * row.markerPct)
                                     }
                                 }
                                 .frame(height: 24)
-                                Text(elite).font(.custom("Tungsten-Medium", size: 17))
+                                Text(row.elite).font(.custom("Tungsten-Medium", size: 17))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                     .frame(width: 38, alignment: .leading)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
                                 VStack(spacing: 0) {
-                                    Text(diff).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.ink)
+                                    Text(row.diff).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1).minimumScaleFactor(0.55)
                                     Text("DIFF").shotiqBody(8, weight: .medium).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -1071,7 +1201,8 @@ struct EliteMatchView: View {       // 050
                             Text("RELEASE FRAME MATCH").shotiqDisplay(20)
                             Spacer()
                             Text("Average frame alignment").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                            Text("±2°").font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.ink)
+                            Text(match.releaseAlignment).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.ink)
+                                .accessibilityIdentifier("elite-match-release-alignment")
                             Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                         }
@@ -1094,19 +1225,21 @@ struct EliteMatchView: View {       // 050
                                     Text("PRIMARY COACHING TARGET ALIGNMENT")
                                         .shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Keep elbow stacked through release")
+                                    Text(match.target)
                                         .shotiqBody(17, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.7)
+                                        .accessibilityIdentifier("elite-match-target")
                                 }
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 2) {
                                     HStack(spacing: 5) {
-                                        Text("ON TRACK").font(.custom("Tungsten-Medium", size: 18))
+                                        Text(match.targetState).font(.custom("Tungsten-Medium", size: 18))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
                                         Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
                                     }
-                                    Text("91% match").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                    Text(match.targetMatch).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("elite-match-target-match")
                                 }
                             }
                             .padding(14)
@@ -1143,6 +1276,10 @@ struct EliteMatchView: View {       // 050
         }
         .task { await vm.load() }
         .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
+    }
+    private var matchedMechanicBars: Int {
+        let parts = match.sharedMechanics.split(separator: " ")
+        return Int(parts.first ?? "0") ?? 0
     }
     private func actionRow(_ icon: String, _ title: String) -> some View {
         HStack {
