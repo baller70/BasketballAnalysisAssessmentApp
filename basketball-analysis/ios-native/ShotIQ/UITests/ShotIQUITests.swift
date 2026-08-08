@@ -454,6 +454,10 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Scoring mechanics"].exists)
         XCTAssertTrue(app.staticTexts["Building coaching plan"].exists)
         XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
+        if !screen("captured-pose-detected").waitForExistence(timeout: 15) {
+            XCTAssertTrue(screen("captured-pose-unavailable").exists || screen("captured-pose-no-shooter").exists,
+                          "Analysis overview must use the selected-photo pose surface instead of the canonical demo skeleton.")
+        }
     }
 
     func testAnalysisBreakdownShowsPhaseSequenceAndJointControls() throws {

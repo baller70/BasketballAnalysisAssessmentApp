@@ -32,6 +32,7 @@ struct AnalysisResultPresentation: Equatable {
     var scoreCaption: String
     var mediaURL: URL?
     var videoURL: URL?
+    var detectedPose: DetectedPose?
     var mediaLabel: String
     var recordedLabel: String
     var phaseText: String
@@ -83,6 +84,7 @@ struct AnalysisResultPresentation: Equatable {
             ?? Self.url(result.media.localImageUrl)
         videoURL = Self.url(result.media.videoUrl)
             ?? Self.url(result.media.localVideoUrl)
+        detectedPose = result.pose?.detectedPose
         mediaLabel = result.media.type?.capitalized ?? "Analysis media"
         recordedLabel = Self.recordedLabel(result.recordedAt)
         phaseText = result.phase.value?.replacingOccurrences(of: "-", with: " ").capitalized ?? "Unavailable"
@@ -151,6 +153,7 @@ struct AnalysisResultPresentation: Equatable {
         scoreCaption: "Keep building consistency.",
         mediaURL: nil,
         videoURL: nil,
+        detectedPose: nil,
         mediaLabel: "Demo media",
         recordedLabel: "Shot 41 • Today at 8:24 AM",
         phaseText: "Release",
@@ -183,6 +186,7 @@ struct AnalysisResultPresentation: Equatable {
         scoreCaption: "No saved analysis result has been loaded.",
         mediaURL: nil,
         videoURL: nil,
+        detectedPose: nil,
         mediaLabel: "No saved media",
         recordedLabel: "No saved analysis",
         phaseText: "Unavailable",
@@ -208,7 +212,8 @@ struct AnalysisResultPresentation: Equatable {
         provenanceSummary: "0 measured • 6 unavailable")
 
     private init(id: String, scoreText: String, scorePct: Double, scoreVerdict: String,
-                 scoreCaption: String, mediaURL: URL?, videoURL: URL?, mediaLabel: String,
+                 scoreCaption: String, mediaURL: URL?, videoURL: URL?,
+                 detectedPose: DetectedPose?, mediaLabel: String,
                  recordedLabel: String, phaseText: String, coachingTarget: String,
                  metrics: [AnalysisMetricTile],
                  scoreBreakdown: [AnalysisScoreBreakdownItem],
@@ -223,6 +228,7 @@ struct AnalysisResultPresentation: Equatable {
         self.scoreCaption = scoreCaption
         self.mediaURL = mediaURL
         self.videoURL = videoURL
+        self.detectedPose = detectedPose
         self.mediaLabel = mediaLabel
         self.recordedLabel = recordedLabel
         self.phaseText = phaseText

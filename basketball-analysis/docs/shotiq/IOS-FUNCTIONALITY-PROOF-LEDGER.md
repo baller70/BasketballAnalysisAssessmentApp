@@ -121,8 +121,8 @@ The first pass should fix root causes before polishing dependent screens:
 | --- | --- | --- | --- | --- | --- | --- |
 | G031 | VERIFYING | P0 | `#path` `#backend` | 027/036 | Processing only appears for real analysis jobs. | Video Review now uses a state-driven analyze button: a real `PickedVideoClip` creates the `VideoAnalysisJob`; nil/staged video shows `Choose a video first` toast and does not open processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-video device/backend proof before `DONE`. |
 | G032 | OPEN | P2 | `#path` | 037 | Prove real long-running analysis timeout. | Slow analysis job opens taking-longer state and later resolves correctly. |
-| G033 | OPEN | P0 | `#analytics` | 038 | Replace hard-coded six key metrics. | Metrics match saved analysis values and update when saved result changes. |
-| G034 | OPEN | P0 | `#pose` `#media` | 038 | Replace demo skeleton on overview with real pose. | Skeleton overlay uses saved pose points from current analysis. |
+| G033 | VERIFYING | P0 | `#analytics` | 038 | Replace hard-coded six key metrics. | Screen 038's six tiles now render from `AnalysisResultPresentation` and the saved-analysis DTO, with missing values shown as `--` / `UNAVAILABLE` instead of demo constants. Still needs live backend-result mutation proof before `DONE`. |
+| G034 | VERIFYING | P0 | `#pose` `#media` | 038 | Replace demo skeleton on overview with real pose. | Local photo analysis now preserves optional detected pose points in the saved result contract, merges them with backend save responses when the backend omits pose, and renders local overview media through `CapturedPoseImage` instead of the canonical skeleton. Laptop simulator Vision is unavailable because its human-pose weights are missing, so real detection draw remains physical-device proof before `DONE`. |
 | G035 | OPEN | P0 | `#analytics` `#backend` | 038 | Replace fixed player/session/elite summary values. | Overview loads user/session/match values from backend and formulas. |
 | G036 | OPEN | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Empty user shows no-analysis; fetch failure shows error, not empty state. |
 | G037 | OPEN | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Failed upload/analyze opens error and retry preserves or reselects media correctly. |
@@ -1728,3 +1728,47 @@ Remaining limitations: this proves the simulator make/miss confirmation path
 does not land on fake review totals. Real detector-created shots, backend
 session persistence, reload behavior, and web/iOS history parity remain before
 G030 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Analysis Overview Pose Surface Proof
+
+Twenty-fifth laptop functionality slice after local Xcode setup:
+
+- Added an optional saved pose payload to `ShotIQAnalysisResultDTO` so local
+  Vision keypoints can travel with the same analysis result object used by
+  screen 038.
+- Local photo analysis now stores detected pose points when Vision returns
+  them, and the `/api/save-analysis` merge keeps those local pose points when
+  the backend returns metrics/media but no pose field.
+- Screen 038 now renders local result images through `CapturedPoseImage`, so
+  selected customer media uses the real-image pose surface instead of the
+  canonical demo skeleton.
+- `CapturedPoseImage` accepts an initial detected pose to avoid immediately
+  discarding pose points that have already been measured upstream.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisOverviewPose-Unit-2026-08-08-v4.xcresult`
+  ran
+  `ShotIQTests/AnalysisResultContractTests/testLocalPhotoFallbackCarriesDetectedPoseIntoPresentation`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisResultContractTests-2026-08-08-v1.xcresult`
+  ran all `ShotIQTests/AnalysisResultContractTests` on the iPhone 17 Pro
+  simulator. The run ended with `** TEST SUCCEEDED **`, `Executed 9 tests,
+  with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisOverviewPose-UI-2026-08-08-v2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSamplePhotoRunsPoseQualityAndProcessingFeedback`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-BundledPose-Unit-2026-08-08-v1.xcresult`
+  confirms this simulator cannot run Vision body-pose detection because Apple's
+  `cnn_human_pose.espresso.weights` file is unavailable in the simulator
+  runtime; the pose sample test is skipped for that hardware/runtime reason.
+
+Remaining limitations: this proves screen 038 no longer falls back to the
+canonical skeleton for a selected local photo, and proves the result model can
+carry detected joints when available. It still needs Kevin's physical iPhone to
+prove an actual Vision detection draws joints on the overview media, and the
+backend/web shared contract still needs a server pose field before remote saved
+analysis can replay joints without local media.

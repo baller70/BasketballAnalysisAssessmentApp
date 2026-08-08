@@ -39,6 +39,40 @@ enum PoseDetectionResult: Equatable {
     case unavailable(String)
 }
 
+struct AnalysisPosePointDTO: Codable, Equatable {
+    var x: Double
+    var y: Double
+}
+
+struct AnalysisPoseDTO: Codable, Equatable {
+    var confidence: Float?
+    var keypoints: [String: AnalysisPosePointDTO]
+
+    init(confidence: Float? = nil, keypoints: [String: AnalysisPosePointDTO]) {
+        self.confidence = confidence
+        self.keypoints = keypoints
+    }
+
+    init(pose: DetectedPose) {
+        confidence = pose.confidence
+        keypoints = Dictionary(uniqueKeysWithValues: pose.joints.map { joint, point in
+            (joint.rawValue.rawValue,
+             AnalysisPosePointDTO(x: Double(point.x), y: Double(point.y)))
+        })
+    }
+
+    var detectedPose: DetectedPose? {
+        var joints: [DetectedPose.Joint: CGPoint] = [:]
+        for (rawName, point) in keypoints {
+            let key = VNRecognizedPointKey(rawValue: rawName)
+            let joint = VNHumanBodyPoseObservation.JointName(rawValue: key)
+            joints[joint] = CGPoint(x: point.x, y: point.y)
+        }
+        let pose = DetectedPose(joints: joints, confidence: confidence ?? 0)
+        return pose.isUsable ? pose : nil
+    }
+}
+
 /// A body pose located in one still, in top-left-origin unit coordinates so it
 /// can be drawn straight into a SwiftUI Canvas without a second flip.
 struct DetectedPose: Equatable {

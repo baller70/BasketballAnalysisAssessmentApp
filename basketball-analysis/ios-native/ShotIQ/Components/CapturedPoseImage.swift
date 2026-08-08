@@ -31,6 +31,7 @@ struct CapturedPoseImage: View {
     var cornerRadius: CGFloat = 0
     /// Set false to show the photo untouched (an "original / analysed" toggle).
     var showsPose: Bool = true
+    var initialPose: DetectedPose? = nil
     /// Handed the result once detection finishes, so a screen can answer its
     /// own questions from it — the quality check's "full body visible" row
     /// would otherwise contradict an overlay that found nobody.
@@ -79,6 +80,13 @@ struct CapturedPoseImage: View {
             }
         }
         .task(id: image) {
+            if let initialPose {
+                pose = initialPose
+                detectionFinished = true
+                detectionUnavailable = false
+                onPose?(initialPose)
+                return
+            }
             detectionFinished = false
             detectionUnavailable = false
             let result = await ShotIQPose.detectResult(in: image)

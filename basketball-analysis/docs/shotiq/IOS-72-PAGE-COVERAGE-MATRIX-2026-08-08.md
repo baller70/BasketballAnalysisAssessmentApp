@@ -111,7 +111,7 @@ Current proof totals:
 | 35 | Capture Review | Yes | Review counters/queues asserted after make/miss; one confirmed make now opens review with `1` shot, `1` make, `100.0%` make rate, and no old `15` / `62.5%` totals | Backend session persistence |
 | 36 | Analysis Processing | Yes | Upload complete, pose, scoring, baseline, coaching steps asserted | Backend processing |
 | 37 | Analysis Taking Longer | Yes | Long-running state staged and rendered | Real slow backend job |
-| 38 | Analysis Result Overview | Yes | Result opened from home, queue, media; metrics/coaching asserted | Live backend result parity |
+| 38 | Analysis Result Overview | Yes | Result opened from home, queue, media; saved metrics/coaching asserted; selected local photo now reaches overview through the pose-aware image surface, and local pose points are carried in the result presentation when available | Live backend result parity; physical-device Vision draw proof |
 | 39 | No Analysis Yet | Yes | Home empty-state CTA route asserted | Backend empty account state |
 | 40 | Analysis Error | Yes | Error state staged and rendered | Real failed backend job/retry |
 | 41 | Shot Breakdown | Yes | Phase sequence, metrics, coaching asserted | Real generated phase frames |

@@ -1491,6 +1491,9 @@ struct UploadQualityCheckView: View { // 024
             if analysis.media.localImageUrl == nil {
                 analysis.media.localImageUrl = localImageURL?.absoluteString
             }
+            if analysis.pose == nil {
+                analysis.pose = localFallback.pose
+            }
             savedAnalysis = analysis
             toast = .success("Analysis started", "Building your ShotIQ results now.")
             route = .processing

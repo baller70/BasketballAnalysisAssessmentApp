@@ -21,6 +21,7 @@ enum ShotIQLocalAnalysisFactory {
                                     videoUrl: nil,
                                     localImageUrl: localImageURL?.absoluteString,
                                     localVideoUrl: nil),
+            pose: detectedPose.map(AnalysisPoseDTO.init),
             scores: missingScores(),
             angles: missingAngles(),
             measurements: missingMeasurements(),
@@ -65,6 +66,7 @@ enum ShotIQLocalAnalysisFactory {
                                     videoUrl: nil,
                                     localImageUrl: nil,
                                     localVideoUrl: job.clip.url.absoluteString),
+            pose: nil,
             scores: AnalysisScoresDTO(
                 overall: metric(summary?.overallScore, unit: "score"),
                 form: metric(summary?.formScore, unit: "score"),

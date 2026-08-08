@@ -187,6 +187,7 @@ struct ShotIQAnalysisResultDTO: Codable, Identifiable, Equatable {
     var recordedAt: String
     var source: String
     var media: AnalysisMediaDTO
+    var pose: AnalysisPoseDTO?
     var scores: AnalysisScoresDTO
     var angles: AnalysisAnglesDTO
     var measurements: AnalysisMeasurementsDTO

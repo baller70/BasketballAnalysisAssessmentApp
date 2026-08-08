@@ -213,6 +213,28 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertTrue(result.provenance.demo.isEmpty)
     }
 
+    func testLocalPhotoFallbackCarriesDetectedPoseIntoPresentation() throws {
+        let url = URL(fileURLWithPath: "/tmp/shotiq-selected-photo.jpg")
+        let pose = DetectedPose(joints: [
+            .neck: CGPoint(x: 0.50, y: 0.20),
+            .leftShoulder: CGPoint(x: 0.43, y: 0.30),
+            .rightShoulder: CGPoint(x: 0.57, y: 0.30),
+            .rightElbow: CGPoint(x: 0.62, y: 0.43),
+            .rightWrist: CGPoint(x: 0.66, y: 0.56),
+            .rightHip: CGPoint(x: 0.56, y: 0.58)
+        ], confidence: 0.84)
+
+        let result = ShotIQLocalAnalysisFactory.photo(localImageURL: url, detectedPose: pose)
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertNotNil(result.pose)
+        XCTAssertEqual(presentation.detectedPose?.joints.count, 6)
+        XCTAssertEqual(Double(presentation.detectedPose?.confidence ?? 0), 0.84, accuracy: 0.0001)
+        XCTAssertEqual(presentation.phaseText, "Pose Detected")
+        XCTAssertTrue(result.provenance.measured.contains("pose.body"))
+        XCTAssertTrue(result.provenance.demo.isEmpty)
+    }
+
     func testLocalVideoFallbackCarriesSelectedVideoAndMeasuredPoseSummary() throws {
         let url = URL(fileURLWithPath: "/tmp/shotiq-selected-video.mov")
         let clip = PickedVideoClip(url: url,

@@ -142,7 +142,10 @@ fileprivate struct AnalysisResultMediaSurface: View {
             case .image(let url):
                 if url.isFileURL {
                     if let image = UIImage(contentsOfFile: url.path) {
-                        Image(uiImage: image).resizable().scaledToFill()
+                        CapturedPoseImage(image: image,
+                                          height: height,
+                                          cornerRadius: 8,
+                                          initialPose: presentation.detectedPose)
                     } else {
                         mediaPlaceholder("Media unavailable")
                     }
