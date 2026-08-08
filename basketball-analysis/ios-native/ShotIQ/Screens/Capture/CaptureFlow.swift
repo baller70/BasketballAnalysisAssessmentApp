@@ -3160,10 +3160,45 @@ struct LiveRecordingView: View {    // 032
     }
 }
 
+struct LiveFormFeedbackState: Equatable {
+    var formScore: Int?
+    var confidence: Double?
+    var detectedPhase: String?
+    var cue: String?
+
+    var hasMeasurement: Bool {
+        formScore != nil || confidence != nil || detectedPhase != nil || cue != nil
+    }
+
+    var scoreText: String { formScore.map(String.init) ?? "--" }
+    var scorePercent: Double { Double(formScore ?? 0) / 100 }
+    var confidenceText: String {
+        guard let confidence else { return "--" }
+        return "\(Int((confidence * 100).rounded()))%"
+    }
+    var phaseText: String { detectedPhase ?? "Waiting" }
+    var headline: String { cue ?? "Waiting for live pose." }
+    var detail: String {
+        hasMeasurement
+            ? "Measured from the current capture session."
+            : "No live pose measurement yet. Keep the athlete fully in frame."
+    }
+
+    static let waiting = LiveFormFeedbackState()
+
+    static func measured(formScore: Int, confidence: Double, phase: String, cue: String) -> LiveFormFeedbackState {
+        LiveFormFeedbackState(formScore: formScore,
+                              confidence: confidence,
+                              detectedPhase: phase,
+                              cue: cue)
+    }
+}
+
 struct LiveFormFeedbackView: View { // 033
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var camera = CameraService.live
     @State private var muted = false
+    @State private var feedback = LiveFormFeedbackState.waiting
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-form-feedback") {
             ScrollView {
@@ -3174,8 +3209,11 @@ struct LiveFormFeedbackView: View { // 033
                         SectionLabel(text: "LIVE FORM FEEDBACK")
                         Spacer()
                         HStack(spacing: 6) {
-                            Circle().fill(ShotIQColor.analysisBlue).frame(width: 8, height: 8)
-                            Text("Demo").shotiqBody(14).foregroundStyle(ShotIQColor.analysisBlue)
+                            Circle().fill(feedback.hasMeasurement ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
+                                .frame(width: 8, height: 8)
+                            Text(feedback.hasMeasurement ? "Measured" : "Waiting")
+                                .shotiqBody(14)
+                                .foregroundStyle(feedback.hasMeasurement ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
                         }
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
@@ -3185,10 +3223,9 @@ struct LiveFormFeedbackView: View { // 033
                     // read as a dark plate. Canonical's frame is 767x799 at
                     // x 45…812, y 330…1129 — 368pt tall across the 353pt column.
                     //
-                    // The LIVE pill, the 179° release-angle callout and the whole
-                    // LATEST RESULT / FORM SCORE 82 card are painted into that
-                    // frame, so the app's own pill and card only draw over a real
-                    // feed.
+                    // The canonical fallback already paints its own HUD details,
+                    // so the app's live pill and summary card only draw over a
+                    // real feed.
                     ZStack(alignment: .topLeading) {
                         captureDark(368)
                         LiveViewfinder(camera: camera, fallback: "033-visual-001").frame(height: 368)
@@ -3204,17 +3241,7 @@ struct LiveFormFeedbackView: View { // 033
                     }
                     .overlay(alignment: .trailing) {
                         if camera.isLive {
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text("LATEST RESULT").shotiqBody(10, weight: .bold).kerning(0.7)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.7)
-                                    .foregroundStyle(ShotIQColor.ink)
-                                Text("82").font(.custom("Tungsten-Medium", size: 58))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                ScoreBar(pct: 0.82).frame(width: 110)
-                                Text("GOOD").shotiqBody(14, weight: .bold).foregroundStyle(ShotIQColor.analysisBlue)
-                                Text("Keep building consistency.").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                            }
+                            liveResultCard
                             .padding(14)
                             .frame(width: 160, alignment: .leading)
                             .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 10))
@@ -3229,32 +3256,39 @@ struct LiveFormFeedbackView: View { // 033
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("LIVE FEEDBACK").shotiqBody(10, weight: .bold).kerning(0.7)
                                     .foregroundStyle(ShotIQColor.graphite)
-                                Text("Keep elbow stacked.")
+                                Text(feedback.headline)
                                     .shotiqBody(21, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                    .lineLimit(2).minimumScaleFactor(0.7)
+                                    .accessibilityIdentifier("live-feedback-headline")
+                                Text(feedback.detail)
+                                    .shotiqBody(12)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(2)
                                 HStack(spacing: 0) {
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text("CONFIDENCE").shotiqBody(9, weight: .medium).kerning(0.5)
-                                            .foregroundStyle(ShotIQColor.graphite)
-                                        Text("87%").font(.custom("Tungsten-Medium", size: 20))
-                                            .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    feedbackValue("FORM SCORE", feedback.scoreText, "live-feedback-score")
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text("DETECTED").shotiqBody(9, weight: .medium).kerning(0.5)
-                                            .foregroundStyle(ShotIQColor.graphite)
-                                        Text("Release").shotiqBody(15, weight: .semibold)
-                                            .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.leading, 12)
+                                    feedbackValue("CONFIDENCE", feedback.confidenceText, "live-feedback-confidence")
+                                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
+                                    feedbackValue("DETECTED", feedback.phaseText, "live-feedback-phase")
                                 }
                             }
                         }
                         .padding(16)
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
+
+                    if UITestHooks.active {
+                        Button("Simulate live feedback") {
+                            feedback = .measured(formScore: 79,
+                                                 confidence: 0.72,
+                                                 phase: "Release",
+                                                 cue: "Keep elbow stacked.")
+                        }
+                        .accessibilityIdentifier("Simulate live feedback")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 8)
+                    }
 
                     PhaseStrip().padding(.horizontal, 20).padding(.top, 16)
 
@@ -3290,6 +3324,46 @@ struct LiveFormFeedbackView: View { // 033
                 }
             }
         }
+    }
+
+    private var liveResultCard: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(feedback.hasMeasurement ? "LATEST RESULT" : "LIVE STATUS")
+                .shotiqBody(10, weight: .bold).kerning(0.7)
+                .foregroundStyle(ShotIQColor.graphite)
+            Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.7)
+                .foregroundStyle(ShotIQColor.ink)
+            Text(feedback.scoreText).font(.custom("Tungsten-Medium", size: 58))
+                .foregroundStyle(feedback.hasMeasurement ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                .accessibilityIdentifier("live-feedback-overlay-score")
+            ScoreBar(pct: feedback.scorePercent,
+                     color: feedback.hasMeasurement ? ShotIQColor.shotiqOrange : ShotIQColor.graphite.opacity(0.55))
+                .frame(width: 110)
+            Text(feedback.hasMeasurement ? "LIVE" : "NOT MEASURED")
+                .shotiqBody(14, weight: .bold)
+                .foregroundStyle(feedback.hasMeasurement ? ShotIQColor.analysisBlue : ShotIQColor.graphite)
+            Text(feedback.hasMeasurement ? "Updating from live session." : "Waiting for body tracking.")
+                .shotiqBody(11)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("live-feedback-summary")
+    }
+
+    private func feedbackValue(_ label: String, _ value: String, _ id: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label).shotiqBody(9, weight: .medium).kerning(0.5)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Text(value).shotiqBody(label == "DETECTED" ? 15 : 17, weight: .semibold)
+                .foregroundStyle(value == "--" ? ShotIQColor.graphite : ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+                .accessibilityIdentifier(id)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, label == "FORM SCORE" ? 0 : 10)
     }
 }
 

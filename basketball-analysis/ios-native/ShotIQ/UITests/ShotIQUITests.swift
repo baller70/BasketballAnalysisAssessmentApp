@@ -346,6 +346,24 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertEqual(makePercent.label, "MAKE % 50.0%")
     }
 
+    func testLiveFormFeedbackWaitsForMeasuredLivePoseBeforeShowingScores() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "live-form-feedback"])
+        XCTAssertTrue(screen("screen-ios-live-form-feedback").waitForExistence(timeout: 8))
+
+        XCTAssertTrue(app.staticTexts["Waiting for live pose."].exists)
+        XCTAssertTrue(app.staticTexts["No live pose measurement yet. Keep the athlete fully in frame."].exists)
+        XCTAssertTrue(app.staticTexts["--"].exists)
+        XCTAssertFalse(app.staticTexts["87%"].exists)
+        XCTAssertFalse(app.staticTexts["Keep building consistency."].exists)
+
+        tapControl("Simulate live feedback")
+
+        XCTAssertTrue(app.staticTexts["Keep elbow stacked."].exists)
+        XCTAssertTrue(app.staticTexts["79"].exists)
+        XCTAssertTrue(app.staticTexts["72%"].exists)
+        XCTAssertTrue(app.staticTexts["Release"].exists)
+    }
+
     func testShotDetectedMarkMissShowsFeedbackAndOpensReview() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-detected"])
         XCTAssertTrue(screen("screen-ios-shot-detected").waitForExistence(timeout: 8))

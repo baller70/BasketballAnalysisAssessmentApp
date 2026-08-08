@@ -108,7 +108,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G022 | OPEN | P1 | `#device` `#backend` | 029 | Persist hoop calibration and use it in shot detection. | Changed hoop target changes downstream shot/arc calculation. |
 | G023 | OPEN | P1 | `#device` `#analytics` | 030 | Make readiness percentage measured. | Readiness changes with camera/body/hoop conditions and has source formula. |
 | G024 | VERIFYING | P0 | `#device` `#analytics` | 032 | Replace fixed live-recording HUD values. | Live Recording no longer publishes fixed `24 / 15 / 62.5%` shot/make/make-percent values. It starts from `LiveRecordingStats` (`0 / 0 / --`) and updates from recorded session events; focused unit and UI proof assert make/miss events update the HUD to `2 / 1 / 50.0%`. Real optical shot detection classification still needs physical-device proof before `DONE`. |
-| G025 | OPEN | P0 | `#device` `#pose` `#analytics` `#demo` | 033 | Replace demo feedback with measured live feedback or mark feature demo. | Form score, confidence, detected phase, and cue update from live pose stream. |
+| G025 | VERIFYING | P0 | `#device` `#pose` `#analytics` | 033 | Replace demo feedback with measured live feedback or mark feature demo. | Live Form Feedback no longer shows fixed `82`, `87%`, `Release`, or `Keep building consistency.` as if live AI measured them. The screen starts in an honest waiting state (`--`, `Waiting`, `Waiting for live pose.`) and updates only from `LiveFormFeedbackState`; focused unit and UI proof assert a simulated measured event changes the screen to `79`, `72%`, `Release`, and `Keep elbow stacked.` Real live pose-stream integration on Kevin's iPhone remains before `DONE`. |
 | G026 | OPEN | P0 | `#device` `#pose` | 033 | Prove skeleton follows real player while shooting. | Screen recording shows joints follow player motion with logged pose frames. |
 | G027 | OPEN | P0 | `#device` `#pose` `#analytics` | 034 | Trigger shot-detected from real detector, not navigation. | Real shot opens detection card; non-shot does not. |
 | G028 | OPEN | P0 | `#device` `#pose` `#media` | 034 | Draw skeleton/release arc over recorded clip. | Replay shows measured overlay aligned to real body/ball frames. |
@@ -1662,3 +1662,36 @@ Remaining limitations: this proves screen 032 no longer pretends a new live
 recording already has previous shot totals. Real camera shot detection,
 optical make/miss classification, backend session persistence, and web/iOS
 history parity remain open before G024 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Live Form Feedback Waiting-State Proof
+
+Twenty-third laptop functionality slice after local Xcode setup:
+
+- Added `LiveFormFeedbackState` as the single state source for screen 033's
+  live form score, confidence, detected phase, and coaching cue.
+- Removed the player-facing fixed `82`, `87%`, `Release`, and
+  `Keep building consistency.` values from the live feedback card. The screen
+  now starts as `--`, `Waiting`, and `Waiting for live pose.` until measured
+  feedback exists.
+- Added a UI-test-only simulated live feedback event under `UITestHooks.active`
+  so the production screen can prove state updates without shipping a visible
+  test control.
+- Added a direct `live-form-feedback` UI-test stage so screen 033 can be tested
+  from a clean app launch, instead of only through screen 032's Stop route.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveFormFeedbackState-Unit-2026-08-08-v1.xcresult`
+  ran `ShotIQTests/LiveFormFeedbackStateTests` on the iPhone 17 Pro simulator.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0
+  failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveFormFeedback-2026-08-08-v2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testLiveFormFeedbackWaitsForMeasuredLivePoseBeforeShowingScores`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this proves screen 033 is not pretending demo numbers are
+live AI output. It still needs Kevin's physical iPhone to prove the real live
+pose stream supplies score, confidence, phase, and cue values from camera
+frames before G025 can move from `VERIFYING` to `DONE`.

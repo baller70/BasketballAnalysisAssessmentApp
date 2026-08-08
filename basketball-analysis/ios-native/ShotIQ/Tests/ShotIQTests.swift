@@ -721,3 +721,30 @@ final class LiveRecordingStatsTests: XCTestCase {
         XCTAssertEqual(stats.accessibilityRows.map(\.1), ["2", "1", "50.0%"])
     }
 }
+
+final class LiveFormFeedbackStateTests: XCTestCase {
+    func testWaitingStateDoesNotExposeMeasuredLookingValues() {
+        let state = LiveFormFeedbackState.waiting
+
+        XCTAssertFalse(state.hasMeasurement)
+        XCTAssertEqual(state.scoreText, "--")
+        XCTAssertEqual(state.scorePercent, 0)
+        XCTAssertEqual(state.confidenceText, "--")
+        XCTAssertEqual(state.phaseText, "Waiting")
+        XCTAssertEqual(state.headline, "Waiting for live pose.")
+    }
+
+    func testMeasuredStateFormatsLiveValues() {
+        let state = LiveFormFeedbackState.measured(formScore: 79,
+                                                   confidence: 0.724,
+                                                   phase: "Release",
+                                                   cue: "Keep elbow stacked.")
+
+        XCTAssertTrue(state.hasMeasurement)
+        XCTAssertEqual(state.scoreText, "79")
+        XCTAssertEqual(state.scorePercent, 0.79)
+        XCTAssertEqual(state.confidenceText, "72%")
+        XCTAssertEqual(state.phaseText, "Release")
+        XCTAssertEqual(state.headline, "Keep elbow stacked.")
+    }
+}

@@ -159,6 +159,7 @@ enum UITestHooks {
     /// | `readiness-check`        | 030    | hoop/camera setup                    |
     /// | `capture-ready`          | 031    | readiness confirmation               |
     /// | `live-recording`         | 032    | camera capture session               |
+    /// | `live-form-feedback`     | 033    | live coaching feedback               |
     /// | `shot-detected`          | 034    | live detector event                  |
     /// | `analysis-taking-longer` | 037    | analysis slower than the watchdog    |
     /// | `analysis-error`         | 040    | an analyze/upload round trip failing |
@@ -177,7 +178,7 @@ enum UITestHooks {
     /// The `stage` slugs that are rendered inside the signed-in tab shell.
     static let mainShellStages = ["analyze-hub", "photo-upload-source", "photo-review-crop", "upload-quality-check", "video-review",
                                   "live-camera-setup", "hoop-calibration", "readiness-check",
-                                  "capture-ready", "live-recording", "shot-detected",
+                                  "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
                                   "analysis-taking-longer", "analysis-error",
                                   "analytics-cards", "analytics-detailed", "profile",
                                   "player-card", "customize-player-card", "my-media",
@@ -307,6 +308,7 @@ struct MainTabView: View {
         case "readiness-check": ReadinessCheckView()
         case "capture-ready": CaptureReadyView()
         case "live-recording": LiveRecordingView()
+        case "live-form-feedback": LiveFormFeedbackView()
         case "shot-detected": ShotDetectedView()
         case "analysis-taking-longer": AnalysisTakingLongerView()
         case "analytics-cards": AnalyticsCardsView()
