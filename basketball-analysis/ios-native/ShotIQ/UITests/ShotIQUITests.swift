@@ -1456,7 +1456,8 @@ final class ShotIQUITests: XCTestCase {
     }
 
     func testAnalyticsDetailedImageSurfacesWork() throws {
-        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "analytics-detailed"])
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "analytics-detailed"])
         XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
         for item in ["ANALYSIS HISTORY", "+6.4%", "78.2%", "MECHANICS SCORECARD",
                      "SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH",
@@ -1466,6 +1467,55 @@ final class ShotIQUITests: XCTestCase {
             assertVisible(item)
         }
         assertVisible("Confidence: High")
+    }
+
+    func testAnalyticsDetailedUsesWorkoutHistoryMetricRangeAndFeedback() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "analytics-detailed"])
+        XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
+        assertElement(id: "analytics-detailed-trend-delta", contains: "+28.4%")
+        assertElement(id: "analytics-detailed-trend-caption", contains: "vs previous session")
+        assertElement(id: "analytics-detailed-latest-value", contains: "98.4%")
+        assertElement(id: "analytics-detailed-trend-chart", contains: "Release Consistency trend 70 to 98")
+        assertElement(id: "analytics-detailed-confidence", contains: "Confidence: High")
+        assertVisibleElement(id: "analytics-detailed-scorecard-3-value", contains: "99", maxSwipes: 2)
+        assertVisibleElement(id: "analytics-detailed-scorecard-3-delta", contains: "+29", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-detailed-scorecard-3-verdict", contains: "GREAT", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-detailed-comparison-0-latest", contains: "99", maxSwipes: 3)
+        assertVisibleElement(id: "analytics-detailed-comparison-0-previous", contains: "70", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-detailed-comparison-0-change", contains: "+29", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-detailed-arc-value", contains: "+14°", maxSwipes: 3)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "analytics-detailed"])
+        XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
+        tapButton(id: "analytics-detailed-metric-filter")
+        tapDialogOption("Form Score")
+        XCTAssertTrue(waitForToastContaining("Form Score selected"))
+        assertElement(id: "analytics-detailed-trend-delta", contains: "+29")
+        assertElement(id: "analytics-detailed-latest-value", contains: "99")
+
+        tapButton(id: "analytics-detailed-range-filter")
+        tapDialogOption("Last 7 days")
+        XCTAssertTrue(waitForToastContaining("Last 7 days: 2 sessions"))
+        assertElement(id: "analytics-detailed-trend-delta", contains: "+29")
     }
 
     func testProfileImageSurfacesWork() throws {

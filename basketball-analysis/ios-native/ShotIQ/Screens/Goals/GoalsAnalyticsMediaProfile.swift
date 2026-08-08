@@ -2132,31 +2132,213 @@ struct ArcGauge: View {
 
 struct AnalyticsDetailedView: View { // 067
     var metric = "Release Consistency"
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var range = "Last 30 days"
     @State private var chosenMetric: String?
     @State private var showRangePicker = false
     @State private var showMetricPicker = false
     @State private var showConfidenceInfo = false
-    private var displayMetric: String { chosenMetric ?? metric }
-    private var exportSummary: String {
-        "ShotIQ analysis — \(displayMetric), \(range): 78.2% consistency, form score 82, +6.4% vs previous 30 days."
+    @State private var toast: ShotIQToast?
+
+    private struct DetailMetricSummary {
+        let trendText: String
+        let trendCaption: String
+        let latestText: String
+        let latestDate: String
+        let trendPoints: [Double]
+        let trendBadge: String
+        let trendA11y: String
+        let confidenceText: String
+        let confidenceMessage: String
+        let rangeCount: Int
+        let arcLabel: String
+        let arcValue: String
+        let arcTarget: String
+        let consistencyText: String
+        let consistencySpread: String
     }
-    private let scorecard: [(String, Int, Int, String)] = [
-        ("SETUP", 84, 4, "GOOD"), ("LOAD", 79, 2, "GOOD"), ("RISE", 88, 5, "GREAT"),
-        ("RELEASE", 78, 6, "GOOD"), ("FOLLOW-THROUGH", 84, 3, "GOOD")
-    ]
-    private let comparison: [(String, String, String, String, String, Bool)] = [
-        ("Form Score", "82", "76", "71", "+11", true),
-        ("Make %", "62.5%", "59.1%", "52.4%", "+10.1%", true),
-        ("Release Consistency", "78.2%", "71.8%", "64.0%", "+14.2%", true),
-        ("Release Angle", "50.4°", "48.1°", "45.2°", "+5.2°", true),
-        ("Elbow Alignment", "92%", "88%", "81%", "+11%", true),
-        ("Shot Depth", "1.3 ft", "1.5 ft", "1.7 ft", "-0.4 ft", false),
-        ("Shot Speed", "1.06 sec", "1.11 sec", "1.18 sec", "-0.12 sec", false),
-        ("Swish %", "41.7%", "36.4%", "28.6%", "+13.1%", true)
-    ]
+
+    private struct PhaseScoreItem {
+        let name: String
+        let score: Int
+        let delta: String
+        let verdict: String
+        let color: Color
+    }
+
+    private struct ComparisonHeader {
+        let date: String
+        let shots: String
+        let highlight: Bool
+    }
+
+    private struct ComparisonRow {
+        let metric: String
+        let latest: String
+        let previous: String
+        let baseline: String
+        let change: String
+        let positive: Bool
+    }
+
+    private var displayMetric: String { chosenMetric ?? metric }
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+    private var filteredWorkouts: [TrainingWorkoutRecord] {
+        let calendar = Calendar.current
+        let now = Date()
+        return workouts.filter { workout in
+            let daysAgo = calendar.dateComponents([.day], from: workout.completedAt, to: now).day ?? 0
+            switch range {
+            case "Last 7 days": return daysAgo <= 7
+            case "Last 30 days": return daysAgo <= 30
+            case "Last 90 days": return daysAgo <= 90
+            default: return true
+            }
+        }
+    }
+    private var latestPresentation: AnalysisResultPresentation? {
+        app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+    private var exportSummary: String {
+        if workouts.isEmpty {
+            return "ShotIQ analysis - \(displayMetric), \(range): 78.2% consistency, form score 82, +6.4% vs previous 30 days."
+        }
+        let summary = metricSummary
+        return "ShotIQ analysis - \(displayMetric), \(range): latest \(summary.latestText), change \(summary.trendText), \(summary.rangeCount) sessions in range."
+    }
+    private var metricSummary: DetailMetricSummary {
+        guard workouts.isEmpty == false else {
+            return DetailMetricSummary(trendText: "+6.4%",
+                                       trendCaption: "vs previous 30 days",
+                                       latestText: "78.2%",
+                                       latestDate: "MAY 24",
+                                       trendPoints: [68, 66.5, 69, 72.5, 68.5, 71, 73.5, 77, 76.2],
+                                       trendBadge: "78.2%",
+                                       trendA11y: "Release Consistency trend 68 to 66 to 69 to 72 to 68 to 71 to 73 to 77 to 76",
+                                       confidenceText: "Confidence: High",
+                                       confidenceMessage: "Confidence reflects how many tracked sessions back this trend. 9 sessions in range gives a high-confidence read.",
+                                       rangeCount: 9,
+                                       arcLabel: "AVG ARC",
+                                       arcValue: "50.4°",
+                                       arcTarget: "IDEAL: 48°–52°",
+                                       consistencyText: "78.2%",
+                                       consistencySpread: "±3.6°")
+        }
+        let visible = filteredWorkouts
+        guard let latest = visible.first else {
+            return DetailMetricSummary(trendText: "—",
+                                       trendCaption: "no sessions in range",
+                                       latestText: "--",
+                                       latestDate: "--",
+                                       trendPoints: [0, 0],
+                                       trendBadge: "--",
+                                       trendA11y: "\(displayMetric) has no sessions in \(range)",
+                                       confidenceText: "Confidence: None",
+                                       confidenceMessage: "No completed sessions match this range yet.",
+                                       rangeCount: 0,
+                                       arcLabel: "RELEASE OFFSET",
+                                       arcValue: latestPresentation?.releaseOffsetText ?? "--",
+                                       arcTarget: "TARGET: -5°–5°",
+                                       consistencyText: "--",
+                                       consistencySpread: "—")
+        }
+        let latestValue = metricValue(displayMetric, for: latest)
+        let previous = visible.dropFirst().first
+        let previousValue = previous.map { metricValue(displayMetric, for: $0) }
+        let deltaText = previousValue.map { formatDelta(latestValue - $0, metric: displayMetric) } ?? "—"
+        let points = visible.reversed().map { metricValue(displayMetric, for: $0) }
+        let trendPoints = points.count == 1 ? [points[0], points[0]] : points
+        let consistencyValues = visible.map { metricValue("Release Consistency", for: $0) }
+        let spread = (consistencyValues.max() ?? 0) - (consistencyValues.min() ?? 0)
+        return DetailMetricSummary(trendText: deltaText,
+                                   trendCaption: previous == nil ? "no previous session" : "vs previous session",
+                                   latestText: formatMetric(latestValue, metric: displayMetric),
+                                   latestDate: Self.shortDate(latest.completedAt),
+                                   trendPoints: trendPoints,
+                                   trendBadge: formatMetric(latestValue, metric: displayMetric),
+                                   trendA11y: "\(displayMetric) trend \(trendPoints.map { String(Int($0.rounded())) }.joined(separator: " to "))",
+                                   confidenceText: visible.count >= 2 ? "Confidence: High" : "Confidence: Low",
+                                   confidenceMessage: "\(visible.count) completed session\(visible.count == 1 ? "" : "s") in \(range.lowercased()).",
+                                   rangeCount: visible.count,
+                                   arcLabel: "RELEASE OFFSET",
+                                   arcValue: latestPresentation?.releaseOffsetText ?? "--",
+                                   arcTarget: "TARGET: -5°–5°",
+                                   consistencyText: formatMetric(metricValue("Release Consistency", for: latest),
+                                                                 metric: "Release Consistency"),
+                                   consistencySpread: visible.count >= 2 ? "±\(String(format: "%.1f", spread))%" : "—")
+    }
+    private var scorecard: [PhaseScoreItem] {
+        guard let latest = filteredWorkouts.first else {
+            return [PhaseScoreItem(name: "SETUP", score: 84, delta: "+4", verdict: "GOOD", color: ShotIQColor.analysisBlue),
+                    PhaseScoreItem(name: "LOAD", score: 79, delta: "+2", verdict: "GOOD", color: ShotIQColor.analysisBlue),
+                    PhaseScoreItem(name: "RISE", score: 88, delta: "+5", verdict: "GREAT", color: ShotIQColor.confirmGreen),
+                    PhaseScoreItem(name: "RELEASE", score: 78, delta: "+6", verdict: "GOOD", color: ShotIQColor.analysisBlue),
+                    PhaseScoreItem(name: "FOLLOW-THROUGH", score: 84, delta: "+3", verdict: "GOOD", color: ShotIQColor.analysisBlue)]
+        }
+        let previous = filteredWorkouts.dropFirst().first
+        return latest.phaseScores.map { phase, score in
+            let previousScore = previous?.phaseScores.first(where: { $0.0 == phase })?.1
+            let delta = previousScore.map { Self.signedScore(score - $0) } ?? "—"
+            let verdict = score >= 85 ? "GREAT" : score >= 70 ? "GOOD" : "BUILDING"
+            return PhaseScoreItem(name: phase,
+                                  score: score,
+                                  delta: delta,
+                                  verdict: verdict,
+                                  color: verdict == "GREAT" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+        }
+    }
+    private var comparisonHeaders: [ComparisonHeader] {
+        if workouts.isEmpty {
+            return [ComparisonHeader(date: "MAY 24, 8:24 AM", shots: "24 SHOTS", highlight: true),
+                    ComparisonHeader(date: "MAY 16, 7:05 AM", shots: "22 SHOTS", highlight: false),
+                    ComparisonHeader(date: "MAY 9, 6:40 AM", shots: "21 SHOTS", highlight: false)]
+        }
+        var headers = filteredWorkouts.prefix(3).map {
+            ComparisonHeader(date: Self.tableDate($0.completedAt), shots: "\($0.shots) SHOTS", highlight: false)
+        }
+        if headers.indices.contains(0) { headers[0] = ComparisonHeader(date: headers[0].date, shots: headers[0].shots, highlight: true) }
+        while headers.count < 3 {
+            headers.append(ComparisonHeader(date: "NO SESSION", shots: "--", highlight: false))
+        }
+        return headers
+    }
+    private var comparisonChangeLabel: String {
+        workouts.isEmpty ? "(LATEST VS MAY 9)" : "(LATEST VS PREVIOUS)"
+    }
+    private var comparison: [ComparisonRow] {
+        guard workouts.isEmpty == false else {
+            return [ComparisonRow(metric: "Form Score", latest: "82", previous: "76", baseline: "71", change: "+11", positive: true),
+                    ComparisonRow(metric: "Make %", latest: "62.5%", previous: "59.1%", baseline: "52.4%", change: "+10.1%", positive: true),
+                    ComparisonRow(metric: "Release Consistency", latest: "78.2%", previous: "71.8%", baseline: "64.0%", change: "+14.2%", positive: true),
+                    ComparisonRow(metric: "Release Angle", latest: "50.4°", previous: "48.1°", baseline: "45.2°", change: "+5.2°", positive: true),
+                    ComparisonRow(metric: "Elbow Alignment", latest: "92%", previous: "88%", baseline: "81%", change: "+11%", positive: true),
+                    ComparisonRow(metric: "Shot Depth", latest: "1.3 ft", previous: "1.5 ft", baseline: "1.7 ft", change: "-0.4 ft", positive: false),
+                    ComparisonRow(metric: "Shot Speed", latest: "1.06 sec", previous: "1.11 sec", baseline: "1.18 sec", change: "-0.12 sec", positive: false),
+                    ComparisonRow(metric: "Swish %", latest: "41.7%", previous: "36.4%", baseline: "28.6%", change: "+13.1%", positive: true)]
+        }
+        let visible = filteredWorkouts
+        let metrics = ["Form Score", "Make %", "Release Consistency", "Release Angle", "Elbow Alignment"]
+        return metrics.map { name in
+            let values = visible.prefix(3).map { metricValue(name, for: $0) }
+            let latest = values.first
+            let previous = values.dropFirst().first
+            let baseline = values.dropFirst(2).first
+            let changeBase = previous ?? baseline
+            let change = latest.flatMap { latest in changeBase.map { formatDelta(latest - $0, metric: name) } } ?? "—"
+            return ComparisonRow(metric: name,
+                                 latest: latest.map { formatMetric($0, metric: name) } ?? "--",
+                                 previous: previous.map { formatMetric($0, metric: name) } ?? "--",
+                                 baseline: baseline.map { formatMetric($0, metric: name) } ?? "--",
+                                 change: change,
+                                 positive: !change.hasPrefix("-"))
+        }
+    }
     var body: some View {
+        let summary = metricSummary
         CanonicalScreen(testID: "screen-ios-analytics-detailed") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -2177,53 +2359,69 @@ struct AnalyticsDetailedView: View { // 067
                             .shotiqBody(13).foregroundStyle(ShotIQColor.graphite).padding(.top, 4)
                         HStack(spacing: 8) {
                             detailChip("calendar", range, chevron: true) { showRangePicker = true }
+                                .accessibilityIdentifier("analytics-detailed-range-filter")
                             detailChip("chart.xyaxis.line", displayMetric, chevron: true) { showMetricPicker = true }
-                            detailChip(nil, "Confidence: High", chevron: false) { showConfidenceInfo = true }
+                                .accessibilityIdentifier("analytics-detailed-metric-filter")
+                            detailChip(nil, summary.confidenceText, chevron: false) { showConfidenceInfo = true }
+                                .accessibilityIdentifier("analytics-detailed-confidence")
                         }
                         .padding(.top, 12)
                         .confirmationDialog("Time range", isPresented: $showRangePicker, titleVisibility: .visible) {
                             ForEach(["Last 7 days", "Last 30 days", "Last 90 days", "All time"], id: \.self) { r in
-                                Button(r) { range = r }
+                                Button(r) {
+                                    range = r
+                                    toast = .success("Range updated", "\(r): \(filteredCount(for: r)) sessions.")
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
                         .confirmationDialog("Select metric", isPresented: $showMetricPicker, titleVisibility: .visible) {
                             ForEach(["Release Consistency", "Form Score", "Make %", "Release Angle", "Elbow Alignment"],
                                     id: \.self) { m in
-                                Button(m) { chosenMetric = m }
+                                Button(m) {
+                                    chosenMetric = m
+                                    toast = .success("Metric updated", "\(m) selected.")
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
-                        .alert("Confidence: High", isPresented: $showConfidenceInfo) {
+                        .alert(summary.confidenceText, isPresented: $showConfidenceInfo) {
                             Button("OK", role: .cancel) {}
                         } message: {
-                            Text("Confidence reflects how many tracked sessions back this trend. 9 sessions in range gives a high-confidence read.")
+                            Text(summary.confidenceMessage)
                         }
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "TREND")
-                                    Text("+6.4%").font(.custom("Tungsten-Medium", size: 30))
+                                    Text(summary.trendText).font(.custom("Tungsten-Medium", size: 30))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("vs previous 30 days").shotiqBody(10)
+                                        .accessibilityIdentifier("analytics-detailed-trend-delta")
+                                    Text(summary.trendCaption).shotiqBody(10)
                                         .foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("analytics-detailed-trend-caption")
                                 }
                                 .frame(width: 82, alignment: .leading)
-                                TrendLine(points: [68, 66.5, 69, 72.5, 68.5, 71, 73.5, 77, 76.2],
+                                TrendLine(points: summary.trendPoints,
                                           stroke: ShotIQColor.confirmGreen,
                                           areaFill: true, gridlines: true,
                                           xLabels: ["APR", "MAY"],
                                           yLabels: ["80", "72", "64"],
-                                          endBadge: "78.2%")
+                                          endBadge: summary.trendBadge)
                                     .frame(height: 92)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityIdentifier("analytics-detailed-trend-chart")
+                                    .accessibilityLabel(summary.trendA11y)
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "LATEST")
-                                    Text("78.2%").font(.custom("Tungsten-Medium", size: 30))
+                                    Text(summary.latestText).font(.custom("Tungsten-Medium", size: 30))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text("MAY 24").shotiqBody(10, weight: .medium)
+                                        .accessibilityIdentifier("analytics-detailed-latest-value")
+                                    Text(summary.latestDate).shotiqBody(10, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("analytics-detailed-latest-date")
                                 }
                                 .frame(width: 62, alignment: .leading)
                             }
@@ -2234,21 +2432,24 @@ struct AnalyticsDetailedView: View { // 067
                             VStack(alignment: .leading, spacing: 10) {
                                 SectionLabel(text: "MECHANICS SCORECARD")
                                 HStack(alignment: .top, spacing: 6) {
-                                    ForEach(scorecard, id: \.0) { p in
+                                    ForEach(Array(scorecard.enumerated()), id: \.element.name) { index, p in
                                         VStack(spacing: 4) {
-                                            PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 24)
-                                            Text(p.0).shotiqBody(7, weight: .bold).kerning(0.2)
-                                                .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                            PhaseGlyph(phase: p.name, active: p.name == "RELEASE", size: 24)
+                                            Text(p.name).shotiqBody(7, weight: .bold).kerning(0.2)
+                                                .foregroundStyle(p.name == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.55)
+                                                .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-name")
                                             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                                Text("\(p.1)").font(.custom("Tungsten-Medium", size: 20))
-                                                Text("+\(p.2)").shotiqBody(8, weight: .bold)
+                                                Text("\(p.score)").font(.custom("Tungsten-Medium", size: 20))
+                                                    .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-value")
+                                                Text(p.delta).shotiqBody(8, weight: .bold)
                                                     .foregroundStyle(ShotIQColor.confirmGreen)
+                                                    .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-delta")
                                             }
-                                            Text(p.3).shotiqBody(8, weight: .bold)
-                                                .foregroundStyle(p.3 == "GREAT" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
-                                            ScoreBar(pct: Double(p.1) / 100,
-                                                     color: p.3 == "GREAT" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                                            Text(p.verdict).shotiqBody(8, weight: .bold)
+                                                .foregroundStyle(p.color)
+                                                .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-verdict")
+                                            ScoreBar(pct: Double(p.score) / 100, color: p.color)
                                         }
                                         .padding(6)
                                         .frame(maxWidth: .infinity)
@@ -2265,24 +2466,29 @@ struct AnalyticsDetailedView: View { // 067
                                 Text("METRIC").shotiqBody(9, weight: .bold).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                compHeader("MAY 24, 8:24 AM", "24 SHOTS", highlight: true)
-                                compHeader("MAY 16, 7:05 AM", "22 SHOTS", highlight: false)
-                                compHeader("MAY 9, 6:40 AM", "21 SHOTS", highlight: false)
-                                compHeader("CHANGE", "(LATEST VS MAY 9)", highlight: false)
+                                ForEach(Array(comparisonHeaders.enumerated()), id: \.offset) { _, header in
+                                    compHeader(header.date, header.shots, highlight: header.highlight)
+                                }
+                                compHeader("CHANGE", comparisonChangeLabel, highlight: false)
                             }
                             .padding(.vertical, 8)
                             .overlay(HRule(), alignment: .bottom)
-                            ForEach(comparison, id: \.0) { r in
+                            ForEach(Array(comparison.enumerated()), id: \.element.metric) { index, r in
                                 HStack(spacing: 0) {
-                                    Text(r.0).shotiqBody(11)
+                                    Text(r.metric).shotiqBody(11)
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.6)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    compCell(r.1, color: ShotIQColor.shotiqOrange, highlight: true)
-                                    compCell(r.2, color: ShotIQColor.ink, highlight: false)
-                                    compCell(r.3, color: ShotIQColor.ink, highlight: false)
-                                    compCell(r.4, color: r.5 ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed,
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-metric")
+                                    compCell(r.latest, color: ShotIQColor.shotiqOrange, highlight: true)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-latest")
+                                    compCell(r.previous, color: ShotIQColor.ink, highlight: false)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-previous")
+                                    compCell(r.baseline, color: ShotIQColor.ink, highlight: false)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-baseline")
+                                    compCell(r.change, color: r.positive ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed,
                                              highlight: false)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-change")
                                 }
                                 .padding(.vertical, 8)
                                 .overlay(HRule(), alignment: .bottom)
@@ -2293,21 +2499,24 @@ struct AnalyticsDetailedView: View { // 067
                             HStack(alignment: .center, spacing: 10) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "RELEASE ARC RANGE")
-                                    Text("AVG ARC").shotiqBody(8, weight: .semibold)
+                                    Text(summary.arcLabel).shotiqBody(8, weight: .semibold)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("50.4°").font(.custom("Tungsten-Medium", size: 32))
+                                    Text(summary.arcValue).font(.custom("Tungsten-Medium", size: 32))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Text("IDEAL: 48°–52°").shotiqBody(9, weight: .medium)
+                                        .accessibilityIdentifier("analytics-detailed-arc-value")
+                                    Text(summary.arcTarget).shotiqBody(9, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .frame(width: 96, alignment: .leading)
                                 ArcGauge().frame(height: 90).frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "CONSISTENCY")
-                                    Text("78.2%").font(.custom("Tungsten-Medium", size: 28))
+                                    Text(summary.consistencyText).font(.custom("Tungsten-Medium", size: 28))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text("±3.6°").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("analytics-detailed-consistency-value")
+                                    Text(summary.consistencySpread).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("analytics-detailed-consistency-spread")
                                 }
                                 .frame(width: 76, alignment: .leading)
                             }
@@ -2335,7 +2544,94 @@ struct AnalyticsDetailedView: View { // 067
                 }
             }
         }
+        .shotiqToast($toast)
     }
+
+    private func filteredCount(for selectedRange: String) -> Int {
+        let calendar = Calendar.current
+        let now = Date()
+        return workouts.filter { workout in
+            let daysAgo = calendar.dateComponents([.day], from: workout.completedAt, to: now).day ?? 0
+            switch selectedRange {
+            case "Last 7 days": return daysAgo <= 7
+            case "Last 30 days": return daysAgo <= 30
+            case "Last 90 days": return daysAgo <= 90
+            default: return true
+            }
+        }.count
+    }
+
+    private func metricValue(_ metric: String, for workout: TrainingWorkoutRecord) -> Double {
+        switch metric {
+        case "Form Score":
+            return Double(workout.formScore)
+        case "Make %":
+            return workout.accuracy * 100
+        case "Release Consistency":
+            let values = workout.phaseScores.map { Double($0.1) }
+            return values.reduce(0, +) / Double(max(values.count, 1))
+        case "Release Angle":
+            return metricNumber(latestPresentation?.releaseOffsetText) ?? Double(workout.formScore)
+        case "Elbow Alignment":
+            return metricNumber(latestPresentation?.elbowAngleText) ?? Double(workout.formScore)
+        default:
+            let values = workout.phaseScores.map { Double($0.1) }
+            return values.reduce(0, +) / Double(max(values.count, 1))
+        }
+    }
+
+    private func metricNumber(_ text: String?) -> Double? {
+        guard let text else { return nil }
+        let allowed = text.filter { "-0123456789.".contains($0) }
+        return Double(allowed)
+    }
+
+    private func formatMetric(_ value: Double, metric: String) -> String {
+        switch metric {
+        case "Form Score":
+            return "\(Int(value.rounded()))"
+        case "Make %", "Release Consistency":
+            return String(format: "%.1f%%", value)
+        case "Release Angle", "Elbow Alignment":
+            return "\(Int(value.rounded()))°"
+        default:
+            return String(format: "%.1f%%", value)
+        }
+    }
+
+    private func formatDelta(_ value: Double, metric: String) -> String {
+        if abs(value) < 0.05 { return "—" }
+        let sign = value > 0 ? "+" : ""
+        switch metric {
+        case "Form Score":
+            return "\(sign)\(Int(value.rounded()))"
+        case "Make %", "Release Consistency":
+            return "\(sign)\(String(format: "%.1f", value))%"
+        case "Release Angle", "Elbow Alignment":
+            return "\(sign)\(Int(value.rounded()))°"
+        default:
+            return "\(sign)\(String(format: "%.1f", value))%"
+        }
+    }
+
+    private static func signedScore(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : value < 0 ? "\(value)" : "—"
+    }
+
+    private static func shortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "TODAY" : "MMM d"
+        return formatter.string(from: date).uppercased()
+    }
+
+    private static func tableDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "'TODAY,' h:mm a" : "MMM d, h:mm a"
+        return formatter.string(from: date).uppercased()
+    }
+
     private func toolItem(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 3) {
             Image(systemName: icon).font(.system(size: 15))
