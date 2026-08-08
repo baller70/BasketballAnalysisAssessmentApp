@@ -24,6 +24,20 @@ struct AnalysisScoreBreakdownItem: Equatable {
     var isUnavailable: Bool { source == "missing" || scoreText == "--" }
 }
 
+struct AnalysisFlawItem: Equatable, Identifiable {
+    var rank: Int
+    var title: String
+    var impact: String
+    var description: String
+    var confidence: String
+    var cta: String
+    var phase: String
+    var trendEnd: String
+    var source: String
+
+    var id: String { "\(rank)-\(title)-\(source)" }
+}
+
 struct AnalysisEliteMatchSummary: Equatable {
     var isMatched: Bool
     var title: String
@@ -228,6 +242,7 @@ struct AnalysisResultPresentation: Equatable {
     var coachingTarget: String
     var metrics: [AnalysisMetricTile]
     var scoreBreakdown: [AnalysisScoreBreakdownItem]
+    var flaws: [AnalysisFlawItem]
     var provenanceSummary: String
     var sourceCoverageText: String
     var sourceCoverageVerdict: String
@@ -327,6 +342,7 @@ struct AnalysisResultPresentation: Equatable {
                            caption: "Combined result returned by the shared contract.",
                            detail: "Weighted saved analysis score", impact: "High"),
         ]
+        flaws = Self.flaws(for: result)
         sourceCoverageText = "\(result.provenance.measured.count)"
         sourceCoverageVerdict = result.provenance.missing.isEmpty ? "COMPLETE" : "PARTIAL"
         sourceCoverageCaption = result.provenance.missing.isEmpty
@@ -362,6 +378,20 @@ struct AnalysisResultPresentation: Equatable {
             AnalysisScoreBreakdownItem(metric: "Power", scoreText: "86", scorePct: 0.86, verdict: "GOOD", caption: "Strong lower body drive.", detail: "Lower body drive, force transfer", impact: "Medium", source: "demo"),
             AnalysisScoreBreakdownItem(metric: "Consistency", scoreText: "81", scorePct: 0.81, verdict: "GOOD", caption: "Release point is repeatable.", detail: "Repeatability, release control", impact: "High", source: "demo"),
         ],
+        flaws: [
+            AnalysisFlawItem(rank: 1, title: "ELBOW FLARE", impact: "HIGH IMPACT",
+                             description: "Elbow drifts outward during lift, creating inconsistent release path.",
+                             confidence: "92%", cta: "Review elbow flare",
+                             phase: "RELEASE", trendEnd: "60", source: "demo"),
+            AnalysisFlawItem(rank: 2, title: "EARLY WRIST EXTENSION", impact: "MEDIUM IMPACT",
+                             description: "Wrist extends too early, reducing arc and consistency.",
+                             confidence: "76%", cta: "View history",
+                             phase: "RELEASE", trendEnd: "64", source: "demo"),
+            AnalysisFlawItem(rank: 3, title: "LOW FOLLOW-THROUGH", impact: "LOW IMPACT",
+                             description: "Follow-through finishes below eye level, limiting rotation and hold.",
+                             confidence: "58%", cta: "View history",
+                             phase: "FOLLOW-THROUGH", trendEnd: "58", source: "demo"),
+        ],
         sourceCoverageText: "76%",
         sourceCoverageVerdict: "MODERATE",
         sourceCoverageCaption: "Form is repeatable in games, with room to tighten elbow.",
@@ -395,6 +425,7 @@ struct AnalysisResultPresentation: Equatable {
             AnalysisScoreBreakdownItem(metric: "Consistency", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
             AnalysisScoreBreakdownItem(metric: "Overall", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
         ],
+        flaws: [],
         sourceCoverageText: "0",
         sourceCoverageVerdict: "UNAVAILABLE",
         sourceCoverageCaption: "No saved analysis result has been loaded.",
@@ -406,6 +437,7 @@ struct AnalysisResultPresentation: Equatable {
                  recordedLabel: String, phaseText: String, coachingTarget: String,
                  metrics: [AnalysisMetricTile],
                  scoreBreakdown: [AnalysisScoreBreakdownItem],
+                 flaws: [AnalysisFlawItem],
                  sourceCoverageText: String,
                  sourceCoverageVerdict: String,
                  sourceCoverageCaption: String,
@@ -424,6 +456,7 @@ struct AnalysisResultPresentation: Equatable {
         self.coachingTarget = coachingTarget
         self.metrics = metrics
         self.scoreBreakdown = scoreBreakdown
+        self.flaws = flaws
         self.sourceCoverageText = sourceCoverageText
         self.sourceCoverageVerdict = sourceCoverageVerdict
         self.sourceCoverageCaption = sourceCoverageCaption
@@ -501,6 +534,141 @@ struct AnalysisResultPresentation: Equatable {
                                           detail: unavailable ? "Missing score source" : detail,
                                           impact: impact,
                                           source: value.source)
+    }
+
+    private static func flaws(for result: ShotIQAnalysisResultDTO) -> [AnalysisFlawItem] {
+        var items: [(priority: Int, item: AnalysisFlawItem)] = []
+
+        func confidence(_ metric: AnalysisMetricDTO, fallback: String = "74%") -> String {
+            if metric.source == "measured" { return "88%" }
+            if metric.source == "estimated" { return "64%" }
+            return fallback
+        }
+
+        func impact(distance: Double, high: Double) -> String {
+            distance >= high ? "HIGH IMPACT" : "MEDIUM IMPACT"
+        }
+
+        func add(priority: Int, title: String, impact: String, description: String,
+                 confidence: String, cta: String, phase: String, trendEnd: String,
+                 source: String) {
+            items.append((priority, AnalysisFlawItem(rank: 0,
+                                                     title: title,
+                                                     impact: impact,
+                                                     description: description,
+                                                     confidence: confidence,
+                                                     cta: cta,
+                                                     phase: phase,
+                                                     trendEnd: trendEnd,
+                                                     source: source)))
+        }
+
+        func scoreFlaw(_ title: String, metric: String, value: AnalysisMetricDTO,
+                       phase: String) {
+            guard let score = value.value, value.source != "missing", score <= 80 else { return }
+            let severe = score < 70
+            add(priority: severe ? 1 : 2,
+                title: "\(title) SCORE GAP",
+                impact: severe ? "HIGH IMPACT" : "MEDIUM IMPACT",
+                description: "\(metric) score is \(Int(score.rounded())), so this area is lowering the saved form result.",
+                confidence: confidence(value, fallback: "70%"),
+                cta: "Review \(title.lowercased())",
+                phase: phase,
+                trendEnd: "\(Int(score.rounded()))",
+                source: value.source + ".scores." + title.lowercased())
+        }
+
+        scoreFlaw("FORM", metric: "Form", value: result.scores.form,
+                  phase: result.phase.value?.uppercased() ?? "RELEASE")
+        scoreFlaw("RELEASE", metric: "Release", value: result.scores.release,
+                  phase: "RELEASE")
+        scoreFlaw("BALANCE", metric: "Balance", value: result.scores.balance,
+                  phase: "SETUP")
+        scoreFlaw("CONSISTENCY", metric: "Consistency", value: result.scores.consistency,
+                  phase: "FOLLOW-THROUGH")
+
+        if let elbow = result.angles.elbow.value, result.angles.elbow.source != "missing",
+           elbow < 150 || elbow > 180 {
+            let distance = elbow < 150 ? 150 - elbow : elbow - 180
+            add(priority: distance >= 15 ? 1 : 2,
+                title: "ELBOW ANGLE OUT OF RANGE",
+                impact: impact(distance: distance, high: 15),
+                description: "Elbow angle is \(degrees(elbow)); target band is 150°-180° for a stacked release.",
+                confidence: confidence(result.angles.elbow),
+                cta: "Review elbow angle",
+                phase: "RELEASE",
+                trendEnd: "\(Int(elbow.rounded()))",
+                source: result.angles.elbow.source + ".angles.elbow")
+        }
+
+        if let wrist = result.angles.wrist.value, result.angles.wrist.source != "missing",
+           wrist < 50 || wrist > 100 {
+            let distance = wrist < 50 ? 50 - wrist : wrist - 100
+            add(priority: distance >= 12 ? 1 : 2,
+                title: "WRIST ANGLE OUT OF RANGE",
+                impact: impact(distance: distance, high: 12),
+                description: "Wrist angle is \(degrees(wrist)); target band is 50°-100° for a controlled release.",
+                confidence: confidence(result.angles.wrist),
+                cta: "Review wrist angle",
+                phase: "RELEASE",
+                trendEnd: "\(Int(wrist.rounded()))",
+                source: result.angles.wrist.source + ".angles.wrist")
+        }
+
+        if let release = result.angles.release.value, result.angles.release.source != "missing",
+           abs(release) > 5 {
+            let distance = abs(release) - 5
+            add(priority: distance >= 8 ? 1 : 2,
+                title: "RELEASE PATH DRIFT",
+                impact: impact(distance: distance, high: 8),
+                description: "Release offset is \(degrees(release, signed: true)); target band is -5° to +5°.",
+                confidence: confidence(result.angles.release),
+                cta: "Review release path",
+                phase: "RELEASE",
+                trendEnd: "\(Int(abs(release).rounded()))",
+                source: result.angles.release.source + ".angles.release")
+        }
+
+        if let centerline = result.measurements.centerlineDeviationDeg.value,
+           result.measurements.centerlineDeviationDeg.source != "missing",
+           centerline > 3 {
+            add(priority: centerline >= 8 ? 1 : 2,
+                title: "CENTERLINE DEVIATION",
+                impact: impact(distance: centerline, high: 8),
+                description: "Centerline deviation is \(degrees(centerline)); target is under 3°.",
+                confidence: confidence(result.measurements.centerlineDeviationDeg),
+                cta: "Review centerline",
+                phase: "RELEASE",
+                trendEnd: "\(Int(centerline.rounded()))",
+                source: result.measurements.centerlineDeviationDeg.source + ".measurements.centerline")
+        }
+
+        if items.isEmpty,
+           result.provenance.measured.isEmpty,
+           !result.provenance.missing.isEmpty {
+            add(priority: 3,
+                title: "INSUFFICIENT MEASUREMENT DATA",
+                impact: "LOW IMPACT",
+                description: "ShotIQ needs a clearer pose or saved backend result before it can rank mechanical flaws.",
+                confidence: "0%",
+                cta: "Retake analysis",
+                phase: "SETUP",
+                trendEnd: "0",
+                source: "missing.provenance")
+        }
+
+        return items
+            .sorted { left, right in
+                if left.priority != right.priority { return left.priority < right.priority }
+                return left.item.title < right.item.title
+            }
+            .prefix(3)
+            .enumerated()
+            .map { index, entry in
+                var item = entry.item
+                item.rank = index + 1
+                return item
+            }
     }
 
     private static func feetInches(_ inches: Double) -> String {

@@ -64,7 +64,7 @@ The first pass should fix root causes before polishing dependent screens:
 | --- | --- | --- | --- | --- |
 | P0-001 | VERIFYING | `#analytics` `#backend` `#web-sync` | Shared `AnalysisResult` contract for form score, confidence, release angle, elbow/wrist values, shot arc, phase scores, flaws, media, and timestamps. | Same test shot produces one saved result that native and web both render with matching values. Backend contract, native decode, native save-result handoff, native overview presentation, and save/latest web API contract proof are captured. Native video now computes and persists the same release-from-vertical and wrist/forearm-elevation semantics the web pose pipeline uses. Still needs real iOS-created analysis visible on web with matching values before `DONE`. |
 | P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, full-screen source selection, file import, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, server video rendering, and app-local selected-video result fallback are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
-| P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, and 045 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, missing-score state, source coverage, weakest-score CTA, and app-local selected photo/video result fallback instead of their old demo constants when server media URLs are absent. Still needs the remaining result/flaw/frame/detail screens, true confidence/trend/history fields, real pose frames, and real device/backend/web proof before `DONE`. |
+| P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, 045, and 046 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, generated flaws, missing-score state, source coverage, weakest-score CTA, and app-local selected photo/video result fallback instead of their old demo constants when server media URLs are absent. Still needs true confidence/trend/history fields, real pose frames, generated flaw detail evidence, and real device/backend/web proof before `DONE`. |
 | P0-004 | VERIFYING | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | Simulator proof now covers the production navigation path through live camera setup, hoop calibration, readiness, recording, END ROUND, shot detected, confirm make, toast/progress feedback, and capture review. Backend shot-event payload contract is fixed for make/miss confirmation. Still needs Kevin's iPhone with a real hoop/ball to prove optical make/miss classification, skeleton following, confidence, form score, context, and replay come from the recording. |
 | P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
 | P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. Thumbnail placeholder imagery on affected training/goals/media/profile cards now falls back to bundled basketball media, but aggregate values are still unproved. |
@@ -131,7 +131,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G040 | OPEN | P2 | `#control` `#media` `#backend` | 043 | Make annotations real and persistent. | Draw annotation, save/share/export, reopen and see it on same media. |
 | G041 | VERIFYING | P0 | `#analytics` | 044 | Replace fixed form score screen. | Top score/verdict/caption/bar/share text, breakdown cards, metric detail rows, source coverage, key insight, and weakest-score CTA now consume the saved presentation passed by screen 038, including missing-score unavailable state. True confidence and history/trend calculations still need saved result/history sources before `DONE`. |
 | G042 | VERIFYING | P0 | `#analytics` | 045 | Replace fixed metric detail. | Metric detail now receives the selected metric value text plus parent saved presentation from screen 038, and its share/top score/measured value are no longer hardcoded to form score 82. Range, confidence, explainer copy, and drill-plan linkage still need metric-source proof before `DONE`. |
-| G043 | OPEN | P0 | `#analytics` `#pose` | 046 | Generate flaws from analysis. | Flaw list changes based on measured weak metrics and confidence thresholds. |
+| G043 | VERIFYING | P0 | `#analytics` `#pose` | 046 | Generate flaws from analysis. | Screen 046 now renders `AnalysisFlawItem` rows generated from saved scores, measured elbow/wrist/release/centerline values, and missing-data provenance. Focused unit proof verifies weak saved metrics generate elbow/release flaws instead of demo `ELBOW FLARE`; focused UI proof verifies the Home -> Analysis Result -> Flaws route shows generated weak-analysis flaws and excludes the old demo flaws. Real backend/device/web-derived flaw proof remains before `DONE`. |
 | G044 | OPEN | P0 | `#analytics` `#pose` `#media` | 047 | Generate flaw detail from real evidence frames. | Detail frames, angles, ideal range, and trend match selected flaw data. |
 
 ## Training Items
@@ -1927,3 +1927,46 @@ still needs to show Apple's Vision detector creates the pose from an actual
 customer photo/video, that selected video opens the correct sampled release
 frame, and that a real ball marker/classification is available before G039 can
 move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Flaws Overview Derived-Analysis Proof
+
+Thirtieth laptop functionality slice after local Xcode setup:
+
+- `AnalysisResultPresentation` now generates `AnalysisFlawItem` rows from the
+  saved analysis DTO instead of leaving screen 046 tied to fixed demo flaws.
+  The generator evaluates saved score gaps, elbow angle, wrist angle, release
+  path, centerline deviation, and missing-measurement provenance.
+- `FlawsOverviewView` now accepts the saved presentation passed from screen 038
+  and renders the generated flaw title, impact, description, phase, confidence,
+  CTA, and training-plan count. It also shows an honest no-flaw state when the
+  saved measurements are inside the ShotIQ bands.
+- Screen 038's result tabs and coaching-target route now pass the active saved
+  presentation into screen 046, and the test-only weak-analysis fixture proves
+  the non-demo branch deterministically on the simulator.
+- The weak-analysis fixture carries selected-media pose data while isolating
+  three measured issues for proof: release score gap, elbow angle out of range,
+  and release path drift.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawGeneration-Unit-2026-08-08-v3.xcresult`
+  ran
+  `ShotIQTests/AnalysisResultContractTests/testFlawsAreGeneratedFromWeakSavedMetrics`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test verifies saved weak metrics
+  generate `ELBOW ANGLE OUT OF RANGE`, `RELEASE PATH DRIFT`, and
+  `RELEASE SCORE GAP`, with high-impact labels and no non-demo `ELBOW FLARE`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawsOverviewWeakAnalysis-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testFlawsOverviewUsesWeakSavedAnalysisInsteadOfDemoFlaws`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test opens Home, taps View latest
+  analysis, opens `FLAWS`, verifies the generated three-flaw summary plus the
+  generated flaw CTAs, and verifies `ELBOW FLARE`,
+  `EARLY WRIST EXTENSION`, and `LOW FOLLOW-THROUGH` are absent.
+
+Remaining limitations: this proves generated screen 046 content from a
+deterministic saved analysis on the simulator. Real physical-device proof still
+needs a customer photo/video or backend result to create the measured weak
+metrics, and web parity still needs to show the same saved flaw semantics in
+the web app before G043 can move from `VERIFYING` to `DONE`.

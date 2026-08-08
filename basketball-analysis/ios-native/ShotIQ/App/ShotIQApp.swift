@@ -155,6 +155,10 @@ enum UITestHooks {
     /// can prove downstream pose rendering even when Vision weights are absent.
     static var forceSamplePose: Bool { args.contains("-uiTestForceSamplePose") }
 
+    /// Seed analysis screens with measured-but-weak mechanics so simulator
+    /// proof can verify derived flaws instead of canonical demo flaws.
+    static var weakAnalysis: Bool { args.contains("-uiTestWeakAnalysis") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:

@@ -648,7 +648,9 @@ struct AnalysisResultOverviewView: View { // 038
     init(initialResult: ShotIQAnalysisResultDTO? = nil) {
         self.initialResult = initialResult
         let seeded = initialResult.map(AnalysisResultPresentation.init)
-            ?? (UITestHooks.active ? .canonicalDemo : .noResult)
+            ?? (UITestHooks.weakAnalysis
+                ? AnalysisResultPresentation(result: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis())
+                : (UITestHooks.active ? .canonicalDemo : .noResult))
         _presentation = State(initialValue: seeded)
         _overviewChrome = State(initialValue: UITestHooks.active
                                 ? .canonicalDemo
@@ -675,7 +677,7 @@ struct AnalysisResultOverviewView: View { // 038
                                     Rectangle().fill(ShotIQColor.shotiqOrange).frame(height: 3)
                                 }
                                 .fixedSize()
-                                stripLink("FLAWS", FlawsOverviewView())
+                                stripLink("FLAWS", FlawsOverviewView(presentation: p))
                                 stripLink("PLAYER", PlayerCardView())
                                 stripLink("COMPARE", EliteMatchView())
                                 stripLink("TRAINING", TrainingHomeView())
@@ -714,7 +716,7 @@ struct AnalysisResultOverviewView: View { // 038
                             }
                             .padding(.top, 16)
                             PhaseStrip().padding(.top, 16)
-                            NavigationLink { FlawsOverviewView() } label: { CoachTargetCard(title: p.coachingTarget) }
+                            NavigationLink { FlawsOverviewView(presentation: p) } label: { CoachTargetCard(title: p.coachingTarget) }
                                 .padding(.top, 16)
                             HStack(spacing: 6) {
                                 SectionLabel(text: "YOUR SIX KEY METRICS")
@@ -1732,7 +1734,7 @@ struct FrameDetailSkeletonView: View { // 042
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
                                 frameSummaryBlock(value: presentation.wristAngleText, label: "WRIST")
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                NavigationLink { FlawsOverviewView() } label: {
+                                NavigationLink { FlawsOverviewView(presentation: presentation) } label: {
                                     HStack(spacing: 0) {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("TARGET").shotiqBody(9, weight: .semibold).kerning(0.5)
@@ -2542,18 +2544,8 @@ struct FlawsOverviewView: View {    // 046
         var id: String { "\(title)-\(severity)" }
     }
 
-    private let flaws: [(Int, String, String, String, String, String, Color)] = [
-        // rank, title, impact chip, description, confidence, cta, tint
-        (1, "ELBOW FLARE", "HIGH IMPACT",
-         "Elbow drifts outward during lift, creating inconsistent release path.",
-         "92%", "Review elbow flare", ShotIQColor.reviewRed),
-        (2, "EARLY WRIST EXTENSION", "MEDIUM IMPACT",
-         "Wrist extends too early, reducing arc and consistency.",
-         "76%", "View history", ShotIQColor.shotiqOrange),
-        (3, "LOW FOLLOW-THROUGH", "LOW IMPACT",
-         "Follow-through finishes below eye level, limiting rotation and hold.",
-         "58%", "View history", ShotIQColor.muted),
-    ]
+    var presentation: AnalysisResultPresentation = .canonicalDemo
+    private var flaws: [AnalysisFlawItem] { presentation.flaws }
     @Environment(\.dismiss) private var dismiss
     @State private var addingAll = false
     @State private var addedAll = false
@@ -2583,58 +2575,83 @@ struct FlawsOverviewView: View {    // 046
                             HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                         }
                         .padding(.top, 14)
-                        NavigationLink { FlawDetailView(title: "ELBOW FLARE", severity: "HIGH IMPACT") } label: {
+                        NavigationLink {
+                            FlawDetailView(title: flaws.first?.title ?? presentation.coachingTarget,
+                                           severity: flaws.first?.impact ?? "NO PRIORITY FLAW")
+                        } label: {
                             CoachTargetCard(bordered: false)
                                 .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                         }
                         .padding(.top, 14)
-                        Text("AI analysis detected 3 priority flaws impacting your shot efficiency.")
+                        Text(summaryText)
                             .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             .padding(.top, 14)
-                        ForEach(flaws, id: \.0) { rank, title, impact, desc, confidence, cta, tint in
-                            Button {
-                                selectedFlaw = SelectedFlaw(title: title, severity: impact)
-                            } label: {
-                                flawCard(rank, title, impact, desc, confidence, cta, tint)
-                            }
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("\(title), \(impact), \(cta)")
-                            .accessibilityIdentifier(cta)
-                            .buttonStyle(.plain)
-                            .padding(.top, 12)
-                        }
-                        HStack(spacing: 12) {
-                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
-                                                     size: 24,
-                                                     label: nil)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Add all 3 flaws to your training plan")
-                                    .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                Text("Get personalized drills to fix these issues.")
-                                    .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            Spacer()
-                            Button { addAllToPlan() } label: {
-                                HStack(spacing: 6) {
-                                    if addingAll {
-                                        ProgressView().tint(.white).scaleEffect(0.8)
+                        if flaws.isEmpty {
+                            ShotIQCard {
+                                HStack(spacing: 12) {
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "checkmark.circle"),
+                                                             size: 26,
+                                                             label: nil)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text("NO PRIORITY FLAWS DETECTED")
+                                            .shotiqDisplay(20)
+                                        Text("Saved measurements are inside the current ShotIQ target bands.")
+                                            .shotiqBody(13)
+                                            .foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    Text(addedAll ? "Added to plan" : "Add all to plan")
-                                        .shotiqBody(14, weight: .semibold)
-                                    Image(systemName: addedAll ? "checkmark" : "chevron.right")
-                                        .font(.system(size: 11, weight: .semibold))
+                                    Spacer()
                                 }
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 14).padding(.vertical, 11)
-                                .background(addedAll ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue,
-                                            in: RoundedRectangle(cornerRadius: 8))
+                                .padding(14)
                             }
-                            .buttonStyle(.plain)
-                            .disabled(addingAll || addedAll)
+                            .padding(.top, 12)
+                        } else {
+                            ForEach(flaws) { flaw in
+                                Button {
+                                    selectedFlaw = SelectedFlaw(title: flaw.title, severity: flaw.impact)
+                                } label: {
+                                    flawCard(flaw)
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("\(flaw.title), \(flaw.impact), \(flaw.cta)")
+                                .accessibilityIdentifier(flaw.cta)
+                                .buttonStyle(.plain)
+                                .padding(.top, 12)
+                            }
                         }
-                        .padding(14)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                        .padding(.top, 14)
+                        if !flaws.isEmpty {
+                            HStack(spacing: 12) {
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
+                                                         size: 24,
+                                                         label: nil)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Add all \(flaws.count) flaws to your training plan")
+                                        .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                    Text("Get personalized drills to fix these issues.")
+                                        .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                Button { addAllToPlan() } label: {
+                                    HStack(spacing: 6) {
+                                        if addingAll {
+                                            ProgressView().tint(.white).scaleEffect(0.8)
+                                        }
+                                        Text(addedAll ? "Added to plan" : "Add all to plan")
+                                            .shotiqBody(14, weight: .semibold)
+                                        Image(systemName: addedAll ? "checkmark" : "chevron.right")
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 14).padding(.vertical, 11)
+                                    .background(addedAll ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue,
+                                                in: RoundedRectangle(cornerRadius: 8))
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(addingAll || addedAll)
+                            }
+                            .padding(14)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .padding(.top, 14)
+                        }
                         if let addAllError {
                             Text(addAllError).shotiqBody(12).foregroundStyle(ShotIQColor.reviewRed)
                                 .padding(.top, 6)
@@ -2661,7 +2678,7 @@ struct FlawsOverviewView: View {    // 046
                 let _: Resp = try await APIClient.shared.call(
                     "/api/saved-workouts", method: "POST",
                     body: Body(name: "Flaw correction plan", drillCount: flaws.count,
-                               drillIds: flaws.map { $0.1.lowercased().replacingOccurrences(of: " ", with: "-") }))
+                               drillIds: flaws.map { $0.title.lowercased().replacingOccurrences(of: " ", with: "-") }))
                 addedAll = true
             } catch {
                 addAllError = "Couldn't add flaws to your plan. Check your connection and try again."
@@ -2669,47 +2686,62 @@ struct FlawsOverviewView: View {    // 046
             addingAll = false
         }
     }
-    private func flawCard(_ rank: Int, _ title: String, _ impact: String, _ desc: String,
-                          _ confidence: String, _ cta: String, _ tint: Color) -> some View {
-        ShotIQCard {
+    private var summaryText: String {
+        if flaws.isEmpty {
+            return presentation.id == "no-saved-analysis"
+                ? "No saved analysis is loaded yet."
+                : "AI analysis detected no priority flaws from the saved measurements."
+        }
+        return "AI analysis detected \(flaws.count) priority flaw\(flaws.count == 1 ? "" : "s") impacting your shot efficiency."
+    }
+    private func tint(for flaw: AnalysisFlawItem) -> Color {
+        switch flaw.impact {
+        case "HIGH IMPACT": return ShotIQColor.reviewRed
+        case "MEDIUM IMPACT": return ShotIQColor.shotiqOrange
+        default: return ShotIQColor.muted
+        }
+    }
+    private func flawCard(_ flaw: AnalysisFlawItem) -> some View {
+        let tint = tint(for: flaw)
+        return ShotIQCard {
             HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 10) {
                         RoundedRectangle(cornerRadius: 5).fill(tint).frame(width: 26, height: 26)
-                            .overlay(Text("\(rank)").shotiqBody(14, weight: .bold).foregroundStyle(.white))
-                        Text(title).shotiqDisplay(21)
-                        Text(impact).shotiqBody(9, weight: .bold).kerning(0.3)
+                            .overlay(Text("\(flaw.rank)").shotiqBody(14, weight: .bold).foregroundStyle(.white))
+                        Text(flaw.title).shotiqDisplay(21)
+                        Text(flaw.impact).shotiqBody(9, weight: .bold).kerning(0.3)
                             .foregroundStyle(tint)
                             .padding(.horizontal, 7).padding(.vertical, 4)
                             .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 4))
                             .lineLimit(1).minimumScaleFactor(0.6)
                     }
-                    Text(desc).shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                    Text(flaw.description).shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                         .fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.leading)
                         .padding(.top, 8)
                     Text("AFFECTED PHASES").shotiqBody(9, weight: .semibold).kerning(0.5)
                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 12)
-                    PhaseStrip(active: title == "LOW FOLLOW-THROUGH" ? "FOLLOW-THROUGH" : "RELEASE")
+                    PhaseStrip(active: flaw.phase)
                         .scaleEffect(0.82, anchor: .leading)
                         .frame(height: 52)
                         .padding(.top, 4)
                     Text("TREND (LAST 6 SESSIONS)").shotiqBody(9, weight: .semibold).kerning(0.5)
                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
-                    TrendLine(points: [52, 74, 78, 50, 64, 48, 60], stroke: tint,
-                              areaFill: true, gridlines: true, endBadge: "60")
+                    TrendLine(points: [52, 74, 78, 50, 64, 48, Double(Int(flaw.trendEnd) ?? 60)], stroke: tint,
+                              areaFill: true, gridlines: true, endBadge: flaw.trendEnd)
                         .frame(height: 40).padding(.top, 4)
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("CONFIDENCE").shotiqBody(9, weight: .semibold).kerning(0.5)
                         .foregroundStyle(ShotIQColor.graphite)
                     HStack(spacing: 8) {
-                        Text(confidence).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
+                        Text(flaw.confidence).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                         TrendLine(points: [40, 55, 48, 62, 58, 74], stroke: tint).frame(width: 54, height: 20)
                     }
                     // Only the second flaw card has a canonical crop; the others keep
                     // the dark surface so the row stays consistent.
-                    if rank == 2 {
+                    if flaw.source == "demo", flaw.rank == 2 {
                         CanonicalPhoto("046-visual-001", width: 120, height: 108, cornerRadius: 4)
                     } else {
                         ZStack {
@@ -2719,16 +2751,16 @@ struct FlawsOverviewView: View {    // 046
                         .frame(width: 120, height: 108)
                     }
                     HStack(spacing: 5) {
-                        Text(cta).shotiqBody(12, weight: .semibold)
+                        Text(flaw.cta).shotiqBody(12, weight: .semibold)
                             .lineLimit(1).minimumScaleFactor(0.7)
                         Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
                     }
-                    .foregroundStyle(rank == 1 ? .white : ShotIQColor.ink)
+                    .foregroundStyle(flaw.rank == 1 ? .white : ShotIQColor.ink)
                     .frame(width: 120, height: 40)
-                    .background(rank == 1 ? ShotIQColor.shotiqOrange : .clear,
+                    .background(flaw.rank == 1 ? ShotIQColor.shotiqOrange : .clear,
                                 in: RoundedRectangle(cornerRadius: 6))
                     .overlay(RoundedRectangle(cornerRadius: 6)
-                        .stroke(rank == 1 ? .clear : ShotIQColor.rule))
+                        .stroke(flaw.rank == 1 ? .clear : ShotIQColor.rule))
                 }
             }
             .padding(14)

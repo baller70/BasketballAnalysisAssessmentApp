@@ -392,6 +392,28 @@ final class AnalysisResultContractTests: XCTestCase {
         XCTAssertEqual(presentation.sourceCoverageVerdict, "PARTIAL")
         XCTAssertTrue(presentation.sourceCoverageCaption.contains("2 fields are unavailable"))
     }
+
+    func testFlawsAreGeneratedFromWeakSavedMetrics() throws {
+        let weakJSON = sampleAnalysisJSON()
+            .replacingOccurrences(of: "\"release\": { \"value\": 80, \"unit\": \"score\", \"source\": \"measured\" }",
+                                  with: "\"release\": { \"value\": 68, \"unit\": \"score\", \"source\": \"measured\" }")
+            .replacingOccurrences(of: "\"elbow\": { \"value\": 161, \"unit\": \"deg\", \"source\": \"measured\" }",
+                                  with: "\"elbow\": { \"value\": 118, \"unit\": \"deg\", \"source\": \"measured\" }")
+            .replacingOccurrences(of: "\"wrist\": { \"value\": 72, \"unit\": \"deg\", \"source\": \"measured\" }",
+                                  with: "\"wrist\": { \"value\": 42, \"unit\": \"deg\", \"source\": \"measured\" }")
+            .replacingOccurrences(of: "\"release\": { \"value\": -3, \"unit\": \"deg\", \"source\": \"measured\" }",
+                                  with: "\"release\": { \"value\": 14, \"unit\": \"deg\", \"source\": \"measured\" }")
+
+        let result = try JSONDecoder().decode(ShotIQAnalysisResultDTO.self,
+                                              from: weakJSON.data(using: .utf8)!)
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(presentation.flaws.map(\.title),
+                       ["ELBOW ANGLE OUT OF RANGE", "RELEASE PATH DRIFT", "RELEASE SCORE GAP"])
+        XCTAssertEqual(presentation.flaws.map(\.impact), ["HIGH IMPACT", "HIGH IMPACT", "HIGH IMPACT"])
+        XCTAssertTrue(presentation.flaws.first?.description.contains("118") == true)
+        XCTAssertFalse(presentation.flaws.contains { $0.title == "ELBOW FLARE" && $0.source != "demo" })
+    }
 }
 
 final class PoseOverlayAlignmentTests: XCTestCase {

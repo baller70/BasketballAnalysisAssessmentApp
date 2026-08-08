@@ -1,6 +1,50 @@
 import Foundation
 
 enum ShotIQLocalAnalysisFactory {
+    static func uiTestWeakAnalysis() -> ShotIQAnalysisResultDTO {
+        ShotIQAnalysisResultDTO(
+            id: "ios-ui-test-weak-analysis",
+            clientSessionId: "ios-ui-test-weak",
+            captureSessionId: nil,
+            recordedAt: ISO8601DateFormatter().string(from: Date()),
+            source: "ios-native-ui-test-weak-analysis",
+            media: AnalysisMediaDTO(type: "image",
+                                    imageUrl: nil,
+                                    annotatedImageUrl: nil,
+                                    displayImageUrl: nil,
+                                    videoUrl: nil,
+                                    localImageUrl: nil,
+                                    localVideoUrl: nil),
+            pose: AnalysisPoseDTO(pose: .uiTestSample),
+            scores: AnalysisScoresDTO(
+                overall: metric(72, unit: "score"),
+                form: metric(82, unit: "score"),
+                balance: metric(83, unit: "score"),
+                release: metric(68, unit: "score"),
+                consistency: metric(83, unit: "score")),
+            angles: AnalysisAnglesDTO(
+                elbow: metric(118, unit: "deg"),
+                knee: metric(92, unit: "deg"),
+                wrist: metric(72, unit: "deg"),
+                shoulder: metric(nil, unit: "deg"),
+                hip: metric(nil, unit: "deg"),
+                release: metric(14, unit: "deg"),
+                kneeMin: metric(88, unit: "deg")),
+            measurements: AnalysisMeasurementsDTO(
+                releaseHeightInches: metric(84, unit: "in"),
+                releaseDistanceInches: metric(nil, unit: "in"),
+                verticalJumpInches: metric(nil, unit: "in"),
+                centerlineDeviationDeg: metric(2, unit: "deg")),
+            phase: AnalysisTextMetricDTO(value: "release", unit: nil, source: "measured"),
+            provenance: AnalysisProvenanceDTO(
+                measured: ["pose.body", "scores.form", "scores.release", "scores.consistency",
+                           "angles.elbow", "angles.wrist", "angles.release",
+                           "measurements.centerlineDeviationDeg"],
+                missing: ["angles.shoulder", "angles.hip", "measurements.releaseDistanceInches"],
+                estimated: [],
+                demo: []))
+    }
+
     static func photo(localImageURL: URL?, detectedPose: DetectedPose?) -> ShotIQAnalysisResultDTO {
         let hasPose = detectedPose != nil
         let measured = hasPose ? ["pose.body"] : []

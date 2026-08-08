@@ -602,6 +602,26 @@ final class ShotIQUITests: XCTestCase {
         }
     }
 
+    func testFlawsOverviewUsesWeakSavedAnalysisInsteadOfDemoFlaws() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestHomeVariant", "standard"])
+        XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
+        tapControl("View latest analysis")
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 8))
+
+        tapControl("FLAWS")
+        XCTAssertTrue(screen("screen-ios-flaws-overview").waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["AI analysis detected 3 priority flaws impacting your shot efficiency."].exists)
+        for generated in ["ELBOW ANGLE OUT OF RANGE", "RELEASE PATH DRIFT", "RELEASE SCORE GAP",
+                          "Review elbow angle", "Review release path", "Review release"] {
+            XCTAssertNotNil(findControl(generated), "Missing generated flaw item: \(generated)")
+        }
+        for oldDemo in ["ELBOW FLARE", "EARLY WRIST EXTENSION", "LOW FOLLOW-THROUGH"] {
+            XCTAssertFalse(app.staticTexts[oldDemo].exists,
+                           "Flaws overview must not reuse demo flaw: \(oldDemo)")
+        }
+    }
+
     func testUploadQueueStartsEmptyAndBlocksAnalysisWithoutMedia() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "analyze-hub"])
         XCTAssertTrue(screen("screen-ios-analyze-hub").waitForExistence(timeout: 8))
