@@ -717,6 +717,40 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["62.5%"].exists)
     }
 
+    func testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard",
+                "-uiTestSampleMedia", "-uiTestSampleMediaName", "photo-068-visual-004",
+                "-uiTestForceSamplePose"])
+        XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
+        tapControl("Upload image")
+        XCTAssertTrue(screen("screen-ios-photo-upload-source").waitForExistence(timeout: 8))
+        tapControl("Use sample for all views")
+        XCTAssertTrue(waitForToastContaining("All views ready"))
+        tapControl("Continue with selected views")
+        XCTAssertTrue(screen("screen-ios-photo-review-crop").waitForExistence(timeout: 8))
+        app.buttons["USE PHOTO"].tap()
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 8))
+        app.buttons["Continue to analysis"].tap()
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
+
+        tapControl("COMPARE")
+        XCTAssertTrue(screen("screen-ios-elite-match").waitForExistence(timeout: 8))
+        tapElement(id: "open-photo-comparison")
+        XCTAssertTrue(screen("screen-ios-photo-comparison").waitForExistence(timeout: 8))
+        XCTAssertTrue(screen("captured-pose-detected").waitForExistence(timeout: 8))
+        assertStaticText(id: "photo-comparison-score", contains: "--")
+        assertElement(id: "photo-comparison-shots", contains: "--")
+        assertElement(id: "photo-comparison-makes", contains: "--")
+        assertElement(id: "photo-comparison-accuracy", contains: "--")
+        assertVisibleElement(id: "photo-comparison-you-PHASE", contains: "POSE DETECTED")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+
+        tapControl("Overlay skeletons")
+        XCTAssertTrue(screen("captured-pose-detected").exists)
+        tapControl("Sync release frames")
+        assertVisible("Release frames synced", maxSwipes: 2)
+    }
+
     func testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "my-media"])
         XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))

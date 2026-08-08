@@ -93,6 +93,10 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWeakMeasuredAnalysisFeedsEliteMatchComparison-20260808-151500-v2.xcresult`
 - Focused canonical analysis/elite-route regression result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalAnalysisEliteRoute-20260808-151500.xcresult`
+- Focused photo-comparison selected-pose result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000-v3.xcresult`
+- Focused canonical photo-comparison route regression result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalPhotoComparisonRoute-20260808-152000.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -135,6 +139,8 @@ Current proof totals:
 - Focused settings persistence/feedback target: 1 passed, 0 failed, 0 skipped
 - Focused selected-media/share-results real-analysis target: 1 passed, 0 failed, 0 skipped
 - Focused share-results export renderer target: 1 passed, 0 failed, 0 skipped
+- Focused photo-comparison selected-pose target: 1 passed, 0 failed, 0 skipped
+- Focused canonical photo-comparison route target: 1 passed, 0 failed, 0 skipped
 - Superseded bundled media/profile regression attempts: failed due staged
   relaunches falling back to Splash; replaced by one-staged-launch-per-test
   proof
@@ -201,7 +207,7 @@ even when the page has no upload/photo feature.
 | 48 | Player Card | Yes | Stats, measurements, mechanics, customize/share/download labels asserted; focused proof now walks selected photo analysis into Player Card and verifies `--`/`UNAVAILABLE` placeholders, latest coaching target, source coverage, and no old `62.5%` demo make rate | Backend reload/history aggregates; system share/download completion |
 | 49 | Customize Player Card | Yes | Details, banner color, save card, saved sheet asserted; focused proof verifies the customize preview/export uses the same latest selected-analysis payload, persists customization values locally, and shows card-saved feedback | Relaunch persistence proof; backend/shared-profile sync; real system share completion |
 | 50 | Elite Match | Yes | Analysis route to elite match and choose shooter route asserted; focused proof now verifies a weak measured analysis drives form score, similarity, shared mechanics, release offset, elbow, wrist, release alignment, target text, and suppresses the old `62.5%` demo stat while canonical analysis screenshot regression still captures `008-elite-match` | Backend nearest-shooter vector selection; multiple elite-vector changes; web parity |
-| 51 | Photo Comparison | Yes | Elite shooter detail to comparison route asserted | Real uploaded user photo comparison |
+| 51 | Photo Comparison | Yes | Elite shooter detail to comparison route asserted; focused proof now walks selected sample photo analysis into Photo Comparison, verifies selected pose/media state, `--` score/shots/makes/accuracy placeholders, `POSE DETECTED` phase, no old `62.5%`, Overlay Skeletons, and Sync Release Frames feedback; canonical route regression still captures `011-photo-comparison` | Backend elite-profile/vector selection; real make/miss aggregates; physical-device/web parity |
 | 52 | Elite Shooters | Yes | Profile menu and elite-match chooser routes asserted | Live catalog updates |
 | 53 | Elite Shooter Detail | Yes | Klay detail and compare route asserted | Live catalog/video assets |
 | 54 | Training Home | Yes | Quick start, my drills, calendar, drill detail, tracker routes asserted; staged training root now used for saved-drill persistence proof | Backend training plan sync |
@@ -226,6 +232,19 @@ even when the page has no upload/photo feature.
 
 ## Latest Focused Evidence
 
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000-v3.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves page 051 consumes the selected native photo
+  analysis in the app-owned path, exposes the selected pose/media state, replaces
+  fake session stats with `--` placeholders, keeps old `62.5%` offscreen, and
+  provides overlay/sync customer feedback.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalPhotoComparisonRoute-20260808-152000.xcresult`
+  ran `ShotIQUITests/CanonicalScreenshotTests/test03HomeScreens` on the same
+  simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0 failed, 0 skipped. This
+  proves the canonical Elite Shooters -> Klay Thompson -> Compare with my shot
+  path still renders and captures `011-photo-comparison`.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisAppearsInMyMediaAndDetail-share-20260808-143111.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisAppearsInMyMediaAndDetail`

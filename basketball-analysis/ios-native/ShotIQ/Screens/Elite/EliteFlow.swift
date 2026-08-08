@@ -1207,7 +1207,10 @@ struct EliteMatchView: View {       // 050
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                         }
                         .padding(.top, 18)
-                        NavigationLink { PhotoComparisonView() } label: {
+                        NavigationLink {
+                            PhotoComparisonView(presentation: presentation
+                                                ?? app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) })
+                        } label: {
                             HStack(spacing: 4) {
                                 ForEach(0..<7, id: \.self) { i in
                                     RoundedRectangle(cornerRadius: 4)
@@ -1218,6 +1221,7 @@ struct EliteMatchView: View {       // 050
                                 }
                             }
                         }
+                        .accessibilityIdentifier("open-photo-comparison")
                         .padding(.top, 8)
                         ShotIQCard {
                             HStack {
@@ -1301,21 +1305,163 @@ struct EliteMatchView: View {       // 050
     }
 }
 
+fileprivate struct PhotoComparisonMetricData {
+    var icon: String
+    var label: String
+    var sub: String
+    var you: String
+    var diff: String
+    var elite: String
+}
+
+fileprivate struct PhotoComparisonData {
+    var score: String
+    var scorePct: Double
+    var shots: String
+    var makes: String
+    var accuracy: String
+    var shareText: String
+    var rows: [PhotoComparisonMetricData]
+    var syncCopy: String
+
+    static func make(presentation: AnalysisResultPresentation) -> PhotoComparisonData {
+        if presentation.id == "canonical-demo" {
+            return PhotoComparisonData(
+                score: "82",
+                scorePct: 0.82,
+                shots: "24",
+                makes: "15",
+                accuracy: "62.5%",
+                shareText: "Comparing my shot to an elite reference on ShotIQ - 82 vs 94 form score, release angle within 12 degrees.",
+                rows: [
+                    PhotoComparisonMetricData(icon: "point.3.connected.trianglepath.dotted", label: "ELBOW ANGLE", sub: "at release", you: "162°", diff: "12°", elite: "174°"),
+                    PhotoComparisonMetricData(icon: "arrow.up.to.line", label: "RELEASE HEIGHT", sub: "from floor", you: "8' 11\"", diff: "+2\"", elite: "9' 1\""),
+                    PhotoComparisonMetricData(icon: "arrow.left.and.right", label: "RELEASE DISTANCE", sub: "from forehead", you: "9.3\"", diff: "+0.7\"", elite: "10.0\""),
+                    PhotoComparisonMetricData(icon: "point.bottomleft.forward.to.point.topright.scurvepath", label: "SHOT ARC", sub: "peak height", you: "74°", diff: "+6°", elite: "80°"),
+                    PhotoComparisonMetricData(icon: "gauge.with.needle", label: "BALANCE", sub: "centered at release", you: "92%", diff: "+8%", elite: "100%"),
+                ],
+                syncCopy: "Release frames aligned - both shooters shown at RELEASE (within 2 degrees).")
+        }
+        return PhotoComparisonData(
+            score: presentation.scoreText,
+            scorePct: presentation.scorePct,
+            shots: "--",
+            makes: "--",
+            accuracy: "--",
+            shareText: presentation.shotBreakdownShareText,
+            rows: [
+                PhotoComparisonMetricData(icon: "point.3.connected.trianglepath.dotted", label: "ELBOW ANGLE", sub: "saved analysis", you: presentation.elbowAngleText, diff: diffText(presentation.elbowAngleText), elite: "165°"),
+                PhotoComparisonMetricData(icon: "arrow.up.to.line", label: "RELEASE HEIGHT", sub: "saved analysis", you: presentation.releaseHeightText, diff: diffText(presentation.releaseHeightText), elite: "7'8\""),
+                PhotoComparisonMetricData(icon: "angle", label: "RELEASE OFFSET", sub: "-5° to +5° target", you: presentation.releaseOffsetText, diff: diffText(presentation.releaseOffsetText), elite: "0°"),
+                PhotoComparisonMetricData(icon: "point.bottomleft.forward.to.point.topright.scurvepath", label: "WRIST ANGLE", sub: "50°-100° target", you: presentation.wristAngleText, diff: diffText(presentation.wristAngleText), elite: "75°"),
+                PhotoComparisonMetricData(icon: "viewfinder", label: "PHASE", sub: "detected phase", you: presentation.phaseText.uppercased(), diff: presentation.phaseText == "Unavailable" ? "--" : "matched", elite: "RELEASE"),
+            ],
+            syncCopy: "Release frames aligned - selected shot and elite reference shown at RELEASE.")
+    }
+
+    private static func diffText(_ value: String) -> String {
+        value == "--" ? "--" : "measured"
+    }
+}
+
+fileprivate struct PhotoComparisonUserMediaSurface: View {
+    var presentation: AnalysisResultPresentation
+    var height: CGFloat
+    var overlaySkeletons: Bool
+
+    var body: some View {
+        ZStack {
+            Group {
+                if presentation.id == "canonical-demo" {
+                    CanonicalMediaSurface(key: "051-visual-003", height: height, alignment: .trailing)
+                } else if let url = presentation.mediaURL, url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
+                    CapturedPoseImage(image: image,
+                                      height: height,
+                                      cornerRadius: 4,
+                                      showsPose: true,
+                                      showBones: true,
+                                      showJoints: true,
+                                      initialPose: presentation.detectedPose)
+                } else if let url = presentation.mediaURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .failure:
+                            placeholder("Media unavailable")
+                        default:
+                            placeholder("Loading media")
+                        }
+                    }
+                    .frame(height: height)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                } else {
+                    placeholder(presentation.mediaLabel)
+                        .frame(height: height)
+                }
+            }
+            if overlaySkeletons {
+                SkeletonOverlay(boneColor: ShotIQColor.analysisBlue,
+                                jointColor: ShotIQColor.analysisBlue)
+                    .opacity(0.75)
+                    .offset(x: 5)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(mediaAccessibilityID)
+        .accessibilityLabel(mediaAccessibilityLabel)
+    }
+
+    private func placeholder(_ text: String) -> some View {
+        RoundedRectangle(cornerRadius: 4)
+            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+            .overlay {
+                VStack(spacing: 8) {
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "photo"), size: 28)
+                    Text(text).shotiqBody(12, weight: .medium)
+                }
+                .foregroundStyle(.white.opacity(0.85))
+                .multilineTextAlignment(.center)
+                .padding(10)
+            }
+    }
+
+    private var mediaAccessibilityID: String {
+        guard presentation.id != "canonical-demo" else { return "photo-comparison-user-media" }
+        return presentation.detectedPose == nil ? "photo-comparison-user-media" : "captured-pose-detected"
+    }
+
+    private var mediaAccessibilityLabel: String {
+        guard presentation.id != "canonical-demo" else { return "Photo comparison user reference" }
+        return presentation.detectedPose == nil ? "Selected shot image" : "Shooter pose detected"
+    }
+}
+
 struct PhotoComparisonView: View {  // 051
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @State private var phaseIndex = 3
     @State private var overlaySkeletons = false
     @State private var savedComparison = false
     @State private var synced = false
+    var presentation: AnalysisResultPresentation? = nil
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
-    private let rows: [(String, String, String, String, String, String)] = [
-        // icon, label, sub, you, diff, elite
-        ("point.3.connected.trianglepath.dotted", "ELBOW ANGLE", "at release", "162°", "12°", "174°"),
-        ("arrow.up.to.line", "RELEASE HEIGHT", "from floor", "8' 11\"", "+2\"", "9' 1\""),
-        ("arrow.left.and.right", "RELEASE DISTANCE", "from forehead", "9.3\"", "+0.7\"", "10.0\""),
-        ("point.bottomleft.forward.to.point.topright.scurvepath", "SHOT ARC", "peak height", "74°", "+6°", "80°"),
-        ("gauge.with.needle", "BALANCE", "centered at release", "92%", "+8%", "100%"),
-    ]
+    private var currentPresentation: AnalysisResultPresentation {
+        presentation
+            ?? app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+            ?? (UITestHooks.demoData ? .canonicalDemo : .noResult)
+    }
+    private var comparison: PhotoComparisonData {
+        PhotoComparisonData.make(presentation: currentPresentation)
+    }
+    private var playerName: String {
+        (app.user?.displayName ?? "Jordan Ellis").uppercased()
+    }
+    private var playerProfileLine: String {
+        "You • \(hand.capitalized) • \(level.capitalized)"
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-comparison") {
             VStack(spacing: 0) {
@@ -1328,7 +1474,7 @@ struct PhotoComparisonView: View {  // 051
                     Spacer()
                     Text("COMPARE SHOOTERS").shotiqDisplay(22)
                     Spacer()
-                    ShareLink(item: "Comparing my shot to an elite reference on ShotIQ — 82 vs 94 form score, release angle within 12°. 🏀") {
+                    ShareLink(item: comparison.shareText) {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
                     }
                 }
@@ -1339,8 +1485,10 @@ struct PhotoComparisonView: View {  // 051
                         HStack(alignment: .top, spacing: 10) {
                             Circle().fill(ShotIQColor.rule).frame(width: 52, height: 52)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("JORDAN ELLIS").shotiqDisplay(19)
-                                Text("You • Right • Advanced").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                Text(playerName).shotiqDisplay(19)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
+                                Text(playerProfileLine).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
                                 Text("FORM SCORE").shotiqBody(8, weight: .semibold).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                                 // The compare columns are ~80pt wide. A rigid
@@ -1348,11 +1496,12 @@ struct PhotoComparisonView: View {  // 051
                                 // score 16pt, so "82" wrapped to "8" over "2".
                                 // The number is rigid now and the bar flexes.
                                 HStack(spacing: 6) {
-                                    Text("82").font(.custom("Tungsten-Medium", size: 24))
+                                    Text(comparison.score).font(.custom("Tungsten-Medium", size: 24))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                         .lineLimit(1)
                                         .fixedSize(horizontal: true, vertical: false)
-                                    ScoreBar(pct: 0.82).frame(maxWidth: 58)
+                                        .accessibilityIdentifier("photo-comparison-score")
+                                    ScoreBar(pct: comparison.scorePct).frame(maxWidth: 58)
                                 }
                             }
                             Spacer(minLength: 2)
@@ -1379,9 +1528,18 @@ struct PhotoComparisonView: View {  // 051
                         }
                         .padding(.top, 14)
                         HStack(spacing: 0) {
-                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
-                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
-                            StatBlock(value: "62.5%", label: "ACCURACY", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: comparison.shots, label: "SHOTS", valueSize: ShotIQType.numeric)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityIdentifier("photo-comparison-shots")
+                                .accessibilityLabel("\(comparison.shots) shots")
+                            StatBlock(value: comparison.makes, label: "MAKES", valueSize: ShotIQType.numeric)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityIdentifier("photo-comparison-makes")
+                                .accessibilityLabel("\(comparison.makes) makes")
+                            StatBlock(value: comparison.accuracy, label: "ACCURACY", valueSize: ShotIQType.numeric)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityIdentifier("photo-comparison-accuracy")
+                                .accessibilityLabel("\(comparison.accuracy) accuracy")
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
                             StatBlock(value: "—", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .center)
                             StatBlock(value: "—", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .center)
@@ -1397,20 +1555,9 @@ struct PhotoComparisonView: View {  // 051
                         // pane height, and it keeps the 176x272 pane proportion.
                         HStack(spacing: 2) {
                             ZStack(alignment: .topLeading) {
-                                ZStack {
-                                    // Your canonical frame; its own pose overlay is baked in.
-                                    // The crop sits hard against its right edge, so the pane
-                                    // is anchored there rather than centred on empty wall.
-                                    CanonicalMediaSurface(key: "051-visual-003", height: 272,
-                                                          alignment: .trailing)
-                                    if overlaySkeletons {
-                                        // Elite skeleton overlaid on your frame for direct comparison.
-                                        SkeletonOverlay(boneColor: ShotIQColor.analysisBlue,
-                                                        jointColor: ShotIQColor.analysisBlue)
-                                            .opacity(0.75)
-                                            .offset(x: 5)
-                                    }
-                                }
+                                PhotoComparisonUserMediaSurface(presentation: currentPresentation,
+                                                                height: 272,
+                                                                overlaySkeletons: overlaySkeletons)
                                 mediaTag(ShotIQColor.shotiqOrange, overlaySkeletons ? "YOU + ELITE" : "YOU")
                             }
                             ZStack(alignment: .topLeading) {
@@ -1424,35 +1571,39 @@ struct PhotoComparisonView: View {  // 051
                             HStack(spacing: 6) {
                                 Image(systemName: "checkmark.circle.fill").font(.system(size: 13))
                                     .foregroundStyle(ShotIQColor.confirmGreen)
-                                Text("Release frames aligned — both shooters shown at RELEASE (±2°).")
+                                Text(comparison.syncCopy)
                                     .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             }
                             .padding(.top, 8)
                         }
-                        ForEach(rows, id: \.1) { icon, label, sub, you, diff, elite in
+                        ForEach(comparison.rows, id: \.label) { row in
                             HStack(spacing: 8) {
-                                ShotIQConceptGlyph(concept: label, fallback: icon, size: 19)
+                                ShotIQConceptGlyph(concept: row.label, fallback: row.icon, size: 19)
                                     .foregroundStyle(ShotIQColor.ink).frame(width: 28)
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text(label).shotiqBody(12, weight: .bold).kerning(0.4)
+                                    Text(row.label).shotiqBody(12, weight: .bold).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text(sub).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                    Text(row.sub).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
                                 }
                                 .frame(width: 108, alignment: .leading)
-                                Text(you).font(.custom("Tungsten-Medium", size: 26))
+                                Text(row.you).font(.custom("Tungsten-Medium", size: 26))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .frame(maxWidth: .infinity)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
+                                    .accessibilityIdentifier("photo-comparison-you-\(row.label)")
                                 VStack(spacing: 0) {
-                                    Text(diff).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.ink)
+                                    Text(row.diff).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1).minimumScaleFactor(0.65)
                                     Text("DIFFERENCE").shotiqBody(7, weight: .medium).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .frame(width: 62)
-                                Text(elite).font(.custom("Tungsten-Medium", size: 26))
+                                Text(row.elite).font(.custom("Tungsten-Medium", size: 26))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                     .frame(maxWidth: .infinity)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
                             }
                             .padding(.vertical, 11)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)

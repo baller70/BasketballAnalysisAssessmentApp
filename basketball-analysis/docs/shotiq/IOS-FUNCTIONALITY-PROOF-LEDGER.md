@@ -174,7 +174,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G068 | VERIFYING | P1 | `#analytics` `#media` | 048 | Player card generated from real history/profile. | Player Card now consumes the latest remembered native analysis through `AnalysisResultPresentation` instead of always showing canned 82/24/15/62.5% values. Focused UI proof walks selected photo -> native pose analysis -> Profile -> Player Card and verifies unavailable-score placeholders, coaching target, source coverage, and no `62.5%` demo make rate. Backend reload and real history aggregate proof remain before `DONE`. |
 | G069 | VERIFYING | P2 | `#control` `#analytics` | 049 | Player-card customization persists over real data. | Customize Player Card now uses the same latest-analysis card payload, persists accent/name/jersey through `@AppStorage`, renders/export the selected analysis placeholders without mutating analytics, and shows customer-visible save feedback. Focused UI and renderer proof passed; relaunch persistence proof and backend/shared-profile sync remain before `DONE`. |
 | G070 | VERIFYING | P1 | `#analytics` `#backend` | 050 | Elite match from measured metric vectors. | Elite Match now receives the current `AnalysisResultPresentation` from the Analysis Result `COMPARE` route, falls back to latest remembered analysis outside that route, and derives player score, placeholders, similarity, shared mechanics, comparison rows, release alignment, and coaching target from that payload instead of always showing the 89%/82/24/15/62.5% demo state. Focused UI proof verifies a weak measured analysis changes similarity to `100%`, shared mechanics to `5 OF 5`, release offset to `+14°`, elbow to `118°`, wrist to `72°`, target to `Stack elbow higher through release`, and removes old `62.5%`; canonical analysis screenshot regression still passes. Backend elite-vector selection and web parity remain before `DONE`. |
-| G071 | OPEN | P1 | `#analytics` `#pose` `#media` | 051 | Photo comparison from user's measured shot. | Comparison overlays and angle differences match user result and selected elite profile. |
+| G071 | VERIFYING | P1 | `#analytics` `#pose` `#media` | 051 | Photo comparison from user's measured shot. | Photo Comparison now receives the selected `AnalysisResultPresentation` from Elite Match, renders the selected local shot media with detected pose state, replaces fake `82`/`24`/`15`/`62.5%` customer stats with selected-analysis placeholders when history is unavailable, and keeps the canonical demo path stable. Backend elite-profile/vector matching and web parity remain before `DONE`. |
 | G072 | OPEN | P2 | `#backend` | 052 | Prove elite shooters list/detail navigation. | Shooter list loads from backend and selected shooter opens correct detail. |
 | G073 | OPEN | P1 | `#analytics` `#backend` | 053 | Elite shooter detail from selected shooter profile. | Detail stats/media load from shooter object and compare correctly with user data. |
 
@@ -2384,3 +2384,52 @@ analysis presentation and keeps the canonical screenshot route stable. It does
 not yet prove backend nearest-shooter selection, multiple elite vectors changing
 the closest match, real iPhone capture data, or web parity; those remain required
 before G070 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Photo Comparison Selected-Pose Proof
+
+Implementation:
+
+- Screen 050 now passes the current `AnalysisResultPresentation` into screen
+  051, and screen 051 falls back to the latest remembered in-app native analysis
+  outside that route.
+- Canonical/demo Photo Comparison still renders the screenshot baseline values,
+  but non-demo comparisons now use the selected result for score, share text,
+  metric rows, source phase, and local media.
+- Selected photo comparisons render the chosen local image through
+  `CapturedPoseImage` with the saved detected pose, expose `captured-pose-detected`
+  for test/proof, and show `--` for shots/makes/accuracy until real shot-history
+  aggregates exist instead of displaying the old `24`/`15`/`62.5%` demo numbers.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000-v3.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test walks selected sample photo
+  upload -> native pose analysis -> Analysis Result -> COMPARE -> Photo
+  Comparison, verifies `captured-pose-detected`, `--` score/shots/makes/accuracy,
+  `POSE DETECTED` phase, absence of `62.5%`, Overlay Skeletons staying on the
+  selected shot, and Sync Release Frames feedback.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalPhotoComparisonRoute-20260808-152000.xcresult`
+  ran `CanonicalScreenshotTests/test03HomeScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and captured the
+  canonical Home/Profile Menu -> Elite Shooters -> Klay Thompson -> Compare with
+  my shot path including `011-photo-comparison`.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000.xcresult`
+  failed at build because the first patch treated optional `displayName` as
+  non-optional.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000-v2.xcresult`
+  failed because the selected media wrapper hid the nested
+  `captured-pose-detected` accessibility state from XCUITest. The `v3` run is
+  the passing proof.
+
+Remaining limitations: this proves screen 051 consumes a selected native photo
+analysis, preserves the selected pose/media surface, avoids fake session stats,
+and keeps the canonical route stable on the simulator. It does not yet prove
+backend elite-profile/vector selection, real make/miss history aggregates, a
+physical iPhone capture, or iOS/web parity; those remain required before G071 can
+move from `VERIFYING` to `DONE`.
