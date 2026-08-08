@@ -12,11 +12,10 @@
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  ChevronLeft, ChevronDown, ArrowRight, Save, Info, Ruler, SlidersHorizontal,
-  ClipboardList, PenLine, type LucideIcon,
+  ChevronLeft, ChevronDown, ArrowRight, Save, Info,
 } from "lucide-react"
 import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure } from "@/components/shotiq/Glyphs"
+import { AbilityGlyph, ApprovedRasterIcon, PoseFigure } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 import { PlayerBio } from "@/components/shotiq/phone/PlayerBio"
@@ -32,9 +31,12 @@ import {
    entirely — no bio field, label or control existed — so the step is added
    here rather than as a duplicate page, and the phone layout for it is
    `PlayerBio`. */
-const STEPS: [string, LucideIcon | null][] = [
-  ["Onboarding", null], ["Measurements", Ruler], ["Preferences", SlidersHorizontal],
-  ["Bio", PenLine], ["Review", ClipboardList],
+const STEPS: [string, string][] = [
+  ["Onboarding", "shotiq-approved-v2-onboarding-profile"],
+  ["Measurements", "shotiq-approved-v2-onboarding-measurements"],
+  ["Preferences", "shotiq-approved-v2-onboarding-preferences"],
+  ["Bio", "shotiq-approved-v2-onboarding-bio"],
+  ["Review", "shotiq-approved-v2-onboarding-review"],
 ]
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 // Canonical gives each benefit its own figure — three poses that appear nowhere
@@ -377,7 +379,7 @@ export default function OnboardingPage() {
           "Step 2 of 4" meter is a control canonical never draws, and it exiled
           the progress card into the right rail. */}
       <div className="flex w-[186px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pb-[22px] pt-[26px]">
-        {STEPS.map(([s, Icon], i) => (
+        {STEPS.map(([s, asset], i) => (
           <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
                   data-testid={`onboarding-tab-${s.toLowerCase()}`}
                   /* Canonical sets the step names in the condensed display
@@ -390,9 +392,7 @@ export default function OnboardingPage() {
                       ? "bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)]"
                       : "text-[#2B2F37]"} ${i ? "mt-[13px]" : ""}`}>
             {step === i + 1 && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-            {Icon
-              ? <Icon className="h-[20px] w-[20px] shrink-0" strokeWidth={1.5} />
-              : <PoseFigure phase="setup" height={22} active={step === i + 1} className="shrink-0" />}
+            <ApprovedRasterIcon asset={asset} size={22} className="shrink-0" />
             {s.toUpperCase()}
           </button>
         ))}
@@ -585,8 +585,16 @@ export default function OnboardingPage() {
                   return (
                     <button key={val} type="button" onClick={() => store.setBodyType(val)}
                             data-testid={`body-${val}`} aria-pressed={on}
-                            className={`h-[92px] rounded-[5px] border px-[12px] text-left ${
+                            className={`h-[112px] rounded-[5px] border px-[12px] py-[10px] text-left ${
                               on ? "border-[var(--shotiq-color-shotiqOrange)] bg-[#FFF7F4]" : "border-[var(--shotiq-color-rule)] bg-white"}`}>
+                      <div className="mb-[5px] flex h-[28px] items-center">
+                        <ApprovedRasterIcon
+                          asset={val === "ectomorph" ? "shotiq-approved-v2-bodytype-slim"
+                            : val === "mesomorph" ? "shotiq-approved-v2-bodytype-athletic"
+                              : "shotiq-approved-v2-bodytype-stocky"}
+                          size={28}
+                        />
+                      </div>
                       <div className={`shotiq-display text-[19px] leading-[21px] ${on ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{t}</div>
                       <div className="mt-[4px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{d}</div>
                     </button>
@@ -595,7 +603,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div className="mt-[22px] flex items-center gap-[10px] rounded-[5px] bg-[var(--shotiq-color-warmCanvas)] px-[14px] py-[12px]">
-              <Ruler className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" strokeWidth={1.6} />
+              <ApprovedRasterIcon asset="shotiq-approved-v2-onboarding-measurements" size={18} className="shrink-0" />
               <p className="text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                 Wingspan and body type scale the ideal ranges in your analysis — a 6&apos;10&quot; wingspan and a 6&apos;2&quot;
                 one do not share a release height. You can update these anytime in profile settings.
@@ -614,8 +622,14 @@ export default function OnboardingPage() {
                 return (
                   <button key={t} type="button" onClick={() => store.setAthleticAbility(val)}
                           data-testid={`ability-${t.toLowerCase()}`} aria-pressed={on}
-                          className={`h-[78px] rounded-[5px] border px-[12px] text-left ${
+                          className={`h-[98px] rounded-[5px] border px-[12px] py-[9px] text-left ${
                             on ? "border-[var(--shotiq-color-shotiqOrange)] bg-[#FFF7F4]" : "border-[var(--shotiq-color-rule)] bg-white"}`}>
+                    <div className="mb-[5px] flex h-[26px] items-center">
+                      <AbilityGlyph
+                        kind={t === "DEVELOPING" ? "developing" : t === "ADVANCED" ? "advanced" : "elite"}
+                        size={27}
+                      />
+                    </div>
                     <div className={`shotiq-display text-[19px] leading-[21px] ${on ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{t}</div>
                     <div className="mt-[4px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   </button>
@@ -630,8 +644,16 @@ export default function OnboardingPage() {
                   return (
                     <button key={val} type="button" onClick={() => store.setShootingStyle(val)}
                             data-testid={`style-${val}`} aria-pressed={on}
-                            className={`h-[78px] rounded-[5px] border px-[12px] text-left ${
+                            className={`h-[98px] rounded-[5px] border px-[12px] py-[9px] text-left ${
                               on ? "border-[var(--shotiq-color-shotiqOrange)] bg-[#FFF7F4]" : "border-[var(--shotiq-color-rule)] bg-white"}`}>
+                      <div className="mb-[5px] flex h-[26px] items-center">
+                        <ApprovedRasterIcon
+                          asset={t === "COMPACT" ? "shotiq-approved-v2-style-compact"
+                            : t === "BALANCED" ? "shotiq-approved-v2-style-balanced"
+                              : "shotiq-approved-v2-style-high-arc"}
+                          size={28}
+                        />
+                      </div>
                       <div className={`shotiq-display text-[19px] leading-[21px] ${on ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{t}</div>
                       <div className="mt-[4px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{d}</div>
                     </button>
@@ -719,7 +741,7 @@ export default function OnboardingPage() {
               ))}
             </div>
             <div className="mt-[18px] flex items-center gap-[12px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[14px] py-[12px]">
-              <ClipboardList className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-shotiqOrange)]" strokeWidth={1.6} />
+              <ApprovedRasterIcon asset="shotiq-approved-v2-onboarding-review" size={20} className="shrink-0" />
               <p className="text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                 Finishing saves this profile to your account and opens your dashboard. Everything here stays editable
                 in <span className="font-semibold text-[var(--shotiq-color-ink)]">Profile &amp; settings</span>.

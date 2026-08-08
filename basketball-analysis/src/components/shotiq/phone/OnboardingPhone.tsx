@@ -37,7 +37,7 @@
 import React from "react"
 import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { Check, Lightbulb, ChevronRight, Info } from "lucide-react"
+import { Check, ChevronRight, Info } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneCard, PhoneAction, Eyebrow, StepMeter,
@@ -45,6 +45,7 @@ import {
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, PoseFigure, MechanicGlyph, ActionGlyph, FlawFigure,
+  ApprovedRasterIcon, BodyMetricGlyph, AbilityGlyph, HandChoiceGlyph,
 } from "@/components/shotiq/Glyphs"
 
 /* The phone flow is its own six-surface sequence. Canonical numbers the five
@@ -288,16 +289,16 @@ export function PhysicalProfile({
         </div>
 
         <div className="mt-[19px]">
-          <FieldRow glyph={<MechanicGlyph kind="angle" size={44} />}
+          <FieldRow glyph={<BodyMetricGlyph kind="age" size={44} />}
                     label="AGE" note="Your current age" value={age} onValue={onAge}
                     units={["YEARS", "MONTHS"]} unit={units[0]} onUnit={setU(0)} testid="phone-age" />
-          <FieldRow glyph={<MechanicGlyph kind="arc" size={44} />}
+          <FieldRow glyph={<BodyMetricGlyph kind="height" size={44} />}
                     label="HEIGHT" note="Without shoes" value={height} onValue={onHeight}
                     units={["FT / IN", "CM"]} unit={units[1]} onUnit={setU(1)} testid="phone-height" />
-          <FieldRow glyph={<MechanicGlyph kind="wrist" size={40} />}
+          <FieldRow glyph={<BodyMetricGlyph kind="weight" size={40} />}
                     label="WEIGHT" note="Without shoes" value={weight} onValue={onWeight}
                     units={["LBS", "KG"]} unit={units[2]} onUnit={setU(2)} testid="phone-weight" />
-          <FieldRow glyph={<PoseFigure phase="follow" height={44} />}
+          <FieldRow glyph={<BodyMetricGlyph kind="wingspan" size={44} />}
                     label="WINGSPAN" note="Fingertip to fingertip" value={wingspan} onValue={onWingspan}
                     units={["FT / IN", "CM"]} unit={units[3]} onUnit={setU(3)} testid="phone-wingspan" />
         </div>
@@ -335,44 +336,21 @@ const BODIES: [string, string, "ectomorph" | "mesomorph" | "endomorph" | "larger
   ["LARGER FRAME", "Broad build, higher mass", "larger"],
 ]
 
-/** Canonical draws each experience tile as a small node-graph that climbs a
- *  little further per level, and each body type as a stick figure whose frame
- *  widens. Both are drawn, never rastered. */
 function LevelMark({ i, on }: { i: number; on: boolean }) {
-  const tint = on ? ORANGE : "currentColor"
-  const pts = [
-    [[3, 20], [10, 17], [17, 15], [24, 13]],
-    [[3, 21], [10, 17], [17, 16], [24, 10]],
-    [[3, 22], [10, 16], [17, 17], [24, 7]],
-    [[3, 22], [10, 18], [17, 10], [24, 5]],
-    [[3, 23], [10, 15], [17, 12], [24, 4]],
-  ][i] as [number, number][]
-  return (
-    <svg width="30" height="27" viewBox="0 0 27 27" fill="none" aria-hidden="true" className="block">
-      <path d={pts.map(([x, y], k) => `${k ? "L" : "M"}${x},${y}`).join(" ")}
-            stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      {pts.map(([x, y], k) => (
-        <circle key={k} cx={x} cy={y} r="2.1" fill={k === pts.length - 1 ? tint : "#fff"}
-                stroke={k === pts.length - 1 ? tint : "currentColor"} strokeWidth="1.2" />
-      ))}
-      {i === 4 && <path d="M20 4 H25 V9" stroke={tint} strokeWidth="1.2" strokeLinecap="round" />}
-    </svg>
-  )
+  void on
+  const kinds = ["developing", "intermediate", "advanced", "elite", "professional"] as const
+  return <AbilityGlyph kind={kinds[i] ?? "advanced"} size={30} />
 }
 
 function BodyMark({ i, on }: { i: number; on: boolean }) {
-  const w = [5.5, 7.5, 9.5, 11][i]
-  const tint = on ? ORANGE : "currentColor"
-  return (
-    <svg width="34" height="44" viewBox="0 0 24 44" fill="none" aria-hidden="true" className="block">
-      <circle cx="12" cy="5" r="3.6" stroke="currentColor" strokeWidth="1.2" />
-      <path d={`M12 9 V26 M${12 - w} 13 H${12 + w} M12 26 L${12 - w * 0.8} 40 M12 26 L${12 + w * 0.8} 40`}
-            stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <path d={`M${12 + w + 1.5} 12 V22`} stroke={tint} strokeWidth="1.4" strokeLinecap="round" />
-      <path d={`M${12 + w - 0.5} 12 H${12 + w + 3.5} M${12 + w - 0.5} 22 H${12 + w + 3.5}`}
-            stroke={tint} strokeWidth="1.1" strokeLinecap="round" />
-    </svg>
-  )
+  void on
+  const assets = [
+    "shotiq-approved-v2-bodytype-slim",
+    "shotiq-approved-v2-bodytype-athletic",
+    "shotiq-approved-v2-bodytype-stocky",
+    "shotiq-approved-v2-bodytype-larger",
+  ]
+  return <ApprovedRasterIcon asset={assets[i] ?? assets[1]} size={42} />
 }
 
 export function ExperienceBodyType({
@@ -458,7 +436,7 @@ export function ExperienceBodyType({
 
         <div className="mt-[14px] flex items-center gap-[11px] rounded-[6px] px-[13px] py-[11px]"
              style={{ background: "var(--shotiq-color-warmCanvas)" }}>
-          <Lightbulb className="h-[17px] w-[17px] shrink-0" style={{ color: GRAPHITE }} strokeWidth={1.5} />
+          <ApprovedRasterIcon asset="shotiq-approved-v2-ui-coaching-tip" size={18} className="shrink-0" />
           <p className="text-[10.5px] leading-[14px]" style={{ color: GRAPHITE }}>
             You can update these anytime in your profile settings.
           </p>
@@ -551,7 +529,7 @@ export function ShootingProfile({
               <Tile key={t} on={on} radio onClick={() => onHand(t)} className="flex-1 py-[13px]"
                     testid={`phone-hand-${t.slice(0, 5).toLowerCase()}`}>
                 <span className="flex h-[36px] items-center">
-                  <MechanicGlyph kind={t.startsWith("RIGHT") ? "angle" : "wrist"} size={32} />
+                  <HandChoiceGlyph kind={t.startsWith("RIGHT") ? "right" : "left"} size={34} />
                 </span>
                 <TileLabel on={on}>{t}</TileLabel>
               </Tile>
@@ -596,7 +574,12 @@ export function ShootingProfile({
                   </span>
                 )}
                 <div className="px-[8px] pb-[9px] pt-[8px]">
-                  <MechanicGlyph kind="arc" size={22} />
+                  <ApprovedRasterIcon
+                    asset={t === "COMPACT" ? "shotiq-approved-v2-style-compact"
+                      : t === "BALANCED" ? "shotiq-approved-v2-style-balanced"
+                        : "shotiq-approved-v2-style-high-arc"}
+                    size={24}
+                  />
                   <div className="mt-[6px] flex items-center gap-[5px]">
                     <span className="grid h-[11px] w-[11px] shrink-0 place-items-center rounded-full"
                           style={{ border: `1.3px solid ${on ? ORANGE : RULE}`, background: on ? ORANGE : "#fff" }} />
