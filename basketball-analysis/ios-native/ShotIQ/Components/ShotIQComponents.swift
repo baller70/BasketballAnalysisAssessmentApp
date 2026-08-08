@@ -699,7 +699,7 @@ struct PhaseStrip: View {
             ForEach(ShotPhase.allCases, id: \.self) { phase in
                 let on = ShotPhase(label: active) == phase
                 VStack(spacing: 4) {
-                    PhaseGlyph(phase: phase, active: on, size: 28)
+                    PhaseGlyph(phase: phase, active: on, size: 44)
                     // "FOLLOW-THROUGH" is the longest label in the app and the
                     // rail gives it ~64pt. On the standard SF width at 0.5
                     // tracking it needed ~92pt, so it bottomed out on the 0.7
