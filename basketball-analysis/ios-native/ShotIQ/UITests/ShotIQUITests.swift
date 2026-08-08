@@ -578,6 +578,55 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertNotNil(findControl("Hide joint angles", maxSwipes: 1))
     }
 
+    func testAnnotationToolbarDrawSaveAndReopenWork() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard",
+                "-uiTestResetAnnotations"])
+        XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
+        tapControl("View latest analysis")
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 8))
+        tapControl("View shot breakdown")
+        XCTAssertTrue(screen("screen-ios-shot-breakdown").waitForExistence(timeout: 8))
+        tapAndExpect("Open release frame", destination: "screen-ios-frame-detail-skeleton")
+        tapAndExpect("Annotations", destination: "screen-ios-annotation-toolbar")
+
+        let canvas = screen("annotation-canvas")
+        XCTAssertTrue(canvas.waitForExistence(timeout: 8))
+        assertStaticText(id: "annotation-count", contains: "0 annotations")
+
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.22, dy: 0.28))
+            .press(forDuration: 0.1,
+                   thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.64, dy: 0.56)))
+        assertStaticText(id: "annotation-count", contains: "1 annotation")
+
+        tapButton(id: "annotation-tool-arrow")
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.32, dy: 0.68))
+            .press(forDuration: 0.1,
+                   thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.74, dy: 0.34)))
+        assertStaticText(id: "annotation-count", contains: "2 annotations")
+
+        tapButton(id: "annotation-tool-undo")
+        assertStaticText(id: "annotation-count", contains: "1 annotation")
+        tapButton(id: "annotation-tool-redo")
+        assertStaticText(id: "annotation-count", contains: "2 annotations")
+
+        let frameTime = app.staticTexts["annotation-frame-time"]
+        XCTAssertTrue(frameTime.waitForExistence(timeout: 2))
+        let beforeStep = frameTime.label
+        tapButton(id: "annotation-step-forward")
+        XCTAssertNotEqual(frameTime.label, beforeStep)
+        tapButton(id: "annotation-play-pause")
+
+        tapControl("Save annotations")
+        XCTAssertTrue(app.alerts["Annotations saved"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.alerts.staticTexts["2 annotations saved to frame 43."].exists)
+        app.alerts.buttons["OK"].tap()
+
+        tapExactControl("Back")
+        XCTAssertTrue(screen("screen-ios-frame-detail-skeleton").waitForExistence(timeout: 8))
+        tapAndExpect("Annotations", destination: "screen-ios-annotation-toolbar")
+        assertStaticText(id: "annotation-count", contains: "2 annotations")
+    }
+
     func testHistoryFetchFailureDoesNotShowNoAnalysisYet() throws {
         launch(["-uiTestBypassAuth", "-uiTestHistoryFailure"])
 

@@ -159,6 +159,10 @@ enum UITestHooks {
     /// proof can verify derived flaws instead of canonical demo flaws.
     static var weakAnalysis: Bool { args.contains("-uiTestWeakAnalysis") }
 
+    /// Clear locally persisted annotation proof data before a focused toolbar
+    /// test. Normal launches never pass this flag.
+    static var resetAnnotations: Bool { args.contains("-uiTestResetAnnotations") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
@@ -205,7 +209,8 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || analysisFailure || homeVariant != nil || stage != nil
+        useSampleMedia || historyFailure || analysisFailure || resetAnnotations ||
+        homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",
@@ -245,6 +250,9 @@ final class AppState: ObservableObject {
     }
 
     func boot() async {
+        if UITestHooks.resetAnnotations {
+            UserDefaults.standard.removeObject(forKey: "shotiq.annotations.frame43.v1")
+        }
         // Test-only: the two auth stages (005 verify-email, 007 reset-password)
         // live inside the signed-out stack, so hand straight to it rather than
         // waiting out the splash hold. See UITestHooks.stage.

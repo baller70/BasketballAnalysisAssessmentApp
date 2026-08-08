@@ -1799,12 +1799,25 @@ struct FrameDetailSkeletonView: View { // 042
 }
 
 struct AnnotationToolbarView: View { // 043
-    private struct Annotation: Identifiable {
-        let id = UUID()
+    private struct StoredPoint: Codable {
+        var x: Double
+        var y: Double
+
+        init(_ point: CGPoint) {
+            x = Double(point.x)
+            y = Double(point.y)
+        }
+
+        var point: CGPoint { CGPoint(x: x, y: y) }
+    }
+
+    private struct Annotation: Identifiable, Codable {
+        var id = UUID()
         let tool: String
-        var points: [CGPoint]
+        var points: [StoredPoint]
     }
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("shotiq.annotations.frame43.v1") private var savedAnnotationPayload = ""
     @State private var tool = "Draw"
     @State private var annotations: [Annotation] = []
     @State private var redoStack: [Annotation] = []
@@ -1817,6 +1830,9 @@ struct AnnotationToolbarView: View { // 043
         ("Label", "textformat"), ("Undo", "arrow.uturn.backward"),
         ("Redo", "arrow.uturn.forward"), ("Clear", "trash"),
     ]
+    private var annotationStatusText: String {
+        "\(annotations.count) annotation\(annotations.count == 1 ? "" : "s") on frame 43"
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-annotation-toolbar") {
             VStack(spacing: 0) {
@@ -1885,6 +1901,9 @@ struct AnnotationToolbarView: View { // 043
                                 }
                                 .contentShape(Rectangle())
                                 .gesture(annotationGesture)
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("Annotation drawing canvas")
+                                .accessibilityIdentifier("annotation-canvas")
                                 HStack(spacing: 6) {
                                     Circle().fill(.white).frame(width: 6, height: 6)
                                     Text("LIVE").shotiqBody(12, weight: .bold).kerning(0.5)
@@ -1897,6 +1916,7 @@ struct AnnotationToolbarView: View { // 043
                             .overlay(alignment: .bottomLeading) {
                                 Text(String(format: "00:%05.2f", frameTime))
                                     .font(.custom("Tungsten-Medium", size: 15)).foregroundStyle(.white)
+                                    .accessibilityIdentifier("annotation-frame-time")
                                     .padding(.horizontal, 12).padding(.vertical, 7)
                                     .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
                                     .padding(12)
@@ -1906,12 +1926,18 @@ struct AnnotationToolbarView: View { // 043
                                     Button { frameTime = max(0, frameTime - 0.04) } label: {
                                         Image(systemName: "backward.end.fill")
                                     }
+                                    .accessibilityLabel("Step back annotation frame")
+                                    .accessibilityIdentifier("annotation-step-back")
                                     Button { playing.toggle() } label: {
                                         Image(systemName: playing ? "pause.fill" : "play.fill")
                                     }
+                                    .accessibilityLabel(playing ? "Pause annotation playback" : "Play annotation playback")
+                                    .accessibilityIdentifier("annotation-play-pause")
                                     Button { frameTime += 0.04 } label: {
                                         Image(systemName: "forward.end.fill")
                                     }
+                                    .accessibilityLabel("Step forward annotation frame")
+                                    .accessibilityIdentifier("annotation-step-forward")
                                 }
                                 .buttonStyle(.plain)
                                 .font(.system(size: 14)).foregroundStyle(.white)
@@ -1922,6 +1948,11 @@ struct AnnotationToolbarView: View { // 043
                             .padding(.top, 10)
                             PhaseStrip().padding(.top, 10)
                             Text("ANNOTATION TOOLS").shotiqDisplay(20).padding(.top, 8)
+                            Text(annotationStatusText)
+                                .shotiqBody(12, weight: .semibold).kerning(0.4)
+                                .foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("annotation-count")
+                                .padding(.top, 8)
                             HStack(spacing: 8) {
                                 ForEach(tools, id: \.0) { name, icon in
                                     Button { activate(name) } label: {
@@ -1939,11 +1970,12 @@ struct AnnotationToolbarView: View { // 043
                                     }
                                     .buttonStyle(.plain)
                                     .disabled(toolDisabled(name))
+                                    .accessibilityIdentifier("annotation-tool-\(name.lowercased())")
                                 }
                             }
                             .padding(.top, 8)
                             PrimaryButton(title: "Save annotations", color: ShotIQColor.confirmGreen) {
-                                showSaved = true
+                                saveAnnotations()
                             }
                             .padding(.top, 12)
                             .alert("Annotations saved", isPresented: $showSaved) {
@@ -1958,6 +1990,7 @@ struct AnnotationToolbarView: View { // 043
                 }
             }
         }
+        .onAppear(perform: restoreAnnotations)
     }
     // MARK: annotation drawing
 
@@ -1986,11 +2019,11 @@ struct AnnotationToolbarView: View { // 043
         DragGesture(minimumDistance: 0)
             .onChanged { v in
                 if current == nil {
-                    current = Annotation(tool: tool, points: [v.startLocation, v.location])
+                    current = Annotation(tool: tool, points: [StoredPoint(v.startLocation), StoredPoint(v.location)])
                 } else if tool == "Draw" {
-                    current?.points.append(v.location)
+                    current?.points.append(StoredPoint(v.location))
                 } else {
-                    current?.points[current!.points.count - 1] = v.location
+                    current?.points[current!.points.count - 1] = StoredPoint(v.location)
                 }
             }
             .onEnded { _ in
@@ -2010,14 +2043,15 @@ struct AnnotationToolbarView: View { // 043
         .allowsHitTesting(false)
     }
     private func draw(_ a: Annotation, in ctx: inout GraphicsContext) {
-        guard let first = a.points.first else { return }
-        let last = a.points.last ?? first
+        let points = a.points.map(\.point)
+        guard let first = points.first else { return }
+        let last = points.last ?? first
         let color = ShotIQColor.shotiqOrange
         switch a.tool {
         case "Draw":
             var p = Path()
             p.move(to: first)
-            a.points.dropFirst().forEach { p.addLine(to: $0) }
+            points.dropFirst().forEach { p.addLine(to: $0) }
             ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
         case "Arrow":
             var p = Path()
@@ -2043,6 +2077,20 @@ struct AnnotationToolbarView: View { // 043
             ctx.stroke(Path(roundedRect: CGRect(x: last.x - 24, y: last.y - 12, width: 48, height: 24), cornerRadius: 5),
                        with: .color(color), lineWidth: 1.5)
         }
+    }
+    private func saveAnnotations() {
+        if let data = try? JSONEncoder().encode(annotations),
+           let text = String(data: data, encoding: .utf8) {
+            savedAnnotationPayload = text
+        }
+        showSaved = true
+    }
+    private func restoreAnnotations() {
+        guard let data = savedAnnotationPayload.data(using: .utf8),
+              let stored = try? JSONDecoder().decode([Annotation].self, from: data) else { return }
+        annotations = stored
+        redoStack = []
+        current = nil
     }
     private func annotStat(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
