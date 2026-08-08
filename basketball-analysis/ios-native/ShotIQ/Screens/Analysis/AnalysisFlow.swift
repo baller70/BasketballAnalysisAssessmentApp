@@ -2361,6 +2361,12 @@ struct MetricDetailView: View {     // 045
 }
 
 struct FlawsOverviewView: View {    // 046
+    private struct SelectedFlaw: Identifiable, Hashable {
+        let title: String
+        let severity: String
+        var id: String { "\(title)-\(severity)" }
+    }
+
     private let flaws: [(Int, String, String, String, String, String, Color)] = [
         // rank, title, impact chip, description, confidence, cta, tint
         (1, "ELBOW FLARE", "HIGH IMPACT",
@@ -2377,6 +2383,7 @@ struct FlawsOverviewView: View {    // 046
     @State private var addingAll = false
     @State private var addedAll = false
     @State private var addAllError: String?
+    @State private var selectedFlaw: SelectedFlaw?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaws-overview") {
             VStack(spacing: 0) {
@@ -2410,9 +2417,15 @@ struct FlawsOverviewView: View {    // 046
                             .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             .padding(.top, 14)
                         ForEach(flaws, id: \.0) { rank, title, impact, desc, confidence, cta, tint in
-                            NavigationLink { FlawDetailView(title: title, severity: impact) } label: {
+                            Button {
+                                selectedFlaw = SelectedFlaw(title: title, severity: impact)
+                            } label: {
                                 flawCard(rank, title, impact, desc, confidence, cta, tint)
                             }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("\(title), \(impact), \(cta)")
+                            .accessibilityIdentifier(cta)
+                            .buttonStyle(.plain)
                             .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
@@ -2456,6 +2469,9 @@ struct FlawsOverviewView: View {    // 046
                     .padding(.horizontal, 20)
                 }
             }
+        }
+        .navigationDestination(item: $selectedFlaw) { flaw in
+            FlawDetailView(title: flaw.title, severity: flaw.severity)
         }
     }
     /// "Training plan" maps to the web app's saved workouts (POST /api/saved-workouts).

@@ -189,6 +189,11 @@ final class CanonicalScreenshotTests: XCTestCase {
     /// tab's pushed NavigationStack, so relaunch the deterministic signed-in
     /// shell before each route branch.
     private func resetTab(_ label: String, root: String) {
+        if label == "Capture", root == "screen-ios-analyze-hub" {
+            launch(Self.mainArgs + ["-uiTestStage", "analyze-hub"])
+            _ = screenExists(root, timeout: 12)
+            return
+        }
         launch(lastLaunchArguments.isEmpty ? Self.mainArgs : lastLaunchArguments)
         selectTab(label)
         _ = screenExists(root, timeout: 8)

@@ -175,7 +175,7 @@ enum UITestHooks {
     }
 
     /// The `stage` slugs that are rendered inside the signed-in tab shell.
-    static let mainShellStages = ["photo-upload-source", "photo-review-crop", "upload-quality-check", "video-review",
+    static let mainShellStages = ["analyze-hub", "photo-upload-source", "photo-review-crop", "upload-quality-check", "video-review",
                                   "live-camera-setup", "hoop-calibration", "readiness-check",
                                   "capture-ready", "live-recording", "shot-detected",
                                   "analysis-taking-longer", "analysis-error",
@@ -296,6 +296,7 @@ struct MainTabView: View {
     /// those renders depict: the canonical review frame, the canonical clip.
     @ViewBuilder private var stagedRoot: some View {
         switch UITestHooks.stage ?? "" {
+        case "analyze-hub": AnalyzeHubView()
         case "photo-upload-source": PhotoUploadSourceView()
         case "photo-review-crop": PhotoReviewCropView(image: UITestHooks.sampleShotImage)
         case "upload-quality-check": UploadQualityCheckView(image: UITestHooks.sampleShotImage)

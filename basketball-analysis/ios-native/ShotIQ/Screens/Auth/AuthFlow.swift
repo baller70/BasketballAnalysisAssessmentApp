@@ -1009,11 +1009,14 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                     .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 8)
                             }
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10).fill(ShotIQColor.warmCanvas)
-                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-profile",
-                                                         size: 46,
+                            ZStack(alignment: .bottomTrailing) {
+                                CanonicalPhoto("002-visual-005", width: 150, height: 180, cornerRadius: 10)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-privacy-info",
+                                                         size: 28,
                                                          label: nil)
+                                    .padding(8)
+                                    .background(.white.opacity(0.9), in: Circle())
+                                    .padding(8)
                             }
                             .frame(width: 150, height: 180)
                         }

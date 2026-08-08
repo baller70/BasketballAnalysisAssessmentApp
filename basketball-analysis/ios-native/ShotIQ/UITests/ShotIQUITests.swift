@@ -22,18 +22,28 @@ final class ShotIQUITests: XCTestCase {
 
     private func findControl(_ text: String, maxSwipes: Int = 5) -> XCUIElement? {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@ OR identifier == %@", text, text)
-        for attempt in 0...maxSwipes {
+        func existingMatch() -> XCUIElement? {
             for query in [app.buttons, app.staticTexts, app.images, app.otherElements] {
                 let match = query.matching(predicate).firstMatch
-                if match.exists && match.isHittable { return match }
-                if match.exists && attempt == maxSwipes { return match }
+                if match.exists { return match }
             }
+            return nil
+        }
+
+        let scroll = app.scrollViews.firstMatch
+        for attempt in 0...maxSwipes {
+            if let match = existingMatch(), match.isHittable { return match }
             if attempt < maxSwipes {
-                let scroll = app.scrollViews.firstMatch
-                (scroll.exists ? scroll : app).swipeUp()
+                scroll.exists ? scroll.swipeUp() : app.swipeUp()
             }
         }
-        return nil
+        for attempt in 0...(maxSwipes * 2) {
+            if let match = existingMatch(), match.isHittable { return match }
+            if attempt < maxSwipes * 2 {
+                scroll.exists ? scroll.swipeDown() : app.swipeDown()
+            }
+        }
+        return existingMatch()
     }
 
     private func tapControl(_ text: String, file: StaticString = #filePath, line: UInt = #line) {
@@ -44,7 +54,7 @@ final class ShotIQUITests: XCTestCase {
         if element.isHittable {
             element.tap()
         } else {
-            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            element.tap()
         }
     }
 

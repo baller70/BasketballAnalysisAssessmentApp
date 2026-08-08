@@ -1347,3 +1347,54 @@ Evidence captured on the laptop, all external-drive backed:
   wiring. It does not prove the Apple Photos picker UI with a real library
   image, real camera capture on Kevin's iPhone, or backend multi-image
   aggregation that evaluates all three uploaded angles together.
+
+### 2026-08-08 Full iOS Regression And Image Surface Proof
+
+Fourteenth laptop functionality slice after local Xcode setup:
+
+- Filled remaining no-image iOS surfaces in the auth/onboarding/profile setup
+  path with app-relevant basketball/profile imagery instead of empty art:
+  onboarding intro, physical profile, player bio, and reset password now show
+  canonical visual surfaces that match the purpose of each page.
+- Added a deterministic `analyze-hub` UI-test stage so the 72-screen canonical
+  walk can land on the actual analyze hub instead of inheriting a stale tab root
+  from a prior test. This fixes a test-harness issue, not a product workaround.
+- Re-ran the full iOS UI regression on the external-drive Xcode/DerivedData
+  setup. The pass covered the 72 canonical pages plus feature proofs for upload
+  image, full-screen video upload options, media detail, live setup, hoop
+  calibration, readiness, capture ready, live recording, live feedback, end
+  round, confirm make, capture review, upload queue, processing, analysis result,
+  shot breakdown, joints/annotations, coaching notes, flaw details/tags,
+  make/miss actions, no-media toasts, progress/profile/media/goals, and
+  screenshot/export surfaces.
+- Exported 75 screenshot attachments and built contact sheets for visual review.
+  The sampled sheets confirmed the newly filled image surfaces render with real
+  app imagery and the dense capture/analysis/profile states are not blank.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-Capture-Harness-2026-08-08.xcresult`
+  ran
+  `ShotIQUITests/CanonicalScreenshotTests/test04CaptureScreens`
+  after the analyze-hub test-stage fix. It ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UITests-2026-08-08-post-image-surfaces-v2.xcresult`
+  ran the complete `ShotIQUITests` target on the local iPhone 17 Pro simulator.
+  The `xcresulttool` summary reports `Passed`, `totalTestCount: 23`,
+  `passedTests: 23`, `failedTests: 0`, and `skippedTests: 0`.
+- The canonical screenshot walk inside that pass produced 75 PNG attachments
+  covering the 72-page map plus extra terminal/error/review states. Named
+  exports are in
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UITests-2026-08-08-post-image-surfaces-v2-attachments-named-export2`.
+- Contact sheets for manual visual QA are in
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UITests-2026-08-08-post-image-surfaces-v2-contact-sheets`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UnitTests-2026-08-08-post-image-surfaces.xcresult`
+  ran the native unit suite. The summary reports `totalTestCount: 40`,
+  `passedTests: 39`, `failedTests: 0`, and `skippedTests: 1`.
+- The skipped unit is
+  `PoseDetectionTests/testBundledSampleMediaProvidesDrawablePose`; the skip
+  reason is the same simulator limitation observed in the UI proof:
+  `Pose detector unavailable on this simulator/device.` The simulator is missing
+  Apple's `cnn_human_pose.espresso.weights`, so it cannot be used as final proof
+  that real-device Vision draws the full body wireframe/nodes. That remaining
+  item must be proven on Kevin's physical iPhone before the App Store claim.

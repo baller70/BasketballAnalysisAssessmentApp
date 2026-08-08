@@ -476,14 +476,22 @@ struct OnboardingIntroView: View {
                                     .shotiqBody(16).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 12)
                             }
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12).fill(ShotIQColor.warmCanvas)
-                                VStack(spacing: 14) {
+                            ZStack(alignment: .bottom) {
+                                CanonicalPhoto("002-visual-005", width: 138, height: 290, cornerRadius: 12)
+                                LinearGradient(colors: [.clear, .black.opacity(0.58)],
+                                               startPoint: .center,
+                                               endPoint: .bottom)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                HStack(spacing: 8) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-profile",
-                                                             size: 52,
+                                                             size: 24,
                                                              label: nil)
-                                    PhaseGlyph(active: true, size: 32)
+                                    PhaseGlyph(active: true, size: 22)
                                 }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 9)
+                                .background(.white.opacity(0.88), in: Capsule())
+                                .padding(.bottom, 10)
                             }
                             .frame(width: 138, height: 290)
                         }
@@ -618,6 +626,27 @@ struct PhysicalProfileView: View {
                             .shotiqBody(17).foregroundStyle(ShotIQColor.graphite)
                             .multilineTextAlignment(.center)
                             .padding(.top, 10).padding(.horizontal, 16)
+
+                        ZStack(alignment: .bottomLeading) {
+                            CanonicalPhoto("002-visual-005", height: 142, cornerRadius: 10)
+                                .frame(maxWidth: .infinity)
+                            LinearGradient(colors: [.clear, .black.opacity(0.6)],
+                                           startPoint: .center,
+                                           endPoint: .bottom)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            HStack(spacing: 8) {
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-measurements",
+                                                         size: 28,
+                                                         label: nil)
+                                Text("Measurements tune your analysis ranges.")
+                                    .shotiqBody(13, weight: .semibold)
+                                    .foregroundStyle(.white)
+                                    .lineLimit(2)
+                            }
+                            .padding(12)
+                        }
+                        .frame(height: 142)
+                        .padding(.top, 18)
 
                         VStack(spacing: 0) {
                             MeasurementRow(icon: "calendar", label: "AGE", sub: "Your current age",
@@ -1026,11 +1055,14 @@ struct PlayerBioView: View {
                                     .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 6)
                             }
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10).fill(ShotIQColor.warmCanvas)
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.fill"), size: 32)
-                                    .font(.system(size: 50))
-                                    .foregroundStyle(ShotIQColor.muted)
+                            ZStack(alignment: .bottomTrailing) {
+                                CanonicalPhoto("013-avatar", width: 148, height: 150, cornerRadius: 10)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-profile-initials",
+                                                         size: 28,
+                                                         label: nil)
+                                    .padding(8)
+                                    .background(.white.opacity(0.9), in: Circle())
+                                    .padding(8)
                             }
                             .frame(width: 148, height: 150)
                         }

@@ -251,6 +251,9 @@ struct TrainingHomeView: View {     // 054
             .background(ShotIQColor.paper)
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityIdentifier(title)
     }
 }
 
@@ -1364,6 +1367,7 @@ struct DrillExecutionView: View {   // 060
     @State private var viewAngle = "FRONT VIEW"
     @State private var showCompletion = false
     @State private var toast: ShotIQToast?
+    @State private var drillFeedback: ShotIQToast?
     private let target = 15
     var body: some View {
         CanonicalScreen(testID: "screen-ios-drill-execution") {
@@ -1463,35 +1467,8 @@ struct DrillExecutionView: View {   // 060
                         }
                         .padding(.top, 12)
                         PhaseStrip().padding(.top, 16)
-                        HStack(spacing: 10) {
-                            Button {
-                                m.mark(true, drillId: drillName)
-                                toast = .success("Make recorded", "\(m.makes) makes • \(m.shots.count) shots")
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "checkmark.circle")
-                                    Text("Mark make").shotiqBody(15, weight: .semibold)
-                                }
-                                .frame(maxWidth: .infinity).frame(height: 52)
-                                .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
-                                .foregroundStyle(.white)
-                            }
-                            .accessibilityIdentifier("mark-make")
-                            Button {
-                                m.mark(false, drillId: drillName)
-                                toast = .info("Miss recorded", "\(m.makes) makes • \(m.shots.count) shots")
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "xmark.circle")
-                                    Text("Mark miss").shotiqBody(15, weight: .semibold)
-                                }
-                                .frame(maxWidth: .infinity).frame(height: 52)
-                                .background(ShotIQColor.reviewRed, in: RoundedRectangle(cornerRadius: 8))
-                                .foregroundStyle(.white)
-                            }
-                            .accessibilityIdentifier("mark-miss")
-                        }
-                        .padding(.top, 16)
+                        drillFeedbackStrip
+                            .padding(.top, 10)
                         HStack(spacing: 10) {
                             Button {
                                 m.undo()
@@ -1548,12 +1525,92 @@ struct DrillExecutionView: View {   // 060
             }
         }
         .shotiqToast($toast)
+        .safeAreaInset(edge: .bottom) {
+            shotActionButtons
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
+        }
         .navigationDestination(isPresented: $showCompletion) {
             WorkoutCompletionView(shots: m.shots.count, makes: m.makes, drillName: drillName)
         }
         .onAppear { m.start() }
         .onDisappear { m.stop() }
     }
+    private func recordShot(made: Bool) {
+        m.mark(made, drillId: drillName)
+        let feedback: ShotIQToast = made
+            ? .success("Make recorded", "\(m.makes) makes • \(m.shots.count) shots")
+            : .info("Miss recorded", "\(m.makes) makes • \(m.shots.count) shots")
+        drillFeedback = feedback
+        toast = feedback
+    }
+
+    private var shotActionButtons: some View {
+        HStack(spacing: 10) {
+            Button {
+                recordShot(made: true)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle")
+                    Text("Mark make").shotiqBody(15, weight: .semibold)
+                }
+                .frame(maxWidth: .infinity).frame(height: 52)
+                .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
+                .foregroundStyle(.white)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Mark make")
+            .accessibilityIdentifier("mark-make")
+
+            Button {
+                recordShot(made: false)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "xmark.circle")
+                    Text("Mark miss").shotiqBody(15, weight: .semibold)
+                }
+                .frame(maxWidth: .infinity).frame(height: 52)
+                .background(ShotIQColor.reviewRed, in: RoundedRectangle(cornerRadius: 8))
+                .foregroundStyle(.white)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Mark miss")
+            .accessibilityIdentifier("mark-miss")
+        }
+    }
+
+    @ViewBuilder private var drillFeedbackStrip: some View {
+        if let toast = drillFeedback {
+            HStack(spacing: 10) {
+                ShotIQApprovedRasterIcon(
+                    assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: toast.kind.icon),
+                    size: 18,
+                    label: nil
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(toast.title)
+                        .shotiqBody(13, weight: .bold)
+                        .foregroundStyle(ShotIQColor.ink)
+                    if let message = toast.message, !message.isEmpty {
+                        Text(message)
+                            .shotiqBody(11)
+                            .foregroundStyle(ShotIQColor.graphite)
+                    }
+                }
+                Spacer()
+            }
+            .padding(12)
+            .background(toast.kind.tint.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(toast.kind.tint.opacity(0.32)))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel([toast.title, toast.message].compactMap { $0 }.joined(separator: ". "))
+            .accessibilityIdentifier("shotiq-toast")
+        }
+    }
+
     private func execStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.custom("Tungsten-Medium", size: 30)).foregroundStyle(ShotIQColor.ink)
