@@ -688,4 +688,18 @@ final class PhotoQualityTests: XCTestCase {
         XCTAssertFalse(low.resolutionRow.ok)
         XCTAssertTrue(low.resolutionRow.detail.contains("480 x 640"))
     }
+
+    func testPhotoVisionLetterGradeIsNotConvertedToNumericScore() throws {
+        let analysis = ShotIQPhotoVisionAnalysis(overallGrade: "A",
+                                                 gradeDescription: "Strong mechanics.",
+                                                 coachSays: "Keep the elbow stacked.")
+
+        XCTAssertNil(analysis.measuredOverallScore)
+        XCTAssertEqual(analysis.coachingNotes, "Keep the elbow stacked.")
+        XCTAssertEqual(analysis.savePayload.scoreSource, "qualitative-grade-not-numeric")
+
+        let json = String(data: try JSONEncoder().encode(analysis.savePayload), encoding: .utf8)
+        XCTAssertTrue(json?.contains("\"overallGrade\":\"A\"") == true)
+        XCTAssertFalse(json?.contains("overallScore") == true)
+    }
 }

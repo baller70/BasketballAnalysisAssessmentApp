@@ -238,6 +238,35 @@ struct ShotIQPhotoQuality {
     }
 }
 
+struct ShotIQPhotoVisionAnalysis: Codable, Equatable {
+    var overallGrade: String?
+    var gradeDescription: String?
+    var coachSays: String?
+
+    var coachingNotes: String? { coachSays ?? gradeDescription }
+
+    /// `/api/vision-analyze` returns a qualitative letter grade for this photo
+    /// route. A letter is not a measured 0-100 score, so it must not be saved as
+    /// one.
+    var measuredOverallScore: Double? { nil }
+
+    var savePayload: ShotIQPhotoVisionAnalysisPayload {
+        ShotIQPhotoVisionAnalysisPayload(source: "ios-native-photo-vision",
+                                         overallGrade: overallGrade,
+                                         gradeDescription: gradeDescription,
+                                         coachSays: coachSays,
+                                         scoreSource: "qualitative-grade-not-numeric")
+    }
+}
+
+struct ShotIQPhotoVisionAnalysisPayload: Codable, Equatable {
+    var source: String
+    var overallGrade: String?
+    var gradeDescription: String?
+    var coachSays: String?
+    var scoreSource: String
+}
+
 enum ShotViewpoint: String, CaseIterable, Identifiable {
     case front
     case side
@@ -1414,16 +1443,9 @@ struct UploadQualityCheckView: View { // 024
             var shootingAngle: String; var imageCategory: String
         }
         struct VisionResp: Codable {
-            struct Analysis: Codable {
-                var overallGrade: String?
-                var gradeDescription: String?
-                var coachSays: String?
-            }
             var success: Bool?
-            var analysis: Analysis?
+            var analysis: ShotIQPhotoVisionAnalysis?
         }
-        var overallScore: Double?
-        var coachingNotes: String?
         let vision: VisionResp? = try? await APIClient.shared.call(
             "/api/vision-analyze", method: "POST",
             body: VisionBody(
@@ -1437,15 +1459,12 @@ struct UploadQualityCheckView: View { // 024
                 focusArea: "\(viewpoint.shortTitle) view shooting form",
                 shootingAngle: viewpoint.uploadAngle,
                 imageCategory: viewpoint.imageCategory))
-        if let analysis = vision?.analysis {
-            let grades: [String: Double] = ["A": 95, "B": 85, "C": 75, "D": 65, "F": 50]
-            overallScore = analysis.overallGrade.flatMap { grades[$0] }
-            coachingNotes = analysis.coachSays ?? analysis.gradeDescription
-        }
+        let photoVision = vision?.analysis
 
         // 3. Persist the analysis session (idempotent by clientSessionId).
         struct SaveBody: Codable {
             var clientSessionId: String; var recordedAt: String; var mediaType: String
+            var visionAnalysis: ShotIQPhotoVisionAnalysisPayload?
             var imageUrl: String?; var overallScore: Double?; var coachingNotes: String?
             var shootingPhase: String?; var visualOverlays: [String: String]?
         }
@@ -1461,9 +1480,10 @@ struct UploadQualityCheckView: View { // 024
                 body: SaveBody(clientSessionId: "ios-\(UUID().uuidString)",
                                recordedAt: ISO8601DateFormatter().string(from: Date()),
                                mediaType: "image",
+                               visionAnalysis: photoVision?.savePayload,
                                imageUrl: imageUrl,
-                               overallScore: overallScore,
-                               coachingNotes: coachingNotes,
+                               overallScore: photoVision?.measuredOverallScore,
+                               coachingNotes: photoVision?.coachingNotes,
                                shootingPhase: viewpoint.uploadAngle,
                                visualOverlays: ["shootingAngle": viewpoint.uploadAngle,
                                                 "imageCategory": viewpoint.imageCategory]))

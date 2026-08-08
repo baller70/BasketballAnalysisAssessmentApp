@@ -91,7 +91,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G010 | VERIFYING | P0 | `#analytics` `#pose` | 024 | Replace fixed header analytics on quality check. | Upload Quality Check no longer shows pre-analysis 82/24/15/62.5% measured-looking score/history values. The header now shows source-safe photo/view/pose/score context (`READY`, selected viewpoint, pose status, `AFTER SCORE`) and says the target is set after upload finishes. Focused UI proof confirms the new copy is present and the old values are absent. Real device/backend proof remains before `DONE`. |
 | G011 | VERIFYING | P1 | `#analytics` `#media` | 024 | Measure or relabel lighting and resolution checks. | Upload Quality Check now evaluates selected still-image brightness from pixels and reports actual image pixel dimensions as `Image resolution`; focused unit proof covers Good/Too dark/Too bright and High/Low resolution, and focused UI proof confirms selected-photo screen 024 shows pixel detail while the old `Video resolution` / `1080p` still-image row is absent. Real low-light/low-resolution physical-device media proof remains before `DONE`. |
 | G012 | VERIFYING | P0 | `#path` `#backend` | 023/024/036 | Block no-image route from pretending analysis started. | Photo Review `USE PHOTO` and Upload Quality Check `Continue to analysis` now require a real picked/captured image and show `Choose a photo first` toast instead of opening processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-image device/backend/web proof before `DONE`. |
-| G013 | OPEN | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | Saved score is reproducible from measured analysis fields. |
+| G013 | VERIFYING | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | The photo upload save path no longer converts qualitative `A/B/C/D/F` vision grades into numeric `overallScore` values. It now saves the grade/coach text as `visionAnalysis` metadata with `overallScore == nil` unless a real measured numeric scoring field exists; focused unit proof asserts an `A` grade does not encode an `overallScore`. Backend round-trip proof with a real saved analysis remains before `DONE`. |
 | G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. If the backend returns no remote image URL, or the backend is unreachable, the selected/cropped local photo is preserved and rendered in the result path with unavailable metrics rather than demo scores. Still needs end-to-end device/web round-trip proof before `DONE`. |
 | G015 | OPEN | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Queue starts empty or from backend, adding media creates real item and status updates. |
 | G016 | VERIFYING | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | `VideoUploadView` now loads the selected `PhotosPickerItem` or Files import into a retained temporary video URL before navigation; focused laptop XCTest confirms the retained clip model and a focused UI test confirms the restored full-screen source options. Still needs real picker/device-media recording before `DONE`. |
@@ -1548,9 +1548,9 @@ Eighteenth laptop functionality slice after local Xcode setup:
 
 Evidence captured on the laptop, all external-drive backed:
 
-- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoQuality-Unit-2026-08-08-v1.xcresult`
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoQuality-Unit-2026-08-08-v2.xcresult`
   ran `ShotIQTests/PhotoQualityTests` on the iPhone 17 Pro simulator. The run
-  ended with `Passed`, `2 passed`, `0 failed`.
+  ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0 failures`.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQualityMeasuredRows-2026-08-08-v2.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testSamplePhotoRunsPoseQualityAndProcessingFeedback`
@@ -1584,3 +1584,27 @@ Evidence captured on the laptop, all external-drive backed:
 Remaining limitations: this is simulator proof with a bundled selected-photo
 fixture. Real Photos picker/crop gesture screenshots on a physical iPhone are
 still required before G009 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Photo Vision Score Provenance Proof
+
+Twentieth laptop functionality slice after local Xcode setup:
+
+- Removed the photo upload path's broad `A/B/C/D/F` to `95/85/75/65/50`
+  conversion.
+- Added a typed `ShotIQPhotoVisionAnalysis` contract: qualitative vision grades
+  and coaching text are saved as `visionAnalysis`, while `overallScore` remains
+  nil because the endpoint did not return a measured 0-100 score.
+- Added unit proof that an `A` grade keeps `measuredOverallScore == nil`,
+  preserves coaching notes, encodes `overallGrade`, and does not encode
+  `overallScore`.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoQuality-Unit-2026-08-08-v2.xcresult`
+  ran `ShotIQTests/PhotoQualityTests` on the iPhone 17 Pro simulator. The run
+  ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0 failures`.
+
+Remaining limitations: this proves the native save payload rule locally.
+G013 still needs backend round-trip proof showing a real saved photo analysis
+stores no numeric score unless the backend/client produced measured numeric
+fields.

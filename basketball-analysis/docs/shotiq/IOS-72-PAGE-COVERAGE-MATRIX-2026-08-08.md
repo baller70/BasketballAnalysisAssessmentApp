@@ -26,7 +26,7 @@ content/actions were asserted by a focused feature test.
 - Focused upload-quality pre-analysis result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQualityPreAnalysis-2026-08-08-v1.xcresult`
 - Focused photo-quality unit result bundle:
-  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoQuality-Unit-2026-08-08-v1.xcresult`
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoQuality-Unit-2026-08-08-v2.xcresult`
 - Focused upload-quality measured-rows result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQualityMeasuredRows-2026-08-08-v2.xcresult`
 - Focused photo-review no-pre-analysis result bundle:
@@ -42,7 +42,7 @@ Current proof totals:
 - Focused secondary-control target: 1 passed, 0 failed, 0 skipped
 - Focused onboarding-controls target: 1 passed, 0 failed, 0 skipped
 - Focused upload-quality pre-analysis target: 1 passed, 0 failed, 0 skipped
-- Focused photo-quality unit target: 2 passed, 0 failed, 0 skipped
+- Focused photo-quality unit target: 3 passed, 0 failed, 0 skipped
 - Focused upload-quality measured-rows target: 1 passed, 0 failed, 0 skipped
 - Focused photo-review no-pre-analysis target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
@@ -76,7 +76,7 @@ Current proof totals:
 | 21 | Analyze Hub | Yes | Upload image, upload video, live camera, media, queue routes asserted | Real device source pickers |
 | 22 | Photo Upload Source | Yes | Front/side/rear required; no-input toast; sample replaces guides | Real Photos picker images |
 | 23 | Photo Review Crop | Yes | No-photo toast; sample photo advances to quality check; focused proof confirms the crop screen shows the selected-photo frame/tip without unmeasured pre-analysis score/history/target values | Real image crop gestures on physical device |
-| 24 | Upload Quality Check | Yes | No-photo toast; sample photo quality/progress path asserted; pre-analysis header now proves source-safe READY/SIDE/AFTER copy and absence of old 82/24/15/62.5% measured-looking values; selected still images now measure brightness and actual pixel dimensions, and UI proof confirms `Image resolution`/pixel detail appears while `Video resolution`/`1080p` is absent | Real Vision pose on iPhone; real low-light/low-resolution selected media proof |
+| 24 | Upload Quality Check | Yes | No-photo toast; sample photo quality/progress path asserted; pre-analysis header now proves source-safe READY/SIDE/AFTER copy and absence of old 82/24/15/62.5% measured-looking values; selected still images now measure brightness and actual pixel dimensions, and UI proof confirms `Image resolution`/pixel detail appears while `Video resolution`/`1080p` is absent; photo save path no longer converts qualitative letter grades into numeric `overallScore` | Real Vision pose on iPhone; real low-light/low-resolution selected media proof; backend save round-trip |
 | 25 | Upload Queue | Yes | Analyze now advances through processing to result | Backend upload queue |
 | 26 | Video Upload | Yes | Full-screen source options asserted | Real video library/files/camera pickers |
 | 27 | Video Review | Yes | No-video toast asserted | Real selected video trimming |
