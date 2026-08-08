@@ -408,8 +408,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     // MARK: - 054-062 · training
 
     func test06TrainingScreens() {
-        launch(Self.mainArgs)
-        selectTab("Train")
+        launch(Self.mainArgs + ["-uiTestStage", "training-home"])
         guard expectScreen("screen-ios-training-home", timeout: 20) else { return }
 
         tapAndExpect("Quick start", "screen-ios-quick-start", from: "training-home")

@@ -145,7 +145,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
 | G050 | VERIFYING | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Completed shot-tracker sessions now persist locally into Workout Calendar with saved shots/makes/FG/status/name/summary. Backend workout/shot-event reload and web parity remain before `DONE`. |
 | G051 | VERIFYING | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Drill Execution now derives drill name, cue, focus, target makes, and media key from the selected analysis-backed drill plan; exposes live makes/shots/make-percent/target-remaining stats; proves view-angle toast feedback, make/miss/undo/pause toasts, and completion totals. Focused UI proof and canonical training regression pass on the laptop simulator. Backend shot-event/workout reload, live camera/pose-driven cues, physical-device proof, and web parity remain before `DONE`. |
-| G052 | VERIFYING | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | Shot Tracker now starts a clean manual session at `0 OF 0`, derives make %, current streak, set progress, and phase rail from recorded make/miss events, and proves make/miss/undo through UI. Backend reload/history aggregation remains before `DONE`. |
+| G052 | VERIFYING | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | Shot Tracker now starts a clean manual session at `0 OF 0`, derives make %, current streak, timer, media status, set progress, shot rail, and score bar from recorded make/miss events; blocks empty End Workout with a customer toast; proves pause/resume, View Analysis, make/miss/undo, saving progress, and completion totals through UI. Backend reload/history aggregation, physical-device behavior, and web parity remain before `DONE`. |
 | G053 | VERIFYING | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Workout Completion now receives the completed session record and derives shots, makes, accuracy, points, form score, phase scores, primary target progress, share text, and coaching takeaway from those totals. Backend workout reload/web parity remains before `DONE`. |
 
 ## Goals, Analytics, Media, Profile Items
@@ -2299,6 +2299,60 @@ feedback on the simulator. It does not yet prove backend workout reload,
 calendar aggregation from saved workout records, or iOS/web shared database
 visibility. Those remain required before G052/G053 can move from `VERIFYING` to
 `DONE`.
+
+### 2026-08-08 Shot Tracker Expanded Control/Progress Proof
+
+Implementation:
+
+- Screen 061 now exposes stable proof identifiers for the countdown timer,
+  `shots of target` counter, canonical media placeholder, media status label,
+  set-progress cells, shot-rail phase names/values, score bar, and View
+  Analysis route.
+- Empty-session End Workout is now guarded with a customer-visible `Record a
+  shot first` toast instead of creating a zero-shot completion record.
+- The existing customer feedback loop is now fully asserted for this screen:
+  pause/resume toasts, make/miss toasts, undo toast, saving progress toast, and
+  completion navigation.
+- The canonical Training screenshot/click harness now launches the Training
+  screen group through the existing `training-home` stage, matching the staged
+  branch resets and avoiding the flaky first tab reselect that could leave the
+  harness on Home while looking for Training controls.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-shot-tracker-expanded-20260808-1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testShotTrackerStartsAtZeroAndCompletionUsesSessionTotals`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It verified the zero state (`0 OF 25`, `0 OF 0`, `0.0%`, streak
+  `0`, timer present, media key `061-visual-001`, `READY` status, open progress
+  cell, empty phase values, and score bar), empty End Workout toast and no
+  navigation, pause/resume toasts, View Analysis route, make/miss progress
+  cells, media status changing to `SHOT 1`, derived `3 OF 25`, `2 OF 3`,
+  `66.7%`, phase value updates, undo reopening shot 3, saving progress toast,
+  and completion totals of `3` shots, `2` makes, `66.7%`, `+40`, form score
+  `70`, and primary target `7 / 10`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-shot-tracker-canonical-20260808-2.xcresult`
+  ran `CanonicalScreenshotTests/test06TrainingScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and re-captured
+  the canonical Training flow from `001-training-home` through
+  `009-shot-tracker` after the Shot Tracker proof identifiers and canonical
+  training entry change.
+
+Superseded failed attempt:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-shot-tracker-canonical-20260808-1.xcresult`
+  failed before reaching Shot Tracker because the first canonical Training
+  entry depended on reselecting the Train tab after launch; the tap occurred
+  but the root did not change to `screen-ios-training-home`. Staging the initial
+  Training root fixed that harness failure.
+
+Remaining limitations: this proves screen 061 manual tracking, placeholders,
+  toasts/progress feedback, clickable analysis route, local completion
+  handoff, and canonical Training navigation in simulator production
+  navigation. It does not yet prove backend shot-session reload/history
+  aggregation, physical-device behavior, or iOS/web parity; those remain
+  required before G052 can move to `DONE`.
 
 ### 2026-08-08 Player Card Latest-Analysis And Save-Feedback Proof
 

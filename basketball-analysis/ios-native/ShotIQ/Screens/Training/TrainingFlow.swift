@@ -2391,6 +2391,7 @@ struct ShotTrackerView: View {      // 061
                             Text(String(format: "%02d:%02d", max(0, 20 * 60 - m.elapsed) / 60,
                                         max(0, 20 * 60 - m.elapsed) % 60))
                                 .font(.custom("Tungsten-Medium", size: 17))
+                                .accessibilityIdentifier("tracker-timer-remaining")
                             Text("REMAINING").shotiqBody(7, weight: .medium).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -2419,14 +2420,18 @@ struct ShotTrackerView: View {      // 061
                                     Spacer()
                                     Text("\(shots) OF \(sessionTarget)")
                                         .font(.custom("Tungsten-Medium", size: 16))
+                                        .accessibilityIdentifier("tracker-session-count")
                                 }
                                 // This plate stays live because it counts the
                                 // shots the player records in this session.
                                 ZStack(alignment: .bottomLeading) {
                                     CanonicalPhoto("061-visual-001", height: 284)
+                                        .accessibilityIdentifier("tracker-media")
+                                        .accessibilityLabel("Shot tracker media 061-visual-001")
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(shots == 0 ? "READY" : "SHOT \(shots)")
                                             .shotiqBody(10, weight: .bold).kerning(0.4)
+                                            .accessibilityIdentifier("tracker-media-status")
                                         Text(shots == 0 ? "START SESSION" : "JUST NOW")
                                             .shotiqBody(7).opacity(0.8)
                                     }
@@ -2472,6 +2477,7 @@ struct ShotTrackerView: View {      // 061
                                     .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
                                     .foregroundStyle(ShotIQColor.ink)
                                 }
+                                .accessibilityIdentifier("tracker-view-analysis")
                             }
                             .frame(width: 128)
                         }
@@ -2493,6 +2499,11 @@ struct ShotTrackerView: View {      // 061
                                         }
                                         Text("\(i)").shotiqBody(9).foregroundStyle(ShotIQColor.graphite)
                                     }
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityLabel(i <= shots
+                                                        ? "Shot \(i) \(m.shots[i - 1].made ? "make" : "miss")"
+                                                        : "Shot \(i) open")
+                                    .accessibilityIdentifier("tracker-progress-\(i)")
                                 }
                             }
                             .padding(.vertical, 2)
@@ -2515,21 +2526,26 @@ struct ShotTrackerView: View {      // 061
                         .padding(.top, 8)
                         SectionLabel(text: "SHOT RAIL").padding(.top, 20)
                         HStack(alignment: .top) {
-                            ForEach(phaseScores, id: \.0) { p in
+                            ForEach(Array(phaseScores.enumerated()), id: \.offset) { i, p in
                                 VStack(spacing: 3) {
                                     PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 26)
                                     Text(p.0).shotiqBody(8, weight: p.0 == "RELEASE" ? .bold : .regular)
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
+                                        .accessibilityIdentifier("tracker-phase-\(i)-name")
                                     Text(p.1).font(.custom("Tungsten-Medium", size: 12))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                        .accessibilityIdentifier("tracker-phase-\(i)-value")
                                 }
                                 .frame(maxWidth: .infinity)
                             }
                         }
                         .padding(.top, 8)
                         ScoreBar(pct: pct).padding(.top, 8)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Tracker score bar \(String(format: "%.1f%%", pct * 100))")
+                            .accessibilityIdentifier("tracker-score-bar")
                         HStack(spacing: 8) {
                             Button {
                                 m.mark(true, drillId: "shot-tracker")
@@ -2557,6 +2573,11 @@ struct ShotTrackerView: View {      // 061
                             .accessibilityIdentifier("tracker-undo")
                             Button {
                                 Task {
+                                    guard shots > 0 else {
+                                        toast = .info("Record a shot first",
+                                                      "Mark a make or miss before ending.")
+                                        return
+                                    }
                                     toast = .progress("Saving workout", "Syncing shot tracker results.", progress: 0.65)
                                     await m.finish(drillName: "Shot Tracker Session")
                                     let workout = TrainingWorkoutRecord.manualSession(
