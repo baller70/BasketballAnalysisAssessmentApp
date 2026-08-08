@@ -486,23 +486,20 @@ final class ShotIQUITests: XCTestCase {
         }
     }
 
-    func testUploadQueueShowsStepByStepProgressToResults() throws {
-        launch(["-uiTestBypassAuth", "-uiTestDemoData"])
-        guard app.buttons["Capture"].waitForExistence(timeout: 8) else {
-            throw XCTSkip("Not signed in")
-        }
-        app.buttons["Capture"].tap()
+    func testUploadQueueStartsEmptyAndBlocksAnalysisWithoutMedia() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "analyze-hub"])
         XCTAssertTrue(screen("screen-ios-analyze-hub").waitForExistence(timeout: 8))
         tapControl("View all")
         XCTAssertTrue(screen("screen-ios-upload-queue").waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["No media queued"].exists)
+        XCTAssertTrue(app.staticTexts["Add an image or video from your device to start upload and analysis."].exists)
+        XCTAssertFalse(app.staticTexts["pullup-jumper.mov"].exists)
+        XCTAssertFalse(app.staticTexts["spotup-three.mov"].exists)
+        XCTAssertFalse(app.staticTexts["transition-pullup.mov"].exists)
         tapControl("Analyze now")
-        XCTAssertTrue(screen("screen-ios-analysis-processing").waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["Upload complete"].exists)
-        XCTAssertTrue(app.staticTexts["Detecting pose & landmarks"].exists)
-        XCTAssertTrue(app.staticTexts["Scoring mechanics"].exists)
-        XCTAssertTrue(app.staticTexts["Comparing to your baseline"].exists)
-        XCTAssertTrue(app.staticTexts["Building coaching plan"].exists)
-        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
+        XCTAssertTrue(screen("shotiq-toast").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Add media first"].exists)
+        XCTAssertFalse(screen("screen-ios-analysis-processing").waitForExistence(timeout: 1))
     }
 
     func testCaptureNoMediaShowsCustomerFeedback() throws {

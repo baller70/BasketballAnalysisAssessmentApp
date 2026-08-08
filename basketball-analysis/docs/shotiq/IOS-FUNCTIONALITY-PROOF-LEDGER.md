@@ -93,7 +93,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G012 | VERIFYING | P0 | `#path` `#backend` | 023/024/036 | Block no-image route from pretending analysis started. | Photo Review `USE PHOTO` and Upload Quality Check `Continue to analysis` now require a real picked/captured image and show `Choose a photo first` toast instead of opening processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-image device/backend/web proof before `DONE`. |
 | G013 | VERIFYING | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | The photo upload save path no longer converts qualitative `A/B/C/D/F` vision grades into numeric `overallScore` values. It now saves the grade/coach text as `visionAnalysis` metadata with `overallScore == nil` unless a real measured numeric scoring field exists; focused unit proof asserts an `A` grade does not encode an `overallScore`. Backend round-trip proof with a real saved analysis remains before `DONE`. |
 | G014 | VERIFYING | P0 | `#backend` `#analytics` | 024 to 038 | Pass saved analysis into native result UI. | Save response now carries `analysisResult` from 024 through 036 into 038, and 038 renders score/media/metric values from `ShotIQAnalysisResultDTO`; focused laptop XCTest proves the presentation mapping. If the backend returns no remote image URL, or the backend is unreachable, the selected/cropped local photo is preserved and rendered in the result path with unavailable metrics rather than demo scores. Still needs end-to-end device/web round-trip proof before `DONE`. |
-| G015 | OPEN | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Queue starts empty or from backend, adding media creates real item and status updates. |
+| G015 | VERIFYING | P1 | `#media` `#backend` `#demo` | 025 | Replace fake upload queue with real queued media/persistence. | Upload Queue no longer starts with fake `pullup-jumper.mov`, `spotup-three.mov`, or `transition-pullup.mov` items. It starts empty with customer-facing empty-state copy, `Analyze now` blocks with `Add media first` toast, and focused UI proof confirms it does not navigate to processing without queued media. Real picker-selected media queueing and backend persistence remain before `DONE`. |
 | G016 | VERIFYING | P0 | `#media` `#control` | 026 | Load selected video instead of only navigating. | `VideoUploadView` now loads the selected `PhotosPickerItem` or Files import into a retained temporary video URL before navigation; focused laptop XCTest confirms the retained clip model and a focused UI test confirms the restored full-screen source options. Still needs real picker/device-media recording before `DONE`. |
 | G017 | VERIFYING | P0 | `#media` `#demo` | 027 | Review actual selected clip, not canonical media. | `VideoReviewView` now renders `VideoPlayer` for the selected clip and keeps canonical media only for explicit fallback/staged paths. Still needs real picker/device-media recording before `DONE`. |
 | G018 | VERIFYING | P1 | `#media` `#analytics` | 027 | Read real duration, size, orientation, and FPS. | `PickedVideoClip` reads duration, dimensions, file size, and FPS from the selected asset; focused laptop XCTest proves the metadata formatting. Still needs real selected file proof before `DONE`. |
@@ -1608,3 +1608,27 @@ Remaining limitations: this proves the native save payload rule locally.
 G013 still needs backend round-trip proof showing a real saved photo analysis
 stores no numeric score unless the backend/client produced measured numeric
 fields.
+
+### 2026-08-08 Upload Queue Empty-State Proof
+
+Twenty-first laptop functionality slice after local Xcode setup:
+
+- Removed the fake seeded upload queue items from screen 025.
+- Added a customer-facing empty state: `No media queued` plus guidance to add
+  an image or video from the device.
+- Changed `Analyze now` so it shows `Add media first` toast and stays on the
+  queue when no real queued media exists.
+- Updated focused UI proof to assert the old fake filenames are absent and
+  analysis processing is not opened from an empty queue.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQueueEmpty-2026-08-08-v2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testUploadQueueStartsEmptyAndBlocksAnalysisWithoutMedia`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this proves the honest empty queue and no-media guard.
+Real Photos/Files picker queueing, upload status updates, reload persistence,
+and web sync remain open before G015 can move from `VERIFYING` to `DONE`.

@@ -31,6 +31,8 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQualityMeasuredRows-2026-08-08-v2.xcresult`
 - Focused photo-review no-pre-analysis result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoReviewNoPreAnalysis-2026-08-08-v1.xcresult`
+- Focused upload-queue empty-state result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQueueEmpty-2026-08-08-v2.xcresult`
 
 Current proof totals:
 
@@ -45,6 +47,7 @@ Current proof totals:
 - Focused photo-quality unit target: 3 passed, 0 failed, 0 skipped
 - Focused upload-quality measured-rows target: 1 passed, 0 failed, 0 skipped
 - Focused photo-review no-pre-analysis target: 1 passed, 0 failed, 0 skipped
+- Focused upload-queue empty-state target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen
@@ -77,7 +80,7 @@ Current proof totals:
 | 22 | Photo Upload Source | Yes | Front/side/rear required; no-input toast; sample replaces guides | Real Photos picker images |
 | 23 | Photo Review Crop | Yes | No-photo toast; sample photo advances to quality check; focused proof confirms the crop screen shows the selected-photo frame/tip without unmeasured pre-analysis score/history/target values | Real image crop gestures on physical device |
 | 24 | Upload Quality Check | Yes | No-photo toast; sample photo quality/progress path asserted; pre-analysis header now proves source-safe READY/SIDE/AFTER copy and absence of old 82/24/15/62.5% measured-looking values; selected still images now measure brightness and actual pixel dimensions, and UI proof confirms `Image resolution`/pixel detail appears while `Video resolution`/`1080p` is absent; photo save path no longer converts qualitative letter grades into numeric `overallScore` | Real Vision pose on iPhone; real low-light/low-resolution selected media proof; backend save round-trip |
-| 25 | Upload Queue | Yes | Analyze now advances through processing to result | Backend upload queue |
+| 25 | Upload Queue | Yes | Empty queue state asserted; fake seeded filenames absent; Analyze now blocks with `Add media first` toast and does not open processing without queued media | Real picker-selected media queueing; backend upload queue persistence |
 | 26 | Video Upload | Yes | Full-screen source options asserted | Real video library/files/camera pickers |
 | 27 | Video Review | Yes | No-video toast asserted | Real selected video trimming |
 | 28 | Live Camera Setup | Yes | Setup items asserted; setup-camera route asserted | Real camera pixels |

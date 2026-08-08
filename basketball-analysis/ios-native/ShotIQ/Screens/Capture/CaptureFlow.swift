@@ -1505,9 +1505,7 @@ struct UploadQualityCheckView: View { // 024
 
 struct UploadQueueView: View {      // 025
     struct Item: Identifiable { let id = UUID(); var name: String; var pct: Double; var state: String }
-    @State private var items = [Item(name: "pullup-jumper.mov", pct: 0.62, state: "Uploading"),
-                                Item(name: "spotup-three.mov", pct: 1.0, state: "Complete"),
-                                Item(name: "transition-pullup.mov", pct: 0, state: "Queued")]
+    @State private var items: [Item] = []
     @State private var addPick: PhotosPickerItem?
     @State private var goAnalyze = false
     @State private var toast: ShotIQToast?
@@ -1556,8 +1554,12 @@ struct UploadQueueView: View {      // 025
                     }
                     .padding(.horizontal, 20).padding(.top, 20)
 
-                    ForEach(items) { it in
-                        queueCard(it).padding(.horizontal, 20).padding(.top, 12)
+                    if items.isEmpty {
+                        emptyQueueCard.padding(.horizontal, 20).padding(.top, 12)
+                    } else {
+                        ForEach(items) { it in
+                            queueCard(it).padding(.horizontal, 20).padding(.top, 12)
+                        }
                     }
 
                     ShotIQCard {
@@ -1591,9 +1593,13 @@ struct UploadQueueView: View {      // 025
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     Button {
+                        guard items.isEmpty == false else {
+                            toast = .info("Add media first", "Queue an image or video before starting analysis.")
+                            return
+                        }
                         toast = .progress("Starting analysis", "Preparing the selected queue item.", progress: 0.45)
                         goAnalyze = true
-                    } label: { captureCTA("Analyze selected (1)") }
+                    } label: { captureCTA(items.isEmpty ? "Add media to analyze" : "Analyze selected (1)") }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("Analyze now")
                         .padding(.horizontal, 20).padding(.top, 16)
@@ -1619,7 +1625,7 @@ struct UploadQueueView: View {      // 025
         .onChange(of: addPick) { _, item in
             guard item != nil else { return }
             withAnimation {
-                items.append(Item(name: "new-capture-\(items.count + 1).mov", pct: 0, state: "Queued"))
+                items.append(Item(name: "selected-media-\(items.count + 1)", pct: 0, state: "Queued"))
             }
             toast = .success("Media queued", "ShotIQ will upload it when ready.")
             addPick = nil
@@ -1629,9 +1635,29 @@ struct UploadQueueView: View {      // 025
     }
 
     private var queueSummary: String {
+        guard items.isEmpty == false else { return "No media queued" }
         let up = items.filter { $0.state == "Uploading" }.count
         let done = items.filter { $0.state == "Complete" }.count
         return "\(up) uploading • \(done) completed"
+    }
+
+    private var emptyQueueCard: some View {
+        ShotIQCard {
+            HStack(alignment: .center, spacing: 14) {
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
+                                         size: 44,
+                                         label: nil)
+                    .frame(width: 54, height: 54)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("No media queued").shotiqBody(17, weight: .bold).foregroundStyle(ShotIQColor.ink)
+                    Text("Add an image or video from your device to start upload and analysis.")
+                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+        }
     }
 
     private func queueCard(_ it: Item) -> some View {
