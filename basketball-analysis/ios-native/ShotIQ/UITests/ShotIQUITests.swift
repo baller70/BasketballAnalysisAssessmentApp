@@ -255,6 +255,29 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["67%"].exists || app.staticTexts["3"].exists)
     }
 
+    func testDiscoverDrillFiltersAndSavedDrillsPersistLocally() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingDrills",
+                "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
+        tapAndExpect("Discover", destination: "screen-ios-discover-drills")
+
+        tapControl("Filters")
+        tapDialogOption("Beginner only")
+        XCTAssertTrue(app.staticTexts["2 drills"].waitForExistence(timeout: 3))
+        assertVisible("STACK & SHOOT")
+        assertVisible("WRIST STAY DRILL")
+
+        tapButton(id: "discover-save-stack-and-shoot")
+        XCTAssertTrue(waitForToastContaining("Drill saved"))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
+        tapAndExpect("My drills", destination: "screen-ios-my-drills")
+        assertVisible("STACK & SHOOT")
+        assertVisible("Saved now")
+        assertVisible("--")
+    }
+
     func testVideoUploadShowsFullScreenSourceOptions() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData"])
         guard app.buttons["Capture"].waitForExistence(timeout: 8) else {

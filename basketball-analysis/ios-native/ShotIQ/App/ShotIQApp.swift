@@ -47,6 +47,13 @@ struct ShotIQApp: App {
                 // `-uiTestNoTypeClamp` lifts the clamp so the capture harness
                 // can shoot the unclamped arm and prove this is the cause.
                 .modifier(CanonicalTypeScale())
+                // UI-test launches sometimes need to skip Splash before the
+                // splash view's own task has become observable to XCTest.
+                .task {
+                    if UITestHooks.active {
+                        await app.boot()
+                    }
+                }
         }
     }
 }
@@ -163,6 +170,10 @@ enum UITestHooks {
     /// test. Normal launches never pass this flag.
     static var resetAnnotations: Bool { args.contains("-uiTestResetAnnotations") }
 
+    /// Clear locally persisted saved-drill proof data before focused training
+    /// catalog tests. Normal launches never pass this flag.
+    static var resetTrainingDrills: Bool { args.contains("-uiTestResetTrainingDrills") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
@@ -201,6 +212,7 @@ enum UITestHooks {
                                   "live-camera-setup", "hoop-calibration", "readiness-check",
                                   "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
                                   "analysis-taking-longer", "analysis-error",
+                                  "training-home", "discover-drills", "drill-detail", "my-drills",
                                   "analytics-cards", "analytics-detailed", "profile",
                                   "player-card", "customize-player-card", "my-media",
                                   "media-detail", "goals", "create-goal", "goal-detail",
@@ -209,7 +221,7 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || analysisFailure || resetAnnotations ||
+        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills ||
         homeVariant != nil || stage != nil
     }
 
@@ -252,6 +264,9 @@ final class AppState: ObservableObject {
     func boot() async {
         if UITestHooks.resetAnnotations {
             UserDefaults.standard.removeObject(forKey: "shotiq.annotations.frame43.v1")
+        }
+        if UITestHooks.resetTrainingDrills {
+            UserDefaults.standard.removeObject(forKey: "shotiq.training.savedDrills.v1")
         }
         // Test-only: the two auth stages (005 verify-email, 007 reset-password)
         // live inside the signed-out stack, so hand straight to it rather than
@@ -358,6 +373,10 @@ struct MainTabView: View {
         case "live-form-feedback": LiveFormFeedbackView()
         case "shot-detected": ShotDetectedView()
         case "analysis-taking-longer": AnalysisTakingLongerView()
+        case "training-home": TrainingHomeView()
+        case "discover-drills": DiscoverDrillsView()
+        case "drill-detail": DrillDetailView(name: "STACK & SHOOT")
+        case "my-drills": MyDrillsView()
         case "analytics-cards": AnalyticsCardsView()
         case "analytics-detailed": AnalyticsDetailedView()
         case "profile": ProfileView()

@@ -140,9 +140,9 @@ The first pass should fix root causes before polishing dependent screens:
 | --- | --- | --- | --- | --- | --- | --- |
 | G045 | OPEN | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Seeded weakness/goal changes recommended drill and progress stats. Training saved-drill thumbnail placeholders are fixed with bundled shot imagery; recommendation data still needs backend/history proof. |
 | G046 | OPEN | P1 | `#analytics` | 055 | Quick start values from current user data. | Different user history changes form score/session context. |
-| G047 | OPEN | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Filter/save/drill selection persists and syncs. |
+| G047 | VERIFYING | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Discover filters now prove `Beginner only` narrows to two drills; saving `STACK & SHOOT` uses a proper 44pt bookmark control, shows customer toast feedback, and persists locally after relaunch into My Drills. Backend/web sync remains before `DONE`. |
 | G048 | OPEN | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill detail target changes from selected real flaw/goal. |
-| G049 | OPEN | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | Save/remove drill changes list after reload and web sync if applicable. Shared drill thumbnail fallback now prevents gray icon-only cards, but persistence/backend proof is still open. |
+| G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
 | G050 | OPEN | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Workout API seed changes calendar percentages/streaks. |
 | G051 | OPEN | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Chosen drill displays correct media/cue and measured/live data where claimed. |
 | G052 | OPEN | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | New session starts from zero or real history; phase/correction values have source. |
@@ -2155,3 +2155,40 @@ controls on the simulator. It does not yet prove server-side annotation
 records, system share-sheet completion, or iOS/web round-trip visibility for
 the same annotated media. Those remain required before G040 can move from
 `VERIFYING` to `DONE`.
+
+### 2026-08-08 Training Saved-Drill Local Persistence Proof
+
+Thirty-fifth laptop functionality slice after local Xcode setup:
+
+- `TrainingSavedDrill` and `TrainingSavedDrillStore` now provide app-owned
+  local saved-drill persistence for the training catalog and My Drills list.
+- Screen 056 Discover Drills now uses persisted save state instead of a
+  view-local bookmark set, shows `Drill saved` / `Drill removed` toast
+  feedback, and still posts the existing `/api/saved-workouts` save intent.
+- The Discover drill card no longer nests the save button inside the card
+  `NavigationLink`; the bookmark is now a separate 44pt tappable control while
+  the photo/title/View Drill affordances still open drill detail.
+- Screen 058 My Drills now prepends locally saved catalog drills ahead of the
+  canonical demo rows after relaunch, with placeholder stats for newly saved
+  drills until real workout history exists.
+- The UI-test harness has direct staged training roots and a
+  `-uiTestResetTrainingDrills` launch arg so this proof can reset only the
+  saved-drill payload and then prove save -> relaunch -> My Drills persistence.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-TrainingSavedDrills-2026-08-08-v6.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testDiscoverDrillFiltersAndSavedDrillsPersistLocally`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test opens Training Home, navigates to
+  Discover, applies the `Beginner only` filter, verifies the two beginner
+  drills, taps the `STACK & SHOOT` save control, verifies the `Drill saved`
+  toast, relaunches the app, opens My Drills, and verifies `STACK & SHOOT`,
+  `Saved now`, and `--` render from local persistence.
+
+Remaining limitations: this proves local app persistence, customer-visible save
+feedback, and training-screen navigation on the simulator. It does not yet prove
+backend reload, save/remove parity in the web app, or shared iOS/web database
+visibility for the saved drill. Those remain required before G047/G049 can move
+from `VERIFYING` to `DONE`.

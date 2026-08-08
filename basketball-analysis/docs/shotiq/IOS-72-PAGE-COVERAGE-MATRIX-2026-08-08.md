@@ -69,6 +69,8 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LatePageRegressionIsolated-2026-08-08-v2.xcresult`
 - Focused annotation-toolbar persistence result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v3.xcresult`
+- Focused training saved-drills result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-TrainingSavedDrills-2026-08-08-v6.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -104,6 +106,7 @@ Current proof totals:
 - Focused media library/detail canonical regression target: 1 passed, 0 failed, 0 skipped
 - Focused late-page isolated regression target: 9 passed, 0 failed, 0 skipped
 - Focused annotation-toolbar persistence target: 1 passed, 0 failed, 0 skipped
+- Focused training saved-drills target: 1 passed, 0 failed, 0 skipped
 - Superseded bundled media/profile regression attempts: failed due staged
   relaunches falling back to Splash; replaced by one-staged-launch-per-test
   proof
@@ -173,11 +176,11 @@ even when the page has no upload/photo feature.
 | 51 | Photo Comparison | Yes | Elite shooter detail to comparison route asserted | Real uploaded user photo comparison |
 | 52 | Elite Shooters | Yes | Profile menu and elite-match chooser routes asserted | Live catalog updates |
 | 53 | Elite Shooter Detail | Yes | Klay detail and compare route asserted | Live catalog/video assets |
-| 54 | Training Home | Yes | Quick start, my drills, calendar, drill detail, tracker routes asserted | Backend training plan sync |
+| 54 | Training Home | Yes | Quick start, my drills, calendar, drill detail, tracker routes asserted; staged training root now used for saved-drill persistence proof | Backend training plan sync |
 | 55 | Quick Start | Yes | Start shot tracking route asserted | None |
-| 56 | Discover Drills | Yes | Drill list route and drill selection asserted | Live drill catalog |
+| 56 | Discover Drills | Yes | Drill list route and drill selection asserted; `Beginner only` filter, save control, and `Drill saved` toast proven | Live drill catalog and backend/web saved-drill sync |
 | 57 | Drill Detail | Yes | Start drill route asserted | None |
-| 58 | My Drills | Yes | Discover route asserted | Saved-drill backend sync |
+| 58 | My Drills | Yes | Discover route asserted; locally saved catalog drill appears after relaunch with placeholder stats | Saved-drill backend sync and web parity |
 | 59 | Workout Calendar | Yes | Calendar route asserted | Calendar persistence |
 | 60 | Drill Execution | Yes | Make/miss counters, toast feedback, end workout asserted | Real workout persistence |
 | 61 | Shot Tracker | Yes | Recent workout card opens tracker | Real shot-session persistence |
@@ -204,6 +207,15 @@ even when the page has no upload/photo feature.
   annotated image export, Share image availability, copy-summary feedback,
   playback step/pause, save alert, leaving the screen, reopening it, and seeing
   the saved annotations still attached to frame 43.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-TrainingSavedDrills-2026-08-08-v6.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testDiscoverDrillFiltersAndSavedDrillsPersistLocally`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves pages 054, 056, and 058 in the local
+  saved-drill path: Training Home routes to Discover/My Drills, Discover applies
+  the `Beginner only` filter, the drill save control is tappable and shows a
+  customer toast, and My Drills shows the saved `STACK & SHOOT` drill after app
+  relaunch with placeholder stats.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LatePageRegressionIsolated-2026-08-08-v2.xcresult`
   ran nine isolated tests on the iPhone 17 Pro simulator:
   `testAnalyticsCardsImageSurfacesWork`,

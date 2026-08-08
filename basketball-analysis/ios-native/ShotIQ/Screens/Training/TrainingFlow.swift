@@ -81,20 +81,80 @@ struct SavedWorkoutBody: Encodable {
     var drillIds: [String] = []
 }
 
+struct TrainingSavedDrill: Identifiable, Codable, Equatable {
+    var id: String { name.lowercased().replacingOccurrences(of: " ", with: "-") }
+    var name: String
+    var description: String
+    var phase: String
+    var shots: Int
+    var makes: Int
+    var accuracy: String
+    var completed: String
+    var difficulty: String
+    var duration: String
+    var photo: String?
+
+    static func catalog(name: String, difficulty: String, duration: String,
+                        description: String, phase: String = "RELEASE",
+                        photo: String? = nil) -> TrainingSavedDrill {
+        TrainingSavedDrill(name: name, description: description, phase: phase,
+                           shots: 0, makes: 0, accuracy: "--",
+                           completed: "Saved now", difficulty: difficulty,
+                           duration: duration, photo: photo)
+    }
+}
+
+enum TrainingSavedDrillStore {
+    static let key = "shotiq.training.savedDrills.v1"
+
+    static func decode(_ payload: String) -> [TrainingSavedDrill] {
+        guard let data = payload.data(using: .utf8),
+              let drills = try? JSONDecoder().decode([TrainingSavedDrill].self, from: data) else { return [] }
+        return drills
+    }
+
+    static func encode(_ drills: [TrainingSavedDrill]) -> String {
+        guard let data = try? JSONEncoder().encode(drills),
+              let payload = String(data: data, encoding: .utf8) else { return "[]" }
+        return payload
+    }
+
+    static func contains(_ name: String, in payload: String) -> Bool {
+        decode(payload).contains { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    static func save(_ drill: TrainingSavedDrill, in payload: String) -> String {
+        var drills = decode(payload)
+        drills.removeAll { $0.name.caseInsensitiveCompare(drill.name) == .orderedSame }
+        drills.insert(drill, at: 0)
+        return encode(drills)
+    }
+
+    static func remove(_ name: String, from payload: String) -> String {
+        encode(decode(payload).filter { $0.name.caseInsensitiveCompare(name) != .orderedSame })
+    }
+}
+
 struct HRule: View {
     var body: some View { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
 }
 
 struct TrainingHomeView: View {     // 054
     @EnvironmentObject var app: AppState
-    private var savedDrills: [(String, [String], String)] {
-        [("Quick Release Builder", ["20 min", "Form Focus", "Intermediate"], "Improve release speed and consistency."),
-         ("Elbow Alignment Series", ["15 min", "Form Focus", "All Levels"], "Train a stacked elbow and straight line."),
-         ("Catch & Shoot Flow", ["12 min", "Game Speed", "All Levels"], "Smooth rhythm from catch to follow-through.")]
+    @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
+    private var canonicalSavedDrills: [(String, [String], String, String?)] {
+        [("Quick Release Builder", ["20 min", "Form Focus", "Intermediate"], "Improve release speed and consistency.", "054-visual-003"),
+         ("Elbow Alignment Series", ["15 min", "Form Focus", "All Levels"], "Train a stacked elbow and straight line.", "054-visual-002"),
+         ("Catch & Shoot Flow", ["12 min", "Game Speed", "All Levels"], "Smooth rhythm from catch to follow-through.", "054-visual-001")]
     }
-    /// Each saved-drill row should carry a real court frame; the third row used
-    /// to fall through to PhotoThumb's gray placeholder.
-    private let savedDrillPhotos = ["054-visual-003", "054-visual-002", "054-visual-001"]
+    private var savedDrills: [(String, [String], String, String?)] {
+        let stored = TrainingSavedDrillStore.decode(savedDrillsPayload).map {
+            ($0.name, [$0.duration, "Form Focus", $0.difficulty], $0.description, $0.photo)
+        }
+        return stored + canonicalSavedDrills.filter { canonical in
+            !stored.contains { $0.0.caseInsensitiveCompare(canonical.0) == .orderedSame }
+        }
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-training-home") {
             ScrollView {
@@ -163,8 +223,7 @@ struct TrainingHomeView: View {     // 054
                                         // the row was leaving them 166.
                                         HStack(spacing: 8) {
                                             PhotoThumb(width: 84, height: 76,
-                                                       photo: savedDrillPhotos.indices.contains(i)
-                                                       ? savedDrillPhotos[i] : nil)
+                                                       photo: d.3)
                                             WorkoutGlyph(kind: .init(drillName: d.0), size: 28)
                                                 .foregroundStyle(i == 0 ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             VStack(alignment: .leading, spacing: 5) {
@@ -371,6 +430,7 @@ struct QuickStartView: View {       // 055
 
 struct DiscoverDrillsView: View {   // 056
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @State private var query = ""
     // Each browse chip is a real filter dimension backed by a picker dialog.
     @State private var flawFilter = "All Flaws"
@@ -380,7 +440,7 @@ struct DiscoverDrillsView: View {   // 056
     @State private var sortMode = "Recommended"
     @State private var activeChip: String?
     @State private var showFilterMenu = false
-    @State private var bookmarked: Set<String> = []
+    @State private var toast: ShotIQToast?
     private let drills: [(String, String, String, String)] = [
         ("STACK & SHOOT", "Beginner", "8 min", "Builds stacked elbow position and a straight shooting line."),
         ("WRIST STAY DRILL", "Beginner", "6 min", "Keeps wrist neutral for a clean, consistent release."),
@@ -427,6 +487,23 @@ struct DiscoverDrillsView: View {   // 056
         case "All Difficulties": difficultyFilter = value
         default: durationFilter = value
         }
+    }
+    private func saved(_ d: (String, String, String, String)) -> Bool {
+        TrainingSavedDrillStore.contains(d.0, in: savedDrillsPayload)
+    }
+    private func toggleSaved(_ d: (String, String, String, String)) {
+        if saved(d) {
+            savedDrillsPayload = TrainingSavedDrillStore.remove(d.0, from: savedDrillsPayload)
+            toast = .info("Drill removed", "\(d.0) removed from My Drills.")
+            return
+        }
+        let savedDrill = TrainingSavedDrill.catalog(name: d.0, difficulty: d.1,
+                                                    duration: d.2, description: d.3,
+                                                    photo: d.0 == "STACK & SHOOT" ? "056-visual-001" : nil)
+        savedDrillsPayload = TrainingSavedDrillStore.save(savedDrill, in: savedDrillsPayload)
+        toast = .success("Drill saved", "\(d.0) added to My Drills.")
+        Task { await APIClient.shared.send("/api/saved-workouts",
+                                           body: SavedWorkoutBody(name: d.0)) }
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-discover-drills") {
@@ -562,59 +639,58 @@ struct DiscoverDrillsView: View {   // 056
                         }
                         .padding(.top, 12)
                         ForEach(filteredDrills, id: \.0) { d in
-                            NavigationLink { DrillDetailView(name: d.0) } label: {
-                                ShotIQCard {
-                                    HStack(spacing: 0) {
-                                        // Canonical 056 only carries a frame for STACK & SHOOT.
+                            ShotIQCard {
+                                HStack(spacing: 0) {
+                                    // Canonical 056 only carries a frame for STACK & SHOOT.
+                                    NavigationLink { DrillDetailView(name: d.0) } label: {
                                         PhotoThumb(width: 104, height: 158,
                                                    photo: d.0 == "STACK & SHOOT" ? "056-visual-001" : nil)
-                                        VStack(alignment: .leading, spacing: 8) {
-                                            HStack(alignment: .top) {
+                                    }
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack(alignment: .top) {
+                                            NavigationLink { DrillDetailView(name: d.0) } label: {
                                                 Text(d.0).shotiqDisplay(20).lineLimit(1)
-                                                Spacer()
-                                                Button {
-                                                    if bookmarked.contains(d.0) {
-                                                        bookmarked.remove(d.0)
-                                                    } else {
-                                                        bookmarked.insert(d.0)
-                                                        Task { await APIClient.shared.send("/api/saved-workouts",
-                                                                                           body: SavedWorkoutBody(name: d.0)) }
-                                                    }
-                                                } label: {
-                                                    Image(systemName: bookmarked.contains(d.0) ? "bookmark.fill" : "bookmark")
-                                                        .font(.system(size: 15))
-                                                        .foregroundStyle(bookmarked.contains(d.0) ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                                                        .frame(width: 32, height: 32, alignment: .topTrailing)
-                                                }
-                                                .buttonStyle(.plain)
-                                                .accessibilityLabel("Bookmark drill")
                                             }
-                                            HStack(spacing: 8) {
-                                                HStack(spacing: 4) {
-                                                    ForEach(0..<4, id: \.self) { i in
-                                                        PhaseGlyph(phase: ShotPhase.allCases[i],
-                                                                   active: i == 3, size: 15)
-                                                    }
-                                                }
-                                                Text("Release").shotiqBody(11, weight: .medium)
-                                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                                Text("· \(d.1) · \(d.2)").shotiqBody(11)
-                                                    .foregroundStyle(ShotIQColor.graphite)
-                                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                            Spacer()
+                                            Button {
+                                                toggleSaved(d)
+                                            } label: {
+                                                Image(systemName: saved(d) ? "bookmark.fill" : "bookmark")
+                                                    .font(.system(size: 18))
+                                                    .foregroundStyle(saved(d) ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                                    .frame(width: 44, height: 44)
                                             }
-                                            Text(d.3).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                                                .lineLimit(2).multilineTextAlignment(.leading)
-                                                .fixedSize(horizontal: false, vertical: true)
-                                            HStack {
-                                                Spacer()
+                                            .buttonStyle(.plain)
+                                            .accessibilityLabel(saved(d) ? "Remove saved drill" : "Save drill")
+                                            .accessibilityIdentifier("discover-save-\(d.0.lowercased().replacingOccurrences(of: " ", with: "-").replacingOccurrences(of: "&", with: "and"))")
+                                        }
+                                        HStack(spacing: 8) {
+                                            HStack(spacing: 4) {
+                                                ForEach(0..<4, id: \.self) { i in
+                                                    PhaseGlyph(phase: ShotPhase.allCases[i],
+                                                               active: i == 3, size: 15)
+                                                }
+                                            }
+                                            Text("Release").shotiqBody(11, weight: .medium)
+                                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                            Text("· \(d.1) · \(d.2)").shotiqBody(11)
+                                                .foregroundStyle(ShotIQColor.graphite)
+                                                .lineLimit(1).minimumScaleFactor(0.7)
+                                        }
+                                        Text(d.3).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                            .lineLimit(2).multilineTextAlignment(.leading)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        HStack {
+                                            Spacer()
+                                            NavigationLink { DrillDetailView(name: d.0) } label: {
                                                 Text("View drill").shotiqBody(13, weight: .semibold)
                                                     .padding(.horizontal, 14).padding(.vertical, 8)
                                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
                                                     .foregroundStyle(.white)
                                             }
                                         }
-                                        .padding(12)
                                     }
+                                    .padding(12)
                                 }
                             }
                             .padding(.top, 12)
@@ -625,13 +701,16 @@ struct DiscoverDrillsView: View {   // 056
                 }
             }
         }
+        .shotiqToast($toast)
     }
 }
 
 struct DrillDetailView: View {      // 057
     var name = "Pound Crossover Foundation"
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @State private var bookmarked = false
+    @State private var toast: ShotIQToast?
     private let steps: [(String, String)] = [
         ("SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in."),
         ("LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked."),
@@ -659,16 +738,13 @@ struct DrillDetailView: View {      // 057
                         Spacer()
                         HStack(spacing: 18) {
                             Button {
-                                bookmarked.toggle()
-                                if bookmarked {
-                                    Task { await APIClient.shared.send("/api/saved-workouts",
-                                                                       body: SavedWorkoutBody(name: name)) }
-                                }
+                                toggleSaved()
                             } label: {
                                 Image(systemName: bookmarked ? "bookmark.fill" : "bookmark")
                                     .foregroundStyle(bookmarked ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                             }
-                            .accessibilityLabel("Bookmark drill")
+                            .accessibilityLabel(bookmarked ? "Remove saved drill" : "Save drill")
+                            .accessibilityIdentifier("drill-detail-save")
                             ShareLink(item: "Check out the \(name) drill on ShotIQ 🏀") {
                                 Image(systemName: "square.and.arrow.up").foregroundStyle(ShotIQColor.ink)
                             }
@@ -815,6 +891,28 @@ struct DrillDetailView: View {      // 057
                 }
             }
         }
+        .onAppear {
+            bookmarked = TrainingSavedDrillStore.contains(name, in: savedDrillsPayload)
+        }
+        .shotiqToast($toast)
+    }
+    private func toggleSaved() {
+        if bookmarked {
+            savedDrillsPayload = TrainingSavedDrillStore.remove(name, from: savedDrillsPayload)
+            bookmarked = false
+            toast = .info("Drill removed", "\(name) removed from My Drills.")
+            return
+        }
+        let savedDrill = TrainingSavedDrill.catalog(name: name,
+                                                    difficulty: "Intermediate",
+                                                    duration: "15 min",
+                                                    description: "Build a tight, controlled release by stacking your elbow and wrist through extension.",
+                                                    photo: "057-visual-001")
+        savedDrillsPayload = TrainingSavedDrillStore.save(savedDrill, in: savedDrillsPayload)
+        bookmarked = true
+        toast = .success("Drill saved", "\(name) added to My Drills.")
+        Task { await APIClient.shared.send("/api/saved-workouts",
+                                           body: SavedWorkoutBody(name: name)) }
     }
     private func factColumn(_ icon: String, _ label: String, _ value: String) -> some View {
         VStack(spacing: 4) {
@@ -875,26 +973,49 @@ struct DrillDetailView: View {      // 057
 struct MyDrillsView: View {         // 058
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @State private var tab = 1                  // 0 TRAIN · 1 MY DRILLS · 2 ASSIGNED
     @State private var sortMode = "Newest"
     @State private var phaseFilter = "All phases"
-    private let drills: [(String, String, String, Int, Int, String, String)] = [
-        ("Quick Release Builder", "Keep elbow stacked through release", "RELEASE", 24, 15, "62.5%", "May 10, 2025"),
-        ("Stationary Pound Dribble", "Build a strong handle with a stationary pound dribble focus", "LOAD", 18, 11, "61.1%", "May 8, 2025"),
-        ("Speed Dribble Combo", "Advance your handle with speed dribble combinations and counters", "RISE", 30, 21, "70.0%", "May 5, 2025"),
-        ("1-2 Step Finishing", "Finish at the rim using quick 1-2 step footwork and control", "RISE", 16, 12, "75.0%", "Apr 28, 2025")
+    private let drills: [TrainingSavedDrill] = [
+        TrainingSavedDrill(name: "Quick Release Builder",
+                           description: "Keep elbow stacked through release",
+                           phase: "RELEASE", shots: 24, makes: 15,
+                           accuracy: "62.5%", completed: "May 10, 2025",
+                           difficulty: "Intermediate", duration: "20 min",
+                           photo: "058-visual-002"),
+        TrainingSavedDrill(name: "Stationary Pound Dribble",
+                           description: "Build a strong handle with a stationary pound dribble focus",
+                           phase: "LOAD", shots: 18, makes: 11,
+                           accuracy: "61.1%", completed: "May 8, 2025",
+                           difficulty: "Beginner", duration: "15 min",
+                           photo: "058-visual-001"),
+        TrainingSavedDrill(name: "Speed Dribble Combo",
+                           description: "Advance your handle with speed dribble combinations and counters",
+                           phase: "RISE", shots: 30, makes: 21,
+                           accuracy: "70.0%", completed: "May 5, 2025",
+                           difficulty: "Intermediate", duration: "18 min",
+                           photo: "058-visual-003"),
+        TrainingSavedDrill(name: "1-2 Step Finishing",
+                           description: "Finish at the rim using quick 1-2 step footwork and control",
+                           phase: "RISE", shots: 16, makes: 12,
+                           accuracy: "75.0%", completed: "Apr 28, 2025",
+                           difficulty: "Beginner", duration: "12 min",
+                           photo: "058-visual-004")
     ]
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
-    /// Canonical 058 frames, keyed by drill so sorting/filtering keeps each
-    /// card with the photograph the design pairs it with.
-    private let drillPhotos = ["Quick Release Builder": "058-visual-002",
-                               "Stationary Pound Dribble": "058-visual-001",
-                               "Speed Dribble Combo": "058-visual-003",
-                               "1-2 Step Finishing": "058-visual-004"]
-    private var visibleDrills: [(String, String, String, Int, Int, String, String)] {
-        var out = drills.filter { phaseFilter == "All phases" || $0.2 == phaseFilter }
+    private var savedCatalogDrills: [TrainingSavedDrill] {
+        TrainingSavedDrillStore.decode(savedDrillsPayload)
+    }
+    private var allDrills: [TrainingSavedDrill] {
+        savedCatalogDrills + drills.filter { canonical in
+            !savedCatalogDrills.contains { $0.name.caseInsensitiveCompare(canonical.name) == .orderedSame }
+        }
+    }
+    private var visibleDrills: [TrainingSavedDrill] {
+        var out = allDrills.filter { phaseFilter == "All phases" || $0.phase == phaseFilter }
         if sortMode == "Best accuracy" {
-            out.sort { (Double($0.5.dropLast()) ?? 0) > (Double($1.5.dropLast()) ?? 0) }
+            out.sort { (Double($0.accuracy.dropLast()) ?? -1) > (Double($1.accuracy.dropLast()) ?? -1) }
         }
         return out
     }
@@ -970,7 +1091,7 @@ struct MyDrillsView: View {         // 058
                             }
                             .padding(.top, 12)
                         } else {
-                            ForEach(visibleDrills, id: \.0) { d in
+                            ForEach(visibleDrills) { d in
                                 drillCard(d)
                                     .padding(.top, 12)
                             }
@@ -1027,42 +1148,42 @@ struct MyDrillsView: View {         // 058
             .frame(maxWidth: .infinity)
         }
     }
-    private func drillCard(_ d: (String, String, String, Int, Int, String, String)) -> some View {
+    private func drillCard(_ d: TrainingSavedDrill) -> some View {
         ShotIQCard {
             HStack(alignment: .top, spacing: 12) {
-                NavigationLink { DrillDetailView(name: d.0) } label: {
-                    PhotoThumb(width: 84, height: 150, photo: drillPhotos[d.0])
+                NavigationLink { DrillDetailView(name: d.name) } label: {
+                    PhotoThumb(width: 84, height: 150, photo: d.photo)
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .top, spacing: 8) {
-                        NavigationLink { DrillDetailView(name: d.0) } label: {
-                            Text(d.0.uppercased()).shotiqDisplay(18)
+                        NavigationLink { DrillDetailView(name: d.name) } label: {
+                            Text(d.name.uppercased()).shotiqDisplay(18)
                                 .multilineTextAlignment(.leading)
                         }
                         Spacer(minLength: 4)
-                        NavigationLink { DrillExecutionView(drillName: d.0) } label: {
+                        NavigationLink { DrillExecutionView(drillName: d.name) } label: {
                             Text("Start drill").shotiqBody(12, weight: .semibold)
                                 .padding(.horizontal, 11).padding(.vertical, 7)
                                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                     }
-                    Text(d.1).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                    Text(d.description).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 16) {
                         ForEach(phases, id: \.self) { p in
                             VStack(spacing: 3) {
-                                PhaseGlyph(phase: p, active: p == d.2, size: 18)
-                                Rectangle().fill(p == d.2 ? ShotIQColor.shotiqOrange : .clear)
+                                PhaseGlyph(phase: p, active: p == d.phase, size: 18)
+                                Rectangle().fill(p == d.phase ? ShotIQColor.shotiqOrange : .clear)
                                     .frame(width: 18, height: 2)
                             }
                         }
                     }
                     HStack(spacing: 0) {
-                        miniStat("\(d.3)", "SHOTS")
-                        miniStat("\(d.4)", "MAKES")
-                        miniStat(d.5, "BEST ACCURACY")
-                        miniStat(d.6, "LAST COMPLETED")
+                        miniStat("\(d.shots)", "SHOTS")
+                        miniStat("\(d.makes)", "MAKES")
+                        miniStat(d.accuracy, "BEST ACCURACY")
+                        miniStat(d.completed, "LAST COMPLETED")
                     }
                 }
                 .padding(.vertical, 12).padding(.trailing, 12)
