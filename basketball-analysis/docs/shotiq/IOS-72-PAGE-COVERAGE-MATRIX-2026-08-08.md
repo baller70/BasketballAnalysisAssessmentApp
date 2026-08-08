@@ -79,6 +79,10 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWorkoutCalendarShowsCompletedTrackerSession-20260808-141504.xcresult`
 - Focused settings persistence/feedback result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSettingsTogglesPersistLocallyAndShowFeedback-20260808-142420.xcresult`
+- Focused selected-media/share-results real-analysis result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisAppearsInMyMediaAndDetail-share-20260808-143111.xcresult`
+- Focused share-results export renderer result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testShareResultsExportRendersShareableImage-20260808-143528.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -119,6 +123,8 @@ Current proof totals:
 - Focused capture no-media feedback target: 1 passed, 0 failed, 0 skipped
 - Focused workout-calendar persistence target: 1 passed, 0 failed, 0 skipped
 - Focused settings persistence/feedback target: 1 passed, 0 failed, 0 skipped
+- Focused selected-media/share-results real-analysis target: 1 passed, 0 failed, 0 skipped
+- Focused share-results export renderer target: 1 passed, 0 failed, 0 skipped
 - Superseded bundled media/profile regression attempts: failed due staged
   relaunches falling back to Splash; replaced by one-staged-launch-per-test
   proof
@@ -206,10 +212,25 @@ even when the page has no upload/photo feature.
 | 69 | Media Detail | Yes | Play toast, frame select toast, actions, linked analysis route asserted; download toast/alert, delete-confirmation toast, and sample-delete toast tested; selected native photo analysis now opens matching real media/detail context and links back to the same pose-detected analysis while suppressing fake sample stats | Real backend playback/share/delete; web media-detail parity |
 | 70 | Profile | Yes | Profile stats, physical/shooting/card/completion surfaces asserted | Backend profile edit/save |
 | 71 | Settings Hub | Yes | Settings route asserted; edit-profile route, Automation/Data privacy expanders, toggles, About alert, local toggle persistence after relaunch, and `Settings saved` toast tested | Backend settings reload and analytics provenance |
-| 72 | Share Results | Yes | Share-results page route asserted from analysis/profile; Copy feedback plus share/save controls tested | iOS system share sheet |
+| 72 | Share Results | Yes | Share-results page route asserted from analysis/profile; Copy feedback plus share/save controls tested; selected native photo analysis now drives Share Results text/stats with `--` unavailable score, image media, pose-detected phase, canned `62.5%` / `24` values absent, and export renderer still produces a shareable bitmap | Backend/web selected-result parity and iOS system share sheet |
 
 ## Latest Focused Evidence
 
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisAppearsInMyMediaAndDetail-share-20260808-143111.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisAppearsInMyMediaAndDetail`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This extends pages 068, 069, and 072 in one app-owned
+  selected-media path: selected sample image analysis appears in My Media, opens
+  Media Detail with the real media surface, links back to the pose-detected
+  analysis, and Share Results renders the selected analysis state instead of
+  the canonical sample numbers.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testShareResultsExportRendersShareableImage-20260808-143528.xcresult`
+  ran
+  `ShotIQTests/ScreenshotExportRendererTests/testShareResultsExportRendersShareableImage`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves the page 072 export renderer still creates a
+  shareable bitmap after the dynamic result-data change.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSettingsTogglesPersistLocallyAndShowFeedback-20260808-142420.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testSettingsTogglesPersistLocallyAndShowFeedback`

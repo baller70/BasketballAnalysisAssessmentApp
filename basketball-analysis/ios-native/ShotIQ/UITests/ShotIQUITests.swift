@@ -615,6 +615,18 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["62.5%"].exists)
         tapAndExpect("Open analysis", destination: "screen-ios-analysis-result-overview")
         XCTAssertTrue(screen("captured-pose-detected").waitForExistence(timeout: 8))
+
+        tapAndExpect("Share analysis", destination: "screen-ios-share-results")
+        assertStaticText(id: "share-results-score", contains: "--")
+        assertStaticText(id: "share-results-target", contains: "Keep elbow stacked")
+        assertStaticText(id: "share-results-text", contains: "UNAVAILABLE")
+        assertStaticText(id: "share-results-text", contains: "image")
+        assertVisible("MEDIA IMAGE")
+        assertVisible("POSE DETECTED PHASE")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+        XCTAssertFalse(app.staticTexts["24"].exists)
+        tapControl("Copy")
+        XCTAssertTrue(app.staticTexts["Copied"].waitForExistence(timeout: 3))
     }
 
     func testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces() throws {

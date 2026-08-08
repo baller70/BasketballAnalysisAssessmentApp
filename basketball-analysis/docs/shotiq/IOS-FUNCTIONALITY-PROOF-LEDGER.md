@@ -162,7 +162,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target context, suppresses fake sample shot-event stats for real selected media, and opens the linked saved analysis. Real backend playback/share/delete and web parity remain before `DONE`. |
 | G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
 | G063 | VERIFYING | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings toggles persist locally across app relaunch and show a customer-visible `Settings saved` toast; each toggle also fire-and-forget syncs through `/api/settings`. Backend reload proof and provenance for the fixed header analytics remain before `DONE`. |
-| G064 | OPEN | P1 | `#control` `#media` `#analytics` | 072 | Share latest real result. | Shared/exported card/text matches selected saved analysis and media. |
+| G064 | VERIFYING | P1 | `#control` `#media` `#analytics` | 072 | Share latest real result. | Share Results now consumes the latest remembered selected native analysis instead of always rendering the 82/24/15/62.5% canonical sample. Focused UI proof walks selected photo -> pose analysis -> My Media -> Media Detail -> linked Analysis -> Share Results, verifies the shared text and page stats reflect the selected unavailable-score/image/pose-detected analysis, confirms canned `62.5%` / `24` values are absent, and verifies Copy feedback. Export renderer proof still produces a shareable image. Backend/web/system share-sheet proof remains before `DONE`. |
 
 ## Home, Elite, Onboarding, Auth Items
 
@@ -283,6 +283,21 @@ Evidence captured on the laptop, all external-drive backed:
   It verified the Coaching audio setting starts from reset defaults, shows
   `Settings saved` / `Coaching audio cues` customer feedback when toggled,
   persists off after app relaunch, and can be restored on.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisAppearsInMyMediaAndDetail-share-20260808-143111.log`
+  ran `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisAppearsInMyMediaAndDetail`
+  on the same external-backed iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-share-real-analysis-20260808-143111`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+  It verified selected image analysis reaches My Media and Media Detail, links
+  back to the same pose-detected analysis, then opens Share Results with the
+  selected analysis state: score `--`, image media, pose-detected phase,
+  unavailable share text, canned `62.5%` / `24` values absent, and Copy feedback.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testShareResultsExportRendersShareableImage-20260808-143528.log`
+  ran `ShotIQTests/ScreenshotExportRendererTests/testShareResultsExportRendersShareableImage`
+  on the same external-backed iPhone 17 Pro simulator and ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`. It verifies the
+  Share Results export renderer still produces a shareable bitmap after the
+  page started accepting dynamic analysis presentation data.
 
 ### 2026-08-07 Native Screenshot Capture and Export Proof
 

@@ -3098,6 +3098,8 @@ struct SettingsHubView: View {      // 071
 /// `@State` and `@EnvironmentObject` boxes.
 private struct ShareCardExportView: View {
     let name: String
+    let presentation: AnalysisResultPresentation
+    let statLine: String
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 0) {
@@ -3111,16 +3113,16 @@ private struct ShareCardExportView: View {
             Text(name.uppercased())
                 .shotiqCondensed(24, weight: .heavy)
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("82").font(.custom("Tungsten-Medium", size: 54))
+                Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 54))
                     .foregroundStyle(ShotIQColor.shotiqOrange)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("FORM SCORE · GOOD").shotiqBody(11, weight: .bold)
+                    Text("FORM SCORE · \(presentation.scoreVerdict)").shotiqBody(11, weight: .bold)
                         .foregroundStyle(ShotIQColor.analysisBlue)
-                    Text("24 shots · 15 makes · 62.5% · +8.1% vs last session")
+                    Text(statLine)
                         .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                 }
             }
-            Text("Primary target: keep elbow stacked through release")
+            Text("Primary target: \(presentation.coachingTarget.lowercased())")
                 .shotiqBody(12, weight: .semibold)
         }
         .padding(20)
@@ -3132,8 +3134,12 @@ private struct ShareCardExportView: View {
 
 enum ShareResultsImageRenderer {
     @MainActor
-    static func render(name: String) -> UIImage? {
-        let renderer = ImageRenderer(content: ShareCardExportView(name: name))
+    static func render(name: String,
+                       presentation: AnalysisResultPresentation = .canonicalDemo,
+                       statLine: String = "24 shots · 15 makes · 62.5% · +8.1% vs last session") -> UIImage? {
+        let renderer = ImageRenderer(content: ShareCardExportView(name: name,
+                                                                  presentation: presentation,
+                                                                  statLine: statLine))
         renderer.scale = 3
         return renderer.uiImage
     }
@@ -3143,7 +3149,33 @@ struct ShareResultsView: View {     // 072
     @EnvironmentObject var app: AppState
     @State private var renderedCard: UIImage?
     @State private var copied = false
-    private let shareText = "My ShotIQ form score: 82 (GOOD) — 62.5% make rate, trending +8.1%. 🏀"
+
+    private var presentation: AnalysisResultPresentation {
+        if let latest = app.recentMedia.first?.analysis {
+            return AnalysisResultPresentation(result: latest)
+        }
+        return UITestHooks.active ? .canonicalDemo : .noResult
+    }
+
+    private var playerName: String { app.user?.displayName ?? "Jordan Ellis" }
+
+    private var isCanonicalShareDemo: Bool { presentation.id == "canonical-demo" }
+
+    private var shareStatLine: String {
+        let p = presentation
+        if isCanonicalShareDemo {
+            return "24 shots · 15 makes · 62.5% · +8.1% vs last session"
+        }
+        return "\(p.mediaLabel) · \(p.recordedLabel) · \(p.provenanceSummary)"
+    }
+
+    private var shareText: String {
+        let p = presentation
+        if isCanonicalShareDemo {
+            return "My ShotIQ form score: 82 (GOOD) — 62.5% make rate, trending +8.1%."
+        }
+        return "\(p.formScoreShareText) \(p.coachingTarget)"
+    }
 
     /// Rasterises the share card once, on demand. Nothing on this screen runs it
     /// on appear any more: a full synchronous `ImageRenderer` pass at scale 3 was
@@ -3151,7 +3183,9 @@ struct ShareResultsView: View {     // 072
     /// nothing here displays the bitmap until the reader asks to share it.
     @MainActor private func renderCard() {
         guard renderedCard == nil else { return }
-        renderedCard = ShareResultsImageRenderer.render(name: app.user?.displayName ?? "Jordan Ellis")
+        renderedCard = ShareResultsImageRenderer.render(name: playerName,
+                                                        presentation: presentation,
+                                                        statLine: shareStatLine)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-share-results") {
@@ -3172,7 +3206,7 @@ struct ShareResultsView: View {     // 072
                             HRule()
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
+                                    Text(playerName.uppercased())
                                         .shotiqDisplay(30)
                                     Text("Right-handed • Advanced").shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -3181,9 +3215,10 @@ struct ShareResultsView: View {     // 072
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Medium", size: 44))
+                                    Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 44))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 88)
+                                        .accessibilityIdentifier("share-results-score")
+                                    ScoreBar(pct: presentation.scorePct).frame(width: 88)
                                 }
                             }
                             HRule()
@@ -3192,9 +3227,10 @@ struct ShareResultsView: View {     // 072
                                     Text("PRIMARY COACHING TARGET")
                                         .shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Keep elbow stacked through release").shotiqBody(15, weight: .bold)
+                                    Text(presentation.coachingTarget).shotiqBody(15, weight: .bold)
                                         .lineLimit(2).minimumScaleFactor(0.8)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("share-results-target")
                                 }
                                 Spacer(minLength: 8)
                                 VStack(alignment: .trailing, spacing: 5) {
@@ -3223,26 +3259,39 @@ struct ShareResultsView: View {     // 072
                                     Text("MECHANICS HIGHLIGHTS")
                                         .shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    highlight("figure.arms.open", "ELBOW STACK")
-                                    highlight("gauge", "52° RELEASE ANGLE")
-                                    highlight("hand.raised", "WRIST SNAP")
-                                    highlight("figure.stand", "FOLLOW-THROUGH")
+                                    if isCanonicalShareDemo {
+                                        highlight("figure.arms.open", "ELBOW STACK")
+                                        highlight("gauge", "52° RELEASE ANGLE")
+                                        highlight("hand.raised", "WRIST SNAP")
+                                        highlight("figure.stand", "FOLLOW-THROUGH")
+                                    } else {
+                                        highlight("figure.arms.open", "MEDIA \(presentation.mediaLabel.uppercased())")
+                                        highlight("gauge", "\(presentation.phaseText.uppercased()) PHASE")
+                                        highlight("hand.raised", "WRIST \(presentation.wristAngleText)")
+                                        highlight("figure.stand", "ELBOW \(presentation.elbowAngleText)")
+                                    }
                                 }
                                 .frame(width: 124, alignment: .leading)
                             }
                             PhaseStrip()
                             HRule()
                             HStack(spacing: 0) {
-                                shareBottomStat("24", "SHOTS", ShotIQColor.ink)
+                                shareBottomStat(isCanonicalShareDemo ? "24" : presentation.mediaLabel.uppercased(),
+                                                isCanonicalShareDemo ? "SHOTS" : "MEDIA",
+                                                ShotIQColor.ink)
                                 VRule(height: 34)
-                                shareBottomStat("15", "MAKES", ShotIQColor.ink)
+                                shareBottomStat(isCanonicalShareDemo ? "15" : presentation.phaseText.uppercased(),
+                                                isCanonicalShareDemo ? "MAKES" : "PHASE",
+                                                ShotIQColor.ink)
                                 VRule(height: 34)
-                                shareBottomStat("62.5%", "MAKE %", ShotIQColor.ink)
+                                shareBottomStat(isCanonicalShareDemo ? "62.5%" : presentation.sourceCoverageText,
+                                                isCanonicalShareDemo ? "MAKE %" : "SOURCES",
+                                                ShotIQColor.ink)
                                 VRule(height: 34)
                                 VStack(spacing: 2) {
-                                    Text("+8.1%").shotiqBody(13, weight: .bold)
+                                    Text(isCanonicalShareDemo ? "+8.1%" : presentation.scoreVerdict).shotiqBody(13, weight: .bold)
                                         .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("VS LAST SESSION").shotiqBody(6.5, weight: .medium)
+                                    Text(isCanonicalShareDemo ? "VS LAST SESSION" : "RESULT STATE").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
                                 }
@@ -3250,7 +3299,7 @@ struct ShareResultsView: View {     // 072
                             }
                             HRule()
                             HStack {
-                                Text("ANALYZED TODAY AT 8:24 AM")
+                                Text(isCanonicalShareDemo ? "ANALYZED TODAY AT 8:24 AM" : presentation.recordedLabel.uppercased())
                                 Spacer()
                                 Text("SHOTIQ.COM")
                             }
@@ -3263,6 +3312,10 @@ struct ShareResultsView: View {     // 072
                     Text("SHARE PREVIEW").shotiqBody(11, weight: .bold).kerning(0.8)
                         .padding(.top, 20)
                     HStack(spacing: 10) {
+                        Text(shareText)
+                            .frame(width: 1, height: 1)
+                            .clipped()
+                            .accessibilityIdentifier("share-results-text")
                         imageShareControl("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
                         imageShareControl("arrow.down.to.line", "Save image", ShotIQColor.ink)
                         Button {
