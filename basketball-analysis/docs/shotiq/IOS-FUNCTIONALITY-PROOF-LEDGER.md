@@ -87,7 +87,7 @@ The first pass should fix root causes before polishing dependent screens:
 | --- | --- | --- | --- | --- | --- | --- |
 | G007 | VERIFYING | P2 | `#path` `#media` | 022/026 | Clarify photo vs video upload paths. | Analyze hub separates upload photo from upload video, and screen 026 now opens a full-screen video source menu with Video library, Browse files, Record video, Upload queue, and View filming tips. Focused UI proof passes on the laptop iPhone 17 Pro simulator. Still needs real selected-media device proof before `DONE`. |
 | G008 | OPEN | P0 | `#control` `#media` `#device` | 023 | Prove and fix photo crop on real selected image. | Before/after real image screenshot shows crop changed pixels and persisted to next screen. |
-| G009 | OPEN | P1 | `#analytics` `#demo` | 023 | Remove or source analysis context from pre-analysis crop screen. | No measured-looking analytics appear before analysis unless sourced from history or demo-labeled. |
+| G009 | VERIFYING | P1 | `#analytics` `#demo` | 023 | Remove or source analysis context from pre-analysis crop screen. | Photo Review Crop now has focused UI proof that it renders the selected-photo crop/tip path without pre-analysis score/history/target language (`82`, `24`, `15`, `62.5%`, `FORM SCORE`, `SHOTS`, `MAKES`, `ACCURACY`, `Keep elbow stacked through release`). Real picker/device crop screenshots remain before `DONE`. |
 | G010 | VERIFYING | P0 | `#analytics` `#pose` | 024 | Replace fixed header analytics on quality check. | Upload Quality Check no longer shows pre-analysis 82/24/15/62.5% measured-looking score/history values. The header now shows source-safe photo/view/pose/score context (`READY`, selected viewpoint, pose status, `AFTER SCORE`) and says the target is set after upload finishes. Focused UI proof confirms the new copy is present and the old values are absent. Real device/backend proof remains before `DONE`. |
 | G011 | VERIFYING | P1 | `#analytics` `#media` | 024 | Measure or relabel lighting and resolution checks. | Upload Quality Check now evaluates selected still-image brightness from pixels and reports actual image pixel dimensions as `Image resolution`; focused unit proof covers Good/Too dark/Too bright and High/Low resolution, and focused UI proof confirms selected-photo screen 024 shows pixel detail while the old `Video resolution` / `1080p` still-image row is absent. Real low-light/low-resolution physical-device media proof remains before `DONE`. |
 | G012 | VERIFYING | P0 | `#path` `#backend` | 023/024/036 | Block no-image route from pretending analysis started. | Photo Review `USE PHOTO` and Upload Quality Check `Continue to analysis` now require a real picked/captured image and show `Choose a photo first` toast instead of opening processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-image device/backend/web proof before `DONE`. |
@@ -1561,3 +1561,26 @@ Remaining limitations: this proves selected still-image quality rows on
 simulator using synthetic and bundled sample images. Real low-light,
 low-resolution, and physical iPhone selected-media proof remains open before
 G011 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Photo Review No Pre-Analysis Proof
+
+Nineteenth laptop functionality slice after local Xcode setup:
+
+- Extended the selected-photo capture flow proof at screen 023 so the crop
+  screen itself must be free of measured-looking score/history/target values
+  before the player has started analysis.
+- The proof now checks that `82`, `24`, `15`, `62.5%`, `FORM SCORE`, `SHOTS`,
+  `MAKES`, `ACCURACY`, and `Keep elbow stacked through release` are absent while
+  the real crop frame and framing tip are visible.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoReviewNoPreAnalysis-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSamplePhotoRunsPoseQualityAndProcessingFeedback`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this is simulator proof with a bundled selected-photo
+fixture. Real Photos picker/crop gesture screenshots on a physical iPhone are
+still required before G009 can move from `VERIFYING` to `DONE`.

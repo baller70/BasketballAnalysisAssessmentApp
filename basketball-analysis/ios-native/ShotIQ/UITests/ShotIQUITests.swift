@@ -370,6 +370,11 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("screen-ios-photo-review-crop").waitForExistence(timeout: 8))
         XCTAssertTrue(app.staticTexts["3:4"].exists)
         XCTAssertTrue(app.staticTexts["Tip: Include your full body. Leave a little space above your head and below your feet."].exists)
+        for unmeasuredCropItem in ["82", "24", "15", "62.5%", "FORM SCORE", "SHOTS", "MAKES",
+                                   "ACCURACY", "Keep elbow stacked through release"] {
+            XCTAssertFalse(app.staticTexts[unmeasuredCropItem].exists,
+                           "Photo review crop must not show unmeasured pre-analysis value: \(unmeasuredCropItem)")
+        }
 
         app.buttons["USE PHOTO"].tap()
         XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 8))
