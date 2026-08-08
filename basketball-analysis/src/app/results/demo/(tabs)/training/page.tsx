@@ -296,7 +296,7 @@ export default function TrainingHubPage() {
           <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
             Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
           </p>
-          <div className="absolute right-0 top-0 flex w-[492px] shrink-0 gap-[14px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
+          <div className="absolute right-0 top-0 flex w-[456px] shrink-0 gap-[10px] border-l border-[var(--shotiq-color-rule)] pl-[14px]">
             <div className="min-w-0 flex-1">
               <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
               {/* The player's own target, from /api/coaching-targets — the same
@@ -326,7 +326,7 @@ export default function TrainingHubPage() {
             </div>
             {/* The one shared form-score module rather than a hand-set numeral +
                 verdict pair (see FormScoreCell). */}
-            <div className="w-[132px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[12px]">
+            <div className="w-[118px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[10px]">
               <div className="text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">Form score</div>
               <FormScoreCell score={score} size={24} numeral={30} label={null} caption={null} layout="beside" />
             </div>
@@ -561,7 +561,7 @@ export default function TrainingHubPage() {
                 </div>
                 <div className="p-[10px]">
                   <div className="text-[13px] font-semibold">{t}</div>
-                  <DrillMeta level={level} focus={focus} className="mt-[2px] flex-nowrap gap-x-[7px] text-[9px]" />
+                  <DrillMeta level={level} focus={focus} className="mt-[2px] gap-x-[6px] text-[8.5px]" />
                 </div>
               </Card>
             </Link>
@@ -585,8 +585,8 @@ export default function TrainingHubPage() {
                          stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)"
                          dotAccent="var(--shotiq-color-shotiqOrange)" className="shrink-0" />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-semibold">{t}</div>
-                <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                <div className="text-[13px] font-semibold leading-[15px]">{t}</div>
+                <div className="text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{d}</div>
               </div>
               <div className="w-[96px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[10px]">
                 <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>

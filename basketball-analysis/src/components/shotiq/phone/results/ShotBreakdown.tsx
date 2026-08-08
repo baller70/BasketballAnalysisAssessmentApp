@@ -217,13 +217,13 @@ export function ShotBreakdown({
       {/* shot context ---------------------------------------------------- */}
       <Panel className="mx-[16px] mt-[9px] px-[10px] pb-[7px] pt-[7px]">
         <div className="shotiq-section-label leading-[12px] tracking-[0.08em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>SHOT CONTEXT</div>
-        <div className="mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)]">
+        <div className="mt-[6px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)]">
           {context.map(([g, v, l, c]) => (
-            <div key={l} className="flex min-w-0 flex-1 items-center gap-[6px] px-[6px]">
-              <span className="shrink-0" style={{ color: INK }}>{g}</span>
-              <span className="min-w-0">
-                <span className="block truncate text-[12.5px] font-semibold leading-[14px]" style={{ color: c }}>{v}</span>
-                <span className="block truncate text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>{l}</span>
+            <div key={l} className="flex min-w-0 flex-col items-center px-[5px] text-center">
+              <span className="flex h-[20px] items-center justify-center" style={{ color: INK }}>{g}</span>
+              <span className="mt-[3px] min-w-0">
+                <span className="block whitespace-nowrap text-[11.5px] font-semibold leading-[13px]" style={{ color: c }}>{v}</span>
+                <span className="block whitespace-nowrap text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>{l}</span>
               </span>
             </div>
           ))}

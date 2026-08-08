@@ -367,7 +367,7 @@ export default function SignInPage() {
             the media surface (below) rather than by the FORM SCORE card, which
             keeps its canonical 346px width — the card is the dense element and
             is the one that breaks first when squeezed. */}
-        <section className="hidden flex-1 px-[32px] pt-[34px] md:block" data-testid="region-main">
+        <section className="hidden min-w-0 flex-1 px-[32px] pt-[34px] md:block" data-testid="region-main">
           {/* 40px drew a 28px cap against canonical's 34px. */}
           <h2 className="shotiq-display text-[49px] leading-[51px]">
             AI ANALYSIS. BETTER MECHANICS. BETTER RESULTS.
@@ -440,7 +440,7 @@ export default function SignInPage() {
               </div>
             </div>
 
-            <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
+            <div className="min-w-0 flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
               <div className="shotiq-section-label">FORM SCORE</div>
               {/* Canonical's progress track sits UNDER the numeral and is 133px
                   wide, not the full card. Spanning it across both columns read
