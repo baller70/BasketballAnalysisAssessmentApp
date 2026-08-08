@@ -160,6 +160,24 @@ final class ShotIQUITests: XCTestCase {
                       "Expected \(id) to contain \(text), got \(element.label)", file: file, line: line)
     }
 
+    private func assertSwitch(id: String, isOn: Bool,
+                              file: StaticString = #filePath, line: UInt = #line) {
+        let element = app.switches[id]
+        XCTAssertTrue(element.waitForExistence(timeout: 3), "Missing switch id: \(id)", file: file, line: line)
+        XCTAssertEqual(element.value as? String, isOn ? "1" : "0",
+                       "Unexpected switch value for \(id)", file: file, line: line)
+    }
+
+    private func tapSwitch(id: String, file: StaticString = #filePath, line: UInt = #line) {
+        let element = app.switches[id]
+        XCTAssertTrue(element.waitForExistence(timeout: 3), "Missing switch id: \(id)", file: file, line: line)
+        if element.isHittable {
+            element.tap()
+        } else {
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.86, dy: 0.5)).tap()
+        }
+    }
+
     private func dismissKeyboardIfPresent() {
         if app.keyboards.buttons["Done"].exists {
             app.keyboards.buttons["Done"].tap()
@@ -330,6 +348,28 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "calendar-selected-status", contains: "COMPLETED")
         assertStaticText(id: "calendar-selected-workout-name", contains: "SHOT TRACKER SESSION")
         assertStaticText(id: "calendar-selected-workout-summary", contains: "3 shots")
+    }
+
+    func testSettingsTogglesPersistLocallyAndShowFeedback() throws {
+        let coachingAudio = "settings-toggle-coaching-audio"
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetSettings",
+                "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+        assertSwitch(id: coachingAudio, isOn: true)
+
+        tapSwitch(id: coachingAudio)
+        XCTAssertTrue(waitForToastContaining("Settings saved"))
+        XCTAssertTrue(waitForToastContaining("Coaching audio cues"))
+        assertSwitch(id: coachingAudio, isOn: false)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+        assertSwitch(id: coachingAudio, isOn: false)
+
+        tapSwitch(id: coachingAudio)
+        XCTAssertTrue(waitForToastContaining("Settings saved"))
+        assertSwitch(id: coachingAudio, isOn: true)
     }
 
     func testVideoUploadShowsFullScreenSourceOptions() throws {

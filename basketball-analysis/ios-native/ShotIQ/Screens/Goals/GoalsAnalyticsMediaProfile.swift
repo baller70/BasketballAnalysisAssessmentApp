@@ -2824,6 +2824,7 @@ struct SettingsHubView: View {      // 071
     @State private var showAutomation = false
     @State private var showPrivacy = false
     @State private var showAbout = false
+    @State private var toast: ShotIQToast?
 
     // PUT /api/settings — sections are merged over server defaults
     // (src/app/api/settings/route.ts); extra keys are stored harmlessly.
@@ -2859,6 +2860,12 @@ struct SettingsHubView: View {      // 071
                               dataBackupEnabled: dataBackup))
         Task { await APIClient.shared.send("/api/settings", method: "PUT", body: body) }
     }
+
+    private func saveSettingsChange(_ label: String) {
+        persistSettings()
+        toast = .success("Settings saved", "\(label) updated.")
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-settings-hub") {
             ScrollView {
@@ -2940,18 +2947,18 @@ struct SettingsHubView: View {      // 071
                         SectionLabel(text: "PREFERENCES").padding(.top, 20)
                         ShotIQCard {
                             VStack(spacing: 0) {
-                                settingsToggle("Workout notifications", "Manage alerts, reminders, and updates.", $notifs)
+                                settingsToggle("notifications", "Workout notifications", "Manage alerts, reminders, and updates.", $notifs)
                                     .onChange(of: notifs) { _, on in
                                         if on { UNUserNotificationCenter.current()
                                             .requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in } }
-                                        persistSettings()
+                                        saveSettingsChange("Workout notifications")
                                     }
                                 HRule().padding(.leading, 14)
-                                settingsToggle("Coaching audio cues", "Voice cues while you train.", $audio)
-                                    .onChange(of: audio) { _, _ in persistSettings() }
+                                settingsToggle("coaching-audio", "Coaching audio cues", "Voice cues while you train.", $audio)
+                                    .onChange(of: audio) { _, _ in saveSettingsChange("Coaching audio cues") }
                                 HRule().padding(.leading, 14)
-                                settingsToggle("Metric units", "Use metric units across the app.", $metric)
-                                    .onChange(of: metric) { _, _ in persistSettings() }
+                                settingsToggle("metric-units", "Metric units", "Use metric units across the app.", $metric)
+                                    .onChange(of: metric) { _, _ in saveSettingsChange("Metric units") }
                             }
                         }
                         .padding(.top, 8)
@@ -2969,11 +2976,11 @@ struct SettingsHubView: View {      // 071
                                     withAnimation { showAutomation.toggle() }
                                 }
                                 if showAutomation {
-                                    settingsToggle("Auto-analysis refresh", "Recompute analytics overnight.", $autoAnalysis)
-                                        .onChange(of: autoAnalysis) { _, _ in persistSettings() }
+                                    settingsToggle("auto-analysis", "Auto-analysis refresh", "Recompute analytics overnight.", $autoAnalysis)
+                                        .onChange(of: autoAnalysis) { _, _ in saveSettingsChange("Auto-analysis refresh") }
                                         .padding(.leading, 26)
-                                    settingsToggle("Data backup", "Back up sessions to the server.", $dataBackup)
-                                        .onChange(of: dataBackup) { _, _ in persistSettings() }
+                                    settingsToggle("data-backup", "Data backup", "Back up sessions to the server.", $dataBackup)
+                                        .onChange(of: dataBackup) { _, _ in saveSettingsChange("Data backup") }
                                         .padding(.leading, 26)
                                 }
                                 HRule().padding(.leading, 14)
@@ -2983,11 +2990,11 @@ struct SettingsHubView: View {      // 071
                                     withAnimation { showPrivacy.toggle() }
                                 }
                                 if showPrivacy {
-                                    settingsToggle("Anonymous analytics", "Share anonymized usage data.", $anonAnalytics)
-                                        .onChange(of: anonAnalytics) { _, _ in persistSettings() }
+                                    settingsToggle("anonymous-analytics", "Anonymous analytics", "Share anonymized usage data.", $anonAnalytics)
+                                        .onChange(of: anonAnalytics) { _, _ in saveSettingsChange("Anonymous analytics") }
                                         .padding(.leading, 26)
-                                    settingsToggle("Peer comparisons", "Include my stats in peer comparisons.", $peerComparisons)
-                                        .onChange(of: peerComparisons) { _, _ in persistSettings() }
+                                    settingsToggle("peer-comparisons", "Peer comparisons", "Include my stats in peer comparisons.", $peerComparisons)
+                                        .onChange(of: peerComparisons) { _, _ in saveSettingsChange("Peer comparisons") }
                                         .padding(.leading, 26)
                                 }
                                 HRule().padding(.leading, 14)
@@ -3033,6 +3040,7 @@ struct SettingsHubView: View {      // 071
                 }
             }
         }
+        .shotiqToast($toast)
     }
     private func settingsStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
@@ -3043,7 +3051,7 @@ struct SettingsHubView: View {      // 071
         }
         .frame(maxWidth: .infinity)
     }
-    private func settingsToggle(_ title: String, _ caption: String, _ isOn: Binding<Bool>) -> some View {
+    private func settingsToggle(_ id: String, _ title: String, _ caption: String, _ isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).shotiqBody(15, weight: .semibold)
@@ -3052,6 +3060,7 @@ struct SettingsHubView: View {      // 071
         }
         .tint(ShotIQColor.shotiqOrange)
         .padding(14)
+        .accessibilityIdentifier("settings-toggle-\(id)")
     }
     private func settingsRow(_ icon: String, _ title: String, _ caption: String,
                              status: String?, statusColor: Color?,

@@ -79,7 +79,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G004 | OPEN | P0 | `#backend` `#web-sync` | auth/data sync | Prove native write/read and web read/write with configured secrets. | Auth-chain test passes in staging/prod. |
 | G005 | OPEN | P1 | `#demo` | app-wide | Label intentional sample states. | Any sample screen visibly says demo/example and cannot be mistaken for player data. |
 | G006 | OPEN | P0 | `#analytics` | app-wide | Build analytics provenance matrix. | Every visible number on cleared screens has source, formula, and test. |
-| G074 | VERIFYING | P0 | `#control` | capture/goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Capture now adds toast/progress feedback for photo load/capture/rotate/crop/use-photo, photo analysis upload/analyze/error, upload queue add/analyze/remove, video load/error, video review trim/change/analyze, and no-media guards. Focused UI proof verifies make/miss toasts, capture no-media feedback, create-goal target-link toast, settings/about controls, share-results copy feedback, and media detail download/delete feedback on iPhone 17 Pro simulator with external-backed CoreSimulator storage. Remaining app-wide action sweep still needs proof before `DONE`. |
+| G074 | VERIFYING | P0 | `#control` | capture/goals/training/media/profile | Add customer-visible toast/progress feedback after meaningful actions. | First batch covers create/update goal, target link, add drill, drill make/miss/undo/pause/save, shot-tracker make/miss/undo/pause/save, analytics filters, media play/speed/frame/share/download/delete, profile bio enhancement, and profile save. Capture now adds toast/progress feedback for photo load/capture/rotate/crop/use-photo, photo analysis upload/analyze/error, upload queue add/analyze/remove, video load/error, video review trim/change/analyze, and no-media guards. Focused UI proof verifies make/miss toasts, capture no-media feedback, create-goal target-link toast, settings/about controls, settings toggle-save toast/persistence, share-results copy feedback, and media detail download/delete feedback on iPhone 17 Pro simulator with external-backed CoreSimulator storage. Remaining app-wide action sweep still needs proof before `DONE`. |
 
 ## Capture And Upload Items
 
@@ -143,7 +143,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G047 | VERIFYING | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Discover filters now prove `Beginner only` narrows to two drills; saving `STACK & SHOOT` uses a proper 44pt bookmark control, shows customer toast feedback, and persists locally after relaunch into My Drills. Backend/web sync remains before `DONE`. |
 | G048 | OPEN | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill detail target changes from selected real flaw/goal. |
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
-| G050 | OPEN | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Workout API seed changes calendar percentages/streaks. |
+| G050 | VERIFYING | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Completed shot-tracker sessions now persist locally into Workout Calendar with saved shots/makes/FG/status/name/summary. Backend workout/shot-event reload and web parity remain before `DONE`. |
 | G051 | OPEN | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Chosen drill displays correct media/cue and measured/live data where claimed. |
 | G052 | VERIFYING | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | Shot Tracker now starts a clean manual session at `0 OF 0`, derives make %, current streak, set progress, and phase rail from recorded make/miss events, and proves make/miss/undo through UI. Backend reload/history aggregation remains before `DONE`. |
 | G053 | VERIFYING | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Workout Completion now receives the completed session record and derives shots, makes, accuracy, points, form score, phase scores, primary target progress, share text, and coaching takeaway from those totals. Backend workout reload/web parity remains before `DONE`. |
@@ -161,7 +161,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. Backend reload/web-library proof remains before `DONE`. |
 | G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target context, suppresses fake sample shot-event stats for real selected media, and opens the linked saved analysis. Real backend playback/share/delete and web parity remain before `DONE`. |
 | G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
-| G063 | OPEN | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings persist; any analytics displayed have provenance. |
+| G063 | VERIFYING | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings toggles persist locally across app relaunch and show a customer-visible `Settings saved` toast; each toggle also fire-and-forget syncs through `/api/settings`. Backend reload proof and provenance for the fixed header analytics remain before `DONE`. |
 | G064 | OPEN | P1 | `#control` `#media` `#analytics` | 072 | Share latest real result. | Shared/exported card/text matches selected saved analysis and media. |
 
 ## Home, Elite, Onboarding, Auth Items
@@ -275,6 +275,14 @@ Evidence captured on the laptop, all external-drive backed:
   `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`. It verified a
   completed shot-tracker session persists into Workout Calendar with 3 shots,
   2 makes, 66.7% FG, completed status, and the saved session summary.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSettingsTogglesPersistLocallyAndShowFeedback-20260808-142420.log`
+  ran `ShotIQUITests/ShotIQUITests/testSettingsTogglesPersistLocallyAndShowFeedback`
+  on the same external-backed iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-settings-ui-20260808-142420`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+  It verified the Coaching audio setting starts from reset defaults, shows
+  `Settings saved` / `Coaching audio cues` customer feedback when toggled,
+  persists off after app relaunch, and can be restored on.
 
 ### 2026-08-07 Native Screenshot Capture and Export Proof
 

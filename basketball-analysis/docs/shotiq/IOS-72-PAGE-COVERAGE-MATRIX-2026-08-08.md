@@ -73,6 +73,12 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-TrainingSavedDrills-2026-08-08-v6.xcresult`
 - Focused shot-tracker/completion result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-ShotTrackerCompletion-2026-08-08-v1.xcresult`
+- Focused capture no-media feedback result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCaptureNoMediaShowsCustomerFeedback-20260808-141504.xcresult`
+- Focused workout-calendar persistence result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWorkoutCalendarShowsCompletedTrackerSession-20260808-141504.xcresult`
+- Focused settings persistence/feedback result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSettingsTogglesPersistLocallyAndShowFeedback-20260808-142420.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -110,6 +116,9 @@ Current proof totals:
 - Focused annotation-toolbar persistence target: 1 passed, 0 failed, 0 skipped
 - Focused training saved-drills target: 1 passed, 0 failed, 0 skipped
 - Focused shot-tracker/completion target: 1 passed, 0 failed, 0 skipped
+- Focused capture no-media feedback target: 1 passed, 0 failed, 0 skipped
+- Focused workout-calendar persistence target: 1 passed, 0 failed, 0 skipped
+- Focused settings persistence/feedback target: 1 passed, 0 failed, 0 skipped
 - Superseded bundled media/profile regression attempts: failed due staged
   relaunches falling back to Splash; replaced by one-staged-launch-per-test
   proof
@@ -184,7 +193,7 @@ even when the page has no upload/photo feature.
 | 56 | Discover Drills | Yes | Drill list route and drill selection asserted; `Beginner only` filter, save control, and `Drill saved` toast proven | Live drill catalog and backend/web saved-drill sync |
 | 57 | Drill Detail | Yes | Start drill route asserted | None |
 | 58 | My Drills | Yes | Discover route asserted; locally saved catalog drill appears after relaunch with placeholder stats | Saved-drill backend sync and web parity |
-| 59 | Workout Calendar | Yes | Calendar route asserted | Calendar persistence |
+| 59 | Workout Calendar | Yes | Calendar route asserted; completed shot-tracker session persists into the selected date with 3 shots, 2 makes, 66.7% FG, `COMPLETED` status, saved name, and saved summary | Backend workout/shot-event reload and web parity |
 | 60 | Drill Execution | Yes | Make/miss counters, toast feedback, end workout asserted | Real workout persistence |
 | 61 | Shot Tracker | Yes | Recent workout card opens tracker; zero-state, make/miss, undo, derived percentage/streak, and end-workout controls proven | Backend shot-session reload and analytics aggregation |
 | 62 | Workout Completion | Yes | End workout reaches completion; shots/makes/accuracy/points/form score/target score derived from completed tracker session | Backend completion reload and web parity |
@@ -196,11 +205,34 @@ even when the page has no upload/photo feature.
 | 68 | My Media | Yes | Tabs, filtering, select/done workflow asserted; selected native photo analysis now appears first as `Side View Analysis` with `Just now` and a `media-real-surface`; canonical sample tiles still render `media-sample-surface` | Backend reload and web media-library parity |
 | 69 | Media Detail | Yes | Play toast, frame select toast, actions, linked analysis route asserted; download toast/alert, delete-confirmation toast, and sample-delete toast tested; selected native photo analysis now opens matching real media/detail context and links back to the same pose-detected analysis while suppressing fake sample stats | Real backend playback/share/delete; web media-detail parity |
 | 70 | Profile | Yes | Profile stats, physical/shooting/card/completion surfaces asserted | Backend profile edit/save |
-| 71 | Settings Hub | Yes | Settings route asserted; edit-profile route, Automation/Data privacy expanders, toggles, and About alert tested | Backend settings persistence |
+| 71 | Settings Hub | Yes | Settings route asserted; edit-profile route, Automation/Data privacy expanders, toggles, About alert, local toggle persistence after relaunch, and `Settings saved` toast tested | Backend settings reload and analytics provenance |
 | 72 | Share Results | Yes | Share-results page route asserted from analysis/profile; Copy feedback plus share/save controls tested | iOS system share sheet |
 
 ## Latest Focused Evidence
 
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSettingsTogglesPersistLocallyAndShowFeedback-20260808-142420.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSettingsTogglesPersistLocallyAndShowFeedback`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves page 071 in the app-owned settings path:
+  Coaching audio starts from reset defaults, changing it shows the
+  customer-visible `Settings saved` / `Coaching audio cues` toast, the off
+  state survives app relaunch through local persistence, and the setting can be
+  restored.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWorkoutCalendarShowsCompletedTrackerSession-20260808-141504.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testWorkoutCalendarShowsCompletedTrackerSession`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves page 059 consumes a locally completed
+  shot-tracker session with 3 shots, 2 makes, 66.7% FG, completed status, and
+  saved session summary after app relaunch.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCaptureNoMediaShowsCustomerFeedback-20260808-141504.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testCaptureNoMediaShowsCustomerFeedback`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves no-media photo/video capture paths show
+  customer-visible guidance and do not open quality/processing screens without
+  real media.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v3.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testAnnotationToolbarDrawSaveAndReopenWork`

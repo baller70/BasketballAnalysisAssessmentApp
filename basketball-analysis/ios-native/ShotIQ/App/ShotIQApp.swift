@@ -181,6 +181,10 @@ enum UITestHooks {
     /// shot-tracker tests. Normal launches never pass this flag.
     static var resetTrainingWorkouts: Bool { args.contains("-uiTestResetTrainingWorkouts") }
 
+    /// Clear locally persisted settings proof data before focused settings
+    /// tests. Normal launches never pass this flag.
+    static var resetSettings: Bool { args.contains("-uiTestResetSettings") }
+
     /// Launch media-gated staged screens empty so functional tests can prove
     /// customer feedback instead of using the canonical screenshot sample.
     static var noMedia: Bool { args.contains("-uiTestNoMedia") }
@@ -233,7 +237,7 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || noMedia ||
+        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || resetSettings || noMedia ||
         homeVariant != nil || stage != nil
     }
 
@@ -339,6 +343,12 @@ final class AppState: ObservableObject {
         }
         if UITestHooks.resetTrainingWorkouts {
             UserDefaults.standard.removeObject(forKey: "shotiq.training.completedWorkouts.v1")
+        }
+        if UITestHooks.resetSettings {
+            for key in ["notifications", "coachingAudio", "units", "autoAnalysis",
+                        "dataBackup", "anonAnalytics", "peerComparisons"] {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
         }
     }
 
