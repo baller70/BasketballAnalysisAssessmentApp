@@ -1398,3 +1398,25 @@ Evidence captured on the laptop, all external-drive backed:
   Apple's `cnn_human_pose.espresso.weights`, so it cannot be used as final proof
   that real-device Vision draws the full body wireframe/nodes. That remaining
   item must be proven on Kevin's physical iPhone before the App Store claim.
+
+### 2026-08-08 72-Page Coverage Matrix And Device Visibility Check
+
+Follow-up audit after the full UI regression:
+
+- Created
+  `basketball-analysis/docs/shotiq/IOS-72-PAGE-COVERAGE-MATRIX-2026-08-08.md`
+  as the current source-of-truth matrix for the 72 canonical iOS pages.
+- Verified the canonical iOS map has 72 entries and the matrix has 72 rows.
+- Verified the 2026-08-08 screenshot export covers all 72 canonical iOS pages
+  by slug, not by attachment order. Attachment numbering is run order; slug
+  matching is the correct proof key.
+- The export also contains extra non-map iOS states `capture-guide` and
+  `points-system`, plus a second routed `drill-detail` capture.
+- Checked physical-device visibility before attempting real iPhone proof:
+  `devicectl` reported `No devices found`, `xctrace list devices` listed only
+  Kevin's MacBook Air and simulators, USB showed only the SanDisk external
+  drive, and both Thunderbolt/USB4 receptacles reported `No device connected`.
+
+Result: simulator page/screenshot proof is complete for the 72-page map, but
+the real-device Vision/camera/system-picker/share-sheet proof remains open
+until macOS/Xcode can see Kevin's physical iPhone.
