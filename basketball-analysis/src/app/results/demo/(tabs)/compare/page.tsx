@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, Ring, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure, WorkoutGlyph, toShotPhase, ActionGlyph } from "@/components/shotiq/Glyphs"
+import { MechanicGlyph, PoseFigure, WorkoutGlyph, toShotPhase, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
@@ -420,14 +420,14 @@ export default function ComparePage() {
         <div className="w-[306px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[16px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
-            {([["Slightly lower release angle reduces margin for error on longer shots.", "087-insight-1"],
-              ["More open elbow improves line to target and repeatability.", "087-insight-2"],
-              ["Increased wrist flexion adds backspin and softens the shot.", "087-insight-3"],
-              ["Elite balance helps maintain consistency under fatigue.", "087-insight-4"]] as [string, string][]).map(([t, glyph]) => (
+            {([["Slightly lower release angle reduces margin for error on longer shots.", "releaseAngle"],
+              ["More open elbow improves line to target and repeatability.", "angle"],
+              ["Increased wrist flexion adds backspin and softens the shot.", "wrist"],
+              ["Elite balance helps maintain consistency under fatigue.", "balance"]] as [string, MechanicKind][]).map(([t, glyph]) => (
               <div key={t} className="flex gap-[10px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                     className="block h-[31px] w-[34px] max-w-none shrink-0 object-contain" />
+                <span className="grid h-[38px] w-[40px] shrink-0 place-items-center">
+                  <MechanicGlyph kind={glyph} size={36} />
+                </span>
                 <p className="text-[12px] leading-[16px]">{t}</p>
               </div>
             ))}

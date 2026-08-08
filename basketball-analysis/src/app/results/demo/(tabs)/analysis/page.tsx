@@ -6,7 +6,7 @@ import React from "react"
 import Link from "next/link"
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Maximize2 } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
+import { FlawFigure, MechanicGlyph, PoseFigure, WorkoutGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
   useHistory, CoachingTarget, scoreSeries, sessionDelta, formatDelta,
   FormScoreCell, formatMakePct,
@@ -27,9 +27,9 @@ const PHASES: [string, string][] = [
 // segment is picked out, not with an abstract measurement diagram — one figure
 // per mechanic, none repeated.
 // Row diagrams are the canonical 083 crops, not redrawn line art.
-const MECHANICS: [string, string, string, string][] = [
-  ["Elbow Angle", "172°", "160° – 180°", "083-mech-1"], ["Wrist Angle", "21°", "15° – 30°", "083-mech-2"],
-  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "083-mech-3"], ["Body Alignment", "2°", "-5° – 5°", "083-mech-4"],
+const MECHANICS: [string, string, string, MechanicKind][] = [
+  ["Elbow Angle", "172°", "160° – 180°", "angle"], ["Wrist Angle", "21°", "15° – 30°", "wrist"],
+  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "height"], ["Body Alignment", "2°", "-5° – 5°", "centerline"],
 ]
 
 export default function AnalysisOverviewPage() {
@@ -226,9 +226,9 @@ export default function AnalysisOverviewPage() {
           <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
             {MECHANICS.map(([m, v, range, glyph]) => (
               <div key={m} className="flex items-center gap-[8px] py-[9px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                     className="block h-[26px] w-[24px] max-w-none shrink-0 object-contain" />
+                <span className="grid h-[34px] w-[36px] shrink-0 place-items-center">
+                  <MechanicGlyph kind={glyph} size={32} />
+                </span>
                 <span className="flex-1 whitespace-nowrap text-[13px]">{m}</span>
                 <span className="shotiq-numeric text-[18px]">{hasData ? v : "—"}</span>
                 <span className="w-[58px] shrink-0 text-right">
@@ -254,17 +254,13 @@ export default function AnalysisOverviewPage() {
               shrunk to a size where the flared elbow is no longer readable. */}
           <div className="mt-[12px] flex items-center justify-center gap-[30px]">
             <div className="text-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/083-insight-current.png" alt="" aria-hidden="true"
-                   className="mx-auto block h-[95px] w-auto max-w-none" />
+              <FlawFigure kind="elbow" size={92} className="mx-auto" />
               <div className="shotiq-numeric text-[18px]">172°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
             </div>
             <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
             <div className="text-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/083-insight-ideal.png" alt="" aria-hidden="true"
-                   className="mx-auto block h-[95px] w-auto max-w-none" />
+              <MechanicGlyph kind="releasePath" size={92} className="mx-auto" />
               <div className="shotiq-numeric text-[18px]">180°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
             </div>
@@ -320,9 +316,9 @@ export default function AnalysisOverviewPage() {
         <div className="px-[16px] py-[10px] xl:py-[4px]">
           <SectionLabel>TOP FLAW</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[12px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-flaw-glyph.png" alt="" aria-hidden="true"
-                 className="block h-[56px] w-[35px] max-w-none shrink-0 object-contain" />
+            <span className="grid h-[60px] w-[54px] shrink-0 place-items-center">
+              <FlawFigure kind="elbow" size={58} />
+            </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
                 <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>

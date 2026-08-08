@@ -8,7 +8,7 @@ import {
   Pencil, MoreVertical, MoreHorizontal, Check, CircleCheck, ChevronRight, X,
 } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { WorkoutGlyph, type WorkoutKind, ActionGlyph } from "@/components/shotiq/Glyphs"
+import { WorkoutGlyph, type WorkoutKind, ActionGlyph, MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
   useHistory, StatStrip, formatDelta, formatMakePct, scoreSeries,
 } from "@/components/shotiq/ResultsBits"
@@ -380,9 +380,9 @@ export default function GoalsPlanPage() {
           <div className="mt-[42px]">
           <SectionLabel>KEY MECHANIC FOCUS</SectionLabel>
           <div className="mt-[10px] flex items-stretch gap-[12px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
-                 className="block h-[98px] w-auto max-w-none shrink-0 self-center" />
+            <span className="grid h-[104px] w-[112px] shrink-0 place-items-center self-center">
+              <MechanicGlyph kind="releasePath" size={96} />
+            </span>
             <div className="flex-1 self-center">
               <div className="text-[14px] font-semibold">Elbow vertical at release</div>
               <p className="text-[11px] text-[var(--shotiq-color-graphite)]">Maintain a stacked arm position to improve consistency and accuracy.</p>
@@ -546,9 +546,7 @@ export default function GoalsPlanPage() {
             </p>
             <div className="mt-[10px] flex gap-[14px]">
               <div className="grid h-[104px] w-[104px] shrink-0 place-items-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/092-create-goal.png" alt="" aria-hidden="true"
-                     className="block h-[62px] w-auto max-w-none" />
+                <ActionGlyph kind="nodeClimb" height={70} />
               </div>
               <ul className="space-y-[12px] text-[12px]">
                 {["Focus on the right mechanics", "Track progress with AI analysis", "Stay accountable and improve"].map((t) => (
