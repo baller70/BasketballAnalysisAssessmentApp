@@ -12,6 +12,7 @@ final class ShotIQUITests: XCTestCase {
 
     private func launch(_ args: [String] = []) {
         app.terminate()
+        app = XCUIApplication()
         app.launchArguments = args
         app.launch()
     }
@@ -729,7 +730,7 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "screen-ios-analysis-processing").firstMatch.waitForExistence(timeout: 1))
     }
 
-    func testProgressProfileMediaGoalAnalyticsAndImageSurfacesWork() throws {
+    func testAnalyticsCardsImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "analytics-cards"])
         XCTAssertTrue(screen("screen-ios-analytics-cards").waitForExistence(timeout: 8))
         assertVisible("All time")
@@ -741,6 +742,9 @@ final class ShotIQUITests: XCTestCase {
             assertVisible(item)
         }
 
+    }
+
+    func testAnalyticsDetailedImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "analytics-detailed"])
         XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
         for item in ["ANALYSIS HISTORY", "+6.4%", "78.2%", "MECHANICS SCORECARD",
@@ -751,7 +755,9 @@ final class ShotIQUITests: XCTestCase {
             assertVisible(item)
         }
         assertVisible("Confidence: High")
+    }
 
+    func testProfileImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "profile"])
         XCTAssertTrue(screen("screen-ios-profile").waitForExistence(timeout: 8))
         for item in ["JORDAN ELLIS", "6", "DAY STREAK", "2,840", "POINTS",
@@ -760,7 +766,9 @@ final class ShotIQUITests: XCTestCase {
                      "PROFILE COMPLETION", "82%"] {
             assertVisible(item)
         }
+    }
 
+    func testPlayerCardImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "player-card"])
         XCTAssertTrue(screen("screen-ios-player-card").waitForExistence(timeout: 8))
         for item in ["FORM SCORE", "82", "GOOD", "62.5%", "MAKE %",
@@ -769,7 +777,9 @@ final class ShotIQUITests: XCTestCase {
                      "Customize card", "Share card", "Download card"] {
             assertVisible(item)
         }
+    }
 
+    func testCustomizePlayerCardImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "customize-player-card"])
         XCTAssertTrue(screen("screen-ios-customize-player-card").waitForExistence(timeout: 8))
         for item in ["LIVE PREVIEW", "FORM SCORE", "82", "GOOD",
@@ -781,7 +791,9 @@ final class ShotIQUITests: XCTestCase {
         tapControl("Save card")
         XCTAssertTrue(app.staticTexts["CARD SAVED"].waitForExistence(timeout: 8))
         assertVisible("Save or share image", maxSwipes: 2)
+    }
 
+    func testMediaLibraryImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "my-media"])
         XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
         for item in ["MY MEDIA", "FORM SCORE", "82", "GOOD", "24", "SHOTS",
@@ -796,7 +808,9 @@ final class ShotIQUITests: XCTestCase {
         tapControl("Spot-Up")
         assertVisible("Done (1)", maxSwipes: 2)
         tapControl("Done")
+    }
 
+    func testMediaDetailImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "media-detail"])
         XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
         tapExactControl("Play")
@@ -813,7 +827,9 @@ final class ShotIQUITests: XCTestCase {
             assertVisible(item)
         }
         tapAndExpect("Open analysis", destination: "screen-ios-analysis-result-overview")
+    }
 
+    func testGoalsImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goals"])
         XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
         for item in ["GOALS", "ACTIVE (2)", "68%", "40%", "MAKE %",
@@ -824,7 +840,9 @@ final class ShotIQUITests: XCTestCase {
         }
         tapControl("Form Score")
         assertVisible("Make %", maxSwipes: 2)
+    }
 
+    func testGoalDetailImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
         XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
         for item in ["Keep elbow stacked through release", "IMPACT", "HIGH",

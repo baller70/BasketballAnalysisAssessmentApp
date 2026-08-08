@@ -2068,3 +2068,49 @@ backend after relaunch, appears in the web media library from the same shared
 database, or that share/export/delete operate against a persisted backend media
 record. Those are still required before P0-005/G060/G061 can move from
 `VERIFYING` to `DONE`.
+
+### 2026-08-08 Late-Page Isolated Regression Proof
+
+Thirty-third laptop functionality slice after local Xcode setup:
+
+- The old bundled late-page regression mixed many `-uiTestStage` relaunches in
+  one XCTest method. Repeated runs proved that path can drop or ignore a staged
+  launch after earlier relaunches, landing on `screen-ios-splash` and producing
+  false failures for otherwise working pages.
+- `ShotIQUITests.launch(_:)` now creates a fresh `XCUIApplication` before each
+  launch, and the late analytics/profile/player-card/media/goals proof is split
+  to one staged cold launch per XCTest method. This preserves the evidence while
+  making failures point at the actual screen under test.
+- The superseded failing bundles remain useful as harness evidence:
+  `ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`,
+  `ShotIQ-MediaProfileRegression-2026-08-08-v2.xcresult`,
+  `ShotIQ-MediaProfileRegression-2026-08-08-v3.xcresult`,
+  `ShotIQ-LatePageRegressionSplit-2026-08-08-v1.xcresult`, and
+  `ShotIQ-LatePageRegressionSplit-2026-08-08-v2.xcresult`.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LatePageRegressionIsolated-2026-08-08-v2.xcresult`
+  ran nine isolated UI tests on the iPhone 17 Pro simulator:
+  `testAnalyticsCardsImageSurfacesWork`,
+  `testAnalyticsDetailedImageSurfacesWork`, `testProfileImageSurfacesWork`,
+  `testPlayerCardImageSurfacesWork`,
+  `testCustomizePlayerCardImageSurfacesWork`,
+  `testMediaLibraryImageSurfacesWork`, `testMediaDetailImageSurfacesWork`,
+  `testGoalsImageSurfacesWork`, and `testGoalDetailImageSurfacesWork`. The run
+  ended with `** TEST SUCCEEDED **`, `Executed 9 tests, with 0 failures`.
+  Coverage includes pages 048, 049, 063, 065, 066, 067, 068, 069, and 070,
+  including media play/frame toasts, media selection/done feedback,
+  linked-analysis navigation, goal-detail navigation, and player-card save
+  feedback.
+
+New method rule: no-image pages still need visual intent. If a canonical screen
+does not have customer-uploaded media, it must still contain a purposeful
+basketball image, generated visual, or placeholder that clearly reflects what
+the page is for. Blank or purely textual cards are not considered complete
+unless the product intentionally requires a dense settings/form surface.
+
+Remaining limitations: this is still simulator/canonical proof for late-page
+surfaces. Backend reload, web parity, share/export/delete against persisted
+records, and physical-device media proof remain open before P0-005/G060/G061
+can move from `VERIFYING` to `DONE`.
