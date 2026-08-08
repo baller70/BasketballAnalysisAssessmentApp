@@ -1158,6 +1158,7 @@ struct UploadQualityCheckView: View { // 024
     var image: UIImage? = nil
     var viewpoint: ShotViewpoint = .side
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var app: AppState
     @State private var busy = false
     @State private var uploadError: String?
     @State private var savedAnalysis: ShotIQAnalysisResultDTO?
@@ -1502,10 +1503,12 @@ struct UploadQualityCheckView: View { // 024
                 analysis.pose = localFallback.pose
             }
             savedAnalysis = analysis
+            app.rememberAnalysisMedia(analysis, title: "\(viewpoint.shortTitle) View Analysis")
             toast = .success("Analysis started", "Building your ShotIQ results now.")
             route = .processing
         } catch {
             savedAnalysis = localFallback
+            app.rememberAnalysisMedia(localFallback, title: "\(viewpoint.shortTitle) View Analysis")
             uploadError = nil
             toast = .info("Showing local result", "Your selected photo is ready; synced metrics need connection.")
             route = .processing

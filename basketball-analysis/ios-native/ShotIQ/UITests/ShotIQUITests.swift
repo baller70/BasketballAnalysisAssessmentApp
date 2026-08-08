@@ -460,6 +460,63 @@ final class ShotIQUITests: XCTestCase {
         }
     }
 
+    func testSelectedPhotoAnalysisAppearsInMyMediaAndDetail() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard",
+                "-uiTestSampleMedia", "-uiTestSampleMediaName", "photo-068-visual-004",
+                "-uiTestForceSamplePose"])
+        XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
+        tapControl("Upload image")
+        XCTAssertTrue(screen("screen-ios-photo-upload-source").waitForExistence(timeout: 8))
+        tapControl("Use sample for all views")
+        XCTAssertTrue(waitForToastContaining("All views ready"))
+        tapControl("Continue with selected views")
+        XCTAssertTrue(screen("screen-ios-photo-review-crop").waitForExistence(timeout: 8))
+        app.buttons["USE PHOTO"].tap()
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 8))
+        app.buttons["Continue to analysis"].tap()
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
+
+        app.buttons["Profile"].tap()
+        XCTAssertTrue(screen("screen-ios-profile").waitForExistence(timeout: 8))
+        tapControl("My media")
+        XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        XCTAssertNotNil(findControl("Side View Analysis"), "Selected analysis must appear in My Media.")
+        XCTAssertNotNil(findControl("Just now"), "Selected analysis must be surfaced as the newest media item.")
+        XCTAssertTrue(screen("media-real-surface").waitForExistence(timeout: 5),
+                      "My Media must render the selected image/video surface.")
+
+        tapControl("Side View Analysis")
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+        XCTAssertTrue(screen("media-real-surface").waitForExistence(timeout: 5),
+                      "Media detail must render the selected media surface.")
+        for detail in ["MEDIA DETAIL", "CAPTURE DETAILS", "Image", "LINKED ANALYSIS",
+                       "Shot Analysis", "Form Score", "Open analysis", "PRIMARY COACHING TARGET"] {
+            XCTAssertNotNil(findControl(detail), "Missing selected media detail item: \(detail)")
+        }
+        XCTAssertFalse(app.staticTexts["MAY 21, 2025 - 8:24 AM"].exists)
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+        tapAndExpect("Open analysis", destination: "screen-ios-analysis-result-overview")
+        XCTAssertTrue(screen("captured-pose-detected").waitForExistence(timeout: 8))
+    }
+
+    func testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "my-media"])
+        XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        XCTAssertTrue(screen("media-sample-surface").waitForExistence(timeout: 5))
+        for item in ["MY MEDIA", "Pull-Up", "Spot-Up", "Catch & Shoot", "Cone Progression"] {
+            XCTAssertNotNil(findControl(item), "Missing canonical media-library item: \(item)")
+        }
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "media-detail"])
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+        XCTAssertTrue(screen("media-sample-surface").waitForExistence(timeout: 5))
+        for item in ["MEDIA DETAIL", "CAPTURE DETAILS", "MAY 21, 2025",
+                     "LINKED ANALYSIS", "Shot Analysis", "Form Score", "82",
+                     "SHOT EVENTS", "24", "15", "62.5%", "PRIMARY COACHING TARGET"] {
+            XCTAssertNotNil(findControl(item), "Missing canonical media-detail item: \(item)")
+        }
+    }
+
     func testAnalysisBreakdownShowsPhaseSequenceAndJointControls() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard"])
         XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))

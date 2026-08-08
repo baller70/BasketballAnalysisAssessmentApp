@@ -61,6 +61,12 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailWeakAnalysis-2026-08-08-v1.xcresult`
 - Focused flaw-detail canonical regression result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailCanonicalRegression-2026-08-08-v1.xcresult`
+- Focused selected-media library/detail result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-SelectedMediaLibrary-2026-08-08-v2.xcresult`
+- Focused media library/detail canonical regression result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaLibraryDetailCanonical-2026-08-08-v1.xcresult`
+- Non-passing bundled media/profile regression attempt:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
 Current proof totals:
 
@@ -90,6 +96,9 @@ Current proof totals:
 - Focused flaws-overview weak-analysis UI target: 1 passed, 0 failed, 0 skipped
 - Focused flaw-detail weak-analysis UI target: 1 passed, 0 failed, 0 skipped
 - Focused flaw-detail canonical regression target: 1 passed, 0 failed, 0 skipped
+- Focused selected-media library/detail target: 1 passed, 0 failed, 0 skipped
+- Focused media library/detail canonical regression target: 1 passed, 0 failed, 0 skipped
+- Bundled media/profile regression attempt: 0 passed, 1 failed before media stages
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen
@@ -165,14 +174,31 @@ Current proof totals:
 | 65 | Goal Detail | Yes | Progress, technique snapshot, linked sessions, drills asserted; log-progress sheet, edit-goal sheet, and recommended-drill route tested | Backend goal updates |
 | 66 | Analytics Cards | Yes | Filters, trends, session cards, shot type stats asserted | Backend aggregation parity |
 | 67 | Analytics Detailed | Yes | Mechanics scorecard, comparison, arc range, shot rail asserted | Backend aggregation parity |
-| 68 | My Media | Yes | Tabs, filtering, select/done workflow asserted | Real media library backend |
-| 69 | Media Detail | Yes | Play toast, frame select toast, actions, linked analysis route asserted; download toast/alert, delete-confirmation toast, and sample-delete toast tested | Real playback/share/delete |
+| 68 | My Media | Yes | Tabs, filtering, select/done workflow asserted; selected native photo analysis now appears first as `Side View Analysis` with `Just now` and a `media-real-surface`; canonical sample tiles still render `media-sample-surface` | Backend reload and web media-library parity |
+| 69 | Media Detail | Yes | Play toast, frame select toast, actions, linked analysis route asserted; download toast/alert, delete-confirmation toast, and sample-delete toast tested; selected native photo analysis now opens matching real media/detail context and links back to the same pose-detected analysis while suppressing fake sample stats | Real backend playback/share/delete; web media-detail parity |
 | 70 | Profile | Yes | Profile stats, physical/shooting/card/completion surfaces asserted | Backend profile edit/save |
 | 71 | Settings Hub | Yes | Settings route asserted; edit-profile route, Automation/Data privacy expanders, toggles, and About alert tested | Backend settings persistence |
 | 72 | Share Results | Yes | Share-results page route asserted from analysis/profile; Copy feedback plus share/save controls tested | iOS system share sheet |
 
 ## Latest Focused Evidence
 
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-SelectedMediaLibrary-2026-08-08-v2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisAppearsInMyMediaAndDetail`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves pages 068 and 069 consume selected native
+  photo analysis media in the app-owned path and link back to the same
+  pose-detected analysis result.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaLibraryDetailCanonical-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces`
+  on the same simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0 failed, 0
+  skipped. This proves the canonical sample library/detail surfaces still render
+  after adding the selected-media path.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
+  attempted the older bundled media/profile regression. Result: failed before
+  reaching media pages because staged `screen-ios-analytics-cards` did not
+  appear within 8 seconds. Logged as unresolved harness/stage follow-up.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FrameDetailRealPose-2026-08-08-v4.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testFrameDetailUsesSelectedMediaPoseAndSavedMetrics`

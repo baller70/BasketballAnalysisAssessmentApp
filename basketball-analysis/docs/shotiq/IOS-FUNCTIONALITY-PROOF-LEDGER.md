@@ -66,7 +66,7 @@ The first pass should fix root causes before polishing dependent screens:
 | P0-002 | VERIFYING | `#media` `#control` `#backend` | Native video upload, review, trim, frame extraction, analysis, and save pipeline. | Pick a real video, review that exact clip, trim it, analyze only the trimmed range, save result, and reopen it. Selected-video review, full-screen source selection, file import, trim propagation, multipart upload, save-analysis handoff, trimmed-frame pose sampling, measured angle/score persistence, server video rendering, and app-local selected-video result fallback are implemented and simulator-tested; release and wrist parity fields are now included. Needs real selected-video device/backend/web proof before `DONE`. |
 | P0-003 | VERIFYING | `#analytics` `#pose` `#media` | Native analysis/result screens consume saved analysis instead of constants. | Screen 038 now passes the saved `AnalysisResultPresentation` into the immediate result-detail branch, and screens 041, 044, 045, and 046 render/share the saved score, measured release/height/elbow/wrist values, saved score breakdown, generated flaws, missing-score state, source coverage, weakest-score CTA, and app-local selected photo/video result fallback instead of their old demo constants when server media URLs are absent. Still needs true confidence/trend/history fields, real pose frames, generated flaw detail evidence, and real device/backend/web proof before `DONE`. |
 | P0-004 | VERIFYING | `#device` `#pose` `#analytics` `#media` | Live camera measured feedback and shot detection. | Simulator proof now covers the production navigation path through live camera setup, hoop calibration, readiness, recording, END ROUND, shot detected, confirm make, toast/progress feedback, and capture review. Backend shot-event payload contract is fixed for make/miss confirmation. Still needs Kevin's iPhone with a real hoop/ball to prove optical make/miss classification, skeleton following, confidence, form score, context, and replay come from the recording. |
-| P0-005 | OPEN | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Upload/capture media on iOS, see it in iOS library and web library, open detail, share the matching result. |
+| P0-005 | VERIFYING | `#media` `#backend` `#web-sync` | Media library, media detail, and share/export use real uploaded/captured media. | Native app-session proof now registers selected photo/video analyses into My Media, opens the matching Media Detail, renders the selected media surface, and links back to the same analysis instead of demo stats. Still needs backend reload, web library parity, and share/export proof before `DONE`. |
 | P0-006 | OPEN | `#analytics` `#backend` | Home, profile, goals, training, analytics, points, and trends aggregate real history. | Seed or create backend history, reload iOS and web, verify totals/trends/points match expected calculations. Thumbnail placeholder imagery on affected training/goals/media/profile cards now falls back to bundled basketball media, but aggregate values are still unproved. |
 
 ## Cross-Cutting Items
@@ -158,8 +158,8 @@ The first pass should fix root causes before polishing dependent screens:
 | G057 | OPEN | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Linked sessions/trends/angles match saved workout and analysis records. |
 | G058 | OPEN | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | API seed changes cards, trends, share values, and deltas exactly. |
 | G059 | OPEN | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Range/filter changes recompute rows, confidence, trends, and phase values. |
-| G060 | OPEN | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Upload/capture appears in media library after reload. Stock thumbnail placeholders on My Media tiles are fixed, but real uploaded/captured media listing remains open. |
-| G061 | OPEN | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Selecting item opens matching media and saved metrics. |
+| G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. Backend reload/web-library proof remains before `DONE`. |
+| G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target context, suppresses fake sample shot-event stats for real selected media, and opens the linked saved analysis. Real backend playback/share/delete and web parity remain before `DONE`. |
 | G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
 | G063 | OPEN | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings persist; any analytics displayed have provenance. |
 | G064 | OPEN | P1 | `#control` `#media` `#analytics` | 072 | Share latest real result. | Shared/exported card/text matches selected saved analysis and media. |
@@ -2011,3 +2011,60 @@ evidence frames per flaw; screen 047 still uses canonical evidence crops for
 demo and a frame-detail route for the active saved presentation until backend
 frame payloads exist. Real physical-device/backend/web evidence-frame proof is
 required before G044 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Selected Media Library/Detail Proof
+
+Thirty-second laptop functionality slice after local Xcode setup:
+
+- `AppState` now keeps a short in-session list of selected photo/video analyses
+  produced by the native upload/processing flows. Duplicate registrations keep
+  the more specific selected-view title instead of overwriting it with a generic
+  processing title.
+- `UploadQualityCheckView` and `AnalysisProcessingView` register completed
+  selected-photo/video analyses as recent media after save or local fallback.
+- `MyMediaView` now prepends real selected analyses to the library grid, renders
+  the selected image/video surface, and passes the selected analysis into Media
+  Detail.
+- `MediaDetailView` now renders the selected image/video surface, score,
+  capture/source context, coaching target, share text, and linked-analysis route
+  from the selected analysis. For real selected media it no longer shows fake
+  sample shot-event totals such as `24`, `15`, or `62.5%`.
+- The canonical sample media path is preserved for default/demo screens and now
+  has a focused regression test so sample surfaces and labels do not break.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-SelectedMediaLibrary-2026-08-08-v2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisAppearsInMyMediaAndDetail`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test follows Home -> Upload image ->
+  sample all views -> crop -> upload quality -> analysis overview -> Profile ->
+  My Media -> selected real tile -> Media Detail -> Open analysis. It verifies
+  `Side View Analysis`, `Just now`, `media-real-surface` on My Media and Media
+  Detail, real Image/source context, absence of sample `MAY 21, 2025 - 8:24 AM`
+  and `62.5%`, and the linked analysis reopens with `captured-pose-detected`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaLibraryDetailCanonical-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces`
+  on the same simulator. The run ended with `** TEST SUCCEEDED **`, `Executed
+  1 test, with 0 failures`. The test verifies staged My Media and Media Detail
+  still render `media-sample-surface` plus canonical library/detail labels and
+  stats.
+
+Related non-passing evidence:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
+  attempted the older bundled
+  `testProgressProfileMediaGoalAnalyticsAndImageSurfacesWork` regression. It
+  failed before reaching media pages because the first staged
+  `screen-ios-analytics-cards` assertion did not appear within 8 seconds. That
+  failure is recorded as unresolved harness/stage follow-up, not as a media
+  regression pass.
+
+Remaining limitations: this proves the native selected-media handoff inside a
+single app session. It does not yet prove the selected media reloads from the
+backend after relaunch, appears in the web media library from the same shared
+database, or that share/export/delete operate against a persisted backend media
+record. Those are still required before P0-005/G060/G061 can move from
+`VERIFYING` to `DONE`.

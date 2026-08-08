@@ -271,6 +271,7 @@ struct AnalysisProcessingView: View { // 036
     private static let longRunningThreshold: Duration = .seconds(12)
     var initialResult: ShotIQAnalysisResultDTO? = nil
     var videoJob: VideoAnalysisJob? = nil
+    @EnvironmentObject var app: AppState
     @State private var pct = 0.12
     @State private var route: ProcessingRoute?
     @State private var completedResult: ShotIQAnalysisResultDTO?
@@ -376,6 +377,9 @@ struct AnalysisProcessingView: View { // 036
             if let videoJob {
                 await processVideo(job: videoJob)
                 return
+            }
+            if let initialResult {
+                app.rememberAnalysisMedia(initialResult)
             }
             // Watchdog: if the pipeline is still going when the threshold passes,
             // hand over to the analysis-taking-longer screen (canonical 037).
@@ -497,10 +501,12 @@ struct AnalysisProcessingView: View { // 036
                 analysis.media.localVideoUrl = job.clip.url.absoluteString
             }
             completedResult = analysis
+            app.rememberAnalysisMedia(analysis, title: "Analyzed Video")
             pct = 0.94
             route = .results
         } catch {
             completedResult = localFallback
+            app.rememberAnalysisMedia(localFallback, title: "Analyzed Video")
             pct = 0.94
             route = .results
         }

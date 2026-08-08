@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import AVKit
 
 // Remaining flows — goals 063-065, analytics 066-067, media 068-069,
 // profile 070, settings 071, share 072.
@@ -57,6 +58,70 @@ final class GoalsViewModel: ObservableObject {
 
     var active: [GoalRecord] { goals.filter { $0.completedAt == nil } }
     var completed: [GoalRecord] { goals.filter { $0.completedAt != nil } }
+}
+
+private struct MediaAnalysisSurface: View {
+    var analysis: ShotIQAnalysisResultDTO?
+    var fallbackPhoto: String
+    var width: CGFloat? = nil
+    var height: CGFloat
+    var cornerRadius: CGFloat = 6
+
+    private var presentation: AnalysisResultPresentation? {
+        analysis.map(AnalysisResultPresentation.init)
+    }
+
+    var body: some View {
+        ZStack {
+            if let presentation {
+                switch AnalysisResultMediaSurfaceResolver.source(for: presentation,
+                                                                 fallbackKey: fallbackPhoto) {
+                case .video(let url):
+                    VideoPlayer(player: AVPlayer(url: url))
+                        .accessibilityLabel("Saved media video")
+                case .image(let url):
+                    if url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image): image.resizable().scaledToFill()
+                            default: mediaPlaceholder(presentation.mediaLabel)
+                            }
+                        }
+                    }
+                case .canonicalFallback(let key):
+                    CanonicalPhoto(key, width: width, height: height, cornerRadius: cornerRadius)
+                case .placeholder(let label):
+                    mediaPlaceholder(label)
+                }
+            } else {
+                CanonicalPhoto(fallbackPhoto, width: width, height: height, cornerRadius: cornerRadius)
+            }
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .accessibilityIdentifier(analysis == nil ? "media-sample-surface" : "media-real-surface")
+    }
+
+    private func mediaPlaceholder(_ label: String) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius)
+            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+            .overlay {
+                VStack(spacing: 6) {
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "photo"),
+                                             size: 26,
+                                             label: nil)
+                    Text(label)
+                        .shotiqBody(11, weight: .medium)
+                }
+                .foregroundStyle(.white.opacity(0.86))
+                .multilineTextAlignment(.center)
+                .padding(8)
+            }
+    }
 }
 
 struct GoalsView: View {            // 063
@@ -1016,39 +1081,75 @@ struct DottedTrend: View {
     let labels: [String]
     var body: some View {
         GeometryReader { geo in
-            let maxV = points.max() ?? 1, minV = points.min() ?? 0
-            let span = max(maxV - minV, 0.0001)
-            let top: CGFloat = 18, bottom: CGFloat = 18, side: CGFloat = 16
-            let coords = points.enumerated().map { i, p in
-                CGPoint(x: side + CGFloat(i) / CGFloat(max(points.count - 1, 1)) * (geo.size.width - 2 * side),
-                        y: top + (1 - CGFloat((p - minV) / span)) * (geo.size.height - top - bottom))
-            }
-            ZStack {
-                Path { p in
-                    guard let f = coords.first else { return }
-                    p.move(to: f)
-                    coords.dropFirst().forEach { p.addLine(to: $0) }
-                }
-                .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
-                ForEach(coords.indices, id: \.self) { i in
-                    let last = i == coords.count - 1
-                    Circle().fill(last ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                        .frame(width: last ? 8 : 6, height: last ? 8 : 6)
-                        .position(coords[i])
-                    Text("\(Int(points[i]))")
-                        .font(.custom("Tungsten-Medium", size: 12))
-                        .foregroundStyle(last ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                        .position(x: coords[i].x, y: coords[i].y - 12)
-                    if labels.indices.contains(i) {
-                        Text(labels[i])
-                            .shotiqBody(7, weight: last ? .bold : .regular)
-                            .foregroundStyle(last ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                            .position(x: coords[i].x, y: geo.size.height - 6)
-                    }
-                }
-            }
+            DottedTrendPlot(points: points, labels: labels, size: geo.size)
         }
         .accessibilityHidden(true)
+    }
+}
+
+private struct DottedTrendPlot: View {
+    let points: [Double]
+    let labels: [String]
+    let size: CGSize
+
+    private var coords: [CGPoint] {
+        let maxV = points.max() ?? 1
+        let minV = points.min() ?? 0
+        let span = max(maxV - minV, 0.0001)
+        let top: CGFloat = 18
+        let bottom: CGFloat = 18
+        let side: CGFloat = 16
+        return points.enumerated().map { index, value in
+            let x = side + CGFloat(index) / CGFloat(max(points.count - 1, 1)) * (size.width - 2 * side)
+            let y = top + (1 - CGFloat((value - minV) / span)) * (size.height - top - bottom)
+            return CGPoint(x: x, y: y)
+        }
+    }
+
+    var body: some View {
+        let trendCoords = coords
+        ZStack {
+            Path { path in
+                guard let first = trendCoords.first else { return }
+                path.move(to: first)
+                trendCoords.dropFirst().forEach { path.addLine(to: $0) }
+            }
+            .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+            ForEach(trendCoords.indices, id: \.self) { index in
+                DottedTrendPoint(point: trendCoords[index],
+                                 value: points[index],
+                                 label: labels.indices.contains(index) ? labels[index] : nil,
+                                 isLast: index == trendCoords.count - 1,
+                                 chartHeight: size.height)
+            }
+        }
+    }
+}
+
+private struct DottedTrendPoint: View {
+    let point: CGPoint
+    let value: Double
+    let label: String?
+    let isLast: Bool
+    let chartHeight: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(isLast ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                .frame(width: isLast ? 8 : 6, height: isLast ? 8 : 6)
+                .position(point)
+            Text("\(Int(value))")
+                .font(.custom("Tungsten-Medium", size: 12))
+                .foregroundStyle(isLast ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                .position(x: point.x, y: point.y - 12)
+            if let label {
+                Text(label)
+                    .shotiqBody(7, weight: isLast ? .bold : .regular)
+                    .foregroundStyle(isLast ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                    .position(x: point.x, y: chartHeight - 6)
+            }
+        }
     }
 }
 
@@ -1601,28 +1702,48 @@ struct MyMediaView: View {          // 068
         let title, time, score, grade: String
         let color: Color
         let kind: String            // Images / Videos / Live / Workouts
+        let duration: String
+        let photo: String?
+        let analysis: ShotIQAnalysisResultDTO?
     }
     private let today: [MediaItem] = [
         .init(title: "Pull-Up • Right", time: "8:24 AM", score: "82", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Videos"),
+              color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:03",
+              photo: "068-visual-002", analysis: nil),
         .init(title: "Spot-Up • Right", time: "8:18 AM", score: "74", grade: "REVIEW",
-              color: ShotIQColor.reviewRed, kind: "Images"),
+              color: ShotIQColor.reviewRed, kind: "Images", duration: "0:04",
+              photo: "068-visual-003", analysis: nil),
         .init(title: "Catch & Shoot • Right", time: "8:12 AM", score: "86", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Videos"),
+              color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:05",
+              photo: "068-visual-001", analysis: nil),
         .init(title: "Live Session", time: "8:01 AM", score: "80", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Live"),
+              color: ShotIQColor.analysisBlue, kind: "Live", duration: "0:06",
+              photo: "068-visual-005", analysis: nil),
         .init(title: "Low Dribble Series", time: "7:45 AM", score: "88", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Workouts"),
+              color: ShotIQColor.analysisBlue, kind: "Workouts", duration: "0:07",
+              photo: "068-visual-004", analysis: nil),
         .init(title: "Cone Progression", time: "7:28 AM", score: "90", grade: "EXCELLENT",
-              color: ShotIQColor.confirmGreen, kind: "Images")
+              color: ShotIQColor.confirmGreen, kind: "Images", duration: "0:08",
+              photo: "068-visual-003", analysis: nil)
     ]
-    /// Canonical 068 grid frames, in the tile order above. The second tile used
-    /// to keep a gray placeholder because no crop was assigned; reuse a nearby
-    /// shot frame so every media item has visible basketball imagery.
-    private let todayPhotos: [String?] = ["068-visual-002", "068-visual-003", "068-visual-001",
-                                          "068-visual-005", "068-visual-004", "068-visual-003"]
+    private var realMedia: [MediaItem] {
+        app.recentMedia.map { entry in
+            let presentation = AnalysisResultPresentation(result: entry.analysis)
+            let isGood = presentation.scoreVerdict == "GOOD" || presentation.scoreVerdict == "EXCELLENT"
+            return MediaItem(title: entry.title,
+                             time: "Just now",
+                             score: presentation.scoreText,
+                             grade: presentation.scoreVerdict,
+                             color: isGood ? ShotIQColor.analysisBlue : ShotIQColor.reviewRed,
+                             kind: entry.kind,
+                             duration: entry.durationText,
+                             photo: nil,
+                             analysis: entry.analysis)
+        }
+    }
+    private var allToday: [MediaItem] { realMedia + today }
     private var filteredToday: [(Int, MediaItem)] {
-        var items = Array(today.enumerated()).filter { pair in
+        var items = Array(allToday.enumerated()).filter { pair in
             (segment == "All" || pair.element.kind == segment)
             && (gradeFilter == "All results" || pair.element.grade == gradeFilter)
         }
@@ -1739,7 +1860,7 @@ struct MyMediaView: View {          // 068
                                         if selectedTiles.contains(i) { selectedTiles.remove(i) }
                                         else { selectedTiles.insert(i) }
                                     } label: {
-                                        mediaTile(t, duration: "0:0\((i + 3) % 9)", photo: photoKey(i))
+                                        mediaTile(t)
                                             .overlay(alignment: .topLeading) {
                                                 Image(systemName: selectedTiles.contains(i)
                                                       ? "checkmark.circle.fill" : "circle")
@@ -1751,8 +1872,8 @@ struct MyMediaView: View {          // 068
                                     }
                                     .buttonStyle(.plain)
                                 } else {
-                                    NavigationLink { MediaDetailView() } label: {
-                                        mediaTile(t, duration: "0:0\((i + 3) % 9)", photo: photoKey(i))
+                                    NavigationLink { MediaDetailView(analysis: t.analysis) } label: {
+                                        mediaTile(t)
                                     }
                                 }
                             }
@@ -1816,14 +1937,13 @@ struct MyMediaView: View {          // 068
             .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
         }
     }
-    private func photoKey(_ i: Int) -> String? {
-        todayPhotos.indices.contains(i) ? todayPhotos[i] : nil
-    }
-    private func mediaTile(_ t: MediaItem, duration: String, photo: String? = nil) -> some View {
+    private func mediaTile(_ t: MediaItem) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            PhotoThumb(height: 112, photo: photo)
+            MediaAnalysisSurface(analysis: t.analysis,
+                                 fallbackPhoto: t.photo ?? "068-visual-002",
+                                 height: 112)
                 .overlay(alignment: .bottomLeading) {
-                    Text(duration).font(.custom("Tungsten-Medium", size: 11))
+                    Text(t.duration).font(.custom("Tungsten-Medium", size: 11))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5).padding(.vertical, 2)
                         .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 3))
@@ -1855,6 +1975,7 @@ struct MyMediaView: View {          // 068
 }
 
 struct MediaDetailView: View {      // 069
+    var analysis: ShotIQAnalysisResultDTO? = nil
     /// Server id of the backing UserAnalysis row, when opened from real data —
     /// enables the authoritative DELETE /api/media?analysisId=… call.
     var analysisId: String? = nil
@@ -1867,7 +1988,28 @@ struct MediaDetailView: View {      // 069
     @State private var showDownloadInfo = false
     @State private var toast: ShotIQToast?
     private let speeds = ["SLOW 0.5x", "SLOW 1.0x", "SLOW 2.0x"]
-    private let shareText = "My ShotIQ session — 15/24 makes (62.5%), form score 82. 🏀"
+    private var presentation: AnalysisResultPresentation {
+        analysis.map(AnalysisResultPresentation.init) ?? .canonicalDemo
+    }
+    private var isRealAnalysis: Bool { analysis != nil }
+    private var shareText: String {
+        isRealAnalysis
+            ? presentation.formScoreShareText
+            : "My ShotIQ session - 15/24 makes (62.5%), form score 82."
+    }
+    private var mediaDurationText: String {
+        analysis?.media.type?.lowercased() == "image" ? "photo" : "6:12"
+    }
+    private var captureDateText: String {
+        isRealAnalysis ? presentation.recordedLabel.uppercased() : "MAY 21, 2025 - 8:24 AM"
+    }
+    private var captureMetaText: String {
+        guard isRealAnalysis else { return "Indoor Court - iPhone 15 Pro - 1080p - 60fps" }
+        return "\(presentation.mediaLabel) - \(presentation.provenanceSummary)"
+    }
+    private var shotEventValues: (shots: String, makes: String, pct: String, streak: String, points: String) {
+        isRealAnalysis ? ("--", "--", "--", "--", "--") : ("24", "15", "62.5%", "6", "2,840")
+    }
 
     /// DELETE /api/media?analysisId=… (route requires query params + CSRF, so
     /// this builds the request directly; it shares URLSession's cookie store
@@ -1937,7 +2079,10 @@ struct MediaDetailView: View {      // 069
                     .overlay(HRule(), alignment: .bottom)
                     VStack(alignment: .leading, spacing: 0) {
                         ZStack {
-                            CanonicalMediaSurface(key: "069-visual-002", height: 310, duration: "6:12")
+                            MediaAnalysisSurface(analysis: analysis,
+                                                 fallbackPhoto: "069-visual-002",
+                                                 height: 310,
+                                                 cornerRadius: 8)
                             Button {
                                 playing.toggle()
                                 toast = .info(playing ? "Playing clip" : "Clip paused",
@@ -1951,7 +2096,7 @@ struct MediaDetailView: View {      // 069
                             .accessibilityLabel(playing ? "Pause" : "Play")
                         }
                         .overlay(alignment: .topLeading) {
-                            Text("6:12").font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
+                            Text(mediaDurationText).font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                                 .padding(.horizontal, 8).padding(.vertical, 4)
                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
                                 .padding(10)
@@ -1997,17 +2142,19 @@ struct MediaDetailView: View {      // 069
                         }
                         .padding(.top, 10)
                         SectionLabel(text: "CAPTURE DETAILS").padding(.top, 18)
-                        Text("MAY 21, 2025 • 8:24 AM").font(.custom("Tungsten-Medium", size: 24))
+                        Text(captureDateText).font(.custom("Tungsten-Medium", size: 24))
                             .padding(.top, 6)
-                        Text("Indoor Court • iPhone 15 Pro • 1080p • 60fps")
+                        Text(captureMetaText)
                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                         SectionLabel(text: "LINKED ANALYSIS").padding(.top, 18)
                         ShotIQCard {
                             HStack(spacing: 12) {
                                 // Canonical's linked-analysis row shows a frame of
                                 // the same clip, not a placeholder tile.
-                                PhotoThumb(width: 62, height: 48, icon: "chart.xyaxis.line",
-                                           photo: "069-visual-004")
+                                MediaAnalysisSurface(analysis: analysis,
+                                                     fallbackPhoto: "069-visual-004",
+                                                     width: 62,
+                                                     height: 48)
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(spacing: 4) {
                                         // The date and the "Open analysis" pill
@@ -2024,13 +2171,13 @@ struct MediaDetailView: View {      // 069
                                     }
                                     Text("Form Score").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                     HStack(spacing: 8) {
-                                        Text("82").font(.custom("Tungsten-Medium", size: 22))
+                                        Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 22))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 76)
+                                        ScoreBar(pct: presentation.scorePct).frame(width: 76)
                                     }
                                 }
                                 Spacer(minLength: 4)
-                                NavigationLink { AnalysisResultOverviewView() } label: {
+                                NavigationLink { AnalysisResultOverviewView(initialResult: analysis) } label: {
                                     HStack(spacing: 4) {
                                         Text("Open analysis").shotiqBody(12, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -2046,16 +2193,16 @@ struct MediaDetailView: View {      // 069
                         .padding(.top, 8)
                         SectionLabel(text: "SHOT EVENTS").padding(.top, 18)
                         HStack(spacing: 0) {
-                            HeaderStat(icon: "scope", value: "24", label: "SHOTS").frame(maxWidth: .infinity)
+                            HeaderStat(icon: "scope", value: shotEventValues.shots, label: "SHOTS").frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "point.3.connected.trianglepath.dotted", value: "15", label: "MAKES")
+                            HeaderStat(icon: "point.3.connected.trianglepath.dotted", value: shotEventValues.makes, label: "MAKES")
                                 .frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "gauge", value: "62.5%", label: "MAKE %").frame(maxWidth: .infinity)
+                            HeaderStat(icon: "gauge", value: shotEventValues.pct, label: "MAKE %").frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "sparkles", value: "6", label: "DAY STREAK").frame(maxWidth: .infinity)
+                            HeaderStat(icon: "sparkles", value: shotEventValues.streak, label: "DAY STREAK").frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                            HeaderStat(icon: "circle.hexagongrid", value: shotEventValues.points, label: "POINTS")
                                 .frame(maxWidth: .infinity)
                         }
                         .padding(.top, 10)
@@ -2063,7 +2210,7 @@ struct MediaDetailView: View {      // 069
                             VStack(alignment: .leading, spacing: 5) {
                                 MicroLabel(text: "PRIMARY COACHING TARGET")
                                 HStack {
-                                    Text("Keep elbow stacked through release").shotiqBody(17, weight: .bold)
+                                    Text(presentation.coachingTarget).shotiqBody(17, weight: .bold)
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.8)
                                     Spacer()

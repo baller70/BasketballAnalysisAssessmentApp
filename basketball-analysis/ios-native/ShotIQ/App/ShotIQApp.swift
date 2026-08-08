@@ -215,12 +215,34 @@ enum UITestHooks {
 
 /// App-level state machine: splash → auth → onboarding → main.
 @MainActor
+struct ShotIQRecentMediaEntry: Identifiable, Equatable {
+    var id: String
+    var title: String
+    var kind: String
+    var durationText: String
+    var analysis: ShotIQAnalysisResultDTO
+}
+
 final class AppState: ObservableObject {
     enum Phase { case splash, welcome, main }
     @Published var phase: Phase = .splash
     @Published var user: APIUser?
     @Published var onboardingComplete = false
     @Published var tab: RootTab = .home
+    @Published var recentMedia: [ShotIQRecentMediaEntry] = []
+
+    func rememberAnalysisMedia(_ analysis: ShotIQAnalysisResultDTO, title: String? = nil) {
+        let kind = analysis.media.type?.lowercased() == "video" ? "Videos" : "Images"
+        let existing = recentMedia.first { $0.id == analysis.id }
+        let entry = ShotIQRecentMediaEntry(
+            id: analysis.id,
+            title: title ?? existing?.title ?? (kind == "Videos" ? "Analyzed Video" : "Analyzed Photo"),
+            kind: kind,
+            durationText: existing?.durationText ?? (kind == "Videos" ? "clip" : "photo"),
+            analysis: analysis)
+        recentMedia.removeAll { $0.id == entry.id }
+        recentMedia.insert(entry, at: 0)
+    }
 
     func boot() async {
         // Test-only: the two auth stages (005 verify-email, 007 reset-password)
