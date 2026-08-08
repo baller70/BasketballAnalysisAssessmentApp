@@ -9,7 +9,7 @@
 import React, { useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Loader2, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Loader2, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "@/components/shotiq/ApprovedLucide"
 
 async function getCsrfToken(): Promise<string> {
   try {

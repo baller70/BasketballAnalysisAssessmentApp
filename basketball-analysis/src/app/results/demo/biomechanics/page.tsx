@@ -6,7 +6,7 @@ import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   ChevronLeft, ChevronRight, Upload, MoreVertical, Pencil, Minus, Eraser, X,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { formatFeetInches } from "@/lib/vision/derivedMetrics"

@@ -8,7 +8,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { Loader2, ArrowLeft } from "@/components/shotiq/ApprovedLucide"
 
 async function getCsrfToken(): Promise<string> {
   try {

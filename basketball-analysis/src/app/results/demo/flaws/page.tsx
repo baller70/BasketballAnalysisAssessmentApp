@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { ChevronRight, ChevronLeft, ArrowDown } from "lucide-react"
+import { ChevronRight, ChevronLeft, ArrowDown } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
 import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"

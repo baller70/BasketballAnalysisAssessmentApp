@@ -27,7 +27,7 @@ import Image from "next/image"
 import {
   User, Bell, Clock, MonitorSmartphone, SlidersHorizontal,
   ChevronRight, ChevronDown, CheckCircle2, Film, Hexagon,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct, useJoinedDate } from "@/components/shotiq/ResultsBits"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"

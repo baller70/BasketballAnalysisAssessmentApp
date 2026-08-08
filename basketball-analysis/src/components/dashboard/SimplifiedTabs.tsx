@@ -14,7 +14,7 @@ import {
   Zap,
   ChevronRight,
   Activity
-} from 'lucide-react'
+} from '@/components/shotiq/ApprovedLucide'
 import type { DashboardView } from '@/components/DashboardViewSelector'
 
 // ============================================

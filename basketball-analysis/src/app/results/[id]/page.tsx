@@ -29,7 +29,7 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"
 import UploadedPoseOverlay from "@/components/upload/UploadedPoseOverlay"

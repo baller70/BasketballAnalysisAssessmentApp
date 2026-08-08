@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2 } from '@/components/shotiq/ApprovedLucide'
 
 import type { CaptureReadiness } from '@/lib/capture/guidedCapture'
 

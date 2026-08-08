@@ -25,7 +25,7 @@
  */
 
 import React from "react"
-import { FileText, Share2 } from "lucide-react"
+import { FileText, Share2 } from "@/components/shotiq/ApprovedLucide"
 import { PoseGlyph, MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, ResultsIdentity, Panel, SectionHead, Micro,

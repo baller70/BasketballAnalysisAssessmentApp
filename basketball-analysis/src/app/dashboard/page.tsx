@@ -17,7 +17,7 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   ChevronRight, LineChart, MoreVertical, Info,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { ActionGlyph, PhaseTrack, WorkoutGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"

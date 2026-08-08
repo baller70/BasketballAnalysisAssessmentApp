@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Check, Circle, Flag, UserRound, X } from "lucide-react"
+import { Check, Circle, Flag, UserRound, X } from "@/components/shotiq/ApprovedLucide"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
 export type ShotCorrectionKind = "false_shot" | "make_miss" | "shooter" | "phase"

@@ -17,7 +17,7 @@ import {
   Activity, Focus, Hand, Footprints, Move,
   CircleDot, Crosshair, Gauge, ListChecks,
   ArrowLeftRight, CheckCircle
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import {
   ALL_DRILLS,
   Drill,

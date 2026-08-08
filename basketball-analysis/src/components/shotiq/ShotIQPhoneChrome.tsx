@@ -52,10 +52,10 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { X, ChevronRight, LogOut, Settings } from "lucide-react"
+import { X, ChevronRight, LogOut } from "@/components/shotiq/ApprovedLucide"
 import { useAuthStore } from "@/stores/authStore"
-import { ApprovedRasterIcon } from "@/components/shotiq/Glyphs"
-import { SIDEBAR_GROUPS, SIDEBAR_FOOTER, SIDEBAR_LEGAL, type IconType } from "@/components/shotiq/ShotIQShell"
+import { ApprovedRasterIcon, ConceptGlyph } from "@/components/shotiq/Glyphs"
+import { SIDEBAR_GROUPS, SIDEBAR_FOOTER, SIDEBAR_LEGAL, type ShotIQNavItem } from "@/components/shotiq/ShotIQShell"
 
 /* ------------------------------------------------------------------ tokens */
 
@@ -230,7 +230,7 @@ export function PhoneTopBar({ onMenu, menuOpen }: { onMenu: () => void; menuOpen
             the box is 21px. The -3px pull sets the ink gutter to canonical's 44. */}
         {menuOpen
           ? <X className="h-[21px] w-[21px]" strokeWidth={1.8} />
-          : <Settings className="h-[21px] w-[21px]" strokeWidth={1.8} />}
+          : <ApprovedRasterIcon asset="shotiq-approved-v2-ui-settings" size={24} />}
       </button>
     </header>
   )
@@ -252,14 +252,16 @@ export function PhoneNavSheet({ open, onClose }: { open: boolean; onClose: () =>
   if (!open) return null
   const go = (href: string) => { onClose(); router.push(href) }
 
-  const row = ({ label, href, icon: Icon }: { label: string; href: string; icon: IconType }) => {
+  const row = ({ label, href, concept }: ShotIQNavItem) => {
     const on = pathname === href || pathname.startsWith(href + "/")
     return (
       <button key={href + label} type="button" onClick={() => go(href)}
               aria-current={on ? "page" : undefined}
               className={`flex w-full items-center gap-[14px] border-b border-[var(--shotiq-color-rule)] py-[13px] text-left text-[15px] ${
                 on ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-ink)]"}`}>
-        <Icon className="h-[20px] w-[20px] shrink-0" strokeWidth={1.6} />
+        <span className="grid h-[24px] w-[24px] shrink-0 place-items-center">
+          <ConceptGlyph concept={concept ?? label} size={24} />
+        </span>
         <span className="flex-1 truncate">{label}</span>
         <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-muted)]" />
       </button>

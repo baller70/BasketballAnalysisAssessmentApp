@@ -7,7 +7,7 @@ import Link from "next/link"
 import {
   Bookmark, ChevronRight, Check, CalendarCheck,
   Clock, SignalHigh, Waypoints,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, Stat, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph, type CueKind } from "@/components/shotiq/Glyphs"
 import {

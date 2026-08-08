@@ -7,7 +7,7 @@ import Link from "next/link"
 import {
   ChevronRight, CheckCircle2, Upload, Trash2, Bell,
   Workflow, ShieldCheck, Film, Hexagon, type LucideIcon,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { useAuthStore } from "@/stores/authStore"
 import {

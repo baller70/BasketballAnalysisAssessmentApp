@@ -4,7 +4,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "lucide-react"
+import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 import { MyMedia, MediaDetail, type PhoneMedia } from "@/components/shotiq/phone/MediaPhone"
 import { usePhoneViewport } from "@/components/shotiq/phone/PhoneBits"

@@ -21,7 +21,7 @@ import {
   CircleCheck, CircleX, Undo2, Pause, Play, Square,
   VolumeX, Volume2, LogOut, ChevronRight, ChevronDown, Maximize,
   Globe, SignalHigh, Clock, Pen, type LucideIcon,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import {
   ShotIQShell, SectionLabel, Card, PageTitle,
 } from "@/components/shotiq/ShotIQShell"

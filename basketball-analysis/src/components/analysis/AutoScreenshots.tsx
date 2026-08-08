@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useRef, useEffect, useState, useCallback } from "react"
-import { Download, X, Eye, EyeOff, Sparkles, Zap, Loader2, ZoomIn } from "lucide-react"
+import { Download, X, Eye, EyeOff, Sparkles, Zap, Loader2, ZoomIn } from "@/components/shotiq/ApprovedLucide"
 import { MedalIcon, type MedalTier } from "@/components/icons/MedalIcons"
 import { getMedalTierFromStatus, getMedalTierFromAngles } from "@/lib/medalRanking"
 import { enhanceImage, type EnhancementTier } from "@/services/imageEnhancement"

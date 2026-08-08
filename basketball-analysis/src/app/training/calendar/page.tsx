@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { WorkoutCalendar } from "@/components/shotiq/phone/TrainingPhone"
 import { usePhoneViewport } from "@/components/shotiq/phone/PhoneBits"

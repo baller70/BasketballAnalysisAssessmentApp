@@ -26,7 +26,7 @@ import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import {
   ChevronRight, ChevronDown, Check, Plus, Lock, Play, Pencil, X,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhoneCard,

@@ -28,7 +28,7 @@
  */
 
 import React from "react"
-import { Bookmark } from "lucide-react"
+import { Bookmark } from "@/components/shotiq/ApprovedLucide"
 import { ActionGlyph, MechanicGlyph, PoseGlyph, CorrectionGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, ShareIcon, ResultsIdentity, Panel, ScoreBar,

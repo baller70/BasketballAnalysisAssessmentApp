@@ -16,7 +16,7 @@ import {
   Calendar, Settings, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Star, Play, Pause,
   Bell, BellRing, Target, Clock, Check, X, Zap, BookOpen, GripVertical,
   Info, AlertTriangle, Dumbbell, CircleDot, TrendingUp, Lightbulb, Plus, BarChart3
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { ALL_DRILLS, Drill, DrillFocusArea, SkillLevel, getRecommendedDrills, mapFlawToFocusArea } from "@/data/drillDatabase"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 import { coachingMetricUnit } from "@/lib/coaching/coachingTarget"

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { ProfileCard } from "../ProfileCard"
-import { Camera, Upload, Trash2, User } from "lucide-react"
+import { Camera, Upload, Trash2, User } from "@/components/shotiq/ApprovedLucide"
 
 interface AvatarCardProps {
   currentStep: number

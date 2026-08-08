@@ -22,7 +22,7 @@
 
 import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
-import { Pause, SkipBack, SkipForward, Type as TypeIcon, Undo2, Redo2, Trash2, ArrowUpRight } from "lucide-react"
+import { Pause, SkipBack, SkipForward, Type as TypeIcon, Undo2, Redo2, Trash2, ArrowUpRight } from "@/components/shotiq/ApprovedLucide"
 import { MechanicGlyph } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, GearLink, Panel, Micro, PhaseRail, PrimaryBar,

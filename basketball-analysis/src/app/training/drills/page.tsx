@@ -10,7 +10,7 @@
 import React, { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, Bookmark, Plus, Search, X } from "lucide-react"
+import { ArrowLeft, Bookmark, Plus, Search, X } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, MediaSurface } from "@/components/shotiq/ShotIQShell"
 import { DiscoverDrills, MyDrills, type LibraryDrill } from "@/components/shotiq/phone/DrillsPhone"
 import { usePhoneViewport } from "@/components/shotiq/phone/PhoneBits"

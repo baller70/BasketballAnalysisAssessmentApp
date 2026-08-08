@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { X, Target, Navigation, ArrowRight, Check, Calendar } from 'lucide-react'
+import { X, Target, Navigation, ArrowRight, Check, Calendar } from '@/components/shotiq/ApprovedLucide'
 import { useGoals, Goal } from '@/lib/goals'
 
 // Mapbox access token

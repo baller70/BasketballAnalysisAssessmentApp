@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react"
 import { ProfileCard } from "../ProfileCard"
 import { motion, AnimatePresence } from "framer-motion"
-import { Sparkles, Loader2, Check, RefreshCw } from "lucide-react"
+import { Sparkles, Loader2, Check, RefreshCw } from "@/components/shotiq/ApprovedLucide"
 
 // Example prompts for placeholder
 const EXAMPLE_PROMPTS = [

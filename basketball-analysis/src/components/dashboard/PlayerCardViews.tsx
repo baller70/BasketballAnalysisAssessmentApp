@@ -4,7 +4,7 @@ import React from "react"
 import { 
   Trophy, 
   Star
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import Image from "next/image"
 import type { DashboardView } from "../DashboardViewSelector"
 

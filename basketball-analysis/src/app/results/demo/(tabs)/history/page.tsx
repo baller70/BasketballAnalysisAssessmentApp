@@ -4,7 +4,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"

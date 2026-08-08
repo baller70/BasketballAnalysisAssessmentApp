@@ -15,12 +15,12 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { Search, Bell, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import {
-  Search, Bell, ChevronDown, Home, LineChart, Activity, TrendingUp,
-  Film, Compass, Settings, Video, Upload, Gauge, PersonStanding,
-  AlertTriangle, GitCompare, CreditCard, Dumbbell, ListChecks,
-  CalendarDays, Target, Trophy, User, HelpCircle, FileVideo, Award,
-  SlidersHorizontal, Rocket, type LucideIcon,
+  Home, LineChart, Activity, TrendingUp, Film, Compass, Settings, Video,
+  Upload, Gauge, PersonStanding, AlertTriangle, GitCompare, CreditCard,
+  Dumbbell, ListChecks, CalendarDays, Target, Trophy, User, HelpCircle,
+  FileVideo, Award, SlidersHorizontal, Rocket, type LucideIcon,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { usePoints } from "@/lib/points/pointsContext"
@@ -28,6 +28,8 @@ import { PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 import { PhoneChrome } from "@/components/shotiq/ShotIQPhoneChrome"
 
 export type IconType = LucideIcon
+
+export type ShotIQNavItem = { label: string; href: string; icon?: IconType; concept?: string }
 
 export type ShotIQTab =
   | "Home" | "Analyze" | "Training" | "Progress" | "Media" | "Explore" | "Settings"
@@ -585,46 +587,46 @@ export function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-s
  */
 export const SIDEBAR_GROUPS: {
   heading: string
-  items: { label: string; href: string; icon: IconType }[]
+  items: ShotIQNavItem[]
 }[] = [
   { heading: "MAIN", items: [
-    { label: "Dashboard", href: "/dashboard", icon: Home },
-    { label: "Analyze", href: "/analyze", icon: LineChart },
-    { label: "Live Capture", href: "/video-analysis", icon: Video },
-    { label: "Upload", href: "/upload", icon: Upload },
-    { label: "Video Upload", href: "/video-analysis/upload", icon: FileVideo },
+    { label: "Dashboard", href: "/dashboard", icon: Home, concept: "Home dashboard" },
+    { label: "Analyze", href: "/analyze", icon: LineChart, concept: "Analyze shot" },
+    { label: "Live Capture", href: "/video-analysis", icon: Video, concept: "Live camera" },
+    { label: "Upload", href: "/upload", icon: Upload, concept: "Upload image" },
+    { label: "Video Upload", href: "/video-analysis/upload", icon: FileVideo, concept: "Upload video" },
   ]},
   { heading: "RESULTS", items: [
-    { label: "Overview", href: "/results/demo", icon: Gauge },
-    { label: "Analysis", href: "/results/demo/analysis", icon: Activity },
-    { label: "Biomechanics", href: "/results/demo/biomechanics", icon: PersonStanding },
-    { label: "Flaws", href: "/results/demo/flaws", icon: AlertTriangle },
-    { label: "Compare", href: "/results/demo/compare", icon: GitCompare },
-    { label: "History", href: "/results/demo/history", icon: TrendingUp },
-    { label: "Player Card", href: "/results/demo/player", icon: CreditCard },
+    { label: "Overview", href: "/results/demo", icon: Gauge, concept: "Form score overview" },
+    { label: "Analysis", href: "/results/demo/analysis", icon: Activity, concept: "AI analysis" },
+    { label: "Biomechanics", href: "/results/demo/biomechanics", icon: PersonStanding, concept: "Biomechanics" },
+    { label: "Flaws", href: "/results/demo/flaws", icon: AlertTriangle, concept: "Flaws detected" },
+    { label: "Compare", href: "/results/demo/compare", icon: GitCompare, concept: "Compare pose" },
+    { label: "History", href: "/results/demo/history", icon: TrendingUp, concept: "Progress history" },
+    { label: "Player Card", href: "/results/demo/player", icon: CreditCard, concept: "Player card" },
   ]},
   { heading: "TRAIN", items: [
-    { label: "Training", href: "/results/demo/training", icon: Dumbbell },
-    { label: "Drill Library", href: "/training/drills", icon: ListChecks },
-    { label: "Calendar", href: "/training/calendar", icon: CalendarDays },
-    { label: "Goals", href: "/results/demo/goals", icon: Target },
+    { label: "Training", href: "/results/demo/training", icon: Dumbbell, concept: "Train workout" },
+    { label: "Drill Library", href: "/training/drills", icon: ListChecks, concept: "My drills" },
+    { label: "Calendar", href: "/training/calendar", icon: CalendarDays, concept: "Training calendar" },
+    { label: "Goals", href: "/results/demo/goals", icon: Target, concept: "Training goals" },
   ]},
   { heading: "LIBRARY", items: [
-    { label: "Media", href: "/media", icon: Film },
-    { label: "Elite Shooters", href: "/elite-shooters", icon: Compass },
-    { label: "Achievements", href: "/points", icon: Trophy },
-    { label: "Badges", href: "/badges", icon: Award },
+    { label: "Media", href: "/media", icon: Film, concept: "Media upload" },
+    { label: "Elite Shooters", href: "/elite-shooters", icon: Compass, concept: "Elite shooters" },
+    { label: "Achievements", href: "/points", icon: Trophy, concept: "Achievements points" },
+    { label: "Badges", href: "/badges", icon: Award, concept: "Badges points" },
   ]},
   { heading: "ADMIN", items: [
-    { label: "Shooting Forms", href: "/admin/shooting-forms", icon: SlidersHorizontal },
+    { label: "Shooting Forms", href: "/admin/shooting-forms", icon: SlidersHorizontal, concept: "Shooting forms settings" },
   ]},
 ]
 
-export const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
-  { label: "Profile", href: "/profile", icon: User },
-  { label: "Onboarding", href: "/onboarding", icon: Rocket },
-  { label: "Settings", href: "/settings", icon: Settings },
-  { label: "Help", href: "/guide", icon: HelpCircle },
+export const SIDEBAR_FOOTER: ShotIQNavItem[] = [
+  { label: "Profile", href: "/profile", icon: User, concept: "Profile" },
+  { label: "Onboarding", href: "/onboarding", icon: Rocket, concept: "Onboarding profile" },
+  { label: "Settings", href: "/settings", icon: Settings, concept: "Settings" },
+  { label: "Help", href: "/guide", icon: HelpCircle, concept: "Help guide" },
 ]
 
 /** Legal pages are real routes but not tabs; they sit in a compact footer line
@@ -644,7 +646,7 @@ export function UnifiedSidebar() {
       : pathname === href || pathname.startsWith(href + "/")
 
   const row = (
-    { label, href, icon: Icon }: { label: string; href: string; icon: IconType },
+    { label, href, icon: Icon }: ShotIQNavItem,
     height: string,
   ) => {
     const on = isActive(href)
@@ -656,7 +658,7 @@ export function UnifiedSidebar() {
                 ? "bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]"
                 : "text-[var(--shotiq-color-ink)] hover:bg-[var(--shotiq-color-warmCanvas)]"}`}>
         {on && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-        <Icon className="h-[16px] w-[16px] shrink-0" strokeWidth={1.6} />
+        {Icon && <Icon className="h-[16px] w-[16px] shrink-0" strokeWidth={1.6} />}
         <span className="truncate">{label}</span>
       </Link>
     )

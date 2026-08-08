@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Check, Lock, ChevronRight, Zap, Target, Gem, Crown, Circle } from 'lucide-react'
+import { X, Check, Lock, ChevronRight, Zap, Target, Gem, Crown, Circle } from '@/components/shotiq/ApprovedLucide'
 import { usePoints } from '@/lib/points/pointsContext'
 import { TIERS, TIER_ORDER, type TierLevel } from '@/lib/points/pointsConfig'
 

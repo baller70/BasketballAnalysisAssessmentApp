@@ -26,7 +26,7 @@ import React from "react"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 import { useLatestSession } from "@/components/shotiq/phone/useLatestSession"
 import { useLatestShots } from "@/components/shotiq/phone/useLatestShots"
-import { Clock, MapPin } from "lucide-react"
+import { Clock, MapPin } from "@/components/shotiq/ApprovedLucide"
 import { MechanicGlyph, PoseFigure, ActionGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import {
   ResultsScreen, ResultsBar, ShareIcon, Panel, Micro, ScoreBar, Chev, Frame,

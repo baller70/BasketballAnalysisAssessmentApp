@@ -13,9 +13,9 @@ import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ChevronLeft, ChevronDown, ArrowRight, Save, Info,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { AbilityGlyph, ApprovedRasterIcon, PoseFigure } from "@/components/shotiq/Glyphs"
+import { AbilityGlyph, ApprovedRasterIcon, HandChoiceGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 import { PlayerBio } from "@/components/shotiq/phone/PlayerBio"
@@ -457,8 +457,9 @@ export default function OnboardingPage() {
                   return (
                     <button key={hnd} type="button" onClick={() => store.setDominantHand(hnd)} data-testid={`hand-${hnd}`}
                             aria-pressed={on}
-                            className={`h-[46px] flex-1 text-[14px] capitalize ${on ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
-                      {hnd}
+                            className={`flex h-[76px] flex-1 flex-col items-center justify-center gap-[4px] text-[14px] capitalize ${on ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
+                      <HandChoiceGlyph kind={hnd} size={44} />
+                      <span>{hnd}</span>
                     </button>
                   )
                 })}

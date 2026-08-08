@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Crosshair, RotateCcw, X } from 'lucide-react'
+import { Crosshair, RotateCcw, X } from '@/components/shotiq/ApprovedLucide'
 
 import {
   createRimCalibrationFromPoint,

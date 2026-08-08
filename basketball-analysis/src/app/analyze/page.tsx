@@ -15,10 +15,8 @@
 import React, { useCallback, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-  Upload, ChevronRight, HelpCircle, ArrowLeft,
-} from "lucide-react"
-import { ActionGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
+import { ArrowLeft, ChevronRight } from "@/components/shotiq/ApprovedLucide"
+import { ActionGlyph, ConceptGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { enqueueVideoUpload, uploadQueueStorage } from "@/lib/upload/uploadQueue"
@@ -243,7 +241,7 @@ export default function AnalyzeWorkspacePage() {
               onClick={() => inputRef.current?.click()}
               className={`mt-[12px] flex h-[148px] cursor-pointer flex-col items-center justify-center rounded-[8px] border-2 border-dashed ${dragOver ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)]" : "border-[var(--shotiq-color-rule)]"}`}
             >
-              <Upload className="h-[26px] w-[26px]" strokeWidth={1.5} />
+              <ActionGlyph kind="chooseMedia" height={32} />
               <div className="mt-[10px] text-[16px] font-semibold">Drag and drop your files here</div>
               <div className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
                 or browse to choose media from your device.
@@ -261,7 +259,7 @@ export default function AnalyzeWorkspacePage() {
           <aside className="w-[392px] shrink-0">
             <div className="flex justify-end">
               <Link href="/guide" className="flex items-center gap-[6px] text-[13px] text-[var(--shotiq-color-analysisBlue)]">
-                <HelpCircle className="h-[15px] w-[15px]" /> How it works
+                <ConceptGlyph concept="Help guide" size={15} /> How it works
               </Link>
             </div>
             <Card className="mt-[10px] px-[18px] py-[12px]">

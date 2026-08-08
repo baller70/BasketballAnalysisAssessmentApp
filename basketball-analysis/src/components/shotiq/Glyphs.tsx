@@ -50,8 +50,11 @@ const APPROVED_ICON_BASE = "/shotiq/icons/approved"
 export function ApprovedRasterIcon({
   asset, size = 24, width, height, className = "", title, alt = "",
 }: GlyphProps & { asset: string; alt?: string; width?: number; height?: number }) {
-  const renderedWidth = width ?? size
-  const renderedHeight = height ?? size
+  const compact = className.includes("shotiq-compact-icon")
+  const baseWidth = width ?? size
+  const baseHeight = height ?? size
+  const renderedHeight = compact ? baseHeight : Math.max(baseHeight, 32)
+  const renderedWidth = Math.round((baseWidth * renderedHeight) / Math.max(baseHeight, 1))
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -732,6 +735,7 @@ export function ActionGlyph({
   kind, height = 34, className = "", accent = ORANGE, title,
 }: { kind: ActionKind; height?: number } & GlyphProps) {
   void accent
+  const renderedHeight = Math.max(height, 32)
   const approved: Record<ActionKind, string> = {
     analyze: "shotiq-approved-ui-target-reticle",
     uploadImage: "shotiq-approved-ui-analytics-upload",
@@ -746,8 +750,8 @@ export function ActionGlyph({
   return (
     <ApprovedRasterIcon
       asset={approved[kind]}
-      width={Math.round((height * w) / h)}
-      height={height}
+      width={Math.round((renderedHeight * w) / h)}
+      height={renderedHeight}
       className={`block ${className}`}
       title={title}
     />
@@ -845,4 +849,108 @@ export function StreakGlyph({ size = 47 }: { size?: number }) {
 
 export function PointsGlyph({ size = 26 }: { size?: number }) {
   return <ApprovedRasterIcon asset="shotiq-approved-ui-badge-target" size={size} />
+}
+
+export function approvedAssetForFallback(fallback: string): string {
+  const k = fallback.toLowerCase()
+  if (k.includes("film") || k.includes("video") || k.includes("play")) return "shotiq-approved-ui-upload-video"
+  if (k.includes("camera") || k.includes("viewfinder") || k.includes("scope")) return "shotiq-approved-ui-target-reticle"
+  if (k.includes("chart") || k.includes("trend") || k.includes("progress")) return "shotiq-approved-ui-progress-line"
+  if (k.includes("point") || k.includes("connected") || k.includes("node")) return "shotiq-approved-ui-pose-shooter"
+  if (k.includes("ruler") || k.includes("measure")) return "shotiq-approved-v2-onboarding-measurements"
+  if (k.includes("person") || k.includes("profile") || k.includes("user")) return "shotiq-approved-v2-onboarding-profile"
+  if (k.includes("calendar")) return "shotiq-approved-ui-calendar-heat"
+  if (k.includes("hexagon") || k.includes("badge") || k.includes("trophy") || k.includes("award")) return "shotiq-approved-ui-badge-target"
+  if (k.includes("trash")) return "shotiq-approved-v2-ui-trash"
+  if (k.includes("share")) return "shotiq-approved-v2-ui-share"
+  if (k.includes("upload") || k.includes("arrow.down") || k.includes("arrow.up")) return "shotiq-approved-v2-ui-upload"
+  if (k.includes("gear") || k.includes("setting") || k.includes("slider") || k.includes("filter")) return "shotiq-approved-v2-ui-settings"
+  if (k.includes("check")) return "shotiq-approved-v2-ui-check-ring"
+  if (k.includes("warning") || k.includes("exclamation") || k.includes("alert")) return "shotiq-approved-v2-ui-warning"
+  return "shotiq-approved-v2-coaching-target"
+}
+
+export function approvedAssetForConcept(concept: string, fallback = concept): string {
+  const k = concept.toLowerCase()
+
+  if (k.includes("follow-through") || k.includes("follow through")) return APPROVED_PHASE_ICONS.follow
+  if (k === "setup" || k === "load" || k === "rise" || k === "release" || k === "release phase") {
+    return APPROVED_PHASE_ICONS[toShotPhase(concept)]
+  }
+
+  if (k.includes("right-handed") || k.includes("right handed")) return "shotiq-approved-v2-hand-right"
+  if (k.includes("left-handed") || k.includes("left handed")) return "shotiq-approved-v2-hand-left"
+  if (k.includes("developing")) return "shotiq-approved-v2-ability-developing"
+  if (k.includes("intermediate")) return "shotiq-approved-v2-ability-intermediate"
+  if (k.includes("advanced")) return "shotiq-approved-v2-ability-advanced"
+  if (k.includes("elite")) return "shotiq-approved-v2-ability-elite"
+  if (k.includes("professional")) return "shotiq-approved-v2-ability-professional"
+
+  if (k.includes("live camera") || k.includes("record live") || k.includes("take photo")) return "shotiq-approved-ui-live-camera"
+  if (k.includes("video upload") || k.includes("upload video") || k.includes("choose video")) return "shotiq-approved-ui-upload-video"
+  if (k.includes("upload image") || k.includes("upload photo") || k.includes("image upload") || k.includes("library")) return "shotiq-approved-ui-analytics-upload"
+  if (k.includes("choose media")) return "shotiq-approved-ui-player-card"
+
+  if (k.includes("camera position") || k.includes("tripod") || k.includes("stable") || k.includes("steady")) return "shotiq-approved-mechanics-camera-position"
+  if (k.includes("lighting") || k.includes("environment") || k.includes("background")) return "shotiq-approved-mechanics-environment-light"
+  if (k.includes("full body") || k.includes("full-body") || k.includes("framing") || k.includes("what to capture")) return "shotiq-approved-mechanics-capture-frame"
+  if (k.includes("routine") || k.includes("athlete visible")) return "shotiq-approved-mechanics-routine-refresh"
+
+  if (k.includes("basketball")) return "shotiq-approved-mechanics-ball-speed"
+  if (k.includes("cone")) return "shotiq-approved-mechanics-cones"
+  if (k.includes("spot") || k.includes("free throw") || k.includes("line")) return "shotiq-approved-mechanics-spot-ruler"
+  if (k.includes("location") || k.includes("court")) return "shotiq-approved-mechanics-location-pin"
+
+  if (k.includes("elbow stacked") || k.includes("elbow stack")) return "shotiq-approved-mechanics-elbow-stack"
+  if (k.includes("elbow")) return "shotiq-approved-mechanics-elbow-under-ball"
+  if (k.includes("wrist")) return "shotiq-approved-mechanics-wrist-over-elbow"
+  if (k.includes("release height")) return "shotiq-approved-mechanics-release-height"
+  if (k.includes("release angle")) return "shotiq-approved-mechanics-release-angle"
+  if (k.includes("release path") || k.includes("shot path") || k.includes("straight path")) return "shotiq-approved-mechanics-elbow-stack"
+  if (k.includes("backspin") || k.includes("spin")) return "shotiq-approved-mechanics-backspin"
+  if (k.includes("balance") || k.includes("center") || k.includes("centre")) return "shotiq-approved-mechanics-balance-archetype"
+  if (k.includes("tempo") || k.includes("form score")) return "shotiq-approved-ui-performance-gauge"
+
+  if (k.includes("catch")) return "shotiq-approved-v2-shot-catch-shoot"
+  if (k.includes("pull-up") || k.includes("pull up")) return "shotiq-approved-v2-shot-pull-up"
+  if (k.includes("off dribble")) return "shotiq-approved-v2-shot-off-dribble"
+  if (k.includes("step back")) return "shotiq-approved-v2-shot-step-back"
+  if (k.includes("other")) return "shotiq-approved-v2-shot-other"
+
+  if (k === "home" || k.includes("dashboard") || k.includes("analyze") || k.includes("analysis")) return "shotiq-approved-ui-target-reticle"
+  if (k === "capture" || k.includes("capture")) return "shotiq-approved-ui-pose-shooter"
+  if (k === "train" || k.includes("training") || k.includes("drill") || k.includes("workout")) return "shotiq-approved-ui-ladder-balls"
+  if (k.includes("progress") || k.includes("history") || k.includes("goals") || k.includes("track")) return "shotiq-approved-ui-progress-line"
+  if (k.includes("media")) return "shotiq-approved-v2-ui-upload"
+  if (k.includes("profile") || k.includes("player card") || k.includes("onboarding")) return "shotiq-approved-v2-onboarding-profile"
+  if (k.includes("settings") || k.includes("filter") || k.includes("forms")) return "shotiq-approved-v2-ui-settings"
+  if (k.includes("help") || k.includes("guide")) return "shotiq-approved-v2-ui-privacy-info"
+  if (k.includes("points") || k.includes("achievement") || k.includes("badge")) return "shotiq-approved-ui-badge-target"
+  if (k.includes("compare")) return "shotiq-approved-ui-pose-shooter"
+  if (k.includes("flaw")) return "shotiq-approved-v2-flaw-guide"
+  if (k.includes("biomechanic")) return "shotiq-approved-mechanics-node-target"
+
+  if (k.includes("shots") || k.includes("volume")) return "shotiq-approved-v2-stat-volume"
+  if (k.includes("makes")) return "shotiq-approved-v2-stat-makes"
+  if (k.includes("accuracy") || k.includes("fg")) return "shotiq-approved-v2-stat-make-percent"
+  if (k.includes("share")) return "shotiq-approved-v2-ui-share"
+  if (k.includes("trash") || k.includes("delete")) return "shotiq-approved-v2-ui-trash"
+  if (k.includes("save") || k.includes("bookmark")) return "shotiq-approved-v2-workout-saved"
+  if (k.includes("warning") || k.includes("error")) return "shotiq-approved-v2-ui-warning"
+  if (k.includes("success") || k.includes("complete")) return "shotiq-approved-v2-ui-success"
+
+  return approvedAssetForFallback(fallback)
+}
+
+export function ConceptGlyph({
+  concept, fallback, size = 24, className = "", title,
+}: { concept: string; fallback?: string } & GlyphProps) {
+  return (
+    <ApprovedRasterIcon
+      asset={approvedAssetForConcept(concept, fallback)}
+      size={size}
+      className={className}
+      title={title}
+    />
+  )
 }

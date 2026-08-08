@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { cn } from '@/lib/utils'
-import { Activity } from 'lucide-react'
+import { Activity } from '@/components/shotiq/ApprovedLucide'
 
 // 10 Analysis Stages with titles for the progress box
 export const ANALYSIS_STAGES = [

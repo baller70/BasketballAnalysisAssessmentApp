@@ -18,7 +18,7 @@ import {
   Lightbulb,
   RotateCcw,
   Sparkles
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { usePoints } from "@/lib/points/pointsContext"
 import { InlinePointsBurst } from "@/components/points/PointsBurst"
 import { getAllSessions } from "@/services/sessionStorage"

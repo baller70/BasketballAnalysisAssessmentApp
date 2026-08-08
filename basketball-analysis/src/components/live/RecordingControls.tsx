@@ -16,7 +16,7 @@ import {
   FlipHorizontal,
   Pause,
   Play,
-} from 'lucide-react';
+} from '@/components/shotiq/ApprovedLucide';
 
 // ============================================
 // TYPES

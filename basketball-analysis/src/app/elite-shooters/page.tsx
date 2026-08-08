@@ -15,7 +15,7 @@ import Link from "next/link"
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, GitCompare, X, Check,
   LayoutGrid, List, RotateCcw, CalendarClock,
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { MechanicGlyph, PoseGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { ALL_ELITE_SHOOTERS } from "@/data/eliteShooters"
 import { EliteShootersPhone, type ShooterRow } from "@/components/shotiq/phone/ElitePhone"

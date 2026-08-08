@@ -28,7 +28,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import gsap from "gsap"
 import { useGSAP } from "@gsap/react"
-import { Play, Pause, SkipBack, SkipForward, Maximize, Minimize, Download, RotateCcw, Film, Loader2, ChevronDown } from "lucide-react"
+import { Play, Pause, SkipBack, SkipForward, Maximize, Minimize, Download, RotateCcw, Film, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 
 // Register GSAP plugins
 if (typeof window !== "undefined") {

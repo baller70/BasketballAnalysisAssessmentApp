@@ -9,7 +9,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, AlertCircle, Loader2, Maximize2, Minimize2 } from 'lucide-react';
+import { Video, AlertCircle, Loader2, Maximize2, Minimize2 } from '@/components/shotiq/ApprovedLucide';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
 import { SkeletonOverlay } from './SkeletonOverlay';
 import { LiveMetrics } from './LiveMetrics';

@@ -13,7 +13,7 @@
 import React, { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Loader2, ArrowLeft, MailCheck, MailWarning, ShieldCheck, CheckCircle2, ChevronRight } from "lucide-react"
+import { Loader2, ArrowLeft, MailCheck, MailWarning, ShieldCheck, CheckCircle2, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
 function VerifyEmailBody() {

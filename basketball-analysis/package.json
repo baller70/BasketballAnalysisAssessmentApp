@@ -42,6 +42,8 @@
     "db:seed": "prisma db seed",
     "discover:shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/discover-shooter-candidates.ts",
     "proof:visual": "node scripts/shotiq-visual-proof.mjs",
+    "audit:shotiq-icons": "node scripts/audit-shotiq-icons.mjs",
+    "normalize:shotiq-icons": "node scripts/normalize-shotiq-icons.mjs",
     "sidecar:audit": "python3 ../tools/shotiq-sidecar/audit.py"
   },
   "prisma": {

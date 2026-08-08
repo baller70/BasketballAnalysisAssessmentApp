@@ -11,7 +11,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react"
 import { 
   X, Volume2, VolumeX, 
   CheckCircle, XCircle, Target, CameraOff
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 
 // ============================================
 // TYPES

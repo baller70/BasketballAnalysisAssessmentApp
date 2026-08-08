@@ -14,7 +14,7 @@ import {
   AlertCircle,
   X,
   Sparkles
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 
 // ============================================
 // PHASE 5: PROCESSING EXPERIENCE & USER ENGAGEMENT

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, Loader2, Play, Upload, X, Video, ChevronLeft, ChevronRight, Pause } from "lucide-react"
+import { AlertTriangle, Loader2, Play, Upload, X, Video, ChevronLeft, ChevronRight, Pause } from "@/components/shotiq/ApprovedLucide"
 import { cn } from "@/lib/utils"
 import { analyzeVideoShooting, convertVideoToSessionFormat, type VideoAnalysisResult } from "@/services/videoAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"

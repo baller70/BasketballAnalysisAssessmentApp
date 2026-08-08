@@ -15,7 +15,7 @@ import {
   InfoIcon,
   GoodFormIcon,
 } from "@/components/icons"
-import { Video, Radio, Image as ImageIcon } from "lucide-react"
+import { Video, Radio, Image as ImageIcon } from "@/components/shotiq/ApprovedLucide"
 import {
   runPreUploadValidation,
   calculateQualityScore,

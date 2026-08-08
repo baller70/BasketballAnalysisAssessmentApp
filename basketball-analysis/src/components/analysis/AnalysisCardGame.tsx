@@ -12,7 +12,7 @@ import {
   Lightbulb,
   Star,
   GraduationCap
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 import { usePoints } from "@/lib/points"
 import { InlinePointsBurst } from "@/components/points/PointsBurst"
 

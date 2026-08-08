@@ -18,7 +18,7 @@ import {
   Eye,
   EyeOff,
   Download
-} from "lucide-react"
+} from "@/components/shotiq/ApprovedLucide"
 
 // Tool types
 export type AnnotationTool = 'select' | 'arrow' | 'highlight' | 'spotlight' | 'circle' | 'rectangle' | 'line' | 'freehand'
