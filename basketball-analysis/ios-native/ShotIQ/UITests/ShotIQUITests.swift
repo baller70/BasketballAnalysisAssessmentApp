@@ -620,6 +620,17 @@ final class ShotIQUITests: XCTestCase {
             XCTAssertFalse(app.staticTexts[oldDemo].exists,
                            "Flaws overview must not reuse demo flaw: \(oldDemo)")
         }
+
+        tapControl("Review release path")
+        XCTAssertTrue(screen("screen-ios-flaw-detail").waitForExistence(timeout: 8))
+        for detail in ["RELEASE PATH DRIFT", "Release offset is +14°",
+                       "YOUR OFFSET", "14°", "IDEAL BAND", "-5° to +5°",
+                       "Release through centerline", "Elbow over shooting hip",
+                       "Line Release Holds"] {
+            XCTAssertNotNil(findControl(detail), "Missing generated flaw detail item: \(detail)")
+        }
+        XCTAssertFalse(app.staticTexts["Elbow flare opens your shooting angle and adds unwanted side spin, which reduces accuracy and increases variability."].exists)
+        XCTAssertFalse(app.staticTexts["25°"].exists)
     }
 
     func testUploadQueueStartsEmptyAndBlocksAnalysisWithoutMedia() throws {

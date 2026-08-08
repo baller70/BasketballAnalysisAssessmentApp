@@ -57,6 +57,10 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawGeneration-Unit-2026-08-08-v3.xcresult`
 - Focused flaws-overview weak-analysis UI result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawsOverviewWeakAnalysis-2026-08-08-v1.xcresult`
+- Focused flaw-detail weak-analysis UI result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailWeakAnalysis-2026-08-08-v1.xcresult`
+- Focused flaw-detail canonical regression result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailCanonicalRegression-2026-08-08-v1.xcresult`
 
 Current proof totals:
 
@@ -84,6 +88,8 @@ Current proof totals:
 - Focused analysis-error retry/reframe UI target: 1 passed, 0 failed, 0 skipped
 - Focused flaw-generation unit target: 1 passed, 0 failed, 0 skipped
 - Focused flaws-overview weak-analysis UI target: 1 passed, 0 failed, 0 skipped
+- Focused flaw-detail weak-analysis UI target: 1 passed, 0 failed, 0 skipped
+- Focused flaw-detail canonical regression target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen
@@ -138,7 +144,7 @@ Current proof totals:
 | 44 | Form Score | Yes | Score, breakdown, source coverage, insight, weakest metric route asserted | Live backend score history |
 | 45 | Metric Detail | Yes | Measurements, ranges, confidence, correction cue, frame link asserted | Live metric derivation |
 | 46 | Flaws Overview | Yes | Flaw tags, impact levels, confidence, affected phases asserted; weak saved analysis now generates `ELBOW ANGLE OUT OF RANGE`, `RELEASE PATH DRIFT`, and `RELEASE SCORE GAP` through the Home -> Analysis Result -> Flaws route while old demo flaws are absent | Real backend/device-generated flaw semantics; web parity |
-| 47 | Flaw Detail | Yes | Evidence, impact, angles, fix cues, drill recommendation asserted | Live flaw evidence frames |
+| 47 | Flaw Detail | Yes | Evidence, impact, angles, fix cues, drill recommendation asserted; generated release-path flaw now opens detail with selected flaw title, description, saved score, offset value, ideal band, fix checklist, recommended drill, and no old elbow-flare demo angle/copy | Live backend/video evidence frames; web parity |
 | 48 | Player Card | Yes | Stats, measurements, mechanics, customize/share/download labels asserted | System share/download sheet |
 | 49 | Customize Player Card | Yes | Details, banner color, save card, saved sheet asserted | Real photo/export/share |
 | 50 | Elite Match | Yes | Analysis route to elite match and choose shooter route asserted | Backend elite comparison |
@@ -188,6 +194,14 @@ Current proof totals:
   on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed,
   0 failed, 0 skipped. This proves screen 046 renders generated flaws from the
   active saved presentation and removes the old demo flaw names in this path.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailWeakAnalysis-2026-08-08-v1.xcresult`
+  reran the weak-analysis flaws route and tapped into screen 047. Result:
+  `** TEST SUCCEEDED **`, 1 passed, 0 failed, 0 skipped. This proves generated
+  release-path flaw detail uses selected saved-flaw content instead of the old
+  elbow-flare detail.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailCanonicalRegression-2026-08-08-v1.xcresult`
+  reran the canonical coaching/metric/flaw route. Result:
+  `** TEST SUCCEEDED **`, 1 passed, 0 failed, 0 skipped.
 
 ## Current Physical-Device Blocker
 

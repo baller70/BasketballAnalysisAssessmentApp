@@ -2538,19 +2538,13 @@ struct MetricDetailView: View {     // 045
 }
 
 struct FlawsOverviewView: View {    // 046
-    private struct SelectedFlaw: Identifiable, Hashable {
-        let title: String
-        let severity: String
-        var id: String { "\(title)-\(severity)" }
-    }
-
     var presentation: AnalysisResultPresentation = .canonicalDemo
     private var flaws: [AnalysisFlawItem] { presentation.flaws }
     @Environment(\.dismiss) private var dismiss
     @State private var addingAll = false
     @State private var addedAll = false
     @State private var addAllError: String?
-    @State private var selectedFlaw: SelectedFlaw?
+    @State private var selectedFlaw: AnalysisFlawItem?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaws-overview") {
             VStack(spacing: 0) {
@@ -2577,7 +2571,9 @@ struct FlawsOverviewView: View {    // 046
                         .padding(.top, 14)
                         NavigationLink {
                             FlawDetailView(title: flaws.first?.title ?? presentation.coachingTarget,
-                                           severity: flaws.first?.impact ?? "NO PRIORITY FLAW")
+                                           severity: flaws.first?.impact ?? "NO PRIORITY FLAW",
+                                           flaw: flaws.first,
+                                           presentation: presentation)
                         } label: {
                             CoachTargetCard(bordered: false)
                                 .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
@@ -2607,7 +2603,7 @@ struct FlawsOverviewView: View {    // 046
                         } else {
                             ForEach(flaws) { flaw in
                                 Button {
-                                    selectedFlaw = SelectedFlaw(title: flaw.title, severity: flaw.impact)
+                                    selectedFlaw = flaw
                                 } label: {
                                     flawCard(flaw)
                                 }
@@ -2663,7 +2659,8 @@ struct FlawsOverviewView: View {    // 046
             }
         }
         .navigationDestination(item: $selectedFlaw) { flaw in
-            FlawDetailView(title: flaw.title, severity: flaw.severity)
+            FlawDetailView(title: flaw.title, severity: flaw.impact,
+                           flaw: flaw, presentation: presentation)
         }
     }
     /// "Training plan" maps to the web app's saved workouts (POST /api/saved-workouts).
@@ -2769,7 +2766,29 @@ struct FlawsOverviewView: View {    // 046
 }
 
 struct FlawDetailView: View {       // 047
-    var title = "Elbow flare at release"; var severity = "HIGH IMPACT"
+    struct DetailContent {
+        let title: String
+        let description: String
+        let phaseText: String
+        let severityText: String
+        let confidenceText: String
+        let metricLabel: String
+        let measuredValue: String
+        let idealLabel: String
+        let idealValue: String
+        let impactText: String
+        let fixText: String
+        let targets: [String]
+        let drillName: String
+        let drillMeta: String
+        let drillDescription: String
+        let highlightedFrame: String
+    }
+
+    var title = "Elbow flare at release"
+    var severity = "HIGH IMPACT"
+    var flaw: AnalysisFlawItem?
+    var presentation: AnalysisResultPresentation = .canonicalDemo
     @Environment(\.dismiss) private var dismiss
     @State private var addingGoal = false
     @State private var addedGoal = false
@@ -2790,6 +2809,125 @@ struct FlawDetailView: View {       // 047
         default: return nil
         }
     }
+    private var detail: DetailContent {
+        guard let flaw, flaw.source != "demo" else {
+            return DetailContent(
+                title: title,
+                description: "Your elbow drifts outward in the release phase, creating side spin and inconsistency.",
+                phaseText: "Release phase",
+                severityText: severity.capitalized,
+                confidenceText: "72% confidence",
+                metricLabel: "YOUR ANGLE",
+                measuredValue: "25°",
+                idealLabel: "IDEAL RANGE",
+                idealValue: "15-20°",
+                impactText: "Elbow flare opens your shooting angle and adds unwanted side spin, which reduces accuracy and increases variability.",
+                fixText: "Keep your elbow stacked under the ball through release. Think \"elbow in, wrist out.\"",
+                targets: ["Elbow under ball", "Forearm vertical", "Wrist behind ball"],
+                drillName: "Towel Elbow Stack",
+                drillMeta: "8 min • Shooting Mechanics",
+                drillDescription: "Use a towel between elbow and hip to build awareness of keeping your elbow stacked through release.",
+                highlightedFrame: "RELEASE")
+        }
+
+        let flawTitle = flaw.title.uppercased()
+        let severityText = flaw.impact.capitalized
+        let phase = flaw.phase.replacingOccurrences(of: "-", with: " ").capitalized
+        let confidence = "\(flaw.confidence) confidence"
+        if flawTitle.contains("RELEASE PATH") {
+            return DetailContent(
+                title: flaw.title,
+                description: flaw.description,
+                phaseText: "\(phase) phase",
+                severityText: severityText,
+                confidenceText: confidence,
+                metricLabel: "YOUR OFFSET",
+                measuredValue: "\(flaw.trendEnd)°",
+                idealLabel: "IDEAL BAND",
+                idealValue: "-5° to +5°",
+                impactText: "The ball is leaving outside the centerline window, which makes left-right misses more likely.",
+                fixText: "Drive the ball straight up through the shooting line and hold the finish toward the rim.",
+                targets: ["Release through centerline", "Elbow over shooting hip", "Hold follow-through"],
+                drillName: "Line Release Holds",
+                drillMeta: "7 min • Release Control",
+                drillDescription: "Pause at release with the ball, elbow, and wrist stacked on one vertical line.",
+                highlightedFrame: "RELEASE")
+        }
+        if flawTitle.contains("ELBOW") {
+            return DetailContent(
+                title: flaw.title,
+                description: flaw.description,
+                phaseText: "\(phase) phase",
+                severityText: severityText,
+                confidenceText: confidence,
+                metricLabel: "YOUR ANGLE",
+                measuredValue: "\(flaw.trendEnd)°",
+                idealLabel: "IDEAL RANGE",
+                idealValue: "150-180°",
+                impactText: "The elbow is outside the stacked release band, which can push the shot path away from the rim line.",
+                fixText: "Keep your elbow stacked under the ball through release and finish tall through the wrist.",
+                targets: ["Elbow under ball", "Forearm vertical", "Wrist behind ball"],
+                drillName: "Towel Elbow Stack",
+                drillMeta: "8 min • Shooting Mechanics",
+                drillDescription: "Use a towel between elbow and hip to build awareness of keeping your elbow stacked through release.",
+                highlightedFrame: "RELEASE")
+        }
+        if flawTitle.contains("WRIST") {
+            return DetailContent(
+                title: flaw.title,
+                description: flaw.description,
+                phaseText: "\(phase) phase",
+                severityText: severityText,
+                confidenceText: confidence,
+                metricLabel: "YOUR ANGLE",
+                measuredValue: "\(flaw.trendEnd)°",
+                idealLabel: "IDEAL RANGE",
+                idealValue: "50-100°",
+                impactText: "The wrist is outside the release-control band, which can flatten arc and reduce touch.",
+                fixText: "Let the wrist load behind the ball, then snap through the center of the ball at release.",
+                targets: ["Wrist behind ball", "Snap over elbow", "Fingers finish down"],
+                drillName: "Wrist Snap Holds",
+                drillMeta: "6 min • Release Feel",
+                drillDescription: "Hold the wrist-loaded position, release softly, and finish with fingers through the rim line.",
+                highlightedFrame: "RELEASE")
+        }
+        if flawTitle.contains("CENTERLINE") {
+            return DetailContent(
+                title: flaw.title,
+                description: flaw.description,
+                phaseText: "\(phase) phase",
+                severityText: severityText,
+                confidenceText: confidence,
+                metricLabel: "YOUR DRIFT",
+                measuredValue: "\(flaw.trendEnd)°",
+                idealLabel: "IDEAL BAND",
+                idealValue: "< 3°",
+                impactText: "The shot path is drifting away from the body centerline, which adds side-to-side variability.",
+                fixText: "Start balanced, keep the ball on the shooting side, and finish through one vertical lane.",
+                targets: ["Ball on shooting lane", "Shoulders square", "Finish on target line"],
+                drillName: "Centerline Form Shots",
+                drillMeta: "8 min • Alignment",
+                drillDescription: "Shoot close-range reps while keeping feet, elbow, wrist, and follow-through on one line.",
+                highlightedFrame: "RISE")
+        }
+        return DetailContent(
+            title: flaw.title,
+            description: flaw.description,
+            phaseText: "\(phase) phase",
+            severityText: severityText,
+            confidenceText: confidence,
+            metricLabel: "YOUR SCORE",
+            measuredValue: flaw.trendEnd,
+            idealLabel: "TARGET",
+            idealValue: "75+",
+            impactText: "This score gap is pulling down the saved analysis result and should be prioritized in training.",
+            fixText: "Use focused reps on the lowest-scoring mechanic before adding speed or fatigue.",
+            targets: ["Clean setup", "Controlled rhythm", "Repeatable finish"],
+            drillName: "Release Rhythm Builder",
+            drillMeta: "9 min • Form Focus",
+            drillDescription: "Build repeatable reps by pausing at set point, release, and follow-through before increasing pace.",
+            highlightedFrame: "RELEASE")
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaw-detail") {
             VStack(spacing: 0) {
@@ -2802,7 +2940,7 @@ struct FlawDetailView: View {       // 047
                     Spacer()
                     Wordmark(size: 30)
                     Spacer()
-                    ShareLink(item: "Working on my shot: fixing \(title.lowercased()) with ShotIQ AI analysis. 🏀") {
+                    ShareLink(item: "Working on my shot: fixing \(detail.title.lowercased()) with ShotIQ AI analysis. 🏀") {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
                     }
                 }
@@ -2816,8 +2954,8 @@ struct FlawDetailView: View {       // 047
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("FLAW DETAIL").shotiqBody(12, weight: .semibold).kerning(0.8)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text(title.uppercased()).shotiqDisplay(30)
-                                    Text("Your elbow drifts outward in the release phase, creating side spin and inconsistency.")
+                                    Text(detail.title.uppercased()).shotiqDisplay(30)
+                                    Text(detail.description)
                                         .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
                                         .padding(.top, 2)
@@ -2826,18 +2964,18 @@ struct FlawDetailView: View {       // 047
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("FORM SCORE").shotiqBody(10, weight: .semibold).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Medium", size: 40))
+                                    Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 40))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 76)
+                                    ScoreBar(pct: presentation.scorePct).frame(width: 76)
                                 }
                             }
                             .padding(.top, 14)
                             HStack(spacing: 0) {
-                                metaItem("clock", "Release phase")
+                                metaItem("clock", detail.phaseText)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 20)
-                                metaItem("chart.bar", severity.capitalized)
+                                metaItem("chart.bar", detail.severityText)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 20)
-                                metaItem("water.waves", "72% confidence")
+                                metaItem("water.waves", detail.confidenceText)
                             }
                             .padding(.top, 14)
                             SectionLabel(text: "EVIDENCE FRAMES").padding(.top, 20)
@@ -2858,12 +2996,12 @@ struct FlawDetailView: View {       // 047
                                             }
                                         }
                                         .overlay(RoundedRectangle(cornerRadius: 4)
-                                            .stroke(f == "RELEASE" ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
-                                        Text(f).shotiqBody(8, weight: f == "RELEASE" ? .bold : .regular)
+                                            .stroke(f == detail.highlightedFrame ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
+                                        Text(f).shotiqBody(8, weight: f == detail.highlightedFrame ? .bold : .regular)
                                             .kerning(0.3)
-                                            .foregroundStyle(f == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                            .foregroundStyle(f == detail.highlightedFrame ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             .lineLimit(1).minimumScaleFactor(0.6)
-                                        if f == "RELEASE" {
+                                        if f == detail.highlightedFrame {
                                             Text("(Flaw)").shotiqBody(9).foregroundStyle(ShotIQColor.reviewRed)
                                         }
                                     }
@@ -2874,46 +3012,46 @@ struct FlawDetailView: View {       // 047
                             HStack(alignment: .top, spacing: 18) {
                                 VStack(alignment: .leading, spacing: 6) {
                                     SectionLabel(text: "IMPACT")
-                                    Text("Elbow flare opens your shooting angle and adds unwanted side spin, which reduces accuracy and increases variability.")
+                                    Text(detail.impactText)
                                         .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                                 HStack(spacing: 14) {
-                                    angleFigure("YOUR ANGLE", "25°", ShotIQColor.reviewRed)
+                                    angleFigure(detail.metricLabel, detail.measuredValue, ShotIQColor.reviewRed)
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 74)
-                                    angleFigure("IDEAL RANGE", "15–20°", ShotIQColor.analysisBlue)
+                                    angleFigure(detail.idealLabel, detail.idealValue, ShotIQColor.analysisBlue)
                                 }
                             }
                             .padding(.top, 22)
                             HStack(alignment: .top, spacing: 18) {
                                 VStack(alignment: .leading, spacing: 6) {
                                     SectionLabel(text: "HOW TO FIX")
-                                    Text("Keep your elbow stacked under the ball through release. Think \u{201C}elbow in, wrist out.\u{201D}")
+                                    Text(detail.fixText)
                                         .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                                 VStack(alignment: .leading, spacing: 7) {
                                     Text("TARGET POSITION").shotiqBody(11, weight: .bold).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    targetCheck("Elbow under ball")
-                                    targetCheck("Forearm vertical")
-                                    targetCheck("Wrist behind ball")
+                                    ForEach(detail.targets, id: \.self) { target in
+                                        targetCheck(target)
+                                    }
                                 }
                                 .padding(12)
                                 .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                             }
                             .padding(.top, 20)
                             SectionLabel(text: "RECOMMENDED DRILL").padding(.top, 22)
-                            NavigationLink { DrillDetailView(name: "Towel Elbow Stack") } label: {
+                            NavigationLink { DrillDetailView(name: detail.drillName) } label: {
                                 HStack(alignment: .top, spacing: 14) {
                                     RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.rule)
                                         .frame(width: 92, height: 92)
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text("Towel Elbow Stack").shotiqBody(16, weight: .semibold)
+                                        Text(detail.drillName).shotiqBody(16, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.ink)
-                                        Text("8 min • Shooting Mechanics").shotiqBody(12)
+                                        Text(detail.drillMeta).shotiqBody(12)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("Use a towel between elbow and hip to build awareness of keeping your elbow stacked through release.")
+                                        Text(detail.drillDescription)
                                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                             .fixedSize(horizontal: false, vertical: true)
                                             .multilineTextAlignment(.leading)
@@ -2957,8 +3095,8 @@ struct FlawDetailView: View {       // 047
         }
         .navigationDestination(item: $route) { r in
             switch r {
-            case .frames: FrameDetailSkeletonView()
-            case .drill: DrillExecutionView(drillName: "Towel Elbow Stack")
+            case .frames: FrameDetailSkeletonView(presentation: presentation)
+            case .drill: DrillExecutionView(drillName: detail.drillName)
             }
         }
     }
@@ -2980,8 +3118,8 @@ struct FlawDetailView: View {       // 047
             do {
                 let _: Resp = try await APIClient.shared.call(
                     "/api/goals", method: "POST",
-                    body: Body(name: "Fix \(title.lowercased())",
-                               description: "Correct \(title.lowercased()) identified by shot analysis.",
+                    body: Body(name: "Fix \(detail.title.lowercased())",
+                               description: "\(detail.fixText) Recommended drill: \(detail.drillName).",
                                category: "form", targetValue: 100, unit: "%", xpReward: 150))
                 addedGoal = true
             } catch {

@@ -24,7 +24,7 @@ struct AnalysisScoreBreakdownItem: Equatable {
     var isUnavailable: Bool { source == "missing" || scoreText == "--" }
 }
 
-struct AnalysisFlawItem: Equatable, Identifiable {
+struct AnalysisFlawItem: Equatable, Hashable, Identifiable {
     var rank: Int
     var title: String
     var impact: String

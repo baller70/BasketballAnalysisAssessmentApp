@@ -132,7 +132,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G041 | VERIFYING | P0 | `#analytics` | 044 | Replace fixed form score screen. | Top score/verdict/caption/bar/share text, breakdown cards, metric detail rows, source coverage, key insight, and weakest-score CTA now consume the saved presentation passed by screen 038, including missing-score unavailable state. True confidence and history/trend calculations still need saved result/history sources before `DONE`. |
 | G042 | VERIFYING | P0 | `#analytics` | 045 | Replace fixed metric detail. | Metric detail now receives the selected metric value text plus parent saved presentation from screen 038, and its share/top score/measured value are no longer hardcoded to form score 82. Range, confidence, explainer copy, and drill-plan linkage still need metric-source proof before `DONE`. |
 | G043 | VERIFYING | P0 | `#analytics` `#pose` | 046 | Generate flaws from analysis. | Screen 046 now renders `AnalysisFlawItem` rows generated from saved scores, measured elbow/wrist/release/centerline values, and missing-data provenance. Focused unit proof verifies weak saved metrics generate elbow/release flaws instead of demo `ELBOW FLARE`; focused UI proof verifies the Home -> Analysis Result -> Flaws route shows generated weak-analysis flaws and excludes the old demo flaws. Real backend/device/web-derived flaw proof remains before `DONE`. |
-| G044 | OPEN | P0 | `#analytics` `#pose` `#media` | 047 | Generate flaw detail from real evidence frames. | Detail frames, angles, ideal range, and trend match selected flaw data. |
+| G044 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 047 | Generate flaw detail from real evidence frames. | Screen 047 now receives the selected non-demo `AnalysisFlawItem` and parent saved presentation from screen 046. Title, description, phase, severity, confidence, displayed score, metric label/value, ideal band, impact copy, fix checklist, recommended drill, goal payload, and frame-detail route all change with the selected generated flaw. Focused weak-analysis UI proof verifies release-path detail content; canonical regression verifies demo flaw detail still renders. True backend/video evidence-frame images remain before `DONE`. |
 
 ## Training Items
 
@@ -1970,3 +1970,44 @@ deterministic saved analysis on the simulator. Real physical-device proof still
 needs a customer photo/video or backend result to create the measured weak
 metrics, and web parity still needs to show the same saved flaw semantics in
 the web app before G043 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Flaw Detail Selected-Flaw Proof
+
+Thirty-first laptop functionality slice after local Xcode setup:
+
+- `FlawsOverviewView` now passes the full selected `AnalysisFlawItem` and the
+  active saved `AnalysisResultPresentation` into screen 047, instead of only
+  passing a title/severity string.
+- `FlawDetailView` now maps non-demo selected flaws into detail content:
+  selected title, saved score, description, phase, severity, confidence,
+  measured value, ideal band, impact explanation, fix copy, target checklist,
+  recommended drill, backend goal payload, and the affected-frame route.
+- The canonical demo flaw path is intentionally preserved for screenshot and
+  demo regression tests, so the old canonical `ELBOW FLARE` route still renders
+  the expected demo detail.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailWeakAnalysis-2026-08-08-v1.xcresult`
+  reran
+  `ShotIQUITests/ShotIQUITests/testFlawsOverviewUsesWeakSavedAnalysisInsteadOfDemoFlaws`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test opens Home -> Analysis Result
+  -> Flaws, taps `Review release path`, verifies screen 047 shows
+  `RELEASE PATH DRIFT`, `Release offset is +14°`, `YOUR OFFSET`, `14°`,
+  `IDEAL BAND`, `-5° to +5°`, `Release through centerline`,
+  `Elbow over shooting hip`, and `Line Release Holds`, and verifies the old
+  elbow-flare impact copy and `25°` demo angle are absent.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FlawDetailCanonicalRegression-2026-08-08-v1.xcresult`
+  reran
+  `ShotIQUITests/ShotIQUITests/testAnalysisCoachingNotesMetricDetailsAndFlawTagsWork`
+  on the same simulator. The run ended with `** TEST SUCCEEDED **`, `Executed
+  1 test, with 0 failures`, proving the canonical coaching/metric/flaw demo
+  route still opens and renders its expected detail/drill controls.
+
+Remaining limitations: this proves selected-flaw detail text and controls from
+a deterministic saved analysis. It does not yet prove true backend or video
+evidence frames per flaw; screen 047 still uses canonical evidence crops for
+demo and a frame-detail route for the active saved presentation until backend
+frame payloads exist. Real physical-device/backend/web evidence-frame proof is
+required before G044 can move from `VERIFYING` to `DONE`.
