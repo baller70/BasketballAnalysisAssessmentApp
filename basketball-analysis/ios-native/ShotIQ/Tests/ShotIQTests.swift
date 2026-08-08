@@ -646,3 +646,46 @@ final class PoseDetectionTests: XCTestCase {
         XCTAssertTrue(drawn.width.isFinite && drawn.height.isFinite)
     }
 }
+
+final class PhotoQualityTests: XCTestCase {
+    private func image(size: CGSize, color: UIColor) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { ctx in
+            color.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+        }
+    }
+
+    func testLightingUsesMeasuredBrightness() {
+        let good = ShotIQPhotoQuality.evaluate(image(size: CGSize(width: 1280, height: 720),
+                                                   color: UIColor(white: 0.55, alpha: 1)))
+        XCTAssertEqual(good.lightingRow.status, "Good")
+        XCTAssertTrue(good.lightingRow.ok)
+
+        let dark = ShotIQPhotoQuality.evaluate(image(size: CGSize(width: 1280, height: 720),
+                                                   color: UIColor(white: 0.08, alpha: 1)))
+        XCTAssertEqual(dark.lightingRow.status, "Too dark")
+        XCTAssertFalse(dark.lightingRow.ok)
+
+        let bright = ShotIQPhotoQuality.evaluate(image(size: CGSize(width: 1280, height: 720),
+                                                     color: UIColor(white: 0.98, alpha: 1)))
+        XCTAssertEqual(bright.lightingRow.status, "Too bright")
+        XCTAssertFalse(bright.lightingRow.ok)
+    }
+
+    func testResolutionUsesActualPixelDimensions() {
+        let high = ShotIQPhotoQuality.evaluate(image(size: CGSize(width: 1280, height: 720),
+                                                   color: .gray))
+        XCTAssertEqual(high.resolutionRow.title, "Image resolution")
+        XCTAssertEqual(high.resolutionRow.status, "High")
+        XCTAssertTrue(high.resolutionRow.ok)
+        XCTAssertTrue(high.resolutionRow.detail.contains("1280 x 720"))
+
+        let low = ShotIQPhotoQuality.evaluate(image(size: CGSize(width: 480, height: 640),
+                                                  color: .gray))
+        XCTAssertEqual(low.resolutionRow.status, "Low")
+        XCTAssertFalse(low.resolutionRow.ok)
+        XCTAssertTrue(low.resolutionRow.detail.contains("480 x 640"))
+    }
+}

@@ -387,6 +387,10 @@ final class ShotIQUITests: XCTestCase {
         if !app.staticTexts["Shooting hand is in frame."].waitForExistence(timeout: 15) {
             XCTAssertTrue(app.staticTexts["Pose detector unavailable on this simulator/device."].exists)
         }
+        XCTAssertTrue(app.staticTexts["Image resolution"].exists)
+        XCTAssertNotNil(findControl("pixels", maxSwipes: 1))
+        XCTAssertFalse(app.staticTexts["Video resolution"].exists)
+        XCTAssertFalse(app.staticTexts["1080p"].exists)
         XCTAssertTrue(app.staticTexts["Full body visibility"].exists)
         XCTAssertTrue(app.staticTexts["Shooting hand visibility"].exists)
         XCTAssertTrue(app.staticTexts["Best framing: side view, full body in frame, shooting hand and ball fully visible."].exists)

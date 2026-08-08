@@ -173,6 +173,71 @@ private func shotiqCropped34(_ image: UIImage) -> UIImage {
     }
 }
 
+struct ShotIQPhotoQuality {
+    typealias Row = (title: String, detail: String, status: String, ok: Bool)
+
+    let pixelWidth: Int
+    let pixelHeight: Int
+    let averageLuminance: Double?
+
+    static func evaluate(_ image: UIImage) -> ShotIQPhotoQuality {
+        let pixels = image.cgImage.map { CGSize(width: $0.width, height: $0.height) }
+            ?? CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
+        return ShotIQPhotoQuality(pixelWidth: max(0, Int(pixels.width.rounded())),
+                                  pixelHeight: max(0, Int(pixels.height.rounded())),
+                                  averageLuminance: averageLuminance(in: image))
+    }
+
+    var lightingRow: Row {
+        guard let averageLuminance else {
+            return ("Lighting", "ShotIQ could not read brightness from this image.", "Check", false)
+        }
+        if averageLuminance < 0.22 {
+            return ("Lighting", "Image is too dark for a reliable pose read.", "Too dark", false)
+        }
+        if averageLuminance > 0.93 {
+            return ("Lighting", "Image is overexposed. Reduce glare or bright backlight.", "Too bright", false)
+        }
+        return ("Lighting", "Average brightness is in range for analysis.", "Good", true)
+    }
+
+    var resolutionRow: Row {
+        let shortSide = min(pixelWidth, pixelHeight)
+        let longSide = max(pixelWidth, pixelHeight)
+        let detail = "\(pixelWidth) x \(pixelHeight) pixels."
+        if shortSide >= 720 && longSide >= 1080 {
+            return ("Image resolution", detail, "High", true)
+        }
+        return ("Image resolution", "\(detail) Use at least 720p for analysis.", "Low", false)
+    }
+
+    private static func averageLuminance(in image: UIImage) -> Double? {
+        guard let cgImage = image.cgImage else { return nil }
+        let width = 16
+        let height = 16
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        guard let context = CGContext(data: &pixels,
+                                      width: width,
+                                      height: height,
+                                      bitsPerComponent: 8,
+                                      bytesPerRow: width * 4,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            return nil
+        }
+        context.interpolationQuality = .low
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var total = 0.0
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let r = Double(pixels[index]) / 255.0
+            let g = Double(pixels[index + 1]) / 255.0
+            let b = Double(pixels[index + 2]) / 255.0
+            total += 0.2126 * r + 0.7152 * g + 0.0722 * b
+        }
+        return total / Double(width * height)
+    }
+}
+
 enum ShotViewpoint: String, CaseIterable, Identifiable {
     case front
     case side
@@ -1087,18 +1152,19 @@ struct UploadQualityCheckView: View { // 024
          "Shooting hand is slightly cropped at the fingertips. Please reframe to show the full hand and ball.",
          "Needs attention", false)]
 
-    /// Over the player's OWN photo, the framing rows are answered by the pose
-    /// detection running on that photo rather than asserted from a constant.
+    /// Over the player's OWN photo, quality rows are answered from the selected
+    /// pixels and pose detection rather than asserted from a constant.
     /// "Entire body is visible · Good" printed over a picture with nobody in it
     /// is the app telling the player something it never checked.
     private var checks: [(String, String, String, Bool)] {
-        guard image != nil else { return canonicalChecks }
+        guard let image else { return canonicalChecks }
+        let quality = ShotIQPhotoQuality.evaluate(image)
         guard poseChecked else {
-            return [canonicalChecks[0],
+            return [quality.lightingRow,
                     ("Full body visibility",
                      "Checking whether your full body is in frame.",
                      "Checking", true),
-                    canonicalChecks[2],
+                    quality.resolutionRow,
                     ("Shooting hand visibility",
                      "Checking whether your shooting hand and ball are visible.",
                      "Checking", true)]
@@ -1130,10 +1196,7 @@ struct UploadQualityCheckView: View { // 024
                     "No shooter was detected, so the hand could not be checked.",
                     "Needs attention", false)
         }
-        // Lighting and resolution are left exactly as canonical states them —
-        // this pass measures pose, and swapping in a guess for the other two
-        // would trade one unmeasured claim for another.
-        return [canonicalChecks[0], body, canonicalChecks[2], hand]
+        return [quality.lightingRow, body, quality.resolutionRow, hand]
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-quality-check") {
