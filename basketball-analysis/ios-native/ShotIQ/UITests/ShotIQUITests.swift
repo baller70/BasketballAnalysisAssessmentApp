@@ -384,7 +384,19 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "completion-accuracy", contains: "66.7%")
         assertStaticText(id: "completion-points", contains: "+40")
         assertStaticText(id: "completion-form-score", contains: "70")
+        assertElement(id: "completion-media", contains: "062-visual-001")
+        assertElement(id: "completion-form-score-bar", contains: "70 percent")
+        assertStaticText(id: "completion-form-verdict", contains: "GOOD")
+        assertStaticText(id: "completion-form-note", contains: "Keep the reps coming")
+        assertStaticText(id: "completion-phase-0-name", contains: "SETUP")
+        assertStaticText(id: "completion-phase-0-value", contains: "72")
+        assertStaticText(id: "completion-phase-3-name", contains: "RELEASE")
+        assertStaticText(id: "completion-phase-3-value", contains: "70")
+        assertStaticText(id: "completion-primary-target-title", contains: "Keep elbow stacked")
+        assertElement(id: "completion-primary-target-bar", contains: "7 out of 10")
         assertStaticText(id: "completion-primary-target-score", contains: "7 / 10")
+        assertVisibleElement(id: "completion-coaching-takeaway", contains: "Strong shooting rhythm")
+        assertVisibleElement(id: "completion-share-progress", contains: "2 of 3 makes 66.7%")
     }
 
     func testTrainingHomeUsesLatestAnalysisAndWorkoutHistory() throws {
@@ -556,6 +568,73 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "completion-shots", contains: "2")
         assertStaticText(id: "completion-makes", contains: "1")
         assertStaticText(id: "completion-accuracy", contains: "50.0%")
+    }
+
+    func testWorkoutCompletionPrefersFinishedDrillOverStoredHistory() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        assertStaticText(id: "completion-drill-name", contains: "SHOT TRACKER SESSION")
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "drill-detail"])
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+        tapButton(id: "drill-detail-start-drill")
+        XCTAssertTrue(screen("screen-ios-drill-execution").waitForExistence(timeout: 8))
+        tapButton(id: "mark-make")
+        tapButton(id: "mark-miss")
+        tapButton(id: "drill-execution-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 10))
+        assertStaticText(id: "completion-drill-name", contains: "STACK & SHOOT")
+        assertStaticText(id: "completion-shots", contains: "2")
+        assertStaticText(id: "completion-makes", contains: "1")
+        assertStaticText(id: "completion-accuracy", contains: "50.0%")
+        assertStaticText(id: "completion-form-score", contains: "52")
+        assertStaticText(id: "completion-primary-target-score", contains: "5 / 10")
+    }
+
+    func testWorkoutCompletionRoutesAndControlsAreLive() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "workout-completion"])
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        assertStaticText(id: "completion-drill-name", contains: "QUICK RELEASE BUILDER")
+        assertElement(id: "completion-media", contains: "062-visual-001")
+        assertStaticText(id: "completion-phase-4-name", contains: "FOLLOW-THROUGH")
+        assertStaticText(id: "completion-phase-4-value", contains: "73")
+        assertVisibleElement(id: "completion-next-recommendation", contains: "Elbow Stack Builder")
+        assertVisibleElement(id: "completion-review-shots", contains: "Review shots")
+        assertVisibleElement(id: "completion-share-progress", contains: "15 of 24 makes 62.5%")
+        assertVisibleElement(id: "completion-repeat-drill", contains: "Repeat drill")
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "workout-completion"])
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        tapElement(id: "completion-calendar-link")
+        XCTAssertTrue(screen("screen-ios-workout-calendar").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "workout-completion"])
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        tapElement(id: "completion-player-card-link")
+        XCTAssertTrue(screen("screen-ios-player-card").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "workout-completion"])
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        tapElement(id: "completion-next-recommendation")
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "workout-completion"])
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        tapElement(id: "completion-review-shots")
+        XCTAssertTrue(screen("screen-ios-shot-breakdown").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "workout-completion"])
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        tapElement(id: "completion-repeat-drill")
+        XCTAssertTrue(screen("screen-ios-drill-execution").waitForExistence(timeout: 8))
     }
 
     func testWorkoutCalendarShowsCompletedTrackerSession() throws {

@@ -146,7 +146,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G050 | VERIFYING | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Completed shot-tracker sessions now persist locally into Workout Calendar with saved shots/makes/FG/status/name/summary. Backend workout/shot-event reload and web parity remain before `DONE`. |
 | G051 | VERIFYING | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Drill Execution now derives drill name, cue, focus, target makes, and media key from the selected analysis-backed drill plan; exposes live makes/shots/make-percent/target-remaining stats; proves view-angle toast feedback, make/miss/undo/pause toasts, and completion totals. Focused UI proof and canonical training regression pass on the laptop simulator. Backend shot-event/workout reload, live camera/pose-driven cues, physical-device proof, and web parity remain before `DONE`. |
 | G052 | VERIFYING | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | Shot Tracker now starts a clean manual session at `0 OF 0`, derives make %, current streak, timer, media status, set progress, shot rail, and score bar from recorded make/miss events; blocks empty End Workout with a customer toast; proves pause/resume, View Analysis, make/miss/undo, saving progress, and completion totals through UI. Backend reload/history aggregation, physical-device behavior, and web parity remain before `DONE`. |
-| G053 | VERIFYING | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Workout Completion now receives the completed session record and derives shots, makes, accuracy, points, form score, phase scores, primary target progress, share text, and coaching takeaway from those totals. Backend workout reload/web parity remains before `DONE`. |
+| G053 | VERIFYING | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Workout Completion now receives the completed session record or just-finished drill route totals, derives shots, makes, accuracy, points, form score, phase scores, primary target progress, share text, and coaching takeaway from those totals, exposes the media placeholder/progress/phase/route controls, and proves it does not show stale saved-workout totals after a new drill completes. Backend workout reload/web parity remains before `DONE`. |
 
 ## Goals, Analytics, Media, Profile Items
 
@@ -2747,3 +2747,63 @@ analysis-backed drill plan and updates manual live-control stats in simulator
 production navigation. It does not yet prove backend shot-event/workout reload,
 live camera/pose-driven drill cues, physical-device media/progress behavior, or
 iOS/web parity; those remain required before G051 can move to `DONE`.
+
+### 2026-08-08 Workout Completion Route/Controls Proof
+
+Implementation:
+
+- Screen 062 now honors the just-finished drill execution route totals before
+  falling back to latest saved workout history. This prevents a customer from
+  finishing a new drill and seeing an older Shot Tracker session on the
+  completion screen.
+- Workout Completion exposes stable proof identifiers for drill name, stat
+  totals, media placeholder `062-visual-001`, form score bar/verdict/note,
+  phase names and phase values, primary target title/bar/score, coaching
+  takeaway, Share Progress, Review Shots, Repeat Drill, Next Recommendation,
+  Calendar, and Player Card routes.
+- Customer-facing confirmation remains visible through the flow: End Workout
+  shows saving progress/toast feedback before opening completion, and the
+  completion screen shows share text and progress/target bars sourced from the
+  completed totals instead of silent demo values.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-workout-completion-expanded-20260808-1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testWorkoutCompletionPrefersFinishedDrillOverStoredHistory`
+  and
+  `ShotIQUITests/ShotIQUITests/testWorkoutCompletionRoutesAndControlsAreLive`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0
+  failures`. It seeded a saved `SHOT TRACKER SESSION`, then completed a
+  `STACK & SHOOT` drill and verified completion showed the new drill's `2`
+  shots, `1` make, `50.0%`, form score `52`, and `5 / 10` target score instead
+  of stale saved totals. It also proved the visible 062 media placeholder,
+  phase row, Share Progress label, Review Shots route, Repeat Drill route, Next
+  Recommendation route, Calendar route, and Player Card route.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-workout-completion-expanded-20260808-3.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testShotTrackerStartsAtZeroAndCompletionUsesSessionTotals`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It verifies the Shot Tracker path into Workout Completion still
+  shows the recorded `3` shots, `2` makes, `66.7%`, `+40`, form score `70`,
+  media key `062-visual-001`, form progress bar, verdict/note, phase values,
+  primary target title/bar/score, coaching takeaway, and share label derived
+  from the completed session.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-workout-completion-canonical-20260808-1.xcresult`
+  ran `CanonicalScreenshotTests/test06TrainingScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and re-captured
+  the canonical Training flow from `001-training-home` through
+  `009-shot-tracker`, including `008-workout-completion`.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-workout-completion-expanded-20260808-2.xcresult`
+  failed because the new test expected the high-accuracy feedback note, but the
+  product rule uses the `Keep the reps coming` note for a 2-for-3 (`66.7%`)
+  tracker session. The app behavior was correct; the assertion was corrected
+  and passed in `...-3.xcresult`.
+
+Remaining limitations: this proves screen 062 derives completion analytics and
+routes from local completed workout state in simulator production navigation.
+It does not yet prove backend workout reload, physical-device behavior, or
+iOS/web parity; those remain required before G053 can move to `DONE`.

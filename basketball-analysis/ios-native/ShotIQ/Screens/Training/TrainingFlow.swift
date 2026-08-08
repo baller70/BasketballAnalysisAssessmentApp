@@ -2254,7 +2254,10 @@ struct DrillExecutionView: View {   // 060
                 .background(.ultraThinMaterial)
         }
         .navigationDestination(isPresented: $showCompletion) {
-            WorkoutCompletionView(shots: m.shots.count, makes: m.makes, drillName: executionData.drillName)
+            WorkoutCompletionView(shots: m.shots.count,
+                                  makes: m.makes,
+                                  drillName: executionData.drillName,
+                                  preferRouteTotals: true)
         }
         .onAppear { m.start() }
         .onDisappear { m.stop() }
@@ -2644,12 +2647,17 @@ struct WorkoutCompletionView: View { // 062
     var workout: TrainingWorkoutRecord?
     var shots = 24; var makes = 15
     var drillName = "Quick Release Builder"
-    private var resolvedWorkout: TrainingWorkoutRecord {
-        workout ?? TrainingWorkoutStore.latest(in: completedWorkoutsPayload) ??
+    var preferRouteTotals = false
+    private var routeWorkout: TrainingWorkoutRecord {
         TrainingWorkoutRecord.manualSession(drillName: drillName,
                                             shots: shots,
                                             makes: makes,
                                             durationSeconds: 20 * 60)
+    }
+    private var resolvedWorkout: TrainingWorkoutRecord {
+        if let workout { return workout }
+        if preferRouteTotals { return routeWorkout }
+        return TrainingWorkoutStore.latest(in: completedWorkoutsPayload) ?? routeWorkout
     }
     private var accuracy: String { resolvedWorkout.accuracyText }
     var body: some View {
@@ -2672,11 +2680,15 @@ struct WorkoutCompletionView: View { // 062
                             HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("View workout calendar")
+                        .accessibilityIdentifier("completion-calendar-link")
                         VRule(height: 46)
                         NavigationLink { PlayerCardView() } label: {
                             HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("View player card points")
+                        .accessibilityIdentifier("completion-player-card-link")
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
                     VStack(alignment: .leading, spacing: 0) {
@@ -2701,17 +2713,26 @@ struct WorkoutCompletionView: View { // 062
                         ShotIQCard {
                             HStack(spacing: 0) {
                                 PhotoThumb(width: 200, height: 210, photo: "062-visual-001")
+                                    .accessibilityElement()
+                                    .accessibilityLabel("Workout completion media 062-visual-001")
+                                    .accessibilityIdentifier("completion-media")
                                 VStack(alignment: .leading, spacing: 6) {
                                     MicroLabel(text: "FORM SCORE")
                                     Text("\(resolvedWorkout.formScore)").font(.custom("Tungsten-Medium", size: 58))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                         .accessibilityIdentifier("completion-form-score")
-                                    ScoreBar(pct: Double(resolvedWorkout.formScore) / 100).frame(width: 96)
+                                    ScoreBar(pct: Double(resolvedWorkout.formScore) / 100)
+                                        .frame(width: 96)
+                                        .accessibilityElement()
+                                        .accessibilityLabel("Form score progress \(resolvedWorkout.formScore) percent")
+                                        .accessibilityIdentifier("completion-form-score-bar")
                                     Text(resolvedWorkout.formVerdict).shotiqBody(13, weight: .bold)
                                         .foregroundStyle(ShotIQColor.analysisBlue)
+                                        .accessibilityIdentifier("completion-form-verdict")
                                     Text(resolvedWorkout.formNote)
                                         .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("completion-form-note")
                                 }
                                 .padding(14)
                                 Spacer(minLength: 0)
@@ -2720,15 +2741,17 @@ struct WorkoutCompletionView: View { // 062
                         .padding(.top, 12)
                         SectionLabel(text: "PHASE BREAKDOWN").padding(.top, 20)
                         HStack(alignment: .top) {
-                            ForEach(resolvedWorkout.phaseScores, id: \.0) { p in
+                            ForEach(Array(resolvedWorkout.phaseScores.enumerated()), id: \.offset) { i, p in
                                 VStack(spacing: 4) {
                                     PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 28)
                                     Text(p.0).shotiqBody(8, weight: p.0 == "RELEASE" ? .bold : .regular)
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
+                                        .accessibilityIdentifier("completion-phase-\(i)-name")
                                     Text("\(p.1)").font(.custom("Tungsten-Medium", size: 16))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                        .accessibilityIdentifier("completion-phase-\(i)-value")
                                 }
                                 .frame(maxWidth: .infinity)
                             }
@@ -2743,8 +2766,12 @@ struct WorkoutCompletionView: View { // 062
                                     MicroLabel(text: "PRIMARY TARGET")
                                     Text("Keep elbow stacked through release").shotiqBody(15, weight: .bold)
                                         .lineLimit(1).minimumScaleFactor(0.8)
+                                        .accessibilityIdentifier("completion-primary-target-title")
                                     HStack(spacing: 10) {
                                         ScoreBar(pct: Double(resolvedWorkout.primaryTargetScore) / 10, color: ShotIQColor.confirmGreen)
+                                            .accessibilityElement()
+                                            .accessibilityLabel("Primary target progress \(resolvedWorkout.primaryTargetScore) out of 10")
+                                            .accessibilityIdentifier("completion-primary-target-bar")
                                         Text("\(resolvedWorkout.primaryTargetScore) / 10").font(.custom("Tungsten-Medium", size: 16))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
                                             .accessibilityIdentifier("completion-primary-target-score")
@@ -2768,6 +2795,7 @@ struct WorkoutCompletionView: View { // 062
                                          : "Keep logging reps. Focus on a clean setup and balanced release.")
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.ink)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("completion-coaching-takeaway")
                                 }
                             }
                             .padding(14)
@@ -2794,6 +2822,8 @@ struct WorkoutCompletionView: View { // 062
                                 .padding(14)
                             }
                         }
+                        .accessibilityLabel("Next recommendation Elbow Stack Builder")
+                        .accessibilityIdentifier("completion-next-recommendation")
                         .padding(.top, 10)
                         HStack(spacing: 10) {
                             NavigationLink { ShotBreakdownView() } label: {
@@ -2808,6 +2838,7 @@ struct WorkoutCompletionView: View { // 062
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
+                            .accessibilityIdentifier("completion-review-shots")
                             ShareLink(item: "ShotIQ workout complete — \(resolvedWorkout.makes)/\(resolvedWorkout.shots) makes (\(accuracy)). 🏀") {
                                 HStack(spacing: 6) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-share",
@@ -2820,6 +2851,8 @@ struct WorkoutCompletionView: View { // 062
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.analysisBlue))
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             }
+                            .accessibilityLabel("Share progress \(resolvedWorkout.makes) of \(resolvedWorkout.shots) makes \(accuracy)")
+                            .accessibilityIdentifier("completion-share-progress")
                             NavigationLink { DrillExecutionView(drillName: drillName) } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "arrow.clockwise").font(.system(size: 12))
@@ -2830,6 +2863,7 @@ struct WorkoutCompletionView: View { // 062
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
+                            .accessibilityIdentifier("completion-repeat-drill")
                         }
                         .padding(.vertical, 20)
                     }
