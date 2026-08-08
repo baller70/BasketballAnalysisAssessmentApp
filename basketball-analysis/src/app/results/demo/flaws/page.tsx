@@ -209,7 +209,7 @@ export default function FlawsPage() {
                 width beneath it — badge and bar side by side cut the track
                 from 222px to 140px. */}
             <div className="mt-[2px] flex items-center justify-between gap-[10px]">
-              <span className="whitespace-nowrap text-[14px] font-semibold leading-[19px]">Keep elbow stacked through release</span>
+              <span className="min-w-0 text-[14px] font-semibold leading-[17px]">Keep elbow stacked through release</span>
               <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </div>
             <div className="mt-[5px]">

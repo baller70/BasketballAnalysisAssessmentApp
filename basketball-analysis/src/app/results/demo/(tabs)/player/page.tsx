@@ -541,20 +541,20 @@ export default function PlayerCardPage() {
           {/* Canonical draws EARNED BADGES and RECENT ANALYSES as one bordered
               container split by an internal hairline, not two detached cards. */}
           <Card className="flex">
-            <div className="w-[292px] shrink-0 px-[20px] py-[16px]">
+            <div className="w-[260px] shrink-0 px-[20px] py-[16px]">
               <div className="flex items-center justify-between">
                 <SectionLabel>EARNED BADGES</SectionLabel>
                 <Link href="/points" className="text-[11px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW ALL</Link>
               </div>
               <Link href="/points" className="mt-[10px] block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/086-badge-strip.png" alt="Earned badges" className="w-[262px]" />
+                <img src="/images/canonical/086-badge-strip.png" alt="Earned badges" className="w-[230px]" />
               </Link>
               {/* Canonical runs these captions at ~10px on a 20.5px line pitch
                   (measured "CONSISTENT" cap 7 / advance 52). The app set 10px on
                   a 14px pitch, which left ~68px of dead space above the card
                   foot; the size is right, the leading was not. */}
-              <div className="mt-[6px] grid w-[262px] grid-cols-4 text-center">
+              <div className="mt-[6px] grid w-[230px] grid-cols-4 text-center">
                 {[["CONSISTENT", "10 sessions", "60%+"], ["LOCKED IN", "5 sessions", "80%+"],
                   ["MECHANICS", "Form score", "80+"], ["STREAK", "5 days", "active"]].map(([t, a, b]) => (
                   <div key={t}>
@@ -577,15 +577,15 @@ export default function PlayerCardPage() {
                   : [["Pull-Up Jumper", "May 12, 2025 • 8:24 AM", "82", "/images/canonical/086-recent-1.png"],
                      ["Spot-Up Three", "May 11, 2025 • 6:15 PM", "78", "/images/canonical/086-recent-2.png"],
                      ["Transition Pull-Up", "May 10, 2025 • 4:02 PM", "75", "/images/canonical/086-recent-3.png"]]).map(([t, d, s, img]) => (
-                  <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[10px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                  <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[8px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={String(img)} alt="" className="h-[40px] w-[72px] shrink-0 rounded-[4px] object-cover" />
+                    <img src={String(img)} alt="" className="h-[40px] w-[58px] shrink-0 rounded-[4px] object-cover" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] font-semibold">{t}</div>
                       <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <div className="whitespace-nowrap text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                    <div className="w-[52px] shrink-0 text-right">
+                      <div className="whitespace-nowrap text-[8px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
                       <div className="flex items-center justify-end gap-[6px]">
                         <span className="shotiq-numeric text-[20px] leading-[22px]">{hasData ? String(s) : "—"}</span>
                         <span className="h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" />

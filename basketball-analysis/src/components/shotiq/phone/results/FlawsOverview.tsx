@@ -132,9 +132,9 @@ function FlawCard({ flaw, primary, onOpen }: { flaw: Flaw; primary?: boolean; on
       <div className="flex items-start">
         <span className="grid h-[21px] w-[21px] shrink-0 place-items-center rounded-[4px] text-[14px] text-white"
               style={{ background: flaw.tone }}>{flaw.n}</span>
-        <span className="ml-[9px] min-w-0 flex-1 overflow-hidden">
-          <span className="flex items-center gap-x-[8px]">
-            <span className="shotiq-display min-w-0 truncate leading-[17px] tracking-[0.03em]" style={{ fontSize: capDisplay(32) }}>{flaw.title}</span>
+        <span className="ml-[9px] min-w-0 flex-1">
+          <span className="flex flex-wrap items-start gap-x-[8px] gap-y-[2px]">
+            <span className="shotiq-display min-w-0 leading-[15px] tracking-[0.03em]" style={{ fontSize: capDisplay(28) }}>{flaw.title}</span>
             <span className="shotiq-microcaps shrink-0 whitespace-nowrap rounded-[4px] px-[5px] py-[2px] leading-[9px]"
                   style={{ fontSize: 7.2, background: flaw.tint, color: flaw.tone }}>{flaw.impact}</span>
           </span>

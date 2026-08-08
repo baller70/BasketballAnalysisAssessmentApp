@@ -125,20 +125,20 @@ export function PlayerCard({
       </div>
 
       {/* form score ---------------------------------------------------------- */}
-      <Panel className="mx-[13px] mt-[10px] flex items-center px-[13px] py-[6px]">
-        <div className="shotiq-section-label w-[92px] shrink-0 leading-[14px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>FORM SCORE</div>
+      <Panel className="mx-[13px] mt-[10px] flex items-center px-[10px] py-[6px]">
+        <div className="shotiq-section-label w-[74px] shrink-0 leading-[14px] tracking-[0.075em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
         <div className="shrink-0">
-          <div className="shotiq-numeric leading-[0.78]" style={{ fontSize: 62, color: ORANGE }}>{score}</div>
-          <ScoreBar score={score} width={108} height={7} />
+          <div className="shotiq-numeric leading-[0.78]" style={{ fontSize: 58, color: ORANGE }}>{score}</div>
+          <ScoreBar score={score} width={88} height={7} />
         </div>
-        <div className="ml-[14px] w-[104px] shrink-0">
+        <div className="ml-[10px] w-[82px] shrink-0">
           {/* The fourth of these. A literal verdict in canonical's blue under a
               wired score reads GOOD for a 41 as readily as for an 82. */}
           <div className="shotiq-display text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: band.color }}>{band.label}</div>
           <div className="mt-[3px] text-[12px] leading-[13.5px]">Keep building<br />consistency.</div>
         </div>
-        <div className="ml-auto w-[86px] shrink-0 border-l pl-[10px] text-center" style={{ borderColor: RULE }}>
-          <div className="shotiq-numeric text-[24px] leading-[22px]">{pct}</div>
+        <div className="ml-[10px] w-[68px] shrink-0 border-l pl-[8px] text-center" style={{ borderColor: RULE }}>
+          <div className="shotiq-numeric text-[21px] leading-[20px]">{pct}</div>
           <Micro className="mt-[4px]">MAKE %</Micro>
           <div className="mt-[5px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>{makes} / {shots}</div>
         </div>
