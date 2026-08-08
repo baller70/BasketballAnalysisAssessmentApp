@@ -1693,13 +1693,15 @@ private struct DottedTrendPoint: View {
 
 struct AnalyticsCardsView: View {   // 066
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var timeRange = "All time"
     @State private var mediaFilter = "All media"
     @State private var showTimePicker = false
     @State private var showMediaPicker = false
     @State private var toast: ShotIQToast?
+
     private struct AnalysisSession: Identifiable {
-        let id = UUID()
+        let id: String
         let date, name: String
         let shots, makes: Int
         let acc: String
@@ -1708,39 +1710,150 @@ struct AnalyticsCardsView: View {   // 066
         let deltaColor: Color
         let daysAgo: Int
         let kind: String
+        let shareText: String
     }
+
+    private struct AnalyticsSummary {
+        var scoreText: String
+        var scoreVerdict: String
+        var coachingTarget: String
+        var trendPoints: [Double]
+        var trendLabels: [String]
+        var trendA11y: String
+        var shotsText: String
+        var makesText: String
+        var accuracyText: String
+        var deltaText: String
+        var deltaCaption: String
+        var deltaColor: Color
+    }
+
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+
     private var sessions: [AnalysisSession] {
-        [.init(date: "Today at 8:24 AM", name: "Catch & Shoot", shots: 24, makes: 15, acc: "62.5%",
-               score: 82, delta: "+6", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
-               daysAgo: 0, kind: "Video"),
-         .init(date: "May 20 at 6:12 PM", name: "Off the Dribble", shots: 22, makes: 13, acc: "59.1%",
-               score: 78, delta: "+4", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
-               daysAgo: 4, kind: "Live"),
-         .init(date: "May 14 at 7:05 AM", name: "Pull-Up Jumper", shots: 25, makes: 14, acc: "56.0%",
-               score: 75, delta: "—", deltaLabel: "NO CHANGE", deltaColor: ShotIQColor.analysisBlue,
-               daysAgo: 10, kind: "Video"),
-         .init(date: "May 8 at 5:48 PM", name: "Mid-Range Work", shots: 20, makes: 11, acc: "55.0%",
-               score: 70, delta: "-3", deltaLabel: "NEEDS REVIEW", deltaColor: ShotIQColor.reviewRed,
-               daysAgo: 16, kind: "Photo")]
+        guard workouts.isEmpty == false else { return sampleSessions }
+        let calendar = Calendar.current
+        let now = Date()
+        return workouts.prefix(12).enumerated().map { index, workout in
+            let older = workouts.dropFirst(index + 1).first
+            let scoreDelta = older.map { workout.formScore - $0.formScore }
+            let delta = scoreDelta.map(Self.signedScore) ?? "—"
+            let deltaLabel: String
+            let deltaColor: Color
+            if let scoreDelta, scoreDelta > 0 {
+                deltaLabel = "IMPROVEMENT"
+                deltaColor = ShotIQColor.confirmGreen
+            } else if let scoreDelta, scoreDelta < 0 {
+                deltaLabel = "NEEDS REVIEW"
+                deltaColor = ShotIQColor.reviewRed
+            } else {
+                deltaLabel = "NO CHANGE"
+                deltaColor = ShotIQColor.analysisBlue
+            }
+            let daysAgo = calendar.dateComponents([.day], from: workout.completedAt, to: now).day ?? 0
+            let share = "\(workout.drillName) on ShotIQ - \(workout.makes)/\(workout.shots) makes (\(workout.accuracyText)), form score \(workout.formScore)."
+            return AnalysisSession(id: workout.id,
+                                   date: Self.sessionDateText(workout.completedAt),
+                                   name: workout.drillName,
+                                   shots: workout.shots,
+                                   makes: workout.makes,
+                                   acc: workout.accuracyText,
+                                   score: workout.formScore,
+                                   delta: delta,
+                                   deltaLabel: deltaLabel,
+                                   deltaColor: deltaColor,
+                                   daysAgo: max(daysAgo, 0),
+                                   kind: "Live",
+                                   shareText: share)
+        }
     }
+
+    private var sampleSessions: [AnalysisSession] {
+        [.init(id: "demo-catch-shoot", date: "Today at 8:24 AM", name: "Catch & Shoot", shots: 24, makes: 15, acc: "62.5%",
+               score: 82, delta: "+6", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
+               daysAgo: 0, kind: "Video",
+               shareText: "Catch & Shoot on ShotIQ - 15/24 makes (62.5%), form score 82."),
+         .init(id: "demo-off-dribble", date: "May 20 at 6:12 PM", name: "Off the Dribble", shots: 22, makes: 13, acc: "59.1%",
+               score: 78, delta: "+4", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
+               daysAgo: 4, kind: "Live",
+               shareText: "Off the Dribble on ShotIQ - 13/22 makes (59.1%), form score 78."),
+         .init(id: "demo-pull-up", date: "May 14 at 7:05 AM", name: "Pull-Up Jumper", shots: 25, makes: 14, acc: "56.0%",
+               score: 75, delta: "—", deltaLabel: "NO CHANGE", deltaColor: ShotIQColor.analysisBlue,
+               daysAgo: 10, kind: "Video",
+               shareText: "Pull-Up Jumper on ShotIQ - 14/25 makes (56.0%), form score 75."),
+         .init(id: "demo-mid-range", date: "May 8 at 5:48 PM", name: "Mid-Range Work", shots: 20, makes: 11, acc: "55.0%",
+               score: 70, delta: "-3", deltaLabel: "NEEDS REVIEW", deltaColor: ShotIQColor.reviewRed,
+               daysAgo: 16, kind: "Photo",
+               shareText: "Mid-Range Work on ShotIQ - 11/20 makes (55.0%), form score 70.")]
+    }
+
     /// Canonical 066 frames, keyed by session so filtering keeps each card
     /// with a real basketball photograph instead of a gray placeholder tile.
     private let sessionPhotos = ["Catch & Shoot": "066-visual-001",
                                  "Off the Dribble": "066-visual-002",
                                  "Pull-Up Jumper": "066-visual-003",
                                  "Mid-Range Work": "066-visual-001"]
+
     private var filteredSessions: [AnalysisSession] {
-        sessions.filter { s in
-            let inRange: Bool
-            switch timeRange {
-            case "Last 7 days": inRange = s.daysAgo <= 7
-            case "Last 30 days": inRange = s.daysAgo <= 30
-            default: inRange = true
-            }
-            let kindOK = mediaFilter == "All media" || s.kind == mediaFilter
-            return inRange && kindOK
-        }
+        sessions.filter { sessionMatches($0, media: mediaFilter, range: timeRange) }
     }
+
+    private var summary: AnalyticsSummary {
+        let visible = filteredSessions
+        if workouts.isEmpty && timeRange == "All time" && mediaFilter == "All media" {
+            let canonicalTrend: [Double] = [68, 72, 76, 79, 80, 82]
+            return AnalyticsSummary(scoreText: "82",
+                                    scoreVerdict: "GOOD",
+                                    coachingTarget: "Keep elbow stacked through release.",
+                                    trendPoints: canonicalTrend,
+                                    trendLabels: ["APR 26", "MAY 2", "MAY 8", "MAY 14", "MAY 20", "TODAY"],
+                                    trendA11y: "Form Score 68 to 72 to 76 to 79 to 80 to 82",
+                                    shotsText: "24",
+                                    makesText: "15",
+                                    accuracyText: "62.5%",
+                                    deltaText: "+8.1%",
+                                    deltaCaption: "VS PREVIOUS 30 DAYS",
+                                    deltaColor: ShotIQColor.confirmGreen)
+        }
+        guard let latest = visible.first else {
+            return AnalyticsSummary(scoreText: "--",
+                                    scoreVerdict: "NO DATA",
+                                    coachingTarget: "Adjust filters to review saved sessions.",
+                                    trendPoints: [0, 0],
+                                    trendLabels: ["S1", "S2"],
+                                    trendA11y: "No matching sessions",
+                                    shotsText: "0",
+                                    makesText: "0",
+                                    accuracyText: "--",
+                                    deltaText: "—",
+                                    deltaCaption: "VS PREVIOUS SESSION",
+                                    deltaColor: ShotIQColor.analysisBlue)
+        }
+        let totalShots = visible.reduce(0) { $0 + $1.shots }
+        let totalMakes = visible.reduce(0) { $0 + $1.makes }
+        let accuracy = totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100)
+        let points = visible.reversed().map { Double($0.score) }
+        let trendPoints = points.count == 1 ? [points[0], points[0]] : points
+        let labels = (1...trendPoints.count).map { "S\($0)" }
+        let previous = visible.dropFirst().first
+        let delta = previous.map { Self.signedScore(latest.score - $0.score) } ?? latest.delta
+        let presentation = app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+        return AnalyticsSummary(scoreText: "\(latest.score)",
+                                scoreVerdict: latest.score >= 85 ? "GREAT" : latest.score >= 70 ? "GOOD" : "BUILDING",
+                                coachingTarget: presentation?.coachingTarget ?? "Keep elbow stacked through release.",
+                                trendPoints: trendPoints,
+                                trendLabels: labels,
+                                trendA11y: "Form Score \(trendPoints.map { String(Int($0)) }.joined(separator: " to "))",
+                                shotsText: "\(totalShots)",
+                                makesText: "\(totalMakes)",
+                                accuracyText: accuracy,
+                                deltaText: delta,
+                                deltaCaption: "VS PREVIOUS SESSION",
+                                deltaColor: latest.deltaColor)
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analytics-cards") {
             ScrollView {
@@ -1752,23 +1865,25 @@ struct AnalyticsCardsView: View {   // 066
                             Text("AI ANALYSIS HISTORY").shotiqDisplay(30)
                             Spacer(minLength: 6)
                             filterChip("calendar", timeRange) { showTimePicker = true }
+                                .accessibilityIdentifier("analytics-cards-time-filter")
                             filterChip("slider.horizontal.3", mediaFilter) { showMediaPicker = true }
+                                .accessibilityIdentifier("analytics-cards-media-filter")
                         }
                         .padding(.top, 16)
                         .confirmationDialog("Time range", isPresented: $showTimePicker, titleVisibility: .visible) {
-                            ForEach(["All time", "Last 30 days", "Last 7 days"], id: \.self) { r in
-                                Button(r) {
-                                    timeRange = r
-                                    toast = .success("Filter applied", "Showing \(r.lowercased()) analysis.")
+                            ForEach(["All time", "Last 30 days", "Last 7 days"], id: \.self) { range in
+                                Button(range) {
+                                    timeRange = range
+                                    toast = .success("Filter applied", "Showing \(range.lowercased()) analysis.")
                                 }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
                         .confirmationDialog("Media type", isPresented: $showMediaPicker, titleVisibility: .visible) {
-                            ForEach(["All media", "Video", "Photo", "Live"], id: \.self) { k in
-                                Button(k) {
-                                    mediaFilter = k
-                                    toast = .success("Media filter applied", "\(filteredSessions.count) sessions visible.")
+                            ForEach(["All media", "Video", "Photo", "Live"], id: \.self) { media in
+                                Button(media) {
+                                    mediaFilter = media
+                                    toast = .success("Media filter applied", "\(filteredCount(for: media)) sessions visible.")
                                 }
                             }
                             Button("Cancel", role: .cancel) {}
@@ -1779,30 +1894,39 @@ struct AnalyticsCardsView: View {   // 066
                                 HStack(alignment: .top, spacing: 10) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                            Text("82").font(.custom("Tungsten-Medium", size: 44))
+                                            Text(summary.scoreText).font(.custom("Tungsten-Medium", size: 44))
                                                 .foregroundStyle(ShotIQColor.shotiqOrange)
-                                            Text("GOOD").shotiqBody(12, weight: .bold)
+                                                .accessibilityIdentifier("analytics-cards-summary-score")
+                                            Text(summary.scoreVerdict).shotiqBody(12, weight: .bold)
                                                 .foregroundStyle(ShotIQColor.analysisBlue)
+                                                .accessibilityIdentifier("analytics-cards-summary-verdict")
                                         }
-                                        Text("Keep elbow stacked through release.")
+                                        Text(summary.coachingTarget)
                                             .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                             .fixedSize(horizontal: false, vertical: true)
+                                            .accessibilityIdentifier("analytics-cards-summary-target")
                                     }
                                     .frame(width: 108, alignment: .leading)
-                                    DottedTrend(points: [68, 72, 76, 79, 80, 82],
-                                                labels: ["APR 26", "MAY 2", "MAY 8", "MAY 14", "MAY 20", "TODAY"])
+                                    DottedTrend(points: summary.trendPoints, labels: summary.trendLabels)
                                         .frame(height: 108)
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityIdentifier("analytics-cards-trend")
+                                        .accessibilityLabel(summary.trendA11y)
                                 }
                                 PhaseStrip()
                                 HRule()
                                 HStack(spacing: 0) {
-                                    trendStat("24", "SHOTS", ShotIQColor.ink)
+                                    trendStat(summary.shotsText, "SHOTS", ShotIQColor.ink)
+                                        .accessibilityIdentifier("analytics-cards-total-shots")
                                     VRule(height: 38)
-                                    trendStat("15", "MAKES", ShotIQColor.ink)
+                                    trendStat(summary.makesText, "MAKES", ShotIQColor.ink)
+                                        .accessibilityIdentifier("analytics-cards-total-makes")
                                     VRule(height: 38)
-                                    trendStat("62.5%", "ACCURACY", ShotIQColor.ink)
+                                    trendStat(summary.accuracyText, "ACCURACY", ShotIQColor.ink)
+                                        .accessibilityIdentifier("analytics-cards-total-accuracy")
                                     VRule(height: 38)
-                                    trendStat("+8.1%", "VS PREVIOUS 30 DAYS", ShotIQColor.confirmGreen)
+                                    trendStat(summary.deltaText, summary.deltaCaption, summary.deltaColor)
+                                        .accessibilityIdentifier("analytics-cards-total-delta")
                                 }
                             }
                             .padding(14)
@@ -1818,6 +1942,7 @@ struct AnalyticsCardsView: View {   // 066
                                 }
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
+                            .accessibilityIdentifier("analytics-cards-view-all")
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 22)
@@ -1825,9 +1950,10 @@ struct AnalyticsCardsView: View {   // 066
                             Text("No sessions match these filters.")
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                 .frame(maxWidth: .infinity).padding(.vertical, 30)
+                                .accessibilityIdentifier("analytics-cards-empty")
                         }
-                        ForEach(filteredSessions) { s in
-                            sessionCard(s).padding(.top, 12)
+                        ForEach(Array(filteredSessions.enumerated()), id: \.element.id) { index, session in
+                            sessionCard(session, index: index).padding(.top, 12)
                         }
                         Spacer(minLength: 30)
                     }
@@ -1837,6 +1963,22 @@ struct AnalyticsCardsView: View {   // 066
         }
         .shotiqToast($toast)
     }
+
+    private func sessionMatches(_ session: AnalysisSession, media: String, range: String) -> Bool {
+        let inRange: Bool
+        switch range {
+        case "Last 7 days": inRange = session.daysAgo <= 7
+        case "Last 30 days": inRange = session.daysAgo <= 30
+        default: inRange = true
+        }
+        let kindOK = media == "All media" || session.kind == media
+        return inRange && kindOK
+    }
+
+    private func filteredCount(for selectedMedia: String) -> Int {
+        sessions.filter { sessionMatches($0, media: selectedMedia, range: timeRange) }.count
+    }
+
     private func filterChip(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
@@ -1850,6 +1992,7 @@ struct AnalyticsCardsView: View {   // 066
             .foregroundStyle(ShotIQColor.ink)
         }
     }
+
     private func trendStat(_ value: String, _ label: String, _ color: Color) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(color)
@@ -1860,26 +2003,28 @@ struct AnalyticsCardsView: View {   // 066
         }
         .frame(maxWidth: .infinity)
     }
-    private func sessionCard(_ s: AnalysisSession) -> some View {
+
+    private func sessionCard(_ session: AnalysisSession, index: Int) -> some View {
         ShotIQCard {
             HStack(alignment: .top, spacing: 0) {
-                PhotoThumb(width: 112, height: 186, photo: sessionPhotos[s.name])
+                PhotoThumb(width: 112, height: 186, photo: sessionPhotos[session.name] ?? "066-visual-001")
                     .overlay(alignment: .bottomLeading) {
-                        Text("\(s.score)").font(.custom("Tungsten-Medium", size: 24))
+                        Text("\(session.score)").font(.custom("Tungsten-Medium", size: 24))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                             .padding(8)
+                            .accessibilityIdentifier("analytics-card-session-\(index)-score")
                     }
                     .overlay(alignment: .bottomTrailing) {
-                        Ring(pct: Double(s.score) / 100, color: ShotIQColor.shotiqOrange, lineWidth: 5)
+                        Ring(pct: Double(session.score) / 100, color: ShotIQColor.shotiqOrange, lineWidth: 5)
                             .frame(width: 40, height: 40)
                             .padding(8)
                     }
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text(s.date).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                        Text(session.date).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                         Spacer()
                         Menu {
-                            ShareLink(item: "\(s.name) on ShotIQ — \(s.makes)/\(s.shots) makes (\(s.acc)), form score \(s.score). 🏀") {
+                            ShareLink(item: session.shareText) {
                                 Label("Share session", systemImage: "square.and.arrow.up")
                             }
                         } label: {
@@ -1887,32 +2032,39 @@ struct AnalyticsCardsView: View {   // 066
                                 .foregroundStyle(ShotIQColor.graphite)
                                 .frame(width: 32, height: 24, alignment: .trailing)
                         }
+                        .accessibilityIdentifier("analytics-card-session-\(index)-share")
+                        .accessibilityLabel(session.shareText)
                     }
-                    Text(s.name).shotiqBody(18, weight: .bold)
+                    Text(session.name).shotiqBody(18, weight: .bold)
                         .lineLimit(1).minimumScaleFactor(0.8)
+                        .accessibilityIdentifier("analytics-card-session-\(index)-name")
                     HStack(spacing: 14) {
-                        sessionStat("\(s.shots)", "SHOTS")
-                        sessionStat("\(s.makes)", "MAKES")
-                        sessionStat(s.acc, "ACCURACY")
+                        sessionStat("\(session.shots)", "SHOTS")
+                            .accessibilityIdentifier("analytics-card-session-\(index)-shots")
+                        sessionStat("\(session.makes)", "MAKES")
+                            .accessibilityIdentifier("analytics-card-session-\(index)-makes")
+                        sessionStat(session.acc, "ACCURACY")
+                            .accessibilityIdentifier("analytics-card-session-\(index)-accuracy")
                     }
                     HStack(spacing: 7) {
-                        ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                            PhaseGlyph(phase: p, active: p == "RELEASE", size: 15)
+                        ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { phase in
+                            PhaseGlyph(phase: phase, active: phase == "RELEASE", size: 15)
                         }
                     }
                     HStack(alignment: .bottom) {
                         VStack(spacing: 1) {
-                            Text(s.delta).font(.custom("Tungsten-Medium", size: 20))
-                                .foregroundStyle(s.deltaColor)
-                            Text(s.deltaLabel).shotiqBody(7, weight: .bold).kerning(0.3)
-                                .foregroundStyle(s.deltaColor)
+                            Text(session.delta).font(.custom("Tungsten-Medium", size: 20))
+                                .foregroundStyle(session.deltaColor)
+                                .accessibilityIdentifier("analytics-card-session-\(index)-delta")
+                            Text(session.deltaLabel).shotiqBody(7, weight: .bold).kerning(0.3)
+                                .foregroundStyle(session.deltaColor)
                                 .lineLimit(1).minimumScaleFactor(0.7)
                         }
                         .frame(width: 84)
                         .padding(.vertical, 7)
-                        .background(s.deltaColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                        .background(session.deltaColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                         Spacer(minLength: 6)
-                        NavigationLink { AnalyticsDetailedView(metric: s.name) } label: {
+                        NavigationLink { AnalyticsDetailedView(metric: session.name) } label: {
                             HStack(spacing: 4) {
                                 Text("Open session").shotiqBody(12, weight: .semibold)
                                 Image(systemName: "chevron.right").font(.system(size: 9))
@@ -1921,12 +2073,14 @@ struct AnalyticsCardsView: View {   // 066
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 7))
                             .foregroundStyle(.white)
                         }
+                        .accessibilityIdentifier("analytics-card-session-\(index)-open")
                     }
                 }
                 .padding(12)
             }
         }
     }
+
     private func sessionStat(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value).font(.custom("Tungsten-Medium", size: 18))
@@ -1934,6 +2088,17 @@ struct AnalyticsCardsView: View {   // 066
             Text(label).shotiqBody(7, weight: .medium).kerning(0.3)
                 .foregroundStyle(ShotIQColor.graphite)
         }
+    }
+
+    private static func signedScore(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : value < 0 ? "\(value)" : "—"
+    }
+
+    private static func sessionDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "'Today at' h:mm a" : "MMM d 'at' h:mm a"
+        return formatter.string(from: date)
     }
 }
 

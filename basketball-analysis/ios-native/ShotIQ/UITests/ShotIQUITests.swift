@@ -1387,7 +1387,8 @@ final class ShotIQUITests: XCTestCase {
     }
 
     func testAnalyticsCardsImageSurfacesWork() throws {
-        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "analytics-cards"])
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "analytics-cards"])
         XCTAssertTrue(screen("screen-ios-analytics-cards").waitForExistence(timeout: 8))
         assertVisible("All time")
         assertVisible("All media")
@@ -1398,6 +1399,60 @@ final class ShotIQUITests: XCTestCase {
             assertVisible(item)
         }
 
+    }
+
+    func testAnalyticsCardsUseWorkoutHistoryFiltersAndShareValues() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "analytics-cards"])
+        XCTAssertTrue(screen("screen-ios-analytics-cards").waitForExistence(timeout: 8))
+        assertElement(id: "analytics-cards-summary-score", contains: "99")
+        assertElement(id: "analytics-cards-summary-verdict", contains: "GREAT")
+        assertElement(id: "analytics-cards-summary-target", contains: "Stack elbow higher")
+        assertElement(id: "analytics-cards-trend", contains: "Form Score 70 to 99")
+        assertElement(id: "analytics-cards-total-shots", contains: "6")
+        assertElement(id: "analytics-cards-total-makes", contains: "5")
+        assertElement(id: "analytics-cards-total-accuracy", contains: "83.3%")
+        assertElement(id: "analytics-cards-total-delta", contains: "+29")
+        assertVisibleElement(id: "analytics-card-session-0-name", contains: "Shot Tracker Session", maxSwipes: 2)
+        assertVisibleElement(id: "analytics-card-session-0-shots", contains: "3", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-card-session-0-makes", contains: "3", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-card-session-0-accuracy", contains: "100.0%", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-card-session-0-score", contains: "99", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-card-session-0-delta", contains: "+29", maxSwipes: 1)
+        assertVisibleElement(id: "analytics-card-session-0-share", contains: "3/3 makes (100.0%), form score 99", maxSwipes: 1)
+
+        tapButton(id: "analytics-cards-media-filter")
+        tapDialogOption("Live")
+        XCTAssertTrue(waitForToastContaining("2 sessions visible"))
+        assertVisibleElement(id: "analytics-card-session-1-accuracy", contains: "66.7%", maxSwipes: 3)
+
+        tapButton(id: "analytics-cards-media-filter")
+        tapDialogOption("Photo")
+        XCTAssertTrue(waitForToastContaining("0 sessions visible"))
+        assertVisibleElement(id: "analytics-cards-empty", contains: "No sessions match", maxSwipes: 2)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "analytics-cards"])
+        XCTAssertTrue(screen("screen-ios-analytics-cards").waitForExistence(timeout: 8))
+        tapButton(id: "analytics-card-session-0-open")
+        XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
     }
 
     func testAnalyticsDetailedImageSurfacesWork() throws {

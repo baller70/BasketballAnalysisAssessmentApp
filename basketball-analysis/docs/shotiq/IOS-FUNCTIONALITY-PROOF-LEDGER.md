@@ -156,7 +156,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G055 | VERIFYING | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal cards now derive sessions, average form score, make percentage, trend endpoint, recent session row, and insight copy from locally completed workout history when present, while preserving the canonical sample only for demo/no-history launches. Focused simulator proof creates a Shot Tracker workout and verifies the Goals card shows `1` session, form `70`, make `66.7%`, recent `Shot Tracker Session`, trend toggle, insights, and related routes. Backend workout reload and iOS/web parity remain before `DONE`. |
 | G056 | VERIFYING | P1 | `#backend` `#analytics` | 064 | Created goals affect recommendations/analytics. | Create Goal now gives progress/success feedback, persists a locally created goal, refreshes the Goals list/detail, and feeds the latest created goal into Training Home and Quick Start context. Backend goal reload, analytics aggregates, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G057 | VERIFYING | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Goal Detail now resolves linked sessions, trend endpoint, elbow angle, form score, and release offset from saved local workout/analysis records when present, while preserving the canonical demo-only static sample for screenshot parity. Focused UI proof creates a real shot-tracker session, seeds weak analysis, verifies the screen shows 3 shots, 66.7% make rate, 70% goal score, 118° elbow, 150°–180° target range, +14° release offset, and opens Analytics Detail from the linked session. Add Drill now has its own progress/success feedback path separate from opening the drill. Backend reload, physical-device proof, and iOS/web parity remain before `DONE`. |
-| G058 | OPEN | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | API seed changes cards, trends, share values, and deltas exactly. |
+| G058 | VERIFYING | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | Analytics Cards now derive the summary score/verdict/target, trend, total shots/makes/accuracy, latest-session delta, session cards, share text, media filter counts, empty state, and Open Session route from completed Shot Tracker history when present, while preserving the canonical demo summary and sample cards for no-history screenshot parity. Focused UI proof creates two real shot-tracker sessions and verifies `99` score, `GREAT`, `Stack elbow higher`, `6` shots, `5` makes, `83.3%`, `+29`, latest session `3/3`, share text, Live/Photo filter toasts, empty state, and Analytics Detail navigation. Backend reload/API parity, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G059 | OPEN | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Range/filter changes recompute rows, confidence, trends, and phase values. |
 | G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. Backend reload/web-library proof remains before `DONE`. |
 | G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target context, suppresses fake sample shot-event stats for real selected media, and opens the linked saved analysis. Real backend playback/share/delete and web parity remain before `DONE`. |
@@ -2978,3 +2978,67 @@ navigation with local completed workout history and latest saved analysis
 state. It does not yet prove backend workout/analysis reload, physical-device
 behavior, or iOS/web parity; those remain required before G057 can move to
 `DONE`.
+
+### 2026-08-08 Analytics Cards Workout-History Proof
+
+Implementation:
+
+- Screen 066 Analytics Cards now reads completed Shot Tracker sessions from
+  `TrainingWorkoutStore` when history exists, and derives its summary card,
+  trend accessibility label, total shots/makes/accuracy, latest-session delta,
+  session rows, and share text from those records.
+- The no-history/demo path keeps the canonical score `82`, `GOOD`, `24`
+  shots, `15` makes, `62.5%`, `+8.1%`, date labels, and four sample sessions
+  unchanged so screenshot captures are not polluted by the real-data branch.
+- Media filtering now reports the count for the newly selected media type,
+  not the previous filter state, and exposes customer-visible toasts plus a
+  deterministic empty state.
+- Stable accessibility identifiers were added for summary values, filters,
+  session stats/share/open controls, and the empty state so future tests can
+  assert the feature directly instead of searching generic visible text.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-analytics-cards-live-20260808-2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testAnalyticsCardsUseWorkoutHistoryFiltersAndShareValues`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It created a 2/3 Shot Tracker session and a 3/3 Shot Tracker
+  session, relaunched Analytics Cards with weak analysis seeded, and verified
+  `99`, `GREAT`, `Stack elbow higher`, trend label `Form Score 70 to 99`, `6`
+  total shots, `5` makes, `83.3%`, `+29`, latest card `Shot Tracker Session`,
+  `3` shots, `3` makes, `100.0%`, score `99`, delta `+29`, share copy
+  containing `3/3 makes (100.0%), form score 99`, Live filter toast `2
+  sessions visible`, Photo filter toast `0 sessions visible`, empty state, and
+  Open Session navigation to Analytics Detail.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-analytics-cards-image-20260808-2.xcresult`
+  ran `ShotIQUITests/ShotIQUITests/testAnalyticsCardsImageSurfacesWork`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`, re-proving the canonical no-history demo values and image-backed
+  session cards. The test now resets workout history before launch so focused
+  real-data proofs cannot contaminate canonical/demo assertions.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-analytics-cards-canonical-20260808-1.xcresult`
+  ran `ShotIQUITests/CanonicalScreenshotTests/test07ProgressAndProfileScreens`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`, and captured Analytics Cards, Analytics Detailed, Profile, Player
+  Card, Customize Player Card, My Media, Goals, Create Goal, Goal Detail,
+  Settings, and Share Results through the production-style tab/navigation path.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-analytics-cards-regression-20260808-1.xcresult`
+  mixed the Analytics Cards image proof with the canonical progress/profile
+  capture and hit the known first Progress tab timing issue; the Analytics
+  Cards image test passed in that bundle, and the canonical path was rerun
+  isolated above.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-analytics-cards-image-20260808-1.xcresult`
+  failed because the old image-surface regression inherited the focused test's
+  saved workout history and therefore correctly rendered the real score `99`
+  instead of the no-history demo score `82`. The test launch now resets
+  training workouts before checking canonical/demo content.
+
+Remaining limitations: this proves screen 066 in simulator production
+navigation with local completed workout history and latest saved analysis
+state. It does not yet prove backend workout/analysis-history reload,
+physical-device behavior, or iOS/web parity; those remain required before G058
+can move to `DONE`.
