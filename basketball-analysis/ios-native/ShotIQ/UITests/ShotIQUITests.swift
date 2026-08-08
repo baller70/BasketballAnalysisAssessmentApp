@@ -472,6 +472,46 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
     }
 
+    func testCreateGoalPersistsIntoGoalsListAndTrainingContext() throws {
+        let title = "Raise corner make rate"
+        let goalId = "local-goal-raise-corner-make-rate"
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetCreatedGoals",
+                "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        tapButton(id: "goals-create-goal")
+        XCTAssertTrue(screen("screen-ios-create-goal").waitForExistence(timeout: 8))
+
+        let titleField = app.textFields["create-goal-title-field"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 3))
+        titleField.tap()
+        titleField.typeText(title)
+        dismissKeyboardIfPresent()
+
+        tapButton(id: "create-goal-submit")
+        XCTAssertTrue(waitForToastContaining("Creating goal"))
+        XCTAssertTrue(waitForToastContaining("Goal created", timeout: 6))
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        assertVisible(title)
+        assertElement(id: "goals-progress-\(goalId)", contains: "0%")
+
+        tapExactControl(title)
+        XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
+        assertVisible(title)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        assertVisible(title)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
+        assertStaticText(id: "training-home-target", contains: title)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "quick-start"])
+        XCTAssertTrue(screen("screen-ios-quick-start").waitForExistence(timeout: 8))
+        assertElement(id: "quick-start-context", contains: title)
+    }
+
     func testDrillDetailUsesLatestAnalysisPlanAndControls() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
                 "-uiTestResetTrainingDrills", "-uiTestStage", "drill-detail"])

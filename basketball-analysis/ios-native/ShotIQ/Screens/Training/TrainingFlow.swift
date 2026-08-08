@@ -280,12 +280,14 @@ struct TrainingHomeData {
 
     static func resolve(latestAnalysis: ShotIQAnalysisResultDTO?,
                         completedWorkoutsPayload: String,
-                        savedDrillsPayload: String) -> TrainingHomeData {
+                        savedDrillsPayload: String,
+                        createdGoalsPayload: String = "") -> TrainingHomeData {
         let presentation = latestAnalysis.map(AnalysisResultPresentation.init(result:))
             ?? (UITestHooks.demoData ? .canonicalDemo : .noResult)
         let latestWorkout = TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
-        let canonicalDemo = latestAnalysis == nil && latestWorkout == nil && UITestHooks.demoData
-        let target = presentation.coachingTarget
+        let latestGoal = CreatedGoalStore.latest(in: createdGoalsPayload)
+        let canonicalDemo = latestAnalysis == nil && latestWorkout == nil && latestGoal == nil && UITestHooks.demoData
+        let target = latestGoal?.name ?? presentation.coachingTarget
         let stored = TrainingSavedDrillStore.decode(savedDrillsPayload).map {
             TrainingHomeDrillRow(title: $0.name,
                                  tags: [$0.duration, "Form Focus", $0.difficulty],
@@ -369,12 +371,14 @@ struct QuickStartData {
     var drillName: String
 
     static func resolve(latestAnalysis: ShotIQAnalysisResultDTO?,
-                        completedWorkoutsPayload: String) -> QuickStartData {
+                        completedWorkoutsPayload: String,
+                        createdGoalsPayload: String = "") -> QuickStartData {
         let presentation = latestAnalysis.map(AnalysisResultPresentation.init(result:))
             ?? (UITestHooks.demoData ? .canonicalDemo : .noResult)
         let latestWorkout = TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
-        let canonicalDemo = latestAnalysis == nil && latestWorkout == nil && UITestHooks.demoData
-        let target = presentation.coachingTarget
+        let latestGoal = CreatedGoalStore.latest(in: createdGoalsPayload)
+        let canonicalDemo = latestAnalysis == nil && latestWorkout == nil && latestGoal == nil && UITestHooks.demoData
+        let target = latestGoal?.name ?? presentation.coachingTarget
         if canonicalDemo {
             return QuickStartData(
                 target: target,
@@ -435,10 +439,12 @@ struct TrainingHomeView: View {     // 054
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     private var homeData: TrainingHomeData {
         TrainingHomeData.resolve(latestAnalysis: app.recentMedia.first?.analysis,
                                  completedWorkoutsPayload: completedWorkoutsPayload,
-                                 savedDrillsPayload: savedDrillsPayload)
+                                 savedDrillsPayload: savedDrillsPayload,
+                                 createdGoalsPayload: createdGoalsPayload)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-training-home") {
@@ -621,12 +627,14 @@ struct TrainingHomeView: View {     // 054
 struct QuickStartView: View {       // 055
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var shotTarget = 24
     @State private var makeTarget = 15
     @State private var targetsSeeded = false
     private var quickData: QuickStartData {
         QuickStartData.resolve(latestAnalysis: app.recentMedia.first?.analysis,
-                               completedWorkoutsPayload: completedWorkoutsPayload)
+                               completedWorkoutsPayload: completedWorkoutsPayload,
+                               createdGoalsPayload: createdGoalsPayload)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-quick-start") {

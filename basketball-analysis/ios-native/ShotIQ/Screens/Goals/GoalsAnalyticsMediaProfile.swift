@@ -25,29 +25,74 @@ struct GoalRecord: Codable, Identifiable {
     }
 }
 
+enum CreatedGoalStore {
+    static let key = "shotiq.goals.created.v1"
+
+    static func decode(_ payload: String) -> [GoalRecord] {
+        guard let data = payload.data(using: .utf8),
+              let goals = try? JSONDecoder().decode([GoalRecord].self, from: data) else {
+            return []
+        }
+        return goals
+    }
+
+    static func stored() -> [GoalRecord] {
+        decode(UserDefaults.standard.string(forKey: key) ?? "")
+    }
+
+    static func encode(_ goals: [GoalRecord]) -> String {
+        guard let data = try? JSONEncoder().encode(goals) else { return "[]" }
+        return String(data: data, encoding: .utf8) ?? "[]"
+    }
+
+    static func append(_ goal: GoalRecord, to payload: String) -> String {
+        var goals = decode(payload).filter {
+            $0.id != goal.id && $0.name.localizedCaseInsensitiveCompare(goal.name) != .orderedSame
+        }
+        goals.insert(goal, at: 0)
+        return encode(goals)
+    }
+
+    static func latest(in payload: String) -> GoalRecord? {
+        decode(payload).first { $0.completedAt == nil }
+    }
+}
+
 @MainActor
 final class GoalsViewModel: ObservableObject {
     @Published var goals: [GoalRecord] = []
     @Published var loading = true
     @Published var loadError: String?
 
-    func load() async {
+    func load(localGoals: [GoalRecord] = []) async {
         loading = true
         loadError = nil
         defer { loading = false }
 
         if UITestHooks.demoData {
-            goals = Self.samples
+            goals = Self.merged(localGoals, with: Self.samples)
             return
         }
 
         struct Resp: Codable { var goals: [GoalRecord]? }
         do {
             let r: Resp = try await APIClient.shared.call("/api/goals")
-            goals = r.goals ?? []
+            goals = Self.merged(localGoals, with: r.goals ?? [])
         } catch {
-            goals = []
-            loadError = "Goals could not load. Check your connection and try again."
+            goals = localGoals
+            loadError = localGoals.isEmpty ? "Goals could not load. Check your connection and try again." : nil
+        }
+    }
+
+    private static func merged(_ localGoals: [GoalRecord], with remoteGoals: [GoalRecord]) -> [GoalRecord] {
+        var seenIds: Set<String> = []
+        var seenNames: Set<String> = []
+        return (localGoals + remoteGoals).filter { goal in
+            let nameKey = goal.name.lowercased()
+            guard !seenIds.contains(goal.id), !seenNames.contains(nameKey) else { return false }
+            seenIds.insert(goal.id)
+            seenNames.insert(nameKey)
+            return true
         }
     }
 
@@ -234,12 +279,16 @@ struct GoalsView: View {            // 063
 
     @StateObject private var vm = GoalsViewModel()
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var tab = 0
     @State private var trendMetric = "Form Score"
     @State private var insightsExpanded: Set<String> = []
     @State private var route: GoalsRoute?
     private var completedWorkouts: [TrainingWorkoutRecord] {
         TrainingWorkoutStore.decode(completedWorkoutsPayload)
+    }
+    private var createdGoals: [GoalRecord] {
+        CreatedGoalStore.decode(createdGoalsPayload)
     }
     private var goalStats: GoalCardStats {
         if !completedWorkouts.isEmpty { return .live(from: completedWorkouts) }
@@ -269,7 +318,7 @@ struct GoalsView: View {            // 063
                                 .accessibilityIdentifier("goals-player-card-link")
                             }
                             .padding(.top, 16)
-                            NavigationLink { CreateGoalView(onCreated: { await vm.load() }) } label: {
+                            NavigationLink { CreateGoalView(onCreated: { await vm.load(localGoals: CreatedGoalStore.stored()) }) } label: {
                                 HStack(spacing: 10) {
                                     ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
                                                              size: 18,
@@ -333,7 +382,7 @@ struct GoalsView: View {            // 063
                 }
             }
         }
-        .task { await vm.load() }
+        .task { await vm.load(localGoals: createdGoals) }
         .navigationDestination(item: $route) { route in
             switch route {
             case .analyticsCards:
@@ -651,6 +700,7 @@ struct GoalsView: View {            // 063
 struct CreateGoalView: View {       // 064
     var onCreated: (() async -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var title = ""
     @State private var desc = "Maintain a stacked elbow on every rep from rise through release to build repeatable form."
     @State private var category = "Form"
@@ -673,6 +723,7 @@ struct CreateGoalView: View {       // 064
         var xpReward: Int
     }
     private struct CreateGoalResp: Codable { var success: Bool }
+    private struct GoalCreationFailed: Error {}
 
     private func createGoal() {
         guard !busy else { return }
@@ -686,17 +737,24 @@ struct CreateGoalView: View {       // 064
         toast = .progress("Creating goal", "Saving your target and XP reward.", progress: 0.45)
         Task {
             do {
-                let _: CreateGoalResp = try await APIClient.shared.call(
-                    "/api/goals", method: "POST",
-                    body: CreateGoalBody(name: cleanTitle,
-                                         description: desc,
-                                         category: category.lowercased(),
-                                         unit: unit.lowercased(),
-                                         targetValue: Int(target),
-                                         xpReward: 150))
+                let savedGoal = localGoal(named: cleanTitle)
+                if UITestHooks.demoData {
+                    try? await Task.sleep(nanoseconds: 900_000_000)
+                } else {
+                    let response: CreateGoalResp = try await APIClient.shared.call(
+                        "/api/goals", method: "POST",
+                        body: CreateGoalBody(name: cleanTitle,
+                                             description: desc,
+                                             category: category.lowercased(),
+                                             unit: unit.lowercased(),
+                                             targetValue: Int(target),
+                                             xpReward: 150))
+                    guard response.success else { throw GoalCreationFailed() }
+                }
+                createdGoalsPayload = CreatedGoalStore.append(savedGoal, to: createdGoalsPayload)
                 toast = .success("Goal created", "Your goal list is refreshing now.")
                 await onCreated?()
-                try? await Task.sleep(nanoseconds: 650_000_000)
+                try? await Task.sleep(nanoseconds: 900_000_000)
                 dismiss()
             } catch {
                 errorText = "Couldn't create the goal. Check your connection and try again."
@@ -704,6 +762,22 @@ struct CreateGoalView: View {       // 064
             }
             busy = false
         }
+    }
+
+    private func localGoal(named cleanTitle: String) -> GoalRecord {
+        let slug = cleanTitle.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+        let cleanDescription = desc.trimmingCharacters(in: .whitespacesAndNewlines)
+        return GoalRecord(id: "local-goal-\(slug.isEmpty ? "target" : slug)",
+                          name: cleanTitle,
+                          description: cleanDescription.isEmpty ? linkedTarget : cleanDescription,
+                          targetValue: Int(target),
+                          currentValue: 0,
+                          unit: unit.lowercased(),
+                          category: category.lowercased(),
+                          xpReward: 150)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-create-goal") {
@@ -736,7 +810,9 @@ struct CreateGoalView: View {       // 064
                         HStack {
                             TextField("e.g. Keep elbow stacked through release", text: $title)
                                 .shotiqBody(15)
+                                .accessibilityIdentifier("create-goal-title-field")
                             Text("\(title.count)").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("create-goal-title-count")
                         }
                         .padding(.horizontal, 14).frame(height: 52)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -745,7 +821,9 @@ struct CreateGoalView: View {       // 064
                         HStack(alignment: .bottom) {
                             TextField("Describe the goal", text: $desc, axis: .vertical)
                                 .shotiqBody(15).lineLimit(3...5)
+                                .accessibilityIdentifier("create-goal-description-field")
                             Text("\(desc.count)").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("create-goal-description-count")
                         }
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -777,6 +855,7 @@ struct CreateGoalView: View {       // 064
                             .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("create-goal-target-picker")
                         .confirmationDialog("Link a coaching target", isPresented: $showTargetPicker,
                                             titleVisibility: .visible) {
                             ForEach(["Keep elbow stacked through release",
@@ -802,6 +881,7 @@ struct CreateGoalView: View {       // 064
                                     Text("\(Int(target))").font(.custom("Tungsten-Medium", size: 24))
                                         .frame(width: 58, height: 42)
                                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                        .accessibilityIdentifier("create-goal-target-value")
                                     Text("%").shotiqBody(13, weight: .semibold)
                                     Text("of reps").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -811,6 +891,7 @@ struct CreateGoalView: View {       // 064
                         .padding(.top, 18)
                         Slider(value: $target, in: 40...100, step: 1)
                             .tint(ShotIQColor.shotiqOrange)
+                            .accessibilityIdentifier("create-goal-target-slider")
                             .padding(.top, 8)
                         HStack(alignment: .top, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
@@ -864,8 +945,10 @@ struct CreateGoalView: View {       // 064
                                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                                     .foregroundStyle(ShotIQColor.ink)
                             }
+                            .accessibilityIdentifier("create-goal-cancel")
                             PrimaryButton(title: busy ? "Creating…" : "Create goal") { createGoal() }
-                                .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || busy)
+                                .disabled(busy)
+                                .accessibilityIdentifier("create-goal-submit")
                         }
                         .padding(.vertical, 22)
                     }
@@ -888,6 +971,7 @@ struct CreateGoalView: View {       // 064
                         lineWidth: category == label ? 1.6 : 1))
             .foregroundStyle(category == label ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
         }
+        .accessibilityIdentifier("create-goal-category-\(label.lowercased())")
     }
     private func segments(_ options: [String], _ sel: Binding<String>) -> some View {
         HStack(spacing: 6) {
@@ -900,6 +984,7 @@ struct CreateGoalView: View {       // 064
                             .stroke(o == sel.wrappedValue ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                         .foregroundStyle(o == sel.wrappedValue ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                 }
+                .accessibilityIdentifier("create-goal-segment-\(o.lowercased())")
             }
         }
     }

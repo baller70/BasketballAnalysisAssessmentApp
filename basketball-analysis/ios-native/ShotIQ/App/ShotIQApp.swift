@@ -185,6 +185,10 @@ enum UITestHooks {
     /// shot-tracker tests. Normal launches never pass this flag.
     static var resetTrainingWorkouts: Bool { args.contains("-uiTestResetTrainingWorkouts") }
 
+    /// Clear locally persisted created-goal proof data before focused goals
+    /// tests. Normal launches never pass this flag.
+    static var resetCreatedGoals: Bool { args.contains("-uiTestResetCreatedGoals") }
+
     /// Expose route-only Goals proof buttons for focused functional coverage.
     /// Normal launches and canonical screenshot tests never pass this flag.
     static var goalsRouteProof: Bool { args.contains("-uiTestGoalsRouteProof") }
@@ -246,7 +250,7 @@ enum UITestHooks {
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
         useSampleMedia || historyFailure || analysisFailure || weakAnalysis || eliteShooterCatalog ||
-        resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || resetSettings || noMedia ||
+        resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || resetCreatedGoals || resetSettings || noMedia ||
         homeVariant != nil || stage != nil
     }
 
@@ -354,6 +358,9 @@ final class AppState: ObservableObject {
         }
         if UITestHooks.resetTrainingWorkouts {
             UserDefaults.standard.removeObject(forKey: "shotiq.training.completedWorkouts.v1")
+        }
+        if UITestHooks.resetCreatedGoals {
+            UserDefaults.standard.removeObject(forKey: CreatedGoalStore.key)
         }
         if UITestHooks.resetSettings {
             for key in ["notifications", "coachingAudio", "units", "autoAnalysis",

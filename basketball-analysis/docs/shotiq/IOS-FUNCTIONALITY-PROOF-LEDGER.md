@@ -138,8 +138,8 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| G045 | VERIFYING | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Training Home now derives its primary target and first recommendation from the latest saved analysis, shows empty-history placeholders instead of fake demo workout stats, and replaces the recent-workout card with locally persisted shot-tracker history after a completed session. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout/goal reload and web parity remain before `DONE`. |
-| G046 | VERIFYING | P1 | `#analytics` | 055 | Quick start values from current user data. | Quick Start now derives coaching target, score, target counts, workout note, and launch drill from latest saved analysis plus local workout history. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout reload, live training-plan mutations, physical-device proof, and web parity remain before `DONE`. |
+| G045 | VERIFYING | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Training Home now derives its primary target and first recommendation from the latest saved analysis, shows empty-history placeholders instead of fake demo workout stats, replaces the recent-workout card with locally persisted shot-tracker history after a completed session, and picks up the latest locally created goal as the coaching target. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout/goal reload and web parity remain before `DONE`. |
+| G046 | VERIFYING | P1 | `#analytics` | 055 | Quick start values from current user data. | Quick Start now derives coaching target, score, target counts, workout note, and launch drill from latest saved analysis plus local workout history, and it uses the latest locally created goal for the prefilled context when one exists. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout/goal reload, live training-plan mutations, physical-device proof, and web parity remain before `DONE`. |
 | G047 | VERIFYING | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Discover filters now prove `Beginner only` narrows to two drills; saving `STACK & SHOOT` uses a proper 44pt bookmark control, shows customer toast feedback, and persists locally after relaunch into My Drills. Backend/web sync remains before `DONE`. |
 | G048 | VERIFYING | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill Detail now derives score, level, duration, reps, build summary, coaching cue, mechanics, saved-drill metadata, and launch drill from the latest saved analysis plus selected drill. Focused UI proof and canonical training regression pass on the laptop simulator. Backend drill-plan reload, live goal/flaw mutations, physical-device proof, and web parity remain before `DONE`. |
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
@@ -154,7 +154,7 @@ The first pass should fix root causes before polishing dependent screens:
 | --- | --- | --- | --- | --- | --- | --- |
 | G054 | VERIFYING | P1 | `#backend` `#demo` | 063 | Remove fake fallback goals or label them. | Empty/failing production goal loads no longer silently show fake personal goals; the screen shows loading, empty, or unavailable states instead. Goal card media placeholders are fixed with bundled basketball imagery. Focused XCTest proves production `GoalsViewModel` does not start with sample progress, and canonical Goals now resets workout history so the intentional demo sample remains stable; still needs backend/web proof before `DONE`. |
 | G055 | VERIFYING | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal cards now derive sessions, average form score, make percentage, trend endpoint, recent session row, and insight copy from locally completed workout history when present, while preserving the canonical sample only for demo/no-history launches. Focused simulator proof creates a Shot Tracker workout and verifies the Goals card shows `1` session, form `70`, make `66.7%`, recent `Shot Tracker Session`, trend toggle, insights, and related routes. Backend workout reload and iOS/web parity remain before `DONE`. |
-| G056 | OPEN | P1 | `#backend` `#analytics` | 064 | Created goals affect recommendations/analytics. | New goal changes goals list and downstream training/analytics surfaces. |
+| G056 | VERIFYING | P1 | `#backend` `#analytics` | 064 | Created goals affect recommendations/analytics. | Create Goal now gives progress/success feedback, persists a locally created goal, refreshes the Goals list/detail, and feeds the latest created goal into Training Home and Quick Start context. Backend goal reload, analytics aggregates, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G057 | OPEN | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Linked sessions/trends/angles match saved workout and analysis records. |
 | G058 | OPEN | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | API seed changes cards, trends, share values, and deltas exactly. |
 | G059 | OPEN | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Range/filter changes recompute rows, confidence, trends, and phase values. |
@@ -2867,3 +2867,64 @@ Remaining limitations: this proves screen 063 consumes local completed workout
 history in simulator production navigation and keeps canonical demo behavior
 stable. It does not yet prove backend workout reload, physical-device behavior,
 or iOS/web parity; those remain required before G055 can move to `DONE`.
+
+### 2026-08-08 Create Goal Persistence/Training Context Proof
+
+Implementation:
+
+- Screen 064 Create Goal now writes successful created goals into a local
+  `CreatedGoalStore`, with deterministic IDs for duplicate-safe merging.
+  Demo/offline proof skips the network but still shows the same progress and
+  success feedback a customer sees while the app saves.
+- Goals now merges locally created goals ahead of remote/demo goals, refreshes
+  immediately after creation from the saved store, and keeps canonical demo
+  screenshots deterministic through `-uiTestResetCreatedGoals`.
+- Training Home and Quick Start now read the latest locally created goal and
+  use it as the current coaching target/context when no stronger saved analysis
+  or workout-derived state overrides it.
+- Create Goal controls gained stable accessibility identifiers for the title
+  field, target picker, category buttons, segments, target value/slider, cancel,
+  and submit controls so customer-facing feedback paths are directly provable.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-create-goal-persistence-20260808-3.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testCreateGoalPersistsIntoGoalsListAndTrainingContext`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It created `Raise corner make rate`, verified `Creating goal` and
+  `Goal created` toast/progress feedback, verified the new goal and `0%`
+  progress on Goals, opened Goal Detail for that created goal, relaunched Goals
+  to prove persistence, then relaunched Training Home and Quick Start to prove
+  both surfaces use `Raise corner make rate` as their current context.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-create-goal-regression-20260808-2.xcresult`
+  ran the existing secondary-control/dialog suite plus canonical progress
+  suite. `ShotIQUITests/ShotIQUITests/testSecondaryControlsShowFeedbackAndDialogs`
+  passed with `0 failures`, re-proving Create Goal category/type/unit controls,
+  target picker feedback, Learn How route, goal-detail dialogs, settings
+  feedback, share feedback, and media-detail action feedback. The same mixed
+  run's canonical method hit a simulator tab-selection timing failure at the
+  first Progress hop and was rerun isolated.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-create-goal-canonical-20260808-1.xcresult`
+  ran `ShotIQUITests/CanonicalScreenshotTests/test07ProgressAndProfileScreens`
+  by itself. The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with
+  0 failures`, and re-captured analytics, profile, player card, customize card,
+  my media, Goals, Create Goal, Goal Detail, Settings, and Share Results with
+  created-goal state reset.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-create-goal-persistence-20260808-1.xcresult`
+  proved the created goal and progress marker existed, but the test tried to tap
+  a nested SwiftUI `NavigationLink` identifier that was not exposed as a
+  hittable element. The proof now taps the visible created-goal title.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-create-goal-persistence-20260808-2.xcresult`
+  showed the progress toast was too brief for warm-build UI automation to catch
+  reliably. The Create Goal progress/success states were lengthened so the
+  feedback is observable.
+
+Remaining limitations: this proves screen 064 in simulator production
+navigation with local created-goal persistence and downstream Training Home /
+Quick Start context. It does not yet prove backend goal reload, analytics
+aggregate mutation, physical-device behavior, or iOS/web parity; those remain
+required before G056 can move to `DONE`.

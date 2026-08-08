@@ -29,7 +29,8 @@ final class CanonicalScreenshotTests: XCTestCase {
 
     /// Signed-in shell with deterministic offline data.
     private static let mainArgs = ["-uiTestBypassAuth", "-uiTestDemoData",
-                                   "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts"]
+                                   "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts",
+                                   "-uiTestResetCreatedGoals"]
 
     private var app: XCUIApplication!
     private var lastLaunchArguments: [String] = []
