@@ -15,7 +15,7 @@ import {
   ChevronLeft, ChevronDown, ArrowRight, Save, Info,
 } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { AbilityGlyph, ApprovedRasterIcon, HandChoiceGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
+import { AbilityGlyph, ApprovedRasterIcon, ConceptGlyph, HandChoiceGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 import { PlayerBio } from "@/components/shotiq/phone/PlayerBio"
@@ -42,9 +42,9 @@ const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 // Canonical gives each benefit its own figure — three poses that appear nowhere
 // else, cropped out of 078 rather than approximated.
 const BENEFITS: [string, string, string][] = [
-  ["Accurate feedback", "AI analysis calibrated to your body and style.", "078-benefit-1"],
-  ["Smarter training", "Drills and plans that target what moves your score.", "078-benefit-2"],
-  ["Track what matters", "See progress where it counts, session after session.", "078-benefit-3"],
+  ["Accurate feedback", "AI analysis calibrated to your body and style.", "analysis feedback"],
+  ["Smarter training", "Drills and plans that target what moves your score.", "training drills"],
+  ["Track what matters", "See progress where it counts, session after session.", "progress tracking"],
 ]
 // Canonical 078 opens the flow; steps 2-4 follow the iOS onboarding screens
 // this wizard shares a profile with (009 physical profile, 010 experience and
@@ -457,8 +457,10 @@ export default function OnboardingPage() {
                   return (
                     <button key={hnd} type="button" onClick={() => store.setDominantHand(hnd)} data-testid={`hand-${hnd}`}
                             aria-pressed={on}
-                            className={`flex h-[76px] flex-1 flex-col items-center justify-center gap-[4px] text-[14px] capitalize ${on ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
-                      <HandChoiceGlyph kind={hnd} size={44} />
+                            className={`flex h-[94px] flex-1 flex-col items-center justify-center gap-[6px] overflow-visible text-[15px] capitalize ${on ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
+                      <span className="grid h-[62px] place-items-center overflow-visible">
+                        <HandChoiceGlyph kind={hnd} size={60} />
+                      </span>
                       <span>{hnd}</span>
                     </button>
                   )
@@ -623,12 +625,12 @@ export default function OnboardingPage() {
                 return (
                   <button key={t} type="button" onClick={() => store.setAthleticAbility(val)}
                           data-testid={`ability-${t.toLowerCase()}`} aria-pressed={on}
-                          className={`h-[98px] rounded-[5px] border px-[12px] py-[9px] text-left ${
+                          className={`h-[124px] rounded-[5px] border px-[12px] py-[10px] text-left ${
                             on ? "border-[var(--shotiq-color-shotiqOrange)] bg-[#FFF7F4]" : "border-[var(--shotiq-color-rule)] bg-white"}`}>
-                    <div className="mb-[5px] flex h-[26px] items-center">
+                    <div className="mb-[8px] flex h-[46px] items-center">
                       <AbilityGlyph
                         kind={t === "DEVELOPING" ? "developing" : t === "ADVANCED" ? "advanced" : "elite"}
-                        size={27}
+                        size={46}
                       />
                     </div>
                     <div className={`shotiq-display text-[19px] leading-[21px] ${on ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{t}</div>
@@ -645,14 +647,14 @@ export default function OnboardingPage() {
                   return (
                     <button key={val} type="button" onClick={() => store.setShootingStyle(val)}
                             data-testid={`style-${val}`} aria-pressed={on}
-                            className={`h-[98px] rounded-[5px] border px-[12px] py-[9px] text-left ${
+                            className={`h-[124px] rounded-[5px] border px-[12px] py-[10px] text-left ${
                               on ? "border-[var(--shotiq-color-shotiqOrange)] bg-[#FFF7F4]" : "border-[var(--shotiq-color-rule)] bg-white"}`}>
-                      <div className="mb-[5px] flex h-[26px] items-center">
+                      <div className="mb-[8px] flex h-[46px] items-center">
                         <ApprovedRasterIcon
                           asset={t === "COMPACT" ? "shotiq-approved-v2-style-compact"
                             : t === "BALANCED" ? "shotiq-approved-v2-style-balanced"
                               : "shotiq-approved-v2-style-high-arc"}
-                          size={28}
+                          size={46}
                         />
                       </div>
                       <div className={`shotiq-display text-[19px] leading-[21px] ${on ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{t}</div>
@@ -809,9 +811,9 @@ export default function OnboardingPage() {
             <div className="mt-[16px] space-y-[28px]">
               {BENEFITS.map(([t, d, mark]) => (
                 <div key={t} className="flex items-center gap-[14px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/images/canonical/${mark}.png`} alt="" aria-hidden="true"
-                       className="block h-[42px] w-auto max-w-none shrink-0" />
+                  <span className="grid h-[58px] w-[58px] shrink-0 place-items-center">
+                    <ConceptGlyph concept={mark} size={54} />
+                  </span>
                   <div className="border-l border-[var(--shotiq-color-rule)] pl-[14px]">
                     <div className="text-[14px] font-semibold leading-[19px]">{t}</div>
                     <div className="mt-[2px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{d}</div>

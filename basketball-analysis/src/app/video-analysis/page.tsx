@@ -15,7 +15,7 @@ import Link from "next/link"
 import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FormScoreCell, useHistory } from "@/components/shotiq/ResultsBits"
-import { PoseGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
+import { PoseGlyph, PoseFigure, ReadinessGlyph, type ReadinessKind } from "@/components/shotiq/Glyphs"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
 import { LiveCapture, isCaptureState, type CaptureState } from "@/components/shotiq/phone/LiveCapture"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
@@ -23,9 +23,9 @@ import type { RimCalibration } from "@/lib/vision/objectTracking"
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 // Canonical draws a bracketed framing mark per check — never one glyph four
 // times. The four marks are cropped straight out of 082.
-const READINESS: [string, string][] = [
-  ["Athlete detected", "082-readiness-athlete"], ["Full body in frame", "082-readiness-framing"],
-  ["Good lighting", "082-readiness-lighting"], ["Stable camera", "082-readiness-stability"],
+const READINESS: [string, ReadinessKind][] = [
+  ["Athlete detected", "athlete"], ["Full body in frame", "framing"],
+  ["Good lighting", "lighting"], ["Stable camera", "stability"],
 ]
 const PRIMER_KEY = "shotiq_camera_primed"
 
@@ -376,9 +376,9 @@ export default function LiveCapturePage() {
             <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
               {READINESS.map(([r, glyph]) => (
                 <div key={r} className="flex-1 px-[4px] text-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                       className="mx-auto block h-[33px] w-auto max-w-none" />
+                  <span className="mx-auto grid h-[48px] place-items-center">
+                    <ReadinessGlyph kind={glyph} size={46} />
+                  </span>
                   <div className="mt-[2px] text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">{r}</div>
                   <span className="mt-[5px] inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
                     <Check className="h-[9px] w-[9px] text-white" strokeWidth={3} />

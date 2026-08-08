@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, ArrowDown } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
-import { FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
+import { CorrectionGlyph, FlawFigure, MechanicGlyph, WorkoutGlyph, type CorrectionKind, type FlawKind, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
@@ -319,13 +319,13 @@ export default function FlawsPage() {
         <div className="w-[250px] shrink-0">
           <SectionLabel>FLAW INSIGHTS</SectionLabel>
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
-            {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "085-insight-1"],
-              ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "085-insight-2"],
-              [impactNote, "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
+            {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "angle"],
+              ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "drift"],
+              [impactNote, "", "impact"]] as [string, string, MechanicKind][]).map(([t, goal, glyph], i) => (
               <div key={i} className="flex gap-[10px] px-[11px] py-[8px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                     className="block h-[40px] w-[40px] max-w-none shrink-0 object-contain" />
+                <span className="grid h-[44px] w-[44px] shrink-0 place-items-center">
+                  <MechanicGlyph kind={glyph} size={40} />
+                </span>
                 <p className="text-[12px] leading-[15px]">{t}
                   {goal && <span className="block text-[var(--shotiq-color-confirmGreen)]">{goal}</span>}</p>
               </div>
@@ -337,12 +337,12 @@ export default function FlawsPage() {
           {/* One bordered container with hairline dividers, as canonical draws
               it — not three individually bordered pills. */}
           <Card className="mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
-            {([["Stack elbow over shooting hip.", "085-correction-1"], ["Create a 90° angle at set point.", "085-correction-2"],
-               ["Drive straight up through release.", "085-correction-3"]] as const).map(([t, glyph]) => (
+            {([["Stack elbow over shooting hip.", "stack"], ["Create a 90° angle at set point.", "square"],
+               ["Drive straight up through release.", "drive"]] as [string, CorrectionKind][]).map(([t, glyph]) => (
               <div key={t} className="flex items-center gap-[10px] px-[11px] py-[7px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                     className="block h-[22px] w-[19px] max-w-none shrink-0 object-contain" /><span className="text-[12px]">{t}</span>
+                <span className="grid h-[34px] w-[34px] shrink-0 place-items-center">
+                  <CorrectionGlyph kind={glyph} size={32} />
+                </span><span className="text-[12px]">{t}</span>
               </div>
             ))}
           </Card>

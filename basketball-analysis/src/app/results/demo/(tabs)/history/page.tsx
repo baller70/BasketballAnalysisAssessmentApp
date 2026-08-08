@@ -6,7 +6,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { CueGlyph } from "@/components/shotiq/Glyphs"
+import { CueGlyph, MechanicGlyph } from "@/components/shotiq/Glyphs"
 import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import { AnalyticsCards } from "@/components/shotiq/phone/results/AnalyticsCards"
@@ -58,16 +58,10 @@ const COLS = "grid-cols-[156px_110px_90px_110px_100px_75px_152px_1fr]"
  * green graph; this is local so the shared glyph family stays untouched.
  */
 function FocusMark({ below }: { below: boolean }) {
-  const apex = below ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"
-  const hollow = { fill: "var(--shotiq-color-paper)", stroke: "var(--shotiq-color-ink)", strokeWidth: 1.4 }
   return (
-    <svg width={26} height={26} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 7 L6.5 17 M12 7 L17.5 17" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth={1.6} strokeLinecap="round" />
-      <path d="M6.5 17 H17.5" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth={1.6} strokeLinecap="round" />
-      <circle cx={6.5} cy={17} r={2.2} {...hollow} />
-      <circle cx={17.5} cy={17} r={2.2} {...hollow} />
-      <circle cx={12} cy={6.4} r={2.6} fill={apex} />
-    </svg>
+    <span className={`grid h-[34px] w-[34px] place-items-center ${below ? "opacity-85" : ""}`}>
+      <MechanicGlyph kind={below ? "drift" : "releasePath"} size={32} />
+    </span>
   )
 }
 const METRIC_TRENDS: Record<string, number[]> = {

@@ -20,7 +20,7 @@ import {
   Share2, Download, Check,
 } from "@/components/shotiq/ApprovedLucide"
 import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure } from "@/components/shotiq/Glyphs"
+import { FlawFigure, MechanicGlyph, PoseFigure, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { PhaseFrame, usePhaseFrames } from "@/components/shotiq/PhaseFrames"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct, formatSessionDate, scoreVerdict } from "@/components/shotiq/ResultsBits"
@@ -61,11 +61,11 @@ const PHASES: { label: string; time: string }[] = [
    textbook release failed. Both the band and the empty-state value move to the
    quantity actually being printed, so the two agree. */
 const MECHANICS = [
-  { icon: "/images/canonical/083-mech-1.png", name: "Elbow Angle", value: "172°", ideal: ELBOW_AT_RELEASE.label },
-  { icon: "/images/canonical/083-mech-2.png", name: "Wrist Angle", value: "78°", ideal: WRIST_AT_RELEASE.label },
-  { icon: "/images/canonical/083-mech-3.png", name: "Release Height", value: "8’6”", ideal: "7’8” – 8’8”" },
-  { icon: "/images/canonical/083-mech-4.png", name: "Body Alignment", value: "2°", ideal: "−5° – 5°" },
-]
+  { kind: "angle", name: "Elbow Angle", value: "172°", ideal: ELBOW_AT_RELEASE.label },
+  { kind: "wrist", name: "Wrist Angle", value: "78°", ideal: WRIST_AT_RELEASE.label },
+  { kind: "height", name: "Release Height", value: "8’6”", ideal: "7’8” – 8’8”" },
+  { kind: "centerline", name: "Body Alignment", value: "2°", ideal: "−5° – 5°" },
+] satisfies { kind: MechanicKind; name: string; value: string; ideal: string }[]
 
 export default function ResultsOverviewPage() {
   const router = useRouter()
@@ -131,10 +131,10 @@ export default function ResultsOverviewPage() {
   const ftIn = (v: number | null | undefined) =>
     v == null ? null : `${Math.floor(Math.round(v) / 12)}’${Math.round(v) % 12}”`
   const liveMechanics = mine ? [
-    { icon: MECHANICS[0].icon, name: "Elbow Angle", value: deg(mine.angles.elbow), ideal: MECHANICS[0].ideal },
-    { icon: MECHANICS[1].icon, name: "Wrist Angle", value: deg(mine.angles.wrist), ideal: MECHANICS[1].ideal },
-    { icon: MECHANICS[2].icon, name: "Release Height", value: ftIn(mine.measurements?.releaseHeightInches), ideal: MECHANICS[2].ideal },
-    { icon: MECHANICS[3].icon, name: "Body Alignment", value: deg(mine.measurements?.centerlineDeviationDeg), ideal: MECHANICS[3].ideal },
+    { kind: MECHANICS[0].kind, name: "Elbow Angle", value: deg(mine.angles.elbow), ideal: MECHANICS[0].ideal },
+    { kind: MECHANICS[1].kind, name: "Wrist Angle", value: deg(mine.angles.wrist), ideal: MECHANICS[1].ideal },
+    { kind: MECHANICS[2].kind, name: "Release Height", value: ftIn(mine.measurements?.releaseHeightInches), ideal: MECHANICS[2].ideal },
+    { kind: MECHANICS[3].kind, name: "Body Alignment", value: deg(mine.measurements?.centerlineDeviationDeg), ideal: MECHANICS[3].ideal },
   ] : null
   const mechanicsRows = liveMechanics ?? MECHANICS.map((m) => ({ ...m, value: m.value as string | null }))
 
@@ -408,16 +408,17 @@ export default function ResultsOverviewPage() {
                 is how canonical spaces these four rows. */}
             <div className="mt-[2px] flex flex-1 flex-col">
               {mechanicsRows.map((m) => (
-                <div key={m.name} className="flex flex-1 items-center py-[5px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={m.icon} alt="" className="h-[30px] w-[28px] object-contain" />
-                  <span className="ml-[8px] w-[92px] text-[12px]">{m.name}</span>
+                <div key={m.name} className="grid flex-1 grid-cols-[42px_minmax(82px,1fr)_auto_72px] items-center gap-[8px] py-[5px]">
+                  <span className="grid h-[38px] w-[42px] place-items-center">
+                    <MechanicGlyph kind={m.kind} size={36} />
+                  </span>
+                  <span className="min-w-0 text-[12px] leading-[14px]">{m.name}</span>
                   {/* A measurement this shot does not carry is drawn as
                       absence, not borrowed from the demo. */}
                   {m.value
-                    ? <span className="shotiq-numeric ml-auto text-[27px]">{m.value}</span>
-                    : <span className="ml-auto text-[12px] text-[var(--shotiq-color-graphite)]">Not measured</span>}
-                  <span className="ml-[12px] w-[62px] text-right">
+                    ? <span className="shotiq-numeric text-right text-[27px]">{m.value}</span>
+                    : <span className="text-right text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">Not measured</span>}
+                  <span className="text-right">
                     <span className="block text-[14px] font-bold leading-[16px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
                     <span className="shotiq-numeric block text-[13px] leading-[15px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
                   </span>
@@ -459,17 +460,18 @@ export default function ResultsOverviewPage() {
                   picture contradicts it. Cover the baked label with the shot's
                   own value; measured off the asset, the digits occupy
                   x 59-95, y 79-100 of its 320x140 source. */}
-              <div className="relative mx-auto mt-[2px] block h-[128px] w-[293px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/083-insight.png"
-                     alt={`Current ${liveElbow ?? 172} degrees versus ideal 180 degrees elbow position`}
-                     className="block h-[128px] w-[293px]" width={293} height={128} />
-                {liveElbow != null && liveElbow !== 172 && (
-                  <span className="absolute grid place-items-center bg-[#FEFEFE] text-[19px] text-[var(--shotiq-color-ink)]"
-                        style={{ left: 52, top: 69, width: 40, height: 24 }}>
-                    {liveElbow}°
-                  </span>
-                )}
+              <div className="mx-auto mt-[8px] flex h-[122px] w-[293px] items-center justify-center gap-[20px] rounded-[7px] bg-[var(--shotiq-color-warmCanvas)]">
+                <div className="text-center">
+                  <FlawFigure kind="elbow" size={70} />
+                  <div className="shotiq-numeric text-[19px] leading-[20px]">{liveElbow ?? 172}°</div>
+                  <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
+                </div>
+                <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
+                <div className="text-center">
+                  <MechanicGlyph kind="releasePath" size={70} />
+                  <div className="shotiq-numeric text-[19px] leading-[20px]">180°</div>
+                  <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
+                </div>
               </div>
             </div>
 
@@ -563,8 +565,9 @@ export default function ResultsOverviewPage() {
               lines; the cell only clears that at canonical’s own 22.7% share
               once the glyph and gutters come back to canonical’s 48px/8px. */}
           <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[7px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[68px] w-[42px] object-contain" />
+            <span className="grid h-[70px] w-[58px] shrink-0 place-items-center">
+              <FlawFigure kind="elbow" size={66} />
+            </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-[8px]">
                 <span className="whitespace-nowrap text-[13px] font-semibold">Elbow flare at release</span>

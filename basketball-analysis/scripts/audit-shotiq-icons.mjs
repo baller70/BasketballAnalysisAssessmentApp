@@ -96,10 +96,29 @@ function lineOf(src, index) {
 }
 
 const webFindings = []
+const disallowedCanonicalIconPatterns = [
+  /\/images\/canonical\/082-readiness-/g,
+  /\/images\/canonical\/083-mech-/g,
+  /\/images\/canonical\/083-insight/g,
+  /\/images\/canonical\/083-flaw-glyph/g,
+  /\/images\/canonical\/084-focus-mark/g,
+  /\/images\/canonical\/085-insight-/g,
+  /\/images\/canonical\/085-correction-/g,
+  /\/images\/canonical\/087-insight-/g,
+  /\/images\/canonical\/092-key-mechanic/g,
+  /\/images\/canonical\/092-create-goal/g,
+  /\/images\/canonical\/078-benefit-/g,
+]
+
 for (const rel of webRoots) {
   for (const file of walk(path.join(root, rel), [".tsx", ".ts"])) {
     if (file.endsWith(path.join("src", "components", "shotiq", "ApprovedLucide.tsx"))) continue
     const src = fs.readFileSync(file, "utf8")
+    for (const pat of disallowedCanonicalIconPatterns) {
+      for (const m of src.matchAll(pat)) {
+        webFindings.push(`${path.relative(root, file)}:${lineOf(src, m.index)} old canonical icon asset`)
+      }
+    }
     for (const m of src.matchAll(/import\s+\{([^}]*)\}\s+from\s*["']lucide-react["']/g)) {
       const relFile = path.relative(root, file)
       const imported = m[1]

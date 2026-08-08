@@ -45,7 +45,7 @@ import {
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, PoseFigure, MechanicGlyph, ActionGlyph, FlawFigure,
-  ApprovedRasterIcon, BodyMetricGlyph, AbilityGlyph, HandChoiceGlyph,
+  ApprovedRasterIcon, BodyMetricGlyph, AbilityGlyph, HandChoiceGlyph, ConceptGlyph,
 } from "@/components/shotiq/Glyphs"
 
 /* The phone flow is its own six-surface sequence. Canonical numbers the five
@@ -97,9 +97,9 @@ function TileNote({ children }: { children: React.ReactNode }) {
 /* --------------------------------------------------------------- 008 */
 
 const BENEFITS: [string, string, string][] = [
-  ["PERSONALIZED ANALYSIS", "Your measurements help tailor angles, ranges, and feedback that fit you.", "078-benefit-1"],
-  ["BETTER COMPARISONS", "Compare against similar players with a profile like yours.", "078-benefit-2"],
-  ["SMARTER COACHING", "Get coaching cues that adapt as you improve.", "078-benefit-3"],
+  ["PERSONALIZED ANALYSIS", "Your measurements help tailor angles, ranges, and feedback that fit you.", "analysis feedback"],
+  ["BETTER COMPARISONS", "Compare against similar players with a profile like yours.", "compare profile"],
+  ["SMARTER COACHING", "Get coaching cues that adapt as you improve.", "smarter coaching"],
 ]
 
 export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }: {
@@ -149,9 +149,9 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
         {BENEFITS.map(([t, d, img]) => (
           <div key={t} className="flex items-start gap-[16px] px-[18px] py-[8px]"
                style={{ borderTop: `1px solid ${RULE}` }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
-                 className="mt-[2px] h-[38px] w-[28px] shrink-0 object-contain" />
+            <span className="mt-[1px] grid h-[42px] w-[36px] shrink-0 place-items-center">
+              <ConceptGlyph concept={img} size={38} />
+            </span>
             {/* Canonical sets these bodies in a column that ends at x207.3pt —
                 it has to, because the knocked-out figure occupies x242.8-362.6
                 right down through this band. At 218/260 the lines ran to 276pt
@@ -336,10 +336,10 @@ const BODIES: [string, string, "ectomorph" | "mesomorph" | "endomorph" | "larger
   ["LARGER FRAME", "Broad build, higher mass", "larger"],
 ]
 
-function LevelMark({ i, on }: { i: number; on: boolean }) {
+function LevelMark({ i, on, size = 30 }: { i: number; on: boolean; size?: number }) {
   void on
   const kinds = ["developing", "intermediate", "advanced", "elite", "professional"] as const
-  return <AbilityGlyph kind={kinds[i] ?? "advanced"} size={30} />
+  return <AbilityGlyph kind={kinds[i] ?? "advanced"} size={size} />
 }
 
 function BodyMark({ i, on }: { i: number; on: boolean }) {
@@ -528,8 +528,8 @@ export function ShootingProfile({
             return (
               <Tile key={t} on={on} radio onClick={() => onHand(t)} className="flex-1 py-[13px]"
                     testid={`phone-hand-${t.slice(0, 5).toLowerCase()}`}>
-                <span className="flex h-[50px] items-center">
-                  <HandChoiceGlyph kind={t.startsWith("RIGHT") ? "right" : "left"} size={48} />
+                <span className="flex h-[58px] items-center">
+                  <HandChoiceGlyph kind={t.startsWith("RIGHT") ? "right" : "left"} size={56} />
                 </span>
                 <TileLabel on={on}>{t}</TileLabel>
               </Tile>
@@ -547,7 +547,7 @@ export function ShootingProfile({
             return (
               <Tile key={t} on={on} radio onClick={() => onAbility(t)} className="flex-1 py-[11px]"
                     testid={`phone-ability-${t.toLowerCase()}`}>
-                <span className="flex h-[34px] items-center"><LevelMark i={i + 1} on={on} /></span>
+                <span className="flex h-[44px] items-center"><LevelMark i={i + 1} on={on} size={42} /></span>
                 <TileLabel on={on}>{t}</TileLabel>
               </Tile>
             )
@@ -578,7 +578,7 @@ export function ShootingProfile({
                     asset={t === "COMPACT" ? "shotiq-approved-v2-style-compact"
                       : t === "BALANCED" ? "shotiq-approved-v2-style-balanced"
                         : "shotiq-approved-v2-style-high-arc"}
-                    size={24}
+                    size={34}
                   />
                   <div className="mt-[6px] flex items-center gap-[5px]">
                     <span className="grid h-[11px] w-[11px] shrink-0 place-items-center rounded-full"

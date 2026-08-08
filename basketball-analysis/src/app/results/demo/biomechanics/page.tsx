@@ -8,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, Upload, MoreVertical, Pencil, Minus, Eraser, X,
 } from "@/components/shotiq/ApprovedLucide"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure } from "@/components/shotiq/Glyphs"
+import { MechanicGlyph, PoseFigure, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { formatFeetInches } from "@/lib/vision/derivedMetrics"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useProfileStore } from "@/stores/profileStore"
@@ -28,13 +28,13 @@ import { ELBOW_AT_RELEASE } from "@/lib/analysis/angleBands"
    A textbook ~168° read as a failure. The band now comes from `angleBands`, so
    this table, the share card, the phone strip and /results/demo cannot drift
    apart again, and the empty-state value moves with it. */
-const MEASUREMENTS: [string, string, string, string, string][] = [
-  ["Elbow Angle", "168°", `Ideal: ${ELBOW_AT_RELEASE.label}`, "Good", "084-metric-elbow"],
-  ["Release Height", "8'10\"", "Ideal: 8'6\"–9'2\"", "Good", "084-metric-height"],
-  ["Release Distance", "16.2\"", "Ideal: 14\"–16\"", "Slightly High", "084-metric-distance"],
-  ["Vertical Jump", "24.6\"", "Ideal: 20\"–28\"", "Good", "084-metric-jump"],
-  ["Shooting Arc", "52°", "Ideal: 45°–55°", "Good", "084-metric-arc"],
-  ["Centerline Deviation", "1.8°", "Ideal: < 3°", "Good", "084-metric-centerline"],
+const MEASUREMENTS: [string, string, string, string, MechanicKind][] = [
+  ["Elbow Angle", "168°", `Ideal: ${ELBOW_AT_RELEASE.label}`, "Good", "angle"],
+  ["Release Height", "8'10\"", "Ideal: 8'6\"–9'2\"", "Good", "height"],
+  ["Release Distance", "16.2\"", "Ideal: 14\"–16\"", "Slightly High", "distance"],
+  ["Vertical Jump", "24.6\"", "Ideal: 20\"–28\"", "Good", "jump"],
+  ["Shooting Arc", "52°", "Ideal: 45°–55°", "Good", "arc"],
+  ["Centerline Deviation", "1.8°", "Ideal: < 3°", "Good", "centerline"],
 ]
 
 // Metric drill-down copy for the detail view (iOS 045 counterpart).
@@ -515,18 +515,18 @@ export default function BiomechanicsWorkspacePage() {
               <div className="divide-y divide-[var(--shotiq-color-rule)]">
                 {MEASUREMENTS.map(([m, v, ideal, band, glyph]) => (
                   <button key={m} type="button" onClick={() => setMetric(m)} data-testid={`metric-${m.toLowerCase().replace(/\s+/g, "-")}`}
-                          className="flex w-full items-center gap-[10px] py-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                         className="block h-[28px] w-[26px] max-w-none shrink-0 object-contain" />
-                    <div className="min-w-0 flex-1 whitespace-nowrap text-[12px] font-medium">{m}</div>
+                          className="grid w-full grid-cols-[32px_minmax(78px,1fr)_68px_58px] items-center gap-[5px] py-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
+                    <span className="grid h-[34px] w-[32px] place-items-center">
+                      <MechanicGlyph kind={glyph} size={30} />
+                    </span>
+                    <div className="min-w-0 text-[12px] font-medium leading-[14px]">{m}</div>
                     {/* Canonical pairs the ideal range with the *value*: reading
                         stacks right-aligned under the number, not under the
                         metric name on the far left. */}
                     {/* Canonical centres the value+ideal block in its own column
                         and leaves ~47px between it and the status badge (92° ends
                         x1030, badge starts x1078); right-aligned it left 15px. */}
-                    <div className="w-[104px] shrink-0 text-center">
+                    <div className="min-w-0 text-center">
                       {(() => {
                         const r = readingFor(m, v)
                         return (
@@ -538,13 +538,13 @@ export default function BiomechanicsWorkspacePage() {
                           </div>
                         )
                       })()}
-                      <div className="mt-[1px] text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
+                      <div className="mt-[1px] text-[9px] leading-[11px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>
                     {/* Tailwind's /10 opacity modifier does not apply to a raw
                         var() colour, so these pills were rendering as bare text
                         with no fill or border. Canonical draws a tinted fill and
                         no border at all. */}
-                    <span className="shrink-0 whitespace-nowrap rounded-[4px] px-[7px] py-[4px] text-[10px] font-bold"
+                    <span className="max-w-[58px] justify-self-end rounded-[4px] px-[5px] py-[4px] text-center text-[9px] font-bold leading-[10px]"
                           style={band === "Good"
                             ? { background: "rgba(22,138,85,0.10)", color: "var(--shotiq-color-confirmGreen)" }
                             : { background: "rgba(253, 55, 1,0.10)", color: "var(--shotiq-color-shotiqOrange)" }}>
@@ -605,9 +605,9 @@ export default function BiomechanicsWorkspacePage() {
                 {/* Canonical rings this one large: the ball's path drifting off
                     the centerline. */}
                 {/* Canonical rings this mark itself, so the crop carries the ring. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/084-focus-mark.png" alt="" aria-hidden="true"
-                     className="block h-[62px] w-[62px] max-w-none shrink-0" />
+                <span className="grid h-[64px] w-[64px] shrink-0 place-items-center rounded-full bg-[rgba(47,112,219,0.12)]">
+                  <MechanicGlyph kind="drift" size={52} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold">Tighten Elbow Path</div>
                   <p className="mt-[2px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
