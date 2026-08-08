@@ -8,8 +8,20 @@ final class HomeViewModel: ObservableObject {
     @Published var stats: HistoryStats?
     @Published var recent: [AnalysisSummary] = []
     @Published var loading = true
+    @Published var loadError: String?
+
     func load() async {
+        loading = true
+        loadError = nil
         defer { loading = false }
+        // Test-only: force the backend-failure branch so XCUITest can prove
+        // that "unknown" is not rendered as "you have no analyses".
+        if UITestHooks.historyFailure {
+            stats = nil
+            recent = []
+            loadError = "We could not load your analysis history."
+            return
+        }
         // Test-only: deterministic history so 018/019 render their populated
         // state without a signed-in account or a network round trip.
         if UITestHooks.demoData {
@@ -18,8 +30,14 @@ final class HomeViewModel: ObservableObject {
             recent = []
             return
         }
-        if let r = try? await APIClient.shared.history() {
-            stats = r.stats; recent = Array(r.items.prefix(3))
+        do {
+            let r = try await APIClient.shared.history()
+            stats = r.stats
+            recent = Array(r.items.prefix(3))
+        } catch {
+            stats = nil
+            recent = []
+            loadError = "We could not load your analysis history."
         }
     }
     var hasData: Bool { (stats?.totalAnalyses ?? 0) > 0 }
@@ -43,6 +61,10 @@ struct HomeView: View {
                 }
             } else if vm.loading {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = vm.loadError {
+                HomeHistoryUnavailableView(message: error, showMenu: $showMenu) {
+                    Task { await vm.load() }
+                }
             } else if !vm.hasData {
                 HomeNewPlayerView(vm: vm, showMenu: $showMenu)
             } else if pro {
@@ -56,6 +78,73 @@ struct HomeView: View {
         // note on the same call in ShotIQComponents.TopBar.
         .sheet(isPresented: $showMenu) {
             ProfileMenuView().modifier(CanonicalTypeScale()).buttonStyle(.plain)
+        }
+    }
+}
+
+struct HomeHistoryUnavailableView: View {
+    let message: String
+    @Binding var showMenu: Bool
+    var retry: () -> Void
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-home-history-unavailable") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HomeHeader(showMenu: $showMenu)
+
+                    ShotIQCard {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack(alignment: .top, spacing: 14) {
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "exclamationmark.triangle"),
+                                                         size: 36,
+                                                         label: nil)
+                                    .foregroundStyle(ShotIQColor.reviewRed)
+                                    .frame(width: 44)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("HISTORY UNAVAILABLE").shotiqDisplay(26)
+                                        .foregroundStyle(ShotIQColor.reviewRed)
+                                    Text(message)
+                                        .shotiqBody(15)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    Text("Your saved shots may still exist. Retry before treating this account as new.")
+                                        .shotiqBody(13)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            Button(action: retry) {
+                                HStack(spacing: 10) {
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrow.clockwise"),
+                                                             size: 18,
+                                                             label: nil)
+                                    Text("Retry history").shotiqBody(ShotIQType.button, weight: .medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: ShotIQType.controlHeight)
+                                .background(ShotIQColor.analysisBlue, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+                                .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.plain)
+                            NavigationLink { AnalyzeHubView() } label: {
+                                HStack(spacing: 10) {
+                                    CaptureReticleGlyph(size: 19)
+                                    Text("Analyze a shot").shotiqBody(ShotIQType.button, weight: .medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: ShotIQType.controlHeight)
+                                .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
+                                .foregroundStyle(ShotIQColor.ink)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(16)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 18)
+                }
+            }
         }
     }
 }

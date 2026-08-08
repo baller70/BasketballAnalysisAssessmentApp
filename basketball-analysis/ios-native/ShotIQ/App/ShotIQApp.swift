@@ -142,6 +142,11 @@ enum UITestHooks {
         return args[i + 1]
     }
 
+    /// Force the history endpoint branch to fail for production-path proof.
+    /// Without this hook the simulator can only prove an empty account, not the
+    /// more dangerous case where a backend error was being mistaken for empty.
+    static var historyFailure: Bool { args.contains("-uiTestHistoryFailure") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
@@ -188,7 +193,7 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || homeVariant != nil || stage != nil
+        useSampleMedia || historyFailure || homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",

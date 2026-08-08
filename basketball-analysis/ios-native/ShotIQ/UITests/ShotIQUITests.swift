@@ -492,6 +492,20 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Keep elbow stacked through release"].exists)
     }
 
+    func testHistoryFetchFailureDoesNotShowNoAnalysisYet() throws {
+        launch(["-uiTestBypassAuth", "-uiTestHistoryFailure"])
+
+        XCTAssertTrue(screen("screen-ios-home-history-unavailable").waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["HISTORY UNAVAILABLE"].exists)
+        XCTAssertTrue(app.staticTexts["Your saved shots may still exist. Retry before treating this account as new."].exists)
+        XCTAssertFalse(screen("screen-ios-home-new-player").waitForExistence(timeout: 1))
+        XCTAssertFalse(screen("screen-ios-no-analysis-yet").waitForExistence(timeout: 1))
+        XCTAssertFalse(app.staticTexts["NO ANALYSES YET"].exists)
+
+        tapControl("Analyze a shot")
+        XCTAssertTrue(screen("screen-ios-analyze-hub").waitForExistence(timeout: 8))
+    }
+
     func testAnalysisCoachingNotesMetricDetailsAndFlawTagsWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard"])
         XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))

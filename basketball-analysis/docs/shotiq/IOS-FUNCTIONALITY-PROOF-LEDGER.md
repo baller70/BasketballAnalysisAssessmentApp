@@ -124,7 +124,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G033 | VERIFYING | P0 | `#analytics` | 038 | Replace hard-coded six key metrics. | Screen 038's six tiles now render from `AnalysisResultPresentation` and the saved-analysis DTO, with missing values shown as `--` / `UNAVAILABLE` instead of demo constants. Still needs live backend-result mutation proof before `DONE`. |
 | G034 | VERIFYING | P0 | `#pose` `#media` | 038 | Replace demo skeleton on overview with real pose. | Local photo analysis now preserves optional detected pose points in the saved result contract, merges them with backend save responses when the backend omits pose, and renders local overview media through `CapturedPoseImage` instead of the canonical skeleton. Laptop simulator Vision is unavailable because its human-pose weights are missing, so real detection draw remains physical-device proof before `DONE`. |
 | G035 | VERIFYING | P0 | `#analytics` `#backend` | 038 | Replace fixed player/session/elite summary values. | Screen 038 now loads profile identity, handedness/experience subtitle, badge streak/points, and elite-match summary from the shared backend DTOs in production. Canonical Jordan/Klay values are preserved only for the screenshot harness, and production empty backend state renders `--` / pending instead of demo values. Focused unit proof and canonical analysis UI proof pass on the laptop simulator. Real signed-in backend/web parity proof remains before `DONE`. |
-| G036 | OPEN | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Empty user shows no-analysis; fetch failure shows error, not empty state. |
+| G036 | VERIFYING | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Home history loading now preserves the difference between empty history and failed history. A forced history fetch failure renders `screen-ios-home-history-unavailable`, keeps `screen-ios-no-analysis-yet` offscreen, and still lets the customer open Analyze Hub. Focused UI proof passes on the laptop simulator. Real backend outage/account-state proof remains before `DONE`. |
 | G037 | OPEN | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Failed upload/analyze opens error and retry preserves or reselects media correctly. |
 | G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. The phase filmstrip now uses selected local/server media for non-demo saved results instead of falling back to canonical stock frames when no frame set exists. Per-frame phase coaching and true saved frame-analysis data still need proof before `DONE`. |
 | G039 | OPEN | P0 | `#pose` `#analytics` | 042 | Frame detail uses real pose and metrics. | Toggling overlay shows real saved joints/ball for selected frame. |
@@ -1812,3 +1812,36 @@ keeps canonical UI navigation intact. It still needs a real signed-in backend
 account with profile/badge/match data to prove the values shown on iOS match
 the web app for the same account before G035 can move from `VERIFYING` to
 `DONE`.
+
+### 2026-08-08 No-Analysis Empty-State Truth Proof
+
+Twenty-seventh laptop functionality slice after local Xcode setup:
+
+- `HomeViewModel` now keeps a distinct `loadError` state for
+  `/api/analysis-history` failures instead of swallowing the error and letting
+  `stats == nil` masquerade as an empty account.
+- Home now renders `screen-ios-home-history-unavailable` for failed history
+  loads. The copy tells the customer their saved shots may still exist and to
+  retry before treating the account as new.
+- The error state keeps a customer-safe `Analyze a shot` route, but it no
+  longer exposes `screen-ios-home-new-player` or `screen-ios-no-analysis-yet`.
+- Added the test-only `-uiTestHistoryFailure` hook so the simulator can prove
+  the failure branch deterministically without relying on breaking production
+  networking.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-HistoryFailure-NoAnalysis-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testHistoryFetchFailureDoesNotShowNoAnalysisYet`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test asserts
+  `screen-ios-home-history-unavailable` exists, `screen-ios-home-new-player`
+  and `screen-ios-no-analysis-yet` do not exist, `NO ANALYSES YET` is absent,
+  and `Analyze a shot` still opens `screen-ios-analyze-hub`.
+
+Remaining limitations: this proves the client state split under deterministic
+simulator failure. A real signed-in backend/account proof still needs to show
+that an actually empty account reaches screen 039, while a real API failure or
+auth/session problem reaches the error surface, before G036 can move from
+`VERIFYING` to `DONE`.
