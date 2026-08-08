@@ -360,14 +360,6 @@ const APPROVED_MECHANIC_ICONS: Record<MechanicKind, string> = {
   balance: "shotiq-approved-mechanics-balance-archetype",
   drift: "shotiq-approved-mechanics-shot-path-bounce",
   impact: "shotiq-approved-ui-target-reticle",
-  tempo: "shotiq-approved-ui-performance-gauge",
-  consistency: "shotiq-approved-ui-progress-line",
-  arcHeight: "shotiq-approved-mechanics-ball-speed",
-  releaseAngle: "shotiq-approved-mechanics-release-angle",
-  spin: "shotiq-approved-mechanics-backspin",
-  flightTime: "shotiq-approved-mechanics-ball-speed",
-  shotShape: "shotiq-approved-mechanics-shot-path-bounce",
-  releasePath: "shotiq-approved-mechanics-elbow-stack",
 }
 
 /** A measured mechanic — one diagram per measurable quantity. */
