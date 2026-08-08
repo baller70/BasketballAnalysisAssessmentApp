@@ -45,6 +45,7 @@ import {
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, PoseFigure, MechanicGlyph,
+  EquipmentGlyph, type EquipmentKind,
 } from "@/components/shotiq/Glyphs"
 
 const RED = "var(--shotiq-color-reviewRed)"
@@ -80,8 +81,11 @@ const STEPS: [string, string, string][] = [
   ["RELEASE", "Release at full extension. Wrist snaps over.", "094-t1"],
   ["FOLLOW-THROUGH", "Hold tall finish. Elbow stacked, fingers down.", "094-y1"],
 ]
-const EQUIPMENT: [string, string][] = [
-  ["Basketball", "1"], ["Cones", "2–3"], ["Spot", "Free throw line"], ["Location", "Any court"],
+const EQUIPMENT: [string, string, EquipmentKind][] = [
+  ["Basketball", "1", "basketball"],
+  ["Cones", "2–3", "cones"],
+  ["Spot", "Free throw line", "spot"],
+  ["Location", "Any court", "location"],
 ]
 const MECHANICS: [string, string, "angle" | "wrist" | "releasePath"][] = [
   ["Elbow Under Ball", "Keep elbow under the ball from load to release.", "angle"],
@@ -155,10 +159,10 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
         <div className="mt-[11px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <Eyebrow>EQUIPMENT &amp; SETUP</Eyebrow>
           <div className="mt-[8px] flex gap-[7px]">
-            {EQUIPMENT.map(([l, v], i) => (
+            {EQUIPMENT.map(([l, v, kind]) => (
               <div key={l} className="flex min-w-0 flex-1 items-center gap-[7px] rounded-[5px] px-[7px] py-[7px]"
                    style={{ border: `1px solid ${RULE}` }}>
-                <CueGlyph kind={(["base", "tree", "extension", "shoulders"] as const)[i]} size={18} />
+                <EquipmentGlyph kind={kind} size={18} />
                 <span className="min-w-0">
                   <span className="block truncate text-[8.5px] leading-[10px]">{l}</span>
                   <span className="block truncate text-[7.5px] leading-[9px]" style={{ color: GRAPHITE }}>{v}</span>

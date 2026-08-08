@@ -619,6 +619,50 @@ export function WorkoutGlyph({
   )
 }
 
+/* --------------------------------------------------- equipment marks */
+
+export type EquipmentKind = "basketball" | "cones" | "spot" | "location"
+
+/** Drill equipment/setup marks. These mirror the native SwiftUI glyphs so the
+ *  same training card nouns read the same way in iOS and web. */
+export function EquipmentGlyph({
+  kind, size = 24, className = "", accent = ORANGE, title,
+}: { kind: EquipmentKind } & GlyphProps) {
+  return (
+    <Svg size={size} className={className} title={title}>
+      {kind === "basketball" && (
+        <>
+          <BasketballMark cx={12} cy={12} r={5.6} stroke={accent} />
+          <path d="M5.5 17 L3.8 18.2" strokeDasharray="1.4 1.8" />
+          <path d="M18.5 6.8 L20.2 5.6" strokeDasharray="1.4 1.8" />
+        </>
+      )}
+      {kind === "cones" && (
+        <>
+          <path d="M12 5 L7 18 H17 Z" />
+          <path d="M8.4 14.4 H15.6" stroke={accent} />
+          <path d="M6 20 H18" />
+        </>
+      )}
+      {kind === "spot" && (
+        <>
+          <path d="M4 13 H20" />
+          <path d="M4 10.2 V15.8 M20 10.2 V15.8" />
+          <path d="M6.7 13 V16.2 M8.8 13 V16.2 M10.9 13 V16.2 M13 13 V16.2 M15.1 13 V16.2 M17.2 13 V16.2" />
+          <circle cx="12" cy="13" r="1.5" fill={accent} stroke={accent} />
+        </>
+      )}
+      {kind === "location" && (
+        <>
+          <path d="M12 21 Q5.8 12.8 8.2 6.8 Q12 2.8 15.8 6.8 Q18.2 12.8 12 21 Z" />
+          <circle cx="12" cy="10.3" r="2.4" stroke={accent} />
+          <path d="M6.2 20.4 Q12 22.8 17.8 20.4" />
+        </>
+      )}
+    </Svg>
+  )
+}
+
 /* -------------------------------------------------- capture readiness */
 
 export type ReadinessKind = "athlete" | "framing" | "lighting" | "stability"

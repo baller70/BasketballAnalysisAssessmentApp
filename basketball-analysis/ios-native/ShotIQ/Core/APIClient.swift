@@ -103,6 +103,29 @@ struct GoalDTO: Codable, Identifiable {
     var status: String?
 }
 
+struct BadgeProgressDTO: Codable, Equatable {
+    var current: Double?
+    var total: Double?
+}
+
+struct BadgeDTO: Codable, Equatable {
+    var id: String?
+    var title: String?
+    var name: String?
+    var description: String?
+    var unlocked: Bool?
+    var earnedAt: String?
+    var progress: BadgeProgressDTO?
+    var untracked: String?
+}
+
+struct BadgesResponseDTO: Codable, Equatable {
+    var success: Bool?
+    var profileId: String?
+    var badges: [BadgeDTO]?
+    var challenges: [BadgeDTO]?
+}
+
 struct AnalysisMetricDTO: Codable, Equatable {
     var value: Double?
     var unit: String?
@@ -339,6 +362,15 @@ actor APIClient {
         struct Resp: Codable { var goals: [GoalDTO]? }
         let r: Resp = try await request("/api/goals")
         return r.goals ?? []
+    }
+
+    func badges() async throws -> BadgesResponseDTO {
+        try await request("/api/badges")
+    }
+
+    func refreshBadges() async throws -> BadgesResponseDTO {
+        struct EmptyBody: Codable {}
+        return try await request("/api/badges", method: "POST", body: EmptyBody())
     }
 
     func latestAnalysis() async throws -> ShotIQAnalysisResultDTO? {
