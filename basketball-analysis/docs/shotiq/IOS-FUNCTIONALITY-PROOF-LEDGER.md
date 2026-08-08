@@ -141,7 +141,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G045 | VERIFYING | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Training Home now derives its primary target and first recommendation from the latest saved analysis, shows empty-history placeholders instead of fake demo workout stats, and replaces the recent-workout card with locally persisted shot-tracker history after a completed session. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout/goal reload and web parity remain before `DONE`. |
 | G046 | VERIFYING | P1 | `#analytics` | 055 | Quick start values from current user data. | Quick Start now derives coaching target, score, target counts, workout note, and launch drill from latest saved analysis plus local workout history. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout reload, live training-plan mutations, physical-device proof, and web parity remain before `DONE`. |
 | G047 | VERIFYING | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Discover filters now prove `Beginner only` narrows to two drills; saving `STACK & SHOOT` uses a proper 44pt bookmark control, shows customer toast feedback, and persists locally after relaunch into My Drills. Backend/web sync remains before `DONE`. |
-| G048 | OPEN | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill detail target changes from selected real flaw/goal. |
+| G048 | VERIFYING | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill Detail now derives score, level, duration, reps, build summary, coaching cue, mechanics, saved-drill metadata, and launch drill from the latest saved analysis plus selected drill. Focused UI proof and canonical training regression pass on the laptop simulator. Backend drill-plan reload, live goal/flaw mutations, physical-device proof, and web parity remain before `DONE`. |
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
 | G050 | VERIFYING | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Completed shot-tracker sessions now persist locally into Workout Calendar with saved shots/makes/FG/status/name/summary. Backend workout/shot-event reload and web parity remain before `DONE`. |
 | G051 | OPEN | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Chosen drill displays correct media/cue and measured/live data where claimed. |
@@ -2578,4 +2578,54 @@ Remaining limitations: this proves screen 055 consumes measured-analysis and
 local workout state in simulator production navigation. It does not yet prove
 backend workout reload, live training-plan/goal mutations, physical-device
 behavior, or iOS/web parity; those remain required before G046 can move to
+`DONE`.
+
+### 2026-08-08 Drill Detail Analysis/Plan Proof
+
+Implementation:
+
+- Screen 057 now resolves `DrillDetailData` from the selected drill plus the
+  latest saved analysis. The canonical/demo path keeps the existing authored
+  drill-detail screenshot state, while non-canonical analysis-backed paths
+  update score, difficulty, duration, reps, build summary, coaching cue, target
+  mechanics, equipment spot, preview photo, saved-drill payload, and drill
+  execution payload.
+- The weak-analysis proof drives `STACK & SHOOT` from the saved elbow/release
+  target, changes the plan to `Beginner`, `8 min`, and `24-30 reps`, and
+  removes the old fixed `Advanced` / `60-70 reps` detail values from that path.
+- Drill Detail now exposes stable proof identifiers for title, description,
+  score, fact columns, build summary, cue, mechanics, save, calendar, media,
+  and start-drill controls.
+- Screen 058 My Drills now shows saved drill difficulty and duration as visible
+  metadata pills, so customers can confirm the plan they saved instead of only
+  seeing placeholder workout stats.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-detail-analysis-plan-20260808-2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testDrillDetailUsesLatestAnalysisPlanAndControls`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It verified `STACK & SHOOT`, score `82`, `Beginner`, `8 min`,
+  `24-30 reps`, analysis-derived build/cue/mechanics copy, absence of the old
+  fixed detail values, save toast feedback, My Drills persistence with
+  `Beginner` / `8 min`, calendar and media side routes, and Start Drill opening
+  Drill Execution with the selected `STACK & SHOOT` payload.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-detail-canonical-20260808-1.xcresult`
+  ran `CanonicalScreenshotTests/test06TrainingScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and re-captured
+  the canonical Training flow from `001-training-home` through
+  `009-shot-tracker` after the Drill Detail and My Drills metadata changes.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-detail-analysis-plan-20260808-1.xcresult`
+  failed because the saved drill persisted into My Drills, but the My Drills
+  card did not expose the saved `Beginner` / `8 min` plan metadata. The
+  metadata pills added to screen 058 fixed the customer-visible confirmation.
+
+Remaining limitations: this proves screen 057 consumes measured-analysis and
+local saved-drill state in simulator production navigation. It does not yet
+prove backend drill-plan reload, live goal/flaw mutations, physical-device
+behavior, or iOS/web parity; those remain required before G048 can move to
 `DONE`.

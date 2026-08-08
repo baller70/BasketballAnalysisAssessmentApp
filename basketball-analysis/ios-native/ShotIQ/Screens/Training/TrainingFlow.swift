@@ -1024,24 +1024,169 @@ struct DiscoverDrillsView: View {   // 056
     }
 }
 
+struct DrillDetailData {
+    var name: String
+    var description: String
+    var scoreText: String
+    var scorePct: Double
+    var skillType: String
+    var level: String
+    var duration: String
+    var reps: String
+    var buildSummary: String
+    var builds: [String]
+    var equipment: [(String, String, String)]
+    var steps: [(String, String)]
+    var cue: String
+    var mechanics: [(String, String)]
+    var photo: String
+
+    static func resolve(name: String, latestAnalysis: ShotIQAnalysisResultDTO?) -> DrillDetailData {
+        let presentation = latestAnalysis.map(AnalysisResultPresentation.init(result:))
+            ?? (UITestHooks.demoData ? .canonicalDemo : .noResult)
+        let canonicalDemo = latestAnalysis == nil && UITestHooks.demoData
+        if canonicalDemo {
+            return canonical(name: name)
+        }
+
+        let normalizedName = name.lowercased()
+        let target = presentation.coachingTarget
+        let normalizedTarget = target.lowercased()
+        if normalizedName.contains("wrist") || normalizedTarget.contains("wrist") {
+            return DrillDetailData(
+                name: name,
+                description: "Train wrist control from set point to release so the ball leaves on a clean line.",
+                scoreText: presentation.scoreText,
+                scorePct: presentation.scorePct,
+                skillType: "Shooting",
+                level: "Beginner",
+                duration: "6 min",
+                reps: "20-25 reps",
+                buildSummary: "Targets the wrist-set weakness from the latest analysis and keeps the hand quiet until full extension.",
+                builds: ["WRIST SET", "CLEAN SNAP", "FOLLOW-THROUGH"],
+                equipment: standardEquipment(spot: "Free throw line"),
+                steps: [
+                    ("SETUP", "Start close with wrist set and elbow under the ball."),
+                    ("LOAD", "Keep the wrist quiet as the ball moves into the pocket."),
+                    ("RISE", "Lift through the elbow without letting the hand cast early."),
+                    ("RELEASE", "Snap after extension and finish fingers down."),
+                    ("FOLLOW-THROUGH", "Hold the wrist finish until the ball lands.")
+                ],
+                cue: "Hold your wrist set until the elbow finishes tall.",
+                mechanics: [
+                    ("Wrist Set", "Keep wrist angle stable until the release window."),
+                    ("Elbow Under Ball", "Keep elbow under the ball from load to release."),
+                    ("Follow-Through", "Finish with fingers down and wrist over elbow.")
+                ],
+                photo: "057-visual-001")
+        }
+
+        if normalizedName.contains("align") || normalizedTarget.contains("centerline") || normalizedTarget.contains("release closer") {
+            return DrillDetailData(
+                name: name,
+                description: "Rehearse a centered rise and straight extension so the ball tracks through the rim line.",
+                scoreText: presentation.scoreText,
+                scorePct: presentation.scorePct,
+                skillType: "Shooting",
+                level: "Intermediate",
+                duration: "10 min",
+                reps: "30-40 reps",
+                buildSummary: "Uses the latest release-path target to reduce lateral drift and keep the shot on centerline.",
+                builds: ["CENTERLINE", "FULL EXTENSION", "RELEASE PATH"],
+                equipment: standardEquipment(spot: "Center slot"),
+                steps: [
+                    ("SETUP", "Square feet and ball to the rim line."),
+                    ("LOAD", "Gather without drifting off your centerline."),
+                    ("RISE", "Extend straight up through the shoulder and elbow."),
+                    ("RELEASE", "Let the ball leave above your shooting eye."),
+                    ("FOLLOW-THROUGH", "Freeze the finish on the rim line.")
+                ],
+                cue: "Release through the centerline instead of drifting across it.",
+                mechanics: [
+                    ("Centerline", "Keep the ball path close to the rim line."),
+                    ("Release Path", "Reduce side-to-side movement through extension."),
+                    ("Full Extension", "Finish tall before the wrist snaps over.")
+                ],
+                photo: "057-visual-001")
+        }
+
+        return DrillDetailData(
+            name: name,
+            description: "Builds stacked elbow position and a straight shooting line for the latest coaching target.",
+            scoreText: presentation.scoreText,
+            scorePct: presentation.scorePct,
+            skillType: "Shooting",
+            level: "Beginner",
+            duration: "8 min",
+            reps: "24-30 reps",
+            buildSummary: "Targets \(target.lowercased()) from the latest saved analysis to improve release consistency.",
+            builds: ["ELBOW STACK", "WRIST ALIGNMENT", "RELEASE PATH"],
+            equipment: standardEquipment(spot: "Free throw line"),
+            steps: [
+                ("SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in."),
+                ("LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked."),
+                ("RISE", "Extend up. Keep elbow under ball and aligned."),
+                ("RELEASE", "Release at full extension. Wrist snaps over."),
+                ("FOLLOW-THROUGH", "Hold tall finish. Elbow stacked, fingers down.")
+            ],
+            cue: target,
+            mechanics: [
+                ("Elbow Angle", "Raise the elbow into the 150-180 degree release band."),
+                ("Release Path", "Keep the release offset inside the -5 to +5 degree band."),
+                ("Form Score", "Use the saved form score to choose the next drill load.")
+            ],
+            photo: name.uppercased() == "STACK & SHOOT" ? "056-visual-001" : "057-visual-001")
+    }
+
+    private static func canonical(name: String) -> DrillDetailData {
+        DrillDetailData(
+            name: name,
+            description: "Build a tight, controlled release by stacking your elbow and wrist through extension.",
+            scoreText: "82",
+            scorePct: 0.82,
+            skillType: "Shooting",
+            level: "Advanced",
+            duration: "15 min",
+            reps: "60-70 reps",
+            buildSummary: "Teaches vertical alignment of the shooting arm to improve consistency, accuracy, and repeatable release mechanics.",
+            builds: ["ELBOW STACK", "WRIST ALIGNMENT", "RELEASE PATH"],
+            equipment: standardEquipment(spot: "Free throw line"),
+            steps: [
+                ("SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in."),
+                ("LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked."),
+                ("RISE", "Extend up. Keep elbow under ball and aligned."),
+                ("RELEASE", "Release at full extension. Wrist snaps over."),
+                ("FOLLOW-THROUGH", "Hold tall finish. Elbow stacked, fingers down.")
+            ],
+            cue: "Stack your elbow under the ball and finish tall every time.",
+            mechanics: [
+                ("Elbow Under Ball", "Keep elbow under the ball from load to release."),
+                ("Wrist Over Elbow", "Snap wrist over elbow at the top of release."),
+                ("Straight Release Path", "Drive straight up with minimal lateral drift.")
+            ],
+            photo: "057-visual-001")
+    }
+
+    private static func standardEquipment(spot: String) -> [(String, String, String)] {
+        [
+            ("figure.basketball", "Basketball", "1"),
+            ("cone", "Cones", "2-3"),
+            ("ruler", "Spot", spot),
+            ("mappin.and.ellipse", "Location", "Any court")
+        ]
+    }
+}
+
 struct DrillDetailView: View {      // 057
     var name = "Pound Crossover Foundation"
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @State private var bookmarked = false
     @State private var toast: ShotIQToast?
-    private let steps: [(String, String)] = [
-        ("SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in."),
-        ("LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked."),
-        ("RISE", "Extend up. Keep elbow under ball and aligned."),
-        ("RELEASE", "Release at full extension. Wrist snaps over."),
-        ("FOLLOW-THROUGH", "Hold tall finish. Elbow stacked, fingers down.")
-    ]
-    private let mechanics: [(String, String)] = [
-        ("Elbow Under Ball", "Keep elbow under the ball from load to release."),
-        ("Wrist Over Elbow", "Snap wrist over elbow at the top of release."),
-        ("Straight Release Path", "Drive straight up with minimal lateral drift.")
-    ]
+    private var detail: DrillDetailData {
+        DrillDetailData.resolve(name: name, latestAnalysis: app.recentMedia.first?.analysis)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-drill-detail") {
             ScrollView {
@@ -1064,7 +1209,7 @@ struct DrillDetailView: View {      // 057
                             }
                             .accessibilityLabel(bookmarked ? "Remove saved drill" : "Save drill")
                             .accessibilityIdentifier("drill-detail-save")
-                            ShareLink(item: "Check out the \(name) drill on ShotIQ 🏀") {
+                            ShareLink(item: "Check out the \(detail.name) drill on ShotIQ 🏀") {
                                 Image(systemName: "square.and.arrow.up").foregroundStyle(ShotIQColor.ink)
                             }
                         }
@@ -1076,19 +1221,23 @@ struct DrillDetailView: View {      // 057
                         HStack(alignment: .top, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
                                 MicroLabel(text: "DRILL DETAIL")
-                                Text(name.uppercased()).shotiqDisplay(30)
-                                Text("Build a tight, controlled release by stacking your elbow and wrist through extension.")
+                                Text(detail.name.uppercased()).shotiqDisplay(30)
+                                    .accessibilityIdentifier("drill-detail-title")
+                                Text(detail.description)
                                     .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityIdentifier("drill-detail-description")
                             }
-                            PhotoThumb(width: 138, height: 160, photo: "057-visual-001")
+                            PhotoThumb(width: 138, height: 160, photo: detail.photo)
                                 .overlay(alignment: .bottomTrailing) {
                                     VStack(spacing: 2) {
                                         Text("FORM SCORE").shotiqBody(7, weight: .semibold).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("Tungsten-Medium", size: 26))
+                                        Text(detail.scoreText).font(.custom("Tungsten-Medium", size: 26))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 28, height: 3)
+                                            .accessibilityIdentifier("drill-detail-score")
+                                        Rectangle().fill(ShotIQColor.shotiqOrange)
+                                            .frame(width: CGFloat(max(4, 28 * detail.scorePct)), height: 3)
                                     }
                                     .padding(7)
                                     .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 6))
@@ -1098,39 +1247,39 @@ struct DrillDetailView: View {      // 057
                         }
                         .padding(.top, 16)
                         HStack(spacing: 0) {
-                            factColumn("chart.bar", "SKILL TYPE", "Shooting")
+                            factColumn("chart.bar", "SKILL TYPE", detail.skillType, id: "drill-detail-skill-type")
                             VRule(height: 44)
-                            factColumn("chart.line.uptrend.xyaxis", "LEVEL", "Advanced")
+                            factColumn("chart.line.uptrend.xyaxis", "LEVEL", detail.level, id: "drill-detail-level")
                             VRule(height: 44)
-                            factColumn("stopwatch", "DURATION", "15 min")
+                            factColumn("stopwatch", "DURATION", detail.duration, id: "drill-detail-duration")
                             VRule(height: 44)
-                            factColumn("arrow.triangle.2.circlepath", "REPS / TIME", "60–70 reps")
+                            factColumn("arrow.triangle.2.circlepath", "REPS / TIME", detail.reps, id: "drill-detail-reps")
                         }
                         .padding(.vertical, 14)
                         .overlay(HRule(), alignment: .bottom)
                         SectionLabel(text: "WHAT IT BUILDS").padding(.top, 18)
                         HStack(alignment: .top, spacing: 12) {
-                            Text("Teaches vertical alignment of the shooting arm to improve consistency, accuracy, and repeatable release mechanics.")
+                            Text(detail.buildSummary)
                                 .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            buildColumn("figure.stand", "ELBOW STACK")
-                            buildColumn("gauge", "WRIST ALIGNMENT")
-                            buildColumn("checkmark.circle", "RELEASE PATH")
+                                .accessibilityIdentifier("drill-detail-build-summary")
+                            ForEach(Array(detail.builds.enumerated()), id: \.offset) { _, build in
+                                buildColumn(buildIcon(for: build), build)
+                            }
                         }
                         .padding(.top, 10)
                         SectionLabel(text: "EQUIPMENT & SETUP").padding(.top, 20)
                         LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
-                            equipCard("figure.basketball", "Basketball", "1")
-                            equipCard("cone", "Cones", "2–3")
-                            equipCard("ruler", "Spot", "Free throw line")
-                            equipCard("mappin.and.ellipse", "Location", "Any court")
+                            ForEach(Array(detail.equipment.enumerated()), id: \.offset) { _, item in
+                                equipCard(item.0, item.1, item.2)
+                            }
                         }
                         .padding(.top, 10)
                         SectionLabel(text: "STEP-BY-STEP").padding(.top, 20)
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(alignment: .top, spacing: 12) {
-                                ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
+                                ForEach(Array(detail.steps.enumerated()), id: \.offset) { i, s in
                                     VStack(alignment: .leading, spacing: 6) {
                                         PhotoThumb(width: 104, height: 104)
                                             .overlay(alignment: .topLeading) {
@@ -1154,21 +1303,23 @@ struct DrillDetailView: View {      // 057
                         HStack(alignment: .top, spacing: 14) {
                             VStack(alignment: .leading, spacing: 10) {
                                 SectionLabel(text: "COACHING CUE")
-                                Text("\u{201C}Stack your elbow under the ball and finish tall every time.\u{201D}")
+                                Text("\u{201C}\(detail.cue)\u{201D}")
                                     .shotiqBody(15).italic()
                                     .foregroundStyle(ShotIQColor.ink)
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityIdentifier("drill-detail-cue")
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             VRule(height: 120)
                             VStack(alignment: .leading, spacing: 10) {
                                 SectionLabel(text: "TARGET MECHANICS")
-                                ForEach(mechanics, id: \.0) { m in
+                                ForEach(detail.mechanics, id: \.0) { m in
                                     HStack(alignment: .top, spacing: 8) {
                                         MechanicGlyph(kind: .init(metricLabel: m.0), size: 18)
                                             .foregroundStyle(ShotIQColor.ink)
                                         VStack(alignment: .leading, spacing: 1) {
                                             Text(m.0).shotiqBody(12, weight: .semibold)
+                                                .accessibilityIdentifier("drill-detail-mechanic-\(m.0.lowercased().replacingOccurrences(of: " ", with: "-"))")
                                             Text(m.1).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                                                 .fixedSize(horizontal: false, vertical: true)
                                         }
@@ -1192,7 +1343,7 @@ struct DrillDetailView: View {      // 057
                         }
                         .padding(.top, 10)
                         HStack(spacing: 10) {
-                            NavigationLink { DrillExecutionView(drillName: name) } label: {
+                            NavigationLink { DrillExecutionView(drillName: detail.name) } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "play.fill")
                                     Text("Start drill").shotiqBody(17, weight: .medium)
@@ -1201,8 +1352,9 @@ struct DrillDetailView: View {      // 057
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
-                            squareNav("calendar") { WorkoutCalendarView() }
-                            squareNav("play.rectangle") { MediaDetailView() }
+                            .accessibilityIdentifier("drill-detail-start-drill")
+                            squareNav("calendar", id: "drill-detail-calendar") { WorkoutCalendarView() }
+                            squareNav("play.rectangle", id: "drill-detail-media") { MediaDetailView() }
                         }
                         .padding(.vertical, 22)
                     }
@@ -1211,29 +1363,29 @@ struct DrillDetailView: View {      // 057
             }
         }
         .onAppear {
-            bookmarked = TrainingSavedDrillStore.contains(name, in: savedDrillsPayload)
+            bookmarked = TrainingSavedDrillStore.contains(detail.name, in: savedDrillsPayload)
         }
         .shotiqToast($toast)
     }
     private func toggleSaved() {
         if bookmarked {
-            savedDrillsPayload = TrainingSavedDrillStore.remove(name, from: savedDrillsPayload)
+            savedDrillsPayload = TrainingSavedDrillStore.remove(detail.name, from: savedDrillsPayload)
             bookmarked = false
-            toast = .info("Drill removed", "\(name) removed from My Drills.")
+            toast = .info("Drill removed", "\(detail.name) removed from My Drills.")
             return
         }
-        let savedDrill = TrainingSavedDrill.catalog(name: name,
-                                                    difficulty: "Intermediate",
-                                                    duration: "15 min",
-                                                    description: "Build a tight, controlled release by stacking your elbow and wrist through extension.",
-                                                    photo: "057-visual-001")
+        let savedDrill = TrainingSavedDrill.catalog(name: detail.name,
+                                                    difficulty: detail.level,
+                                                    duration: detail.duration,
+                                                    description: detail.description,
+                                                    photo: detail.photo)
         savedDrillsPayload = TrainingSavedDrillStore.save(savedDrill, in: savedDrillsPayload)
         bookmarked = true
-        toast = .success("Drill saved", "\(name) added to My Drills.")
+        toast = .success("Drill saved", "\(detail.name) added to My Drills.")
         Task { await APIClient.shared.send("/api/saved-workouts",
-                                           body: SavedWorkoutBody(name: name)) }
+                                           body: SavedWorkoutBody(name: detail.name)) }
     }
-    private func factColumn(_ icon: String, _ label: String, _ value: String) -> some View {
+    private func factColumn(_ icon: String, _ label: String, _ value: String, id: String) -> some View {
         VStack(spacing: 4) {
             ShotIQConceptGlyph(concept: label, fallback: icon, size: 17)
                 .foregroundStyle(ShotIQColor.ink)
@@ -1241,8 +1393,16 @@ struct DrillDetailView: View {      // 057
                 .foregroundStyle(ShotIQColor.graphite)
             Text(value).shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
+                .accessibilityIdentifier(id)
         }
         .frame(maxWidth: .infinity)
+    }
+    private func buildIcon(for label: String) -> String {
+        let normalized = label.lowercased()
+        if normalized.contains("wrist") { return "gauge" }
+        if normalized.contains("path") || normalized.contains("centerline") { return "checkmark.circle" }
+        if normalized.contains("extension") { return "arrow.up" }
+        return "figure.stand"
     }
     private func buildColumn(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 5) {
@@ -1278,7 +1438,7 @@ struct DrillDetailView: View {      // 057
             Text(label).shotiqBody(11).foregroundStyle(ShotIQColor.ink)
         }
     }
-    private func squareNav(_ icon: String, @ViewBuilder dest: @escaping () -> some View) -> some View {
+    private func squareNav(_ icon: String, id: String, @ViewBuilder dest: @escaping () -> some View) -> some View {
         NavigationLink { dest() } label: {
             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
                                      size: 18,
@@ -1286,6 +1446,7 @@ struct DrillDetailView: View {      // 057
                 .frame(width: 54, height: 54)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
         }
+        .accessibilityIdentifier(id)
     }
 }
 
@@ -1489,6 +1650,10 @@ struct MyDrillsView: View {         // 058
                     }
                     Text(d.description).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 8) {
+                        metaPill(d.difficulty)
+                        metaPill(d.duration)
+                    }
                     HStack(spacing: 16) {
                         ForEach(phases, id: \.self) { p in
                             VStack(spacing: 3) {
@@ -1508,6 +1673,13 @@ struct MyDrillsView: View {         // 058
                 .padding(.vertical, 12).padding(.trailing, 12)
             }
         }
+    }
+    private func metaPill(_ text: String) -> some View {
+        Text(text).shotiqBody(10, weight: .semibold)
+            .foregroundStyle(ShotIQColor.ink)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+            .lineLimit(1).minimumScaleFactor(0.7)
     }
     private func miniStat(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {

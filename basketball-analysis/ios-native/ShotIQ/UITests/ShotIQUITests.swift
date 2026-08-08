@@ -429,6 +429,50 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
     }
 
+    func testDrillDetailUsesLatestAnalysisPlanAndControls() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestResetTrainingDrills", "-uiTestStage", "drill-detail"])
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+        assertStaticText(id: "drill-detail-title", contains: "STACK & SHOOT")
+        assertStaticText(id: "drill-detail-score", contains: "82")
+        assertStaticText(id: "drill-detail-level", contains: "Beginner")
+        assertStaticText(id: "drill-detail-duration", contains: "8 min")
+        assertStaticText(id: "drill-detail-reps", contains: "24-30")
+        assertVisibleElement(id: "drill-detail-build-summary", contains: "stack elbow higher")
+        assertVisibleElement(id: "drill-detail-cue", contains: "Stack elbow higher")
+        assertVisibleElement(id: "drill-detail-mechanic-elbow-angle", contains: "Elbow Angle")
+        XCTAssertFalse(app.staticTexts["Advanced"].exists)
+        XCTAssertFalse(app.staticTexts["60-70 reps"].exists)
+
+        tapButton(id: "drill-detail-save")
+        XCTAssertTrue(waitForToastContaining("Drill saved"))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "my-drills"])
+        XCTAssertTrue(screen("screen-ios-my-drills").waitForExistence(timeout: 8))
+        assertVisible("STACK & SHOOT")
+        assertVisible("Beginner")
+        assertVisible("8 min")
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "drill-detail"])
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+        tapElement(id: "drill-detail-calendar")
+        XCTAssertTrue(screen("screen-ios-workout-calendar").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "drill-detail"])
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+        tapElement(id: "drill-detail-media")
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "drill-detail"])
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+        tapButton(id: "drill-detail-start-drill")
+        XCTAssertTrue(screen("screen-ios-drill-execution").waitForExistence(timeout: 8))
+        assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
+    }
+
     func testWorkoutCalendarShowsCompletedTrackerSession() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
                 "-uiTestStage", "shot-tracker"])
