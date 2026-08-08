@@ -5,6 +5,8 @@ import SwiftUI
 struct ShotIQApprovedRasterIcon: View {
     var assetName: String
     var size: CGFloat
+    var width: CGFloat? = nil
+    var height: CGFloat? = nil
     var label: String? = nil
 
     var body: some View {
@@ -13,7 +15,7 @@ struct ShotIQApprovedRasterIcon: View {
             .renderingMode(.original)
             .scaledToFit()
             .accessibilityLabel(label ?? assetName)
-            .frame(width: size, height: size)
+            .frame(width: width ?? size, height: height ?? size)
     }
 }
 
@@ -331,7 +333,21 @@ struct CaptureSourceGlyph: View {
     var body: some View {
         ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: source),
                                  size: size,
+                                 width: source.frameWidth(forHeight: size),
+                                 height: size,
                                  label: label)
+    }
+}
+
+extension CaptureSource {
+    func frameWidth(forHeight height: CGFloat) -> CGFloat {
+        let aspect: CGFloat
+        switch self {
+        case .uploadImage: aspect = 48 / 36
+        case .uploadVideo: aspect = 60 / 26
+        case .liveCamera: aspect = 80 / 30
+        }
+        return (height * aspect).rounded()
     }
 }
 

@@ -48,8 +48,10 @@ function Svg({
 const APPROVED_ICON_BASE = "/shotiq/icons/approved"
 
 export function ApprovedRasterIcon({
-  asset, size = 24, className = "", title, alt = "",
-}: GlyphProps & { asset: string; alt?: string }) {
+  asset, size = 24, width, height, className = "", title, alt = "",
+}: GlyphProps & { asset: string; alt?: string; width?: number; height?: number }) {
+  const renderedWidth = width ?? size
+  const renderedHeight = height ?? size
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -59,7 +61,7 @@ export function ApprovedRasterIcon({
       aria-label={title}
       width={512}
       height={512}
-      style={{ width: size, height: size }}
+      style={{ width: renderedWidth, height: renderedHeight }}
       className={`inline-block max-w-none object-contain ${className}`}
     />
   )
@@ -205,11 +207,11 @@ export function PoseGlyph({
  * one that has to take a user-chosen accent colour.
  */
 const PHASE_FIGURE: Record<ShotPhase, { w: number; h: number }> = {
-  setup: { w: 58, h: 94 },
-  load: { w: 58, h: 94 },
-  rise: { w: 66, h: 94 },
-  release: { w: 56, h: 94 },
-  follow: { w: 50, h: 94 },
+  setup: { w: 96, h: 96 },
+  load: { w: 96, h: 96 },
+  rise: { w: 96, h: 96 },
+  release: { w: 96, h: 96 },
+  follow: { w: 96, h: 96 },
 }
 
 export function PoseFigure({
@@ -740,7 +742,16 @@ export function ActionGlyph({
     nodeClimb: "shotiq-approved-ui-progress-line",
     skeletonDots: "shotiq-approved-mechanics-node-target",
   }
-  return <ApprovedRasterIcon asset={approved[kind]} size={height} className={`block ${className}`} title={title} />
+  const [w, h] = ACTION_BOX[kind]
+  return (
+    <ApprovedRasterIcon
+      asset={approved[kind]}
+      width={Math.round((height * w) / h)}
+      height={height}
+      className={`block ${className}`}
+      title={title}
+    />
+  )
 }
 
 /* ---------------------------------------------------------- phase track */

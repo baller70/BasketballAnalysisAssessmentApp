@@ -16,7 +16,7 @@ import React, { useCallback, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  Image as ImageIcon, Upload, ChevronRight, HelpCircle, ArrowLeft,
+  Upload, ChevronRight, HelpCircle, ArrowLeft,
 } from "lucide-react"
 import { ActionGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
@@ -214,21 +214,20 @@ export default function AnalyzeWorkspacePage() {
                 <ActionGlyph kind="chooseMedia" height={42} />
                 <span className="text-[14px] font-medium">Choose media</span>
               </button>
-              {([["Upload image", null, 34, () => {
+              {([["Upload image", "uploadImage", 34, () => {
                   if (inputRef.current) { inputRef.current.accept = "image/*"; inputRef.current.click() }
                 }],
                 ["Upload video", "uploadVideo", 26, () => {
                   if (inputRef.current) { inputRef.current.accept = "video/*"; inputRef.current.click() }
                 }],
                 ["Live camera", "liveCamera", 28, () => router.push("/video-analysis")]] as
-                [string, ActionKind | null, number, () => void][]).map(([t, kind, h, fn]) => (
+                [string, ActionKind, number, () => void][]).map(([t, kind, h, fn]) => (
                 <button key={t} type="button" onClick={fn}
                         className="flex h-[124px] flex-col items-center justify-center gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
                   {/* Canonical draws the video tile as a film gate with a red
                       centre marker and the camera tile as the node run, not a
                       filmstrip grid and a focus bracket. */}
-                  {kind ? <ActionGlyph kind={kind} height={h} />
-                        : <ImageIcon className="h-[38px] w-[38px]" strokeWidth={1.3} />}
+                  <ActionGlyph kind={kind} height={h} />
                   <span className="text-[14px]">{t}</span>
                 </button>
               ))}
