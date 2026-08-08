@@ -600,14 +600,19 @@ struct TrainingHomeView: View {     // 054
             VStack(spacing: 8) {
                 ShotIQConceptGlyph(concept: title, fallback: icon, size: 24)
                     .foregroundStyle(ShotIQColor.ink)
+                    .accessibilityHidden(true)
                 Text(title).shotiqBody(14, weight: .medium).foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1).minimumScaleFactor(0.8)
+                    .accessibilityHidden(true)
             }
             .frame(maxWidth: .infinity).frame(height: 82)
             .background(ShotIQColor.paper)
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(title)
+            .accessibilityIdentifier(title)
         }
-        .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
         .accessibilityIdentifier(title)
     }
@@ -1450,6 +1455,31 @@ struct DrillDetailView: View {      // 057
     }
 }
 
+struct DrillExecutionData {
+    var drillName: String
+    var cue: String
+    var focus: String
+    var targetMakes: Int
+    var mediaKey: String
+
+    static func resolve(drillName: String, latestAnalysis: ShotIQAnalysisResultDTO?) -> DrillExecutionData {
+        let detail = DrillDetailData.resolve(name: drillName, latestAnalysis: latestAnalysis)
+        let canonicalDemo = latestAnalysis == nil && UITestHooks.demoData
+        let focus = detail.mechanics.first?.0 ?? "Elbow alignment"
+        return DrillExecutionData(
+            drillName: detail.name,
+            cue: canonicalDemo ? "Keep elbow stacked through release" : detail.cue,
+            focus: canonicalDemo ? "Elbow alignment at release" : focus,
+            targetMakes: canonicalDemo ? 15 : targetMakes(from: detail.reps),
+            mediaKey: canonicalDemo ? "060-visual-002" : detail.photo)
+    }
+
+    private static func targetMakes(from reps: String) -> Int {
+        let firstNumber = reps.split { !$0.isNumber }.compactMap { Int($0) }.first ?? 24
+        return max(1, Int((Double(firstNumber) * 0.625).rounded()))
+    }
+}
+
 struct MyDrillsView: View {         // 058
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
@@ -2041,7 +2071,9 @@ struct DrillExecutionView: View {   // 060
     @State private var showCompletion = false
     @State private var toast: ShotIQToast?
     @State private var drillFeedback: ShotIQToast?
-    private let target = 15
+    private var executionData: DrillExecutionData {
+        DrillExecutionData.resolve(drillName: drillName, latestAnalysis: app.recentMedia.first?.analysis)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-drill-execution") {
             ScrollView {
@@ -2052,7 +2084,7 @@ struct DrillExecutionView: View {   // 060
                         HStack(alignment: .center, spacing: 10) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("DRILL EXECUTION").shotiqDisplay(30)
-                                Text(drillName.uppercased()).shotiqBody(10, weight: .bold).kerning(0.5)
+                                Text(executionData.drillName.uppercased()).shotiqBody(10, weight: .bold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                                     .accessibilityIdentifier("drill-execution-drill-name")
@@ -2064,7 +2096,8 @@ struct DrillExecutionView: View {   // 060
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text("TARGET").shotiqBody(10, weight: .semibold).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
-                                Text("\(target) makes").shotiqBody(16, weight: .semibold)
+                                Text("\(executionData.targetMakes) makes").shotiqBody(16, weight: .semibold)
+                                    .accessibilityIdentifier("drill-execution-target")
                             }
                         }
                         .padding(.top, 14)
@@ -2073,8 +2106,9 @@ struct DrillExecutionView: View {   // 060
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("COACHING CUE").shotiqBody(11, weight: .bold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("Keep elbow stacked through release").shotiqBody(17, weight: .bold)
+                                    Text(executionData.cue).shotiqBody(17, weight: .bold)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("drill-execution-cue")
                                 }
                                 Spacer(minLength: 4)
                                 VRule(height: 58)
@@ -2082,8 +2116,9 @@ struct DrillExecutionView: View {   // 060
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FOCUS AREA").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Elbow alignment at release").shotiqBody(12, weight: .medium)
+                                    Text(executionData.focus).shotiqBody(12, weight: .medium)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("drill-execution-focus")
                                 }
                                 .frame(width: 84)
                             }
@@ -2092,30 +2127,33 @@ struct DrillExecutionView: View {   // 060
                         .padding(.top, 12)
                         ShotIQCard {
                             HStack(spacing: 0) {
-                                execStat("\(m.makes)", "MAKES")
+                                execStat("\(m.makes)", "MAKES", id: "drill-execution-makes")
                                 VRule(height: 40)
-                                execStat("\(m.shots.count)", "SHOTS")
+                                execStat("\(m.shots.count)", "SHOTS", id: "drill-execution-shots")
                                 VRule(height: 40)
-                                execStat(String(format: "%.1f%%", m.pct * 100), "MAKE %")
+                                execStat(String(format: "%.1f%%", m.pct * 100), "MAKE %", id: "drill-execution-make-pct")
                                 Spacer(minLength: 8)
                                 VStack(spacing: 6) {
                                     HStack(spacing: 5) {
                                         ForEach(0..<6, id: \.self) { i in
                                             Circle()
-                                                .fill(i < min(6, m.makes * 6 / target)
+                                                .fill(i < min(6, m.makes * 6 / executionData.targetMakes)
                                                       ? ShotIQColor.confirmGreen : ShotIQColor.rule)
                                                 .frame(width: 11, height: 11)
                                         }
                                     }
-                                    Text("\(max(target - m.makes, 0)) to target")
+                                    Text("\(max(executionData.targetMakes - m.makes, 0)) to target")
                                         .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("drill-execution-target-remaining")
                                 }
                             }
                             .padding(14)
                         }
                         .padding(.top, 10)
                         ZStack(alignment: .top) {
-                            CanonicalMediaSurface(key: "060-visual-002", height: 290)
+                            CanonicalMediaSurface(key: executionData.mediaKey, height: 290)
+                                .accessibilityIdentifier("drill-execution-media")
+                                .accessibilityLabel("Drill execution media \(executionData.mediaKey)")
                             HStack {
                                 Menu {
                                     ForEach(["FRONT VIEW", "SIDE VIEW", "REAR VIEW"], id: \.self) { v in
@@ -2127,6 +2165,7 @@ struct DrillExecutionView: View {   // 060
                                 } label: {
                                     HStack(spacing: 5) {
                                         Text(viewAngle).shotiqBody(10, weight: .bold).kerning(0.5)
+                                            .accessibilityIdentifier("drill-execution-view-angle")
                                         Image(systemName: "chevron.down").font(.system(size: 8))
                                     }
                                     .foregroundStyle(.white)
@@ -2138,6 +2177,7 @@ struct DrillExecutionView: View {   // 060
                                     Circle().fill(ShotIQColor.shotiqOrange).frame(width: 7, height: 7)
                                     Text(String(format: "%02d:%02d", m.elapsed / 60, m.elapsed % 60))
                                         .font(.custom("Tungsten-Medium", size: 14)).foregroundStyle(.white)
+                                        .accessibilityIdentifier("drill-execution-timer")
                                 }
                                 .padding(.horizontal, 9).padding(.vertical, 5)
                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
@@ -2162,6 +2202,7 @@ struct DrillExecutionView: View {   // 060
                                 .foregroundStyle(ShotIQColor.ink)
                             }
                             .accessibilityLabel("Undo last shot")
+                            .accessibilityIdentifier("drill-execution-undo")
                             Button {
                                 m.paused.toggle()
                                 toast = .info(m.paused ? "Workout paused" : "Workout resumed",
@@ -2175,12 +2216,13 @@ struct DrillExecutionView: View {   // 060
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                                 .foregroundStyle(ShotIQColor.ink)
                             }
+                            .accessibilityIdentifier("drill-execution-pause")
                         }
                         .padding(.top, 10)
                         Button {
                             Task {
                                 toast = .progress("Saving workout", "Syncing shots and workout summary.", progress: 0.65)
-                                await m.finish(drillName: drillName)   // persist shots + workout
+                                await m.finish(drillName: executionData.drillName)   // persist shots + workout
                                 toast = .success("Workout saved", "Opening your completion summary.")
                                 try? await Task.sleep(nanoseconds: 650_000_000)
                                 showCompletion = true
@@ -2196,6 +2238,7 @@ struct DrillExecutionView: View {   // 060
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                         .disabled(m.saving)
+                        .accessibilityIdentifier("drill-execution-end-workout")
                         .padding(.top, 10)
                         Spacer(minLength: 30)
                     }
@@ -2211,13 +2254,13 @@ struct DrillExecutionView: View {   // 060
                 .background(.ultraThinMaterial)
         }
         .navigationDestination(isPresented: $showCompletion) {
-            WorkoutCompletionView(shots: m.shots.count, makes: m.makes, drillName: drillName)
+            WorkoutCompletionView(shots: m.shots.count, makes: m.makes, drillName: executionData.drillName)
         }
         .onAppear { m.start() }
         .onDisappear { m.stop() }
     }
     private func recordShot(made: Bool) {
-        m.mark(made, drillId: drillName)
+        m.mark(made, drillId: executionData.drillName)
         let feedback: ShotIQToast = made
             ? .success("Make recorded", "\(m.makes) makes • \(m.shots.count) shots")
             : .info("Miss recorded", "\(m.makes) makes • \(m.shots.count) shots")
@@ -2290,10 +2333,11 @@ struct DrillExecutionView: View {   // 060
         }
     }
 
-    private func execStat(_ value: String, _ label: String) -> some View {
+    private func execStat(_ value: String, _ label: String, id: String) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.custom("Tungsten-Medium", size: 30)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
+                .accessibilityIdentifier(id)
             Text(label).shotiqBody(9, weight: .medium).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
         }
@@ -2595,6 +2639,10 @@ struct WorkoutCompletionView: View { // 062
                     HStack(alignment: .center, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("WORKOUT COMPLETE").shotiqDisplay(34)
+                            Text(resolvedWorkout.drillName.uppercased()).shotiqBody(10, weight: .bold).kerning(0.5)
+                                .foregroundStyle(ShotIQColor.graphite)
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                                .accessibilityIdentifier("completion-drill-name")
                             Text("Great session, \(app.user?.firstName ?? "Jordan").")
                                 .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                         }

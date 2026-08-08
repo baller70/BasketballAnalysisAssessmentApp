@@ -473,6 +473,60 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
     }
 
+    func testDrillExecutionUsesSelectedPlanAndLiveControls() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "drill-detail"])
+        XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
+        tapButton(id: "drill-detail-start-drill")
+        XCTAssertTrue(screen("screen-ios-drill-execution").waitForExistence(timeout: 8))
+
+        assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
+        assertStaticText(id: "drill-execution-cue", contains: "Stack elbow higher")
+        assertStaticText(id: "drill-execution-focus", contains: "Elbow Angle")
+        assertElement(id: "drill-execution-media", contains: "056-visual-001")
+        assertStaticText(id: "drill-execution-target", contains: "15 makes")
+        assertStaticText(id: "drill-execution-makes", contains: "0")
+        assertStaticText(id: "drill-execution-shots", contains: "0")
+        assertStaticText(id: "drill-execution-make-pct", contains: "0.0%")
+        assertStaticText(id: "drill-execution-target-remaining", contains: "15 to target")
+
+        tapControl("FRONT VIEW")
+        tapDialogOption("SIDE VIEW")
+        XCTAssertTrue(waitForToastContaining("Camera view changed"))
+        assertStaticText(id: "drill-execution-view-angle", contains: "SIDE VIEW")
+
+        tapButton(id: "mark-make")
+        XCTAssertTrue(waitForToastContaining("Make recorded"))
+        assertStaticText(id: "drill-execution-makes", contains: "1")
+        assertStaticText(id: "drill-execution-shots", contains: "1")
+        assertStaticText(id: "drill-execution-make-pct", contains: "100.0%")
+        assertStaticText(id: "drill-execution-target-remaining", contains: "14 to target")
+
+        tapButton(id: "mark-miss")
+        XCTAssertTrue(waitForToastContaining("Miss recorded"))
+        assertStaticText(id: "drill-execution-makes", contains: "1")
+        assertStaticText(id: "drill-execution-shots", contains: "2")
+        assertStaticText(id: "drill-execution-make-pct", contains: "50.0%")
+
+        tapButton(id: "drill-execution-undo")
+        XCTAssertTrue(waitForToastContaining("Last shot removed"))
+        assertStaticText(id: "drill-execution-shots", contains: "1")
+        assertStaticText(id: "drill-execution-make-pct", contains: "100.0%")
+
+        tapButton(id: "mark-miss")
+        tapButton(id: "drill-execution-pause")
+        XCTAssertTrue(waitForToastContaining("Workout paused"))
+        tapButton(id: "drill-execution-pause")
+        XCTAssertTrue(waitForToastContaining("Workout resumed"))
+
+        tapButton(id: "drill-execution-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 10))
+        assertStaticText(id: "completion-drill-name", contains: "STACK & SHOOT")
+        assertStaticText(id: "completion-shots", contains: "2")
+        assertStaticText(id: "completion-makes", contains: "1")
+        assertStaticText(id: "completion-accuracy", contains: "50.0%")
+    }
+
     func testWorkoutCalendarShowsCompletedTrackerSession() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
                 "-uiTestStage", "shot-tracker"])

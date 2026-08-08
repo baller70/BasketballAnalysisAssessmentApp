@@ -196,6 +196,11 @@ final class CanonicalScreenshotTests: XCTestCase {
             _ = screenExists(root, timeout: 12)
             return
         }
+        if label == "Train", root == "screen-ios-training-home" {
+            launch(Self.mainArgs + ["-uiTestStage", "training-home"])
+            _ = screenExists(root, timeout: 12)
+            return
+        }
         launch(lastLaunchArguments.isEmpty ? Self.mainArgs : lastLaunchArguments)
         selectTab(label)
         _ = screenExists(root, timeout: 8)

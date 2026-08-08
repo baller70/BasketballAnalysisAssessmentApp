@@ -144,7 +144,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G048 | VERIFYING | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill Detail now derives score, level, duration, reps, build summary, coaching cue, mechanics, saved-drill metadata, and launch drill from the latest saved analysis plus selected drill. Focused UI proof and canonical training regression pass on the laptop simulator. Backend drill-plan reload, live goal/flaw mutations, physical-device proof, and web parity remain before `DONE`. |
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
 | G050 | VERIFYING | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Completed shot-tracker sessions now persist locally into Workout Calendar with saved shots/makes/FG/status/name/summary. Backend workout/shot-event reload and web parity remain before `DONE`. |
-| G051 | OPEN | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Chosen drill displays correct media/cue and measured/live data where claimed. |
+| G051 | VERIFYING | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Drill Execution now derives drill name, cue, focus, target makes, and media key from the selected analysis-backed drill plan; exposes live makes/shots/make-percent/target-remaining stats; proves view-angle toast feedback, make/miss/undo/pause toasts, and completion totals. Focused UI proof and canonical training regression pass on the laptop simulator. Backend shot-event/workout reload, live camera/pose-driven cues, physical-device proof, and web parity remain before `DONE`. |
 | G052 | VERIFYING | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | Shot Tracker now starts a clean manual session at `0 OF 0`, derives make %, current streak, set progress, and phase rail from recorded make/miss events, and proves make/miss/undo through UI. Backend reload/history aggregation remains before `DONE`. |
 | G053 | VERIFYING | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Workout Completion now receives the completed session record and derives shots, makes, accuracy, points, form score, phase scores, primary target progress, share text, and coaching takeaway from those totals. Backend workout reload/web parity remains before `DONE`. |
 
@@ -2629,3 +2629,67 @@ local saved-drill state in simulator production navigation. It does not yet
 prove backend drill-plan reload, live goal/flaw mutations, physical-device
 behavior, or iOS/web parity; those remain required before G048 can move to
 `DONE`.
+
+### 2026-08-08 Drill Execution Selected-Plan/Live-Control Proof
+
+Implementation:
+
+- Screen 060 now resolves `DrillExecutionData` from the selected drill plus the
+  latest saved analysis instead of rendering one fixed execution cue, focus,
+  media surface, and target.
+- The weak-analysis path launched from Drill Detail now carries `STACK & SHOOT`
+  into Drill Execution with the analysis-derived `Stack elbow higher` cue,
+  `Elbow Angle` focus, `056-visual-001` media key, and `15 makes` target from
+  the selected `24-30 reps` plan.
+- Drill Execution exposes stable proof identifiers for drill name, cue, focus,
+  media, view angle, timer, makes, shots, make percentage, target remaining,
+  undo, pause/resume, and end-workout controls.
+- Customer-facing progress feedback is proven for the execution flow: view
+  angle change, make, miss, undo, pause, and resume each surface toast feedback
+  while the live stats update in place.
+- Workout Completion now exposes the completed drill name so the route proves
+  the selected execution payload and final totals, not only the destination
+  screen.
+- Training Home option cards now expose one stable tappable accessibility
+  target and hide decorative glyph/text children from the accessibility tree,
+  fixing a real dead-tap path where the Calendar image could be tapped instead
+  of the navigation control.
+- The canonical training reset now stages directly into Training Home for each
+  Train branch so the click-test starts each branch from the intended screen
+  instead of relying on a flaky tab reselect after relaunch.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-execution-selected-plan-20260808-2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testDrillExecutionUsesSelectedPlanAndLiveControls`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It verified `STACK & SHOOT`, `Stack elbow higher`, `Elbow Angle`,
+  media key `056-visual-001`, target `15 makes`, initial `0` / `0` / `0.0%`
+  live stats, view-angle change to `SIDE VIEW` with toast feedback, make/miss
+  recording, undo, pause/resume toasts, target remaining updates, and completion
+  totals of `2` shots, `1` make, and `50.0%`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-execution-canonical-20260808-4.xcresult`
+  ran `CanonicalScreenshotTests/test06TrainingScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and re-captured
+  the canonical Training flow from `001-training-home` through
+  `009-shot-tracker` after the Drill Execution data/routing and Training Home
+  accessibility reset fixes.
+
+Superseded failed/interrupted attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-execution-canonical-20260808-1.xcresult`
+  failed because the Calendar option card exposed its decorative calendar image
+  as a hittable accessibility target; the test tapped the image and stayed on
+  Training Home instead of opening Workout Calendar.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-drill-execution-canonical-20260808-2.xcresult`
+  was intentionally interrupted after the Calendar fix proved successful but a
+  separate relaunch reset flake left the harness on `screen-ios-home-professional`
+  before the My Drills branch. The staged Training Home reset fixed that
+  harness issue.
+
+Remaining limitations: this proves screen 060 consumes the selected
+analysis-backed drill plan and updates manual live-control stats in simulator
+production navigation. It does not yet prove backend shot-event/workout reload,
+live camera/pose-driven drill cues, physical-device media/progress behavior, or
+iOS/web parity; those remain required before G051 can move to `DONE`.
