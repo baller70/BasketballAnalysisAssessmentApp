@@ -136,9 +136,9 @@ struct SplashView: View {          // 001 · ios.splash
                 HStack(spacing: 16) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 15).fill(ShotIQColor.ink)
-                        Image(systemName: "basketball")
-                            .font(.system(size: 32))
-                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-shot-catch-shoot",
+                                                 size: 34,
+                                                 label: nil)
                     }
                     .frame(width: 62, height: 62)
                     VStack(alignment: .leading, spacing: 2) {
@@ -839,7 +839,9 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
 
                         Button { Task { await sendReset() } } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "camera.metering.center.weighted")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                         size: 18,
+                                                         label: nil)
                                 Text(busy ? "SENDING…" : "SEND RESET LINK")
                                     .shotiqCondensed(18, weight: .heavy)
                                     .kerning(1.5)
@@ -1009,18 +1011,18 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                             }
                             ZStack {
                                 RoundedRectangle(cornerRadius: 10).fill(ShotIQColor.warmCanvas)
-                                Image(systemName: "figure.basketball")
-                                    .font(.system(size: 44, weight: .light))
-                                    .foregroundStyle(ShotIQColor.graphite)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-profile",
+                                                         size: 46,
+                                                         label: nil)
                             }
                             .frame(width: 150, height: 180)
                         }
                         .padding(.top, 18)
 
                         HStack(spacing: 16) {
-                            Image(systemName: "camera.metering.center.weighted")
-                                .font(.system(size: 30))
-                                .foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                     size: 30,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("RESET LINK VERIFIED")
                                     .shotiqBody(15, weight: .bold).kerning(0.5)

@@ -178,16 +178,9 @@ export function PoseGlyph({
 }: { phase: ShotPhase | string; active?: boolean } & GlyphProps) {
   const p = typeof phase === "string" && !(phase in POSES)
     ? toShotPhase(phase) : (phase as ShotPhase)
-  if (size >= 18) {
-    return (
-      <span style={active ? { color: ORANGE } : undefined} className="inline-flex">
-        <ApprovedRasterIcon asset={APPROVED_PHASE_ICONS[p]} size={size} className={className} title={title} />
-      </span>
-    )
-  }
   return (
     <span style={active ? { color: ORANGE } : undefined} className="inline-flex">
-      <Svg size={size} className={className} title={title} weight={POSE_WEIGHT}>{POSES[p]}</Svg>
+      <ApprovedRasterIcon asset={APPROVED_PHASE_ICONS[p]} size={size} className={className} title={title} />
     </span>
   )
 }
@@ -450,10 +443,8 @@ const APPROVED_MECHANIC_ICONS: Record<MechanicKind, string> = {
 export function MechanicGlyph({
   kind, size = 22, className = "", accent = ORANGE, title,
 }: { kind: MechanicKind } & GlyphProps) {
-  if (size >= 18) {
-    return <ApprovedRasterIcon asset={APPROVED_MECHANIC_ICONS[kind]} size={size} className={className} title={title} />
-  }
-  return <Svg size={size} className={className} title={title}>{MECHANICS[kind](accent)}</Svg>
+  void accent
+  return <ApprovedRasterIcon asset={APPROVED_MECHANIC_ICONS[kind]} size={size} className={className} title={title} />
 }
 
 /* --------------------------------------------------- correction figures */
@@ -504,10 +495,7 @@ const APPROVED_CORRECTION_ICONS: Record<CorrectionKind, string> = {
 export function CorrectionGlyph({
   kind, size = 22, className = "", title,
 }: { kind: CorrectionKind } & GlyphProps) {
-  if (size >= 18) {
-    return <ApprovedRasterIcon asset={APPROVED_CORRECTION_ICONS[kind]} size={size} className={className} title={title} />
-  }
-  return <Svg size={size} className={className} title={title}>{CORRECTIONS[kind]}</Svg>
+  return <ApprovedRasterIcon asset={APPROVED_CORRECTION_ICONS[kind]} size={size} className={className} title={title} />
 }
 
 /* ------------------------------------------------------- flaw portraits */
@@ -521,58 +509,15 @@ export type FlawKind = "elbow" | "wrist" | "release" | "base" | "guide"
 export function FlawFigure({
   kind, size = 56, className = "", accent = ORANGE, title,
 }: { kind: FlawKind } & GlyphProps) {
-  const body = (
-    <g stroke="var(--shotiq-color-graphite)">
-      <circle cx="10.6" cy="7.6" r="2" />
-      <path d="M10.6 9.6 L11.2 15.2" />
-      <path d="M11.2 15.2 L8.8 19 L8.4 21.6" />
-      <path d="M11.2 15.2 L13.8 18.8 L14.8 21.4" />
-    </g>
-  )
-  return (
-    <Svg size={size} className={className} title={title}>
-      {body}
-      {kind === "elbow" && (
-        <g stroke={accent}>
-          <path d="M10.8 10.8 L13.6 7.6 L15.4 4.6" />
-          <circle cx="13.6" cy="7.6" r="1.4" />
-          <circle cx="15.8" cy="4" r="1.8" />
-        </g>
-      )}
-      {kind === "wrist" && (
-        <>
-          <path d="M10.8 10.8 L13.4 8.6" stroke="var(--shotiq-color-graphite)" />
-          <circle cx="15.4" cy="6.4" r="3.2" stroke={accent} />
-          <path d="M17.4 4.4 L19 3" stroke={accent} strokeDasharray="1.4 1.6" />
-        </>
-      )}
-      {kind === "release" && (
-        <>
-          <path d="M10.8 10.8 L12.8 8.4" stroke="var(--shotiq-color-graphite)" />
-          <circle cx="14.8" cy="4.4" r="3" stroke={accent} />
-          <path d="M14.8 7.4 V12.6" stroke={accent} strokeDasharray="1.4 1.8" />
-        </>
-      )}
-      {kind === "base" && (
-        <>
-          <path d="M10.8 10.8 L13.6 8.8" stroke="var(--shotiq-color-graphite)" />
-          <circle cx="15.4" cy="7" r="2" stroke="var(--shotiq-color-graphite)" />
-          <path d="M8.4 21.6 H14.8" stroke={accent} />
-          <path d="M6.4 21.6 H8" stroke={accent} strokeDasharray="1.2 1.4" />
-          <path d="M15.2 21.6 H16.8" stroke={accent} strokeDasharray="1.2 1.4" />
-        </>
-      )}
-      {kind === "guide" && (
-        <>
-          <path d="M10.8 10.8 L13.6 8" stroke="var(--shotiq-color-graphite)" />
-          <circle cx="15.6" cy="6" r="2" stroke="var(--shotiq-color-graphite)" />
-          <path d="M11.6 12.4 L14.4 11" stroke={accent} />
-          <path d="M14.4 11 L16.6 12.4" stroke={accent} />
-          <circle cx="14.4" cy="11" r="1.2" stroke={accent} />
-        </>
-      )}
-    </Svg>
-  )
+  void accent
+  const approved: Record<FlawKind, string> = {
+    elbow: "shotiq-approved-v2-flaw-elbow",
+    wrist: "shotiq-approved-v2-flaw-wrist",
+    release: "shotiq-approved-v2-flaw-release",
+    base: "shotiq-approved-v2-flaw-base",
+    guide: "shotiq-approved-v2-flaw-guide",
+  }
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
 }
 
 /* -------------------------------------------------- node cue diagrams */
@@ -586,68 +531,17 @@ export type CueKind = "peak" | "apex" | "shoulders" | "extension" | "base" | "tr
 export function CueGlyph({
   kind, size = 26, className = "", accent = GREEN, title,
 }: { kind: CueKind } & GlyphProps) {
-  const node = (x: number, y: number, on = false, r = 1.7) => (
-    <circle cx={x} cy={y} r={r} fill={on ? accent : "var(--shotiq-color-paper)"}
-            stroke={on ? accent : "currentColor"} />
-  )
-  return (
-    <Svg size={size} className={className} title={title}>
-      {kind === "peak" && (
-        <>
-          <path d="M3.5 16.5 L7.5 19 L12 5.5 L16.5 19 L20.5 16.5" />
-          {node(3.5, 16.5, true)}{node(7.5, 19, true)}{node(12, 5.5)}
-          {node(16.5, 19, true)}{node(20.5, 16.5, true)}
-        </>
-      )}
-      {/* An even four-node zigzag with the accent on the third node, as
-          canonical draws the Discover mark on 090. The old path put two long
-          segments against two short ones and bunched the last three nodes. */}
-      {kind === "apex" && (
-        <>
-          <path d="M4.5 18 L10 6.5 L15 15 L20.5 5.5" />
-          {node(4.5, 18)}{node(10, 6.5)}{node(15, 15, true)}{node(20.5, 5.5)}
-        </>
-      )}
-      {kind === "shoulders" && (
-        <>
-          <path d="M12 4.5 V9 M12 9 L5.5 14 M12 9 L18.5 14" />
-          <path d="M5.5 14 L12 19 L18.5 14" strokeDasharray="2 2" />
-          {node(12, 4.5)}{node(12, 9, true)}{node(5.5, 14, true)}{node(18.5, 14, true)}
-        </>
-      )}
-      {kind === "extension" && (
-        <>
-          <path d="M6 19.5 L10 13 L14.5 11 L19 4.5" />
-          <path d="M14.5 11 L16.5 15" strokeDasharray="1.6 1.8" />
-          {node(6, 19.5)}{node(10, 13, true)}{node(14.5, 11, true)}{node(19, 4.5)}
-        </>
-      )}
-      {kind === "base" && (
-        <>
-          <path d="M12 4.5 V12 M12 12 L7 20 M12 12 L17 20 M6.5 9.5 H17.5" />
-          {node(12, 4.5)}{node(7, 20, true)}{node(17, 20, true)}
-        </>
-      )}
-      {/* Canonical's "My drills" mark on 090: a closed five-node link — two
-          shoulders, a dropped centre node and a base bar. It was borrowing the
-          open "apex" zigzag, which is the Discover mark. */}
-      {kind === "saved" && (
-        <>
-          <path d="M4.5 5.5 L12 12.5 L19.5 5.5" />
-          <path d="M4.5 5.5 V18.5 H19.5 V5.5" />
-          {node(4.5, 5.5)}{node(19.5, 5.5)}{node(12, 12.5, true)}
-          {node(4.5, 18.5)}{node(19.5, 18.5)}
-        </>
-      )}
-      {kind === "tree" && (
-        <>
-          <path d="M12 4.5 L5.5 12 M12 4.5 L18.5 12 M5.5 12 L8.5 19.5 M18.5 12 L15.5 19.5" />
-          {node(12, 4.5)}{node(5.5, 12)}{node(18.5, 12)}
-          {node(8.5, 19.5, true)}{node(15.5, 19.5, true)}
-        </>
-      )}
-    </Svg>
-  )
+  void accent
+  const approved: Record<CueKind, string> = {
+    peak: "shotiq-approved-v2-cue-peak",
+    apex: "shotiq-approved-v2-cue-apex",
+    shoulders: "shotiq-approved-v2-cue-shoulders",
+    extension: "shotiq-approved-v2-cue-extension",
+    base: "shotiq-approved-v2-cue-base",
+    tree: "shotiq-approved-v2-cue-tree",
+    saved: "shotiq-approved-v2-workout-saved",
+  }
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
 }
 
 /* -------------------------------------------------------- workout marks */
@@ -663,35 +557,7 @@ export function WorkoutGlyph({
     ladder: "shotiq-approved-ui-ladder-balls",
     flow: "shotiq-approved-mechanics-routine-refresh",
   }
-  if (size >= 16) {
-    return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
-  }
-  return (
-    <Svg size={size} className={className} title={title}>
-      {kind === "release" && (
-        <>
-          <path d="M12 4.5 L6 12.5 M12 4.5 L18 10.5 M6 12.5 L11 19.5" />
-          <circle cx="12" cy="4.5" r="1.8" />
-          <circle cx="6" cy="12.5" r="1.8" />
-          <circle cx="18" cy="10.5" r="1.8" />
-          <circle cx="11" cy="19.5" r="1.8" />
-        </>
-      )}
-      {kind === "ladder" && (
-        <>
-          <path d="M7.5 3.5 L5.5 20.5 M16.5 3.5 L18.5 20.5" />
-          <path d="M7.1 7 H16.9 M6.6 11.5 H17.4 M6.1 16 H17.9" />
-        </>
-      )}
-      {kind === "flow" && (
-        <>
-          <path d="M9 8.5 A4.5 4.5 0 1 0 14.5 12.5" />
-          <path d="M9.6 5.4 L8.4 8.8 L11.8 9.6" />
-          <circle cx="15.5" cy="9" r="2" />
-        </>
-      )}
-    </Svg>
-  )
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
 }
 
 /* --------------------------------------------------- equipment marks */
@@ -703,48 +569,68 @@ export type EquipmentKind = "basketball" | "cones" | "spot" | "location"
 export function EquipmentGlyph({
   kind, size = 24, className = "", accent = ORANGE, title,
 }: { kind: EquipmentKind } & GlyphProps) {
+  void accent
   const approved: Record<EquipmentKind, string> = {
     basketball: "shotiq-approved-mechanics-ball-speed",
     cones: "shotiq-approved-mechanics-cones",
     spot: "shotiq-approved-mechanics-spot-ruler",
     location: "shotiq-approved-mechanics-location-pin",
   }
-  if (size >= 18) {
-    return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
-  }
-  return (
-    <Svg size={size} className={className} title={title}>
-      {kind === "basketball" && (
-        <>
-          <BasketballMark cx={12} cy={12} r={5.6} stroke={accent} />
-          <path d="M5.5 17 L3.8 18.2" strokeDasharray="1.4 1.8" />
-          <path d="M18.5 6.8 L20.2 5.6" strokeDasharray="1.4 1.8" />
-        </>
-      )}
-      {kind === "cones" && (
-        <>
-          <path d="M12 5 L7 18 H17 Z" />
-          <path d="M8.4 14.4 H15.6" stroke={accent} />
-          <path d="M6 20 H18" />
-        </>
-      )}
-      {kind === "spot" && (
-        <>
-          <path d="M4 13 H20" />
-          <path d="M4 10.2 V15.8 M20 10.2 V15.8" />
-          <path d="M6.7 13 V16.2 M8.8 13 V16.2 M10.9 13 V16.2 M13 13 V16.2 M15.1 13 V16.2 M17.2 13 V16.2" />
-          <circle cx="12" cy="13" r="1.5" fill={accent} stroke={accent} />
-        </>
-      )}
-      {kind === "location" && (
-        <>
-          <path d="M12 21 Q5.8 12.8 8.2 6.8 Q12 2.8 15.8 6.8 Q18.2 12.8 12 21 Z" />
-          <circle cx="12" cy="10.3" r="2.4" stroke={accent} />
-          <path d="M6.2 20.4 Q12 22.8 17.8 20.4" />
-        </>
-      )}
-    </Svg>
-  )
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
+}
+
+/* ------------------------------------------------------ profile setup */
+
+export type HandKind = "right" | "left"
+export type BodyMetricKind = "age" | "height" | "weight" | "wingspan"
+export type AbilityKind = "developing" | "intermediate" | "advanced" | "elite" | "professional"
+export type ShotTypeKind = "catchShoot" | "pullUp" | "offDribble" | "stepBack" | "other"
+export type MediaFormatKind = "mp4" | "mov" | "jpg" | "png" | "heic"
+
+export function HandChoiceGlyph({
+  kind, size = 30, className = "", title,
+}: { kind: HandKind } & GlyphProps) {
+  return <ApprovedRasterIcon asset={`shotiq-approved-v2-hand-${kind}`} size={size} className={className} title={title} />
+}
+
+export function BodyMetricGlyph({
+  kind, size = 30, className = "", title,
+}: { kind: BodyMetricKind } & GlyphProps) {
+  return <ApprovedRasterIcon asset={`shotiq-approved-v2-body-${kind}`} size={size} className={className} title={title} />
+}
+
+export function AbilityGlyph({
+  kind, size = 30, className = "", title,
+}: { kind: AbilityKind } & GlyphProps) {
+  return <ApprovedRasterIcon asset={`shotiq-approved-v2-ability-${kind}`} size={size} className={className} title={title} />
+}
+
+const SHOT_TYPE_ICONS: Record<ShotTypeKind, string> = {
+  catchShoot: "shotiq-approved-v2-shot-catch-shoot",
+  pullUp: "shotiq-approved-v2-shot-pull-up",
+  offDribble: "shotiq-approved-v2-shot-off-dribble",
+  stepBack: "shotiq-approved-v2-shot-step-back",
+  other: "shotiq-approved-v2-shot-other",
+}
+
+export function ShotTypeGlyph({
+  kind, size = 30, className = "", title,
+}: { kind: ShotTypeKind } & GlyphProps) {
+  return <ApprovedRasterIcon asset={SHOT_TYPE_ICONS[kind]} size={size} className={className} title={title} />
+}
+
+export function MediaFormatGlyph({
+  kind, size = 24, className = "", title,
+}: { kind: MediaFormatKind } & GlyphProps) {
+  return <ApprovedRasterIcon asset={`shotiq-approved-v2-media-${kind}`} size={size} className={className} title={title} />
+}
+
+export function ReleaseHandGlyph({ size = 44, className = "", title }: GlyphProps) {
+  return <ApprovedRasterIcon asset="shotiq-approved-v2-release-hand" size={size} className={className} title={title} />
+}
+
+export function CoachingTargetGlyph({ size = 28, className = "", title }: GlyphProps) {
+  return <ApprovedRasterIcon asset="shotiq-approved-v2-coaching-target" size={size} className={className} title={title} />
 }
 
 /* -------------------------------------------------- capture readiness */
@@ -767,40 +653,14 @@ export type QualityKind = "resolution" | "lighting" | "framerate" | "stability"
 export function QualityGlyph({
   kind, size = 22, className = "", accent = ORANGE, title,
 }: { kind: QualityKind } & GlyphProps) {
-  const node = (x: number, y: number, c?: string, r = 1.8) => (
-    <circle cx={x} cy={y} r={r} fill="var(--shotiq-color-paper)" stroke={c ?? "currentColor"} />
-  )
-  return (
-    <Svg size={size} className={className} title={title}>
-      {kind === "resolution" && (
-        <>
-          <path d="M4.5 15.5 L11 17.5 L18.5 9.5" />
-          <path d="M18.5 6.5 V4" stroke={GREEN} strokeDasharray="1.2 1.4" />
-          {node(4.5, 15.5, accent)}{node(11, 17.5)}{node(18.5, 9.5, GREEN)}
-        </>
-      )}
-      {kind === "lighting" && (
-        <>
-          <path d="M4.5 16.5 L11.5 18 L18 7.5" />
-          <path d="M15.5 4.5 L18 7.5 L21 6" stroke={accent} />
-          {node(4.5, 16.5)}{node(11.5, 18, accent)}{node(18, 7.5, accent)}
-        </>
-      )}
-      {kind === "framerate" && (
-        <>
-          <path d="M3.5 17 L7.5 8.5 L11.5 15.5 L15.5 6.5 L19.5 13.5" />
-          {node(3.5, 17)}{node(7.5, 8.5, accent)}{node(11.5, 15.5)}
-          {node(15.5, 6.5, accent)}{node(19.5, 13.5)}
-        </>
-      )}
-      {kind === "stability" && (
-        <>
-          <path d="M6 15.5 L12 9.5 L18 15.5 L12 19 Z" />
-          {node(6, 15.5, accent)}{node(12, 9.5)}{node(18, 15.5, accent)}{node(12, 19)}
-        </>
-      )}
-    </Svg>
-  )
+  void accent
+  const approved: Record<QualityKind, string> = {
+    resolution: "shotiq-approved-v2-quality-resolution",
+    lighting: "shotiq-approved-mechanics-environment-light",
+    framerate: "shotiq-approved-v2-quality-framerate",
+    stability: "shotiq-approved-v2-quality-stability",
+  }
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
 }
 
 /* ------------------------------------------------------- filming guide */
@@ -811,37 +671,14 @@ export type FilmingKind = "fullBody" | "sideAngle" | "background" | "light"
 export function FilmingGlyph({
   kind, size = 22, className = "", accent = ORANGE, title,
 }: { kind: FilmingKind } & GlyphProps) {
-  return (
-    <Svg size={size} className={className} title={title}>
-      {kind === "fullBody" && (
-        <>
-          <path d="M4 8 V5 H7.5 M16.5 5 H20 V8 M20 16 V19 H16.5 M7.5 19 H4 V16" />
-          <circle cx="12" cy="12" r="1.6" fill={accent} stroke={accent} />
-        </>
-      )}
-      {kind === "sideAngle" && (
-        <>
-          <path d="M12 4.5 V12 M6 15.5 L12 12 L18 15.5" />
-          <path d="M6 9.5 H18" strokeDasharray="2 2" />
-          <circle cx="12" cy="4.5" r="1.6" />
-          <circle cx="6" cy="15.5" r="1.6" stroke={accent} />
-          <circle cx="18" cy="15.5" r="1.6" stroke={accent} />
-        </>
-      )}
-      {kind === "background" && (
-        <>
-          <rect x="4" y="5.5" width="16" height="13" rx="1.5" strokeDasharray="2.4 2.2" />
-          <path d="M9.2 5.5 V18.5 M14.8 5.5 V18.5 M4 11.8 H20" strokeDasharray="1.6 2.4" />
-        </>
-      )}
-      {kind === "light" && (
-        <>
-          <circle cx="12" cy="12" r="3.6" />
-          <path d="M12 3.6 V6 M12 18 V20.4 M3.6 12 H6 M18 12 H20.4 M6.2 6.2 L7.9 7.9 M16.1 16.1 L17.8 17.8 M17.8 6.2 L16.1 7.9 M7.9 16.1 L6.2 17.8" />
-        </>
-      )}
-    </Svg>
-  )
+  void accent
+  const approved: Record<FilmingKind, string> = {
+    fullBody: "shotiq-approved-v2-filming-full-body",
+    sideAngle: "shotiq-approved-v2-filming-side-angle",
+    background: "shotiq-approved-v2-filming-background",
+    light: "shotiq-approved-mechanics-environment-light",
+  }
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
 }
 
 /** Capture-readiness checks — bracketed framing marks, one per check. */
@@ -854,40 +691,7 @@ export function ReadinessGlyph({
     lighting: "shotiq-approved-mechanics-environment-light",
     stability: "shotiq-approved-mechanics-camera-position",
   }
-  if (size >= 18) {
-    return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
-  }
-  return (
-    <Svg size={size} className={className} title={title}>
-      {kind !== "lighting" && BRACKETS}
-      {kind === "athlete" && (
-        <>
-          <circle cx="11" cy="8.2" r="1.4" />
-          <path d="M11 9.6 L11.4 13.6 M11.4 13.6 L9.6 16.4 M11.4 13.6 L13.4 16.2" />
-          <path d="M11.1 10.8 L13.4 12.4" />
-        </>
-      )}
-      {kind === "framing" && (
-        <>
-          <rect x="8.5" y="6.5" width="7" height="11" rx="1" />
-          <circle cx="12" cy="9.4" r="1.1" />
-          <path d="M12 10.5 V14 M12 11.6 L10.3 12.6 M12 11.6 L13.7 12.6 M12 14 L10.6 16.2 M12 14 L13.4 16.2" />
-        </>
-      )}
-      {kind === "lighting" && (
-        <>
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 3.5 V5.5 M12 18.5 V20.5 M3.5 12 H5.5 M18.5 12 H20.5 M6.2 6.2 L7.6 7.6 M16.4 16.4 L17.8 17.8 M17.8 6.2 L16.4 7.6 M7.6 16.4 L6.2 17.8" />
-        </>
-      )}
-      {kind === "stability" && (
-        <>
-          <rect x="6.5" y="8.5" width="11" height="7" rx="1" />
-          <path d="M12 14 V10 M10.6 11.4 L12 9.8 L13.4 11.4" />
-        </>
-      )}
-    </Svg>
-  )
+  return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
 }
 
 /* ------------------------------------------------- primary-action marks */
@@ -925,6 +729,7 @@ const ACTION_BOX: Record<ActionKind, [number, number]> = {
 export function ActionGlyph({
   kind, height = 34, className = "", accent = ORANGE, title,
 }: { kind: ActionKind; height?: number } & GlyphProps) {
+  void accent
   const approved: Record<ActionKind, string> = {
     analyze: "shotiq-approved-ui-target-reticle",
     uploadImage: "shotiq-approved-ui-analytics-upload",
@@ -935,95 +740,7 @@ export function ActionGlyph({
     nodeClimb: "shotiq-approved-ui-progress-line",
     skeletonDots: "shotiq-approved-mechanics-node-target",
   }
-  if (height >= 14) {
-    return <ApprovedRasterIcon asset={approved[kind]} size={height} className={`block ${className}`} title={title} />
-  }
-  const [bw, bh] = ACTION_BOX[kind]
-  const width = Math.round((height * bw) / bh)
-  // Keep the drawn stroke ~1.7 device px whatever height the caller asks for.
-  const sw = 1.7 * (bh / height)
-  const paper = "var(--shotiq-color-paper)"
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${bw} ${bh}`}
-         className={`block max-w-none ${className}`}
-         fill="none" stroke="currentColor" strokeWidth={sw}
-         strokeLinecap="round" strokeLinejoin="round"
-         role={title ? "img" : undefined} aria-hidden={title ? undefined : "true"}
-         aria-label={title}>
-      {kind === "analyze" && (
-        <>
-          <path d="M2.5 11 V5 A2.5 2.5 0 0 1 5 2.5 H11 M23 2.5 H29 A2.5 2.5 0 0 1 31.5 5 V11 M31.5 23 V29 A2.5 2.5 0 0 1 29 31.5 H23 M11 31.5 H5 A2.5 2.5 0 0 1 2.5 29 V23" />
-          <circle cx="17" cy="17" r="4.4" />
-          <path d="M12.6 17H21.4M17 12.6Q19.6 17 17 21.4M17 12.6Q14.4 17 17 21.4" />
-        </>
-      )}
-      {kind === "uploadImage" && (
-        <>
-          <path d="M1.5 11 V1.5 H11 M37 1.5 H46.5 V11 M46.5 25 V34.5 H37 M11 34.5 H1.5 V25" />
-          <path d="M14.8 14.5 L26.6 20.8 L36 14.5" />
-          <path d="M14.8 17.5 V26.3" strokeDasharray="1.6 2" />
-          {[[14.8, 14.5], [26.6, 20.8], [36, 14.5], [14.8, 29.3]].map(([x, y]) => (
-            <circle key={`${x}-${y}`} cx={x} cy={y} r="2.9" fill={paper} stroke={accent} strokeWidth={sw * 1.25} />
-          ))}
-        </>
-      )}
-      {kind === "uploadVideo" && (
-        <>
-          <rect x="1.2" y="2" width="57.6" height="21.6" />
-          <path d="M20.4 2 V23.6 M39.6 2 V23.6" />
-          <path d="M10.8 9.6 V16 M30 9.6 V16 M49.2 9.6 V16" strokeWidth={sw * 1.5} />
-          <circle cx="30" cy="13" r="4.1" fill={paper} stroke={accent} strokeWidth={sw * 1.25} />
-          <path d="M25.9 13H34.1M30 8.9Q32.4 13 30 17.1M30 8.9Q27.6 13 30 17.1" stroke={accent} strokeWidth={sw * 1.05} />
-          <path d="M30 24.2V26" stroke={accent} strokeWidth={sw * 1.2} />
-        </>
-      )}
-      {kind === "liveCamera" && (
-        <>
-          <path d="M4.6 15 L13.3 22.5 L24.6 6 L39.6 22.5 L57.7 5.6 L63.3 24.4 L76.4 14.4" />
-          {[[4.6, 15], [13.3, 22.5], [24.6, 6], [57.7, 5.6], [63.3, 24.4], [76.4, 14.4]].map(([x, y]) => (
-            <circle key={`${x}-${y}`} cx={x} cy={y} r="2.7" fill={paper} stroke="currentColor" />
-          ))}
-          <circle cx="39.6" cy="22.5" r="5.4" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
-          <path d="M34.2 22.5H45M39.6 17.1Q42.7 22.5 39.6 27.9M39.6 17.1Q36.5 22.5 39.6 27.9" stroke={accent} strokeWidth={sw} />
-        </>
-      )}
-      {kind === "chooseMedia" && (
-        <>
-          <path d="M2 2 H21 L31.5 12.5 V44 H2 Z" />
-          <path d="M21 2 V12.5 H31.5" />
-          <path d="M16.8 44 V18" />
-          <path d="M8.4 26.4 L16.8 18 L25.2 26.4" />
-        </>
-      )}
-      {kind === "nodeClimb" && (
-        <>
-          <path d="M5.5 25 L12 18.5 L17.5 22 L27 7.5" />
-          <circle cx="5.5" cy="25" r="3.4" fill={paper} />
-          <circle cx="12" cy="18.5" r="3.4" fill={paper} />
-          <circle cx="17.5" cy="22" r="3.4" fill={paper} />
-          <circle cx="27" cy="7.5" r="4.2" fill={paper} />
-        </>
-      )}
-      {kind === "skeletonDots" && (
-        <>
-          {[[7, 5], [15, 3.5], [22.5, 6], [4.5, 12], [11.5, 11], [19, 12.5], [25.5, 11],
-            [7.5, 19], [15, 18], [22, 20], [11, 25.5], [19.5, 25]].map(([x, y]) => (
-            <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill="currentColor" stroke="none" />
-          ))}
-          <path d="M7 5 L15 3.5 M11.5 11 L19 12.5 M7.5 19 L15 18 L22 20" strokeDasharray="1.4 2" />
-        </>
-      )}
-      {kind === "nodeGraph" && (
-        <>
-          <path d="M9.9 16.4 L23.4 5.6" />
-          <circle cx="3.4" cy="12.6" r="3" />
-          <circle cx="9.9" cy="16.4" r="3" />
-          <circle cx="23.4" cy="5.6" r="3.9" />
-          <path d="M26 8.6 L27.6 11.6" />
-        </>
-      )}
-    </svg>
-  )
+  return <ApprovedRasterIcon asset={approved[kind]} size={height} className={`block ${className}`} title={title} />
 }
 
 /* ---------------------------------------------------------- phase track */

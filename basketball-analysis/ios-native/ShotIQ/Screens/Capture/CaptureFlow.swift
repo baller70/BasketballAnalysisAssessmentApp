@@ -1436,7 +1436,9 @@ struct UploadQueueView: View {      // 025
                         Spacer()
                         PhotosPicker(selection: $addPick, matching: .any(of: [.images, .videos])) {
                             VStack(spacing: 5) {
-                                Image(systemName: "plus.viewfinder").font(.system(size: 22)).foregroundStyle(ShotIQColor.ink)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
+                                                         size: 24,
+                                                         label: nil)
                                 Text("Add media").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                             }
                             .padding(.horizontal, 16).padding(.vertical, 12)
@@ -1583,7 +1585,9 @@ struct UploadQueueView: View {      // 025
                         // navigationDestination and the tap went nowhere.
                         Button { goAnalyze = true } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "camera.metering.center.weighted").font(.system(size: 14))
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                         size: 15,
+                                                         label: nil)
                                 Text("Analyze now").shotiqBody(14, weight: .medium)
                             }
                             .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -3293,7 +3297,9 @@ struct ShotDetectedView: View {     // 034
                         .buttonStyle(.plain)
                         Button { dismiss() } label: {
                             VStack(spacing: 8) {
-                                Image(systemName: "viewfinder").font(.system(size: 18))
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                         size: 20,
+                                                         label: nil)
                                 Text("NOT A SHOT").shotiqCondensed(12, weight: .heavy).kerning(0.5)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                             }
@@ -3365,7 +3371,9 @@ struct CaptureReviewView: View {    // 035
                         Text("CAPTURE REVIEW").shotiqDisplay(40)
                         Spacer()
                         HStack(spacing: 8) {
-                            Image(systemName: "film").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
+                                                     size: 18,
+                                                     label: nil)
                             Text("24").font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                             Text("SHOTS").shotiqBody(9, weight: .medium).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.graphite)
@@ -3448,7 +3456,9 @@ struct CaptureReviewView: View {    // 035
                                     Text(when).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.8)
                                     HStack(spacing: 6) {
-                                        Image(systemName: "figure.basketball").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "figure.basketball"),
+                                                                 size: 13,
+                                                                 label: nil)
                                         Text(flaw).shotiqBody(12).foregroundStyle(ShotIQColor.ink)
                                             .lineLimit(1).fixedSize()
                                     }
@@ -3458,7 +3468,9 @@ struct CaptureReviewView: View {    // 035
                                             .lineLimit(1).fixedSize()
                                     }
                                     HStack(spacing: 6) {
-                                        Image(systemName: "film").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
+                                                                 size: 13,
+                                                                 label: nil)
                                         Text(dur).shotiqBody(12).foregroundStyle(ShotIQColor.ink)
                                             .lineLimit(1).fixedSize()
                                     }

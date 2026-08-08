@@ -115,7 +115,9 @@ struct PlayerCardView: View {       // 048
                     Spacer()
                     HStack(spacing: 18) {
                         NavigationLink { EliteMatchView() } label: {
-                            Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 17))
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
+                                                     size: 18,
+                                                     label: nil)
                         }
                         .buttonStyle(.plain)
                         downloadControl {
@@ -254,7 +256,9 @@ struct PlayerCardView: View {       // 048
                         HStack(spacing: 12) {
                             NavigationLink { CustomizePlayerCardView() } label: {
                                 VStack(spacing: 8) {
-                                    Image(systemName: "viewfinder").font(.system(size: 20))
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                             size: 22,
+                                                             label: nil)
                                     Text("Customize card").shotiqBody(14, weight: .semibold)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                 }
@@ -266,7 +270,9 @@ struct PlayerCardView: View {       // 048
                             .accessibilityIdentifier("Customize card")
                             NavigationLink { ShareResultsView() } label: {
                                 VStack(spacing: 8) {
-                                    Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 20))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-share",
+                                                             size: 22,
+                                                             label: nil)
                                     Text("Share card").shotiqBody(14)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                 }
@@ -1191,7 +1197,9 @@ struct EliteShootersView: View {    // 052
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                             Button { withAnimation(.easeInOut(duration: 0.15)) { showFilters.toggle() } } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "slider.horizontal.3").font(.system(size: 15))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-settings",
+                                                             size: 16,
+                                                             label: nil)
                                     Text("Filter").shotiqBody(14)
                                 }
                                 .foregroundStyle(showFilters ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
@@ -1262,8 +1270,9 @@ struct EliteShootersView: View {    // 052
                             .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
-                            Image(systemName: "point.3.connected.trianglepath.dotted")
-                                .font(.system(size: 24, weight: .light)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
+                                                     size: 26,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Compare your form to any elite shooter.")
                                     .shotiqBody(14, weight: .semibold).foregroundStyle(ShotIQColor.ink)
@@ -1275,7 +1284,9 @@ struct EliteShootersView: View {    // 052
                             Spacer()
                             NavigationLink { AnalyzeHubView() } label: {
                                 HStack(spacing: 7) {
-                                    Image(systemName: "viewfinder").font(.system(size: 13))
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                             size: 14,
+                                                             label: nil)
                                     Text("Analyze shot").shotiqBody(13, weight: .semibold)
                                 }
                                 .foregroundStyle(.white)

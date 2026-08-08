@@ -283,10 +283,9 @@ struct TopBar: View {
 /// One stat in the header strip: bespoke line mark, condensed numeral, tiny caps
 /// label.
 ///
-/// The mark is chosen from the *concept* (the caps label), not from the SF
-/// Symbol name a screen happens to pass, so the same statistic never gets two
-/// different marks and two statistics never share one. `icon` is kept as the
-/// fallback for concepts canonical draws with a plain system-style icon.
+/// The mark is chosen from the *concept* (the caps label), not from the legacy
+/// SF Symbol name a screen happens to pass, so the same statistic never gets two
+/// different marks and two statistics never share one.
 struct HeaderStat: View {
     var icon: String
     var value: String
@@ -307,7 +306,9 @@ struct HeaderStat: View {
             if let resolvedMark {
                 StatMarkGlyph(kind: resolvedMark, size: 19).foregroundStyle(ShotIQColor.ink)
             } else {
-                Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                         size: 19,
+                                         label: nil)
             }
             Text(value).font(.custom("Tungsten-Medium", size: ShotIQType.numeric))
                 .foregroundStyle(ShotIQColor.ink)
@@ -352,7 +353,11 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                if let icon { Image(systemName: icon) }
+                if let icon {
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                             size: 18,
+                                             label: nil)
+                }
                 Text(title).shotiqBody(ShotIQType.button, weight: .medium)
             }
             .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
@@ -370,7 +375,11 @@ struct SecondaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                if let icon { Image(systemName: icon) }
+                if let icon {
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                             size: 18,
+                                             label: nil)
+                }
                 Text(title).shotiqBody(ShotIQType.button)
             }
             .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
@@ -446,9 +455,9 @@ private struct ShotIQToastView: View {
                         .controlSize(.small)
                         .tint(toast.kind.tint)
                 } else {
-                    Image(systemName: toast.kind.icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(toast.kind.tint)
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: toast.kind.icon),
+                                             size: 16,
+                                             label: nil)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(toast.title)
@@ -835,14 +844,6 @@ enum RootTab: String, CaseIterable {
     // Canonical tab labels are single short words (018/054/066: Home,
     // Capture, Train, Progress, Profile) so nothing ever wraps.
     case home = "Home", analyze = "Capture", training = "Train", progress = "Progress", profile = "Profile"
-    var icon: String {
-        switch self {
-        // Canonical draws a capture reticle for tab 2, not a line chart, and a
-        // target frame for Home rather than a filled house.
-        case .home: "viewfinder"; case .analyze: "camera.viewfinder"; case .training: "figure.run"
-        case .progress: "chart.line.uptrend.xyaxis"; case .profile: "person.crop.circle"
-        }
-    }
     /// Canonical draws five unrelated bespoke marks here — a framing reticle, a
     /// node graph, a rail, a rising node arc, and the player's initials.
     var navMark: NavMark? {

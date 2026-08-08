@@ -701,7 +701,9 @@ struct ProfileMenuView: View {      // 020
                                 app.tab = .profile
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "camera.metering.center.weighted").font(.system(size: 14))
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                             size: 15,
+                                                             label: nil)
                                     Text("View profile").shotiqBody(14, weight: .medium)
                                     Image(systemName: "chevron.right").font(.system(size: 10))
                                 }
@@ -756,8 +758,9 @@ struct ProfileMenuView: View {      // 020
 
                     // DASHBOARD MODE selector
                     HStack(spacing: 14) {
-                        Image(systemName: "camera.metering.center.weighted").font(.system(size: 24))
-                            .foregroundStyle(ShotIQColor.ink)
+                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                 size: 24,
+                                                 label: nil)
                         // NO Spacer HERE, AND THE LABEL COLUMN CLAIMS THE SLACK
                         // ITSELF. A Spacer and a Text are both flexible, so an
                         // over-budget HStack splits the leftover width between

@@ -86,7 +86,9 @@ struct GoalsView: View {            // 063
                         .padding(.top, 16)
                         NavigationLink { CreateGoalView(onCreated: { await vm.load() }) } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "plus.viewfinder")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
+                                                         size: 18,
+                                                         label: nil)
                                 Text("Create goal").shotiqBody(17, weight: .medium)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)
@@ -1572,8 +1574,9 @@ struct AnalyticsDetailedView: View { // 067
     private func railTile(_ label: String, _ color: Color) -> some View {
         VStack(spacing: 0) {
             Rectangle().fill(ShotIQColor.warmCanvas).frame(height: 56)
-                .overlay(Image(systemName: "figure.basketball").font(.system(size: 16))
-                    .foregroundStyle(ShotIQColor.muted))
+                .overlay(ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "figure.basketball"),
+                                                  size: 18,
+                                                  label: nil))
             Text(label).shotiqBody(6.5, weight: .bold).kerning(0.2)
                 .foregroundStyle(.white)
                 .lineLimit(1).minimumScaleFactor(0.5)

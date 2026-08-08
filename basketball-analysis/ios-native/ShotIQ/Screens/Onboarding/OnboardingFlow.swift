@@ -81,7 +81,11 @@ private func ftIn(_ inches: Int) -> String { "\(inches / 12)'\(inches % 12)\"" }
 @ViewBuilder
 private func primaryLabel(_ title: String, icon: String? = nil, color: Color = ShotIQColor.shotiqOrange) -> some View {
     HStack(spacing: 10) {
-        if let icon { Image(systemName: icon) }
+        if let icon {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                     size: 18,
+                                     label: nil)
+        }
         Text(title).shotiqBody(17, weight: .medium)
     }
     .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
@@ -211,8 +215,12 @@ private struct OptionCard: View {
                             AbilityGlyph(kind: ability, size: 34)
                         } else if let shot = ShotTypeKind(shotTypeLabel: label) {
                             ShotTypeGlyph(kind: shot, size: 30)
+                        } else if let body = bodyTypeAsset(for: label) {
+                            ShotIQApprovedRasterIcon(assetName: body, size: 34, label: nil)
                         } else if !icon.isEmpty {
-                            Image(systemName: icon).font(.system(size: 26))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                                     size: 34,
+                                                     label: nil)
                         }
                     }
                     .foregroundStyle(ShotIQColor.ink)
@@ -240,6 +248,15 @@ private struct OptionCard: View {
         }
         .buttonStyle(.plain)
     }
+
+    private func bodyTypeAsset(for label: String) -> String? {
+        let k = label.lowercased()
+        if k.contains("slim") || k.contains("lean") { return "shotiq-approved-v2-bodytype-slim" }
+        if k.contains("athletic") { return "shotiq-approved-v2-bodytype-athletic" }
+        if k.contains("stocky") || k.contains("solid") || k.contains("strong") { return "shotiq-approved-v2-bodytype-stocky" }
+        if k.contains("larger") || k.contains("big") { return "shotiq-approved-v2-bodytype-larger" }
+        return nil
+    }
 }
 
 /// Shooting-style card: media placeholder above a radio row and caption.
@@ -256,12 +273,12 @@ private struct StyleCard: View {
                 ZStack {
                     if let photoKey {
                         CanonicalPhoto(photoKey, height: 96, cornerRadius: 6)
-                    } else {
-                        RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
-                        Image(systemName: "figure.basketball")
-                            .font(.system(size: 30, weight: .light))
-                            .foregroundStyle(ShotIQColor.graphite)
-                    }
+                        } else {
+                            RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "figure.basketball"),
+                                                     size: 34,
+                                                     label: nil)
+                        }
                 }
                 .frame(height: 96)
                 HStack(spacing: 6) {
@@ -338,7 +355,9 @@ private struct MeasurementRow: View {
                 if let body = BodyMetricKind(measurementLabel: label) {
                     BodyMetricGlyph(kind: body, size: 30)
                 } else {
-                    Image(systemName: icon).font(.system(size: 26))
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                             size: 30,
+                                             label: nil)
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
@@ -460,9 +479,9 @@ struct OnboardingIntroView: View {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12).fill(ShotIQColor.warmCanvas)
                                 VStack(spacing: 14) {
-                                    Image(systemName: "figure.basketball")
-                                        .font(.system(size: 52, weight: .light))
-                                        .foregroundStyle(ShotIQColor.graphite)
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-profile",
+                                                             size: 52,
+                                                             label: nil)
                                     PhaseGlyph(active: true, size: 32)
                                 }
                             }
@@ -475,9 +494,7 @@ struct OnboardingIntroView: View {
                         VStack(spacing: 0) {
                             ForEach(benefits, id: \.1) { icon, t, d in
                                 HStack(alignment: .top, spacing: 16) {
-                                    Image(systemName: icon)
-                                        .font(.system(size: 26))
-                                        .foregroundStyle(ShotIQColor.ink)
+                                    ShotIQConceptGlyph(concept: t, fallback: icon, size: 28)
                                         .frame(width: 46)
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(t).shotiqBody(15, weight: .bold).kerning(0.5)
@@ -516,8 +533,9 @@ struct OnboardingIntroView: View {
                                 .frame(maxWidth: .infinity)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
                             VStack(spacing: 3) {
-                                Image(systemName: "scope").font(.system(size: 17))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "scope"),
+                                                         size: 18,
+                                                         label: nil)
                                 Text("82").font(.custom("Tungsten-Medium", size: 24))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 Text("FORM SCORE").shotiqBody(9, weight: .medium).kerning(0.6)
@@ -750,9 +768,9 @@ struct ExperienceBodyTypeView: View {
                         .padding(.top, 12)
 
                         HStack(spacing: 14) {
-                            Image(systemName: "lightbulb")
-                                .font(.system(size: 24))
-                                .foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-coaching-tip",
+                                                     size: 24,
+                                                     label: nil)
                             Text("You can update these anytime in your profile settings.")
                                 .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                             Spacer()
@@ -798,8 +816,9 @@ struct ShootingProfileView: View {
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 6) {
-                                Image(systemName: "film")
-                                    .font(.system(size: 28)).foregroundStyle(ShotIQColor.ink)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-ladder-balls",
+                                                         size: 28,
+                                                         label: nil)
                                 Text("STEP 3 OF 4")
                                     .shotiqBody(12, weight: .semibold).kerning(2)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -841,8 +860,7 @@ struct ShootingProfileView: View {
                         .padding(.top, 16)
 
                         HStack(alignment: .top, spacing: 14) {
-                            Image(systemName: "camera.metering.center.weighted")
-                                .font(.system(size: 28)).foregroundStyle(ShotIQColor.ink)
+                            CoachingTargetGlyph(size: 28)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("PRIMARY TARGET")
                                     .shotiqBody(14, weight: .bold).kerning(0.5)
@@ -897,8 +915,9 @@ struct ShootingProfileView: View {
                         .padding(.top, 12)
 
                         HStack(alignment: .top, spacing: 14) {
-                            Image(systemName: "camera.metering.center.weighted")
-                                .font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                     size: 26,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Why this matters")
                                     .shotiqBody(15, weight: .semibold)
@@ -1068,9 +1087,9 @@ struct PlayerBioView: View {
 
                         ShotIQCard {
                             HStack(spacing: 14) {
-                                Image(systemName: "point.3.connected.trianglepath.dotted")
-                                    .font(.system(size: 28))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-improve",
+                                                         size: 28,
+                                                         label: nil)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("ENHANCE WITH AI")
                                         .shotiqBody(14, weight: .bold).kerning(0.5)
@@ -1227,9 +1246,7 @@ struct OnboardingReviewView: View {
                                 Text("\(m.hand)-handed • \(m.experience)")
                                     .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                 HStack(spacing: 6) {
-                                    Image(systemName: "chart.bar.fill")
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                    AbilityGlyph(kind: .intermediate, size: 14)
                                     Text("INTERMEDIATE TIER")
                                         .shotiqBody(13, weight: .bold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.analysisBlue)
@@ -1521,9 +1538,9 @@ struct CameraPermissionPrimerView: View {
                                 }
                             }
                             Spacer()
-                            Image(systemName: "film")
-                                .font(.system(size: 40, weight: .light))
-                                .foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
+                                                     size: 42,
+                                                     label: nil)
                         }
                         .padding(.top, 18)
 
@@ -1653,9 +1670,9 @@ struct PhotoLibraryPermissionView: View {
                                 }
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.warmCanvas)
-                                    Image(systemName: "photo.on.rectangle")
-                                        .font(.system(size: 38, weight: .light))
-                                        .foregroundStyle(ShotIQColor.graphite)
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-media-jpg",
+                                                             size: 44,
+                                                             label: nil)
                                 }
                                 .frame(height: 210)
                             }
@@ -1667,9 +1684,7 @@ struct PhotoLibraryPermissionView: View {
                         VStack(spacing: 0) {
                             ForEach(accessRows, id: \.1) { icon, title, caption in
                                 HStack(alignment: .top, spacing: 16) {
-                                    Image(systemName: icon)
-                                        .font(.system(size: 26))
-                                        .foregroundStyle(ShotIQColor.ink)
+                                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 28)
                                         .frame(width: 44)
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(title).shotiqBody(16, weight: .semibold)
@@ -1688,9 +1703,9 @@ struct PhotoLibraryPermissionView: View {
                         QuestionLabel(text: "OTHER WAYS TO ADD PHOTOS").padding(.top, 22)
                         Button { Task { await useCameraInstead() } } label: {
                             HStack(spacing: 16) {
-                                Image(systemName: "point.3.connected.trianglepath.dotted")
-                                    .font(.system(size: 26))
-                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-live-camera",
+                                                         size: 28,
+                                                         label: nil)
                                     .frame(width: 44)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("Use camera instead").shotiqBody(16, weight: .semibold)
@@ -1801,9 +1816,7 @@ struct NotificationPermissionPrimerView: View {
                         VStack(spacing: 0) {
                             ForEach(reasons, id: \.1) { icon, title, caption in
                                 HStack(alignment: .center, spacing: 16) {
-                                    Image(systemName: icon)
-                                        .font(.system(size: 32, weight: .light))
-                                        .foregroundStyle(ShotIQColor.ink)
+                                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 34)
                                         .frame(width: 64)
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
                                     VStack(alignment: .leading, spacing: 4) {

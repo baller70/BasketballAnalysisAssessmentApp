@@ -680,7 +680,9 @@ struct AnalysisResultOverviewView: View { // 038
                             .padding(.top, 8)
                             NavigationLink { ShotBreakdownView(presentation: p) } label: {
                                 HStack(spacing: 10) {
-                                    Image(systemName: "film")
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
+                                                             size: 18,
+                                                             label: nil)
                                     Text("View shot breakdown").shotiqBody(17, weight: .medium)
                                 }
                                 .frame(maxWidth: .infinity).frame(height: 54)
@@ -940,7 +942,9 @@ struct NoAnalysisYetView: View {    // 039
                         VStack(alignment: .leading, spacing: 0) {
                             NavigationLink { AnalyzeHubView() } label: {
                                 HStack(spacing: 12) {
-                                    Image(systemName: "viewfinder").font(.system(size: 20))
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                             size: 22,
+                                                             label: nil)
                                     Text("Analyze a shot").shotiqBody(19, weight: .semibold)
                                 }
                                 .frame(maxWidth: .infinity).frame(height: 62)
@@ -1032,8 +1036,9 @@ struct AnalysisErrorView: View {    // 040
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .top, spacing: 16) {
                                 ZStack(alignment: .bottomTrailing) {
-                                    Image(systemName: "viewfinder").font(.system(size: 40, weight: .light))
-                                        .foregroundStyle(ShotIQColor.ink)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                             size: 42,
+                                                             label: nil)
                                     Image(systemName: "exclamationmark.triangle")
                                         .font(.system(size: 18)).foregroundStyle(ShotIQColor.reviewRed)
                                         .offset(x: 6, y: 6)
@@ -1081,8 +1086,10 @@ struct AnalysisErrorView: View {    // 040
                                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 16)
                                     Text("FRAME 18/48").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                                         .padding(.top, 2)
-                                    Image(systemName: "film").font(.system(size: 26, weight: .light))
-                                        .foregroundStyle(ShotIQColor.ink).padding(.top, 6)
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
+                                                             size: 28,
+                                                             label: nil)
+                                        .padding(.top, 6)
                                     Text("Release phase detected.").shotiqBody(12)
                                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 4)
                                 }
@@ -1277,8 +1284,9 @@ struct ShotBreakdownView: View {    // 041
                                             .fixedSize(horizontal: false, vertical: true)
                                         NavigationLink { FrameDetailSkeletonView() } label: {
                                             HStack(spacing: 8) {
-                                                Image(systemName: "viewfinder").font(.system(size: 13))
-                                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                                         size: 14,
+                                                                         label: nil)
                                                 Text("Open release frame").shotiqBody(14)
                                                     .foregroundStyle(ShotIQColor.ink)
                                                 Image(systemName: "chevron.right").font(.system(size: 11))
@@ -1410,7 +1418,9 @@ struct FrameDetailSkeletonView: View { // 042
                             Spacer()
                             NavigationLink { ShotBreakdownView() } label: {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "film").font(.system(size: 15))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
+                                                             size: 16,
+                                                             label: nil)
                                     Text("View sequence").shotiqBody(13)
                                 }
                                 .foregroundStyle(ShotIQColor.ink)
@@ -2242,8 +2252,9 @@ struct MetricDetailView: View {     // 045
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                                 Spacer()
-                                Image(systemName: "figure.arms.open").font(.system(size: 44, weight: .light))
-                                    .foregroundStyle(ShotIQColor.ink)
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-bodytype-larger",
+                                                         size: 46,
+                                                         label: nil)
                             }
                             .padding(16)
                         }
@@ -2405,8 +2416,9 @@ struct FlawsOverviewView: View {    // 046
                             .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
-                            Image(systemName: "point.3.connected.trianglepath.dotted")
-                                .font(.system(size: 22, weight: .light)).foregroundStyle(ShotIQColor.analysisBlue)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
+                                                     size: 24,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Add all 3 flaws to your training plan")
                                     .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)

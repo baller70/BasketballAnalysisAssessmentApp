@@ -124,7 +124,9 @@ struct TrainingHomeView: View {     // 054
 
                         NavigationLink { QuickStartView() } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "camera.viewfinder")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
+                                                         size: 18,
+                                                         label: nil)
                                 Text("Quick start").shotiqBody(17, weight: .medium)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)
@@ -314,7 +316,9 @@ struct QuickStartView: View {       // 055
                         .padding(.top, 10)
                         NavigationLink { DrillExecutionView(drillName: "Wall Elbow Alignment") } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "camera.viewfinder")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
+                                                         size: 18,
+                                                         label: nil)
                                 Text("Start shot tracking").shotiqBody(17, weight: .medium)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)
@@ -335,7 +339,9 @@ struct QuickStartView: View {       // 055
             HStack(alignment: .top) {
                 StatBlock(value: "\(value.wrappedValue)", label: unit, valueSize: ShotIQType.numeric * 1.4)
                 Spacer()
-                Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.graphite)
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                         size: 24,
+                                         label: nil)
             }
             Text(caption).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(2).minimumScaleFactor(0.8)
@@ -439,7 +445,9 @@ struct DiscoverDrillsView: View {   // 056
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                             Button { showFilterMenu = true } label: {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "slider.horizontal.3").font(.system(size: 14))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-settings",
+                                                             size: 15,
+                                                             label: nil)
                                     Text("Filters").shotiqBody(14, weight: .medium)
                                 }
                                 .padding(.horizontal, 14).frame(height: 46)
@@ -852,10 +860,11 @@ struct DrillDetailView: View {      // 057
     }
     private func squareNav(_ icon: String, @ViewBuilder dest: @escaping () -> some View) -> some View {
         NavigationLink { dest() } label: {
-            Image(systemName: icon).font(.system(size: 18))
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                     size: 18,
+                                     label: nil)
                 .frame(width: 54, height: 54)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                .foregroundStyle(ShotIQColor.ink)
         }
     }
 }
@@ -895,7 +904,9 @@ struct MyDrillsView: View {         // 058
                     VStack(alignment: .leading, spacing: 0) {
                         NavigationLink { AnalyzeHubView() } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "camera.viewfinder")
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
+                                                         size: 18,
+                                                         label: nil)
                                 Text("Analyze shot").shotiqBody(17, weight: .medium)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)
@@ -933,7 +944,9 @@ struct MyDrillsView: View {         // 058
                                 HStack(spacing: 5) {
                                     Text(phaseFilter == "All phases" ? "Filter" : phaseFilter)
                                         .shotiqBody(12)
-                                    Image(systemName: "slider.horizontal.3").font(.system(size: 11))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-settings",
+                                                             size: 12,
+                                                             label: nil)
                                 }
                                 .foregroundStyle(phaseFilter == "All phases" ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
                             }
@@ -942,8 +955,9 @@ struct MyDrillsView: View {         // 058
                         if tab == 2 {
                             ShotIQCard {
                                 VStack(spacing: 8) {
-                                    Image(systemName: "scribble.variable").font(.system(size: 26))
-                                        .foregroundStyle(ShotIQColor.graphite)
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-workout-saved",
+                                                             size: 28,
+                                                             label: nil)
                                     Text("No assigned drills yet").shotiqBody(15, weight: .semibold)
                                     Text("Drills your coach assigns will appear here.")
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -1192,7 +1206,9 @@ struct WorkoutCalendarView: View {  // 059
                                 }
                                 NavigationLink { DrillExecutionView(drillName: "Combo Ladder") } label: {
                                     HStack(spacing: 8) {
-                                        Image(systemName: "camera.viewfinder")
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
+                                                                 size: 18,
+                                                                 label: nil)
                                         Text("Open workout").shotiqBody(16, weight: .medium)
                                     }
                                     .frame(maxWidth: .infinity).frame(height: 50)
@@ -1782,7 +1798,9 @@ struct ShotTrackerView: View {      // 061
     }
     private func trackerButton(_ icon: String, _ label: String, _ fg: Color, _ bg: Color?) -> some View {
         HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 11))
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                     size: 12,
+                                     label: nil)
             Text(label).shotiqBody(10, weight: .bold).kerning(0.3)
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
@@ -1896,8 +1914,9 @@ struct WorkoutCompletionView: View { // 062
                         .padding(.top, 16)
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: "viewfinder").font(.system(size: 22))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
+                                                         size: 24,
+                                                         label: nil)
                                 VStack(alignment: .leading, spacing: 5) {
                                     MicroLabel(text: "COACHING TAKEAWAY")
                                     Text("Nice arc and balance. Your release path is clean. Focus on keeping your elbow in line on fatigue.")
@@ -1912,8 +1931,9 @@ struct WorkoutCompletionView: View { // 062
                             ShotIQCard {
                                 HStack(spacing: 12) {
                                     Circle().fill(ShotIQColor.analysisBlue).frame(width: 44, height: 44)
-                                        .overlay(Image(systemName: "point.3.connected.trianglepath.dotted")
-                                            .font(.system(size: 16)).foregroundStyle(.white))
+                                        .overlay(ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
+                                                                         size: 22,
+                                                                         label: nil))
                                     VStack(alignment: .leading, spacing: 2) {
                                         MicroLabel(text: "NEXT RECOMMENDATION")
                                         Text("Elbow Stack Builder").shotiqBody(15, weight: .semibold)
@@ -1932,7 +1952,9 @@ struct WorkoutCompletionView: View { // 062
                         HStack(spacing: 10) {
                             NavigationLink { ShotBreakdownView() } label: {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "doc.text").font(.system(size: 12))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-review",
+                                                             size: 14,
+                                                             label: nil)
                                     Text("Review shots").shotiqBody(13, weight: .semibold)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                 }
@@ -1942,7 +1964,9 @@ struct WorkoutCompletionView: View { // 062
                             }
                             ShareLink(item: "ShotIQ workout complete — \(makes)/\(shots) makes (\(accuracy)). 🏀") {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 12))
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-share",
+                                                             size: 14,
+                                                             label: nil)
                                     Text("Share progress").shotiqBody(13, weight: .semibold)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                 }
