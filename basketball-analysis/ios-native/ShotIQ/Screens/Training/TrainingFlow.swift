@@ -202,6 +202,160 @@ enum TrainingWorkoutStore {
     }
 }
 
+struct TrainingHomeDrillRow: Identifiable, Equatable {
+    var id: String { title.lowercased().replacingOccurrences(of: " ", with: "-") }
+    var title: String
+    var tags: [String]
+    var description: String
+    var photo: String?
+}
+
+struct TrainingHomeWorkoutSummary: Equatable {
+    var timestamp: String
+    var drillName: String
+    var shots: String
+    var makes: String
+    var accuracy: String
+    var verdict: String
+    var note: String
+    var formScore: String
+    var scorePct: Double
+
+    static let canonicalDemo = TrainingHomeWorkoutSummary(
+        timestamp: "Today at 8:24 AM",
+        drillName: "Quick Release Builder",
+        shots: "24",
+        makes: "15",
+        accuracy: "62.5%",
+        verdict: "GOOD",
+        note: "Keep building consistency.",
+        formScore: "82",
+        scorePct: 0.82)
+
+    static let empty = TrainingHomeWorkoutSummary(
+        timestamp: "No workouts yet",
+        drillName: "Start tracking to build history",
+        shots: "0",
+        makes: "0",
+        accuracy: "--",
+        verdict: "READY",
+        note: "Track shots to unlock session feedback.",
+        formScore: "--",
+        scorePct: 0)
+
+    init(workout: TrainingWorkoutRecord) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d • h:mm a"
+        timestamp = formatter.string(from: workout.completedAt)
+        drillName = workout.drillName
+        shots = "\(workout.shots)"
+        makes = "\(workout.makes)"
+        accuracy = workout.accuracyText
+        verdict = workout.formVerdict
+        note = workout.formNote
+        formScore = "\(workout.formScore)"
+        scorePct = Double(workout.formScore) / 100
+    }
+
+    private init(timestamp: String, drillName: String, shots: String, makes: String,
+                 accuracy: String, verdict: String, note: String,
+                 formScore: String, scorePct: Double) {
+        self.timestamp = timestamp
+        self.drillName = drillName
+        self.shots = shots
+        self.makes = makes
+        self.accuracy = accuracy
+        self.verdict = verdict
+        self.note = note
+        self.formScore = formScore
+        self.scorePct = scorePct
+    }
+}
+
+struct TrainingHomeData {
+    var target: String
+    var targetGlyph: CorrectionKind
+    var drills: [TrainingHomeDrillRow]
+    var workout: TrainingHomeWorkoutSummary
+
+    static func resolve(latestAnalysis: ShotIQAnalysisResultDTO?,
+                        completedWorkoutsPayload: String,
+                        savedDrillsPayload: String) -> TrainingHomeData {
+        let presentation = latestAnalysis.map(AnalysisResultPresentation.init(result:))
+            ?? (UITestHooks.demoData ? .canonicalDemo : .noResult)
+        let latestWorkout = TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
+        let canonicalDemo = latestAnalysis == nil && latestWorkout == nil && UITestHooks.demoData
+        let target = presentation.coachingTarget
+        let stored = TrainingSavedDrillStore.decode(savedDrillsPayload).map {
+            TrainingHomeDrillRow(title: $0.name,
+                                 tags: [$0.duration, "Form Focus", $0.difficulty],
+                                 description: $0.description,
+                                 photo: $0.photo)
+        }
+        let baseDrills = canonicalDemo
+            ? canonicalDrills
+            : [recommendedDrill(for: target)] + canonicalDrills
+        return TrainingHomeData(
+            target: target,
+            targetGlyph: glyph(for: target),
+            drills: deduped(stored + baseDrills),
+            workout: latestWorkout.map(TrainingHomeWorkoutSummary.init(workout:))
+                ?? (canonicalDemo ? .canonicalDemo : .empty))
+    }
+
+    private static let canonicalDrills = [
+        TrainingHomeDrillRow(title: "Quick Release Builder",
+                             tags: ["20 min", "Form Focus", "Intermediate"],
+                             description: "Improve release speed and consistency.",
+                             photo: "054-visual-003"),
+        TrainingHomeDrillRow(title: "Elbow Alignment Series",
+                             tags: ["15 min", "Form Focus", "All Levels"],
+                             description: "Train a stacked elbow and straight line.",
+                             photo: "054-visual-002"),
+        TrainingHomeDrillRow(title: "Catch & Shoot Flow",
+                             tags: ["12 min", "Game Speed", "All Levels"],
+                             description: "Smooth rhythm from catch to follow-through.",
+                             photo: "054-visual-001")
+    ]
+
+    private static func recommendedDrill(for target: String) -> TrainingHomeDrillRow {
+        let normalized = target.lowercased()
+        if normalized.contains("wrist") {
+            return TrainingHomeDrillRow(title: "WRIST STAY DRILL",
+                                       tags: ["6 min", "Release", "Beginner"],
+                                       description: "Keeps wrist neutral for a clean, consistent release.",
+                                       photo: nil)
+        }
+        if normalized.contains("centerline") || normalized.contains("release closer") {
+            return TrainingHomeDrillRow(title: "ALIGN & EXTEND",
+                                       tags: ["10 min", "Release", "Intermediate"],
+                                       description: "Promotes full extension and vertical ball flight.",
+                                       photo: nil)
+        }
+        return TrainingHomeDrillRow(title: "STACK & SHOOT",
+                                   tags: ["8 min", "Release", "Beginner"],
+                                   description: "Builds stacked elbow position and a straight shooting line.",
+                                   photo: "056-visual-001")
+    }
+
+    private static func glyph(for target: String) -> CorrectionKind {
+        let normalized = target.lowercased()
+        if normalized.contains("centerline") || normalized.contains("release closer") { return .square }
+        if normalized.contains("drive") { return .drive }
+        return .stack
+    }
+
+    private static func deduped(_ rows: [TrainingHomeDrillRow]) -> [TrainingHomeDrillRow] {
+        var seen: Set<String> = []
+        return rows.filter { row in
+            let key = row.title.lowercased()
+            if seen.contains(key) { return false }
+            seen.insert(key)
+            return true
+        }
+    }
+}
+
 struct HRule: View {
     var body: some View { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
 }
@@ -209,18 +363,11 @@ struct HRule: View {
 struct TrainingHomeView: View {     // 054
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
-    private var canonicalSavedDrills: [(String, [String], String, String?)] {
-        [("Quick Release Builder", ["20 min", "Form Focus", "Intermediate"], "Improve release speed and consistency.", "054-visual-003"),
-         ("Elbow Alignment Series", ["15 min", "Form Focus", "All Levels"], "Train a stacked elbow and straight line.", "054-visual-002"),
-         ("Catch & Shoot Flow", ["12 min", "Game Speed", "All Levels"], "Smooth rhythm from catch to follow-through.", "054-visual-001")]
-    }
-    private var savedDrills: [(String, [String], String, String?)] {
-        let stored = TrainingSavedDrillStore.decode(savedDrillsPayload).map {
-            ($0.name, [$0.duration, "Form Focus", $0.difficulty], $0.description, $0.photo)
-        }
-        return stored + canonicalSavedDrills.filter { canonical in
-            !stored.contains { $0.0.caseInsensitiveCompare(canonical.0) == .orderedSame }
-        }
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    private var homeData: TrainingHomeData {
+        TrainingHomeData.resolve(latestAnalysis: app.recentMedia.first?.analysis,
+                                 completedWorkoutsPayload: completedWorkoutsPayload,
+                                 savedDrillsPayload: savedDrillsPayload)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-training-home") {
@@ -233,13 +380,14 @@ struct TrainingHomeView: View {     // 054
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 8) {
                                 MicroLabel(text: "PRIMARY COACHING TARGET")
-                                Text("Keep elbow stacked through release")
+                                Text(homeData.target)
                                     .shotiqBody(21, weight: .bold)
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityIdentifier("training-home-target")
                             }
                             Spacer(minLength: 8)
                             VStack(spacing: 8) {
-                                CorrectionGlyph(kind: .stack, size: 54).foregroundStyle(ShotIQColor.ink)
+                                CorrectionGlyph(kind: homeData.targetGlyph, size: 54).foregroundStyle(ShotIQColor.ink)
                                 Image(systemName: "checkmark.circle")
                                     .font(.system(size: 19))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -283,23 +431,24 @@ struct TrainingHomeView: View {     // 054
                         .padding(.top, 22)
                         ShotIQCard {
                             VStack(spacing: 0) {
-                                ForEach(Array(savedDrills.enumerated()), id: \.offset) { i, d in
-                                    NavigationLink { DrillDetailView(name: d.0) } label: {
+                                ForEach(Array(homeData.drills.enumerated()), id: \.element.id) { i, d in
+                                    NavigationLink { DrillDetailView(name: d.title) } label: {
                                         // 8 rather than 10 across four gutters:
                                         // the three metadata pills need ~164pt and
                                         // the row was leaving them 166.
                                         HStack(spacing: 8) {
                                             PhotoThumb(width: 84, height: 76,
-                                                       photo: d.3)
-                                            WorkoutGlyph(kind: .init(drillName: d.0), size: 28)
+                                                       photo: d.photo)
+                                            WorkoutGlyph(kind: .init(drillName: d.title), size: 28)
                                                 .foregroundStyle(i == 0 ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             VStack(alignment: .leading, spacing: 5) {
-                                                Text(d.0).shotiqBody(15, weight: .semibold)
+                                                Text(d.title).shotiqBody(15, weight: .semibold)
                                                     .lineLimit(1).minimumScaleFactor(0.8)
+                                                    .accessibilityIdentifier("training-home-recommended-drill-\(i)")
                                                 HStack(spacing: 5) {
-                                                    ForEach(d.1, id: \.self) { TagChip(text: $0) }
+                                                    ForEach(d.tags, id: \.self) { TagChip(text: $0) }
                                                 }
-                                                Text(d.2).shotiqBody(11)
+                                                Text(d.description).shotiqBody(11)
                                                     .foregroundStyle(ShotIQColor.graphite)
                                                     .lineLimit(1).minimumScaleFactor(0.8)
                                             }
@@ -309,7 +458,7 @@ struct TrainingHomeView: View {     // 054
                                         }
                                         .padding(10)
                                     }
-                                    if i < savedDrills.count - 1 {
+                                    if i < homeData.drills.count - 1 {
                                         HRule().padding(.leading, 10)
                                     }
                                 }
@@ -320,7 +469,8 @@ struct TrainingHomeView: View {     // 054
                         HStack {
                             SectionLabel(text: "RECENT WORKOUT")
                             Spacer()
-                            Text("Today at 8:24 AM").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                            Text(homeData.workout.timestamp).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("training-home-recent-time")
                         }
                         .padding(.top, 22)
                         NavigationLink { ShotTrackerView() } label: {
@@ -328,19 +478,25 @@ struct TrainingHomeView: View {     // 054
                                 HStack(spacing: 0) {
                                     PhotoThumb(width: 100, height: 128, photo: "054-visual-001")
                                     VStack(alignment: .leading, spacing: 8) {
-                                        Text("Quick Release Builder").shotiqBody(15, weight: .semibold)
+                                        Text(homeData.workout.drillName).shotiqBody(15, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.8)
+                                            .accessibilityIdentifier("training-home-recent-drill")
                                         HStack(spacing: 14) {
-                                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
-                                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
-                                            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
+                                            StatBlock(value: homeData.workout.shots, label: "SHOTS", valueSize: ShotIQType.numeric)
+                                                .accessibilityIdentifier("training-home-recent-shots")
+                                            StatBlock(value: homeData.workout.makes, label: "MAKES", valueSize: ShotIQType.numeric)
+                                                .accessibilityIdentifier("training-home-recent-makes")
+                                            StatBlock(value: homeData.workout.accuracy, label: "MAKE %", valueSize: ShotIQType.numeric)
+                                                .accessibilityIdentifier("training-home-recent-accuracy")
                                         }
                                         HStack(spacing: 7) {
-                                            Text("GOOD").shotiqBody(10, weight: .bold)
+                                            Text(homeData.workout.verdict).shotiqBody(10, weight: .bold)
                                                 .foregroundStyle(ShotIQColor.analysisBlue)
-                                            Text("Keep building consistency.").shotiqBody(11)
+                                                .accessibilityIdentifier("training-home-recent-verdict")
+                                            Text(homeData.workout.note).shotiqBody(11)
                                                 .foregroundStyle(ShotIQColor.graphite)
                                                 .lineLimit(1).minimumScaleFactor(0.8)
+                                                .accessibilityIdentifier("training-home-recent-note")
                                         }
                                     }
                                     .padding(12)
@@ -348,14 +504,17 @@ struct TrainingHomeView: View {     // 054
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("Tungsten-Medium", size: 44))
+                                        Text(homeData.workout.formScore).font(.custom("Tungsten-Medium", size: 44))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 60)
+                                            .accessibilityIdentifier("training-home-recent-score")
+                                        ScoreBar(pct: homeData.workout.scorePct).frame(width: 60)
                                     }
                                     .padding(.trailing, 12)
                                 }
                             }
                         }
+                        .accessibilityIdentifier("training-home-recent-workout-card")
+                        .accessibilityLabel("Recent workout")
                         .padding(.top, 8)
                         PhaseStrip().padding(.top, 22)
                         Spacer(minLength: 30)

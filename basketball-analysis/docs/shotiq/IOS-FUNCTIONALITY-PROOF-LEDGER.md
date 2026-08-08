@@ -138,7 +138,7 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| G045 | OPEN | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Seeded weakness/goal changes recommended drill and progress stats. Training saved-drill thumbnail placeholders are fixed with bundled shot imagery; recommendation data still needs backend/history proof. |
+| G045 | VERIFYING | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Training Home now derives its primary target and first recommendation from the latest saved analysis, shows empty-history placeholders instead of fake demo workout stats, and replaces the recent-workout card with locally persisted shot-tracker history after a completed session. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout/goal reload and web parity remain before `DONE`. |
 | G046 | OPEN | P1 | `#analytics` | 055 | Quick start values from current user data. | Different user history changes form score/session context. |
 | G047 | VERIFYING | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Discover filters now prove `Beginner only` narrows to two drills; saving `STACK & SHOOT` uses a proper 44pt bookmark control, shows customer toast feedback, and persists locally after relaunch into My Drills. Backend/web sync remains before `DONE`. |
 | G048 | OPEN | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill detail target changes from selected real flaw/goal. |
@@ -2489,3 +2489,51 @@ detail/comparison data in simulator production navigation. It does not yet prove
 live backend catalog mutations, real elite shooter media/video assets, backend
 reload after app restart, or matching desktop/web selected-shooter routes; those
 remain required before G072/G073 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Training Home Analysis/History Proof
+
+Implementation:
+
+- Screen 054 now resolves a `TrainingHomeData` model from the latest saved
+  analysis plus locally persisted completed workouts instead of rendering one
+  fixed coaching target and one fixed recent-workout stat line.
+- The primary target and first recommended drill now change with the saved
+  analysis target. The weak measured-analysis proof shows `Stack elbow higher`
+  and promotes `STACK & SHOOT`.
+- The recent-workout card now shows empty-history customer placeholders until a
+  real workout exists, then displays the saved shot-tracker session name,
+  shots, makes, make percentage, verdict, note, and form score.
+- The canonical screenshot harness now resets local training drills/workouts on
+  launch, and the recent-workout card has a stable
+  `training-home-recent-workout-card` identifier instead of relying on the
+  second duplicate `Quick Release Builder` text match.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-training-home-combined-20260808-1.xcresult`
+  ran `CanonicalScreenshotTests/test06TrainingScreens` plus
+  `ShotIQUITests/ShotIQUITests/testTrainingHomeUsesLatestAnalysisAndWorkoutHistory`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0
+  failures`. The canonical run captured training screens `001-training-home`
+  through `009-shot-tracker`. The focused run verified empty-history
+  placeholders, absence of the fake `62.5%` stat, then persisted a 3-shot,
+  2-make shot-tracker workout and verified Training Home displayed `Shot
+  Tracker Session`, `3`, `2`, `66.7%`, and form score `70`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-training-home-history-20260808-1.xcresult`
+  is the earlier focused passing proof for the same Training Home data path.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-training-canonical-20260808-1.xcresult`
+  failed because the canonical run inherited persisted local training state
+  from the focused test and then could not reliably establish the training root
+  from a dirty simulator state.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-training-canonical-clean-20260808-1.xcresult`
+  reached all training screens but failed the final shot-tracker route because
+  the harness searched for a duplicate `Quick Release Builder` label instead of
+  a stable recent-workout-card identifier.
+
+Remaining limitations: this proves screen 054 consumes measured-analysis and
+local workout state in simulator production navigation. It does not yet prove
+backend training-plan/workout reload, goal-derived recommendations from the live
+API, or iOS/web parity; those remain required before G045 can move to `DONE`.

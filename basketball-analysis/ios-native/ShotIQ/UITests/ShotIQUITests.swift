@@ -356,6 +356,41 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "completion-primary-target-score", contains: "7 / 10")
     }
 
+    func testTrainingHomeUsesLatestAnalysisAndWorkoutHistory() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
+        assertStaticText(id: "training-home-target", contains: "Stack elbow higher")
+        assertStaticText(id: "training-home-recommended-drill-0", contains: "STACK & SHOOT")
+        assertStaticText(id: "training-home-recent-drill", contains: "Start tracking")
+        assertElement(id: "training-home-recent-shots", contains: "0")
+        assertElement(id: "training-home-recent-makes", contains: "0")
+        assertElement(id: "training-home-recent-accuracy", contains: "--")
+        assertStaticText(id: "training-home-recent-score", contains: "--")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
+        assertStaticText(id: "training-home-target", contains: "Stack elbow higher")
+        assertStaticText(id: "training-home-recommended-drill-0", contains: "STACK & SHOOT")
+        assertStaticText(id: "training-home-recent-drill", contains: "Shot Tracker Session")
+        assertElement(id: "training-home-recent-shots", contains: "3")
+        assertElement(id: "training-home-recent-makes", contains: "2")
+        assertElement(id: "training-home-recent-accuracy", contains: "66.7%")
+        assertStaticText(id: "training-home-recent-score", contains: "70")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+    }
+
     func testWorkoutCalendarShowsCompletedTrackerSession() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
                 "-uiTestStage", "shot-tracker"])

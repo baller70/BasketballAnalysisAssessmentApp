@@ -241,7 +241,8 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || resetSettings || noMedia ||
+        useSampleMedia || historyFailure || analysisFailure || weakAnalysis || eliteShooterCatalog ||
+        resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || resetSettings || noMedia ||
         homeVariant != nil || stage != nil
     }
 
@@ -284,6 +285,7 @@ final class AppState: ObservableObject {
             onboardingComplete = !UITestHooks.startOnboarding
             phase = .main
         }
+        seedUITestAnalysisIfNeeded()
     }
 
     func rememberAnalysisMedia(_ analysis: ShotIQAnalysisResultDTO, title: String? = nil) {
@@ -325,6 +327,7 @@ final class AppState: ObservableObject {
             user = UITestHooks.demoUser
             onboardingComplete = !UITestHooks.startOnboarding
             phase = .main
+            seedUITestAnalysisIfNeeded()
             return
         }
         // Canonical 001 is a real screen, not a flash: hold the brand moment long
@@ -354,6 +357,13 @@ final class AppState: ObservableObject {
                 UserDefaults.standard.removeObject(forKey: key)
             }
         }
+    }
+
+    private func seedUITestAnalysisIfNeeded() {
+        guard UITestHooks.weakAnalysis,
+              recentMedia.contains(where: { $0.id == "ios-ui-test-weak-analysis" }) == false else { return }
+        rememberAnalysisMedia(ShotIQLocalAnalysisFactory.uiTestWeakAnalysis(),
+                              title: "Weak mechanics proof")
     }
 
     /// Leave screen 001 for whatever the stored session says comes next. Safe to

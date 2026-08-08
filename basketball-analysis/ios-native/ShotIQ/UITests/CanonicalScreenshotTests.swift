@@ -28,7 +28,8 @@ final class CanonicalScreenshotTests: XCTestCase {
     private static var shotIndex = 0
 
     /// Signed-in shell with deterministic offline data.
-    private static let mainArgs = ["-uiTestBypassAuth", "-uiTestDemoData"]
+    private static let mainArgs = ["-uiTestBypassAuth", "-uiTestDemoData",
+                                   "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts"]
 
     private var app: XCUIApplication!
     private var lastLaunchArguments: [String] = []
@@ -424,10 +425,8 @@ final class CanonicalScreenshotTests: XCTestCase {
         tapAndExpect("End workout", "screen-ios-workout-completion", from: "drill-execution", timeout: 40)
 
         resetTab("Train", root: "screen-ios-training-home")
-        // The RECENT WORKOUT card is the second "Quick Release Builder" on the
-        // page and opens the shot tracker.
-        tapAndExpect("Quick Release Builder", "screen-ios-shot-tracker",
-                     from: "training-home", index: 1)
+        tapAndExpect("training-home-recent-workout-card", "screen-ios-shot-tracker",
+                     from: "training-home")
     }
 
     // MARK: - 063-072 · goals, analytics, media, profile

@@ -1547,6 +1547,31 @@ geometry. Probe account deleted.
 Zero `error:` lines. Three defects stood between the request and that log, and
 each one alone was enough to stop it.
 
+### F40 - canonical screenshots must start from canonical local state
+
+Focused native UI tests intentionally mutate local app state: saved drills,
+completed workouts, annotations, settings. If the canonical screenshot walk
+runs afterward on the same simulator without clearing those stores, it is no
+longer photographing canonical. It is photographing yesterday's proof residue.
+
+This bit screen 054. A focused Training Home test saved a real shot-tracker
+workout. The next canonical training walk inherited that workout and the route
+that used to rely on "the second Quick Release Builder" became ambiguous. The
+app fix was correct; the screenshot proof was dirty.
+
+Fixed two ways:
+  - Canonical screenshot `mainArgs` now reset local training drills/workouts on
+    launch, so each canonical training branch starts from the same offline demo
+    state.
+  - The recent-workout card now has a stable
+    `training-home-recent-workout-card` identifier, so the route proof does not
+    depend on duplicate visible copy.
+
+THE RULE: before calling a screenshot "canonical", wipe every local store that a
+focused test can mutate, or stage the screen from a known store snapshot. Never
+let a route assertion depend on duplicate label text when a stable identifier
+can name the user action.
+
 ### F39 - a GENERATED file that is also COMMITTED is a defect waiting to happen
 
 `ShotIQ.xcodeproj` is produced by XcodeGen from `project.yml`. A copy is ALSO
