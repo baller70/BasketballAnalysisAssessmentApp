@@ -54,6 +54,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { X, ChevronRight, LogOut, Settings } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
+import { ApprovedRasterIcon } from "@/components/shotiq/Glyphs"
 import { SIDEBAR_GROUPS, SIDEBAR_FOOTER, SIDEBAR_LEGAL, type IconType } from "@/components/shotiq/ShotIQShell"
 
 /* ------------------------------------------------------------------ tokens */
@@ -77,6 +78,16 @@ const TAB_ICON = 28
  * sidecars' activeStrokeWidth; colour is inherited so one rule owns it.
  */
 function TabGlyph({ kind, active }: { kind: TabKey; active: boolean }) {
+  const approved: Partial<Record<TabKey, string>> = {
+    Home: "shotiq-approved-ui-target-reticle",
+    Capture: "shotiq-approved-ui-pose-shooter",
+    Train: "shotiq-approved-ui-ladder-balls",
+    Progress: "shotiq-approved-ui-progress-line",
+  }
+  const approvedAsset = approved[kind]
+  if (approvedAsset) {
+    return <ApprovedRasterIcon asset={approvedAsset} size={TAB_ICON} className="block" />
+  }
   const sw = active ? 2 : 1.7
   const common = {
     width: TAB_ICON, height: TAB_ICON, viewBox: "0 0 24 24",

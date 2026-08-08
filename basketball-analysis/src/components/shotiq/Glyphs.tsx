@@ -45,6 +45,26 @@ function Svg({
   )
 }
 
+const APPROVED_ICON_BASE = "/shotiq/icons/approved"
+
+export function ApprovedRasterIcon({
+  asset, size = 24, className = "", title, alt = "",
+}: GlyphProps & { asset: string; alt?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`${APPROVED_ICON_BASE}/${asset}.png`}
+      alt={alt}
+      aria-hidden={alt || title ? undefined : "true"}
+      aria-label={title}
+      width={512}
+      height={512}
+      style={{ width: size, height: size }}
+      className={`inline-block max-w-none object-contain ${className}`}
+    />
+  )
+}
+
 function BasketballMark({
   cx, cy, r = 2.2, stroke = "currentColor",
 }: { cx: number; cy: number; r?: number; stroke?: string }) {
@@ -145,11 +165,26 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
  */
 const POSE_WEIGHT = 1.6
 
+const APPROVED_PHASE_ICONS: Record<ShotPhase, string> = {
+  setup: "shotiq-approved-phase-setup",
+  load: "shotiq-approved-phase-load",
+  rise: "shotiq-approved-phase-rise",
+  release: "shotiq-approved-phase-release",
+  follow: "shotiq-approved-phase-follow",
+}
+
 export function PoseGlyph({
   phase, active = false, size = 26, className = "", title,
 }: { phase: ShotPhase | string; active?: boolean } & GlyphProps) {
   const p = typeof phase === "string" && !(phase in POSES)
     ? toShotPhase(phase) : (phase as ShotPhase)
+  if (size >= 18) {
+    return (
+      <span style={active ? { color: ORANGE } : undefined} className="inline-flex">
+        <ApprovedRasterIcon asset={APPROVED_PHASE_ICONS[p]} size={size} className={className} title={title} />
+      </span>
+    )
+  }
   return (
     <span style={active ? { color: ORANGE } : undefined} className="inline-flex">
       <Svg size={size} className={className} title={title} weight={POSE_WEIGHT}>{POSES[p]}</Svg>
@@ -185,7 +220,7 @@ const PHASE_FIGURE: Record<ShotPhase, { w: number; h: number }> = {
 }
 
 export function PoseFigure({
-  phase, active = false, tone = "light", height = 40, className = "", alt = "",
+  phase, active: _active = false, tone: _tone = "light", height = 40, className = "", alt = "",
 }: {
   phase: ShotPhase | string
   active?: boolean
@@ -197,13 +232,12 @@ export function PoseFigure({
   className?: string
   alt?: string
 }) {
+  void _active
+  void _tone
   const p = typeof phase === "string" && !(phase in PHASE_FIGURE)
     ? toShotPhase(phase) : (phase as ShotPhase)
   const { w, h } = PHASE_FIGURE[p]
-  const variant = tone === "elite"
-    ? (active ? "-elite" : "")
-    : `${active ? "-active" : ""}${tone === "dark" ? "-dark" : ""}`
-  const src = `/images/canonical/078-phase-${p}${variant}.png`
+  const src = `${APPROVED_ICON_BASE}/${APPROVED_PHASE_ICONS[p]}.png`
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -391,10 +425,34 @@ const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
   ),
 }
 
+const APPROVED_MECHANIC_ICONS: Record<MechanicKind, string> = {
+  angle: "shotiq-approved-mechanics-elbow-under-ball",
+  wrist: "shotiq-approved-mechanics-wrist-over-elbow",
+  height: "shotiq-approved-mechanics-release-height",
+  distance: "shotiq-approved-mechanics-spot-ruler",
+  jump: "shotiq-approved-mechanics-shot-path-runner",
+  arc: "shotiq-approved-mechanics-ball-speed",
+  centerline: "shotiq-approved-mechanics-body-centerline",
+  balance: "shotiq-approved-mechanics-balance-archetype",
+  drift: "shotiq-approved-mechanics-shot-path-bounce",
+  impact: "shotiq-approved-ui-target-reticle",
+  tempo: "shotiq-approved-ui-performance-gauge",
+  consistency: "shotiq-approved-ui-progress-line",
+  arcHeight: "shotiq-approved-mechanics-ball-speed",
+  releaseAngle: "shotiq-approved-mechanics-release-angle",
+  spin: "shotiq-approved-mechanics-backspin",
+  flightTime: "shotiq-approved-mechanics-ball-speed",
+  shotShape: "shotiq-approved-mechanics-shot-path-bounce",
+  releasePath: "shotiq-approved-mechanics-elbow-stack",
+}
+
 /** A measured mechanic — one diagram per measurable quantity. */
 export function MechanicGlyph({
   kind, size = 22, className = "", accent = ORANGE, title,
 }: { kind: MechanicKind } & GlyphProps) {
+  if (size >= 18) {
+    return <ApprovedRasterIcon asset={APPROVED_MECHANIC_ICONS[kind]} size={size} className={className} title={title} />
+  }
   return <Svg size={size} className={className} title={title}>{MECHANICS[kind](accent)}</Svg>
 }
 
@@ -436,10 +494,19 @@ const CORRECTIONS: Record<CorrectionKind, React.ReactNode> = {
   ),
 }
 
+const APPROVED_CORRECTION_ICONS: Record<CorrectionKind, string> = {
+  stack: "shotiq-approved-mechanics-elbow-stack",
+  square: "shotiq-approved-ui-target-reticle",
+  drive: "shotiq-approved-mechanics-shot-path-runner",
+}
+
 /** A coaching correction — a figure demonstrating the fix. */
 export function CorrectionGlyph({
   kind, size = 22, className = "", title,
 }: { kind: CorrectionKind } & GlyphProps) {
+  if (size >= 18) {
+    return <ApprovedRasterIcon asset={APPROVED_CORRECTION_ICONS[kind]} size={size} className={className} title={title} />
+  }
   return <Svg size={size} className={className} title={title}>{CORRECTIONS[kind]}</Svg>
 }
 
@@ -591,6 +658,14 @@ export type WorkoutKind = "release" | "ladder" | "flow"
 export function WorkoutGlyph({
   kind, size = 20, className = "", title,
 }: { kind: WorkoutKind } & GlyphProps) {
+  const approved: Record<WorkoutKind, string> = {
+    release: "shotiq-approved-phase-release",
+    ladder: "shotiq-approved-ui-ladder-balls",
+    flow: "shotiq-approved-mechanics-routine-refresh",
+  }
+  if (size >= 16) {
+    return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
+  }
   return (
     <Svg size={size} className={className} title={title}>
       {kind === "release" && (
@@ -628,6 +703,15 @@ export type EquipmentKind = "basketball" | "cones" | "spot" | "location"
 export function EquipmentGlyph({
   kind, size = 24, className = "", accent = ORANGE, title,
 }: { kind: EquipmentKind } & GlyphProps) {
+  const approved: Record<EquipmentKind, string> = {
+    basketball: "shotiq-approved-mechanics-ball-speed",
+    cones: "shotiq-approved-mechanics-cones",
+    spot: "shotiq-approved-mechanics-spot-ruler",
+    location: "shotiq-approved-mechanics-location-pin",
+  }
+  if (size >= 18) {
+    return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
+  }
   return (
     <Svg size={size} className={className} title={title}>
       {kind === "basketball" && (
@@ -764,6 +848,15 @@ export function FilmingGlyph({
 export function ReadinessGlyph({
   kind, size = 24, className = "", title,
 }: { kind: ReadinessKind } & GlyphProps) {
+  const approved: Record<ReadinessKind, string> = {
+    athlete: "shotiq-approved-mechanics-routine-refresh",
+    framing: "shotiq-approved-mechanics-capture-frame",
+    lighting: "shotiq-approved-mechanics-environment-light",
+    stability: "shotiq-approved-mechanics-camera-position",
+  }
+  if (size >= 18) {
+    return <ApprovedRasterIcon asset={approved[kind]} size={size} className={className} title={title} />
+  }
   return (
     <Svg size={size} className={className} title={title}>
       {kind !== "lighting" && BRACKETS}
@@ -832,6 +925,19 @@ const ACTION_BOX: Record<ActionKind, [number, number]> = {
 export function ActionGlyph({
   kind, height = 34, className = "", accent = ORANGE, title,
 }: { kind: ActionKind; height?: number } & GlyphProps) {
+  const approved: Record<ActionKind, string> = {
+    analyze: "shotiq-approved-ui-target-reticle",
+    uploadImage: "shotiq-approved-ui-analytics-upload",
+    uploadVideo: "shotiq-approved-ui-upload-video",
+    liveCamera: "shotiq-approved-ui-live-camera",
+    chooseMedia: "shotiq-approved-ui-player-card",
+    nodeGraph: "shotiq-approved-ui-pose-shooter",
+    nodeClimb: "shotiq-approved-ui-progress-line",
+    skeletonDots: "shotiq-approved-mechanics-node-target",
+  }
+  if (height >= 14) {
+    return <ApprovedRasterIcon asset={approved[kind]} size={height} className={`block ${className}`} title={title} />
+  }
   const [bw, bh] = ACTION_BOX[kind]
   const width = Math.round((height * bw) / bh)
   // Keep the drawn stroke ~1.7 device px whatever height the caller asks for.
@@ -1006,32 +1112,9 @@ export function PhaseTrack({
  * twenty screens.
  */
 export function StreakGlyph({ size = 47 }: { size?: number }) {
-  const h = size * 18 / 47
-  return (
-    <svg width={size} height={h} viewBox="0 0 47 18" fill="none" aria-hidden="true" className="shrink-0">
-      <rect x="0.9" y="0.9" width="45.2" height="16.2" rx="1.4" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M0.9 4.6h45.2M0.9 13.4h45.2" stroke="currentColor" strokeWidth="1.4" />
-      {[5.2, 9.4, 13.6, 17.8, 22, 26.2, 30.4, 34.6, 38.8, 43].map((x) => (
-        <g key={x}>
-          <rect x={x - 1.1} y="1.7" width="2.2" height="2.2" fill="currentColor" />
-          <rect x={x - 1.1} y="14.1" width="2.2" height="2.2" fill="currentColor" />
-        </g>
-      ))}
-      <path d="M12.6 4.6v8.8M23.5 4.6v8.8M34.4 4.6v8.8" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  )
+  return <ApprovedRasterIcon asset="shotiq-approved-ui-calendar-heat" size={size} />
 }
 
 export function PointsGlyph({ size = 26 }: { size?: number }) {
-  const w = size * 23 / 26
-  return (
-    <svg width={w} height={size} viewBox="0 0 23 26" fill="none" aria-hidden="true" className="shrink-0">
-      <path d="M11.5 1.4 21.1 7v11.9l-9.6 5.6-9.6-5.6V7z" stroke="currentColor" strokeWidth="1.5" />
-      {[[11.5, 1.4], [21.1, 7], [21.1, 18.9], [11.5, 24.5], [1.9, 18.9], [1.9, 7]].map(([cx, cy]) => (
-        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.5" fill="#fff" stroke="currentColor" strokeWidth="1.3" />
-      ))}
-      <path d="M11.5 13 16 9.6" stroke="var(--shotiq-color-shotiqOrange)" strokeWidth="1.4" />
-      <circle cx="11.5" cy="13" r="2.4" fill="var(--shotiq-color-shotiqOrange)" />
-    </svg>
-  )
+  return <ApprovedRasterIcon asset="shotiq-approved-ui-badge-target" size={size} />
 }
