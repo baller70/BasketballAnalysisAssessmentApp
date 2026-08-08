@@ -1141,20 +1141,25 @@ struct UploadQualityCheckView: View { // 024
                 VStack(alignment: .leading, spacing: 0) {
                     CaptureHeader()
 
-                    // Compact profile stat strip (blue accents, canonical 024)
+                    // Pre-analysis context strip. This screen can verify that a
+                    // selected photo is ready to submit, but it has not scored the
+                    // shot yet, so do not show measured-looking score/history stats.
                     HStack(alignment: .center, spacing: 0) {
-                        captureStat("82", "FORM SCORE", color: ShotIQColor.analysisBlue)
+                        captureStat(image == nil ? "GUIDE" : "READY", "PHOTO",
+                                    color: image == nil ? ShotIQColor.graphite : ShotIQColor.confirmGreen)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
-                        captureStat("24", "SHOTS")
+                        captureStat(viewpoint.shortTitle.uppercased(), "VIEW")
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
-                        captureStat("15", "MAKES")
+                        captureStat(poseChecked ? (poseUnavailable ? "DEVICE" : "CHECKED") : "PENDING",
+                                    "POSE",
+                                    color: poseChecked && !poseUnavailable ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
-                        captureStat("62.5%", "ACCURACY", color: ShotIQColor.analysisBlue)
+                        captureStat("AFTER", "SCORE", color: ShotIQColor.analysisBlue)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("PRIMARY TARGET").shotiqBody(9, weight: .medium).kerning(0.5)
+                            Text("TARGET AFTER ANALYSIS").shotiqBody(9, weight: .medium).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.graphite)
-                            Text("Keep elbow stacked through release")
+                            Text("ShotIQ will set this after the upload finishes.")
                                 .shotiqBody(11).foregroundStyle(ShotIQColor.ink)
                                 .lineLimit(2).minimumScaleFactor(0.8)
                         }

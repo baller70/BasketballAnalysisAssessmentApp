@@ -373,6 +373,15 @@ final class ShotIQUITests: XCTestCase {
 
         app.buttons["USE PHOTO"].tap()
         XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 8))
+        for sourceSafeItem in ["READY", "SIDE", "AFTER", "TARGET AFTER ANALYSIS",
+                               "ShotIQ will set this after the upload finishes."] {
+            XCTAssertTrue(app.staticTexts[sourceSafeItem].exists, "Missing pre-analysis source-safe item: \(sourceSafeItem)")
+        }
+        for unmeasuredItem in ["82", "24", "15", "62.5%", "FORM SCORE", "SHOTS", "MAKES",
+                               "ACCURACY", "Keep elbow stacked through release"] {
+            XCTAssertFalse(app.staticTexts[unmeasuredItem].exists,
+                           "Upload quality check must not show unmeasured pre-analysis value: \(unmeasuredItem)")
+        }
         XCTAssertTrue(app.staticTexts["IMG_4521.JPG"].exists)
         XCTAssertTrue(app.staticTexts["Side view • ready to analyze"].exists)
         if !app.staticTexts["Shooting hand is in frame."].waitForExistence(timeout: 15) {

@@ -88,7 +88,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G007 | VERIFYING | P2 | `#path` `#media` | 022/026 | Clarify photo vs video upload paths. | Analyze hub separates upload photo from upload video, and screen 026 now opens a full-screen video source menu with Video library, Browse files, Record video, Upload queue, and View filming tips. Focused UI proof passes on the laptop iPhone 17 Pro simulator. Still needs real selected-media device proof before `DONE`. |
 | G008 | OPEN | P0 | `#control` `#media` `#device` | 023 | Prove and fix photo crop on real selected image. | Before/after real image screenshot shows crop changed pixels and persisted to next screen. |
 | G009 | OPEN | P1 | `#analytics` `#demo` | 023 | Remove or source analysis context from pre-analysis crop screen. | No measured-looking analytics appear before analysis unless sourced from history or demo-labeled. |
-| G010 | OPEN | P0 | `#analytics` `#pose` | 024 | Replace fixed header analytics on quality check. | Header values come from prior history or are hidden/demo-labeled before new analysis. |
+| G010 | VERIFYING | P0 | `#analytics` `#pose` | 024 | Replace fixed header analytics on quality check. | Upload Quality Check no longer shows pre-analysis 82/24/15/62.5% measured-looking score/history values. The header now shows source-safe photo/view/pose/score context (`READY`, selected viewpoint, pose status, `AFTER SCORE`) and says the target is set after upload finishes. Focused UI proof confirms the new copy is present and the old values are absent. Real device/backend proof remains before `DONE`. |
 | G011 | OPEN | P1 | `#analytics` `#media` | 024 | Measure or relabel lighting and resolution checks. | Bad lighting/low-res sample produces failed checks, or rows are not presented as measured. |
 | G012 | VERIFYING | P0 | `#path` `#backend` | 023/024/036 | Block no-image route from pretending analysis started. | Photo Review `USE PHOTO` and Upload Quality Check `Continue to analysis` now require a real picked/captured image and show `Choose a photo first` toast instead of opening processing. Focused UI proof passes on the laptop iPhone 17 Pro simulator using external DerivedData and external-backed CoreSimulator storage. Still needs real selected-image device/backend/web proof before `DONE`. |
 | G013 | OPEN | P0 | `#analytics` `#backend` | 024 | Replace broad grade-to-score mapping with real metric contract. | Saved score is reproducible from measured analysis fields. |
@@ -1504,3 +1504,30 @@ Remaining limitations: this proof uses simulator paths and offline save fallback
 Real backend profile save, real AI bio enhancement success, and real iOS system
 permission alerts still need physical-device/backend proof before onboarding can
 be marked `DONE`.
+
+### 2026-08-08 Upload Quality Pre-Analysis Header Proof
+
+Seventeenth laptop functionality slice after local Xcode setup:
+
+- Replaced the Upload Quality Check header's fixed pre-analysis values
+  (`82` form score, `24` shots, `15` makes, `62.5%` accuracy, and the fixed
+  primary target) with source-safe context that does not pretend the selected
+  image has already been scored.
+- The header now shows whether a photo is ready, which viewpoint is being
+  checked, the pose-check status, and that the score/target are produced after
+  analysis.
+- Extended the sample-photo upload quality UI proof so it asserts the new
+  READY/SIDE/AFTER/TARGET AFTER ANALYSIS copy and fails if the old measured
+  values or target copy reappear before analysis.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQualityPreAnalysis-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSamplePhotoRunsPoseQualityAndProcessingFeedback`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this clears the misleading pre-analysis header values on
+screen 024, but lighting/resolution are still not truly measured on simulator,
+and real iPhone Vision/backend/web parity proof remains open.
