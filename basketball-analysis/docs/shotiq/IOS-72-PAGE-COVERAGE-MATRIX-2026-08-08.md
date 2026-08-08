@@ -68,7 +68,7 @@ content/actions were asserted by a focused feature test.
 - Focused late-page isolated regression result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LatePageRegressionIsolated-2026-08-08-v2.xcresult`
 - Focused annotation-toolbar persistence result bundle:
-  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v1.xcresult`
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v3.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -162,7 +162,7 @@ even when the page has no upload/photo feature.
 | 40 | Analysis Error | Yes | Error state staged and rendered | Real failed backend job/retry |
 | 41 | Shot Breakdown | Yes | Phase sequence, metrics, coaching asserted | Real generated phase frames |
 | 42 | Frame Detail Skeleton | Yes | Skeleton/joint/annotation/basketball controls asserted; selected-photo path now opens frame detail with saved media, saved pose marker, saved metric strip, and no old `82` / `24` / `15` / `62.5%` demo stats | Real Vision drawable pose on iPhone; real video frame/ball proof |
-| 43 | Annotation Toolbar | Yes | Annotation toolbar route asserted from frame detail; focused proof draws freehand and arrow annotations, verifies count changes, undo/redo, frame playback step/pause, save alert, back, reopen, and local persistence of `2 annotations on frame 43` | Server annotation persistence; annotated media export/share; web parity |
+| 43 | Annotation Toolbar | Yes | Annotation toolbar route asserted from frame detail; focused proof draws freehand and arrow annotations, verifies count changes, undo/redo, annotated image export, Share image availability, copied summary feedback, frame playback step/pause, save alert, back, reopen, and local persistence of `2 annotations on frame 43` | Server annotation persistence; system share-sheet completion; web parity |
 | 44 | Form Score | Yes | Score, breakdown, source coverage, insight, weakest metric route asserted | Live backend score history |
 | 45 | Metric Detail | Yes | Measurements, ranges, confidence, correction cue, frame link asserted | Live metric derivation |
 | 46 | Flaws Overview | Yes | Flaw tags, impact levels, confidence, affected phases asserted; weak saved analysis now generates `ELBOW ANGLE OUT OF RANGE`, `RELEASE PATH DRIFT`, and `RELEASE SCORE GAP` through the Home -> Analysis Result -> Flaws route while old demo flaws are absent | Real backend/device-generated flaw semantics; web parity |
@@ -195,12 +195,13 @@ even when the page has no upload/photo feature.
 
 ## Latest Focused Evidence
 
-- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v1.xcresult`
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v3.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testAnnotationToolbarDrawSaveAndReopenWork`
   on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
   failed, 0 skipped. This proves page 043 as an app-owned toolbar flow:
   drawing freehand and arrow annotations, annotation counts, undo/redo,
+  annotated image export, Share image availability, copy-summary feedback,
   playback step/pause, save alert, leaving the screen, reopening it, and seeing
   the saved annotations still attached to frame 43.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LatePageRegressionIsolated-2026-08-08-v2.xcresult`

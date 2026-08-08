@@ -128,7 +128,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G037 | VERIFYING | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Forced selected-photo analysis failure now opens screen 040 with the selected side-view image preserved. `Choose another frame` returns to Photo Review with the same image, and `Try analysis again` returns to Upload Quality Check with the image still ready. Focused UI proof passes on the laptop simulator. Real backend failure/device-picker proof remains before `DONE`. |
 | G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. The phase filmstrip now uses selected local/server media for non-demo saved results instead of falling back to canonical stock frames when no frame set exists. Per-frame phase coaching and true saved frame-analysis data still need proof before `DONE`. |
 | G039 | VERIFYING | P0 | `#pose` `#analytics` | 042 | Frame detail uses real pose and metrics. | Screen 042 now receives the saved `AnalysisResultPresentation` from shot breakdown/metric detail, renders selected media instead of the canonical frame for non-demo analyses, carries saved pose through the overlay controls, and replaces demo `82` / `24` / `15` / `62.5%` frame stats with saved score/metric values. Focused UI proof passes on the laptop simulator using deterministic saved-pose injection. Real device Vision/video-frame/ball proof remains before `DONE`. |
-| G040 | VERIFYING | P2 | `#control` `#media` `#backend` | 043 | Make annotations real and persistent. | Screen 043 now persists saved annotation strokes locally for frame 43, exposes stable draw/playback/tool controls, and has focused UI proof for draw, arrow, undo, redo, playback step, save, back, and reopen persistence. Share/export/backend annotation records remain before `DONE`. |
+| G040 | VERIFYING | P2 | `#control` `#media` `#backend` | 043 | Make annotations real and persistent. | Screen 043 now persists saved annotation strokes locally for frame 43, exposes stable draw/playback/tool controls, exports an annotated frame image, prepares the image share control, copies an annotation summary, and has focused UI proof for draw, arrow, undo, redo, export, copy, playback step, save, back, and reopen persistence. Backend annotation records and iOS/web round-trip visibility remain before `DONE`. |
 | G041 | VERIFYING | P0 | `#analytics` | 044 | Replace fixed form score screen. | Top score/verdict/caption/bar/share text, breakdown cards, metric detail rows, source coverage, key insight, and weakest-score CTA now consume the saved presentation passed by screen 038, including missing-score unavailable state. True confidence and history/trend calculations still need saved result/history sources before `DONE`. |
 | G042 | VERIFYING | P0 | `#analytics` | 045 | Replace fixed metric detail. | Metric detail now receives the selected metric value text plus parent saved presentation from screen 038, and its share/top score/measured value are no longer hardcoded to form score 82. Range, confidence, explainer copy, and drill-plan linkage still need metric-source proof before `DONE`. |
 | G043 | VERIFYING | P0 | `#analytics` `#pose` | 046 | Generate flaws from analysis. | Screen 046 now renders `AnalysisFlawItem` rows generated from saved scores, measured elbow/wrist/release/centerline values, and missing-data provenance. Focused unit proof verifies weak saved metrics generate elbow/release flaws instead of demo `ELBOW FLARE`; focused UI proof verifies the Home -> Analysis Result -> Flaws route shows generated weak-analysis flaws and excludes the old demo flaws. Real backend/device/web-derived flaw proof remains before `DONE`. |
@@ -2121,6 +2121,9 @@ Thirty-fourth laptop functionality slice after local Xcode setup:
 
 - `AnnotationToolbarView` now stores screen 043 annotations as encoded local
   frame data instead of losing them when the user backs out of the screen.
+- Screen 043 now prepares an annotated frame export bitmap, exposes a Share
+  image control once the bitmap exists, and copies a concise frame annotation
+  summary to the clipboard with customer-visible toast feedback.
 - The annotation surface now exposes stable UI identifiers for the drawing
   canvas, live annotation count, draw/arrow/undo/redo/clear tools, frame-time
   readout, and playback step/play-pause buttons, so the toolbar can be tested
@@ -2131,7 +2134,7 @@ Thirty-fourth laptop functionality slice after local Xcode setup:
 
 Evidence captured on the laptop, all external-drive backed:
 
-- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v1.xcresult`
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v3.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testAnnotationToolbarDrawSaveAndReopenWork`
   on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
@@ -2139,12 +2142,16 @@ Evidence captured on the laptop, all external-drive backed:
   analysis -> View shot breakdown -> Open release frame -> Annotations, draws a
   freehand mark, switches to Arrow and draws a second mark, verifies the count
   reaches two, verifies Undo drops the count to one and Redo restores it to
-  two, steps frame playback, pauses playback, saves annotations, confirms the
-  `2 annotations saved to frame 43.` alert, backs to frame detail, reopens the
-  annotation toolbar, and verifies `2 annotations on frame 43` still renders.
+  two, exports the annotated frame image, verifies the `Export ready` toast,
+  verifies the Share image control is present, copies the annotation summary,
+  verifies the `Summary copied` toast, steps frame playback, pauses playback,
+  saves annotations, confirms the `2 annotations saved to frame 43.` alert,
+  backs to frame detail, reopens the annotation toolbar, and verifies
+  `2 annotations on frame 43` still renders.
 
-Remaining limitations: this proves app-owned local persistence and toolbar
+Remaining limitations: this proves app-owned local persistence, annotated image
+export preparation, share-control availability, copy feedback, and toolbar
 controls on the simulator. It does not yet prove server-side annotation
-records, annotated image/video export, native share sheets, or iOS/web
-round-trip visibility for the same annotated media. Those remain required
-before G040 can move from `VERIFYING` to `DONE`.
+records, system share-sheet completion, or iOS/web round-trip visibility for
+the same annotated media. Those remain required before G040 can move from
+`VERIFYING` to `DONE`.

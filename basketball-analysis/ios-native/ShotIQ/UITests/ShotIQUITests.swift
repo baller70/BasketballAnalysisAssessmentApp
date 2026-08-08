@@ -609,6 +609,12 @@ final class ShotIQUITests: XCTestCase {
         tapButton(id: "annotation-tool-redo")
         assertStaticText(id: "annotation-count", contains: "2 annotations")
 
+        tapButton(id: "annotation-export-image")
+        XCTAssertTrue(waitForToastContaining("Export ready"))
+        XCTAssertTrue(app.buttons["annotation-share-image"].waitForExistence(timeout: 2))
+        tapButton(id: "annotation-copy-summary")
+        XCTAssertTrue(waitForToastContaining("Summary copied"))
+
         let frameTime = app.staticTexts["annotation-frame-time"]
         XCTAssertTrue(frameTime.waitForExistence(timeout: 2))
         let beforeStep = frameTime.label

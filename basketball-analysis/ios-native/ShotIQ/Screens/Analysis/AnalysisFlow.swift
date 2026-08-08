@@ -1825,6 +1825,9 @@ struct AnnotationToolbarView: View { // 043
     @State private var playing = true
     @State private var frameTime = 1.28
     @State private var showSaved = false
+    @State private var toast: ShotIQToast?
+    @State private var exportedImage: UIImage?
+    @State private var copiedSummary = false
     private let tools: [(String, String)] = [
         ("Draw", "scribble"), ("Arrow", "arrow.up.right"), ("Angle", "angle"),
         ("Label", "textformat"), ("Undo", "arrow.uturn.backward"),
@@ -1832,6 +1835,9 @@ struct AnnotationToolbarView: View { // 043
     ]
     private var annotationStatusText: String {
         "\(annotations.count) annotation\(annotations.count == 1 ? "" : "s") on frame 43"
+    }
+    private var annotationShareSummary: String {
+        "ShotIQ annotated release frame 43: \(annotations.count) annotation\(annotations.count == 1 ? "" : "s") on Keep elbow stacked through release."
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-annotation-toolbar") {
@@ -1983,6 +1989,35 @@ struct AnnotationToolbarView: View { // 043
                             } message: {
                                 Text("\(annotations.count) annotation\(annotations.count == 1 ? "" : "s") saved to frame 43.")
                             }
+                            HStack(spacing: 8) {
+                                Button { exportAnnotationImage() } label: {
+                                    annotationAction("arrow.down.to.line", "Export image", ShotIQColor.confirmGreen)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("annotation-export-image")
+                                if let exportedImage {
+                                    ShareLink(item: Image(uiImage: exportedImage),
+                                              preview: SharePreview("ShotIQ annotated frame", image: Image(uiImage: exportedImage))) {
+                                        annotationAction("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityIdentifier("annotation-share-image")
+                                } else {
+                                    Button { exportAnnotationImage() } label: {
+                                        annotationAction("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityIdentifier("annotation-share-image")
+                                }
+                                Button { copyAnnotationSummary() } label: {
+                                    annotationAction(copiedSummary ? "checkmark" : "square.on.square",
+                                                     copiedSummary ? "Copied" : "Copy summary",
+                                                     ShotIQColor.ink)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("annotation-copy-summary")
+                            }
+                            .padding(.top, 10)
                             Spacer(minLength: 12)
                         }
                         .padding(.horizontal, 20)
@@ -1991,6 +2026,7 @@ struct AnnotationToolbarView: View { // 043
             }
         }
         .onAppear(perform: restoreAnnotations)
+        .shotiqToast($toast)
     }
     // MARK: annotation drawing
 
@@ -2037,46 +2073,10 @@ struct AnnotationToolbarView: View { // 043
     private var annotationCanvas: some View {
         Canvas { ctx, _ in
             for a in annotations + (current.map { [$0] } ?? []) {
-                draw(a, in: &ctx)
+                AnnotationExportRenderer.draw(a, in: &ctx)
             }
         }
         .allowsHitTesting(false)
-    }
-    private func draw(_ a: Annotation, in ctx: inout GraphicsContext) {
-        let points = a.points.map(\.point)
-        guard let first = points.first else { return }
-        let last = points.last ?? first
-        let color = ShotIQColor.shotiqOrange
-        switch a.tool {
-        case "Draw":
-            var p = Path()
-            p.move(to: first)
-            points.dropFirst().forEach { p.addLine(to: $0) }
-            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-        case "Arrow":
-            var p = Path()
-            p.move(to: first)
-            p.addLine(to: last)
-            let angle = atan2(last.y - first.y, last.x - first.x)
-            for side in [angle + .pi * 0.85, angle - .pi * 0.85] {
-                p.move(to: last)
-                p.addLine(to: CGPoint(x: last.x + 14 * cos(side), y: last.y + 14 * sin(side)))
-            }
-            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-        case "Angle":
-            var p = Path()
-            p.move(to: first)
-            p.addLine(to: last)
-            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 2.5, dash: [6, 4]))
-            let deg = abs(atan2(last.y - first.y, last.x - first.x)) * 180 / .pi
-            ctx.draw(Text("\(Int(deg))°").font(.custom(shotiqBoxedFace(.bold), size: 12)).foregroundColor(color),
-                     at: CGPoint(x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 - 12))
-        default: // Label
-            ctx.draw(Text("NOTE").font(.custom(shotiqBoxedFace(.bold), size: 11)).foregroundColor(.white),
-                     at: last)
-            ctx.stroke(Path(roundedRect: CGRect(x: last.x - 24, y: last.y - 12, width: 48, height: 24), cornerRadius: 5),
-                       with: .color(color), lineWidth: 1.5)
-        }
     }
     private func saveAnnotations() {
         if let data = try? JSONEncoder().encode(annotations),
@@ -2085,12 +2085,135 @@ struct AnnotationToolbarView: View { // 043
         }
         showSaved = true
     }
+    @MainActor private func exportAnnotationImage() {
+        guard !annotations.isEmpty else {
+            toast = .error("Add annotation first", "Draw on the frame before exporting.")
+            return
+        }
+        if let image = AnnotationExportRenderer.render(annotations: annotations) {
+            exportedImage = image
+            toast = .success("Export ready", "Annotated frame image prepared.")
+        } else {
+            toast = .error("Export unavailable", "Could not render this annotated frame.")
+        }
+    }
+    private func copyAnnotationSummary() {
+        UIPasteboard.general.string = annotationShareSummary
+        copiedSummary = true
+        toast = .success("Summary copied", "Frame 43 annotation notes copied.")
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await MainActor.run { copiedSummary = false }
+        }
+    }
     private func restoreAnnotations() {
         guard let data = savedAnnotationPayload.data(using: .utf8),
               let stored = try? JSONDecoder().decode([Annotation].self, from: data) else { return }
         annotations = stored
         redoStack = []
         current = nil
+    }
+    private func annotationAction(_ icon: String, _ label: String, _ tint: Color) -> some View {
+        VStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 15, weight: .semibold))
+            Text(label).shotiqBody(10, weight: .semibold)
+                .lineLimit(1).minimumScaleFactor(0.65)
+        }
+        .foregroundStyle(tint)
+        .frame(maxWidth: .infinity).frame(height: 46)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+    private struct AnnotationExportRenderer {
+        @MainActor
+        static func render(annotations: [Annotation]) -> UIImage? {
+            let renderer = ImageRenderer(content: AnnotationExportCard(annotations: annotations))
+            renderer.scale = 3
+            return renderer.uiImage
+        }
+
+        static func draw(_ a: Annotation, in ctx: inout GraphicsContext) {
+            let points = a.points.map(\.point)
+            guard let first = points.first else { return }
+            let last = points.last ?? first
+            let color = ShotIQColor.shotiqOrange
+            switch a.tool {
+            case "Draw":
+                var p = Path()
+                p.move(to: first)
+                points.dropFirst().forEach { p.addLine(to: $0) }
+                ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+            case "Arrow":
+                var p = Path()
+                p.move(to: first)
+                p.addLine(to: last)
+                let angle = atan2(last.y - first.y, last.x - first.x)
+                for side in [angle + .pi * 0.85, angle - .pi * 0.85] {
+                    p.move(to: last)
+                    p.addLine(to: CGPoint(x: last.x + 14 * cos(side), y: last.y + 14 * sin(side)))
+                }
+                ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+            case "Angle":
+                var p = Path()
+                p.move(to: first)
+                p.addLine(to: last)
+                ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 2.5, dash: [6, 4]))
+                let deg = abs(atan2(last.y - first.y, last.x - first.x)) * 180 / .pi
+                ctx.draw(Text("\(Int(deg))°").font(.custom(shotiqBoxedFace(.bold), size: 12)).foregroundColor(color),
+                         at: CGPoint(x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 - 12))
+            default:
+                ctx.draw(Text("NOTE").font(.custom(shotiqBoxedFace(.bold), size: 11)).foregroundColor(.white),
+                         at: last)
+                ctx.stroke(Path(roundedRect: CGRect(x: last.x - 24, y: last.y - 12, width: 48, height: 24), cornerRadius: 5),
+                           with: .color(color), lineWidth: 1.5)
+            }
+        }
+    }
+    private struct AnnotationExportCard: View {
+        let annotations: [Annotation]
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Wordmark(size: 28)
+                    Spacer()
+                    Text("ANNOTATED FRAME 43").shotiqBody(12, weight: .bold).kerning(0.6)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                ZStack {
+                    Image("043-visual-001")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 390, height: 175)
+                        .clipped()
+                    Canvas { ctx, _ in
+                        for annotation in annotations {
+                            AnnotationExportRenderer.draw(annotation, in: &ctx)
+                        }
+                    }
+                    .frame(width: 390, height: 175)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                HStack(spacing: 10) {
+                    CorrectionGlyph(kind: .stack, size: 32).foregroundStyle(ShotIQColor.ink)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("PRIMARY TARGET").shotiqBody(10, weight: .semibold).kerning(0.6)
+                            .foregroundStyle(ShotIQColor.graphite)
+                        Text("Keep elbow stacked through release.")
+                            .shotiqBody(15, weight: .bold).foregroundStyle(ShotIQColor.ink)
+                    }
+                    Spacer()
+                    Text("\(annotations.count)")
+                        .font(.custom("Tungsten-Medium", size: 34))
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                    Text("MARKS").shotiqBody(10, weight: .semibold).kerning(0.5)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+            }
+            .padding(20)
+            .frame(width: 430, height: 320, alignment: .topLeading)
+            .background(Color.white)
+        }
     }
     private func annotStat(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
