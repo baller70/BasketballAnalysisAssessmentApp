@@ -175,8 +175,8 @@ The first pass should fix root causes before polishing dependent screens:
 | G069 | VERIFYING | P2 | `#control` `#analytics` | 049 | Player-card customization persists over real data. | Customize Player Card now uses the same latest-analysis card payload, persists accent/name/jersey through `@AppStorage`, renders/export the selected analysis placeholders without mutating analytics, and shows customer-visible save feedback. Focused UI and renderer proof passed; relaunch persistence proof and backend/shared-profile sync remain before `DONE`. |
 | G070 | VERIFYING | P1 | `#analytics` `#backend` | 050 | Elite match from measured metric vectors. | Elite Match now receives the current `AnalysisResultPresentation` from the Analysis Result `COMPARE` route, falls back to latest remembered analysis outside that route, and derives player score, placeholders, similarity, shared mechanics, comparison rows, release alignment, and coaching target from that payload instead of always showing the 89%/82/24/15/62.5% demo state. Focused UI proof verifies a weak measured analysis changes similarity to `100%`, shared mechanics to `5 OF 5`, release offset to `+14°`, elbow to `118°`, wrist to `72°`, target to `Stack elbow higher through release`, and removes old `62.5%`; canonical analysis screenshot regression still passes. Backend elite-vector selection and web parity remain before `DONE`. |
 | G071 | VERIFYING | P1 | `#analytics` `#pose` `#media` | 051 | Photo comparison from user's measured shot. | Photo Comparison now receives the selected `AnalysisResultPresentation` from Elite Match, renders the selected local shot media with detected pose state, replaces fake `82`/`24`/`15`/`62.5%` customer stats with selected-analysis placeholders when history is unavailable, and keeps the canonical demo path stable. Backend elite-profile/vector matching and web parity remain before `DONE`. |
-| G072 | OPEN | P2 | `#backend` | 052 | Prove elite shooters list/detail navigation. | Shooter list loads from backend and selected shooter opens correct detail. |
-| G073 | OPEN | P1 | `#analytics` `#backend` | 053 | Elite shooter detail from selected shooter profile. | Detail stats/media load from shooter object and compare correctly with user data. |
+| G072 | VERIFYING | P2 | `#backend` | 052 | Prove elite shooters list/detail navigation. | Profile Menu and Elite Match routes now open a selectable Elite Shooters list with stable row identifiers; focused proof seeds multiple shooters and verifies selecting Stephen Curry opens Stephen Curry, while canonical regression still opens Klay Thompson. Real backend catalog update/reload proof remains before `DONE`. |
+| G073 | VERIFYING | P1 | `#analytics` `#backend` | 053 | Elite shooter detail from selected shooter profile. | Elite Shooter Detail now derives WSI, tier, summary rates, shot breakdown, mechanics, strengths, weaknesses, bio, share text, save-reference feedback, and Photo Comparison elite reference from the selected `EliteShooterDTO`. Focused proof verifies Stephen Curry values and save toast; canonical Klay route remains stable. Real backend shooter assets/video and iOS/web parity remain before `DONE`. |
 
 ## Desktop Web Sync Items
 
@@ -2433,3 +2433,59 @@ and keeps the canonical route stable on the simulator. It does not yet prove
 backend elite-profile/vector selection, real make/miss history aggregates, a
 physical iPhone capture, or iOS/web parity; those remain required before G071 can
 move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Elite Shooter Selected-Detail Proof
+
+Implementation:
+
+- Added a focused UI-test-only elite catalog seed with Stephen Curry, Klay
+  Thompson, and Steve Kerr so screen 052 proves selected-row routing instead of
+  a one-row demo path.
+- Screen 052 row WSI values now come from `EliteShooterDetailData.wsiScore`
+  instead of a rank-based constant, and Profile Menu rows expose stable
+  identifiers for route proof.
+- Screen 053 now derives detail score, tier, summary rates, sample breakdown,
+  mechanics, strengths, weaknesses, bio text, and share text from the selected
+  `EliteShooterDTO`. The canonical single-Klay demo values are preserved only
+  for the screenshot harness.
+- Screen 053 now shows customer-visible save/remove reference toast feedback,
+  and its compare route passes the selected shooter into Photo Comparison so the
+  elite name/profile/score match the selected profile.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-elite-shooters-final-combined-20260808-154200.xcresult`
+  reran the focused selected-detail test and
+  `CanonicalScreenshotTests/test03HomeScreens` after the final code cleanup. The
+  run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testEliteShootersOpenSelectedShooterDetailAndComparison-20260808-153000-v3.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testEliteShootersOpenSelectedShooterDetailAndComparison`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test walks Home Professional ->
+  Profile Menu -> Elite Shooters, selects `elite-shooter-row-30`, verifies
+  Stephen Curry name/team, `47.1%` FG, `43.0%` 3P, `98` score/tier, `50°`
+  release angle, absence of the Klay detail title, save-reference toast
+  feedback, and Photo Comparison carrying `STEPHEN CURRY` with score `98`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalEliteShootersDetailRoute-20260808-153000.xcresult`
+  ran `CanonicalScreenshotTests/test03HomeScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and captured the
+  canonical Home/Profile Menu -> Elite Shooters -> Klay Thompson -> Compare with
+  my shot path including `009-elite-shooters`, `010-elite-shooter-detail`, and
+  `011-photo-comparison`.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testEliteShootersOpenSelectedShooterDetailAndComparison-20260808-153000.xcresult`
+  failed because the fuzzy text tap inside the profile menu did not open screen
+  052. Stable profile-menu row identifiers replaced that path.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testEliteShootersOpenSelectedShooterDetailAndComparison-20260808-153000-v2.xcresult`
+  failed because the proof identifier sat on a stat column and XCUITest read
+  the `FG%` label instead of the `47.1%` value. Identifiers now sit on the value
+  text used for proof.
+
+Remaining limitations: this proves selected shooter routing and selected-profile
+detail/comparison data in simulator production navigation. It does not yet prove
+live backend catalog mutations, real elite shooter media/video assets, backend
+reload after app restart, or matching desktop/web selected-shooter routes; those
+remain required before G072/G073 can move from `VERIFYING` to `DONE`.

@@ -97,6 +97,12 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000-v3.xcresult`
 - Focused canonical photo-comparison route regression result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalPhotoComparisonRoute-20260808-152000.xcresult`
+- Focused elite-shooter selected-detail result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testEliteShootersOpenSelectedShooterDetailAndComparison-20260808-153000-v3.xcresult`
+- Focused canonical elite-shooter detail route regression result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalEliteShootersDetailRoute-20260808-153000.xcresult`
+- Final elite-shooter combined selected-detail + canonical route result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-elite-shooters-final-combined-20260808-154200.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -141,6 +147,9 @@ Current proof totals:
 - Focused share-results export renderer target: 1 passed, 0 failed, 0 skipped
 - Focused photo-comparison selected-pose target: 1 passed, 0 failed, 0 skipped
 - Focused canonical photo-comparison route target: 1 passed, 0 failed, 0 skipped
+- Focused elite-shooter selected-detail target: 1 passed, 0 failed, 0 skipped
+- Focused canonical elite-shooter detail route target: 1 passed, 0 failed, 0 skipped
+- Final elite-shooter combined route target: 2 passed, 0 failed, 0 skipped
 - Superseded bundled media/profile regression attempts: failed due staged
   relaunches falling back to Splash; replaced by one-staged-launch-per-test
   proof
@@ -208,8 +217,8 @@ even when the page has no upload/photo feature.
 | 49 | Customize Player Card | Yes | Details, banner color, save card, saved sheet asserted; focused proof verifies the customize preview/export uses the same latest selected-analysis payload, persists customization values locally, and shows card-saved feedback | Relaunch persistence proof; backend/shared-profile sync; real system share completion |
 | 50 | Elite Match | Yes | Analysis route to elite match and choose shooter route asserted; focused proof now verifies a weak measured analysis drives form score, similarity, shared mechanics, release offset, elbow, wrist, release alignment, target text, and suppresses the old `62.5%` demo stat while canonical analysis screenshot regression still captures `008-elite-match` | Backend nearest-shooter vector selection; multiple elite-vector changes; web parity |
 | 51 | Photo Comparison | Yes | Elite shooter detail to comparison route asserted; focused proof now walks selected sample photo analysis into Photo Comparison, verifies selected pose/media state, `--` score/shots/makes/accuracy placeholders, `POSE DETECTED` phase, no old `62.5%`, Overlay Skeletons, and Sync Release Frames feedback; canonical route regression still captures `011-photo-comparison` | Backend elite-profile/vector selection; real make/miss aggregates; physical-device/web parity |
-| 52 | Elite Shooters | Yes | Profile menu and elite-match chooser routes asserted | Live catalog updates |
-| 53 | Elite Shooter Detail | Yes | Klay detail and compare route asserted | Live catalog/video assets |
+| 52 | Elite Shooters | Yes | Profile menu and elite-match chooser routes asserted; focused proof seeds a multi-shooter catalog and verifies selecting `elite-shooter-row-30` opens Stephen Curry instead of the one-row Klay demo path, while row WSI values derive from each shooter | Live backend catalog updates/reload; web selected-shooter route |
+| 53 | Elite Shooter Detail | Yes | Klay detail and compare route asserted; focused proof verifies selected Stephen Curry detail derives name, team, FG/3P rates, WSI score/tier, release angle, strengths/weaknesses/bio/share payload, save-reference toast, and Photo Comparison elite name/score from the selected shooter | Live catalog/video assets; backend reload; web parity |
 | 54 | Training Home | Yes | Quick start, my drills, calendar, drill detail, tracker routes asserted; staged training root now used for saved-drill persistence proof | Backend training plan sync |
 | 55 | Quick Start | Yes | Start shot tracking route asserted | None |
 | 56 | Discover Drills | Yes | Drill list route and drill selection asserted; `Beginner only` filter, save control, and `Drill saved` toast proven | Live drill catalog and backend/web saved-drill sync |
@@ -232,6 +241,24 @@ even when the page has no upload/photo feature.
 
 ## Latest Focused Evidence
 
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-elite-shooters-final-combined-20260808-154200.xcresult`
+  reran the focused selected-detail proof and canonical Home/Profile Menu ->
+  Elite Shooters route after final source cleanup. Result: `** TEST SUCCEEDED **`,
+  2 passed, 0 failed, 0 skipped.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testEliteShootersOpenSelectedShooterDetailAndComparison-20260808-153000-v3.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testEliteShootersOpenSelectedShooterDetailAndComparison`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves pages 052 and 053 consume a selected elite
+  shooter instead of a single demo profile: Stephen Curry opens from the list,
+  renders selected FG/3P/score/tier/mechanics values, shows save-reference toast
+  feedback, and carries Stephen Curry into Photo Comparison.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCanonicalEliteShootersDetailRoute-20260808-153000.xcresult`
+  ran `ShotIQUITests/CanonicalScreenshotTests/test03HomeScreens` on the same
+  simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0 failed, 0 skipped. This
+  proves the canonical Home/Profile Menu -> Elite Shooters -> Klay Thompson ->
+  Compare with my shot path still renders and captures `009-elite-shooters`,
+  `010-elite-shooter-detail`, and `011-photo-comparison`.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders-20260808-152000-v3.xcresult`
   ran
   `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisFeedsPhotoComparisonPoseAndPlaceholders`

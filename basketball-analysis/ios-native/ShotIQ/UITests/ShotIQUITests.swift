@@ -751,6 +751,35 @@ final class ShotIQUITests: XCTestCase {
         assertVisible("Release frames synced", maxSwipes: 2)
     }
 
+    func testEliteShootersOpenSelectedShooterDetailAndComparison() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestEliteShooterCatalog",
+                "-uiTestHomeVariant", "pro"])
+        XCTAssertTrue(screen("screen-ios-home-professional").waitForExistence(timeout: 20))
+        tapControl("Menu")
+        XCTAssertTrue(screen("screen-ios-profile-menu").waitForExistence(timeout: 8))
+        tapElement(id: "profile-menu-row-elite-shooters")
+        XCTAssertTrue(screen("screen-ios-elite-shooters").waitForExistence(timeout: 8))
+        assertVisible("Stephen Curry")
+
+        tapElement(id: "elite-shooter-row-30")
+        XCTAssertTrue(screen("screen-ios-elite-shooter-detail").waitForExistence(timeout: 8))
+        assertStaticText(id: "elite-detail-name", contains: "STEPHEN CURRY")
+        assertStaticText(id: "elite-detail-team", contains: "Golden State Warriors")
+        assertElement(id: "elite-detail-fg", contains: "47.1%")
+        assertElement(id: "elite-detail-three", contains: "43.0%")
+        assertStaticText(id: "elite-detail-score", contains: "98")
+        assertStaticText(id: "elite-detail-tier", contains: "98")
+        assertVisibleElement(id: "elite-detail-mechanic-Release Angle", contains: "50°")
+        XCTAssertFalse(app.staticTexts["KLAY THOMPSON"].exists)
+
+        tapControl("Save reference")
+        XCTAssertTrue(waitForToastContaining("Reference saved"))
+        tapControl("Compare with my shot")
+        XCTAssertTrue(screen("screen-ios-photo-comparison").waitForExistence(timeout: 8))
+        assertStaticText(id: "photo-comparison-elite-name", contains: "STEPHEN CURRY")
+        assertStaticText(id: "photo-comparison-elite-score", contains: "98")
+    }
+
     func testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "my-media"])
         XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))

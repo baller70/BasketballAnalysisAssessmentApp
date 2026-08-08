@@ -169,6 +169,10 @@ enum UITestHooks {
     /// proof can verify derived flaws instead of canonical demo flaws.
     static var weakAnalysis: Bool { args.contains("-uiTestWeakAnalysis") }
 
+    /// Seed more than one elite shooter so focused proof can verify selected
+    /// shooter detail state instead of the one-row canonical screenshot path.
+    static var eliteShooterCatalog: Bool { args.contains("-uiTestEliteShooterCatalog") }
+
     /// Clear locally persisted annotation proof data before a focused toolbar
     /// test. Normal launches never pass this flag.
     static var resetAnnotations: Bool { args.contains("-uiTestResetAnnotations") }

@@ -946,6 +946,7 @@ struct ProfileMenuView: View {      // 020
                                     }
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityIdentifier("profile-menu-row-\(t.lowercased().replacingOccurrences(of: " ", with: "-"))")
                             }
                         }
                     }

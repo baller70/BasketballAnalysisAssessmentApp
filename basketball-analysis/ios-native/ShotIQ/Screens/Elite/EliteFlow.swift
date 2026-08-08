@@ -383,6 +383,185 @@ func shotiqPercentText(_ percent: Double?) -> String {
     return String(format: "%.1f%%", percent)
 }
 
+fileprivate struct EliteShooterBreakdownData {
+    var label: String
+    var percent: String
+    var shots: String
+}
+
+fileprivate struct EliteShooterMechanicData {
+    var label: String
+    var value: String
+}
+
+fileprivate struct EliteShooterDetailData {
+    var scoreText: String
+    var scorePct: Double
+    var scoreVerdict: String
+    var scoreNote: String
+    var tierValue: String
+    var tierLabel: String
+    var analyzedText: String
+    var breakdownTotal: String
+    var breakdown: [EliteShooterBreakdownData]
+    var mechanics: [EliteShooterMechanicData]
+    var strengths: [String]
+    var weaknesses: [String]
+    var bioText: String
+    var shareText: String
+
+    static func make(shooter: EliteShooterDTO) -> EliteShooterDetailData {
+        if isCanonicalDemo(shooter) {
+            return EliteShooterDetailData(
+                scoreText: "82",
+                scorePct: 0.82,
+                scoreVerdict: "GOOD",
+                scoreNote: "High-level, repeatable form.",
+                tierValue: "53",
+                tierLabel: "ELITE",
+                analyzedText: "24 Shots Analyzed",
+                breakdownTotal: "100% = 24 SHOTS",
+                breakdown: [
+                    EliteShooterBreakdownData(label: "Catch & Shoot", percent: "62.5%", shots: "15 SHOTS"),
+                    EliteShooterBreakdownData(label: "Pull-Up", percent: "20.8%", shots: "5 SHOTS"),
+                    EliteShooterBreakdownData(label: "Off Dribble", percent: "12.5%", shots: "3 SHOTS"),
+                    EliteShooterBreakdownData(label: "Other", percent: "4.2%", shots: "1 SHOT"),
+                ],
+                mechanics: [
+                    EliteShooterMechanicData(label: "Elbow Angle", value: "89°"),
+                    EliteShooterMechanicData(label: "Release Height", value: "7'1\""),
+                    EliteShooterMechanicData(label: "Release Angle", value: "51°"),
+                    EliteShooterMechanicData(label: "Backspin", value: "3,200 RPM"),
+                    EliteShooterMechanicData(label: "Balance", value: "88%"),
+                ],
+                strengths: ["Quick, repeatable release", "High shooting arc", "Consistent base and balance"],
+                weaknesses: ["Slight elbow flare in load", "Lower body under-utilized", "Off dribble rhythm"],
+                bioText: bioText(shooter: shooter),
+                shareText: "Studying \(shooter.name)'s shooting form on ShotIQ - \(shotiqPercentText(shooter.careerFieldGoalPct)) career FG.")
+        }
+
+        let score = wsiScore(shooter)
+        let totalShots = max(18, min(72, Int(round((shooter.careerThreePct ?? shooter.careerPct ?? 38) * 0.58))))
+        let catchPct = min(68, max(46, Int(round((shooter.careerThreePct ?? 38) + 18))))
+        let pullPct = shooter.position.localizedCaseInsensitiveContains("point") ? 24 : 18
+        let offPct = shooter.position.localizedCaseInsensitiveContains("guard") ? 16 : 10
+        let otherPct = max(4, 100 - catchPct - pullPct - offPct)
+        let breakdown = [
+            breakdownRow("Catch & Shoot", catchPct, totalShots),
+            breakdownRow("Pull-Up", pullPct, totalShots),
+            breakdownRow("Off Dribble", offPct, totalShots),
+            breakdownRow("Other", otherPct, totalShots),
+        ]
+        let releaseAngle = Int(round(47 + ((shooter.careerThreePct ?? shooter.careerPct ?? 38) - 35) * 0.35))
+        let elbow = min(178, max(150, 150 + Int(round(Double(score - 70) * 0.45))))
+        let releaseHeight = shooter.height + 24
+        let backspin = 2_850 + max(0, score - 70) * 18
+        let balance = min(99, 82 + max(0, score - 70) / 2)
+
+        return EliteShooterDetailData(
+            scoreText: "\(score)",
+            scorePct: Double(score) / 100.0,
+            scoreVerdict: verdict(score),
+            scoreNote: "\(shooter.name)'s reference profile is derived from career shooting data.",
+            tierValue: "\(score)",
+            tierLabel: tierLabel(shooter),
+            analyzedText: "\(totalShots) Reference Samples",
+            breakdownTotal: "100% = \(totalShots) SAMPLES",
+            breakdown: breakdown,
+            mechanics: [
+                EliteShooterMechanicData(label: "Elbow Angle", value: "\(elbow)°"),
+                EliteShooterMechanicData(label: "Release Height", value: inchesText(releaseHeight)),
+                EliteShooterMechanicData(label: "Release Angle", value: "\(releaseAngle)°"),
+                EliteShooterMechanicData(label: "Backspin", value: "\(grouped(backspin)) RPM"),
+                EliteShooterMechanicData(label: "Balance", value: "\(balance)%"),
+            ],
+            strengths: strengths(shooter, score: score),
+            weaknesses: weaknesses(shooter, score: score),
+            bioText: bioText(shooter: shooter),
+            shareText: "Studying \(shooter.name)'s shooting form on ShotIQ - \(shotiqPercentText(shooter.careerFieldGoalPct)) career FG, \(shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)) from three.")
+    }
+
+    static func isCanonicalDemo(_ shooter: EliteShooterDTO) -> Bool {
+        UITestHooks.demoData && !UITestHooks.eliteShooterCatalog && shooter.id == 1
+    }
+
+    static func wsiScore(_ shooter: EliteShooterDTO) -> Int {
+        let fg = shooter.careerFieldGoalPct ?? shooter.careerPct ?? 38
+        let three = shooter.careerThreePct ?? shooter.careerPct ?? 38
+        let ft = shooter.careerFreeThrowPct
+        let efficiency = fg * 0.35 + three * 0.45 + ft * 0.20
+        let boost: Double
+        switch tierLabel(shooter).lowercased() {
+        case "legendary": boost = 44
+        case "elite": boost = 40
+        case "great": boost = 34
+        case "good": boost = 28
+        case "mid level", "mid_level": boost = 20
+        default: boost = 12
+        }
+        return min(99, max(30, Int(round(efficiency + boost))))
+    }
+
+    static func tierLabel(_ shooter: EliteShooterDTO) -> String {
+        (shooter.tier ?? "Reference")
+            .replacingOccurrences(of: "_", with: " ")
+            .capitalized
+    }
+
+    private static func breakdownRow(_ label: String, _ pct: Int, _ total: Int) -> EliteShooterBreakdownData {
+        let shots = max(1, Int(round(Double(total * pct) / 100.0)))
+        return EliteShooterBreakdownData(label: label,
+                                         percent: "\(pct)%",
+                                         shots: "\(shots) \(shots == 1 ? "SAMPLE" : "SAMPLES")")
+    }
+
+    private static func verdict(_ score: Int) -> String {
+        if score >= 95 { return "LEGENDARY" }
+        if score >= 88 { return "ELITE" }
+        if score >= 78 { return "GREAT" }
+        if score >= 70 { return "GOOD" }
+        return "DEVELOPING"
+    }
+
+    private static func strengths(_ shooter: EliteShooterDTO, score: Int) -> [String] {
+        var items: [String] = []
+        if (shooter.careerThreePct ?? shooter.careerPct ?? 0) >= 42 {
+            items.append("Deep range efficiency")
+        } else {
+            items.append("Repeatable perimeter touch")
+        }
+        if shooter.careerFreeThrowPct >= 88 {
+            items.append("Stable free-throw mechanics")
+        } else {
+            items.append("Compact repeatable base")
+        }
+        items.append(score >= 90 ? "Elite shot preparation" : "Reliable release rhythm")
+        return items
+    }
+
+    private static func weaknesses(_ shooter: EliteShooterDTO, score: Int) -> [String] {
+        var items: [String] = []
+        items.append(shooter.height < 76 ? "Needs quick release window" : "Can tighten off-dribble timing")
+        items.append((shooter.careerThreePct ?? shooter.careerPct ?? 0) < 39 ? "Improve three-point consistency" : "Maintain balance under contests")
+        items.append(score >= 90 ? "Small misses show in footwork" : "Raise release consistency")
+        return items
+    }
+
+    private static func bioText(shooter: EliteShooterDTO) -> String {
+        let fg = shotiqPercentText(shooter.careerFieldGoalPct)
+        let tp = shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)
+        return "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(tierLabel(shooter)) \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, shooting \(fg) from the field, \(tp) from three and \(shotiqPercentText(shooter.careerFreeThrowPct)) from the line."
+    }
+
+    private static func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private static func grouped(_ value: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+}
+
 struct PlayerCardView: View {       // 048
     @EnvironmentObject var app: AppState
     @AppStorage("profileHeightIn") private var heightIn = 75
@@ -1001,6 +1180,32 @@ final class EliteViewModel: ObservableObject {
         // Test-only: one canned shooter so 052/053 have a row to open without
         // reaching /api/shooters.
         if UITestHooks.demoData {
+            if UITestHooks.eliteShooterCatalog {
+                shooters = [
+                    EliteShooterDTO(id: 30, name: "Stephen Curry", team: "Golden State Warriors",
+                                    league: "NBA", era: "2009-Present", tier: "Legendary",
+                                    position: "PG", height: 75, weight: 185,
+                                    careerPct: 43.0, careerFreeThrowPct: 91.0,
+                                    careerFieldGoalPct: 47.1, careerThreePct: 43.0,
+                                    careerEfgPct: 58.2, careerTsPct: 62.6,
+                                    approvedFormImages: nil),
+                    EliteShooterDTO(id: 1, name: "Klay Thompson", team: "Warriors",
+                                    league: "NBA", era: "Modern", tier: "Elite",
+                                    position: "SG", height: 78, weight: 215,
+                                    careerPct: 41.3, careerFreeThrowPct: 85.3,
+                                    careerFieldGoalPct: 45.7, careerThreePct: 41.3,
+                                    careerEfgPct: 54.8, careerTsPct: 58.6,
+                                    approvedFormImages: nil),
+                    EliteShooterDTO(id: 31, name: "Steve Kerr", team: "Multiple Teams",
+                                    league: "NBA", era: "1988-2003", tier: "Elite",
+                                    position: "PG", height: 75, weight: 175,
+                                    careerPct: 45.4, careerFreeThrowPct: 86.4,
+                                    careerFieldGoalPct: 47.9, careerThreePct: 45.4,
+                                    careerEfgPct: 60.5, careerTsPct: 62.0,
+                                    approvedFormImages: nil),
+                ]
+                return
+            }
             // Published career rates, 0-100, on the same scale /api/shooters
             // serves. This seed used to carry 0-1 fractions, which is the whole
             // reason 052/053 rendered "0.5%".
@@ -1209,7 +1414,8 @@ struct EliteMatchView: View {       // 050
                         .padding(.top, 18)
                         NavigationLink {
                             PhotoComparisonView(presentation: presentation
-                                                ?? app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) })
+                                                ?? app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) },
+                                                shooter: vm.shooters.first)
                         } label: {
                             HStack(spacing: 4) {
                                 ForEach(0..<7, id: \.self) { i in
@@ -1447,6 +1653,7 @@ struct PhotoComparisonView: View {  // 051
     @State private var savedComparison = false
     @State private var synced = false
     var presentation: AnalysisResultPresentation? = nil
+    var shooter: EliteShooterDTO? = nil
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
     private var currentPresentation: AnalysisResultPresentation {
         presentation
@@ -1461,6 +1668,19 @@ struct PhotoComparisonView: View {  // 051
     }
     private var playerProfileLine: String {
         "You • \(hand.capitalized) • \(level.capitalized)"
+    }
+    private var eliteName: String {
+        shooter?.name.uppercased() ?? "ELITE REFERENCE"
+    }
+    private var eliteProfileLine: String {
+        guard let shooter else { return "Pro • Right • Elite" }
+        return "\(shooter.team) • \(shooter.position)"
+    }
+    private var eliteScoreText: String {
+        shooter.map { "\(EliteShooterDetailData.wsiScore($0))" } ?? "94"
+    }
+    private var eliteScorePct: Double {
+        shooter.map { Double(EliteShooterDetailData.wsiScore($0)) / 100.0 } ?? 0.94
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-comparison") {
@@ -1511,16 +1731,20 @@ struct PhotoComparisonView: View {  // 051
                                 .padding(.top, 8)
                             Spacer(minLength: 2)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("ELITE REFERENCE").shotiqDisplay(19)
-                                Text("Pro • Right • Elite").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                Text(eliteName).shotiqDisplay(19)
+                                    .lineLimit(1).minimumScaleFactor(0.65)
+                                    .accessibilityIdentifier("photo-comparison-elite-name")
+                                Text(eliteProfileLine).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
                                 Text("FORM SCORE").shotiqBody(8, weight: .semibold).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                                 HStack(spacing: 6) {
-                                    Text("94").font(.custom("Tungsten-Medium", size: 24))
+                                    Text(eliteScoreText).font(.custom("Tungsten-Medium", size: 24))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                         .lineLimit(1)
                                         .fixedSize(horizontal: true, vertical: false)
-                                    ScoreBar(pct: 0.94, color: ShotIQColor.analysisBlue)
+                                        .accessibilityIdentifier("photo-comparison-elite-score")
+                                    ScoreBar(pct: eliteScorePct, color: ShotIQColor.analysisBlue)
                                         .frame(maxWidth: 58)
                                 }
                             }
@@ -1795,6 +2019,7 @@ struct EliteShootersView: View {    // 052
                             NavigationLink { EliteShooterDetailView(shooter: s) } label: {
                                 shooterCard(s, rank: i)
                             }
+                            .accessibilityIdentifier("elite-shooter-row-\(s.id)")
                             .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
@@ -1910,7 +2135,7 @@ struct EliteShootersView: View {    // 052
                             VStack(spacing: 3) {
                                 Text("WSI").shotiqMicroCaps()
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
-                                Text("\(max(70, 94 - rank * 2))")
+                                Text("\(EliteShooterDetailData.wsiScore(s))")
                                     .font(.custom("Tungsten-Medium", size: 22)).foregroundStyle(ShotIQColor.shotiqOrange)
                                     .lineLimit(1)
                             }
@@ -1951,10 +2176,12 @@ struct EliteShooterDetailView: View { // 053
     @Environment(\.dismiss) private var dismiss
     @State private var tab = "OVERVIEW"
     @State private var savedReference = false
+    @State private var toast: ShotIQToast?
     @State private var info: EliteInfoNote?
     private let tabs = ["OVERVIEW", "MECHANICS", "STRENGTHS", "WEAKNESSES", "REFERENCE"]
-    private let strengths = ["Quick, repeatable release", "High shooting arc", "Consistent base and balance"]
-    private let weaknesses = ["Slight elbow flare in load", "Lower body under-utilized", "Off dribble rhythm"]
+    private var detail: EliteShooterDetailData {
+        EliteShooterDetailData.make(shooter: shooter)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-elite-shooter-detail") {
             VStack(spacing: 0) {
@@ -1974,16 +2201,18 @@ struct EliteShooterDetailView: View { // 053
                                 .buttonStyle(.plain)
                                 .padding(.top, 14)
                                 Text(shooter.name.uppercased()).shotiqDisplay(36).padding(.top, 12)
+                                    .accessibilityIdentifier("elite-detail-name")
                                 Text("Right-handed  •  \(shooter.position)").shotiqBody(14)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 4)
                                 Text("\(shooter.team)  •  \(shooter.league)").shotiqBody(14)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
+                                    .accessibilityIdentifier("elite-detail-team")
                                 Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.vertical, 12)
                                 HStack(alignment: .top, spacing: 12) {
                                     PhaseGlyph(active: true, size: 40)
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text("ELITE REFERENCE").shotiqDisplay(17)
-                                        Text("\(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter.\nQuick, repeatable release.")
+                                        Text("\(detail.tierLabel) \(shooter.era ?? "era") shooter.\n\(detail.strengths.first ?? "Reference shooting profile").")
                                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                     }
                                 }
@@ -2020,15 +2249,13 @@ struct EliteShooterDetailView: View { // 053
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("CAREER SHOOTING SUMMARY").shotiqDisplay(22)
-                                    Text("24 Shots Analyzed").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                                    Text(detail.analyzedText).shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Spacer()
                                 Button {
-                                    let fg = shotiqPercentText(shooter.careerFieldGoalPct)
-                                    let tp = shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)
                                     info = EliteInfoNote(
                                         title: shooter.name,
-                                        message: "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, shooting \(fg) from the field, \(tp) from three and \(shotiqPercentText(shooter.careerFreeThrowPct)) from the line.")
+                                        message: detail.bioText)
                                 } label: {
                                     HStack(spacing: 3) {
                                         Text("View bio").shotiqBody(14).foregroundStyle(ShotIQColor.shotiqOrange)
@@ -2045,9 +2272,11 @@ struct EliteShooterDetailView: View { // 053
                                 // FG%, 3P%, FT%, eFG%, TS% — not height/weight.
                                 ShotIQCard {
                                     HStack(spacing: 0) {
-                                        summaryStat("FG%", shotiqPercentText(shooter.careerFieldGoalPct))
+                                        summaryStat("FG%", shotiqPercentText(shooter.careerFieldGoalPct),
+                                                    valueID: "elite-detail-fg")
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("3P%", shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct))
+                                        summaryStat("3P%", shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct),
+                                                    valueID: "elite-detail-three")
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
                                         summaryStat("FT%", shotiqPercentText(shooter.careerFreeThrowPct))
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
@@ -2061,9 +2290,10 @@ struct EliteShooterDetailView: View { // 053
                                     VStack(spacing: 3) {
                                         Text("WSI TIER").shotiqBody(10, weight: .medium).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("53").font(.custom("Tungsten-Medium", size: 34))
+                                        Text(detail.tierValue).font(.custom("Tungsten-Medium", size: 34))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        Text((shooter.tier ?? "ELITE").uppercased())
+                                            .accessibilityIdentifier("elite-detail-tier")
+                                        Text(detail.tierLabel.uppercased())
                                             .shotiqBody(10, weight: .medium).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
@@ -2075,15 +2305,16 @@ struct EliteShooterDetailView: View { // 053
                                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
                             HStack(alignment: .top, spacing: 20) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("82").font(.custom("Tungsten-Medium", size: 54))
+                                    Text(detail.scoreText).font(.custom("Tungsten-Medium", size: 54))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 17))
+                                        .accessibilityIdentifier("elite-detail-score")
+                                    Text(detail.scoreVerdict).font(.custom("Tungsten-Medium", size: 17))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("High-level, repeatable form.").shotiqBody(12)
+                                    Text(detail.scoreNote).shotiqBody(12)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(spacing: 4) {
-                                    ScoreBar(pct: 0.82).padding(.top, 22)
+                                    ScoreBar(pct: detail.scorePct).padding(.top, 22)
                                     HStack {
                                         ForEach(["0", "25", "50", "75", "100"], id: \.self) { t in
                                             Text(t).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
@@ -2096,40 +2327,37 @@ struct EliteShooterDetailView: View { // 053
                             HStack {
                                 Text("SHOT BREAKDOWN (CAREER)").shotiqDisplay(20)
                                 Spacer()
-                                Text("100% = 24 SHOTS").shotiqBody(11, weight: .medium).kerning(0.4)
+                                Text(detail.breakdownTotal).shotiqBody(11, weight: .medium).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
                             .padding(.top, 22)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
                             HStack(spacing: 0) {
-                                breakdownCol("Catch & Shoot", "62.5%", "15 SHOTS")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
-                                breakdownCol("Pull-Up", "20.8%", "5 SHOTS")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
-                                breakdownCol("Off Dribble", "12.5%", "3 SHOTS")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
-                                breakdownCol("Other", "4.2%", "1 SHOT")
+                                ForEach(Array(detail.breakdown.enumerated()), id: \.element.label) { index, item in
+                                    if index > 0 {
+                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
+                                    }
+                                    breakdownCol(item.label, item.percent, item.shots)
+                                        .accessibilityIdentifier("elite-detail-breakdown-\(item.label)")
+                                }
                             }
                             .padding(.top, 8)
                             Text("MECHANICS SNAPSHOT").shotiqDisplay(20).padding(.top, 22)
                                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
                                 .id("section-MECHANICS")
                             HStack(spacing: 0) {
-                                snapshotCol("Elbow Angle", "89°")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                snapshotCol("Release Height", "7'1\"")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                snapshotCol("Release Angle", "51°")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                snapshotCol("Backspin", "3,200 RPM")
-                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                snapshotCol("Balance", "88%")
+                                ForEach(Array(detail.mechanics.enumerated()), id: \.element.label) { index, item in
+                                    if index > 0 {
+                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
+                                    }
+                                    snapshotCol(item.label, item.value, valueID: "elite-detail-mechanic-\(item.label)")
+                                }
                             }
                             .padding(.top, 8)
                             HStack(alignment: .top, spacing: 24) {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("STRENGTHS").shotiqDisplay(18).id("section-STRENGTHS")
-                                    ForEach(strengths, id: \.self) { s in
+                                    ForEach(detail.strengths, id: \.self) { s in
                                         HStack(spacing: 8) {
                                             Image(systemName: "checkmark.circle").font(.system(size: 14))
                                                 .foregroundStyle(ShotIQColor.confirmGreen)
@@ -2141,7 +2369,7 @@ struct EliteShooterDetailView: View { // 053
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("WEAKNESSES").shotiqDisplay(18)
-                                    ForEach(weaknesses, id: \.self) { w in
+                                    ForEach(detail.weaknesses, id: \.self) { w in
                                         HStack(spacing: 8) {
                                             Image(systemName: "minus.circle").font(.system(size: 14))
                                                 .foregroundStyle(ShotIQColor.reviewRed)
@@ -2173,7 +2401,7 @@ struct EliteShooterDetailView: View { // 053
                             }
                             .padding(.top, 8)
                             HStack(spacing: 10) {
-                                NavigationLink { PhotoComparisonView() } label: {
+                                NavigationLink { PhotoComparisonView(shooter: shooter) } label: {
                                     HStack(spacing: 8) {
                                         Image(systemName: "magnifyingglass")
                                         Text("Compare with my shot").shotiqBody(15, weight: .medium)
@@ -2183,7 +2411,12 @@ struct EliteShooterDetailView: View { // 053
                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
                                     .foregroundStyle(.white)
                                 }
-                                Button { savedReference.toggle() } label: {
+                                Button {
+                                    savedReference.toggle()
+                                    toast = savedReference
+                                        ? .success("Reference saved", "\(shooter.name) added to your study list.")
+                                        : .info("Reference removed", "\(shooter.name) removed from your study list.")
+                                } label: {
                                     HStack(spacing: 8) {
                                         Image(systemName: savedReference ? "bookmark.fill" : "bookmark")
                                         Text(savedReference ? "Saved" : "Save reference").shotiqBody(14)
@@ -2195,7 +2428,7 @@ struct EliteShooterDetailView: View { // 053
                                         .stroke(savedReference ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                 }
                                 .buttonStyle(.plain)
-                                ShareLink(item: "Studying \(shooter.name)'s shooting form on ShotIQ — \(shotiqPercentText(shooter.careerFieldGoalPct)) career FG. 🏀") {
+                                ShareLink(item: detail.shareText) {
                                     Image(systemName: "square.and.arrow.up").font(.system(size: 17))
                                         .foregroundStyle(ShotIQColor.ink)
                                         .frame(width: 52, height: 52)
@@ -2212,20 +2445,27 @@ struct EliteShooterDetailView: View { // 053
             }
         }
         .eliteInfoAlert($info)
+        .shotiqToast($toast)
     }
     /// Strengths and weaknesses share one row, so both tabs land on the same anchor.
     private func anchorID(for tab: String) -> String {
         tab == "WEAKNESSES" ? "section-STRENGTHS" : "section-\(tab)"
     }
-    private func summaryStat(_ label: String, _ value: String) -> some View {
+    private func summaryStat(_ label: String, _ value: String, valueID: String? = nil) -> some View {
         VStack(spacing: 3) {
             Text(label).shotiqBody(10, weight: .medium).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
             // Five columns share the card on 053, so the widest value ("100.0%")
             // is allowed to shrink rather than truncate.
-            Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
-                .lineLimit(1).minimumScaleFactor(0.6)
+            if let valueID {
+                Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                    .accessibilityIdentifier(valueID)
+            } else {
+                Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -2245,7 +2485,7 @@ struct EliteShooterDetailView: View { // 053
         }
         .frame(maxWidth: .infinity)
     }
-    private func snapshotCol(_ label: String, _ value: String) -> some View {
+    private func snapshotCol(_ label: String, _ value: String, valueID: String? = nil) -> some View {
         VStack(spacing: 4) {
             // Canonical 053 draws five different diagrams across MECHANICS
             // SNAPSHOT; this row printed one SF runner five times.
@@ -2253,8 +2493,14 @@ struct EliteShooterDetailView: View { // 053
                 .foregroundStyle(ShotIQColor.ink)
             Text(label).shotiqBody(9).foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
-                .lineLimit(1).minimumScaleFactor(0.6)
+            if let valueID {
+                Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                    .accessibilityIdentifier(valueID)
+            } else {
+                Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+            }
         }
         .frame(maxWidth: .infinity)
     }
