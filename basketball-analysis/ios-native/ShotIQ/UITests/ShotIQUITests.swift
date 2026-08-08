@@ -1553,6 +1553,37 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("screen-ios-analytics-cards").waitForExistence(timeout: 8))
     }
 
+    func testGoalDetailUsesWorkoutHistoryAndAnalysisSnapshot() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "goal-detail"])
+        XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
+        assertElement(id: "goal-detail-progress-value", contains: "72%")
+        assertElement(id: "goal-detail-trend-chart", contains: "Form Score 70")
+        assertVisibleElement(id: "goal-detail-elbow-angle", contains: "118°", maxSwipes: 3)
+        assertVisibleElement(id: "goal-detail-target-range", contains: "150°", maxSwipes: 3)
+        assertVisibleElement(id: "goal-detail-target-range", contains: "180°", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-snapshot-form-score", contains: "82", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-snapshot-release-offset", contains: "+14°", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-linked-count", contains: "1 LINKED THIS GOAL", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-session-0-name", contains: "Shot Tracker Session", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-session-0-shots", contains: "3", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-session-0-make-pct", contains: "66.7%", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-session-0-elbow", contains: "118°", maxSwipes: 1)
+        assertVisibleElement(id: "goal-detail-session-0-goal-score", contains: "70%", maxSwipes: 1)
+
+        tapElement(id: "goal-detail-session-0")
+        XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
+    }
+
     func testGoalDetailImageSurfacesWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
         XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
@@ -1592,7 +1623,12 @@ final class ShotIQUITests: XCTestCase {
 
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
         XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
-        tapControl("Quick Release Builder")
+        tapButton(id: "goal-detail-drill-add-quick-release-builder")
+        XCTAssertTrue(waitForToastContaining("Adding drill") || waitForToastContaining("Drill added"))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goal-detail"])
+        XCTAssertTrue(screen("screen-ios-goal-detail").waitForExistence(timeout: 8))
+        tapButton(id: "goal-detail-drill-open-quick-release-builder")
         XCTAssertTrue(screen("screen-ios-drill-detail").waitForExistence(timeout: 8))
 
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "settings-hub"])

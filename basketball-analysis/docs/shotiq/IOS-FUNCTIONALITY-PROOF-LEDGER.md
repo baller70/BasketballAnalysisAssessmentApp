@@ -155,7 +155,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G054 | VERIFYING | P1 | `#backend` `#demo` | 063 | Remove fake fallback goals or label them. | Empty/failing production goal loads no longer silently show fake personal goals; the screen shows loading, empty, or unavailable states instead. Goal card media placeholders are fixed with bundled basketball imagery. Focused XCTest proves production `GoalsViewModel` does not start with sample progress, and canonical Goals now resets workout history so the intentional demo sample remains stable; still needs backend/web proof before `DONE`. |
 | G055 | VERIFYING | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal cards now derive sessions, average form score, make percentage, trend endpoint, recent session row, and insight copy from locally completed workout history when present, while preserving the canonical sample only for demo/no-history launches. Focused simulator proof creates a Shot Tracker workout and verifies the Goals card shows `1` session, form `70`, make `66.7%`, recent `Shot Tracker Session`, trend toggle, insights, and related routes. Backend workout reload and iOS/web parity remain before `DONE`. |
 | G056 | VERIFYING | P1 | `#backend` `#analytics` | 064 | Created goals affect recommendations/analytics. | Create Goal now gives progress/success feedback, persists a locally created goal, refreshes the Goals list/detail, and feeds the latest created goal into Training Home and Quick Start context. Backend goal reload, analytics aggregates, physical-device proof, and iOS/web parity remain before `DONE`. |
-| G057 | OPEN | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Linked sessions/trends/angles match saved workout and analysis records. |
+| G057 | VERIFYING | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Goal Detail now resolves linked sessions, trend endpoint, elbow angle, form score, and release offset from saved local workout/analysis records when present, while preserving the canonical demo-only static sample for screenshot parity. Focused UI proof creates a real shot-tracker session, seeds weak analysis, verifies the screen shows 3 shots, 66.7% make rate, 70% goal score, 118° elbow, 150°–180° target range, +14° release offset, and opens Analytics Detail from the linked session. Add Drill now has its own progress/success feedback path separate from opening the drill. Backend reload, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G058 | OPEN | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | API seed changes cards, trends, share values, and deltas exactly. |
 | G059 | OPEN | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Range/filter changes recompute rows, confidence, trends, and phase values. |
 | G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. Backend reload/web-library proof remains before `DONE`. |
@@ -2928,3 +2928,53 @@ navigation with local created-goal persistence and downstream Training Home /
 Quick Start context. It does not yet prove backend goal reload, analytics
 aggregate mutation, physical-device behavior, or iOS/web parity; those remain
 required before G056 can move to `DONE`.
+
+### 2026-08-08 Goal Detail Workout/Analysis Proof
+
+Implementation:
+
+- Screen 065 Goal Detail now resolves its linked sessions from
+  `TrainingWorkoutStore` and its technique snapshot from the latest remembered
+  `AnalysisResultPresentation` when those records exist. Demo/no-history
+  launches keep the canonical static sample so pixel screenshots remain stable.
+- The progress trend, linked-session count, session shots/date/name/make
+  percentage/elbow/goal score, elbow target range, form score, and release
+  offset are exposed through stable accessibility identifiers for direct UI
+  proof.
+- Goal Detail update controls now succeed locally in demo/proof mode instead
+  of trying the network and showing a false failure, so Log Progress/Edit Goal/
+  Mark Complete retain customer-visible progress and success feedback while
+  still PATCHing real goals outside demo mode.
+- Recommended drills now separate "open drill" from "add drill" controls so
+  adding a drill shows its own customer-visible progress/success toast instead
+  of being swallowed by row navigation.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goal-detail-live-20260808-2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testGoalDetailUsesWorkoutHistoryAndAnalysisSnapshot`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It created a real Shot Tracker session with make/miss/make,
+  relaunched Goal Detail with the weak analysis seed, and verified `72%`
+  progress, `Form Score 70` trend, `118°` elbow, `150°–180°` target range,
+  analysis-backed form score `82`, `+14°` release offset, `1 LINKED THIS GOAL`,
+  linked session `Shot Tracker Session`, `3` shots, `66.7%` make percentage,
+  `118°` row elbow, `70%` row goal score, and Analytics Detail navigation from
+  the linked row.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goal-detail-regression-20260808-2.xcresult`
+  ran `ShotIQUITests/ShotIQUITests/testGoalDetailImageSurfacesWork`,
+  `ShotIQUITests/ShotIQUITests/testSecondaryControlsShowFeedbackAndDialogs`,
+  and `ShotIQUITests/CanonicalScreenshotTests/test07ProgressAndProfileScreens`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0
+  failures`, re-proving the canonical Goal Detail sample, Goal Detail sheets,
+  Add Drill progress feedback, separated drill opening, settings/share/media
+  customer-feedback controls, and the canonical
+  progress/profile screenshot walk including Goals, Create Goal, Goal Detail,
+  Settings, and Share Results.
+
+Remaining limitations: this proves screen 065 in simulator production
+navigation with local completed workout history and latest saved analysis
+state. It does not yet prove backend workout/analysis reload, physical-device
+behavior, or iOS/web parity; those remain required before G057 can move to
+`DONE`.

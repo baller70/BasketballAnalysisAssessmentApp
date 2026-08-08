@@ -56,6 +56,13 @@ enum CreatedGoalStore {
     static func latest(in payload: String) -> GoalRecord? {
         decode(payload).first { $0.completedAt == nil }
     }
+
+    static func update(_ id: String, in payload: String, mutate: (inout GoalRecord) -> Void) -> String {
+        var goals = decode(payload)
+        guard let index = goals.firstIndex(where: { $0.id == id }) else { return payload }
+        mutate(&goals[index])
+        return encode(goals)
+    }
 }
 
 @MainActor
@@ -990,10 +997,144 @@ struct CreateGoalView: View {       // 064
     }
 }
 
+private struct GoalDetailSessionRow: Identifiable {
+    var id: String
+    var shots: String
+    var date: String
+    var name: String
+    var makePct: String
+    var elbow: String
+    var goalScore: String
+}
+
+private struct GoalDetailSnapshotCard: Identifiable {
+    var id: String { label }
+    var label: String
+    var grade: String
+    var value: String
+}
+
+private struct GoalDetailResolvedData {
+    var progressPct: Double
+    var trendPoints: [Double]
+    var trendLabels: [String]
+    var trendBadge: String
+    var trendA11y: String
+    var elbowAngle: String
+    var elbowScorePct: Double
+    var elbowScale: [String]
+    var targetRange: String
+    var snapshotCards: [GoalDetailSnapshotCard]
+    var linkedCaption: String
+    var sessions: [GoalDetailSessionRow]
+
+    static func make(goal: GoalRecord,
+                     workouts: [TrainingWorkoutRecord],
+                     presentation: AnalysisResultPresentation?,
+                     demoData: Bool) -> GoalDetailResolvedData {
+        if workouts.isEmpty && presentation == nil && demoData {
+            return GoalDetailResolvedData(
+                progressPct: goal.progress,
+                trendPoints: [40, 48, 55, 60, 66, 72],
+                trendLabels: ["S1", "S3", "S5", "S7"],
+                trendBadge: "72",
+                trendA11y: "Form Score 72",
+                elbowAngle: "87°",
+                elbowScorePct: 0.45,
+                elbowScale: ["60°", "90°", "120°"],
+                targetRange: "85°–95°",
+                snapshotCards: [
+                    GoalDetailSnapshotCard(label: "VERTICAL ALIGNMENT", grade: "GOOD", value: "92%"),
+                    GoalDetailSnapshotCard(label: "LATERAL DRIFT", grade: "GOOD", value: "4.2°")
+                ],
+                linkedCaption: "4 OF 6 THIS GOAL",
+                sessions: [
+                    GoalDetailSessionRow(id: "demo-1", shots: "24", date: "May 24, 8:24 AM",
+                                         name: "Form Session", makePct: "62.5%", elbow: "87°", goalScore: "68%"),
+                    GoalDetailSessionRow(id: "demo-2", shots: "18", date: "May 22, 7:12 AM",
+                                         name: "Quick Release", makePct: "61.1%", elbow: "83°", goalScore: "62%"),
+                    GoalDetailSessionRow(id: "demo-3", shots: "20", date: "May 20, 6:45 AM",
+                                         name: "Catch & Shoot", makePct: "60.0%", elbow: "78°", goalScore: "54%"),
+                    GoalDetailSessionRow(id: "demo-4", shots: "22", date: "May 18, 9:01 AM",
+                                         name: "Off the Dribble", makePct: "59.1%", elbow: "85°", goalScore: "64%")
+                ])
+        }
+
+        let sorted = workouts.sorted { $0.completedAt > $1.completedAt }
+        let analysisScore = presentation.map { Int(($0.scorePct * 100).rounded()) }
+        let latestElbow = presentation?.elbowAngleText ?? "--"
+        let sessions = sorted.prefix(4).enumerated().map { index, workout in
+            GoalDetailSessionRow(
+                id: workout.id,
+                shots: "\(workout.shots)",
+                date: Self.sessionDateText(workout.completedAt),
+                name: workout.drillName,
+                makePct: workout.accuracyText,
+                elbow: index == 0 ? latestElbow : "--",
+                goalScore: "\(workout.formScore)%")
+        }
+        let trendPoints: [Double]
+        let trendBadge: String
+        if sorted.isEmpty, let analysisScore {
+            trendPoints = [Double(analysisScore)]
+            trendBadge = "\(analysisScore)"
+        } else if sorted.isEmpty {
+            let value = Double(Int((goal.progress * 100).rounded()))
+            trendPoints = [value]
+            trendBadge = "\(Int(value))"
+        } else {
+            trendPoints = sorted.reversed().map { Double($0.formScore) }
+            trendBadge = "\(sorted.first?.formScore ?? 0)"
+        }
+
+        let scoreText = presentation?.scoreText ?? sorted.first.map { "\($0.formScore)" } ?? "--"
+        let scoreGrade = presentation?.scoreVerdict ?? sorted.first?.formVerdict ?? "NO DATA"
+        return GoalDetailResolvedData(
+            progressPct: goal.progress,
+            trendPoints: trendPoints,
+            trendLabels: Self.trendLabels(count: trendPoints.count),
+            trendBadge: trendBadge,
+            trendA11y: "Form Score \(trendBadge)",
+            elbowAngle: latestElbow,
+            elbowScorePct: Self.elbowScore(for: latestElbow),
+            elbowScale: ["120°", "150°", "180°"],
+            targetRange: "150°–180°",
+            snapshotCards: [
+                GoalDetailSnapshotCard(label: "FORM SCORE", grade: scoreGrade, value: scoreText),
+                GoalDetailSnapshotCard(label: "RELEASE OFFSET", grade: "MEASURED",
+                                       value: presentation?.releaseOffsetText ?? "--")
+            ],
+            linkedCaption: sessions.isEmpty ? "NO LINKED SESSIONS YET" : "\(sessions.count) LINKED THIS GOAL",
+            sessions: sessions)
+    }
+
+    private static func trendLabels(count: Int) -> [String] {
+        guard count > 1 else { return ["S1"] }
+        return (1...count).map { "S\($0)" }
+    }
+
+    private static func sessionDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d, h:mm a"
+        return formatter.string(from: date)
+    }
+
+    private static func elbowScore(for text: String) -> Double {
+        guard let value = Double(text.filter { $0.isNumber || $0 == "." || $0 == "-" }) else { return 0 }
+        if (150...180).contains(value) { return 0.92 }
+        let distance = value < 150 ? 150 - value : value - 180
+        return min(0.9, max(0.12, 1 - (distance / 90)))
+    }
+}
+
 struct GoalDetailView: View {       // 065
     var goal: GoalRecord
     var onChanged: (() async -> Void)? = nil
+    @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var name = ""
     @State private var desc = ""
     @State private var pct: Double = 0
@@ -1014,6 +1155,25 @@ struct GoalDetailView: View {       // 065
     }
     private struct GoalPatchResp: Codable { var success: Bool }
 
+    private var completedWorkouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload)
+    }
+
+    private var latestPresentation: AnalysisResultPresentation? {
+        app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+
+    private var detailData: GoalDetailResolvedData {
+        GoalDetailResolvedData.make(goal: goal,
+                                    workouts: completedWorkouts,
+                                    presentation: latestPresentation,
+                                    demoData: UITestHooks.demoData)
+    }
+
+    private var shouldPatchLocally: Bool {
+        UITestHooks.demoData || goal.id == "uitest-goal" || goal.id.hasPrefix("local-goal-")
+    }
+
     /// PATCH /api/goals/[id] and mirror the change locally + refresh the list.
     private func patch(_ body: GoalPatchBody,
                        progressTitle: String = "Saving goal",
@@ -1026,9 +1186,14 @@ struct GoalDetailView: View {       // 065
         toast = .progress(progressTitle, "Syncing the change to ShotIQ.", progress: 0.55)
         Task {
             do {
-                let _: GoalPatchResp = try await APIClient.shared.call(
-                    "/api/goals/\(goal.id)", method: "PATCH", body: body)
+                if shouldPatchLocally {
+                    try? await Task.sleep(nanoseconds: 250_000_000)
+                } else {
+                    let _: GoalPatchResp = try await APIClient.shared.call(
+                        "/api/goals/\(goal.id)", method: "PATCH", body: body)
+                }
                 apply()
+                mirrorLocalPatch(body)
                 await onChanged?()
                 toast = .success(successTitle, successMessage)
             } catch {
@@ -1044,17 +1209,23 @@ struct GoalDetailView: View {       // 065
         addedDrills.insert(name)
         toast = .progress("Adding drill", "Saving \(name) to your workouts.", progress: 0.5)
         Task {
-            await APIClient.shared.send("/api/saved-workouts", body: SavedWorkoutBody(name: name))
+            if UITestHooks.demoData {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            } else {
+                await APIClient.shared.send("/api/saved-workouts", body: SavedWorkoutBody(name: name))
+            }
             toast = .success("Drill added", "\(name) is in your saved workouts.")
         }
     }
+    private func mirrorLocalPatch(_ body: GoalPatchBody) {
+        createdGoalsPayload = CreatedGoalStore.update(goal.id, in: createdGoalsPayload) { record in
+            if let name = body.name { record.name = name }
+            if let description = body.description { record.description = description }
+            if let currentValue = body.currentValue { record.currentValue = currentValue }
+            if let completedAt = body.completedAt { record.completedAt = completedAt }
+        }
+    }
     private var targetValue: Int { goal.targetValue ?? 100 }
-    private let sessions: [(String, String, String, String, String, String)] = [
-        ("24", "May 24, 8:24 AM", "Form Session", "62.5%", "87°", "68%"),
-        ("18", "May 22, 7:12 AM", "Quick Release", "61.1%", "83°", "62%"),
-        ("20", "May 20, 6:45 AM", "Catch & Shoot", "60.0%", "78°", "54%"),
-        ("22", "May 18, 9:01 AM", "Off the Dribble", "59.1%", "85°", "64%")
-    ]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-goal-detail") {
             ScrollView {
@@ -1115,17 +1286,21 @@ struct GoalDetailView: View {       // 065
                                 Text("\(Int(pct * 100))%")
                                     .font(.custom("Tungsten-Medium", size: 46))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .accessibilityIdentifier("goal-detail-progress-value")
                                 ScoreBar(pct: pct).frame(width: 110)
                             }
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("TREND (LAST 7 SESSIONS)").shotiqBody(9, weight: .semibold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.graphite)
-                                TrendLine(points: [40, 48, 55, 60, 66, 72],
+                                TrendLine(points: detailData.trendPoints,
                                           stroke: ShotIQColor.shotiqOrange,
                                           areaFill: true, gridlines: true,
-                                          xLabels: ["S1", "S3", "S5", "S7"],
-                                          endBadge: "72")
+                                          xLabels: detailData.trendLabels,
+                                          endBadge: detailData.trendBadge)
                                     .frame(height: 84)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityIdentifier("goal-detail-trend-chart")
+                                    .accessibilityLabel(detailData.trendA11y)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -1137,22 +1312,26 @@ struct GoalDetailView: View {       // 065
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "ELBOW STACK ANGLE")
                                     HStack(alignment: .firstTextBaseline, spacing: 5) {
-                                        Text("87°").font(.custom("Tungsten-Medium", size: 34))
+                                        Text(detailData.elbowAngle).font(.custom("Tungsten-Medium", size: 34))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
+                                            .accessibilityIdentifier("goal-detail-elbow-angle")
                                         Text("AVG").shotiqBody(9, weight: .medium)
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    ScoreBar(pct: 0.45)
+                                    ScoreBar(pct: detailData.elbowScorePct)
                                     HStack {
-                                        Text("60°"); Spacer(); Text("90°"); Spacer(); Text("120°")
+                                        Text(detailData.elbowScale[0]); Spacer()
+                                        Text(detailData.elbowScale[1]); Spacer()
+                                        Text(detailData.elbowScale[2])
                                     }
                                     .font(.system(size: 9)).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("TARGET RANGE").shotiqBody(8.5, weight: .semibold).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("85°–95°").font(.custom("Tungsten-Medium", size: 22))
+                                    Text(detailData.targetRange).font(.custom("Tungsten-Medium", size: 22))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
+                                        .accessibilityIdentifier("goal-detail-target-range")
                                 }
                                 .padding(10)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1161,45 +1340,54 @@ struct GoalDetailView: View {       // 065
                         }
                         .padding(.top, 10)
                         HStack(spacing: 10) {
-                            snapshotCard("VERTICAL ALIGNMENT", "GOOD", "92%")
-                            snapshotCard("LATERAL DRIFT", "GOOD", "4.2°")
+                            ForEach(detailData.snapshotCards) { card in
+                                snapshotCard(card.label, card.grade, card.value)
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityIdentifier("goal-detail-snapshot-\(card.label.lowercased().replacingOccurrences(of: " ", with: "-"))")
+                            }
                         }
                         .padding(.top, 10)
                         HStack {
                             SectionLabel(text: "LINKED SESSIONS")
                             Spacer()
-                            Text("4 OF 6 THIS GOAL").shotiqBody(10, weight: .semibold).kerning(0.4)
+                            Text(detailData.linkedCaption).shotiqBody(10, weight: .semibold).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("goal-detail-linked-count")
                         }
                         .padding(.top, 22)
-                        ForEach(sessions, id: \.1) { s in
-                            NavigationLink { AnalyticsDetailedView(metric: s.2) } label: {
+                        ForEach(Array(detailData.sessions.enumerated()), id: \.element.id) { index, s in
+                            NavigationLink { AnalyticsDetailedView(metric: s.name) } label: {
                             HStack(spacing: 10) {
                                 PhotoThumb(width: 46, height: 34, icon: "play.circle", photo: "066-visual-002")
                                 VStack(spacing: 1) {
-                                    Text(s.0).font(.custom("Tungsten-Medium", size: 16))
+                                    Text(s.shots).font(.custom("Tungsten-Medium", size: 16))
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-shots")
                                     Text("SHOTS").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text(s.1).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                                    Text(s.2).shotiqBody(13, weight: .semibold)
+                                    Text(s.date).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                    Text(s.name).shotiqBody(13, weight: .semibold)
                                         .lineLimit(1).minimumScaleFactor(0.7)
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-name")
                                     HStack(spacing: 3) {
-                                        Text(s.3).shotiqBody(10, weight: .semibold)
+                                        Text(s.makePct).shotiqBody(10, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.analysisBlue)
+                                            .accessibilityIdentifier("goal-detail-session-\(index)-make-pct")
                                         Text("MAKE %").shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
                                     }
                                 }
                                 Spacer(minLength: 4)
                                 VStack(spacing: 1) {
-                                    Text(s.4).font(.custom("Tungsten-Medium", size: 16))
+                                    Text(s.elbow).font(.custom("Tungsten-Medium", size: 16))
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-elbow")
                                     Text("ELBOW").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(spacing: 1) {
-                                    Text(s.5).font(.custom("Tungsten-Medium", size: 16))
+                                    Text(s.goalScore).font(.custom("Tungsten-Medium", size: 16))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-goal-score")
                                     Text("GOAL SCORE").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -1209,42 +1397,48 @@ struct GoalDetailView: View {       // 065
                             .padding(.vertical, 9)
                             .overlay(HRule(), alignment: .bottom)
                             }
+                            .accessibilityIdentifier("goal-detail-session-\(index)")
                             .buttonStyle(.plain)
                         }
                         SectionLabel(text: "RECOMMENDED DRILLS").padding(.top, 20)
                         ForEach(["Quick Release Builder", "Wall Elbow Alignment"], id: \.self) { d in
-                            NavigationLink { DrillDetailView(name: d) } label: {
-                                HStack(spacing: 12) {
-                                    PhotoThumb(width: 56, height: 44, photo: "066-visual-003")
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(d).shotiqBody(14, weight: .semibold)
-                                            .lineLimit(1).minimumScaleFactor(0.8)
-                                        Text("3 sets • 15 reps • Form Focus")
-                                            .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                    }
-                                    Spacer(minLength: 4)
-                                    Button {
-                                        saveDrill(d)
-                                    } label: {
-                                        HStack(spacing: 4) {
-                                            if addedDrills.contains(d) {
-                                                Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
-                                            }
-                                            Text(addedDrills.contains(d) ? "Added" : "Add drill")
-                                                .shotiqBody(12, weight: .semibold)
+                            HStack(spacing: 12) {
+                                NavigationLink { DrillDetailView(name: d) } label: {
+                                    HStack(spacing: 12) {
+                                        PhotoThumb(width: 56, height: 44, photo: "066-visual-003")
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(d).shotiqBody(14, weight: .semibold)
+                                                .lineLimit(1).minimumScaleFactor(0.8)
+                                            Text("3 sets • 15 reps • Form Focus")
+                                                .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         }
-                                        .padding(.horizontal, 11).padding(.vertical, 7)
-                                        .overlay(RoundedRectangle(cornerRadius: 6)
-                                            .stroke(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange))
-                                        .foregroundStyle(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                                        Spacer(minLength: 4)
+                                        Image(systemName: "chevron.right").font(.system(size: 12))
+                                            .foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    .buttonStyle(.plain)
-                                    Image(systemName: "chevron.right").font(.system(size: 12))
-                                        .foregroundStyle(ShotIQColor.graphite)
                                 }
-                                .padding(.vertical, 10)
-                                .overlay(HRule(), alignment: .bottom)
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("goal-detail-drill-open-\(d.lowercased().replacingOccurrences(of: " ", with: "-"))")
+                                Button {
+                                    saveDrill(d)
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        if addedDrills.contains(d) {
+                                            Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
+                                        }
+                                        Text(addedDrills.contains(d) ? "Added" : "Add drill")
+                                            .shotiqBody(12, weight: .semibold)
+                                    }
+                                    .padding(.horizontal, 11).padding(.vertical, 7)
+                                    .overlay(RoundedRectangle(cornerRadius: 6)
+                                        .stroke(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange))
+                                    .foregroundStyle(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                                }
+                                .accessibilityIdentifier("goal-detail-drill-add-\(d.lowercased().replacingOccurrences(of: " ", with: "-"))")
+                                .buttonStyle(.plain)
                             }
+                            .padding(.vertical, 10)
+                            .overlay(HRule(), alignment: .bottom)
                         }
                         SectionLabel(text: "MILESTONES").padding(.top, 20)
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -1268,8 +1462,10 @@ struct GoalDetailView: View {       // 065
                                 logValue = Double(Int(pct * Double(targetValue)))
                                 showLogProgress = true
                             }
+                            .accessibilityIdentifier("goal-detail-log-progress")
                             .disabled(busy || completed)
                             SecondaryButton(title: "Edit goal", icon: "pencil") { showEdit = true }
+                                .accessibilityIdentifier("goal-detail-edit-goal")
                                 .disabled(busy)
                         }
                         .padding(.top, 20)
@@ -1293,6 +1489,7 @@ struct GoalDetailView: View {       // 065
                                     pct = 1
                                 }
                             }
+                            .accessibilityIdentifier("goal-detail-complete")
                             .disabled(busy)
                             .padding(.top, 10)
                         }
