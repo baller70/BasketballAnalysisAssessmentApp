@@ -21,6 +21,8 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UnitTests-2026-08-08-post-image-surfaces.xcresult`
 - Focused secondary-control result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-SecondaryControls-2026-08-08-v20.xcresult`
+- Focused onboarding-controls result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-OnboardingControls-2026-08-08-v6.xcresult`
 
 Current proof totals:
 
@@ -30,6 +32,7 @@ Current proof totals:
 - Capture screenshot target: 1 passed, 0 failed, 0 skipped
 - Unit target: 39 passed, 0 failed, 1 skipped
 - Focused secondary-control target: 1 passed, 0 failed, 0 skipped
+- Focused onboarding-controls target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen
@@ -46,14 +49,14 @@ Current proof totals:
 | 6 | Forgot Password | Yes | Sign In to Forgot Password route asserted; reset-link route click-tested | Backend reset email delivery |
 | 7 | Reset Password | Yes | Reset-token state staged and rendered | Real emailed token flow |
 | 8 | Onboarding Intro | Yes | Build profile CTA route asserted | None |
-| 9 | Physical Profile | Yes | Continue route asserted; inputs render with filled image surface | Native picker/keyboard edge cases |
-| 10 | Experience Body Type | Yes | Continue route asserted; card choices render | None |
-| 11 | Shooting Profile | Yes | Continue route asserted; hand/ability/style controls render | None |
-| 12 | Player Bio | Yes | Review profile route asserted; profile image surface filled | Backend AI enhancement/save |
-| 13 | Onboarding Review | Yes | Complete profile fallback reaches camera primer | Backend profile save |
+| 9 | Physical Profile | Yes | Age/height/weight/wingspan steppers and unit toggles mutate values; Continue route asserted; inputs render with filled image surface | Native keyboard edge cases |
+| 10 | Experience Body Type | Yes | Beginner and Slim / Lean selections mutate state; Continue route asserted | None |
+| 11 | Shooting Profile | Yes | Left-handed, Developing, and Compact selections mutate state; Continue route asserted | None |
+| 12 | Player Bio | Yes | Enhance-bio short-input validation toast/copy asserted; Review profile route asserted; profile image surface filled | Backend AI enhancement success |
+| 13 | Onboarding Review | Yes | Left-handed/Beginner carry-forward asserted; Coaching Focus expander asserted; Complete profile fallback reaches camera primer | Backend profile save |
 | 14 | Camera Permission Primer | Yes | Not now route to photo-library primer asserted | iOS camera permission alert |
 | 15 | Photo Library Permission | Yes | Not now route to notification primer asserted | iOS photo permission alert |
-| 16 | Notification Permission Primer | Yes | Primer state rendered in onboarding chain | iOS notification permission alert |
+| 16 | Notification Permission Primer | Yes | Not now completes onboarding and returns to a real home root | iOS notification permission alert |
 | 17 | Home New Player | Yes | Analyze first shot, GET AI ANALYSIS, capture guide routes asserted | Backend first-user state |
 | 18 | Home Standard | Yes | View latest analysis and drill card routes asserted | Live backend data parity |
 | 19 | Home Professional | Yes | View all analytics and menu routes asserted | Live backend data parity |

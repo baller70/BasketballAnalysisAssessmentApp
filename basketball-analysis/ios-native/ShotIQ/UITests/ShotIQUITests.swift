@@ -20,6 +20,15 @@ final class ShotIQUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
     }
 
+    private func waitForAnyScreen(_ ids: [String], timeout: TimeInterval = 8) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if ids.contains(where: { screen($0).exists }) { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        } while Date() < deadline
+        return ids.contains(where: { screen($0).exists })
+    }
+
     private func findControl(_ text: String, maxSwipes: Int = 5) -> XCUIElement? {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@ OR identifier == %@", text, text)
         func existingMatch() -> XCUIElement? {
@@ -98,6 +107,30 @@ final class ShotIQUITests: XCTestCase {
         XCTFail("Missing hittable button id: \(id)", file: file, line: line)
     }
 
+    private func tapElement(id: String, file: StaticString = #filePath, line: UInt = #line) {
+        let element = app.descendants(matching: .any).matching(identifier: id).firstMatch
+        let scroll = app.scrollViews.firstMatch
+        for attempt in 0...6 {
+            if element.waitForExistence(timeout: 1), element.isHittable {
+                element.tap()
+                return
+            }
+            if attempt < 6 {
+                scroll.exists ? scroll.swipeUp() : app.swipeUp()
+            }
+        }
+        for attempt in 0...6 {
+            if element.exists, element.isHittable {
+                element.tap()
+                return
+            }
+            if attempt < 6 {
+                scroll.exists ? scroll.swipeDown() : app.swipeDown()
+            }
+        }
+        XCTFail("Missing hittable element id: \(id)", file: file, line: line)
+    }
+
     private func toastContains(_ text: String) -> Bool {
         let toast = screen("shotiq-toast")
         return toast.exists && toast.label.localizedCaseInsensitiveContains(text)
@@ -115,6 +148,14 @@ final class ShotIQUITests: XCTestCase {
     private func assertVisible(_ text: String, maxSwipes: Int = 4,
                                file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertNotNil(findControl(text, maxSwipes: maxSwipes), "Missing visible item: \(text)", file: file, line: line)
+    }
+
+    private func assertStaticText(id: String, contains text: String,
+                                  file: StaticString = #filePath, line: UInt = #line) {
+        let element = app.staticTexts[id]
+        XCTAssertTrue(element.waitForExistence(timeout: 2), "Missing static text id: \(id)", file: file, line: line)
+        XCTAssertTrue(element.label.localizedCaseInsensitiveContains(text),
+                      "Expected \(id) to contain \(text), got \(element.label)", file: file, line: line)
     }
 
     private func dismissKeyboardIfPresent() {
@@ -653,5 +694,66 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
         tapButton(id: "media-detail-delete-media-button")
         XCTAssertTrue(waitForToastContaining("Sample media only"))
+    }
+
+    func testOnboardingProfileControlsCarryForwardAndPermissionSkipsWork() throws {
+        launch(["-uiTestBypassAuth", "-uiTestOnboarding", "-uiTestDemoData"])
+        XCTAssertTrue(screen("screen-ios-onboarding-intro").waitForExistence(timeout: 20))
+        tapControl("Build my player profile")
+
+        XCTAssertTrue(screen("screen-ios-physical-profile").waitForExistence(timeout: 8))
+        tapElement(id: "measurement-age-increase")
+        assertStaticText(id: "measurement-age-value", contains: "25")
+        tapElement(id: "measurement-age-unit-right")
+        assertStaticText(id: "measurement-age-value", contains: "300")
+        tapElement(id: "measurement-height-increase")
+        tapElement(id: "measurement-height-unit-right")
+        assertStaticText(id: "measurement-height-value", contains: "190")
+        tapElement(id: "measurement-weight-decrease")
+        tapElement(id: "measurement-weight-unit-right")
+        assertStaticText(id: "measurement-weight-value", contains: "83")
+        tapElement(id: "measurement-wingspan-increase")
+        tapElement(id: "measurement-wingspan-unit-right")
+        assertStaticText(id: "measurement-wingspan-value", contains: "200")
+        tapAndExpect("CONTINUE", destination: "screen-ios-experience-body-type")
+
+        tapControl("BEGINNER")
+        tapControl("SLIM / LEAN")
+        assertVisible("Beginner")
+        tapAndExpect("Continue", destination: "screen-ios-shooting-profile")
+
+        tapControl("LEFT-HANDED")
+        tapControl("DEVELOPING")
+        tapControl("COMPACT")
+        assertVisible("Left-handed", maxSwipes: 1)
+        tapAndExpect("Continue", destination: "screen-ios-player-bio")
+
+        tapControl("Enhance bio")
+        assertVisible("Write at least 20 characters first", maxSwipes: 1)
+        tapControl("Review profile")
+
+        XCTAssertTrue(screen("screen-ios-onboarding-review").waitForExistence(timeout: 8))
+        assertVisible("Left-handed", maxSwipes: 2)
+        assertVisible("Beginner", maxSwipes: 3)
+        tapControl("COACHING FOCUS")
+        assertVisible("updates automatically", maxSwipes: 1)
+
+        tapControl("Complete profile")
+        if !screen("screen-ios-camera-permission-primer").waitForExistence(timeout: 12) {
+            tapControl("Continue without saving")
+        }
+        XCTAssertTrue(screen("screen-ios-camera-permission-primer").waitForExistence(timeout: 8))
+        tapControl("Not now")
+
+        XCTAssertTrue(screen("screen-ios-photo-library-permission").waitForExistence(timeout: 8))
+        tapControl("Not now")
+
+        XCTAssertTrue(screen("screen-ios-notification-permission-primer").waitForExistence(timeout: 8))
+        tapControl("Not now")
+        XCTAssertTrue(waitForAnyScreen([
+            "screen-ios-home-new-player",
+            "screen-ios-home-standard",
+            "screen-ios-home-professional"
+        ], timeout: 12))
     }
 }

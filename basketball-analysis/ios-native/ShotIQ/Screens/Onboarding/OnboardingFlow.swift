@@ -309,15 +309,16 @@ private struct UnitToggle: View {
     var left: String
     var right: String
     @Binding var leftSelected: Bool
+    var accessibilityPrefix: String = ""
     var body: some View {
         HStack(spacing: 0) {
-            seg(left, on: leftSelected) { leftSelected = true }
-            seg(right, on: !leftSelected) { leftSelected = false }
+            seg(left, idSuffix: "left", on: leftSelected) { leftSelected = true }
+            seg(right, idSuffix: "right", on: !leftSelected) { leftSelected = false }
         }
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
     }
-    private func seg(_ label: String, on: Bool, tap: @escaping () -> Void) -> some View {
+    private func seg(_ label: String, idSuffix: String, on: Bool, tap: @escaping () -> Void) -> some View {
         Button(action: tap) {
             // The segment had no intrinsic width, so the measurement row's
             // trailing column absorbed every point the name column wanted and
@@ -331,6 +332,8 @@ private struct UnitToggle: View {
                 .background(on ? ShotIQColor.analysisBlue : ShotIQColor.paper)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("\(accessibilityPrefix)-unit-\(idSuffix)")
+        .accessibilityLabel(label)
     }
 }
 
@@ -346,6 +349,9 @@ private struct MeasurementRow: View {
     @Binding var leftSelected: Bool
     var onMinus: () -> Void
     var onPlus: () -> Void
+    private var accessibilityKey: String {
+        label.lowercased().replacingOccurrences(of: " ", with: "-")
+    }
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             // Canonical 009 draws a different measuring instrument on each of the
@@ -376,18 +382,24 @@ private struct MeasurementRow: View {
                             .font(.system(size: 18)).foregroundStyle(ShotIQColor.muted)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityIdentifier("measurement-\(accessibilityKey)-decrease")
                     .accessibilityLabel("Decrease \(label.lowercased())")
                     Text(value).font(.custom("Tungsten-Medium", size: 36))
                         .foregroundStyle(ShotIQColor.ink)
                         .lineLimit(1).minimumScaleFactor(0.6)
+                        .accessibilityIdentifier("measurement-\(accessibilityKey)-value")
                     Button(action: onPlus) {
                         Image(systemName: "plus.circle")
                             .font(.system(size: 18)).foregroundStyle(ShotIQColor.muted)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityIdentifier("measurement-\(accessibilityKey)-increase")
                     .accessibilityLabel("Increase \(label.lowercased())")
                 }
-                UnitToggle(left: leftUnit, right: rightUnit, leftSelected: $leftSelected)
+                UnitToggle(left: leftUnit, right: rightUnit, leftSelected: $leftSelected,
+                           accessibilityPrefix: "measurement-\(accessibilityKey)")
             }
         }
         .padding(.vertical, 20)

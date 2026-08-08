@@ -169,7 +169,7 @@ The first pass should fix root causes before polishing dependent screens:
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
 | G065 | OPEN | P1 | `#path` `#backend` | 003-007 | Prove full auth, verify email, reset token journeys. | Real signup, verify, forgot password, reset, sign-in, sign-out flows pass. |
-| G066 | OPEN | P2 | `#demo` `#analytics` | 008-016 | Remove or label pre-analysis analytics in onboarding/permissions. | New user sees no fake measured stats before first analysis. |
+| G066 | VERIFYING | P2 | `#demo` `#analytics` | 008-016 | Remove or label pre-analysis analytics in onboarding/permissions. | Focused onboarding proof now verifies the profile controls and carried-forward state through screens 008-016: measurement steppers/unit toggles, experience/body type, shooting profile, short-bio validation, review expander, save-fallback, permission skips, and return to a real home root. Pre-analysis analytics/sample stats still need a product decision or backend-derived source before `DONE`. |
 | G067 | OPEN | P0 | `#analytics` `#backend` | 017-020 | Home/profile-menu stats from real backend. | New/standard/pro user dashboard changes from seeded history. |
 | G068 | OPEN | P1 | `#analytics` `#media` | 048 | Player card generated from real history/profile. | Card values/media match current user data and latest analysis. |
 | G069 | OPEN | P2 | `#control` `#analytics` | 049 | Player-card customization persists over real data. | Custom style changes persist without changing underlying analytics. |
@@ -1469,3 +1469,38 @@ Evidence captured on the laptop, all external-drive backed:
 Remaining limitations: this is still simulator proof. Real iPhone proof remains
 required for Apple media pickers, camera permission/capture, Vision pose
 wireframe output, iOS share sheets, and backend/web parity.
+
+### 2026-08-08 Onboarding Profile Controls Proof
+
+Sixteenth laptop functionality slice after local Xcode setup:
+
+- Added stable accessibility identifiers to the four Physical Profile
+  measurement rows so tests can tap the correct stepper/unit control instead of
+  accidentally hitting the first generic plus/minus image on the page.
+- Proved the onboarding state carries forward screen-by-screen: Physical
+  Profile updates age, height, weight, and wingspan values; Experience & Body
+  Type stores Beginner and Slim / Lean; Shooting Profile stores Left-handed,
+  Developing, and Compact; Onboarding Review shows the selected values.
+- Proved customer feedback on Player Bio's AI helper when the bio is too short:
+  tapping Enhance bio without enough text shows the validation message instead
+  of silently doing nothing.
+- Proved the review Coaching Focus expander opens, the offline profile-save
+  failure exposes `Continue without saving`, and the Not now path moves through
+  camera, photo-library, and notification primers before returning to a real
+  home root.
+- Fixed the test harness final assertion to accept the actual home root the app
+  can show after onboarding (`new-player`, `standard`, or `professional`)
+  instead of assuming every demo-data launch lands on `home-standard`.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-OnboardingControls-2026-08-08-v6.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testOnboardingProfileControlsCarryForwardAndPermissionSkipsWork`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this proof uses simulator paths and offline save fallback.
+Real backend profile save, real AI bio enhancement success, and real iOS system
+permission alerts still need physical-device/backend proof before onboarding can
+be marked `DONE`.
