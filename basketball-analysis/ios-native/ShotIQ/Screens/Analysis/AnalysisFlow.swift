@@ -189,6 +189,78 @@ fileprivate struct AnalysisResultMediaSurface: View {
     }
 }
 
+fileprivate struct FrameDetailMediaSurface: View {
+    var presentation: AnalysisResultPresentation
+    var fallbackKey: String
+    var height: CGFloat
+    var showSkeleton: Bool
+    var showJoints: Bool
+    var showBall: Bool
+    var showAngles: Bool
+
+    var body: some View {
+        ZStack {
+            switch AnalysisResultMediaSurfaceResolver.source(for: presentation, fallbackKey: fallbackKey) {
+            case .video(let url):
+                VideoPlayer(player: AVPlayer(url: url))
+                    .accessibilityLabel("Saved analysis video frame")
+            case .image(let url):
+                if url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
+                    CapturedPoseImage(image: image,
+                                      height: height,
+                                      cornerRadius: 4,
+                                      showsPose: showSkeleton || showJoints || showAngles,
+                                      showBones: showSkeleton,
+                                      showJoints: showJoints || showAngles,
+                                      showBall: showBall,
+                                      showAngles: showAngles,
+                                      initialPose: presentation.detectedPose)
+                } else {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .failure:
+                            framePlaceholder("Media unavailable")
+                        default:
+                            framePlaceholder("Loading media")
+                        }
+                    }
+                }
+            case .canonicalFallback(let key):
+                CanonicalPhoto(key, height: height, cornerRadius: 4)
+            case .placeholder(let label):
+                framePlaceholder(label)
+            }
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .accessibilityIdentifier("frame-detail-real-media")
+        .overlay(alignment: .topTrailing) {
+            if presentation.detectedPose != nil {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityIdentifier("captured-pose-detected")
+                    .accessibilityLabel("Shooter pose detected")
+            }
+        }
+    }
+
+    private func framePlaceholder(_ label: String) -> some View {
+        RoundedRectangle(cornerRadius: 4)
+            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+            .overlay {
+                VStack(spacing: 8) {
+                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "photo"), size: 34)
+                    Text(label).shotiqBody(12, weight: .medium)
+                }
+                .foregroundStyle(.white.opacity(0.85))
+                .multilineTextAlignment(.center)
+                .padding(12)
+            }
+    }
+}
+
 struct AnalysisProcessingView: View { // 036
     /// One route out of processing. Two `navigationDestination(isPresented:)`
     /// modifiers on the same view conflict — the second silently wins — so the
@@ -1275,7 +1347,7 @@ struct ShotBreakdownView: View {    // 041
                         // Five-frame phase filmstrip — each frame opens the frame detail.
                         HStack(spacing: 2) {
                             ForEach(phases, id: \.self) { phase in
-                                NavigationLink { FrameDetailSkeletonView() } label: {
+                                NavigationLink { FrameDetailSkeletonView(presentation: presentation) } label: {
                                     VStack(spacing: 8) {
                                         if presentation.id != "canonical-demo",
                                            presentation.mediaURL != nil || presentation.videoURL != nil {
@@ -1362,7 +1434,7 @@ struct ShotBreakdownView: View {    // 041
                                         Text("Great elevation and alignment. Focus on snapping wrist down to create more backspin.")
                                             .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                             .fixedSize(horizontal: false, vertical: true)
-                                        NavigationLink { FrameDetailSkeletonView() } label: {
+                                        NavigationLink { FrameDetailSkeletonView(presentation: presentation) } label: {
                                             HStack(spacing: 8) {
                                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
                                                                          size: 14,
@@ -1465,6 +1537,7 @@ struct ShotBreakdownView: View {    // 041
 
 struct FrameDetailSkeletonView: View { // 042
     @Environment(\.dismiss) private var dismiss
+    var presentation: AnalysisResultPresentation = .canonicalDemo
     @State private var frame = 3.0
     @State private var phase = "RELEASE"
     @State private var showSkeleton = true
@@ -1477,6 +1550,15 @@ struct FrameDetailSkeletonView: View { // 042
                                "042-frame-004", "042-frame-005"]
     /// Frame 42 corresponds to the canonical slider position 3.
     private var frameNumber: Int { 39 + Int(frame) }
+    private var isCanonicalDemo: Bool { presentation.id == "canonical-demo" }
+    private var displayPhase: String {
+        isCanonicalDemo || presentation.phaseText == "Unavailable"
+            ? phase
+            : presentation.phaseText.uppercased()
+    }
+    private var shotLabel: String {
+        isCanonicalDemo ? "SHOT 12 OF 24" : "SAVED ANALYSIS"
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-frame-detail-skeleton") {
             VStack(spacing: 0) {
@@ -1493,10 +1575,10 @@ struct FrameDetailSkeletonView: View { // 042
                             }
                             .buttonStyle(.plain)
                             Spacer()
-                            Text("SHOT 12 OF 24").shotiqBody(13, weight: .semibold).kerning(0.8)
+                            Text(shotLabel).shotiqBody(13, weight: .semibold).kerning(0.8)
                                 .foregroundStyle(ShotIQColor.graphite)
                             Spacer()
-                            NavigationLink { ShotBreakdownView() } label: {
+                            NavigationLink { ShotBreakdownView(presentation: presentation) } label: {
                                 HStack(spacing: 6) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
                                                              size: 16,
@@ -1509,33 +1591,24 @@ struct FrameDetailSkeletonView: View { // 042
                         }
                         .padding(.horizontal, 20).frame(height: 44)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-                        PlayerHeader(name: "Jordan Ellis")
+                        PlayerHeader(name: isCanonicalDemo ? "Jordan Ellis" : "Saved Analysis",
+                                     subtitle: isCanonicalDemo ? "Right-handed • Advanced" : presentation.recordedLabel,
+                                     streak: isCanonicalDemo ? "6" : "--",
+                                     points: isCanonicalDemo ? "2,840" : "--")
                         VStack(alignment: .leading, spacing: 0) {
-                            // The canonical frame, not a black rectangle. 042's
-                            // sidecar bundles one crop for this panel and it is the
-                            // *finished* panel: 767x689 at y 333 on the 853x1844
-                            // canvas — 353x317pt, which is exactly the width this
-                            // column offers, so it lands with no crop at all — and
-                            // it already carries the pose skeleton, the 168° elbow
-                            // callout, the phase and FPS chips, the CONFIDENCE card
-                            // and the transport row burned into the pixels.
-                            //
-                            // So the app draws none of those a second time: the
-                            // skeleton, the confidence card and the FPS chip are
-                            // gone, `MediaSurface`'s own scrubber is gone (that is
-                            // why this is a plain CanonicalPhoto), and the phase
-                            // Menu is kept only as a transparent hit target sitting
-                            // on its own printed chip, so the control still works
-                            // without stamping a second chip over the first.
                             ZStack(alignment: .topLeading) {
-                                CanonicalPhoto("042-visual-002", height: 317, cornerRadius: 4)
-                                // The live Canvas only comes out for something the
-                                // printed frame does not already show — joint
-                                // points, the ball marker, or the angle arcs behind
-                                // "Show joint angles". Left unconditional it drew a
-                                // second white stick figure a few points off the
-                                // baked one.
-                                if showJoints || showBall || showAngles {
+                                if isCanonicalDemo {
+                                    CanonicalPhoto("042-visual-002", height: 317, cornerRadius: 4)
+                                } else {
+                                    FrameDetailMediaSurface(presentation: presentation,
+                                                            fallbackKey: "042-visual-002",
+                                                            height: 317,
+                                                            showSkeleton: showSkeleton,
+                                                            showJoints: showJoints,
+                                                            showBall: showBall,
+                                                            showAngles: showAngles)
+                                }
+                                if isCanonicalDemo && (showJoints || showBall || showAngles) {
                                     SkeletonOverlay(showBones: showSkeleton, showJoints: showJoints,
                                                     showBall: showBall, showAngles: showAngles)
                                 }
@@ -1546,20 +1619,27 @@ struct FrameDetailSkeletonView: View { // 042
                                         }
                                     } label: {
                                         HStack(spacing: 6) {
-                                            Text("\(phase) • FRAME \(frameNumber)").shotiqBody(12, weight: .bold).kerning(0.5)
+                                            Text("\(displayPhase) • FRAME \(frameNumber)").shotiqBody(12, weight: .bold).kerning(0.5)
                                             Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold))
                                         }
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 12).padding(.vertical, 8)
-                                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
-                                        .opacity(0)
+                                        .background(.black.opacity(isCanonicalDemo ? 0.55 : 0.68), in: RoundedRectangle(cornerRadius: 8))
+                                        .opacity(isCanonicalDemo ? 0 : 1)
                                     }
-                                    .accessibilityLabel("Shot phase, \(phase), frame \(frameNumber)")
+                                    .accessibilityLabel("Shot phase, \(displayPhase), frame \(frameNumber)")
                                     Spacer()
                                 }
                                 .padding(10)
                             }
                             .padding(.top, 14)
+                            if !isCanonicalDemo {
+                                Text("\(presentation.mediaLabel) • \(presentation.provenanceSummary)")
+                                    .shotiqBody(12, weight: .medium)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .accessibilityIdentifier("frame-detail-presentation-source")
+                                    .padding(.top, 8)
+                            }
                             HStack(spacing: 10) {
                                 Button { showSkeleton.toggle() } label: {
                                     overlayToggleLabel("point.3.connected.trianglepath.dotted", "Skeleton", showSkeleton)
@@ -1578,7 +1658,7 @@ struct FrameDetailSkeletonView: View { // 042
                                 .buttonStyle(.plain)
                             }
                             .padding(.top, 14)
-                            PhaseStrip(active: phase).padding(.top, 16)
+                            PhaseStrip(active: displayPhase).padding(.top, 16)
                             HStack(spacing: 10) {
                                 Button { frame = max(0, frame - 1) } label: {
                                     VStack(spacing: 2) {
@@ -1638,26 +1718,26 @@ struct FrameDetailSkeletonView: View { // 042
                                     Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     HStack(spacing: 6) {
-                                        Text("82").font(.custom("Tungsten-Medium", size: 30))
+                                        Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 30))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 34)
+                                        ScoreBar(pct: presentation.scorePct).frame(width: 34)
                                     }
-                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 13))
+                                    Text(presentation.scoreVerdict).font(.custom("Tungsten-Medium", size: 13))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+                                frameSummaryBlock(value: presentation.elbowAngleText, label: "ELBOW")
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+                                frameSummaryBlock(value: presentation.releaseOffsetText, label: "OFFSET")
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
+                                frameSummaryBlock(value: presentation.wristAngleText, label: "WRIST")
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
                                 NavigationLink { FlawsOverviewView() } label: {
                                     HStack(spacing: 0) {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("TARGET").shotiqBody(9, weight: .semibold).kerning(0.5)
                                                 .foregroundStyle(ShotIQColor.graphite)
-                                            Text("Keep elbow stacked through release")
+                                            Text(presentation.coachingTarget)
                                                 .shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                                 .lineLimit(2).minimumScaleFactor(0.7)
                                         }
@@ -1682,6 +1762,21 @@ struct FrameDetailSkeletonView: View { // 042
                 }
             }
         }
+        .onAppear {
+            guard !isCanonicalDemo, presentation.phaseText != "Unavailable" else { return }
+            phase = presentation.phaseText.uppercased()
+        }
+    }
+    private func frameSummaryBlock(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.custom("Tungsten-Medium", size: 24))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).shotiqBody(9, weight: .semibold).kerning(0.4)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
     }
     private func overlayToggleLabel(_ icon: String, _ label: String, _ active: Bool) -> some View {
         VStack(spacing: 6) {
@@ -2361,7 +2456,7 @@ struct MetricDetailView: View {     // 045
                         .padding(.top, 12)
                         ShotIQCard {
                             VStack(spacing: 0) {
-                                NavigationLink { FrameDetailSkeletonView() } label: {
+                                NavigationLink { FrameDetailSkeletonView(presentation: presentation) } label: {
                                     detailRow("film", "View frame", "See this rep at release")
                                 }
                                 .buttonStyle(.plain)

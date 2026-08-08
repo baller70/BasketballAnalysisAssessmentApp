@@ -127,7 +127,7 @@ Current proof totals:
 | 39 | No Analysis Yet | Yes | Home empty-state CTA route asserted | Backend empty account state |
 | 40 | Analysis Error | Yes | Error state staged and rendered | Real failed backend job/retry |
 | 41 | Shot Breakdown | Yes | Phase sequence, metrics, coaching asserted | Real generated phase frames |
-| 42 | Frame Detail Skeleton | Yes | Skeleton/joint/annotation/basketball controls asserted | Real Vision drawable pose on iPhone |
+| 42 | Frame Detail Skeleton | Yes | Skeleton/joint/annotation/basketball controls asserted; selected-photo path now opens frame detail with saved media, saved pose marker, saved metric strip, and no old `82` / `24` / `15` / `62.5%` demo stats | Real Vision drawable pose on iPhone; real video frame/ball proof |
 | 43 | Annotation Toolbar | Yes | Annotation toolbar route asserted from frame detail | Save/share annotated output |
 | 44 | Form Score | Yes | Score, breakdown, source coverage, insight, weakest metric route asserted | Live backend score history |
 | 45 | Metric Detail | Yes | Measurements, ranges, confidence, correction cue, frame link asserted | Live metric derivation |
@@ -158,6 +158,19 @@ Current proof totals:
 | 70 | Profile | Yes | Profile stats, physical/shooting/card/completion surfaces asserted | Backend profile edit/save |
 | 71 | Settings Hub | Yes | Settings route asserted; edit-profile route, Automation/Data privacy expanders, toggles, and About alert tested | Backend settings persistence |
 | 72 | Share Results | Yes | Share-results page route asserted from analysis/profile; Copy feedback plus share/save controls tested | iOS system share sheet |
+
+## Latest Focused Evidence
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FrameDetailRealPose-2026-08-08-v4.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testFrameDetailUsesSelectedMediaPoseAndSavedMetrics`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves screen 042 receives selected-photo analysis
+  media, saved pose data, saved metric values, and drops the old demo stat strip
+  in the app-owned simulator path.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisBreakdownRegression-2026-08-08-v1.xcresult`
+  reran the canonical analysis breakdown/frame-detail route. Result:
+  `** TEST SUCCEEDED **`, 1 passed, 0 failed, 0 skipped.
 
 ## Current Physical-Device Blocker
 

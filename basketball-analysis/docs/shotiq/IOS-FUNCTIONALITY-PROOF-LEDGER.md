@@ -127,7 +127,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G036 | VERIFYING | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Home history loading now preserves the difference between empty history and failed history. A forced history fetch failure renders `screen-ios-home-history-unavailable`, keeps `screen-ios-no-analysis-yet` offscreen, and still lets the customer open Analyze Hub. Focused UI proof passes on the laptop simulator. Real backend outage/account-state proof remains before `DONE`. |
 | G037 | VERIFYING | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Forced selected-photo analysis failure now opens screen 040 with the selected side-view image preserved. `Choose another frame` returns to Photo Review with the same image, and `Try analysis again` returns to Upload Quality Check with the image still ready. Focused UI proof passes on the laptop simulator. Real backend failure/device-picker proof remains before `DONE`. |
 | G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. The phase filmstrip now uses selected local/server media for non-demo saved results instead of falling back to canonical stock frames when no frame set exists. Per-frame phase coaching and true saved frame-analysis data still need proof before `DONE`. |
-| G039 | OPEN | P0 | `#pose` `#analytics` | 042 | Frame detail uses real pose and metrics. | Toggling overlay shows real saved joints/ball for selected frame. |
+| G039 | VERIFYING | P0 | `#pose` `#analytics` | 042 | Frame detail uses real pose and metrics. | Screen 042 now receives the saved `AnalysisResultPresentation` from shot breakdown/metric detail, renders selected media instead of the canonical frame for non-demo analyses, carries saved pose through the overlay controls, and replaces demo `82` / `24` / `15` / `62.5%` frame stats with saved score/metric values. Focused UI proof passes on the laptop simulator using deterministic saved-pose injection. Real device Vision/video-frame/ball proof remains before `DONE`. |
 | G040 | OPEN | P2 | `#control` `#media` `#backend` | 043 | Make annotations real and persistent. | Draw annotation, save/share/export, reopen and see it on same media. |
 | G041 | VERIFYING | P0 | `#analytics` | 044 | Replace fixed form score screen. | Top score/verdict/caption/bar/share text, breakdown cards, metric detail rows, source coverage, key insight, and weakest-score CTA now consume the saved presentation passed by screen 038, including missing-score unavailable state. True confidence and history/trend calculations still need saved result/history sources before `DONE`. |
 | G042 | VERIFYING | P0 | `#analytics` | 045 | Replace fixed metric detail. | Metric detail now receives the selected metric value text plus parent saved presentation from screen 038, and its share/top score/measured value are no longer hardcoded to form score 82. Range, confidence, explainer copy, and drill-plan linkage still need metric-source proof before `DONE`. |
@@ -1881,3 +1881,49 @@ the simulator. Real PhotosPicker media, actual backend/upload/analyze failures,
 video-error retry/reframe behavior, and web/backend media persistence still
 need physical-device/backend proof before G037 can move from `VERIFYING` to
 `DONE`.
+
+### 2026-08-08 Frame Detail Saved-Pose/Metric Proof
+
+Twenty-ninth laptop functionality slice after local Xcode setup:
+
+- `ShotBreakdownView` and `MetricDetailView` now pass the saved
+  `AnalysisResultPresentation` into screen 042 instead of reopening frame detail
+  with the canonical demo presentation.
+- `FrameDetailSkeletonView` now has a real-analysis mode. Non-demo analyses
+  show `SAVED ANALYSIS`, render the selected saved image/video surface, expose
+  saved-pose presence, and use saved score/metric values in the lower frame
+  strip instead of the old demo `82`, `24`, `15`, and `62.5%` constants.
+- `CapturedPoseImage` now accepts separate overlay flags for bones, joints,
+  ball, and angles, so frame-detail overlay controls can affect player-owned
+  media instead of only the canonical skeleton.
+- Added a test-only `-uiTestForceSamplePose` argument that injects a
+  deterministic pose into the local analysis DTO only during UI tests. This
+  proves downstream saved-pose rendering on the simulator even when Apple
+  Vision model files are unavailable there.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-FrameDetailRealPose-2026-08-08-v4.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testFrameDetailUsesSelectedMediaPoseAndSavedMetrics`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test starts from selected-photo
+  upload quality, continues through analysis result overview and shot
+  breakdown, opens screen 042, verifies `frame-detail-real-media`,
+  `captured-pose-detected`, `frame-detail-presentation-source`,
+  `SAVED ANALYSIS`, and `POSE DETECTED • FRAME 42`, verifies the old demo
+  stats `82`, `24`, `15`, and `62.5%` are absent, and toggles joint points plus
+  joint angles.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisBreakdownRegression-2026-08-08-v1.xcresult`
+  reran
+  `ShotIQUITests/ShotIQUITests/testAnalysisBreakdownShowsPhaseSequenceAndJointControls`
+  on the same simulator. The run ended with `** TEST SUCCEEDED **`, `Executed
+  1 test, with 0 failures`, proving the canonical analysis breakdown/frame
+  detail route still opens and its overlay controls still work.
+
+Remaining limitations: this proves screen 042 consumes saved media, saved pose,
+and saved metrics in the app-owned simulator path. Real physical-device proof
+still needs to show Apple's Vision detector creates the pose from an actual
+customer photo/video, that selected video opens the correct sampled release
+frame, and that a real ball marker/classification is available before G039 can
+move from `VERIFYING` to `DONE`.

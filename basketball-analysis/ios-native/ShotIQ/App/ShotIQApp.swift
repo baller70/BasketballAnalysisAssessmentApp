@@ -151,6 +151,10 @@ enum UITestHooks {
     /// loaded, proving screen 040 preserves media for retry/reframe paths.
     static var analysisFailure: Bool { args.contains("-uiTestAnalysisFailure") }
 
+    /// Force a deterministic pose into the local analysis DTO so the simulator
+    /// can prove downstream pose rendering even when Vision weights are absent.
+    static var forceSamplePose: Bool { args.contains("-uiTestForceSamplePose") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:

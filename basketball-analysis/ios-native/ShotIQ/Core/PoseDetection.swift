@@ -124,6 +124,20 @@ struct DetectedPose: Equatable {
         return found([.neck, .leftShoulder, .rightShoulder])
             && found([.leftAnkle, .rightAnkle, .leftKnee, .rightKnee])
     }
+
+    static let uiTestSample = DetectedPose(joints: [
+        .neck: CGPoint(x: 0.50, y: 0.18),
+        .leftShoulder: CGPoint(x: 0.42, y: 0.30),
+        .rightShoulder: CGPoint(x: 0.58, y: 0.30),
+        .rightElbow: CGPoint(x: 0.64, y: 0.42),
+        .rightWrist: CGPoint(x: 0.70, y: 0.28),
+        .rightHip: CGPoint(x: 0.56, y: 0.58),
+        .rightKnee: CGPoint(x: 0.50, y: 0.74),
+        .rightAnkle: CGPoint(x: 0.46, y: 0.90),
+        .leftHip: CGPoint(x: 0.46, y: 0.58),
+        .leftKnee: CGPoint(x: 0.42, y: 0.74),
+        .leftAnkle: CGPoint(x: 0.38, y: 0.90)
+    ], confidence: 0.91)
 }
 
 enum ShotIQPose {

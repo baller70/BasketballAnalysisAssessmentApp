@@ -1418,6 +1418,7 @@ struct UploadQualityCheckView: View { // 024
         // 1. Upload the raw frame (field "image", uploadType "user").
         let localImageURL = shotiqPersistLocalJPEG(jpeg, prefix: "shotiq-\(viewpoint.rawValue)")
         let detectedPose = await ShotIQPose.detect(in: selectedImage)
+            ?? (UITestHooks.forceSamplePose ? .uiTestSample : nil)
         let localFallback = ShotIQLocalAnalysisFactory.photo(localImageURL: localImageURL,
                                                              detectedPose: detectedPose)
         if UITestHooks.analysisFailure {

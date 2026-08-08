@@ -31,6 +31,10 @@ struct CapturedPoseImage: View {
     var cornerRadius: CGFloat = 0
     /// Set false to show the photo untouched (an "original / analysed" toggle).
     var showsPose: Bool = true
+    var showBones: Bool = true
+    var showJoints: Bool = true
+    var showBall: Bool = false
+    var showAngles: Bool = false
     var initialPose: DetectedPose? = nil
     /// Handed the result once detection finishes, so a screen can answer its
     /// own questions from it — the quality check's "full body visible" row
@@ -51,7 +55,11 @@ struct CapturedPoseImage: View {
                     .resizable()
                     .frame(width: drawn.width, height: drawn.height)
                 if showsPose, let pose {
-                    SkeletonOverlay(pose: pose, showBall: false)
+                    SkeletonOverlay(pose: pose,
+                                    showBones: showBones,
+                                    showJoints: showJoints,
+                                    showBall: showBall,
+                                    showAngles: showAngles)
                         .frame(width: drawn.width, height: drawn.height)
                 }
             }

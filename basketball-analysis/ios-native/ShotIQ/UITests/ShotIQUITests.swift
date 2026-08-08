@@ -492,6 +492,34 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Keep elbow stacked through release"].exists)
     }
 
+    func testFrameDetailUsesSelectedMediaPoseAndSavedMetrics() throws {
+        launch(["-uiTestBypassAuth", "-uiTestSampleMedia", "-uiTestForceSamplePose",
+                "-uiTestStage", "upload-quality-check"])
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["READY"].exists)
+
+        tapControl("Continue to analysis")
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
+        tapControl("View shot breakdown")
+        XCTAssertTrue(screen("screen-ios-shot-breakdown").waitForExistence(timeout: 8))
+        tapAndExpect("Open release frame", destination: "screen-ios-frame-detail-skeleton")
+
+        XCTAssertTrue(screen("frame-detail-real-media").waitForExistence(timeout: 8))
+        XCTAssertTrue(screen("captured-pose-detected").waitForExistence(timeout: 8))
+        XCTAssertTrue(screen("frame-detail-presentation-source").exists)
+        XCTAssertTrue(app.staticTexts["SAVED ANALYSIS"].exists)
+        XCTAssertTrue(app.staticTexts["POSE DETECTED • FRAME 42"].exists)
+        XCTAssertFalse(app.staticTexts["SHOT 12 OF 24"].exists)
+        for oldDemoValue in ["82", "24", "15", "62.5%"] {
+            XCTAssertFalse(app.staticTexts[oldDemoValue].exists,
+                           "Frame detail must not reuse demo stat: \(oldDemoValue)")
+        }
+
+        tapControl("Joint points")
+        tapControl("Show joint angles")
+        XCTAssertNotNil(findControl("Hide joint angles", maxSwipes: 1))
+    }
+
     func testHistoryFetchFailureDoesNotShowNoAnalysisYet() throws {
         launch(["-uiTestBypassAuth", "-uiTestHistoryFailure"])
 
