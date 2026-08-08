@@ -51,6 +51,7 @@ final class CanonicalScreenshotTests: XCTestCase {
         lastLaunchArguments = args
         let a = XCUIApplication()
         a.launchArguments = args + Self.extraLaunchArguments
+        a.launchEnvironment["SHOTIQ_UI_TEST_ARGS"] = (args + Self.extraLaunchArguments).joined(separator: "|")
         a.launch()
         app = a
         return a

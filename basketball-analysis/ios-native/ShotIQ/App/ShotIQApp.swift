@@ -86,7 +86,10 @@ struct CanonicalTypeScale: ViewModifier {
 /// SpringBoard never carries them, so none of this is reachable in production.
 /// See ShotIQ/UITests/CanonicalScreenshotTests.swift.
 enum UITestHooks {
-    private static let args = ProcessInfo.processInfo.arguments
+    private static let args = ProcessInfo.processInfo.arguments +
+        (ProcessInfo.processInfo.environment["SHOTIQ_UI_TEST_ARGS"]?
+            .split(separator: "|")
+            .map(String.init) ?? [])
 
     /// Skip splash/auth and drop straight into the signed-in tab shell.
     static var bypassAuth: Bool { args.contains("-uiTestBypassAuth") }
@@ -178,6 +181,10 @@ enum UITestHooks {
     /// shot-tracker tests. Normal launches never pass this flag.
     static var resetTrainingWorkouts: Bool { args.contains("-uiTestResetTrainingWorkouts") }
 
+    /// Launch media-gated staged screens empty so functional tests can prove
+    /// customer feedback instead of using the canonical screenshot sample.
+    static var noMedia: Bool { args.contains("-uiTestNoMedia") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
@@ -217,7 +224,7 @@ enum UITestHooks {
                                   "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
                                   "analysis-taking-longer", "analysis-error",
                                   "training-home", "discover-drills", "drill-detail", "my-drills",
-                                  "shot-tracker", "workout-completion",
+                                  "workout-calendar", "shot-tracker", "workout-completion",
                                   "analytics-cards", "analytics-detailed", "profile",
                                   "player-card", "customize-player-card", "my-media",
                                   "media-detail", "goals", "create-goal", "goal-detail",
@@ -226,7 +233,7 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills || resetTrainingWorkouts ||
+        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || noMedia ||
         homeVariant != nil || stage != nil
     }
 
@@ -253,6 +260,24 @@ final class AppState: ObservableObject {
     @Published var tab: RootTab = .home
     @Published var recentMedia: [ShotIQRecentMediaEntry] = []
 
+    init() {
+        applyUITestResets()
+
+        if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
+            phase = .welcome
+        } else if UITestHooks.signedOut {
+            KeychainStore.delete(key: "accessToken")
+            KeychainStore.delete(key: "refreshToken")
+            user = nil
+            onboardingComplete = false
+            phase = .welcome
+        } else if UITestHooks.bypassAuth || UITestHooks.startOnboarding {
+            user = UITestHooks.demoUser
+            onboardingComplete = !UITestHooks.startOnboarding
+            phase = .main
+        }
+    }
+
     func rememberAnalysisMedia(_ analysis: ShotIQAnalysisResultDTO, title: String? = nil) {
         let kind = analysis.media.type?.lowercased() == "video" ? "Videos" : "Images"
         let existing = recentMedia.first { $0.id == analysis.id }
@@ -267,15 +292,8 @@ final class AppState: ObservableObject {
     }
 
     func boot() async {
-        if UITestHooks.resetAnnotations {
-            UserDefaults.standard.removeObject(forKey: "shotiq.annotations.frame43.v1")
-        }
-        if UITestHooks.resetTrainingDrills {
-            UserDefaults.standard.removeObject(forKey: "shotiq.training.savedDrills.v1")
-        }
-        if UITestHooks.resetTrainingWorkouts {
-            UserDefaults.standard.removeObject(forKey: "shotiq.training.completedWorkouts.v1")
-        }
+        applyUITestResets()
+        guard phase == .splash else { return }
         // Test-only: the two auth stages (005 verify-email, 007 reset-password)
         // live inside the signed-out stack, so hand straight to it rather than
         // waiting out the splash hold. See UITestHooks.stage.
@@ -310,6 +328,18 @@ final class AppState: ObservableObject {
         // ceiling is only a backstop so a stray flag can never wedge the app.
         try? await Task.sleep(for: .seconds(UITestHooks.holdSplash ? 120.0 : 2.5))
         leaveSplash()
+    }
+
+    private func applyUITestResets() {
+        if UITestHooks.resetAnnotations {
+            UserDefaults.standard.removeObject(forKey: "shotiq.annotations.frame43.v1")
+        }
+        if UITestHooks.resetTrainingDrills {
+            UserDefaults.standard.removeObject(forKey: "shotiq.training.savedDrills.v1")
+        }
+        if UITestHooks.resetTrainingWorkouts {
+            UserDefaults.standard.removeObject(forKey: "shotiq.training.completedWorkouts.v1")
+        }
     }
 
     /// Leave screen 001 for whatever the stored session says comes next. Safe to
@@ -370,8 +400,8 @@ struct MainTabView: View {
         switch UITestHooks.stage ?? "" {
         case "analyze-hub": AnalyzeHubView()
         case "photo-upload-source": PhotoUploadSourceView()
-        case "photo-review-crop": PhotoReviewCropView(image: UITestHooks.sampleShotImage)
-        case "upload-quality-check": UploadQualityCheckView(image: UITestHooks.sampleShotImage)
+        case "photo-review-crop": PhotoReviewCropView(image: UITestHooks.noMedia ? nil : UITestHooks.sampleShotImage)
+        case "upload-quality-check": UploadQualityCheckView(image: UITestHooks.noMedia ? nil : UITestHooks.sampleShotImage)
         case "video-review": VideoReviewView()
         case "live-camera-setup": LiveCameraSetupView()
         case "hoop-calibration": HoopCalibrationView()
@@ -385,6 +415,7 @@ struct MainTabView: View {
         case "discover-drills": DiscoverDrillsView()
         case "drill-detail": DrillDetailView(name: "STACK & SHOOT")
         case "my-drills": MyDrillsView()
+        case "workout-calendar": WorkoutCalendarView()
         case "shot-tracker": ShotTrackerView()
         case "workout-completion": WorkoutCompletionView()
         case "analytics-cards": AnalyticsCardsView()

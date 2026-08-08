@@ -779,6 +779,13 @@ struct CanonicalScreen<Content: View>: View {
         ZStack(alignment: .top) {
             ShotIQColor.paper.ignoresSafeArea()
             content
+            if UITestHooks.active {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityElement()
+                    .accessibilityIdentifier(testID)
+                    .accessibilityLabel(testID)
+            }
         }
         // Ink is the inherited default for the whole screen. It used to be
         // stamped inside `shotiqBody` / `shotiqNumeric` / `shotiqDisplay`,

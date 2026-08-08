@@ -14,6 +14,7 @@ final class ShotIQUITests: XCTestCase {
         app.terminate()
         app = XCUIApplication()
         app.launchArguments = args
+        app.launchEnvironment["SHOTIQ_UI_TEST_ARGS"] = args.joined(separator: "|")
         app.launch()
     }
 
@@ -309,6 +310,26 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "completion-points", contains: "+40")
         assertStaticText(id: "completion-form-score", contains: "70")
         assertStaticText(id: "completion-primary-target-score", contains: "7 / 10")
+    }
+
+    func testWorkoutCalendarShowsCompletedTrackerSession() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "workout-calendar"])
+        XCTAssertTrue(app.staticTexts["calendar-selected-workout-name"].waitForExistence(timeout: 8))
+        assertStaticText(id: "calendar-strip-shots", contains: "3")
+        assertStaticText(id: "calendar-strip-makes", contains: "2")
+        assertStaticText(id: "calendar-strip-fg", contains: "66.7%")
+        assertStaticText(id: "calendar-selected-status", contains: "COMPLETED")
+        assertStaticText(id: "calendar-selected-workout-name", contains: "SHOT TRACKER SESSION")
+        assertStaticText(id: "calendar-selected-workout-summary", contains: "3 shots")
     }
 
     func testVideoUploadShowsFullScreenSourceOptions() throws {
@@ -819,14 +840,14 @@ final class ShotIQUITests: XCTestCase {
     }
 
     func testCaptureNoMediaShowsCustomerFeedback() throws {
-        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "photo-review-crop"])
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestNoMedia", "-uiTestStage", "photo-review-crop"])
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-photo-review-crop").firstMatch.waitForExistence(timeout: 8))
         app.buttons["USE PHOTO"].tap()
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Choose a photo first"].exists)
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "screen-ios-upload-quality-check").firstMatch.waitForExistence(timeout: 1))
 
-        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "upload-quality-check"])
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestNoMedia", "-uiTestStage", "upload-quality-check"])
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-upload-quality-check").firstMatch.waitForExistence(timeout: 8))
         app.buttons["Continue to analysis"].tap()
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))

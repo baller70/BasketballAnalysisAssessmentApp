@@ -1271,13 +1271,34 @@ struct MyDrillsView: View {         // 058
 
 struct WorkoutCalendarView: View {  // 059
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var selected = 7
     @State private var monthIndex = 4          // 0-based; 4 = May 2025 (has data)
+    @State private var displayYear = 2025
     @State private var dayCardExpanded = true
     private let monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
                               "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
     private let daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    private var isDataMonth: Bool { monthIndex == 4 }
+    private var latestWorkout: TrainingWorkoutRecord? {
+        TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
+    }
+    private var latestComponents: DateComponents? {
+        guard let latestWorkout else { return nil }
+        return Calendar.current.dateComponents([.year, .month, .day, .weekday], from: latestWorkout.completedAt)
+    }
+    private var isLocalWorkoutMonth: Bool {
+        guard let latestComponents,
+              let month = latestComponents.month,
+              let year = latestComponents.year else { return false }
+        return monthIndex == month - 1 && displayYear == year
+    }
+    private var isDataMonth: Bool { monthIndex == 4 && displayYear == 2025 }
+    private var selectedLocalWorkout: TrainingWorkoutRecord? {
+        guard isLocalWorkoutMonth,
+              let day = latestComponents?.day,
+              selected == day else { return nil }
+        return latestWorkout
+    }
     private let completed: Set<Int> = [4, 5, 6, 9, 12, 15, 18]
     private let missed: Set<Int> = [10, 17]
     /// Canonical greys 24 with no marker and no duration — the legend's
@@ -1286,6 +1307,20 @@ struct WorkoutCalendarView: View {  // 059
     private let minutes: [Int: String] = [4: "18 min", 5: "17 min", 6: "20 min", 9: "15 min",
                                           12: "17 min", 15: "15 min", 18: "18 min"]
     private let weekdayNames = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
+    private var topWorkout: TrainingWorkoutRecord? { latestWorkout }
+    private var selectedDayTitle: String {
+        if let local = selectedLocalWorkout {
+            let c = Calendar.current.dateComponents([.month, .day, .weekday], from: local.completedAt)
+            let weekday = weekdayNames[max(0, min((c.weekday ?? 1) - 1, weekdayNames.count - 1))]
+            let month = monthNames[max(0, min((c.month ?? 1) - 1, monthNames.count - 1))]
+            return "\(weekday), \(month) \(c.day ?? selected)"
+        }
+        let weekday = weekdayNames[(4 + selected - 1) % 7]
+        return "\(weekday), MAY \(selected)"
+    }
+    private var selectedStatusText: String {
+        selectedLocalWorkout == nil ? "IN PROGRESS" : "COMPLETED"
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-workout-calendar") {
             ScrollView {
@@ -1304,9 +1339,9 @@ struct WorkoutCalendarView: View {  // 059
                                     .lineLimit(1).minimumScaleFactor(0.7)
                             }
                             Spacer(minLength: 6)
-                            stripStat("24", "SHOTS")
-                            stripStat("15", "MAKES")
-                            stripStat("62.5%", "FG%")
+                            stripStat("\(topWorkout?.shots ?? 24)", "SHOTS", id: "calendar-strip-shots")
+                            stripStat("\(topWorkout?.makes ?? 15)", "MAKES", id: "calendar-strip-makes")
+                            stripStat(topWorkout?.accuracyText ?? "62.5%", "FG%", id: "calendar-strip-fg")
                         }
                         .padding(12)
                         .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
@@ -1319,7 +1354,7 @@ struct WorkoutCalendarView: View {  // 059
                             }
                             .accessibilityLabel("Previous month")
                             Spacer()
-                            Text("\(monthNames[monthIndex]) 2025").shotiqDisplay(26)
+                            Text("\(monthNames[monthIndex]) \(displayYear)").shotiqDisplay(26)
                             Spacer()
                             Button { if monthIndex < 11 { monthIndex += 1 } } label: {
                                 Image(systemName: "chevron.right").font(.system(size: 17))
@@ -1362,13 +1397,15 @@ struct WorkoutCalendarView: View {  // 059
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 10) {
-                                    Text("\(weekdayNames[(4 + selected - 1) % 7]), MAY \(selected)")
+                                    Text(selectedDayTitle)
                                         .shotiqBody(15, weight: .bold)
                                         .lineLimit(1).minimumScaleFactor(0.7)
-                                    Text("IN PROGRESS").shotiqBody(9, weight: .bold).kerning(0.4)
+                                        .accessibilityIdentifier("calendar-selected-day-title")
+                                    Text(selectedStatusText).shotiqBody(9, weight: .bold).kerning(0.4)
                                         .padding(.horizontal, 7).padding(.vertical, 3)
-                                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange))
-                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(selectedLocalWorkout == nil ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen))
+                                        .foregroundStyle(selectedLocalWorkout == nil ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen)
+                                        .accessibilityIdentifier("calendar-selected-status")
                                     Spacer()
                                     Button { withAnimation { dayCardExpanded.toggle() } } label: {
                                         Image(systemName: dayCardExpanded ? "chevron.up" : "chevron.down")
@@ -1380,12 +1417,15 @@ struct WorkoutCalendarView: View {  // 059
                                 HStack(alignment: .top, spacing: 12) {
                                     PhotoThumb(width: 112, height: 128, photo: "059-visual-001")
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text("COMBO LADDER").shotiqDisplay(22)
+                                        Text(selectedLocalWorkout?.drillName.uppercased() ?? "COMBO LADDER").shotiqDisplay(22)
+                                            .accessibilityIdentifier("calendar-selected-workout-name")
                                         HStack(spacing: 5) {
                                             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 11))
-                                            Text("Day 4 of 7 • 17 min").shotiqBody(12, weight: .semibold)
+                                            Text(selectedLocalWorkout.map { "Completed • \($0.shots) shots • \($0.accuracyText)" } ?? "Day 4 of 7 • 17 min").shotiqBody(12, weight: .semibold)
+                                                .accessibilityIdentifier("calendar-selected-workout-summary")
                                         }
-                                        Text("Layer catch-and-shoot reps with movement progressions to reinforce release timing and alignment under fatigue.")
+                                        Text(selectedLocalWorkout.map { "Saved session: \($0.makes) makes, \($0.misses) misses, +\($0.pointsEarned) points earned." } ??
+                                             "Layer catch-and-shoot reps with movement progressions to reinforce release timing and alignment under fatigue.")
                                             .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                             .fixedSize(horizontal: false, vertical: true)
                                         HStack(spacing: 12) {
@@ -1417,11 +1457,22 @@ struct WorkoutCalendarView: View {  // 059
                 }
             }
         }
+        .onAppear(perform: syncLatestWorkoutSelection)
     }
-    private func stripStat(_ value: String, _ label: String) -> some View {
+    private func syncLatestWorkoutSelection() {
+        guard let c = latestComponents,
+              let month = c.month,
+              let year = c.year,
+              let day = c.day else { return }
+        monthIndex = max(0, min(month - 1, 11))
+        displayYear = year
+        selected = day
+    }
+    private func stripStat(_ value: String, _ label: String, id: String? = nil) -> some View {
         VStack(spacing: 1) {
             Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
+                .accessibilityIdentifier(id ?? "")
             Text(label).shotiqBody(7, weight: .medium).foregroundStyle(ShotIQColor.graphite)
         }
     }
@@ -1434,7 +1485,17 @@ struct WorkoutCalendarView: View {  // 059
     private func dayCell(_ d: Int) -> some View {
         Button { selected = d; dayCardExpanded = true } label: {
             VStack(spacing: 3) {
-                if !isDataMonth {
+                if isLocalWorkoutMonth && d == latestComponents?.day {
+                    Text("\(d)").shotiqBody(12, weight: .bold)
+                        .foregroundStyle(d == selected ? .white : ShotIQColor.ink)
+                        .frame(width: 26, height: 26)
+                        .background(d == selected ? ShotIQColor.shotiqOrange : .clear, in: Circle())
+                    Image(systemName: "checkmark.circle").font(.system(size: 12))
+                        .foregroundStyle(ShotIQColor.confirmGreen)
+                    Text(latestWorkout.map { "\($0.shots) shots" } ?? "Done")
+                        .shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                } else if !isDataMonth {
                     Text("\(d)").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                 } else if d == selected {
                     Text("\(d)").shotiqBody(12, weight: .bold).foregroundStyle(.white)

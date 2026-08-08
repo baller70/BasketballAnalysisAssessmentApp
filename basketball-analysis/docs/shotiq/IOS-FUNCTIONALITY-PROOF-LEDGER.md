@@ -227,11 +227,54 @@ add/analyze/remove, and nil-media attempts. The laptop host storage issue is now
 cleared: CoreSimulator staging lives on an external APFS sparsebundle mounted at
 `/Volumes/ShotIQCoreSimulator`, DerivedData and evidence live under
 `/Volumes/TBF SKILLZ.INC/CodexWork`, and the focused capture no-media UI proof
-passes on the iPhone 17 Pro simulator. The connected iPhone still does not
+passes on the iPhone 17 Pro simulator. The restart follow-up also fixed a
+UI-test launch race by seeding bypass/staged app state synchronously in
+`AppState.init`, before SwiftUI builds the staged `NavigationStack`. The
+connected iPhone still does not
 enumerate in `devicectl`, so physical-device proof remains blocked by
 host/device visibility, not by disk space. Remaining proof before
 `P0-002` can move to `DONE`: real selected-video device/backend proof and
 web/iOS round trip.
+
+### 2026-08-08 Native External-Storage + Focused Regression Proof
+
+Seventeenth laptop functionality slice after local Xcode setup:
+
+- Cleared more internal laptop space without deleting user documents, keys,
+  photos, or normal app containers. Large developer/cache/project data was
+  moved under `/Volumes/TBF SKILLZ.INC/CodexWork/InternalHomeRelocated` and the
+  original paths were preserved as symlinks.
+- Confirmed the external-backed simulator setup after restart:
+  `/Users/tbfinc/Library/Developer/CoreSimulator` resolves to
+  `/Volumes/ShotIQCoreSimulator/CoreSimulator`, backed by
+  `/Volumes/TBF SKILLZ.INC/CodexWork/ShotIQCoreSimulator.sparsebundle`.
+- Post-relocation storage audit showed `/System/Volumes/Data` at 18 GiB free,
+  `/Volumes/ShotIQCoreSimulator` at 73 GiB free, and
+  `/Volumes/TBF SKILLZ.INC` at 1.6 TiB free.
+- Fixed a restart-exposed UI-test launch crash/race: staged/bypass UI-test
+  launches now initialize `AppState` directly into the requested auth/main
+  state instead of first building Splash and asynchronously switching into a
+  staged `NavigationStack`.
+- Added explicit `-uiTestNoMedia` coverage so functional no-media tests can
+  request empty staged media while canonical screenshot stages can still opt
+  into sample media when needed.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testCaptureNoMediaShowsCustomerFeedback-20260808-141504.log`
+  ran `ShotIQUITests/ShotIQUITests/testCaptureNoMediaShowsCustomerFeedback` on
+  the iPhone 17 Pro simulator using external DerivedData
+  `/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-ios-focused-ui-20260808-141504`
+  and ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+  It verified the customer-visible `Choose a photo first` and
+  `Choose a video first` toasts and confirmed nil media does not open upload
+  quality or analysis processing.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testWorkoutCalendarShowsCompletedTrackerSession-20260808-141504.log`
+  ran `ShotIQUITests/ShotIQUITests/testWorkoutCalendarShowsCompletedTrackerSession`
+  on the same external-backed iPhone 17 Pro simulator and ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`. It verified a
+  completed shot-tracker session persists into Workout Calendar with 3 shots,
+  2 makes, 66.7% FG, completed status, and the saved session summary.
 
 ### 2026-08-07 Native Screenshot Capture and Export Proof
 
