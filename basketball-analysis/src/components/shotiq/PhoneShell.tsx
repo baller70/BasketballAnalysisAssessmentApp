@@ -29,7 +29,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import { Settings } from "lucide-react"
-import { ActionGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { ActionGlyph, ApprovedRasterIcon, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 import { usePlayerChrome } from "@/components/shotiq/phone/usePlayerChrome"
 
 export const PHONE_W = 393
@@ -39,30 +39,13 @@ export const PHONE_W = 393
 /** Train tab: canonical draws a court plan — a wide box with a centre line and
  *  four position dots (measured 89x33px -> 41x15pt). */
 export function TrainGlyph({ height = 15 }: { height?: number }) {
-  const w = Math.round((height * 41) / 15)
-  return (
-    <svg width={w} height={height} viewBox="0 0 41 15" fill="none" aria-hidden="true"
-         className="block max-w-none" stroke="currentColor" strokeWidth="1.3">
-      <rect x="0.9" y="0.9" width="39.2" height="13.2" rx="1" />
-      <path d="M20.5 0.9V14.1" />
-      {[8, 15, 26, 33].map((x) => <circle key={x} cx={x} cy="7.5" r="2.1" />)}
-    </svg>
-  )
+  return <ApprovedRasterIcon asset="shotiq-approved-ui-ladder-balls" size={height} className="block" />
 }
 
 /** Progress tab: canonical draws a rising arc with a tick scale and two
  *  sparkles above it (measured 50x40px -> 23x18pt). */
 export function ProgressGlyph({ height = 18 }: { height?: number }) {
-  const w = Math.round((height * 23) / 18)
-  return (
-    <svg width={w} height={height} viewBox="0 0 23 18" fill="none" aria-hidden="true"
-         className="block max-w-none" stroke="currentColor" strokeWidth="1.3"
-         strokeLinecap="round">
-      <path d="M1.4 16.4A10.6 10.6 0 0 1 21.6 16.4" />
-      <path d="M1.4 10.6V16.4M11.5 5.8v3M21.6 10.6V16.4" />
-      <path d="M14.6 2.2v3M13.1 3.7h3M19 0.9v2.2M17.9 2h2.2" />
-    </svg>
-  )
+  return <ApprovedRasterIcon asset="shotiq-approved-ui-progress-line" size={height} className="block" />
 }
 
 /** Profile tab: canonical draws the player's initials inside a hairline box. */
