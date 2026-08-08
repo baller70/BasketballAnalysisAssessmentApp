@@ -1078,7 +1078,10 @@ struct AnalysisErrorView: View {    // 040
     /// Single item-based route: stacking two `navigationDestination(isPresented:)`
     /// modifiers on one view makes only the last one work.
     enum ErrorRoute: Hashable { case retry, chooseFrame }
+    var retryImage: UIImage? = nil
+    var retryViewpoint: ShotViewpoint = .side
     @State private var route: ErrorRoute?
+    private var hasRetryMedia: Bool { retryImage != nil }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-error") {
             VStack(spacing: 0) {
@@ -1130,9 +1133,21 @@ struct AnalysisErrorView: View {    // 040
                             }
                             .padding(.top, 10)
                             HStack(alignment: .top, spacing: 16) {
-                                // Pose overlay is baked into the canonical crop.
-                                CanonicalMediaSurface(key: "040-visual-003", height: 250)
-                                    .frame(maxWidth: .infinity)
+                                Group {
+                                    if let retryImage {
+                                        Image(uiImage: retryImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(height: 250)
+                                            .frame(maxWidth: .infinity)
+                                            .clipped()
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    } else {
+                                        // Pose overlay is baked into the canonical crop.
+                                        CanonicalMediaSurface(key: "040-visual-003", height: 250)
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                }
                                 VStack(alignment: .leading, spacing: 0) {
                                     FormScorePanel(numeralSize: 56, barWidth: 110)
                                     Text("SHOT QUALITY").shotiqBody(12, weight: .semibold).kerning(0.8)
@@ -1163,7 +1178,9 @@ struct AnalysisErrorView: View {    // 040
                             .padding(.vertical, 10)
                             HStack(spacing: 10) {
                                 Image(systemName: "info.circle").font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
-                                Text("Your media is saved. This clip will be available in your history.")
+                                Text(hasRetryMedia
+                                     ? "Your selected \(retryViewpoint.shortTitle.lowercased()) view is saved for retry."
+                                     : "Your media is saved. This clip will be available in your history.")
                                     .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                             }
                             .padding(12)
@@ -1179,8 +1196,18 @@ struct AnalysisErrorView: View {    // 040
         }
         .navigationDestination(item: $route) { r in
             switch r {
-            case .retry: AnalyzeHubView()
-            case .chooseFrame: FrameDetailSkeletonView()
+            case .retry:
+                if let retryImage {
+                    UploadQualityCheckView(image: retryImage, viewpoint: retryViewpoint)
+                } else {
+                    AnalyzeHubView()
+                }
+            case .chooseFrame:
+                if let retryImage {
+                    PhotoReviewCropView(image: retryImage, viewpoint: retryViewpoint)
+                } else {
+                    FrameDetailSkeletonView()
+                }
             }
         }
     }

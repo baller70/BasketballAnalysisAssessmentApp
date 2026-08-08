@@ -1370,7 +1370,7 @@ struct UploadQualityCheckView: View { // 024
         .navigationDestination(item: $route) { r in
             switch r {
             case .processing: AnalysisProcessingView(initialResult: savedAnalysis)
-            case .failed: AnalysisErrorView()
+            case .failed: AnalysisErrorView(retryImage: image, retryViewpoint: viewpoint)
             }
         }
         .task(id: image) {
@@ -1420,6 +1420,12 @@ struct UploadQualityCheckView: View { // 024
         let detectedPose = await ShotIQPose.detect(in: selectedImage)
         let localFallback = ShotIQLocalAnalysisFactory.photo(localImageURL: localImageURL,
                                                              detectedPose: detectedPose)
+        if UITestHooks.analysisFailure {
+            uploadError = nil
+            toast = .error("Analysis failed", "Your selected photo is saved for retry.")
+            route = .failed
+            return
+        }
         toast = .progress("Uploading \(viewpoint.shortTitle.lowercased()) view",
                           "Sending your shot to ShotIQ analysis.", progress: 0.25)
         var imageUrl: String?

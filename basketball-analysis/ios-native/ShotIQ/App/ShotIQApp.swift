@@ -147,6 +147,10 @@ enum UITestHooks {
     /// more dangerous case where a backend error was being mistaken for empty.
     static var historyFailure: Bool { args.contains("-uiTestHistoryFailure") }
 
+    /// Force the photo-analysis submission to fail after a selected image has
+    /// loaded, proving screen 040 preserves media for retry/reframe paths.
+    static var analysisFailure: Bool { args.contains("-uiTestAnalysisFailure") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
@@ -193,7 +197,7 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || homeVariant != nil || stage != nil
+        useSampleMedia || historyFailure || analysisFailure || homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",

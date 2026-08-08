@@ -51,6 +51,8 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisScreens-UI-2026-08-08-v1.xcresult`
 - Focused history-failure/no-analysis UI result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-HistoryFailure-NoAnalysis-2026-08-08-v1.xcresult`
+- Focused analysis-error retry/reframe UI result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisErrorRetry-2026-08-08-v1.xcresult`
 
 Current proof totals:
 
@@ -75,6 +77,7 @@ Current proof totals:
 - Focused analysis overview chrome unit target: 3 passed, 0 failed, 0 skipped
 - Focused canonical analysis screens UI target: 1 passed, 0 failed, 0 skipped
 - Focused history-failure/no-analysis UI target: 1 passed, 0 failed, 0 skipped
+- Focused analysis-error retry/reframe UI target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen

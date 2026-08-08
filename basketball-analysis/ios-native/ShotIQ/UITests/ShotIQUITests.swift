@@ -506,6 +506,30 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("screen-ios-analyze-hub").waitForExistence(timeout: 8))
     }
 
+    func testAnalysisErrorPreservesSelectedPhotoForRetryAndReframe() throws {
+        let args = ["-uiTestBypassAuth", "-uiTestSampleMedia", "-uiTestAnalysisFailure",
+                    "-uiTestStage", "upload-quality-check"]
+
+        launch(args)
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["READY"].exists)
+        tapControl("Continue to analysis")
+        XCTAssertTrue(screen("screen-ios-analysis-error").waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Your selected side view is saved for retry."].exists)
+
+        tapControl("Choose another frame")
+        XCTAssertTrue(screen("screen-ios-photo-review-crop").waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Side view selected. Adjust crop to include your full body from head to toe."].exists)
+
+        launch(args)
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 20))
+        tapControl("Continue to analysis")
+        XCTAssertTrue(screen("screen-ios-analysis-error").waitForExistence(timeout: 8))
+        tapControl("Try analysis again")
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["READY"].exists)
+    }
+
     func testAnalysisCoachingNotesMetricDetailsAndFlawTagsWork() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard"])
         XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
