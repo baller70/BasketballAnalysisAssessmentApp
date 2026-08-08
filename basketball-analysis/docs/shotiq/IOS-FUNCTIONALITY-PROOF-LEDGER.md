@@ -152,8 +152,8 @@ The first pass should fix root causes before polishing dependent screens:
 
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| G054 | VERIFYING | P1 | `#backend` `#demo` | 063 | Remove fake fallback goals or label them. | Empty/failing production goal loads no longer silently show fake personal goals; the screen shows loading, empty, or unavailable states instead. Goal card media placeholders are fixed with bundled basketball imagery. Focused XCTest proves production `GoalsViewModel` does not start with sample progress; still needs backend/web proof before `DONE`. |
-| G055 | OPEN | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal card numbers reproduce from backend history and goal progress. Goal/session thumbnails are fixed, but numbers and trends still need real history proof. |
+| G054 | VERIFYING | P1 | `#backend` `#demo` | 063 | Remove fake fallback goals or label them. | Empty/failing production goal loads no longer silently show fake personal goals; the screen shows loading, empty, or unavailable states instead. Goal card media placeholders are fixed with bundled basketball imagery. Focused XCTest proves production `GoalsViewModel` does not start with sample progress, and canonical Goals now resets workout history so the intentional demo sample remains stable; still needs backend/web proof before `DONE`. |
+| G055 | VERIFYING | P1 | `#analytics` | 063 | Goal cards use real sessions/form/make/trends. | Goal cards now derive sessions, average form score, make percentage, trend endpoint, recent session row, and insight copy from locally completed workout history when present, while preserving the canonical sample only for demo/no-history launches. Focused simulator proof creates a Shot Tracker workout and verifies the Goals card shows `1` session, form `70`, make `66.7%`, recent `Shot Tracker Session`, trend toggle, insights, and related routes. Backend workout reload and iOS/web parity remain before `DONE`. |
 | G056 | OPEN | P1 | `#backend` `#analytics` | 064 | Created goals affect recommendations/analytics. | New goal changes goals list and downstream training/analytics surfaces. |
 | G057 | OPEN | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Linked sessions/trends/angles match saved workout and analysis records. |
 | G058 | OPEN | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | API seed changes cards, trends, share values, and deltas exactly. |
@@ -2807,3 +2807,63 @@ Remaining limitations: this proves screen 062 derives completion analytics and
 routes from local completed workout state in simulator production navigation.
 It does not yet prove backend workout reload, physical-device behavior, or
 iOS/web parity; those remain required before G053 can move to `DONE`.
+
+### 2026-08-08 Goals Workout-History Card Proof
+
+Implementation:
+
+- Screen 063 Goals now reads locally completed `TrainingWorkoutRecord` history
+  from the shared workout store. When history exists, each goal card derives
+  session count, average form score, make percentage, form/make trend endpoint,
+  recent session title/summary/score, and insight copy from those completed
+  workouts instead of showing canonical sample values as if they were live user
+  analytics.
+- Demo/no-history launches keep the canonical `9` sessions, form `82`, and
+  `64.1%` make sample so screenshot parity stays stable. Non-demo/no-history
+  state remains honest with empty placeholders.
+- Goals route controls now use state-driven navigation for Recent Session and
+  View All. A dedicated `-uiTestGoalsRouteProof` flag exposes transparent
+  route proof buttons only for the focused functional test; canonical screenshot
+  launches never pass that flag.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goals-workout-history-20260808-15.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testGoalsUseCompletedWorkoutHistoryAndRoutes`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It created a real simulator Shot Tracker session with make, miss,
+  make; reopened Goals; verified `68%` goal progress, `1` session, form score
+  `70`, make rate `66.7%`, `Form Score 70`, recent `Shot Tracker Session`,
+  `3 shots`, recent score `70`, Make % trend toggle `67`, insight copy
+  `Average form score is 70`, and route proof for Player Card, Create Goal,
+  Recent Session to Analytics Detail, and View All to Analytics Cards.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goals-canonical-sample-20260808-1.xcresult`
+  ran `ShotIQUITests/ShotIQUITests/testGoalsImageSurfacesWork`. The run ended
+  with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, proving the
+  reset-history canonical Goals sample still shows the intentional demo values
+  and media surfaces without the route-proof flag.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goals-canonical-20260808-1.xcresult`
+  ran `CanonicalScreenshotTests/test07ProgressAndProfileScreens`. The run
+  ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and
+  re-captured analytics, profile, my media, Goals, Create Goal, Goal Detail,
+  Settings, and Share Results screens.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goals-workout-history-20260808-9.xcresult`
+  and `...-10.xcresult` proved the visible live stats were correct but failed
+  because SwiftUI did not expose the nested recent-session route identifier to
+  XCTest after relaunch.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goals-workout-history-20260808-11.xcresult`
+  and `...-12.xcresult` found the View All route ID, but duplicate/compressed
+  accessibility frames produced invalid activation points.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-goals-workout-history-20260808-13.xcresult`
+  and `...-14.xcresult` showed that an overlay-only proof strip was ignored by
+  the Goals accessibility hierarchy. The final fix uses a launch-flagged normal
+  layout strip for route proof only.
+
+Remaining limitations: this proves screen 063 consumes local completed workout
+history in simulator production navigation and keeps canonical demo behavior
+stable. It does not yet prove backend workout reload, physical-device behavior,
+or iOS/web parity; those remain required before G055 can move to `DONE`.

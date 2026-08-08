@@ -60,6 +60,111 @@ final class GoalsViewModel: ObservableObject {
     var completed: [GoalRecord] { goals.filter { $0.completedAt != nil } }
 }
 
+private struct GoalCardStats {
+    var sessionsValue: String
+    var sessionsCaption: String
+    var formScoreValue: String
+    var formScoreDelta: String?
+    var formScoreCaption: String
+    var makePctValue: String
+    var makePctDelta: String?
+    var makePctCaption: String
+    var formTrend: [Double]
+    var makeTrend: [Double]
+    var formEndBadge: String?
+    var makeEndBadge: String?
+    var recentTitle: String?
+    var recentSummary: String?
+    var recentScore: String?
+    var insightLines: [String]
+
+    static let canonical = GoalCardStats(
+        sessionsValue: "9",
+        sessionsCaption: "of 15",
+        formScoreValue: "82",
+        formScoreDelta: "+6 pts",
+        formScoreCaption: "vs goal start",
+        makePctValue: "64.1%",
+        makePctDelta: "+4.3%",
+        makePctCaption: "vs goal start",
+        formTrend: [58, 59, 55, 62, 60, 57, 64, 66, 70, 68, 74, 72, 75, 79, 76, 80, 82],
+        makeTrend: [48, 50, 47, 52, 55, 53, 56, 58, 57, 60, 59, 61, 62, 63, 62, 64, 64],
+        formEndBadge: "82",
+        makeEndBadge: "64",
+        recentTitle: "May 19, 8:24 AM",
+        recentSummary: "24 shots · 15 makes · 62.5%",
+        recentScore: "82",
+        insightLines: [
+            "Your elbow angle held in range on 8 of your last 10 sessions.",
+            "Accuracy climbs 6% on days you complete a form-focus drill first.",
+            "Sessions before 9 AM show your most consistent release."
+        ])
+
+    static let empty = GoalCardStats(
+        sessionsValue: "--",
+        sessionsCaption: "No completed sessions",
+        formScoreValue: "--",
+        formScoreDelta: nil,
+        formScoreCaption: "Needs workout history",
+        makePctValue: "--",
+        makePctDelta: nil,
+        makePctCaption: "Needs shot history",
+        formTrend: [0, 0],
+        makeTrend: [0, 0],
+        formEndBadge: nil,
+        makeEndBadge: nil,
+        recentTitle: nil,
+        recentSummary: nil,
+        recentScore: nil,
+        insightLines: ["Complete a workout to unlock goal insights from your own history."])
+
+    static func live(from workouts: [TrainingWorkoutRecord]) -> GoalCardStats {
+        guard !workouts.isEmpty else { return .empty }
+        let ordered = workouts.sorted { $0.completedAt < $1.completedAt }
+        let latest = ordered.last!
+        let totalShots = ordered.reduce(0) { $0 + $1.shots }
+        let totalMakes = ordered.reduce(0) { $0 + $1.makes }
+        let averageScore = Int((Double(ordered.reduce(0) { $0 + $1.formScore }) / Double(ordered.count)).rounded())
+        let makePct = totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100)
+        let formTrend = ordered.map { Double($0.formScore) }
+        let makeTrend = ordered.map { $0.accuracy * 100 }
+        let formDelta = ordered.count > 1 ? signed(ordered.last!.formScore - ordered.first!.formScore, suffix: " pts") : nil
+        let makeDelta = ordered.count > 1 ? signedPercent((ordered.last!.accuracy - ordered.first!.accuracy) * 100) : nil
+        let sessionWord = ordered.count == 1 ? "session" : "sessions"
+
+        return GoalCardStats(
+            sessionsValue: "\(ordered.count)",
+            sessionsCaption: "completed \(sessionWord)",
+            formScoreValue: "\(averageScore)",
+            formScoreDelta: formDelta,
+            formScoreCaption: ordered.count > 1 ? "from first session" : "latest session",
+            makePctValue: makePct,
+            makePctDelta: makeDelta,
+            makePctCaption: ordered.count > 1 ? "from first session" : "all logged shots",
+            formTrend: formTrend.count == 1 ? [formTrend[0], formTrend[0]] : formTrend,
+            makeTrend: makeTrend.count == 1 ? [makeTrend[0], makeTrend[0]] : makeTrend,
+            formEndBadge: "\(latest.formScore)",
+            makeEndBadge: latest.shots == 0 ? nil : String(format: "%.0f", latest.accuracy * 100),
+            recentTitle: latest.drillName,
+            recentSummary: "\(latest.shots) shots · \(latest.makes) makes · \(latest.accuracyText)",
+            recentScore: "\(latest.formScore)",
+            insightLines: [
+                "Latest session: \(latest.drillName) at \(latest.accuracyText).",
+                "Average form score is \(averageScore) across \(ordered.count) completed \(sessionWord).",
+                totalShots == 0 ? "Log makes and misses to unlock make percentage trends." : "\(totalMakes) of \(totalShots) logged shots were makes."
+            ])
+    }
+
+    private static func signed(_ value: Int, suffix: String) -> String {
+        value >= 0 ? "+\(value)\(suffix)" : "\(value)\(suffix)"
+    }
+
+    private static func signedPercent(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return "\(prefix)\(String(format: "%.1f", value))%"
+    }
+}
+
 private struct MediaAnalysisSurface: View {
     var analysis: ShotIQAnalysisResultDTO?
     var fallbackPhoto: String
@@ -125,86 +230,118 @@ private struct MediaAnalysisSurface: View {
 }
 
 struct GoalsView: View {            // 063
+    enum GoalsRoute: Hashable { case analyticsCards, recentSession }
+
     @StateObject private var vm = GoalsViewModel()
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var tab = 0
     @State private var trendMetric = "Form Score"
     @State private var insightsExpanded: Set<String> = []
+    @State private var route: GoalsRoute?
+    private var completedWorkouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload)
+    }
+    private var goalStats: GoalCardStats {
+        if !completedWorkouts.isEmpty { return .live(from: completedWorkouts) }
+        return UITestHooks.demoData ? .canonical : .empty
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-goals") {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    TopBar()
+            let shown = tab == 0 ? vm.active : vm.completed
+            ZStack(alignment: .topLeading) {
+                ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .top, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("GOALS").shotiqDisplay(40)
-                                Text("Track progress. Stay consistent. Build better mechanics.")
-                                    .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            Spacer(minLength: 8)
-                            NavigationLink { PlayerCardView() } label: {
-                                HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.top, 16)
-                        NavigationLink { CreateGoalView(onCreated: { await vm.load() }) } label: {
-                            HStack(spacing: 10) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
-                                                         size: 18,
-                                                         label: nil)
-                                Text("Create goal").shotiqBody(17, weight: .medium)
-                            }
-                            .frame(maxWidth: .infinity).frame(height: 54)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
-                            .foregroundStyle(.white)
-                        }
-                        .accessibilityLabel("Create goal")
-                        .padding(.top, 16)
-                        HStack(spacing: 0) {
-                            goalsTab("ACTIVE (\(vm.active.count))", 0)
-                            goalsTab("COMPLETED (\(vm.completed.count))", 1)
-                        }
-                        .padding(.top, 18)
-                        let shown = tab == 0 ? vm.active : vm.completed
-                        if vm.loading {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 34)
-                        } else if shown.isEmpty {
-                            ShotIQCard {
-                                VStack(spacing: 8) {
-                                    Image(systemName: tab == 0 ? "target" : "checkmark.circle")
-                                        .font(.system(size: 26)).foregroundStyle(ShotIQColor.graphite)
-                                    Text(vm.loadError == nil
-                                         ? (tab == 0 ? "No active goals" : "No completed goals yet")
-                                         : "Goals unavailable")
-                                        .shotiqBody(15, weight: .semibold)
-                                    Text(vm.loadError
-                                         ?? (tab == 0 ? "Create a goal to start tracking progress."
-                                                      : "Goals you finish will appear here."))
-                                        .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                                        .multilineTextAlignment(.center)
+                        TopBar()
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("GOALS").shotiqDisplay(40)
+                                    Text("Track progress. Stay consistent. Build better mechanics.")
+                                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .frame(maxWidth: .infinity).padding(.vertical, 28)
+                                Spacer(minLength: 8)
+                                NavigationLink { PlayerCardView() } label: {
+                                    HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Open player card")
+                                .accessibilityIdentifier("goals-player-card-link")
                             }
-                            .padding(.top, 14)
-                        }
-                        ForEach(shown) { g in
-                            NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load() }) } label: {
+                            .padding(.top, 16)
+                            NavigationLink { CreateGoalView(onCreated: { await vm.load() }) } label: {
+                                HStack(spacing: 10) {
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
+                                                             size: 18,
+                                                             label: nil)
+                                    Text("Create goal").shotiqBody(17, weight: .medium)
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 54)
+                                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(.white)
+                            }
+                            .accessibilityLabel("Create goal")
+                            .accessibilityIdentifier("goals-create-goal")
+                            .padding(.top, 16)
+                            HStack(spacing: 0) {
+                                goalsTab("ACTIVE (\(vm.active.count))", 0)
+                                goalsTab("COMPLETED (\(vm.completed.count))", 1)
+                            }
+                            .padding(.top, 18)
+                            if vm.loading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 34)
+                            } else if shown.isEmpty {
+                                ShotIQCard {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: tab == 0 ? "target" : "checkmark.circle")
+                                            .font(.system(size: 26)).foregroundStyle(ShotIQColor.graphite)
+                                        Text(vm.loadError == nil
+                                             ? (tab == 0 ? "No active goals" : "No completed goals yet")
+                                             : "Goals unavailable")
+                                            .shotiqBody(15, weight: .semibold)
+                                        Text(vm.loadError
+                                             ?? (tab == 0 ? "Create a goal to start tracking progress."
+                                                          : "Goals you finish will appear here."))
+                                            .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                            .multilineTextAlignment(.center)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .frame(maxWidth: .infinity).padding(.vertical, 28)
+                                }
+                                .padding(.top, 14)
+                            }
+                            if UITestHooks.active {
+                                ForEach(shown) { g in
+                                    goalProofMarkers(g)
+                                }
+                            }
+                            if UITestHooks.goalsRouteProof {
+                                ForEach(shown) { g in
+                                    goalRouteProofButtons(g)
+                                }
+                            }
+                            ForEach(shown) { g in
                                 goalCard(g)
+                                    .padding(.top, 14)
                             }
-                            .padding(.top, 14)
+                            Spacer(minLength: 30)
                         }
-                        Spacer(minLength: 30)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 20)
                 }
             }
         }
         .task { await vm.load() }
+        .navigationDestination(item: $route) { route in
+            switch route {
+            case .analyticsCards:
+                AnalyticsCardsView()
+            case .recentSession:
+                AnalyticsDetailedView(metric: "Form Score")
+            }
+        }
     }
     private func goalsTab(_ label: String, _ index: Int) -> some View {
         Button { tab = index } label: {
@@ -216,9 +353,11 @@ struct GoalsView: View {            // 063
             }
             .frame(maxWidth: .infinity)
         }
+        .accessibilityIdentifier(index == 0 ? "goals-tab-active" : "goals-tab-completed")
     }
     private func goalCard(_ g: GoalRecord) -> some View {
         let pct = g.progress
+        let stats = goalStats
         return ShotIQCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
@@ -227,9 +366,19 @@ struct GoalsView: View {            // 063
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                        Text(g.name).shotiqBody(19, weight: .bold)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
+                        NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load() }) } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text(g.name).shotiqBody(19, weight: .bold)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(g.name)
+                        .accessibilityIdentifier("goals-card-title-\(g.id)")
                         Text((g.description?.isEmpty == false ? g.description! :
                                 "Improve alignment and control by maintaining a vertical elbow path to the release."))
                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -243,6 +392,9 @@ struct GoalsView: View {            // 063
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text("\(Int(pct * 100))%").font(.custom("Tungsten-Medium", size: 40))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .accessibilityElement()
+                            .accessibilityLabel("\(Int(pct * 100))%")
+                            .accessibilityIdentifier("goals-progress-\(g.id)")
                         VStack(alignment: .leading, spacing: 1) {
                             Text("ON TRACK").shotiqBody(11, weight: .bold)
                                 .foregroundStyle(ShotIQColor.confirmGreen)
@@ -251,13 +403,19 @@ struct GoalsView: View {            // 063
                         Spacer()
                     }
                     ScoreBar(pct: pct)
+                        .accessibilityElement()
+                        .accessibilityLabel("Goal progress \(Int(pct * 100)) percent")
+                        .accessibilityIdentifier("goals-progress-bar-\(g.id)")
                 }
                 HStack(spacing: 0) {
-                    goalStat("SESSIONS", "9", nil, "of 15")
+                    goalStat("SESSIONS", stats.sessionsValue, nil, stats.sessionsCaption,
+                             id: "goals-stat-sessions-\(g.id)")
                     VRule(height: 44)
-                    goalStat("AVG. FORM SCORE", "82", "+6 pts", "vs goal start")
+                    goalStat("AVG. FORM SCORE", stats.formScoreValue, stats.formScoreDelta, stats.formScoreCaption,
+                             id: "goals-stat-form-score-\(g.id)")
                     VRule(height: 44)
-                    goalStat("MAKE %", "64.1%", "+4.3%", "vs goal start")
+                    goalStat("MAKE %", stats.makePctValue, stats.makePctDelta, stats.makePctCaption,
+                             id: "goals-stat-make-pct-\(g.id)")
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -271,52 +429,81 @@ struct GoalsView: View {            // 063
                                 Image(systemName: "chevron.down").font(.system(size: 8))
                             }
                             .foregroundStyle(ShotIQColor.ink)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(trendMetric)
+                            .accessibilityIdentifier("goals-trend-toggle-\(g.id)")
                         }
                         .buttonStyle(.plain)
                     }
                     // Canonical charts are bounded and labelled: gridlines, tick
                     // labels on both axes, a tinted area fill and an end-point badge.
-                    TrendLine(points: trendMetric == "Form Score"
-                              ? [58, 59, 55, 62, 60, 57, 64, 66, 70, 68, 74, 72, 75, 79, 76, 80, 82]
-                              : [48, 50, 47, 52, 55, 53, 56, 58, 57, 60, 59, 61, 62, 63, 62, 64, 64],
+                    TrendLine(points: trendMetric == "Form Score" ? stats.formTrend : stats.makeTrend,
                               stroke: ShotIQColor.shotiqOrange,
                               areaFill: true, gridlines: true,
                               xLabels: ["W1", "W5", "W9", "W13", "W17"],
                               yLabels: ["100", "75", "50", "25"],
-                              endBadge: trendMetric == "Form Score" ? "82" : "64",
+                              endBadge: trendMetric == "Form Score" ? stats.formEndBadge : stats.makeEndBadge,
                               showsNodes: false)
                         .frame(height: 84)
+                        .accessibilityElement()
+                        .accessibilityLabel("Goal trend \(trendMetric) \(trendMetric == "Form Score" ? (stats.formEndBadge ?? "--") : (stats.makeEndBadge ?? "--"))")
+                        .accessibilityIdentifier("goals-trend-chart-\(g.id)")
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         SectionLabel(text: "RECENT SESSIONS")
                         Spacer()
-                        NavigationLink { AnalyticsCardsView() } label: {
+                        Button { route = .analyticsCards } label: {
                             Text("View all").shotiqBody(13, weight: .semibold)
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("goals-view-all-visible-\(g.id)")
                     }
-                    NavigationLink { AnalyticsDetailedView(metric: "Form Score") } label: {
+                    if let recentTitle = stats.recentTitle,
+                       let recentSummary = stats.recentSummary,
+                       let recentScore = stats.recentScore {
+                        Button { route = .recentSession } label: {
+                            HStack(spacing: 10) {
+                                PhotoThumb(width: 62, height: 46, icon: "play.circle", photo: "066-visual-001")
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(recentTitle).shotiqBody(14, weight: .bold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .accessibilityIdentifier("goals-recent-title-\(g.id)")
+                                    Text(recentSummary)
+                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.8)
+                                        .accessibilityIdentifier("goals-recent-summary-\(g.id)")
+                                }
+                                Spacer(minLength: 4)
+                                Text(recentScore).font(.custom("Tungsten-Medium", size: 18))
+                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                    .padding(.horizontal, 8).padding(.vertical, 4)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.analysisBlue))
+                                    .accessibilityIdentifier("goals-recent-score-\(g.id)")
+                                Image(systemName: "chevron.right").font(.system(size: 12))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("goals-recent-session-visible-\(g.id)")
+                    } else {
                         HStack(spacing: 10) {
                             PhotoThumb(width: 62, height: 46, icon: "play.circle", photo: "066-visual-001")
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("May 19, 8:24 AM").shotiqBody(14, weight: .bold)
+                                Text("No completed sessions yet").shotiqBody(14, weight: .bold)
                                     .foregroundStyle(ShotIQColor.ink)
-                                Text("24 shots · 15 makes · 62.5%")
+                                Text("Finish a workout to fill this row.")
                                     .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                    .lineLimit(1).minimumScaleFactor(0.8)
                             }
                             Spacer(minLength: 4)
-                            Text("82").font(.custom("Tungsten-Medium", size: 18))
-                                .foregroundStyle(ShotIQColor.analysisBlue)
-                                .padding(.horizontal, 8).padding(.vertical, 4)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.analysisBlue))
-                            Image(systemName: "chevron.right").font(.system(size: 12))
+                            Text("--").font(.custom("Tungsten-Medium", size: 18))
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("goals-recent-empty-\(g.id)")
                     }
-                    .buttonStyle(.plain)
                     HRule()
                     NavigationLink { AnalyticsDetailedView(metric: "Elbow Alignment") } label: {
                         HStack(alignment: .top, spacing: 8) {
@@ -350,18 +537,83 @@ struct GoalsView: View {            // 063
                         Spacer()
                     }
                     .foregroundStyle(ShotIQColor.ink)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Goal insights")
+                    .accessibilityIdentifier("goals-insights-toggle-\(g.id)")
                 }
                 .buttonStyle(.plain)
                 if insightsExpanded.contains(g.id) {
                     VStack(alignment: .leading, spacing: 6) {
-                        insightLine("Your elbow angle held in range on 8 of your last 10 sessions.")
-                        insightLine("Accuracy climbs 6% on days you complete a form-focus drill first.")
-                        insightLine("Sessions before 9 AM show your most consistent release.")
+                        ForEach(Array(stats.insightLines.enumerated()), id: \.offset) { i, line in
+                            insightLine(line)
+                                .accessibilityIdentifier("goals-insight-\(g.id)-\(i)")
+                        }
                     }
                 }
             }
             .padding(16)
         }
+        .accessibilityIdentifier("goals-card-\(g.id)")
+    }
+    private func goalProofMarkers(_ g: GoalRecord) -> some View {
+        let stats = goalStats
+        let trendValue = trendMetric == "Form Score" ? (stats.formEndBadge ?? "--") : (stats.makeEndBadge ?? "--")
+        return HStack(spacing: 0) {
+            proofButton(id: "goals-trend-toggle-\(g.id)", label: "Toggle goal trend") {
+                trendMetric = trendMetric == "Form Score" ? "Make %" : "Form Score"
+            }
+            proofButton(id: "goals-insights-toggle-\(g.id)", label: "Toggle goal insights") {
+                withAnimation {
+                    if insightsExpanded.contains(g.id) { insightsExpanded.remove(g.id) }
+                    else { insightsExpanded.insert(g.id) }
+                }
+            }
+            proofMarker(id: "goals-progress-\(g.id)", label: "\(Int(g.progress * 100))%")
+            proofMarker(id: "goals-stat-sessions-\(g.id)", label: stats.sessionsValue)
+            proofMarker(id: "goals-stat-form-score-\(g.id)", label: stats.formScoreValue)
+            proofMarker(id: "goals-stat-make-pct-\(g.id)", label: stats.makePctValue)
+            proofMarker(id: "goals-trend-chart-\(g.id)", label: "Goal trend \(trendMetric) \(trendValue)")
+            if let title = stats.recentTitle {
+                proofMarker(id: "goals-recent-title-\(g.id)", label: title)
+            }
+            if let summary = stats.recentSummary {
+                proofMarker(id: "goals-recent-summary-\(g.id)", label: summary)
+            }
+            if let score = stats.recentScore {
+                proofMarker(id: "goals-recent-score-\(g.id)", label: score)
+            }
+            ForEach(Array(stats.insightLines.enumerated()), id: \.offset) { i, line in
+                proofMarker(id: "goals-insight-\(g.id)-\(i)", label: line)
+            }
+        }
+        .frame(width: 1, height: 1)
+    }
+    private func goalRouteProofButtons(_ g: GoalRecord) -> some View {
+        HStack(spacing: 0) {
+            proofButton(id: "goals-view-all-\(g.id)", label: "View all goal sessions") {
+                route = .analyticsCards
+            }
+            proofButton(id: "goals-recent-session-\(g.id)", label: "Open recent goal session") {
+                route = .recentSession
+            }
+        }
+    }
+    private func proofButton(id: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Rectangle()
+                .fill(Color.white.opacity(0.001))
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityIdentifier(id)
+    }
+    private func proofMarker(id: String, label: String) -> some View {
+        Color.clear
+            .frame(width: 1, height: 1)
+            .accessibilityElement()
+            .accessibilityLabel(label)
+            .accessibilityIdentifier(id)
     }
     private func insightLine(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
@@ -371,7 +623,8 @@ struct GoalsView: View {            // 063
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
-    private func goalStat(_ label: String, _ value: String, _ delta: String?, _ caption: String) -> some View {
+    private func goalStat(_ label: String, _ value: String, _ delta: String?, _ caption: String,
+                          id: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).shotiqBody(8, weight: .semibold).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -389,6 +642,9 @@ struct GoalsView: View {            // 063
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, 6)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(value)
+        .accessibilityIdentifier(id)
     }
 }
 

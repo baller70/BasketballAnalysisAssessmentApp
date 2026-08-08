@@ -185,6 +185,10 @@ enum UITestHooks {
     /// shot-tracker tests. Normal launches never pass this flag.
     static var resetTrainingWorkouts: Bool { args.contains("-uiTestResetTrainingWorkouts") }
 
+    /// Expose route-only Goals proof buttons for focused functional coverage.
+    /// Normal launches and canonical screenshot tests never pass this flag.
+    static var goalsRouteProof: Bool { args.contains("-uiTestGoalsRouteProof") }
+
     /// Clear locally persisted settings proof data before focused settings
     /// tests. Normal launches never pass this flag.
     static var resetSettings: Bool { args.contains("-uiTestResetSettings") }

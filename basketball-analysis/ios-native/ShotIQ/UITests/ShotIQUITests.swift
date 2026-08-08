@@ -1446,7 +1446,8 @@ final class ShotIQUITests: XCTestCase {
     }
 
     func testGoalsImageSurfacesWork() throws {
-        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "goals"])
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "goals"])
         XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
         for item in ["GOALS", "ACTIVE (2)", "68%", "40%", "MAKE %",
                      "AVG. FORM SCORE", "82", "GOAL PROGRESS",
@@ -1456,6 +1457,60 @@ final class ShotIQUITests: XCTestCase {
         }
         tapControl("Form Score")
         assertVisible("Make %", maxSwipes: 2)
+    }
+
+    func testGoalsUseCompletedWorkoutHistoryAndRoutes() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestGoalsRouteProof",
+                "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        assertVisibleElement(id: "goals-progress-g1", contains: "68%")
+        assertVisibleElement(id: "goals-stat-sessions-g1", contains: "1")
+        assertVisibleElement(id: "goals-stat-form-score-g1", contains: "70")
+        assertVisibleElement(id: "goals-stat-make-pct-g1", contains: "66.7%")
+        assertVisibleElement(id: "goals-trend-chart-g1", contains: "Form Score 70")
+        assertVisibleElement(id: "goals-recent-title-g1", contains: "Shot Tracker Session")
+        assertVisibleElement(id: "goals-recent-summary-g1", contains: "3 shots")
+        assertVisibleElement(id: "goals-recent-summary-g1", contains: "66.7%")
+        assertVisibleElement(id: "goals-recent-score-g1", contains: "70")
+
+        tapElement(id: "goals-trend-toggle-g1")
+        assertVisibleElement(id: "goals-trend-chart-g1", contains: "Make % 67")
+        tapElement(id: "goals-insights-toggle-g1")
+        assertVisibleElement(id: "goals-insight-g1-0", contains: "Shot Tracker Session")
+        assertVisibleElement(id: "goals-insight-g1-1", contains: "Average form score is 70")
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestGoalsRouteProof",
+                "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        tapElement(id: "goals-player-card-link")
+        XCTAssertTrue(screen("screen-ios-player-card").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestGoalsRouteProof",
+                "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        tapElement(id: "goals-create-goal")
+        XCTAssertTrue(screen("screen-ios-create-goal").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestGoalsRouteProof",
+                "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        tapElement(id: "goals-recent-session-g1")
+        XCTAssertTrue(screen("screen-ios-analytics-detailed").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestGoalsRouteProof",
+                "-uiTestStage", "goals"])
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+        tapElement(id: "goals-view-all-g1")
+        XCTAssertTrue(screen("screen-ios-analytics-cards").waitForExistence(timeout: 8))
     }
 
     func testGoalDetailImageSurfacesWork() throws {
