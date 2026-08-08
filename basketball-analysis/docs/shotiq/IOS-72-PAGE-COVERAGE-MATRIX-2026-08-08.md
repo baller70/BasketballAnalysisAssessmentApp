@@ -71,6 +71,8 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnnotationToolbarPersistence-2026-08-08-v3.xcresult`
 - Focused training saved-drills result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-TrainingSavedDrills-2026-08-08-v6.xcresult`
+- Focused shot-tracker/completion result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-ShotTrackerCompletion-2026-08-08-v1.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -107,6 +109,7 @@ Current proof totals:
 - Focused late-page isolated regression target: 9 passed, 0 failed, 0 skipped
 - Focused annotation-toolbar persistence target: 1 passed, 0 failed, 0 skipped
 - Focused training saved-drills target: 1 passed, 0 failed, 0 skipped
+- Focused shot-tracker/completion target: 1 passed, 0 failed, 0 skipped
 - Superseded bundled media/profile regression attempts: failed due staged
   relaunches falling back to Splash; replaced by one-staged-launch-per-test
   proof
@@ -183,8 +186,8 @@ even when the page has no upload/photo feature.
 | 58 | My Drills | Yes | Discover route asserted; locally saved catalog drill appears after relaunch with placeholder stats | Saved-drill backend sync and web parity |
 | 59 | Workout Calendar | Yes | Calendar route asserted | Calendar persistence |
 | 60 | Drill Execution | Yes | Make/miss counters, toast feedback, end workout asserted | Real workout persistence |
-| 61 | Shot Tracker | Yes | Recent workout card opens tracker | Real shot-session persistence |
-| 62 | Workout Completion | Yes | End workout reaches completion | Backend completion save |
+| 61 | Shot Tracker | Yes | Recent workout card opens tracker; zero-state, make/miss, undo, derived percentage/streak, and end-workout controls proven | Backend shot-session reload and analytics aggregation |
+| 62 | Workout Completion | Yes | End workout reaches completion; shots/makes/accuracy/points/form score/target score derived from completed tracker session | Backend completion reload and web parity |
 | 63 | Goals | Yes | Active goals, progress, create goal, goal-detail route asserted | Backend goal CRUD |
 | 64 | Create Goal | Yes | Create-goal page rendered from Goals; metric tabs/target image asserted; category/type/unit controls, target dialog, target-linked toast, and Learn how route tested | Backend create goal |
 | 65 | Goal Detail | Yes | Progress, technique snapshot, linked sessions, drills asserted; log-progress sheet, edit-goal sheet, and recommended-drill route tested | Backend goal updates |
@@ -216,6 +219,14 @@ even when the page has no upload/photo feature.
   the `Beginner only` filter, the drill save control is tappable and shows a
   customer toast, and My Drills shows the saved `STACK & SHOOT` drill after app
   relaunch with placeholder stats.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-ShotTrackerCompletion-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testShotTrackerStartsAtZeroAndCompletionUsesSessionTotals`
+  on the iPhone 17 Pro simulator. Result: `** TEST SUCCEEDED **`, 1 passed, 0
+  failed, 0 skipped. This proves pages 061 and 062 in the manual tracker path:
+  Shot Tracker starts at zero, make/miss/undo update the live stats and toast
+  feedback, and Workout Completion renders the completed session's derived
+  shots, makes, accuracy, points, form score, and target score.
 - `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LatePageRegressionIsolated-2026-08-08-v2.xcresult`
   ran nine isolated tests on the iPhone 17 Pro simulator:
   `testAnalyticsCardsImageSurfacesWork`,

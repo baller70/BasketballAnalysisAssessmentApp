@@ -145,8 +145,8 @@ The first pass should fix root causes before polishing dependent screens:
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
 | G050 | OPEN | P1 | `#analytics` `#backend` | 059 | Calendar summaries from workouts/shot events. | Workout API seed changes calendar percentages/streaks. |
 | G051 | OPEN | P1 | `#media` `#analytics` | 060 | Drill execution media/cue from drill plan or live input. | Chosen drill displays correct media/cue and measured/live data where claimed. |
-| G052 | OPEN | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | New session starts from zero or real history; phase/correction values have source. |
-| G053 | OPEN | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Completion values match workout events, points rules, and analysis output. |
+| G052 | VERIFYING | P1 | `#analytics` `#demo` | 061 | Remove fixed shot-tracker baselines and phase rail. | Shot Tracker now starts a clean manual session at `0 OF 0`, derives make %, current streak, set progress, and phase rail from recorded make/miss events, and proves make/miss/undo through UI. Backend reload/history aggregation remains before `DONE`. |
+| G053 | VERIFYING | P1 | `#analytics` `#backend` | 062 | Workout completion uses real points/form/phase result. | Workout Completion now receives the completed session record and derives shots, makes, accuracy, points, form score, phase scores, primary target progress, share text, and coaching takeaway from those totals. Backend workout reload/web parity remains before `DONE`. |
 
 ## Goals, Analytics, Media, Profile Items
 
@@ -2192,3 +2192,44 @@ feedback, and training-screen navigation on the simulator. It does not yet prove
 backend reload, save/remove parity in the web app, or shared iOS/web database
 visibility for the saved drill. Those remain required before G047/G049 can move
 from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Shot Tracker And Completion Session-Totals Proof
+
+Thirty-sixth laptop functionality slice after local Xcode setup:
+
+- Screen 061 Shot Tracker no longer starts from the fixed `24 shots / 15 makes`
+  demo baseline. A clean manual session starts at `0 OF 0`, `0.0%`, and a zero
+  current streak.
+- Shot Tracker now derives make percentage, current streak, set-progress marks,
+  countdown timer, shot rail values, and score bar from the shots the customer
+  records in that session.
+- Ending a tracker workout creates a `TrainingWorkoutRecord`, stores it in the
+  local completed-workout store, still sends the existing backend
+  `/api/shot-events` and `/api/workouts` intents, and passes the exact record to
+  screen 062.
+- Screen 062 Workout Completion now derives shots, makes, accuracy, points
+  earned, form score, phase breakdown, primary-target score, coaching takeaway,
+  and share text from the completed session totals instead of static demo
+  values.
+- App boot accepts `-uiTestResetTrainingWorkouts` to clear only the local
+  completed-workout proof payload before focused shot-tracker tests.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-ShotTrackerCompletion-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testShotTrackerStartsAtZeroAndCompletionUsesSessionTotals`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test opens Shot Tracker directly,
+  verifies zero-session state (`0 OF 0`, `0.0%`, streak `0`), records make,
+  miss, make, verifies `2 OF 3`, `66.7%`, streak `1`, undoes the last shot,
+  verifies `1 OF 2` and `50.0%`, records another make, ends the workout, and
+  verifies Workout Completion shows `3` shots, `2` makes, `66.7%`, `+40`
+  points, form score `70`, and primary target `7 / 10`.
+
+Remaining limitations: this proves app-owned manual session state, local
+completed-workout persistence, completion derivation, and customer-visible
+feedback on the simulator. It does not yet prove backend workout reload,
+calendar aggregation from saved workout records, or iOS/web shared database
+visibility. Those remain required before G052/G053 can move from `VERIFYING` to
+`DONE`.

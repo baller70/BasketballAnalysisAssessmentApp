@@ -174,6 +174,10 @@ enum UITestHooks {
     /// catalog tests. Normal launches never pass this flag.
     static var resetTrainingDrills: Bool { args.contains("-uiTestResetTrainingDrills") }
 
+    /// Clear locally persisted completed-workout proof data before focused
+    /// shot-tracker tests. Normal launches never pass this flag.
+    static var resetTrainingWorkouts: Bool { args.contains("-uiTestResetTrainingWorkouts") }
+
     /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
@@ -213,6 +217,7 @@ enum UITestHooks {
                                   "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
                                   "analysis-taking-longer", "analysis-error",
                                   "training-home", "discover-drills", "drill-detail", "my-drills",
+                                  "shot-tracker", "workout-completion",
                                   "analytics-cards", "analytics-detailed", "profile",
                                   "player-card", "customize-player-card", "my-media",
                                   "media-detail", "goals", "create-goal", "goal-detail",
@@ -221,7 +226,7 @@ enum UITestHooks {
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
         bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
-        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills ||
+        useSampleMedia || historyFailure || analysisFailure || resetAnnotations || resetTrainingDrills || resetTrainingWorkouts ||
         homeVariant != nil || stage != nil
     }
 
@@ -267,6 +272,9 @@ final class AppState: ObservableObject {
         }
         if UITestHooks.resetTrainingDrills {
             UserDefaults.standard.removeObject(forKey: "shotiq.training.savedDrills.v1")
+        }
+        if UITestHooks.resetTrainingWorkouts {
+            UserDefaults.standard.removeObject(forKey: "shotiq.training.completedWorkouts.v1")
         }
         // Test-only: the two auth stages (005 verify-email, 007 reset-password)
         // live inside the signed-out stack, so hand straight to it rather than
@@ -377,6 +385,8 @@ struct MainTabView: View {
         case "discover-drills": DiscoverDrillsView()
         case "drill-detail": DrillDetailView(name: "STACK & SHOOT")
         case "my-drills": MyDrillsView()
+        case "shot-tracker": ShotTrackerView()
+        case "workout-completion": WorkoutCompletionView()
         case "analytics-cards": AnalyticsCardsView()
         case "analytics-detailed": AnalyticsDetailedView()
         case "profile": ProfileView()

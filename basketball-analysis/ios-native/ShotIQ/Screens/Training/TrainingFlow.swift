@@ -135,6 +135,73 @@ enum TrainingSavedDrillStore {
     }
 }
 
+struct TrainingWorkoutRecord: Identifiable, Codable, Equatable {
+    var id: String
+    var drillName: String
+    var shots: Int
+    var makes: Int
+    var durationSeconds: Int
+    var completedAt: Date
+
+    var misses: Int { max(shots - makes, 0) }
+    var accuracy: Double { shots == 0 ? 0 : Double(makes) / Double(shots) }
+    var accuracyText: String { shots == 0 ? "--" : String(format: "%.1f%%", accuracy * 100) }
+    var pointsEarned: Int { max(40, makes * 12 + shots * 3) }
+    var formScore: Int { min(99, max(40, Int((accuracy * 100).rounded()) + min(shots, 12))) }
+    var formVerdict: String { formScore >= 85 ? "GREAT" : formScore >= 70 ? "GOOD" : "BUILDING" }
+    var formNote: String {
+        shots == 0 ? "Track a few shots to unlock session feedback." :
+        accuracy >= 0.7 ? "Good session. Keep building repeatable mechanics." :
+        "Keep the reps coming and focus on clean alignment."
+    }
+    var phaseScores: [(String, Int)] {
+        let base = formScore
+        return [("SETUP", min(99, base + 2)),
+                ("LOAD", max(40, base - 1)),
+                ("RISE", min(99, base + 1)),
+                ("RELEASE", base),
+                ("FOLLOW-THROUGH", max(40, base - 2))]
+    }
+    var primaryTargetScore: Int { min(10, max(1, Int((accuracy * 10).rounded()))) }
+
+    static func manualSession(drillName: String, shots: Int, makes: Int,
+                              durationSeconds: Int) -> TrainingWorkoutRecord {
+        TrainingWorkoutRecord(id: UUID().uuidString,
+                              drillName: drillName,
+                              shots: shots,
+                              makes: makes,
+                              durationSeconds: durationSeconds,
+                              completedAt: Date())
+    }
+}
+
+enum TrainingWorkoutStore {
+    static let key = "shotiq.training.completedWorkouts.v1"
+
+    static func decode(_ payload: String) -> [TrainingWorkoutRecord] {
+        guard let data = payload.data(using: .utf8),
+              let workouts = try? JSONDecoder().decode([TrainingWorkoutRecord].self, from: data) else { return [] }
+        return workouts
+    }
+
+    static func encode(_ workouts: [TrainingWorkoutRecord]) -> String {
+        guard let data = try? JSONEncoder().encode(workouts),
+              let payload = String(data: data, encoding: .utf8) else { return "[]" }
+        return payload
+    }
+
+    static func latest(in payload: String) -> TrainingWorkoutRecord? {
+        decode(payload).sorted { $0.completedAt > $1.completedAt }.first
+    }
+
+    static func save(_ workout: TrainingWorkoutRecord, in payload: String) -> String {
+        var workouts = decode(payload)
+        workouts.removeAll { $0.id == workout.id }
+        workouts.insert(workout, at: 0)
+        return encode(Array(workouts.prefix(25)))
+    }
+}
+
 struct HRule: View {
     var body: some View { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
 }
@@ -1745,14 +1812,34 @@ struct DrillExecutionView: View {   // 060
 
 struct ShotTrackerView: View {      // 061
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @StateObject private var m = DrillSessionModel()
     @State private var showCompletion = false
     @State private var toast: ShotIQToast?
-    private let baseShots = 24, baseMakes = 15, sessionTarget = 25
-    private let baseMisses: Set<Int> = [2, 4, 5, 8, 11, 14, 17, 20, 21]
-    private var shots: Int { baseShots + m.shots.count }
-    private var makes: Int { baseMakes + m.makes }
+    @State private var completedWorkout: TrainingWorkoutRecord?
+    private let sessionTarget = 25
+    private var shots: Int { m.shots.count }
+    private var makes: Int { m.makes }
     private var pct: Double { shots == 0 ? 0 : Double(makes) / Double(shots) }
+    private var currentStreak: Int {
+        var streak = 0
+        for shot in m.shots.reversed() {
+            guard shot.made else { break }
+            streak += 1
+        }
+        return streak
+    }
+    private var phaseScores: [(String, String)] {
+        guard shots > 0 else {
+            return [("SETUP", "--"), ("LOAD", "--"), ("RISE", "--"),
+                    ("RELEASE", "--"), ("FOLLOW-THROUGH", "--")]
+        }
+        let record = TrainingWorkoutRecord.manualSession(drillName: "Shot Tracker Session",
+                                                         shots: shots,
+                                                         makes: makes,
+                                                         durationSeconds: m.elapsed)
+        return record.phaseScores.map { ($0.0, "\($0.1)%") }
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-shot-tracker") {
             ScrollView {
@@ -1766,7 +1853,9 @@ struct ShotTrackerView: View {      // 061
                         Spacer(minLength: 6)
                         Image(systemName: "stopwatch").font(.system(size: 13))
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("03:18").font(.custom("Tungsten-Medium", size: 17))
+                            Text(String(format: "%02d:%02d", max(0, 20 * 60 - m.elapsed) / 60,
+                                        max(0, 20 * 60 - m.elapsed) % 60))
+                                .font(.custom("Tungsten-Medium", size: 17))
                             Text("REMAINING").shotiqBody(7, weight: .medium).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -1777,12 +1866,13 @@ struct ShotTrackerView: View {      // 061
                         } label: {
                             HStack(spacing: 5) {
                                 Image(systemName: m.paused ? "play.fill" : "pause.fill").font(.system(size: 10))
-                                Text(m.paused ? "RESUME" : "PAUSE WORKOUT")
-                                    .shotiqBody(10, weight: .bold).kerning(0.4)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                            }
-                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            Text(m.paused ? "RESUME" : "PAUSE WORKOUT")
+                                .shotiqBody(10, weight: .bold).kerning(0.4)
+                                .lineLimit(1).minimumScaleFactor(0.7)
                         }
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        }
+                        .accessibilityIdentifier("tracker-pause")
                     }
                     .padding(.horizontal, 20).padding(.vertical, 12)
                     .overlay(HRule(), alignment: .bottom)
@@ -1795,27 +1885,15 @@ struct ShotTrackerView: View {      // 061
                                     Text("\(shots) OF \(sessionTarget)")
                                         .font(.custom("Tungsten-Medium", size: 16))
                                 }
-                                // Canonical 061 shows the last shot's own frame in
-                                // this column; the 061 sidecar declares no photo
-                                // element, so the app had only the dark media
-                                // plate to draw. The frame runs x 28…519,
-                                // y 423…1195 on the 853x1844 canvas.
-                                //
-                                // Cut short at y 1082: canonical bakes its own
-                                // "SHOT 15 / JUST NOW" plate and a fullscreen
-                                // glyph into the bottom of that frame, and the
-                                // plate here has to stay live — it counts the
-                                // shots the reader actually records. Dropping the
-                                // bottom 113 rows of floor keeps one plate on
-                                // screen instead of two. 491x659 is 284pt tall in
-                                // this 211pt column. The plate moves to
-                                // .bottomLeading because that is the corner
-                                // canonical hangs it off.
+                                // This plate stays live because it counts the
+                                // shots the player records in this session.
                                 ZStack(alignment: .bottomLeading) {
                                     CanonicalPhoto("061-visual-001", height: 284)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text("SHOT \(shots)").shotiqBody(10, weight: .bold).kerning(0.4)
-                                        Text("JUST NOW").shotiqBody(7).opacity(0.8)
+                                        Text(shots == 0 ? "READY" : "SHOT \(shots)")
+                                            .shotiqBody(10, weight: .bold).kerning(0.4)
+                                        Text(shots == 0 ? "START SESSION" : "JUST NOW")
+                                            .shotiqBody(7).opacity(0.8)
                                     }
                                     .foregroundStyle(.white)
                                     .padding(8)
@@ -1830,15 +1908,18 @@ struct ShotTrackerView: View {      // 061
                                     .font(.custom("Tungsten-Medium", size: 36))
                                     .foregroundStyle(ShotIQColor.ink)
                                     .lineLimit(1).minimumScaleFactor(0.6)
+                                    .accessibilityIdentifier("tracker-make-pct")
                                 Text("\(makes) OF \(shots)").font(.custom("Tungsten-Medium", size: 14))
                                     .foregroundStyle(ShotIQColor.graphite)
+                                    .accessibilityIdentifier("tracker-makes-total")
                                 Ring(pct: pct, color: ShotIQColor.confirmGreen, lineWidth: 7)
                                     .frame(width: 54, height: 54)
                                 HRule()
                                 MicroLabel(text: "CURRENT STREAK")
                                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                    Text("3").font(.custom("Tungsten-Medium", size: 26))
+                                    Text("\(currentStreak)").font(.custom("Tungsten-Medium", size: 26))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
+                                        .accessibilityIdentifier("tracker-current-streak")
                                     Text("MAKES").shotiqBody(8, weight: .bold)
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                 }
@@ -1866,10 +1947,8 @@ struct ShotTrackerView: View {      // 061
                                 ForEach(1...sessionTarget, id: \.self) { i in
                                     VStack(spacing: 3) {
                                         if i <= shots {
-                                            let made = i <= baseShots
-                                                ? !baseMisses.contains(i)
-                                                : (m.shots.indices.contains(i - baseShots - 1)
-                                                   ? m.shots[i - baseShots - 1].made : true)
+                                            let made = m.shots.indices.contains(i - 1)
+                                                ? m.shots[i - 1].made : true
                                             Image(systemName: made ? "checkmark.circle.fill" : "xmark.circle")
                                                 .font(.system(size: 18))
                                                 .foregroundStyle(made ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
@@ -1901,8 +1980,7 @@ struct ShotTrackerView: View {      // 061
                         .padding(.top, 8)
                         SectionLabel(text: "SHOT RAIL").padding(.top, 20)
                         HStack(alignment: .top) {
-                            ForEach([("SETUP", "100%"), ("LOAD", "100%"), ("RISE", "100%"),
-                                     ("RELEASE", "98%"), ("FOLLOW-THROUGH", "100%")], id: \.0) { p in
+                            ForEach(phaseScores, id: \.0) { p in
                                 VStack(spacing: 3) {
                                     PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 26)
                                     Text(p.0).shotiqBody(8, weight: p.0 == "RELEASE" ? .bold : .regular)
@@ -1916,7 +1994,7 @@ struct ShotTrackerView: View {      // 061
                             }
                         }
                         .padding(.top, 8)
-                        ScoreBar(pct: 0.96).padding(.top, 8)
+                        ScoreBar(pct: pct).padding(.top, 8)
                         HStack(spacing: 8) {
                             Button {
                                 m.mark(true, drillId: "shot-tracker")
@@ -1924,22 +2002,35 @@ struct ShotTrackerView: View {      // 061
                             } label: {
                                 trackerButton("checkmark.circle", "MARK MAKE", .white, ShotIQColor.confirmGreen)
                             }
+                            .accessibilityLabel("Mark make")
+                            .accessibilityIdentifier("tracker-mark-make")
                             Button {
                                 m.mark(false, drillId: "shot-tracker")
                                 toast = .info("Miss recorded", "\(makes) of \(shots) shots made")
                             } label: {
                                 trackerButton("xmark.circle", "MARK MISS", .white, ShotIQColor.shotiqOrange)
                             }
+                            .accessibilityLabel("Mark miss")
+                            .accessibilityIdentifier("tracker-mark-miss")
                             Button {
                                 m.undo()
                                 toast = .info("Last shot removed", "\(shots) shots tracked")
                             } label: {
                                 trackerButton("arrow.uturn.backward", "UNDO", ShotIQColor.ink, nil)
                             }
+                            .accessibilityLabel("Undo last shot")
+                            .accessibilityIdentifier("tracker-undo")
                             Button {
                                 Task {
                                     toast = .progress("Saving workout", "Syncing shot tracker results.", progress: 0.65)
                                     await m.finish(drillName: "Shot Tracker Session")
+                                    let workout = TrainingWorkoutRecord.manualSession(
+                                        drillName: "Shot Tracker Session",
+                                        shots: shots,
+                                        makes: makes,
+                                        durationSeconds: m.elapsed)
+                                    completedWorkoutsPayload = TrainingWorkoutStore.save(workout, in: completedWorkoutsPayload)
+                                    completedWorkout = workout
                                     toast = .success("Workout saved", "Opening your completion summary.")
                                     try? await Task.sleep(nanoseconds: 650_000_000)
                                     showCompletion = true
@@ -1948,6 +2039,8 @@ struct ShotTrackerView: View {      // 061
                                 trackerButton("stop.circle", m.saving ? "SAVING…" : "END WORKOUT", ShotIQColor.ink, nil)
                             }
                             .disabled(m.saving)
+                            .accessibilityLabel("End workout")
+                            .accessibilityIdentifier("tracker-end-workout")
                         }
                         .padding(.top, 18)
                         Spacer(minLength: 30)
@@ -1958,7 +2051,7 @@ struct ShotTrackerView: View {      // 061
         }
         .shotiqToast($toast)
         .navigationDestination(isPresented: $showCompletion) {
-            WorkoutCompletionView(shots: shots, makes: makes, drillName: "Shot Tracker Session")
+            WorkoutCompletionView(workout: completedWorkout, shots: shots, makes: makes, drillName: "Shot Tracker Session")
         }
         .onAppear { m.start() }
         .onDisappear { m.stop() }
@@ -1991,11 +2084,18 @@ struct ShotTrackerView: View {      // 061
 
 struct WorkoutCompletionView: View { // 062
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    var workout: TrainingWorkoutRecord?
     var shots = 24; var makes = 15
     var drillName = "Quick Release Builder"
-    private var accuracy: String {
-        shots > 0 ? String(format: "%.1f%%", Double(makes) / Double(shots) * 100) : "—"
+    private var resolvedWorkout: TrainingWorkoutRecord {
+        workout ?? TrainingWorkoutStore.latest(in: completedWorkoutsPayload) ??
+        TrainingWorkoutRecord.manualSession(drillName: drillName,
+                                            shots: shots,
+                                            makes: makes,
+                                            durationSeconds: 20 * 60)
     }
+    private var accuracy: String { resolvedWorkout.accuracyText }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-workout-completion") {
             ScrollView {
@@ -2022,13 +2122,18 @@ struct WorkoutCompletionView: View { // 062
                     VStack(alignment: .leading, spacing: 0) {
                         ShotIQCard {
                             HStack(spacing: 0) {
-                                completionStat("scope", "\(shots)", "SHOTS", ShotIQColor.ink)
+                                completionStat("scope", "\(resolvedWorkout.shots)", "SHOTS", ShotIQColor.ink,
+                                               id: "completion-shots")
                                 VRule(height: 54)
-                                completionStat("target", "\(makes)", "MAKES", ShotIQColor.ink)
+                                completionStat("target", "\(resolvedWorkout.makes)", "MAKES", ShotIQColor.ink,
+                                               id: "completion-makes")
                                 VRule(height: 54)
-                                completionStat("gauge", accuracy, "ACCURACY", ShotIQColor.ink)
+                                completionStat("gauge", accuracy, "ACCURACY", ShotIQColor.ink,
+                                               id: "completion-accuracy")
                                 VRule(height: 54)
-                                completionStat("chart.line.uptrend.xyaxis", "+210", "POINTS EARNED", ShotIQColor.ink)
+                                completionStat("chart.line.uptrend.xyaxis", "+\(resolvedWorkout.pointsEarned)",
+                                               "POINTS EARNED", ShotIQColor.ink,
+                                               id: "completion-points")
                             }
                             .padding(.vertical, 16)
                         }
@@ -2038,12 +2143,13 @@ struct WorkoutCompletionView: View { // 062
                                 PhotoThumb(width: 200, height: 210, photo: "062-visual-001")
                                 VStack(alignment: .leading, spacing: 6) {
                                     MicroLabel(text: "FORM SCORE")
-                                    Text("82").font(.custom("Tungsten-Medium", size: 58))
+                                    Text("\(resolvedWorkout.formScore)").font(.custom("Tungsten-Medium", size: 58))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 96)
-                                    Text("GOOD").shotiqBody(13, weight: .bold)
+                                        .accessibilityIdentifier("completion-form-score")
+                                    ScoreBar(pct: Double(resolvedWorkout.formScore) / 100).frame(width: 96)
+                                    Text(resolvedWorkout.formVerdict).shotiqBody(13, weight: .bold)
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("Keep building consistency.")
+                                    Text(resolvedWorkout.formNote)
                                         .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -2054,15 +2160,14 @@ struct WorkoutCompletionView: View { // 062
                         .padding(.top, 12)
                         SectionLabel(text: "PHASE BREAKDOWN").padding(.top, 20)
                         HStack(alignment: .top) {
-                            ForEach([("SETUP", "80"), ("LOAD", "78"), ("RISE", "84"),
-                                     ("RELEASE", "82"), ("FOLLOW-THROUGH", "85")], id: \.0) { p in
+                            ForEach(resolvedWorkout.phaseScores, id: \.0) { p in
                                 VStack(spacing: 4) {
                                     PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 28)
                                     Text(p.0).shotiqBody(8, weight: p.0 == "RELEASE" ? .bold : .regular)
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text(p.1).font(.custom("Tungsten-Medium", size: 16))
+                                    Text("\(p.1)").font(.custom("Tungsten-Medium", size: 16))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 }
                                 .frame(maxWidth: .infinity)
@@ -2079,9 +2184,10 @@ struct WorkoutCompletionView: View { // 062
                                     Text("Keep elbow stacked through release").shotiqBody(15, weight: .bold)
                                         .lineLimit(1).minimumScaleFactor(0.8)
                                     HStack(spacing: 10) {
-                                        ScoreBar(pct: 0.8, color: ShotIQColor.confirmGreen)
-                                        Text("8 / 10").font(.custom("Tungsten-Medium", size: 16))
+                                        ScoreBar(pct: Double(resolvedWorkout.primaryTargetScore) / 10, color: ShotIQColor.confirmGreen)
+                                        Text("\(resolvedWorkout.primaryTargetScore) / 10").font(.custom("Tungsten-Medium", size: 16))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
+                                            .accessibilityIdentifier("completion-primary-target-score")
                                     }
                                     Text("Progress this session").shotiqBody(11)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -2097,7 +2203,9 @@ struct WorkoutCompletionView: View { // 062
                                                          label: nil)
                                 VStack(alignment: .leading, spacing: 5) {
                                     MicroLabel(text: "COACHING TAKEAWAY")
-                                    Text("Nice arc and balance. Your release path is clean. Focus on keeping your elbow in line on fatigue.")
+                                    Text(resolvedWorkout.makes >= resolvedWorkout.misses
+                                         ? "Strong shooting rhythm. Keep your elbow stacked as fatigue builds."
+                                         : "Keep logging reps. Focus on a clean setup and balanced release.")
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.ink)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -2140,7 +2248,7 @@ struct WorkoutCompletionView: View { // 062
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
-                            ShareLink(item: "ShotIQ workout complete — \(makes)/\(shots) makes (\(accuracy)). 🏀") {
+                            ShareLink(item: "ShotIQ workout complete — \(resolvedWorkout.makes)/\(resolvedWorkout.shots) makes (\(accuracy)). 🏀") {
                                 HStack(spacing: 6) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-share",
                                                              size: 14,
@@ -2173,12 +2281,14 @@ struct WorkoutCompletionView: View { // 062
     /// Canonical 062 prints four clearly different marks across this row. The
     /// shipped screen used `scope` for SHOTS and `target` for MAKES — two SF
     /// concentric rings that both graders read as the same icon.
-    private func completionStat(_ icon: String, _ value: String, _ label: String, _ color: Color) -> some View {
+    private func completionStat(_ icon: String, _ value: String, _ label: String, _ color: Color,
+                                id: String? = nil) -> some View {
         VStack(spacing: 4) {
             StatMarkGlyph(kind: StatMarkGlyph.kind(forStatLabel: label) ?? .volume, size: 18)
                 .foregroundStyle(ShotIQColor.ink)
             Text(value).font(.custom("Tungsten-Medium", size: 28)).foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.6)
+                .accessibilityIdentifier(id ?? "")
             Text(label).shotiqBody(8, weight: .medium).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.7)

@@ -278,6 +278,39 @@ final class ShotIQUITests: XCTestCase {
         assertVisible("--")
     }
 
+    func testShotTrackerStartsAtZeroAndCompletionUsesSessionTotals() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        assertStaticText(id: "tracker-makes-total", contains: "0 OF 0")
+        assertStaticText(id: "tracker-make-pct", contains: "0.0%")
+        assertStaticText(id: "tracker-current-streak", contains: "0")
+
+        tapButton(id: "tracker-mark-make")
+        XCTAssertTrue(waitForToastContaining("Make recorded"))
+        tapButton(id: "tracker-mark-miss")
+        XCTAssertTrue(waitForToastContaining("Miss recorded"))
+        tapButton(id: "tracker-mark-make")
+        assertStaticText(id: "tracker-makes-total", contains: "2 OF 3")
+        assertStaticText(id: "tracker-make-pct", contains: "66.7%")
+        assertStaticText(id: "tracker-current-streak", contains: "1")
+
+        tapButton(id: "tracker-undo")
+        XCTAssertTrue(waitForToastContaining("Last shot removed"))
+        assertStaticText(id: "tracker-makes-total", contains: "1 OF 2")
+        assertStaticText(id: "tracker-make-pct", contains: "50.0%")
+
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+        assertStaticText(id: "completion-shots", contains: "3")
+        assertStaticText(id: "completion-makes", contains: "2")
+        assertStaticText(id: "completion-accuracy", contains: "66.7%")
+        assertStaticText(id: "completion-points", contains: "+40")
+        assertStaticText(id: "completion-form-score", contains: "70")
+        assertStaticText(id: "completion-primary-target-score", contains: "7 / 10")
+    }
+
     func testVideoUploadShowsFullScreenSourceOptions() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData"])
         guard app.buttons["Capture"].waitForExistence(timeout: 8) else {
