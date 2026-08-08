@@ -113,7 +113,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G027 | OPEN | P0 | `#device` `#pose` `#analytics` | 034 | Trigger shot-detected from real detector, not navigation. | Real shot opens detection card; non-shot does not. |
 | G028 | OPEN | P0 | `#device` `#pose` `#media` | 034 | Draw skeleton/release arc over recorded clip. | Replay shows measured overlay aligned to real body/ball frames. |
 | G029 | VERIFYING | P1 | `#backend` `#analytics` | 034 | Tie make/miss confirmation to measured shot event. | Native `CONFIRM MAKE` / `MARK MISS` now posts the backend `/api/shot-events` event envelope with `detectedResult`, confidence, sequence, drill metadata, and source metadata instead of the old unmatched `{ drillId, result }` body. Focused unit proof verifies the encoded JSON contract, and focused UI proof verifies make/miss feedback and review navigation. Still needs real detector metadata plus history/web-total round-trip proof before `DONE`. |
-| G030 | OPEN | P1 | `#analytics` `#backend` | 035 | Make capture review summarize real captured shots. | Capture review totals match recorded session events and saved analysis. |
+| G030 | VERIFYING | P1 | `#analytics` `#backend` | 035 | Make capture review summarize real captured shots. | Capture Review now takes `LiveCaptureSessionSummary` instead of fixed `24 / 15 / 62.5%` values. Confirming one make on screen 034 records one session event and opens screen 035 with `1` shot, `1` make, `100.0%` make rate, zero review/discard counts, and old `15` / `62.5%` totals absent. Backend session persistence and real detector-created event counts still need proof before `DONE`. |
 
 ## Analysis Result Items
 
@@ -1695,3 +1695,36 @@ Remaining limitations: this proves screen 033 is not pretending demo numbers are
 live AI output. It still needs Kevin's physical iPhone to prove the real live
 pose stream supplies score, confidence, phase, and cue values from camera
 frames before G025 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Live Capture Review Summary Proof
+
+Twenty-fourth laptop functionality slice after local Xcode setup:
+
+- Added `LiveCaptureSessionSummary` as the session-state source for captured
+  shot count, make count, miss count, review count, discarded count, make
+  percentage, and practice time.
+- Screen 034 now records the confirmed make/miss into that summary before
+  opening screen 035.
+- Screen 035 no longer starts from fixed `24`, `15`, and `62.5%` session
+  values. It renders the summary it was given and starts review/discard counts
+  from zero unless real events add them.
+- The live capture UI proof now confirms one make opens Capture Review with
+  `1` shot, `1` make, `100.0%` make rate, no flagged review rows, and no old
+  `15` / `62.5%` totals.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveCaptureSessionSummary-Unit-2026-08-08-v1.xcresult`
+  ran `ShotIQTests/LiveCaptureSessionSummaryTests` on the iPhone 17 Pro
+  simulator. The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with
+  0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveCaptureReviewSummary-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testLiveCaptureCalibrationEndRoundAndConfirmMakeWorks`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this proves the simulator make/miss confirmation path
+does not land on fake review totals. Real detector-created shots, backend
+session persistence, reload behavior, and web/iOS history parity remain before
+G030 can move from `VERIFYING` to `DONE`.

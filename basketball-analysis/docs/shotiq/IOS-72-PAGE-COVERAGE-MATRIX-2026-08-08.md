@@ -41,6 +41,10 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveFormFeedbackState-Unit-2026-08-08-v1.xcresult`
 - Focused live-form-feedback UI result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveFormFeedback-2026-08-08-v2.xcresult`
+- Focused live-capture session summary unit result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveCaptureSessionSummary-Unit-2026-08-08-v1.xcresult`
+- Focused live-capture review summary UI result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveCaptureReviewSummary-2026-08-08-v1.xcresult`
 
 Current proof totals:
 
@@ -60,6 +64,8 @@ Current proof totals:
 - Focused live-recording HUD target: 1 passed, 0 failed, 0 skipped
 - Focused live-form-feedback state unit target: 2 passed, 0 failed, 0 skipped
 - Focused live-form-feedback UI target: 1 passed, 0 failed, 0 skipped
+- Focused live-capture session summary unit target: 1 passed, 0 failed, 0 skipped
+- Focused live-capture review summary UI target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen
@@ -102,7 +108,7 @@ Current proof totals:
 | 32 | Live Recording | Yes | Live shot/make/make-percent rails asserted; HUD starts at `0 / 0 / --` and updates from make/miss session events to `2 / 1 / 50.0%`; END ROUND route asserted | Real optical shot detection from camera |
 | 33 | Live Form Feedback | Yes | Stop recording route asserted; screen starts in honest unmeasured waiting state and updates from a measured feedback event instead of fixed `82` / `87%` demo values | Real live form model output from camera pose stream |
 | 34 | Shot Detected | Yes | Confirm make and mark miss actions asserted with toast | Real make/miss computer vision |
-| 35 | Capture Review | Yes | Review counters/queues asserted after make/miss | Backend session persistence |
+| 35 | Capture Review | Yes | Review counters/queues asserted after make/miss; one confirmed make now opens review with `1` shot, `1` make, `100.0%` make rate, and no old `15` / `62.5%` totals | Backend session persistence |
 | 36 | Analysis Processing | Yes | Upload complete, pose, scoring, baseline, coaching steps asserted | Backend processing |
 | 37 | Analysis Taking Longer | Yes | Long-running state staged and rendered | Real slow backend job |
 | 38 | Analysis Result Overview | Yes | Result opened from home, queue, media; metrics/coaching asserted | Live backend result parity |

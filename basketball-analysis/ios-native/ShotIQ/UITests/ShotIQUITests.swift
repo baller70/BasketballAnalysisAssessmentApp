@@ -316,9 +316,12 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("shotiq-toast").waitForExistence(timeout: 3))
         XCTAssertTrue(toastContains("Saving shot result") || toastContains("Make recorded"))
         XCTAssertTrue(screen("screen-ios-capture-review").waitForExistence(timeout: 8))
-        for reviewItem in ["CAPTURE REVIEW", "15", "MAKES", "62.5%", "MAKE %", "NEED REVIEW", "DISCARDED"] {
+        for reviewItem in ["CAPTURE REVIEW", "1", "SHOTS", "MAKES", "100.0%", "MAKE %",
+                           "NEED REVIEW", "DISCARDED", "Nothing to review in this view"] {
             XCTAssertNotNil(findControl(reviewItem, maxSwipes: 2), "Missing capture review item: \(reviewItem)")
         }
+        XCTAssertFalse(app.staticTexts["15"].exists)
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
     }
 
     func testLiveRecordingHudStartsAtZeroAndUpdatesFromSessionEvents() throws {

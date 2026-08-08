@@ -3367,11 +3367,39 @@ struct LiveFormFeedbackView: View { // 033
     }
 }
 
+struct LiveCaptureSessionSummary: Equatable {
+    var shots = 0
+    var makes = 0
+    var misses = 0
+    var needReview = 0
+    var discarded = 0
+    var elapsedSeconds = 0
+
+    var confirmed: Int { makes + misses }
+    var makePercentText: String {
+        guard shots > 0 else { return "--" }
+        return String(format: "%.1f%%", (Double(makes) / Double(shots)) * 100)
+    }
+    var practiceTimeText: String {
+        String(format: "%02d:%02d:%02d", elapsedSeconds / 3600, (elapsedSeconds / 60) % 60, elapsedSeconds % 60)
+    }
+
+    mutating func record(made: Bool) {
+        shots += 1
+        if made {
+            makes += 1
+        } else {
+            misses += 1
+        }
+    }
+}
+
 struct ShotDetectedView: View {     // 034
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var camera = CameraService.live
     @State private var goReview = false
     @State private var toast: ShotIQToast?
+    @State private var summary = LiveCaptureSessionSummary()
     private let context = [("Catch & Shoot", "Off the Dribble"), ("Top of Key", "17.5 ft"),
                            ("Release Height", "7.6 ft"), ("Defender", "4.2 ft Away")]
 
@@ -3389,6 +3417,7 @@ struct ShotDetectedView: View {     // 034
                 } else {
                     toast = .info(made ? "Make noted" : "Miss noted", "Opening capture review; sync may require connection.")
                 }
+                summary.record(made: made)
             }
             try? await Task.sleep(for: .milliseconds(900))
             await MainActor.run { goReview = true }
@@ -3561,16 +3590,22 @@ struct ShotDetectedView: View {     // 034
             }
         }
         .shotiqToast($toast)
-        .navigationDestination(isPresented: $goReview) { CaptureReviewView() }
+        .navigationDestination(isPresented: $goReview) { CaptureReviewView(summary: summary) }
     }
 }
 
 struct CaptureReviewView: View {    // 035
     @Environment(\.dismiss) private var dismiss
-    @State private var filter = "Needs review (3)"
+    var summary = LiveCaptureSessionSummary()
+    @State private var filter = "needs-review"
     @State private var lowestFirst = true
     @State private var confirmDiscard = false
-    private let filters = ["All (24)", "Needs review (3)", "Confirmed (15)", "Discarded (6)"]
+    private var filters: [(String, String)] {
+        [("all", "All (\(summary.shots))"),
+         ("needs-review", "Needs review (\(summary.needReview))"),
+         ("confirmed", "Confirmed (\(summary.confirmed))"),
+         ("discarded", "Discarded (\(summary.discarded))")]
+    }
     private let flagged: [(Int, String, String, String, Double)] = [
         (7, "Today • 8:05 AM", "Release", "00:03", 0.58),
         (12, "Today • 8:09 AM", "Elbow angle", "00:05", 0.61),
@@ -3579,8 +3614,11 @@ struct CaptureReviewView: View {    // 035
     /// (035-visual-002); the other two rows keep the dark surface until cropped.
     private let shotThumbs: [Int: String] = [12: "035-visual-002"]
     private var visibleFlagged: [(Int, String, String, String, Double)] {
-        guard filter == "All (24)" || filter == "Needs review (3)" else { return [] }
+        guard summary.needReview > 0, filter == "all" || filter == "needs-review" else { return [] }
         return flagged.sorted { lowestFirst ? $0.4 < $1.4 : $0.4 > $1.4 }
+    }
+    private var selectedFilterLabel: String {
+        filters.first { $0.0 == filter }?.1 ?? filters[1].1
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-capture-review") {
@@ -3605,7 +3643,7 @@ struct CaptureReviewView: View {    // 035
                             ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
                                                      size: 18,
                                                      label: nil)
-                            Text("24").font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("\(summary.shots)").font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                             Text("SHOTS").shotiqBody(9, weight: .medium).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -3613,28 +3651,28 @@ struct CaptureReviewView: View {    // 035
                         .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     }
                     .padding(.horizontal, 20).padding(.top, 8)
-                    Text("We flagged 3 shots for review.\nConfirm, correct, or discard each shot.")
+                    Text("We flagged \(summary.needReview) shots for review.\nConfirm, correct, or discard each shot.")
                         .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
                     HStack(alignment: .top, spacing: 0) {
-                        captureStat("15", "MAKES", size: 30)
+                        captureStat("\(summary.makes)", "MAKES", size: 30)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                        captureStat("62.5%", "MAKE %", size: 30)
+                        captureStat(summary.makePercentText, "MAKE %", size: 30)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                        captureStat("3", "NEED REVIEW", color: ShotIQColor.shotiqOrange, size: 30)
+                        captureStat("\(summary.needReview)", "NEED REVIEW", color: ShotIQColor.shotiqOrange, size: 30)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                        captureStat("6", "DISCARDED", size: 30)
+                        captureStat("\(summary.discarded)", "DISCARDED", size: 30)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                        captureStat("00:20:04", "PRACTICE TIME", size: 30)
+                        captureStat(summary.practiceTimeText, "PRACTICE TIME", size: 30)
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(filters, id: \.self) { f in
-                                Button { withAnimation { filter = f } } label: {
-                                    filterChip(f, selected: filter == f)
+                            ForEach(filters, id: \.0) { key, label in
+                                Button { withAnimation { filter = key } } label: {
+                                    filterChip(label, selected: filter == key)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -3644,7 +3682,7 @@ struct CaptureReviewView: View {    // 035
                     .padding(.top, 16)
 
                     HStack {
-                        SectionLabel(text: filter.uppercased())
+                        SectionLabel(text: selectedFilterLabel.uppercased())
                         Spacer()
                         Button { withAnimation { lowestFirst.toggle() } } label: {
                             HStack(spacing: 6) {
@@ -3745,7 +3783,7 @@ struct CaptureReviewView: View {    // 035
             Button("Discard", role: .destructive) { dismiss() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("All 24 captured shots from this session will be deleted.")
+            Text("All \(summary.shots) captured shots from this session will be deleted.")
         }
     }
 

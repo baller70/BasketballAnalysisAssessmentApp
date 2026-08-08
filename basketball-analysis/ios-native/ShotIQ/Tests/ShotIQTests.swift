@@ -748,3 +748,24 @@ final class LiveFormFeedbackStateTests: XCTestCase {
         XCTAssertEqual(state.headline, "Keep elbow stacked.")
     }
 }
+
+final class LiveCaptureSessionSummaryTests: XCTestCase {
+    func testMakeMissEventsDriveCaptureReviewTotals() {
+        var summary = LiveCaptureSessionSummary()
+
+        XCTAssertEqual(summary.shots, 0)
+        XCTAssertEqual(summary.makes, 0)
+        XCTAssertEqual(summary.confirmed, 0)
+        XCTAssertEqual(summary.makePercentText, "--")
+        XCTAssertEqual(summary.practiceTimeText, "00:00:00")
+
+        summary.record(made: true)
+        summary.record(made: false)
+
+        XCTAssertEqual(summary.shots, 2)
+        XCTAssertEqual(summary.makes, 1)
+        XCTAssertEqual(summary.misses, 1)
+        XCTAssertEqual(summary.confirmed, 2)
+        XCTAssertEqual(summary.makePercentText, "50.0%")
+    }
+}
