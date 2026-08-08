@@ -565,8 +565,10 @@ struct AnalysisTakingLongerView: View { // 037
 }
 
 struct AnalysisResultOverviewView: View { // 038
+    @EnvironmentObject private var app: AppState
     private let initialResult: ShotIQAnalysisResultDTO?
     @State private var presentation: AnalysisResultPresentation
+    @State private var overviewChrome: AnalysisOverviewChrome
     @State private var isLoadingLatest = false
     @State private var loadError: String?
     @State private var info: AnalysisInfoNote?
@@ -576,6 +578,9 @@ struct AnalysisResultOverviewView: View { // 038
         let seeded = initialResult.map(AnalysisResultPresentation.init)
             ?? (UITestHooks.active ? .canonicalDemo : .noResult)
         _presentation = State(initialValue: seeded)
+        _overviewChrome = State(initialValue: UITestHooks.active
+                                ? .canonicalDemo
+                                : .productionFallback(user: nil))
     }
 
     var body: some View {
@@ -585,7 +590,10 @@ struct AnalysisResultOverviewView: View { // 038
                 AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        PlayerHeader(name: "Jordan Ellis")
+                        PlayerHeader(name: overviewChrome.playerName,
+                                     subtitle: overviewChrome.subtitle,
+                                     streak: overviewChrome.streak,
+                                     points: overviewChrome.points)
                         // Section tab strip: active ANALYSIS RESULT underlined orange.
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 24) {
@@ -679,7 +687,7 @@ struct AnalysisResultOverviewView: View { // 038
                                 .buttonStyle(.plain)
                             }
                             .padding(.top, 22)
-                            eliteMatchCard(p)
+                            eliteMatchCard(overviewChrome.eliteMatch)
                             .padding(.top, 8)
                             NavigationLink { ShotBreakdownView(presentation: p) } label: {
                                 HStack(spacing: 10) {
@@ -722,7 +730,9 @@ struct AnalysisResultOverviewView: View { // 038
         }
         .analysisInfoAlert($info)
         .task {
-            guard initialResult == nil, !UITestHooks.active else { return }
+            guard !UITestHooks.active else { return }
+            await loadProductionChrome()
+            guard initialResult == nil else { return }
             isLoadingLatest = true
             defer { isLoadingLatest = false }
             do {
@@ -738,6 +748,18 @@ struct AnalysisResultOverviewView: View { // 038
             }
         }
     }
+
+    private func loadProductionChrome() async {
+        let profile = try? await APIClient.shared.profile()
+        let badges = try? await APIClient.shared.badges()
+        let match = try? await APIClient.shared.shooterMatch()
+        overviewChrome = AnalysisOverviewChrome.production(
+            user: app.user,
+            profile: profile,
+            badges: badges,
+            match: match)
+    }
+
     private func stripLink(_ t: String, _ dest: some View) -> some View {
         NavigationLink { dest } label: {
             Text(t).shotiqBody(13, weight: .semibold).kerning(0.6)
@@ -784,25 +806,53 @@ struct AnalysisResultOverviewView: View { // 038
             }
         }
     }
-    @ViewBuilder private func eliteMatchCard(_ p: AnalysisResultPresentation) -> some View {
-        if p.id == "canonical-demo" {
+    @ViewBuilder private func eliteMatchCard(_ match: AnalysisEliteMatchSummary) -> some View {
+        if match.isMatched {
             NavigationLink { EliteMatchView() } label: {
                 ShotIQCard {
                     HStack(spacing: 14) {
-                        // Elite reference shooter photo from the canonical render.
-                        CanonicalPhoto("038-visual-002", width: 84, height: 104, cornerRadius: 6)
+                        Group {
+                            if match == .canonicalDemo {
+                                // Elite reference shooter photo from the canonical render.
+                                CanonicalPhoto("038-visual-002", width: 84, height: 104, cornerRadius: 6)
+                            } else if let photoURL = match.photoURL {
+                                AsyncImage(url: photoURL) { phase in
+                                    switch phase {
+                                    case .success(let image):
+                                        image.resizable().scaledToFill()
+                                    default:
+                                        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-elite-match",
+                                                                 size: 42,
+                                                                 label: nil)
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                    }
+                                }
+                                .frame(width: 84, height: 104)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            } else {
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-elite-match",
+                                                         size: 42,
+                                                         label: nil)
+                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                    .frame(width: 84, height: 104)
+                            }
+                        }
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("KLAY THOMPSON").shotiqDisplay(22)
-                            Text("Golden State Warriors").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                            matchLine("point.3.connected.trianglepath.dotted", "Release Angle", "51°")
-                            matchLine("figure.basketball", "Elbow Alignment", "95%")
-                            matchLine("point.bottomleft.forward.to.point.topright.scurvepath", "Shot Arc", "46°")
+                            Text(match.title).shotiqDisplay(22)
+                            Text(match.subtitle).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                            matchLine("point.3.connected.trianglepath.dotted", "Release Angle", match.releaseAngleText)
+                            matchLine("figure.basketball", "Elbow Angle", match.elbowAngleText)
+                            matchLine("point.bottomleft.forward.to.point.topright.scurvepath", "Shot Arc", match.shotArcText)
+                            if match.isEstimated {
+                                Text("Catalog estimates").shotiqBody(10, weight: .medium)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
                         }
                         Spacer()
                         VStack(spacing: 4) {
-                            Ring(pct: 0.88, color: ShotIQColor.analysisBlue, lineWidth: 7)
+                            Ring(pct: match.pct, color: ShotIQColor.analysisBlue, lineWidth: 7)
                                 .frame(width: 74, height: 74)
-                                .overlay(Text("88%").font(.custom("Tungsten-Medium", size: 24)))
+                                .overlay(Text(match.overallText).font(.custom("Tungsten-Medium", size: 24)))
                             Text("OVERALL MATCH").shotiqBody(9, weight: .semibold).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -818,8 +868,8 @@ struct AnalysisResultOverviewView: View { // 038
                         .foregroundStyle(ShotIQColor.analysisBlue)
                         .frame(width: 54)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(isLoadingLatest ? "LOADING ANALYSIS" : "ELITE MATCH PENDING").shotiqDisplay(21)
-                        Text(loadError ?? "Elite comparison will run after a measured result is loaded from your saved analysis.")
+                        Text(isLoadingLatest ? "LOADING ANALYSIS" : match.title).shotiqDisplay(21)
+                        Text(loadError ?? match.subtitle)
                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             .fixedSize(horizontal: false, vertical: true)
                     }

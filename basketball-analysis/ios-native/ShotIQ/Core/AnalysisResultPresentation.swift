@@ -24,6 +24,195 @@ struct AnalysisScoreBreakdownItem: Equatable {
     var isUnavailable: Bool { source == "missing" || scoreText == "--" }
 }
 
+struct AnalysisEliteMatchSummary: Equatable {
+    var isMatched: Bool
+    var title: String
+    var subtitle: String
+    var reason: String?
+    var overallText: String
+    var pct: Double
+    var photoURL: URL?
+    var releaseAngleText: String
+    var elbowAngleText: String
+    var shotArcText: String
+    var isEstimated: Bool
+
+    init(isMatched: Bool,
+         title: String,
+         subtitle: String,
+         reason: String?,
+         overallText: String,
+         pct: Double,
+         photoURL: URL?,
+         releaseAngleText: String,
+         elbowAngleText: String,
+         shotArcText: String,
+         isEstimated: Bool) {
+        self.isMatched = isMatched
+        self.title = title
+        self.subtitle = subtitle
+        self.reason = reason
+        self.overallText = overallText
+        self.pct = pct
+        self.photoURL = photoURL
+        self.releaseAngleText = releaseAngleText
+        self.elbowAngleText = elbowAngleText
+        self.shotArcText = shotArcText
+        self.isEstimated = isEstimated
+    }
+
+    static let canonicalDemo = AnalysisEliteMatchSummary(
+        isMatched: true,
+        title: "KLAY THOMPSON",
+        subtitle: "Golden State Warriors",
+        reason: nil,
+        overallText: "88%",
+        pct: 0.88,
+        photoURL: nil,
+        releaseAngleText: "51°",
+        elbowAngleText: "95%",
+        shotArcText: "46°",
+        isEstimated: false)
+
+    static func pending(_ reason: String? = nil) -> AnalysisEliteMatchSummary {
+        AnalysisEliteMatchSummary(
+            isMatched: false,
+            title: "ELITE MATCH PENDING",
+            subtitle: reason ?? "Analyze a measured shot to see your closest elite comparison.",
+            reason: reason,
+            overallText: "--",
+            pct: 0,
+            photoURL: nil,
+            releaseAngleText: "--",
+            elbowAngleText: "--",
+            shotArcText: "--",
+            isEstimated: false)
+    }
+
+    init(match: EliteMatchResponseDTO?) {
+        guard match?.matched == true,
+              let top = match?.top,
+              let name = top.name,
+              let overall = top.overall else {
+            self = .pending(match?.reason)
+            return
+        }
+        isMatched = true
+        title = name.uppercased()
+        subtitle = top.team ?? "Elite shooter"
+        reason = top.reason
+        overallText = "\(overall)%"
+        pct = min(max(Double(overall) / 100, 0), 1)
+        photoURL = top.photoUrl.flatMap(URL.init(string:))
+        releaseAngleText = Self.degrees(top.reference?.releaseAngle)
+        elbowAngleText = Self.degrees(top.reference?.elbowAngle)
+        shotArcText = Self.degrees(top.reference?.entryAngle)
+        isEstimated = top.estimated ?? false
+    }
+
+    private static func degrees(_ value: Double?) -> String {
+        guard let value else { return "--" }
+        return "\(Int(value.rounded()))°"
+    }
+}
+
+struct AnalysisOverviewChrome: Equatable {
+    var playerName: String
+    var subtitle: String
+    var streak: String
+    var points: String
+    var eliteMatch: AnalysisEliteMatchSummary
+
+    static let canonicalDemo = AnalysisOverviewChrome(
+        playerName: "Jordan Ellis",
+        subtitle: "Right-handed • Advanced",
+        streak: "6",
+        points: "2,840",
+        eliteMatch: .canonicalDemo)
+
+    static func production(user: APIUser?,
+                           profile: APIProfileDTO?,
+                           badges: BadgesResponseDTO?,
+                           match: EliteMatchResponseDTO?) -> AnalysisOverviewChrome {
+        AnalysisOverviewChrome(
+            playerName: displayName(user: user, profile: profile),
+            subtitle: profileSubtitle(profile),
+            streak: numberOrDash(badges?.stats?.currentStreak),
+            points: groupedNumberOrDash(badges?.stats?.totalPoints),
+            eliteMatch: AnalysisEliteMatchSummary(match: match))
+    }
+
+    static func productionFallback(user: APIUser?) -> AnalysisOverviewChrome {
+        production(user: user, profile: nil, badges: nil, match: nil)
+    }
+
+    private static func displayName(user: APIUser?, profile: APIProfileDTO?) -> String {
+        for candidate in [
+            profile?.displayName,
+            user?.displayName,
+            fullName(first: profile?.firstName, last: profile?.lastName),
+            fullName(first: user?.firstName, last: user?.lastName),
+            emailPrefix(profile?.email),
+            emailPrefix(user?.email),
+        ] {
+            if let candidate, !candidate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return candidate
+            }
+        }
+        return "Player"
+    }
+
+    private static func profileSubtitle(_ profile: APIProfileDTO?) -> String {
+        let parts = [
+            handedness(profile?.dominantHand),
+            titleCase(profile?.experienceLevel),
+        ].compactMap { $0 }
+        return parts.isEmpty ? "ShotIQ athlete" : parts.joined(separator: " • ")
+    }
+
+    private static func handedness(_ raw: String?) -> String? {
+        guard let value = titleCase(raw) else { return nil }
+        if value == "Ambidextrous" { return value }
+        return "\(value)-handed"
+    }
+
+    private static func titleCase(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        let cleaned = raw
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return nil }
+        return cleaned
+            .lowercased()
+            .split(separator: " ")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+            .joined(separator: " ")
+    }
+
+    private static func fullName(first: String?, last: String?) -> String? {
+        let parts = [first, last]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
+    }
+
+    private static func emailPrefix(_ email: String?) -> String? {
+        guard let email, let prefix = email.split(separator: "@").first else { return nil }
+        return String(prefix).replacingOccurrences(of: ".", with: " ")
+    }
+
+    private static func numberOrDash(_ value: Int?) -> String {
+        guard let value else { return "--" }
+        return "\(value)"
+    }
+
+    private static func groupedNumberOrDash(_ value: Int?) -> String {
+        guard let value else { return "--" }
+        return NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+}
+
 struct AnalysisResultPresentation: Equatable {
     var id: String
     var scoreText: String

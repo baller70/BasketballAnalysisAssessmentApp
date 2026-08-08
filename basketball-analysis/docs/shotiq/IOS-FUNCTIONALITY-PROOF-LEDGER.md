@@ -123,7 +123,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G032 | OPEN | P2 | `#path` | 037 | Prove real long-running analysis timeout. | Slow analysis job opens taking-longer state and later resolves correctly. |
 | G033 | VERIFYING | P0 | `#analytics` | 038 | Replace hard-coded six key metrics. | Screen 038's six tiles now render from `AnalysisResultPresentation` and the saved-analysis DTO, with missing values shown as `--` / `UNAVAILABLE` instead of demo constants. Still needs live backend-result mutation proof before `DONE`. |
 | G034 | VERIFYING | P0 | `#pose` `#media` | 038 | Replace demo skeleton on overview with real pose. | Local photo analysis now preserves optional detected pose points in the saved result contract, merges them with backend save responses when the backend omits pose, and renders local overview media through `CapturedPoseImage` instead of the canonical skeleton. Laptop simulator Vision is unavailable because its human-pose weights are missing, so real detection draw remains physical-device proof before `DONE`. |
-| G035 | OPEN | P0 | `#analytics` `#backend` | 038 | Replace fixed player/session/elite summary values. | Overview loads user/session/match values from backend and formulas. |
+| G035 | VERIFYING | P0 | `#analytics` `#backend` | 038 | Replace fixed player/session/elite summary values. | Screen 038 now loads profile identity, handedness/experience subtitle, badge streak/points, and elite-match summary from the shared backend DTOs in production. Canonical Jordan/Klay values are preserved only for the screenshot harness, and production empty backend state renders `--` / pending instead of demo values. Focused unit proof and canonical analysis UI proof pass on the laptop simulator. Real signed-in backend/web parity proof remains before `DONE`. |
 | G036 | OPEN | P2 | `#path` `#backend` | 039 | Prove no-analysis empty state only when truly empty. | Empty user shows no-analysis; fetch failure shows error, not empty state. |
 | G037 | OPEN | P2 | `#path` `#control` | 040 | Prove error path and retry behavior. | Failed upload/analyze opens error and retry preserves or reselects media correctly. |
 | G038 | VERIFYING | P0 | `#analytics` `#pose` `#media` | 041 | Generate shot breakdown from measured frames. | Score/share copy and the top measured stat strip now come from the saved presentation passed by screen 038, with XCTest proof that old 52-degree/7.5 ft demo copy is gone from this path. The phase filmstrip now uses selected local/server media for non-demo saved results instead of falling back to canonical stock frames when no frame set exists. Per-frame phase coaching and true saved frame-analysis data still need proof before `DONE`. |
@@ -1772,3 +1772,43 @@ carry detected joints when available. It still needs Kevin's physical iPhone to
 prove an actual Vision detection draws joints on the overview media, and the
 backend/web shared contract still needs a server pose field before remote saved
 analysis can replay joints without local media.
+
+### 2026-08-08 Analysis Overview Backend Chrome Proof
+
+Twenty-sixth laptop functionality slice after local Xcode setup:
+
+- Added native DTOs for `/api/profile`, `/api/badges` stats, and
+  `/api/shooters/match` so iOS can consume the same player, points/streak, and
+  elite-comparison data that the web backend already serves.
+- Added `AnalysisOverviewChrome` and `AnalysisEliteMatchSummary` as the single
+  presentation contract for screen 038's header and elite-match card.
+- Screen 038 now fetches production profile, badge stats, and elite match
+  before rendering normal signed-in results. Missing backend values render
+  honestly as `--` / pending, not as `Jordan Ellis`, `6`, `2,840`, or
+  `KLAY THOMPSON`.
+- The canonical screenshot harness still receives the approved Jordan/Klay
+  state through `UITestHooks.active`, so screenshot fidelity remains stable
+  while production data stops using demo values.
+- User's added product rule is carried forward for the continuing 72-page pass:
+  every no-image surface must be filled with basketball/app-relevant imagery,
+  and every placeholder must remain a guide that real user media can replace
+  only while that media is being reviewed/analyzed/viewed.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisOverviewChrome-Unit-2026-08-08-v3.xcresult`
+  ran `ShotIQTests/AnalysisOverviewChromeTests` on the iPhone 17 Pro simulator.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 3 tests, with 0
+  failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-AnalysisScreens-UI-2026-08-08-v1.xcresult`
+  ran `ShotIQUITests/CanonicalScreenshotTests/test05AnalysisScreens` on the
+  iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`, covering overview, shot breakdown, frame
+  detail, annotation toolbar, form score, metric detail, flaws, elite match,
+  elite shooters, and share results.
+
+Remaining limitations: this proves the iOS screen 038 production contract and
+keeps canonical UI navigation intact. It still needs a real signed-in backend
+account with profile/badge/match data to prove the values shown on iOS match
+the web app for the same account before G035 can move from `VERIFYING` to
+`DONE`.

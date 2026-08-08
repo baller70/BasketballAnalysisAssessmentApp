@@ -39,6 +39,80 @@ final class ShotIQGlyphResolverTests: XCTestCase {
     }
 }
 
+final class AnalysisOverviewChromeTests: XCTestCase {
+    func testProductionChromeUsesBackendProfileBadgeAndEliteMatchValues() {
+        let user = APIUser(id: "u1", email: "backup@example.com", displayName: nil,
+                           firstName: nil, lastName: nil, profileComplete: true)
+        let profile = APIProfileDTO(displayName: "Kevin Durant", email: "kevin@example.com",
+                                    firstName: nil, lastName: nil,
+                                    dominantHand: "left", experienceLevel: "advanced",
+                                    bodyType: nil)
+        let badges = BadgesResponseDTO(success: true, profileId: "p1",
+                                       stats: BadgeStatsDTO(totalPoints: 12840,
+                                                            totalAnalyses: 24,
+                                                            currentStreak: 9,
+                                                            longestStreak: 12,
+                                                            activeDates: []),
+                                       badges: nil,
+                                       challenges: nil)
+        let match = EliteMatchResponseDTO(
+            success: true,
+            matched: true,
+            reason: nil,
+            top: EliteMatchTopDTO(name: "Stephen Curry",
+                                  team: "Golden State Warriors",
+                                  overall: 94,
+                                  photoUrl: "https://media.test/curry.jpg",
+                                  reason: "Release timing and arc align.",
+                                  reference: EliteMatchReferenceDTO(releaseAngle: 52,
+                                                                    elbowAngle: 176,
+                                                                    entryAngle: 47),
+                                  estimated: true))
+
+        let chrome = AnalysisOverviewChrome.production(user: user,
+                                                       profile: profile,
+                                                       badges: badges,
+                                                       match: match)
+
+        XCTAssertEqual(chrome.playerName, "Kevin Durant")
+        XCTAssertEqual(chrome.subtitle, "Left-handed • Advanced")
+        XCTAssertEqual(chrome.streak, "9")
+        XCTAssertEqual(chrome.points, "12,840")
+        XCTAssertEqual(chrome.eliteMatch.title, "STEPHEN CURRY")
+        XCTAssertEqual(chrome.eliteMatch.overallText, "94%")
+        XCTAssertEqual(chrome.eliteMatch.releaseAngleText, "52°")
+        XCTAssertEqual(chrome.eliteMatch.elbowAngleText, "176°")
+        XCTAssertEqual(chrome.eliteMatch.shotArcText, "47°")
+        XCTAssertTrue(chrome.eliteMatch.isEstimated)
+    }
+
+    func testProductionChromeDoesNotInventDemoNumbersWhenBackendIsEmpty() {
+        let user = APIUser(id: nil, email: "new.player@example.com",
+                           displayName: nil, firstName: nil, lastName: nil,
+                           profileComplete: false)
+
+        let chrome = AnalysisOverviewChrome.productionFallback(user: user)
+
+        XCTAssertEqual(chrome.playerName, "new player")
+        XCTAssertEqual(chrome.subtitle, "ShotIQ athlete")
+        XCTAssertEqual(chrome.streak, "--")
+        XCTAssertEqual(chrome.points, "--")
+        XCTAssertEqual(chrome.eliteMatch.title, "ELITE MATCH PENDING")
+        XCTAssertNotEqual(chrome.points, "2,840")
+        XCTAssertNotEqual(chrome.eliteMatch.title, "KLAY THOMPSON")
+    }
+
+    func testCanonicalChromePreservesScreenshotHarnessValues() {
+        let chrome = AnalysisOverviewChrome.canonicalDemo
+
+        XCTAssertEqual(chrome.playerName, "Jordan Ellis")
+        XCTAssertEqual(chrome.subtitle, "Right-handed • Advanced")
+        XCTAssertEqual(chrome.streak, "6")
+        XCTAssertEqual(chrome.points, "2,840")
+        XCTAssertEqual(chrome.eliteMatch.title, "KLAY THOMPSON")
+    }
+}
+
 final class KeychainStoreTests: XCTestCase {
     func testRoundTrip() {
         KeychainStore.save("abc123", key: "testToken")

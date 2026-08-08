@@ -71,6 +71,21 @@ struct AnalysisSummary: Codable, Identifiable {
     var score: Double?
 }
 
+struct APIProfileDTO: Codable, Equatable {
+    var displayName: String?
+    var email: String?
+    var firstName: String?
+    var lastName: String?
+    var dominantHand: String?
+    var experienceLevel: String?
+    var bodyType: String?
+}
+
+struct APIProfileResponseDTO: Codable, Equatable {
+    var success: Bool?
+    var profile: APIProfileDTO?
+}
+
 struct EliteShooterDTO: Codable, Identifiable {
     var id: Int
     var name: String
@@ -122,8 +137,40 @@ struct BadgeDTO: Codable, Equatable {
 struct BadgesResponseDTO: Codable, Equatable {
     var success: Bool?
     var profileId: String?
+    var stats: BadgeStatsDTO?
     var badges: [BadgeDTO]?
     var challenges: [BadgeDTO]?
+}
+
+struct BadgeStatsDTO: Codable, Equatable {
+    var totalPoints: Int?
+    var totalAnalyses: Int?
+    var currentStreak: Int?
+    var longestStreak: Int?
+    var activeDates: [String]?
+}
+
+struct EliteMatchReferenceDTO: Codable, Equatable {
+    var releaseAngle: Double?
+    var elbowAngle: Double?
+    var entryAngle: Double?
+}
+
+struct EliteMatchTopDTO: Codable, Equatable {
+    var name: String?
+    var team: String?
+    var overall: Int?
+    var photoUrl: String?
+    var reason: String?
+    var reference: EliteMatchReferenceDTO?
+    var estimated: Bool?
+}
+
+struct EliteMatchResponseDTO: Codable, Equatable {
+    var success: Bool?
+    var matched: Bool?
+    var reason: String?
+    var top: EliteMatchTopDTO?
 }
 
 struct AnalysisMetricDTO: Codable, Equatable {
@@ -353,6 +400,11 @@ actor APIClient {
         return (r.stats, r.history ?? [])
     }
 
+    func profile() async throws -> APIProfileDTO? {
+        let r: APIProfileResponseDTO = try await request("/api/profile")
+        return r.profile
+    }
+
     func shooters() async throws -> [EliteShooterDTO] {
         struct Resp: Codable { var shooters: [EliteShooterDTO] }
         let r: Resp = try await request("/api/shooters")
@@ -372,6 +424,10 @@ actor APIClient {
     func refreshBadges() async throws -> BadgesResponseDTO {
         struct EmptyBody: Codable {}
         return try await request("/api/badges", method: "POST", body: EmptyBody())
+    }
+
+    func shooterMatch() async throws -> EliteMatchResponseDTO {
+        try await request("/api/shooters/match")
     }
 
     func latestAnalysis() async throws -> ShotIQAnalysisResultDTO? {
