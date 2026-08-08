@@ -156,7 +156,7 @@ export function HomeProfessionalPhone({
                 {i > 0 && (
                   <span aria-hidden="true" className="absolute left-[-50%] top-[46%] h-px w-full" style={{ background: RULE }} />
                 )}
-                <PoseFigure phase={kind} height={28} active={on} className="relative" />
+                <PoseFigure phase={kind} height={44} active={on} className="relative" />
                 <span className="shotiq-display relative mt-[5px] text-center text-[9.6px] leading-[10px] tracking-[0.03em]"
                       style={{ color: on ? ORANGE : undefined }}>{label}</span>
                 <span className="shotiq-numeric relative mt-[3px] text-[13px] leading-[13px]"

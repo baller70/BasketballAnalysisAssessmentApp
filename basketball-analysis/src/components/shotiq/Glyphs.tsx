@@ -217,8 +217,10 @@ const PHASE_FIGURE: Record<ShotPhase, { w: number; h: number }> = {
   follow: { w: 96, h: 96 },
 }
 
+const PHASE_MIN_RAIL_HEIGHT = 48
+
 export function PoseFigure({
-  phase, active: _active = false, tone: _tone = "light", height = 40, className = "", alt = "",
+  phase, active: _active = false, tone: _tone = "light", height = 40, minHeight = 0, className = "", alt = "",
 }: {
   phase: ShotPhase | string
   active?: boolean
@@ -227,6 +229,7 @@ export function PoseFigure({
   tone?: "light" | "dark" | "elite"
   /** Rendered height in CSS px; the crops are 2x so they stay crisp. */
   height?: number
+  minHeight?: number
   className?: string
   alt?: string
 }) {
@@ -236,12 +239,14 @@ export function PoseFigure({
     ? toShotPhase(phase) : (phase as ShotPhase)
   const { w, h } = PHASE_FIGURE[p]
   const src = `${APPROVED_ICON_BASE}/${APPROVED_PHASE_ICONS[p]}.png`
+  const renderedHeight = Math.max(height, minHeight)
+  const renderedWidth = Math.round((renderedHeight * w) / h)
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src} alt={alt} aria-hidden={alt ? undefined : "true"}
       width={w} height={h}
-      style={{ height, width: Math.round((height * w) / h) }}
+      style={{ height: renderedHeight, width: renderedWidth }}
       className={`block max-w-none ${className}`}
     />
   )
@@ -793,6 +798,7 @@ export function PhaseTrack({
   className?: string
 }) {
   const activeIdx = TRACK_PHASES.findIndex((p) => p.label === active)
+  const renderedFigure = Math.max(figure, PHASE_MIN_RAIL_HEIGHT)
   return (
     <div className={`flex items-start ${className}`}>
       {TRACK_PHASES.map((p, i) => {
@@ -801,7 +807,7 @@ export function PhaseTrack({
           <React.Fragment key={p.key}>
             {i > 0 && (
               <span className="flex min-w-0 flex-1 items-center gap-[8px] px-[8px]"
-                    style={{ height: figure }} aria-hidden="true">
+                    style={{ height: renderedFigure }} aria-hidden="true">
                 {checks && i - 1 < activeIdx && (
                   <span className="grid h-[15px] w-[15px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
                     <svg width="9" height="9" viewBox="0 0 12 12">
@@ -813,7 +819,7 @@ export function PhaseTrack({
               </span>
             )}
             <span className="shrink-0 text-center">
-              <PoseFigure phase={p.key} active={on} height={figure} className="mx-auto" />
+              <PoseFigure phase={p.key} active={on} height={renderedFigure} className="mx-auto" />
               <span className="shotiq-display mt-[3px] block whitespace-nowrap leading-[1.05]"
                     style={{
                       fontSize: label,
