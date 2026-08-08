@@ -33,6 +33,10 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-PhotoReviewNoPreAnalysis-2026-08-08-v1.xcresult`
 - Focused upload-queue empty-state result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-UploadQueueEmpty-2026-08-08-v2.xcresult`
+- Focused live-recording stats unit result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveRecordingStats-Unit-2026-08-08-v1.xcresult`
+- Focused live-recording HUD result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveRecordingHud-2026-08-08-v1.xcresult`
 
 Current proof totals:
 
@@ -48,6 +52,8 @@ Current proof totals:
 - Focused upload-quality measured-rows target: 1 passed, 0 failed, 0 skipped
 - Focused photo-review no-pre-analysis target: 1 passed, 0 failed, 0 skipped
 - Focused upload-queue empty-state target: 1 passed, 0 failed, 0 skipped
+- Focused live-recording stats unit target: 1 passed, 0 failed, 0 skipped
+- Focused live-recording HUD target: 1 passed, 0 failed, 0 skipped
 - Extra non-map iOS states captured: `capture-guide`, `points-system`
 - No-image Swift screen-body audit: `NO_VISUAL_COUNT=0` after adding a
   capture-example photo to the extra `capture-guide` helper screen
@@ -87,7 +93,7 @@ Current proof totals:
 | 29 | Hoop Calibration | Yes | Confirm hoop route asserted | Real hoop detection/calibration |
 | 30 | Readiness Check | Yes | Readiness items asserted; keep-position route asserted | Real camera readiness |
 | 31 | Capture Ready | Yes | Countdown/start path reaches live recording | Real camera capture |
-| 32 | Live Recording | Yes | Live shot/make/make-percent rails asserted; END ROUND route asserted | Real shot detection from camera |
+| 32 | Live Recording | Yes | Live shot/make/make-percent rails asserted; HUD starts at `0 / 0 / --` and updates from make/miss session events to `2 / 1 / 50.0%`; END ROUND route asserted | Real optical shot detection from camera |
 | 33 | Live Form Feedback | Yes | Stop recording route asserted | Real live form model output |
 | 34 | Shot Detected | Yes | Confirm make and mark miss actions asserted with toast | Real make/miss computer vision |
 | 35 | Capture Review | Yes | Review counters/queues asserted after make/miss | Backend session persistence |

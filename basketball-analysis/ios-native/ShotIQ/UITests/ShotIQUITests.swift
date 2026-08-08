@@ -321,6 +321,31 @@ final class ShotIQUITests: XCTestCase {
         }
     }
 
+    func testLiveRecordingHudStartsAtZeroAndUpdatesFromSessionEvents() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "live-recording"])
+        XCTAssertTrue(screen("screen-ios-live-recording").waitForExistence(timeout: 8))
+
+        let shots = app.otherElements["live-stat-SHOTS"]
+        let makes = app.otherElements["live-stat-MAKES"]
+        let makePercent = app.otherElements["live-stat-MAKE %"]
+        XCTAssertTrue(shots.exists)
+        XCTAssertTrue(makes.exists)
+        XCTAssertTrue(makePercent.exists)
+        XCTAssertEqual(shots.label, "SHOTS 0")
+        XCTAssertEqual(makes.label, "MAKES 0")
+        XCTAssertEqual(makePercent.label, "MAKE % --")
+        XCTAssertFalse(app.staticTexts["24"].exists)
+        XCTAssertFalse(app.staticTexts["15"].exists)
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+
+        tapControl("Simulate made shot")
+        tapControl("Simulate missed shot")
+
+        XCTAssertEqual(shots.label, "SHOTS 2")
+        XCTAssertEqual(makes.label, "MAKES 1")
+        XCTAssertEqual(makePercent.label, "MAKE % 50.0%")
+    }
+
     func testShotDetectedMarkMissShowsFeedbackAndOpensReview() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-detected"])
         XCTAssertTrue(screen("screen-ios-shot-detected").waitForExistence(timeout: 8))

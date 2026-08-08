@@ -703,3 +703,21 @@ final class PhotoQualityTests: XCTestCase {
         XCTAssertFalse(json?.contains("overallScore") == true)
     }
 }
+
+final class LiveRecordingStatsTests: XCTestCase {
+    func testMakeMissEventsUpdateHudValues() {
+        var stats = LiveRecordingStats()
+        XCTAssertEqual(stats.shots, 0)
+        XCTAssertEqual(stats.makes, 0)
+        XCTAssertEqual(stats.makePercentText, "--")
+        XCTAssertEqual(stats.accessibilityRows.map(\.1), ["0", "0", "--"])
+
+        stats.record(made: true)
+        stats.record(made: false)
+
+        XCTAssertEqual(stats.shots, 2)
+        XCTAssertEqual(stats.makes, 1)
+        XCTAssertEqual(stats.makePercentText, "50.0%")
+        XCTAssertEqual(stats.accessibilityRows.map(\.1), ["2", "1", "50.0%"])
+    }
+}

@@ -2899,11 +2899,31 @@ struct CaptureReadyView: View {     // 031
     }
 }
 
+struct LiveRecordingStats: Equatable {
+    var shots = 0
+    var makes = 0
+
+    var makePercentText: String {
+        guard shots > 0 else { return "--" }
+        return String(format: "%.1f%%", (Double(makes) / Double(shots)) * 100)
+    }
+
+    mutating func record(made: Bool) {
+        shots += 1
+        if made { makes += 1 }
+    }
+
+    var accessibilityRows: [(String, String)] {
+        [("SHOTS", "\(shots)"), ("MAKES", "\(makes)"), ("MAKE %", makePercentText)]
+    }
+}
+
 struct LiveRecordingView: View {    // 032
     @ObservedObject private var camera = CameraService.live
     @State private var seconds = 0
     @State private var timer: Timer?
     @State private var paused = false
+    @State private var stats = LiveRecordingStats()
     /// Single item-based route out of recording: two
     /// `navigationDestination(isPresented:)` modifiers on one view conflict and
     /// only the last one presents, which left "Stop recording" going nowhere.
@@ -2952,7 +2972,7 @@ struct LiveRecordingView: View {    // 032
                             .padding(14)
                         }
                         VStack {
-                            ForEach([("SHOTS", "24"), ("MAKES", "15"), ("MAKE %", "62.5%")], id: \.0) { label, value in
+                            ForEach(stats.accessibilityRows, id: \.0) { label, value in
                                 Color.clear
                                     .frame(width: 1, height: 1)
                                     .accessibilityElement(children: .ignore)
@@ -2980,20 +3000,11 @@ struct LiveRecordingView: View {    // 032
                     .overlay(alignment: .trailing) {
                         if camera.isLive {
                             VStack(alignment: .leading, spacing: 12) {
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text("SHOTS").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                    Text("24").font(.custom("Tungsten-Medium", size: 30)).foregroundStyle(.white)
-                                }
+                                liveRecordingStat("SHOTS", "\(stats.shots)")
                                 Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text("MAKES").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                    Text("15").font(.custom("Tungsten-Medium", size: 30)).foregroundStyle(.white)
-                                }
+                                liveRecordingStat("MAKES", "\(stats.makes)")
                                 Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text("MAKE %").shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                    Text("62.5%").font(.custom("Tungsten-Medium", size: 30)).foregroundStyle(.white)
-                                }
+                                liveRecordingStat("MAKE %", stats.makePercentText)
                             }
                             .padding(.trailing, 16)
                         }
@@ -3041,6 +3052,18 @@ struct LiveRecordingView: View {    // 032
                         .padding(.vertical, 14).padding(.horizontal, 8)
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
+
+                    if UITestHooks.active {
+                        HStack(spacing: 10) {
+                            Button("Simulate made shot") { stats.record(made: true) }
+                                .accessibilityIdentifier("Simulate made shot")
+                            Button("Simulate missed shot") { stats.record(made: false) }
+                                .accessibilityIdentifier("Simulate missed shot")
+                        }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 8)
+                    }
 
                     HStack(alignment: .top) {
                         Spacer()
@@ -3114,6 +3137,13 @@ struct LiveRecordingView: View {    // 032
             case .feedback: LiveFormFeedbackView()
             case .detected: ShotDetectedView()
             }
+        }
+    }
+
+    private func liveRecordingStat(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label).shotiqBody(9, weight: .bold).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+            Text(value).font(.custom("Tungsten-Medium", size: 30)).foregroundStyle(.white)
         }
     }
 

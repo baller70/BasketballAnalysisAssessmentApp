@@ -107,7 +107,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G021 | OPEN | P1 | `#device` `#analytics` | 028 | Make setup checks measured or demo-labeled. | Body/framing/lighting/stability checks change with real camera conditions. |
 | G022 | OPEN | P1 | `#device` `#backend` | 029 | Persist hoop calibration and use it in shot detection. | Changed hoop target changes downstream shot/arc calculation. |
 | G023 | OPEN | P1 | `#device` `#analytics` | 030 | Make readiness percentage measured. | Readiness changes with camera/body/hoop conditions and has source formula. |
-| G024 | OPEN | P0 | `#device` `#analytics` | 032 | Replace fixed live-recording HUD values. | HUD values are generated from live session state and update during recording. |
+| G024 | VERIFYING | P0 | `#device` `#analytics` | 032 | Replace fixed live-recording HUD values. | Live Recording no longer publishes fixed `24 / 15 / 62.5%` shot/make/make-percent values. It starts from `LiveRecordingStats` (`0 / 0 / --`) and updates from recorded session events; focused unit and UI proof assert make/miss events update the HUD to `2 / 1 / 50.0%`. Real optical shot detection classification still needs physical-device proof before `DONE`. |
 | G025 | OPEN | P0 | `#device` `#pose` `#analytics` `#demo` | 033 | Replace demo feedback with measured live feedback or mark feature demo. | Form score, confidence, detected phase, and cue update from live pose stream. |
 | G026 | OPEN | P0 | `#device` `#pose` | 033 | Prove skeleton follows real player while shooting. | Screen recording shows joints follow player motion with logged pose frames. |
 | G027 | OPEN | P0 | `#device` `#pose` `#analytics` | 034 | Trigger shot-detected from real detector, not navigation. | Real shot opens detection card; non-shot does not. |
@@ -1632,3 +1632,33 @@ Evidence captured on the laptop, all external-drive backed:
 Remaining limitations: this proves the honest empty queue and no-media guard.
 Real Photos/Files picker queueing, upload status updates, reload persistence,
 and web sync remain open before G015 can move from `VERIFYING` to `DONE`.
+
+### 2026-08-08 Live Recording HUD State Proof
+
+Twenty-second laptop functionality slice after local Xcode setup:
+
+- Removed the fixed `24`, `15`, and `62.5%` shot/make/make-percent values from
+  screen 032's visible and accessibility HUD.
+- Added `LiveRecordingStats` as the local session-state source for shot count,
+  make count, and make percentage.
+- Added UI-test-only controls that simulate made and missed shot events under
+  `UITestHooks.active`, so the production UI can be proved without shipping
+  visible test buttons.
+- Focused unit and UI proof now assert the live HUD starts at `0 / 0 / --` and
+  updates to `2 / 1 / 50.0%` after one made and one missed session event.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveRecordingStats-Unit-2026-08-08-v1.xcresult`
+  ran `ShotIQTests/LiveRecordingStatsTests` on the iPhone 17 Pro simulator. The
+  run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-LiveRecordingHud-2026-08-08-v1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testLiveRecordingHudStartsAtZeroAndUpdatesFromSessionEvents`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`.
+
+Remaining limitations: this proves screen 032 no longer pretends a new live
+recording already has previous shot totals. Real camera shot detection,
+optical make/miss classification, backend session persistence, and web/iOS
+history parity remain open before G024 can move from `VERIFYING` to `DONE`.
