@@ -160,6 +160,14 @@ final class ShotIQUITests: XCTestCase {
                       "Expected \(id) to contain \(text), got \(element.label)", file: file, line: line)
     }
 
+    private func assertElement(id: String, contains text: String,
+                               file: StaticString = #filePath, line: UInt = #line) {
+        let element = screen(id)
+        XCTAssertTrue(element.waitForExistence(timeout: 2), "Missing element id: \(id)", file: file, line: line)
+        XCTAssertTrue(element.label.localizedCaseInsensitiveContains(text),
+                      "Expected \(id) to contain \(text), got \(element.label)", file: file, line: line)
+    }
+
     private func assertSwitch(id: String, isOn: Bool,
                               file: StaticString = #filePath, line: UInt = #line) {
         let element = app.switches[id]
@@ -627,6 +635,48 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["24"].exists)
         tapControl("Copy")
         XCTAssertTrue(app.staticTexts["Copied"].waitForExistence(timeout: 3))
+    }
+
+    func testLatestPhotoAnalysisFeedsPlayerCardAndCustomizationFeedback() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard",
+                "-uiTestSampleMedia", "-uiTestSampleMediaName", "photo-068-visual-004",
+                "-uiTestForceSamplePose"])
+        XCTAssertTrue(screen("screen-ios-home-standard").waitForExistence(timeout: 20))
+        tapControl("Upload image")
+        XCTAssertTrue(screen("screen-ios-photo-upload-source").waitForExistence(timeout: 8))
+        tapControl("Use sample for all views")
+        XCTAssertTrue(waitForToastContaining("All views ready"))
+        tapControl("Continue with selected views")
+        XCTAssertTrue(screen("screen-ios-photo-review-crop").waitForExistence(timeout: 8))
+        app.buttons["USE PHOTO"].tap()
+        XCTAssertTrue(screen("screen-ios-upload-quality-check").waitForExistence(timeout: 8))
+        app.buttons["Continue to analysis"].tap()
+        XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
+
+        app.buttons["Profile"].tap()
+        XCTAssertTrue(screen("screen-ios-profile").waitForExistence(timeout: 8))
+        tapControl("Player card")
+        XCTAssertTrue(screen("screen-ios-player-card").waitForExistence(timeout: 8))
+        assertStaticText(id: "player-card-score", contains: "--")
+        assertStaticText(id: "player-card-verdict", contains: "UNAVAILABLE")
+        assertElement(id: "player-card-target", contains: "Keep elbow stacked")
+        assertElement(id: "player-card-source", contains: "PARTIAL")
+        assertElement(id: "player-card-shots", contains: "--")
+        assertElement(id: "player-card-makes", contains: "--")
+        assertElement(id: "player-card-make-rate", contains: "--")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+
+        tapControl("Customize card")
+        XCTAssertTrue(screen("screen-ios-customize-player-card").waitForExistence(timeout: 8))
+        assertStaticText(id: "customize-player-card-score", contains: "--")
+        assertStaticText(id: "customize-player-card-verdict", contains: "UNAVAILABLE")
+        assertElement(id: "customize-player-card-target", contains: "Keep elbow stacked")
+        assertElement(id: "customize-player-card-shots", contains: "--")
+        assertElement(id: "customize-player-card-makes", contains: "--")
+        assertElement(id: "customize-player-card-accuracy", contains: "--")
+        tapControl("Save card")
+        XCTAssertTrue(app.staticTexts["CARD SAVED"].waitForExistence(timeout: 8))
+        assertVisible("Save or share image", maxSwipes: 2)
     }
 
     func testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces() throws {

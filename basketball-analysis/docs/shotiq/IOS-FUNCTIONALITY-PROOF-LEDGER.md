@@ -171,8 +171,8 @@ The first pass should fix root causes before polishing dependent screens:
 | G065 | OPEN | P1 | `#path` `#backend` | 003-007 | Prove full auth, verify email, reset token journeys. | Real signup, verify, forgot password, reset, sign-in, sign-out flows pass. |
 | G066 | VERIFYING | P2 | `#demo` `#analytics` | 008-016 | Remove or label pre-analysis analytics in onboarding/permissions. | Focused onboarding proof now verifies the profile controls and carried-forward state through screens 008-016: measurement steppers/unit toggles, experience/body type, shooting profile, short-bio validation, review expander, save-fallback, permission skips, and return to a real home root. Pre-analysis analytics/sample stats still need a product decision or backend-derived source before `DONE`. |
 | G067 | OPEN | P0 | `#analytics` `#backend` | 017-020 | Home/profile-menu stats from real backend. | New/standard/pro user dashboard changes from seeded history. |
-| G068 | OPEN | P1 | `#analytics` `#media` | 048 | Player card generated from real history/profile. | Card values/media match current user data and latest analysis. |
-| G069 | OPEN | P2 | `#control` `#analytics` | 049 | Player-card customization persists over real data. | Custom style changes persist without changing underlying analytics. |
+| G068 | VERIFYING | P1 | `#analytics` `#media` | 048 | Player card generated from real history/profile. | Player Card now consumes the latest remembered native analysis through `AnalysisResultPresentation` instead of always showing canned 82/24/15/62.5% values. Focused UI proof walks selected photo -> native pose analysis -> Profile -> Player Card and verifies unavailable-score placeholders, coaching target, source coverage, and no `62.5%` demo make rate. Backend reload and real history aggregate proof remain before `DONE`. |
+| G069 | VERIFYING | P2 | `#control` `#analytics` | 049 | Player-card customization persists over real data. | Customize Player Card now uses the same latest-analysis card payload, persists accent/name/jersey through `@AppStorage`, renders/export the selected analysis placeholders without mutating analytics, and shows customer-visible save feedback. Focused UI and renderer proof passed; relaunch persistence proof and backend/shared-profile sync remain before `DONE`. |
 | G070 | OPEN | P1 | `#analytics` `#backend` | 050 | Elite match from measured metric vectors. | Different analysis result changes closest elite match and similarity score. |
 | G071 | OPEN | P1 | `#analytics` `#pose` `#media` | 051 | Photo comparison from user's measured shot. | Comparison overlays and angle differences match user result and selected elite profile. |
 | G072 | OPEN | P2 | `#backend` | 052 | Prove elite shooters list/detail navigation. | Shooter list loads from backend and selected shooter opens correct detail. |
@@ -2298,4 +2298,48 @@ completed-workout persistence, completion derivation, and customer-visible
 feedback on the simulator. It does not yet prove backend workout reload,
 calendar aggregation from saved workout records, or iOS/web shared database
 visibility. Those remain required before G052/G053 can move from `VERIFYING` to
+`DONE`.
+
+### 2026-08-08 Player Card Latest-Analysis And Save-Feedback Proof
+
+Implementation:
+
+- Added a shared Player Card presentation payload for screens 048/049 and the
+  card image renderer. Canonical demo launches still render the screenshot
+  baseline values, but a remembered native analysis now drives score, verdict,
+  coaching target, source coverage, mechanics, and export values.
+- Real selected-photo analyses no longer inherit the canned `82`, `24`, `15`,
+  or `62.5%` session stats. Unavailable shot-history fields are shown as `--`
+  until real history/backend data exists.
+- Customize Player Card now persists accent/name/jersey with `@AppStorage`,
+  keeps the underlying latest-analysis payload intact, and shows progress/success
+  feedback when rendering the save/share image.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testLatestPhotoAnalysisFeedsPlayerCardAndCustomizationFeedback-20260808-150000.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testLatestPhotoAnalysisFeedsPlayerCardAndCustomizationFeedback`
+  on the iPhone 17 Pro simulator. The run ended with `** TEST SUCCEEDED **`,
+  `Executed 1 test, with 0 failures`. The test walks selected sample photo
+  upload -> native pose analysis -> Profile -> Player Card -> Customize Card,
+  verifies `--`/`UNAVAILABLE` placeholders, selected-analysis coaching target,
+  source coverage, absence of the old `62.5%` demo make rate, and the card-saved
+  customer feedback sheet.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testPlayerCardRenderers-20260808-150000.xcresult`
+  ran
+  `ScreenshotExportRendererTests/testPlayerCardExportRendersShareableImage` and
+  `ScreenshotExportRendererTests/testCustomizedPlayerCardExportRendersShareableImage`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testPlayerCardCanonicalRegression-20260808-150000.xcresult`
+  ran `testPlayerCardImageSurfacesWork` and
+  `testCustomizePlayerCardImageSurfacesWork` on the iPhone 17 Pro simulator. The
+  run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`,
+  preserving the canonical demo/screenshot path.
+
+Remaining limitations: this proves latest in-app native analysis wiring,
+placeholder honesty, local customization persistence wiring, renderer viability,
+and customer-visible save feedback on the simulator. It does not yet prove
+backend history reload, real make/miss aggregates, or shared-profile sync across
+iOS/web; those remain required before G068/G069 can move from `VERIFYING` to
 `DONE`.

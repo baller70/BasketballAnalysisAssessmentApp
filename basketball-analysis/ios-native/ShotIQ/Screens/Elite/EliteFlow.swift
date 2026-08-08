@@ -37,6 +37,13 @@ fileprivate extension View {
 /// "Save card"). Mirrors the canonical card banner + score + session stats.
 fileprivate struct PlayerCardExportView: View {
     var name: String
+    var subtitle: String = "RIGHT-HANDED • ADVANCED"
+    var scoreText: String = "82"
+    var scorePct: Double = 0.82
+    var scoreVerdict: String = "GOOD"
+    var shotsText: String = "24"
+    var makesText: String = "15"
+    var accuracyText: String = "62.5%"
     var accent: Color = ShotIQColor.shotiqOrange
     var jersey: Int? = nil
     var body: some View {
@@ -54,20 +61,22 @@ fileprivate struct PlayerCardExportView: View {
             .background(accent)
             VStack(alignment: .leading, spacing: 10) {
                 Text(name.uppercased()).shotiqDisplay(34)
-                Text("RIGHT-HANDED • ADVANCED").shotiqBody(11, weight: .medium).kerning(0.6)
+                Text(subtitle.uppercased()).shotiqBody(11, weight: .medium).kerning(0.6)
                     .foregroundStyle(ShotIQColor.graphite)
                 HStack(alignment: .center, spacing: 16) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("FORM SCORE").shotiqBody(10, weight: .semibold).kerning(0.6)
                             .foregroundStyle(ShotIQColor.graphite)
-                        Text("82").font(.custom("Tungsten-Medium", size: 52)).foregroundStyle(accent)
-                        ScoreBar(pct: 0.82, color: accent).frame(width: 96)
+                        Text(scoreText).font(.custom("Tungsten-Medium", size: 52)).foregroundStyle(accent)
+                        ScoreBar(pct: scorePct, color: accent).frame(width: 96)
                     }
                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
-                    StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
-                    StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
-                    StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
+                    StatBlock(value: shotsText, label: "SHOTS", valueSize: ShotIQType.numeric)
+                    StatBlock(value: makesText, label: "MAKES", valueSize: ShotIQType.numeric)
+                    StatBlock(value: accuracyText, label: "MAKE %", valueSize: ShotIQType.numeric)
                 }
+                Text(scoreVerdict).shotiqBody(11, weight: .bold).kerning(0.6)
+                    .foregroundStyle(ShotIQColor.graphite)
                 PhaseStrip()
             }
             .padding(16)
@@ -80,13 +89,169 @@ fileprivate struct PlayerCardExportView: View {
 enum PlayerCardImageRenderer {
     @MainActor
     static func render(name: String,
+                       subtitle: String = "RIGHT-HANDED • ADVANCED",
+                       scoreText: String = "82",
+                       scorePct: Double = 0.82,
+                       scoreVerdict: String = "GOOD",
+                       shotsText: String = "24",
+                       makesText: String = "15",
+                       accuracyText: String = "62.5%",
                        accent: Color = ShotIQColor.shotiqOrange,
                        jersey: Int? = nil) -> UIImage? {
         let renderer = ImageRenderer(content: PlayerCardExportView(name: name,
+                                                                   subtitle: subtitle,
+                                                                   scoreText: scoreText,
+                                                                   scorePct: scorePct,
+                                                                   scoreVerdict: scoreVerdict,
+                                                                   shotsText: shotsText,
+                                                                   makesText: makesText,
+                                                                   accuracyText: accuracyText,
                                                                    accent: accent,
                                                                    jersey: jersey))
         renderer.scale = 3
         return renderer.uiImage
+    }
+}
+
+fileprivate struct PlayerCardPhaseData {
+    var phase: String
+    var score: String
+    var tint: Color
+    var active: Bool
+}
+
+fileprivate struct PlayerCardData {
+    var name: String
+    var subtitle: String
+    var scoreText: String
+    var scorePct: Double
+    var scoreVerdict: String
+    var scoreCaption: String
+    var streakText: String
+    var pointsText: String
+    var shotsText: String
+    var makesText: String
+    var accuracyText: String
+    var trendText: String
+    var archetypeTitle: String
+    var archetypeCaption: String
+    var primaryTarget: String
+    var primaryCaption: String
+    var badgeTitle: String
+    var badgeCaption: String
+    var heightText: String
+    var heightMetric: String
+    var wingspanText: String
+    var wingspanMetric: String
+    var shootingReachText: String
+    var shootingReachMetric: String
+    var standingReachText: String
+    var standingReachMetric: String
+    var phaseScores: [PlayerCardPhaseData]
+
+    static func make(user: APIUser?,
+                     latestAnalysis: ShotIQAnalysisResultDTO?,
+                     hand: String,
+                     level: String,
+                     heightIn: Int,
+                     wingspanIn: Int) -> PlayerCardData {
+        let name = user?.displayName?.isEmpty == false ? (user?.displayName ?? "Jordan Ellis") : "Jordan Ellis"
+        let isCanonicalDemo = latestAnalysis == nil && UITestHooks.demoData
+        let presentation = latestAnalysis.map(AnalysisResultPresentation.init)
+            ?? (isCanonicalDemo ? .canonicalDemo : .noResult)
+        let subtitle = "\(hand.capitalized)-handed • \(level.capitalized)"
+        let measurements = Self.measurements(isCanonicalDemo: isCanonicalDemo,
+                                             heightIn: heightIn,
+                                             wingspanIn: wingspanIn)
+        let phaseScores = isCanonicalDemo
+            ? [
+                PlayerCardPhaseData(phase: "SETUP", score: "84", tint: ShotIQColor.confirmGreen, active: false),
+                PlayerCardPhaseData(phase: "LOAD", score: "78", tint: ShotIQColor.analysisBlue, active: false),
+                PlayerCardPhaseData(phase: "RISE", score: "81", tint: ShotIQColor.analysisBlue, active: false),
+                PlayerCardPhaseData(phase: "RELEASE", score: "78", tint: ShotIQColor.shotiqOrange, active: true),
+                PlayerCardPhaseData(phase: "FOLLOW-THROUGH", score: "88", tint: ShotIQColor.confirmGreen, active: false),
+            ]
+            : Self.phaseScores(from: presentation)
+
+        return PlayerCardData(
+            name: name,
+            subtitle: subtitle,
+            scoreText: presentation.scoreText,
+            scorePct: presentation.scorePct,
+            scoreVerdict: presentation.scoreVerdict,
+            scoreCaption: presentation.scoreCaption,
+            streakText: isCanonicalDemo ? "6" : "--",
+            pointsText: isCanonicalDemo ? "2,840" : "--",
+            shotsText: isCanonicalDemo ? "24" : "--",
+            makesText: isCanonicalDemo ? "15" : "--",
+            accuracyText: isCanonicalDemo ? "62.5%" : "--",
+            trendText: isCanonicalDemo ? "+8.1%" : presentation.provenanceSummary,
+            archetypeTitle: isCanonicalDemo ? "Balanced Shooter" : "\(presentation.mediaLabel) Analysis",
+            archetypeCaption: isCanonicalDemo
+                ? "Smooth, repeatable, and well-aligned mechanics."
+                : presentation.provenanceSummary,
+            primaryTarget: presentation.coachingTarget,
+            primaryCaption: isCanonicalDemo
+                ? "Maintain vertical alignment for a cleaner release."
+                : "Built from the latest saved ShotIQ analysis.",
+            badgeTitle: isCanonicalDemo ? "Release Control" : presentation.sourceCoverageVerdict,
+            badgeCaption: isCanonicalDemo
+                ? "Consistent release height and timing."
+                : presentation.sourceCoverageCaption,
+            heightText: measurements.heightText,
+            heightMetric: measurements.heightMetric,
+            wingspanText: measurements.wingspanText,
+            wingspanMetric: measurements.wingspanMetric,
+            shootingReachText: measurements.shootingReachText,
+            shootingReachMetric: measurements.shootingReachMetric,
+            standingReachText: measurements.standingReachText,
+            standingReachMetric: measurements.standingReachMetric,
+            phaseScores: phaseScores)
+    }
+
+    private static func phaseScores(from presentation: AnalysisResultPresentation) -> [PlayerCardPhaseData] {
+        let labels = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+        let items = Array(presentation.scoreBreakdown.prefix(labels.count))
+        return labels.enumerated().map { index, label in
+            let item = index < items.count ? items[index] : nil
+            let pct = item?.scorePct ?? 0
+            return PlayerCardPhaseData(phase: label,
+                                       score: item?.scoreText ?? "--",
+                                       tint: Self.tint(for: pct, source: item?.source ?? "missing"),
+                                       active: label == "RELEASE")
+        }
+    }
+
+    private static func tint(for pct: Double, source: String) -> Color {
+        guard source != "missing" else { return ShotIQColor.graphite }
+        if pct >= 0.84 { return ShotIQColor.confirmGreen }
+        if pct >= 0.70 { return ShotIQColor.analysisBlue }
+        return ShotIQColor.shotiqOrange
+    }
+
+    private static func measurements(isCanonicalDemo: Bool,
+                                     heightIn: Int,
+                                     wingspanIn: Int) -> (heightText: String, heightMetric: String,
+                                                         wingspanText: String, wingspanMetric: String,
+                                                         shootingReachText: String, shootingReachMetric: String,
+                                                         standingReachText: String, standingReachMetric: String) {
+        if isCanonicalDemo {
+            return ("6'3\"", "190 cm", "6'6\"", "198 cm", "8'2\"", "249 cm", "8'0\"", "244 cm")
+        }
+        let standingReach = max(heightIn + 21, 0)
+        let shootingReach = max(standingReach + 2, 0)
+        return (Self.inchesText(heightIn), Self.cmText(heightIn),
+                Self.inchesText(wingspanIn), Self.cmText(wingspanIn),
+                Self.inchesText(shootingReach), Self.cmText(shootingReach),
+                Self.inchesText(standingReach), Self.cmText(standingReach))
+    }
+
+    private static func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private static func cmText(_ inches: Int) -> String {
+        "\(Int(round(Double(inches) * 2.54))) cm"
     }
 }
 
@@ -103,8 +268,19 @@ func shotiqPercentText(_ percent: Double?) -> String {
 
 struct PlayerCardView: View {       // 048
     @EnvironmentObject var app: AppState
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @State private var cardImage: Image?
-    private var playerName: String { app.user?.displayName ?? "Jordan Ellis" }
+    private var card: PlayerCardData {
+        PlayerCardData.make(user: app.user,
+                            latestAnalysis: app.recentMedia.first?.analysis,
+                            hand: hand,
+                            level: level,
+                            heightIn: heightIn,
+                            wingspanIn: wingspanIn)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-player-card") {
             VStack(spacing: 0) {
@@ -136,17 +312,17 @@ struct PlayerCardView: View {       // 048
                                 .overlay(Text(shotiqInitials(app.user))
                                     .shotiqBody(34, weight: .bold).foregroundStyle(ShotIQColor.graphite))
                             VStack(alignment: .leading, spacing: 4) {
-                                Text((app.user?.displayName ?? "Jordan Ellis").uppercased()).shotiqDisplay(36)
-                                Text("Right-handed • Advanced").shotiqBody(14)
+                                Text(card.name.uppercased()).shotiqDisplay(36)
+                                Text(card.subtitle).shotiqBody(14)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 HStack(spacing: 0) {
-                                    HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                                    HeaderStat(icon: "film", value: card.streakText, label: "DAY STREAK")
                                         .frame(maxWidth: .infinity)
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                    HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                    HeaderStat(icon: "circle.hexagongrid", value: card.pointsText, label: "POINTS")
                                         .frame(maxWidth: .infinity)
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                    HeaderStat(icon: "viewfinder", value: "24", label: "SHOTS TODAY")
+                                    HeaderStat(icon: "viewfinder", value: card.shotsText, label: "SHOTS TODAY")
                                         .frame(maxWidth: .infinity)
                                 }
                                 .padding(.top, 12)
@@ -166,28 +342,34 @@ struct PlayerCardView: View {       // 048
                                     .foregroundStyle(ShotIQColor.ink)
                                     .fixedSize(horizontal: true, vertical: false)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("82").font(.custom("Tungsten-Medium", size: 58))
+                                    Text(card.scoreText).font(.custom("Tungsten-Medium", size: 58))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                         .lineLimit(1).fixedSize()
-                                    ScoreBar(pct: 0.82).frame(maxWidth: 110)
+                                        .accessibilityIdentifier("player-card-score")
+                                    ScoreBar(pct: card.scorePct).frame(maxWidth: 110)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("GOOD").font(.custom("Tungsten-Medium", size: 17))
+                                    Text(card.scoreVerdict).font(.custom("Tungsten-Medium", size: 17))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("Keep building\nconsistency.").shotiqBody(12)
+                                        .accessibilityIdentifier("player-card-verdict")
+                                    Text(card.scoreCaption).shotiqBody(12)
                                         .foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(2).minimumScaleFactor(0.75)
+                                        .accessibilityIdentifier("player-card-caption")
                                 }
-                                .fixedSize(horizontal: true, vertical: false)
+                                .frame(width: 88, alignment: .leading)
                                 Spacer(minLength: 0)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("62.5%").font(.custom("Tungsten-Medium", size: 26))
+                                    Text(card.accuracyText).font(.custom("Tungsten-Medium", size: 26))
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1)
+                                        .accessibilityIdentifier("player-card-accuracy")
                                     Text("MAKE %").shotiqMicroCaps()
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("15 / 24").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                                    Text("\(card.makesText) / \(card.shotsText)").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1)
+                                        .accessibilityIdentifier("player-card-makes-shots")
                                 }
                                 .fixedSize(horizontal: true, vertical: false)
                             }
@@ -196,13 +378,15 @@ struct PlayerCardView: View {       // 048
                         .padding(.top, 16)
                         HStack(alignment: .top, spacing: 0) {
                             archetypeCol("ARCHETYPE", "point.3.connected.trianglepath.dotted",
-                                         "Balanced Shooter", "Smooth, repeatable, and well-aligned mechanics.")
+                                         card.archetypeTitle, card.archetypeCaption)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 12)
                             archetypeCol("PRIMARY TARGET", "figure.basketball",
-                                         "Keep elbow stacked through release", "Maintain vertical alignment for a cleaner release.")
+                                         card.primaryTarget, card.primaryCaption)
+                                .accessibilityIdentifier("player-card-target")
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 12)
                             archetypeCol("LATEST BADGE", "hexagon",
-                                         "Release Control", "Consistent release height and timing.")
+                                         card.badgeTitle, card.badgeCaption)
+                                .accessibilityIdentifier("player-card-source")
                         }
                         .padding(.vertical, 6)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
@@ -210,13 +394,13 @@ struct PlayerCardView: View {       // 048
                         .padding(.top, 18)
                         SectionLabel(text: "MEASUREMENTS").padding(.top, 18)
                         HStack(spacing: 0) {
-                            measureCol("HEIGHT", "6'3\"", "190 cm")
+                            measureCol("HEIGHT", card.heightText, card.heightMetric)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 54)
-                            measureCol("WINGSPAN", "6'6\"", "198 cm")
+                            measureCol("WINGSPAN", card.wingspanText, card.wingspanMetric)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 54)
-                            measureCol("SHOOTING REACH", "8'2\"", "249 cm")
+                            measureCol("SHOOTING REACH", card.shootingReachText, card.shootingReachMetric)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 54)
-                            measureCol("STANDING REACH", "8'0\"", "244 cm")
+                            measureCol("STANDING REACH", card.standingReachText, card.standingReachMetric)
                         }
                         .padding(.top, 8)
                         HStack(spacing: 6) {
@@ -226,17 +410,28 @@ struct PlayerCardView: View {       // 048
                         .padding(.top, 18)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -9), alignment: .top)
                         HStack(spacing: 0) {
-                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: card.shotsText, label: "SHOTS", valueSize: ShotIQType.numeric)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("player-card-shots")
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
+                            StatBlock(value: card.makesText, label: "MAKES", valueSize: ShotIQType.numeric)
+                                .frame(maxWidth: .infinity)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("player-card-makes")
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
+                            StatBlock(value: card.accuracyText, label: "MAKE %", valueSize: ShotIQType.numeric)
+                                .frame(maxWidth: .infinity)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityIdentifier("player-card-make-rate")
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
                             VStack(spacing: 3) {
                                 TrendLine(points: [58, 66, 61, 70]).frame(width: 84, height: 24)
                                 HStack(spacing: 3) {
-                                    Text("+8.1%").shotiqBody(11, weight: .bold).foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("vs last session").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                    Text(card.trendText).shotiqBody(11, weight: .bold).foregroundStyle(ShotIQColor.confirmGreen)
+                                        .accessibilityIdentifier("player-card-trend")
+                                    Text(UITestHooks.demoData && app.recentMedia.isEmpty ? "vs last session" : "source coverage")
+                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .lineLimit(1).minimumScaleFactor(0.7)
                             }
@@ -246,11 +441,9 @@ struct PlayerCardView: View {       // 048
                         SectionLabel(text: "MECHANICS OVERVIEW").padding(.top, 18)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -9), alignment: .top)
                         HStack(alignment: .top) {
-                            phaseScore("SETUP", "84", ShotIQColor.confirmGreen, false)
-                            phaseScore("LOAD", "78", ShotIQColor.analysisBlue, false)
-                            phaseScore("RISE", "81", ShotIQColor.analysisBlue, false)
-                            phaseScore("RELEASE", "78", ShotIQColor.shotiqOrange, true)
-                            phaseScore("FOLLOW-THROUGH", "88", ShotIQColor.confirmGreen, false)
+                            ForEach(Array(card.phaseScores.enumerated()), id: \.offset) { _, phase in
+                                phaseScore(phase.phase, phase.score, phase.tint, phase.active)
+                            }
                         }
                         .padding(.top, 8)
                         HStack(spacing: 12) {
@@ -317,7 +510,15 @@ struct PlayerCardView: View {       // 048
     }
     private func renderCard() {
         guard cardImage == nil else { return }
-        if let ui = PlayerCardImageRenderer.render(name: playerName) {
+        let card = card
+        if let ui = PlayerCardImageRenderer.render(name: card.name,
+                                                   subtitle: card.subtitle,
+                                                   scoreText: card.scoreText,
+                                                   scorePct: card.scorePct,
+                                                   scoreVerdict: card.scoreVerdict,
+                                                   shotsText: card.shotsText,
+                                                   makesText: card.makesText,
+                                                   accuracyText: card.accuracyText) {
             cardImage = Image(uiImage: ui)
         }
     }
@@ -336,6 +537,7 @@ struct PlayerCardView: View {       // 048
                 .multilineTextAlignment(.center)
                 .lineLimit(3).minimumScaleFactor(0.7)
         }
+        .accessibilityElement(children: .combine)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14).padding(.horizontal, 6)
     }
@@ -365,16 +567,22 @@ struct PlayerCardView: View {       // 048
 }
 
 struct CustomizePlayerCardView: View { // 049
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("playerCardAccent") private var accent = "Orange"
+    @AppStorage("playerCardJersey") private var jersey = 24
+    @AppStorage("playerCardFirstName") private var firstName = "Jordan"
+    @AppStorage("playerCardLastName") private var lastName = "Ellis"
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @State private var savedImage: Image?
     @State private var showSaveSheet = false
     @State private var layoutInfo: EliteInfoNote?
-    @State private var accent = "Orange"
     @State private var layout = "Classic"
     @State private var showTrend = true
-    @State private var jersey = 24
-    @State private var firstName = "Jordan"
-    @State private var lastName = "Ellis"
+    @State private var toast: ShotIQToast?
     private let banners: [(String, Color)] = [
         ("Orange", ShotIQColor.shotiqOrange), ("Blue", ShotIQColor.analysisBlue),
         ("Green", ShotIQColor.confirmGreen), ("Red", ShotIQColor.reviewRed),
@@ -382,6 +590,18 @@ struct CustomizePlayerCardView: View { // 049
     ]
     private var bannerColor: Color {
         banners.first(where: { $0.0 == accent })?.1 ?? ShotIQColor.shotiqOrange
+    }
+    private var previewCard: PlayerCardData {
+        PlayerCardData.make(user: app.user,
+                            latestAnalysis: app.recentMedia.first?.analysis,
+                            hand: hand,
+                            level: level,
+                            heightIn: heightIn,
+                            wingspanIn: wingspanIn)
+    }
+    private var previewName: String {
+        "\(firstName.trimmingCharacters(in: .whitespacesAndNewlines)) \(lastName.trimmingCharacters(in: .whitespacesAndNewlines))"
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-customize-player-card") {
@@ -421,13 +641,13 @@ struct CustomizePlayerCardView: View { // 049
                                 HStack(alignment: .top) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("\(firstName)\n\(lastName)".uppercased()).shotiqDisplay(34)
-                                        Text("RIGHT-HANDED • ADVANCED").shotiqBody(11, weight: .medium).kerning(0.6)
+                                        Text(previewCard.subtitle.uppercased()).shotiqBody(11, weight: .medium).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
                                     Spacer()
-                                    HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                                    HeaderStat(icon: "film", value: previewCard.streakText, label: "DAY STREAK")
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                    HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                    HeaderStat(icon: "circle.hexagongrid", value: previewCard.pointsText, label: "POINTS")
                                 }
                                 HStack(alignment: .top, spacing: 14) {
                                     // Canonical card frame — the pose overlay is already
@@ -437,23 +657,33 @@ struct CustomizePlayerCardView: View { // 049
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("FORM SCORE").shotiqBody(10, weight: .semibold).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("Tungsten-Medium", size: 52))
+                                        Text(previewCard.scoreText).font(.custom("Tungsten-Medium", size: 52))
                                             .foregroundStyle(bannerColor)
-                                        ScoreBar(pct: 0.82, color: bannerColor).frame(width: 96)
-                                        Text("GOOD").font(.custom("Tungsten-Medium", size: 16))
+                                            .accessibilityIdentifier("customize-player-card-score")
+                                        ScoreBar(pct: previewCard.scorePct, color: bannerColor).frame(width: 96)
+                                        Text(previewCard.scoreVerdict).font(.custom("Tungsten-Medium", size: 16))
                                             .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 4)
-                                        Text("Keep elbow stacked\nthrough release.").shotiqBody(11)
+                                            .accessibilityIdentifier("customize-player-card-verdict")
+                                        Text(previewCard.primaryTarget).shotiqBody(11)
                                             .foregroundStyle(ShotIQColor.graphite)
+                                            .lineLimit(2).minimumScaleFactor(0.75)
+                                            .accessibilityIdentifier("customize-player-card-target")
                                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.vertical, 8)
                                         HStack(spacing: 0) {
-                                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+                                            StatBlock(value: previewCard.shotsText, label: "SHOTS", valueSize: ShotIQType.numeric)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                                .accessibilityElement(children: .combine)
+                                                .accessibilityIdentifier("customize-player-card-shots")
                                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
-                                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+                                            StatBlock(value: previewCard.makesText, label: "MAKES", valueSize: ShotIQType.numeric)
                                                 .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .accessibilityElement(children: .combine)
+                                                .accessibilityIdentifier("customize-player-card-makes")
                                         }
-                                        StatBlock(value: "62.5%", label: "ACCURACY", valueSize: ShotIQType.numeric)
+                                        StatBlock(value: previewCard.accuracyText, label: "ACCURACY", valueSize: ShotIQType.numeric)
                                             .padding(.top, 4)
+                                            .accessibilityElement(children: .combine)
+                                            .accessibilityIdentifier("customize-player-card-accuracy")
                                     }
                                     .frame(width: 130)
                                 }
@@ -590,14 +820,24 @@ struct CustomizePlayerCardView: View { // 049
             .modifier(CanonicalTypeScale())
         }
         .eliteInfoAlert($layoutInfo)
+        .shotiqToast($toast)
     }
     /// Renders the customized card to a bitmap; ShareLink's sheet handles saving
     /// (no photo-library permission key ships in Info.plist).
     private func saveCard() {
-        if let ui = PlayerCardImageRenderer.render(name: "\(firstName) \(lastName)",
+        toast = .progress("Saving card", "Rendering your player card image.", progress: 0.7)
+        if let ui = PlayerCardImageRenderer.render(name: previewName.isEmpty ? previewCard.name : previewName,
+                                                   subtitle: previewCard.subtitle,
+                                                   scoreText: previewCard.scoreText,
+                                                   scorePct: previewCard.scorePct,
+                                                   scoreVerdict: previewCard.scoreVerdict,
+                                                   shotsText: previewCard.shotsText,
+                                                   makesText: previewCard.makesText,
+                                                   accuracyText: previewCard.accuracyText,
                                                    accent: bannerColor,
                                                    jersey: jersey) {
             savedImage = Image(uiImage: ui)
+            toast = .success("Card saved", "Your image is ready to save or share.")
             showSaveSheet = true
         }
     }

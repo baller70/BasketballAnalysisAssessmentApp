@@ -83,6 +83,12 @@ content/actions were asserted by a focused feature test.
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testSelectedPhotoAnalysisAppearsInMyMediaAndDetail-share-20260808-143111.xcresult`
 - Focused share-results export renderer result bundle:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testShareResultsExportRendersShareableImage-20260808-143528.xcresult`
+- Focused player-card latest-analysis/customization feedback result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testLatestPhotoAnalysisFeedsPlayerCardAndCustomizationFeedback-20260808-150000.xcresult`
+- Focused player-card export renderer result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-unit-testPlayerCardRenderers-20260808-150000.xcresult`
+- Focused player-card canonical regression result bundle:
+  `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-testPlayerCardCanonicalRegression-20260808-150000.xcresult`
 - Superseded non-passing bundled media/profile regression attempt:
   `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-test-results/ShotIQ-MediaProfileRegression-2026-08-08-v1.xcresult`
 
@@ -188,8 +194,8 @@ even when the page has no upload/photo feature.
 | 45 | Metric Detail | Yes | Measurements, ranges, confidence, correction cue, frame link asserted | Live metric derivation |
 | 46 | Flaws Overview | Yes | Flaw tags, impact levels, confidence, affected phases asserted; weak saved analysis now generates `ELBOW ANGLE OUT OF RANGE`, `RELEASE PATH DRIFT`, and `RELEASE SCORE GAP` through the Home -> Analysis Result -> Flaws route while old demo flaws are absent | Real backend/device-generated flaw semantics; web parity |
 | 47 | Flaw Detail | Yes | Evidence, impact, angles, fix cues, drill recommendation asserted; generated release-path flaw now opens detail with selected flaw title, description, saved score, offset value, ideal band, fix checklist, recommended drill, and no old elbow-flare demo angle/copy | Live backend/video evidence frames; web parity |
-| 48 | Player Card | Yes | Stats, measurements, mechanics, customize/share/download labels asserted | System share/download sheet |
-| 49 | Customize Player Card | Yes | Details, banner color, save card, saved sheet asserted | Real photo/export/share |
+| 48 | Player Card | Yes | Stats, measurements, mechanics, customize/share/download labels asserted; focused proof now walks selected photo analysis into Player Card and verifies `--`/`UNAVAILABLE` placeholders, latest coaching target, source coverage, and no old `62.5%` demo make rate | Backend reload/history aggregates; system share/download completion |
+| 49 | Customize Player Card | Yes | Details, banner color, save card, saved sheet asserted; focused proof verifies the customize preview/export uses the same latest selected-analysis payload, persists customization values locally, and shows card-saved feedback | Relaunch persistence proof; backend/shared-profile sync; real system share completion |
 | 50 | Elite Match | Yes | Analysis route to elite match and choose shooter route asserted | Backend elite comparison |
 | 51 | Photo Comparison | Yes | Elite shooter detail to comparison route asserted | Real uploaded user photo comparison |
 | 52 | Elite Shooters | Yes | Profile menu and elite-match chooser routes asserted | Live catalog updates |
