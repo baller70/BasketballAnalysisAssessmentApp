@@ -139,7 +139,7 @@ The first pass should fix root causes before polishing dependent screens:
 | ID | Status | Priority | Tags | Screen(s) | Work Item | Proof Gate |
 | --- | --- | --- | --- | --- | --- | --- |
 | G045 | VERIFYING | P1 | `#analytics` `#backend` | 054 | Training home recommendations from real history/goals. | Training Home now derives its primary target and first recommendation from the latest saved analysis, shows empty-history placeholders instead of fake demo workout stats, and replaces the recent-workout card with locally persisted shot-tracker history after a completed session. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout/goal reload and web parity remain before `DONE`. |
-| G046 | OPEN | P1 | `#analytics` | 055 | Quick start values from current user data. | Different user history changes form score/session context. |
+| G046 | VERIFYING | P1 | `#analytics` | 055 | Quick start values from current user data. | Quick Start now derives coaching target, score, target counts, workout note, and launch drill from latest saved analysis plus local workout history. Focused UI proof and canonical training regression pass on the laptop simulator. Backend workout reload, live training-plan mutations, physical-device proof, and web parity remain before `DONE`. |
 | G047 | VERIFYING | P2 | `#control` `#backend` | 056 | Prove drill catalog filters and saved drills. | Discover filters now prove `Beginner only` narrows to two drills; saving `STACK & SHOOT` uses a proper 44pt bookmark control, shows customer toast feedback, and persists locally after relaunch into My Drills. Backend/web sync remains before `DONE`. |
 | G048 | OPEN | P1 | `#analytics` | 057 | Drill detail uses player weakness/goals. | Drill detail target changes from selected real flaw/goal. |
 | G049 | VERIFYING | P1 | `#backend` `#demo` | 058 | Saved drill list from backend. | My Drills now merges locally saved catalog drills ahead of canonical rows and proves the saved drill survives relaunch with `Saved now` / `--` placeholder stats. Backend reload and iOS/web shared database parity remain before `DONE`. |
@@ -2537,3 +2537,45 @@ Remaining limitations: this proves screen 054 consumes measured-analysis and
 local workout state in simulator production navigation. It does not yet prove
 backend training-plan/workout reload, goal-derived recommendations from the live
 API, or iOS/web parity; those remain required before G045 can move to `DONE`.
+
+### 2026-08-08 Quick Start Analysis/History Proof
+
+Implementation:
+
+- Screen 055 now resolves `QuickStartData` from the latest saved analysis plus
+  locally persisted completed workouts instead of rendering fixed coaching copy,
+  score, targets, note, and drill destination.
+- The canonical demo path keeps the existing 24-shot / 15-make Quick Start
+  screenshot state when no analysis or workout history exists.
+- The non-canonical path changes the primary coaching target, score, verdict,
+  note, shot target, make target, target captions, and selected drill from the
+  current analysis/workout state. After a completed 3-shot, 2-make session, it
+  recommends a 6-shot / 4-make next session and explains the values came from
+  the last 3-shot session.
+- Quick Start now exposes stable proof identifiers for the target, score,
+  verdict, note, stepper controls, target values, and start-tracking route.
+  Drill Execution also exposes the chosen drill name so route tests prove the
+  payload, not only the destination screen.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-quick-start-history-20260808-1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testQuickStartUsesLatestAnalysisWorkoutHistoryAndTargetSteppers`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It verified weak saved-analysis text (`Stack elbow higher`, score
+  `82`, verdict `GOOD`), target steppers (`24` -> `25`, `15` -> `14`), a saved
+  3-shot / 2-make shot-tracker session, Quick Start's next-session values (`6`
+  shots, `4` makes), absence of the old `62.5%` demo stat, and launch into the
+  selected `STACK & SHOOT` drill.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-quick-start-canonical-20260808-1.xcresult`
+  ran `CanonicalScreenshotTests/test06TrainingScreens`. The run ended with
+  `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and re-captured
+  the canonical Training flow from `001-training-home` through
+  `009-shot-tracker` after the Quick Start data/routing changes.
+
+Remaining limitations: this proves screen 055 consumes measured-analysis and
+local workout state in simulator production navigation. It does not yet prove
+backend workout reload, live training-plan/goal mutations, physical-device
+behavior, or iOS/web parity; those remain required before G046 can move to
+`DONE`.

@@ -231,7 +231,7 @@ enum UITestHooks {
                                   "live-camera-setup", "hoop-calibration", "readiness-check",
                                   "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
                                   "analysis-taking-longer", "analysis-error",
-                                  "training-home", "discover-drills", "drill-detail", "my-drills",
+                                  "training-home", "quick-start", "discover-drills", "drill-detail", "my-drills",
                                   "workout-calendar", "shot-tracker", "workout-completion",
                                   "analytics-cards", "analytics-detailed", "profile",
                                   "player-card", "customize-player-card", "my-media",
@@ -436,6 +436,7 @@ struct MainTabView: View {
         case "shot-detected": ShotDetectedView()
         case "analysis-taking-longer": AnalysisTakingLongerView()
         case "training-home": TrainingHomeView()
+        case "quick-start": QuickStartView()
         case "discover-drills": DiscoverDrillsView()
         case "drill-detail": DrillDetailView(name: "STACK & SHOOT")
         case "my-drills": MyDrillsView()

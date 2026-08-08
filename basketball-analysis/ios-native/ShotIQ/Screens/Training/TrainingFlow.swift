@@ -356,6 +356,77 @@ struct TrainingHomeData {
     }
 }
 
+struct QuickStartData {
+    var target: String
+    var scoreText: String
+    var scorePct: Double
+    var verdict: String
+    var note: String
+    var shotTarget: Int
+    var makeTarget: Int
+    var shotCaption: String
+    var makeCaption: String
+    var drillName: String
+
+    static func resolve(latestAnalysis: ShotIQAnalysisResultDTO?,
+                        completedWorkoutsPayload: String) -> QuickStartData {
+        let presentation = latestAnalysis.map(AnalysisResultPresentation.init(result:))
+            ?? (UITestHooks.demoData ? .canonicalDemo : .noResult)
+        let latestWorkout = TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
+        let canonicalDemo = latestAnalysis == nil && latestWorkout == nil && UITestHooks.demoData
+        let target = presentation.coachingTarget
+        if canonicalDemo {
+            return QuickStartData(
+                target: target,
+                scoreText: "82",
+                scorePct: 0.82,
+                verdict: "GOOD",
+                note: "Keep building consistency.",
+                shotTarget: 24,
+                makeTarget: 15,
+                shotCaption: "Recommended 20-30 shots",
+                makeCaption: "Recommended 50-65%",
+                drillName: "Wall Elbow Alignment")
+        }
+
+        let baseShots = latestWorkout?.shots ?? 24
+        let baseMakes = latestWorkout?.makes ?? 15
+        let nextShots = latestWorkout == nil ? baseShots : max(1, min(60, baseShots + 3))
+        let nextMakes = latestWorkout == nil ? baseMakes : max(0, min(nextShots, baseMakes + 2))
+        let scoreText = presentation.scoreText != "--"
+            ? presentation.scoreText
+            : latestWorkout.map { "\($0.formScore)" } ?? "--"
+        let scorePct = presentation.scoreText != "--"
+            ? presentation.scorePct
+            : latestWorkout.map { Double($0.formScore) / 100 } ?? 0
+        return QuickStartData(
+            target: target,
+            scoreText: scoreText,
+            scorePct: scorePct,
+            verdict: presentation.scoreVerdict == "UNAVAILABLE"
+                ? (latestWorkout?.formVerdict ?? "READY")
+                : presentation.scoreVerdict,
+            note: latestWorkout.map { "Built from your last \($0.shots)-shot session." }
+                ?? presentation.scoreCaption,
+            shotTarget: nextShots,
+            makeTarget: nextMakes,
+            shotCaption: latestWorkout.map { "Last session \($0.shots) shots" }
+                ?? "Recommended 20-30 shots",
+            makeCaption: latestWorkout.map { "Last session \($0.makes) makes" }
+                ?? "Recommended 50-65%",
+            drillName: recommendedDrillName(for: target))
+    }
+
+    private static func recommendedDrillName(for target: String) -> String {
+        let normalized = target.lowercased()
+        if normalized.contains("wrist") { return "WRIST STAY DRILL" }
+        if normalized.contains("centerline") || normalized.contains("release closer") {
+            return "ALIGN & EXTEND"
+        }
+        return "STACK & SHOOT"
+    }
+}
+
 struct HRule: View {
     var body: some View { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
 }
@@ -544,8 +615,14 @@ struct TrainingHomeView: View {     // 054
 
 struct QuickStartView: View {       // 055
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var shotTarget = 24
     @State private var makeTarget = 15
+    @State private var targetsSeeded = false
+    private var quickData: QuickStartData {
+        QuickStartData.resolve(latestAnalysis: app.recentMedia.first?.analysis,
+                               completedWorkoutsPayload: completedWorkoutsPayload)
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-quick-start") {
             ScrollView {
@@ -555,22 +632,26 @@ struct QuickStartView: View {       // 055
                     VStack(alignment: .leading, spacing: 0) {
                         Text("QUICK START").shotiqDisplay(40).padding(.top, 16)
                         (Text("Get right to work. We've prefilled this workout from ")
-                            + Text("Keep elbow stacked through release.").fontWeight(.semibold))
+                            + Text("\(quickData.target).").fontWeight(.semibold))
                             .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 6)
+                            .accessibilityIdentifier("quick-start-context")
                         HStack(alignment: .top, spacing: 16) {
                             PhotoThumb(height: 190, photo: "055-visual-001").frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 6) {
                                 MicroLabel(text: "FORM SCORE")
-                                Text("82").font(.custom("Tungsten-Medium", size: 52))
+                                Text(quickData.scoreText).font(.custom("Tungsten-Medium", size: 52))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
-                                ScoreBar(pct: 0.82).frame(width: 96)
-                                Text("GOOD").shotiqBody(13, weight: .bold)
+                                    .accessibilityIdentifier("quick-start-score")
+                                ScoreBar(pct: quickData.scorePct).frame(width: 96)
+                                Text(quickData.verdict).shotiqBody(13, weight: .bold)
                                     .foregroundStyle(ShotIQColor.analysisBlue)
-                                Text("Keep building consistency.")
+                                    .accessibilityIdentifier("quick-start-verdict")
+                                Text(quickData.note)
                                     .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityIdentifier("quick-start-note")
                             }
                             .frame(width: 112, alignment: .leading)
                         }
@@ -581,9 +662,10 @@ struct QuickStartView: View {       // 055
                             VStack(alignment: .leading, spacing: 6) {
                                 MicroLabel(text: "PRIMARY COACHING TARGET")
                                 HStack {
-                                    Text("Keep elbow stacked through release").shotiqBody(18, weight: .bold)
+                                    Text(quickData.target).shotiqBody(18, weight: .bold)
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.8)
+                                        .accessibilityIdentifier("quick-start-target")
                                     Spacer()
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
@@ -597,12 +679,14 @@ struct QuickStartView: View {       // 055
                         SectionLabel(text: "WORKOUT TARGETS").padding(.top, 16)
                         HStack(alignment: .top, spacing: 12) {
                             targetCard("SHOT TARGET", icon: "target", value: $shotTarget,
-                                       unit: "SHOTS", caption: "Recommended 20–30 shots")
+                                       unit: "SHOTS", caption: quickData.shotCaption,
+                                       idPrefix: "quick-start-shot-target")
                             targetCard("MAKE TARGET", icon: "chart.line.uptrend.xyaxis", value: $makeTarget,
-                                       unit: "MAKES", caption: "Recommended 50–65%")
+                                       unit: "MAKES", caption: quickData.makeCaption,
+                                       idPrefix: "quick-start-make-target")
                         }
                         .padding(.top, 10)
-                        NavigationLink { DrillExecutionView(drillName: "Wall Elbow Alignment") } label: {
+                        NavigationLink { DrillExecutionView(drillName: quickData.drillName) } label: {
                             HStack(spacing: 10) {
                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
                                                          size: 18,
@@ -614,18 +698,26 @@ struct QuickStartView: View {       // 055
                             .foregroundStyle(.white)
                         }
                         .padding(.vertical, 22)
+                        .accessibilityIdentifier("quick-start-start-tracking")
                     }
                     .padding(.horizontal, 20)
                 }
             }
         }
+        .onAppear {
+            guard !targetsSeeded else { return }
+            shotTarget = quickData.shotTarget
+            makeTarget = quickData.makeTarget
+            targetsSeeded = true
+        }
     }
     private func targetCard(_ label: String, icon: String, value: Binding<Int>,
-                            unit: String, caption: String) -> some View {
+                            unit: String, caption: String, idPrefix: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             MicroLabel(text: label)
             HStack(alignment: .top) {
                 StatBlock(value: "\(value.wrappedValue)", label: unit, valueSize: ShotIQType.numeric * 1.4)
+                    .accessibilityIdentifier(idPrefix)
                 Spacer()
                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
                                          size: 24,
@@ -636,21 +728,22 @@ struct QuickStartView: View {       // 055
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
                 Spacer()
-                stepButton("minus") { value.wrappedValue = max(0, value.wrappedValue - 1) }
-                stepButton("plus") { value.wrappedValue += 1 }
+                stepButton("minus", id: "\(idPrefix)-minus") { value.wrappedValue = max(0, value.wrappedValue - 1) }
+                stepButton("plus", id: "\(idPrefix)-plus") { value.wrappedValue += 1 }
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
     }
-    private func stepButton(_ icon: String, action: @escaping () -> Void) -> some View {
+    private func stepButton(_ icon: String, id: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 14, weight: .medium))
                 .frame(width: 38, height: 38)
                 .overlay(Circle().stroke(ShotIQColor.rule))
                 .foregroundStyle(ShotIQColor.ink)
         }
+        .accessibilityIdentifier(id)
     }
 }
 
@@ -1785,7 +1878,13 @@ struct DrillExecutionView: View {   // 060
                     PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(alignment: .center, spacing: 10) {
-                            Text("DRILL EXECUTION").shotiqDisplay(30)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("DRILL EXECUTION").shotiqDisplay(30)
+                                Text(drillName.uppercased()).shotiqBody(10, weight: .bold).kerning(0.5)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                    .accessibilityIdentifier("drill-execution-drill-name")
+                            }
                             Text("Set 2 of 5").shotiqBody(12, weight: .medium)
                                 .padding(.horizontal, 10).padding(.vertical, 5)
                                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))

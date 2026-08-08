@@ -391,6 +391,44 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["62.5%"].exists)
     }
 
+    func testQuickStartUsesLatestAnalysisWorkoutHistoryAndTargetSteppers() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestResetTrainingWorkouts", "-uiTestStage", "quick-start"])
+        XCTAssertTrue(screen("screen-ios-quick-start").waitForExistence(timeout: 8))
+        assertStaticText(id: "quick-start-target", contains: "Stack elbow higher")
+        assertStaticText(id: "quick-start-score", contains: "82")
+        assertStaticText(id: "quick-start-verdict", contains: "GOOD")
+        assertElement(id: "quick-start-shot-target", contains: "24")
+        assertElement(id: "quick-start-make-target", contains: "15")
+
+        tapButton(id: "quick-start-shot-target-plus")
+        assertElement(id: "quick-start-shot-target", contains: "25")
+        tapButton(id: "quick-start-make-target-minus")
+        assertElement(id: "quick-start-make-target", contains: "14")
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "quick-start"])
+        XCTAssertTrue(screen("screen-ios-quick-start").waitForExistence(timeout: 8))
+        assertStaticText(id: "quick-start-target", contains: "Stack elbow higher")
+        assertStaticText(id: "quick-start-score", contains: "82")
+        assertVisibleElement(id: "quick-start-note", contains: "last 3-shot session")
+        assertElement(id: "quick-start-shot-target", contains: "6")
+        assertElement(id: "quick-start-make-target", contains: "4")
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+
+        tapButton(id: "quick-start-start-tracking")
+        XCTAssertTrue(screen("screen-ios-drill-execution").waitForExistence(timeout: 8))
+        assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
+    }
+
     func testWorkoutCalendarShowsCompletedTrackerSession() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
                 "-uiTestStage", "shot-tracker"])
