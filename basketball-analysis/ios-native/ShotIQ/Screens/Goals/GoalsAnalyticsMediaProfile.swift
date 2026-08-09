@@ -4085,6 +4085,9 @@ struct EditProfileSheet: View {
 
 struct SettingsHubView: View {      // 071
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @AppStorage("notifications") private var notifs = true
     @AppStorage("coachingAudio") private var audio = true
     @AppStorage("units") private var metric = false
@@ -4096,6 +4099,71 @@ struct SettingsHubView: View {      // 071
     @State private var showPrivacy = false
     @State private var showAbout = false
     @State private var toast: ShotIQToast?
+    @State private var productionProfile: APIProfileDTO?
+    @State private var productionBadges: BadgesResponseDTO?
+    @State private var productionHistoryStats: HistoryStats?
+    @State private var loadedProductionContext = false
+
+    private struct SettingsSummary {
+        var displayName: String
+        var initials: String
+        var subtitle: String
+        var streak: String
+        var points: String
+        var formScore: String
+        var formPct: Double
+        var shots: String
+        var makes: String
+        var makeRate: String
+        var trend: String
+    }
+
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+
+    private var isCanonicalSettingsDemo: Bool {
+        UITestHooks.demoData && workouts.isEmpty && productionBadges == nil && productionHistoryStats == nil
+    }
+
+    private var summary: SettingsSummary {
+        if isCanonicalSettingsDemo {
+            return SettingsSummary(displayName: "Jordan Ellis",
+                                   initials: "JE",
+                                   subtitle: "Right-handed • Advanced",
+                                   streak: "6",
+                                   points: "2,840",
+                                   formScore: "82",
+                                   formPct: 0.82,
+                                   shots: "24",
+                                   makes: "15",
+                                   makeRate: "62.5%",
+                                   trend: "+8.1%")
+        }
+
+        let display = Self.displayName(user: app.user, profile: productionProfile)
+        let totalShots = workouts.reduce(0) { $0 + $1.shots }
+        let totalMakes = workouts.reduce(0) { $0 + $1.makes }
+        let localPoints = workouts.reduce(0) { $0 + $1.pointsEarned }
+        let latestScore = workouts.first?.formScore ?? productionHistoryStats?.latestScore.map { Int($0.rounded()) }
+        let previousScore = workouts.dropFirst().first?.formScore
+        let trend = previousScore.flatMap { previous in
+            latestScore.map { latest in "\(latest - previous >= 0 ? "+" : "")\(latest - previous)" }
+        } ?? Self.percentTrend(productionHistoryStats?.improvementRate)
+        let profileHand = productionProfile?.dominantHand ?? hand
+        let profileLevel = productionProfile?.experienceLevel ?? level
+        return SettingsSummary(displayName: display,
+                               initials: Self.initials(for: display),
+                               subtitle: "\(Self.titleCase(profileHand))-handed • \(Self.titleCase(profileLevel))",
+                               streak: Self.numberOrDash(productionBadges?.stats?.currentStreak) ?? (workouts.isEmpty ? "--" : "\(Self.localStreakDays(from: workouts))"),
+                               points: Self.groupedNumber(productionBadges?.stats?.totalPoints) ?? (workouts.isEmpty ? "--" : Self.groupedNumber(localPoints) ?? "\(localPoints)"),
+                               formScore: latestScore.map { "\($0)" } ?? "--",
+                               formPct: Double(latestScore ?? 0) / 100.0,
+                               shots: totalShots == 0 ? "--" : "\(totalShots)",
+                               makes: totalShots == 0 ? "--" : "\(totalMakes)",
+                               makeRate: totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100),
+                               trend: trend ?? "--")
+    }
 
     // PUT /api/settings — sections are merged over server defaults
     // (src/app/api/settings/route.ts); extra keys are stored harmlessly.
@@ -4137,6 +4205,27 @@ struct SettingsHubView: View {      // 071
         toast = .success("Settings saved", "\(label) updated.")
     }
 
+    private func openAfterFeedback(_ feedback: ShotIQToast, action: @escaping @MainActor () -> Void) {
+        toast = feedback
+        guard !UITestHooks.active else { return }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            action()
+        }
+    }
+
+    private func loadProductionContext() async {
+        guard !loadedProductionContext, !UITestHooks.demoData else { return }
+        loadedProductionContext = true
+        async let profile = try? APIClient.shared.profile()
+        async let badges = try? APIClient.shared.badges()
+        async let history = try? APIClient.shared.history(limit: 10)
+        productionProfile = await profile ?? nil
+        productionBadges = await badges ?? nil
+        let historyResult = await history
+        productionHistoryStats = historyResult?.stats
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-settings-hub") {
             ScrollView {
@@ -4151,23 +4240,31 @@ struct SettingsHubView: View {      // 071
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 8)
-                            HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                            HeaderStat(icon: "film", value: summary.streak, label: "DAY STREAK")
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("\(summary.streak) DAY STREAK")
+                                .accessibilityIdentifier("settings-day-streak")
                             VRule(height: 46)
-                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                            HeaderStat(icon: "circle.hexagongrid", value: summary.points, label: "POINTS")
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("\(summary.points) POINTS")
+                                .accessibilityIdentifier("settings-points")
                         }
                         .padding(.top, 16)
                         ShotIQCard {
                             VStack(spacing: 0) {
                                 HStack(spacing: 14) {
                                     Circle().fill(ShotIQColor.rule).frame(width: 62, height: 62)
-                                        .overlay(Text(shotiqInitials(app.user))
+                                        .overlay(Text(summary.initials)
                                             .shotiqBody(19, weight: .bold)
                                             .foregroundStyle(ShotIQColor.graphite))
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
+                                        Text(summary.displayName.uppercased())
                                             .shotiqDisplay(26)
-                                        Text("Right-handed • Advanced").shotiqBody(13)
+                                            .accessibilityIdentifier("settings-display-name")
+                                        Text(summary.subtitle).shotiqBody(13)
                                             .foregroundStyle(ShotIQColor.graphite)
+                                            .accessibilityIdentifier("settings-subtitle")
                                     }
                                     Spacer()
                                 }
@@ -4177,17 +4274,28 @@ struct SettingsHubView: View {      // 071
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text("FORM SCORE").shotiqBody(8, weight: .semibold).kerning(0.4)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("Tungsten-Medium", size: 28))
+                                        Text(summary.formScore).font(.custom("Tungsten-Medium", size: 28))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 58)
+                                            .accessibilityIdentifier("settings-form-score")
+                                        ScoreBar(pct: summary.formPct).frame(width: 58)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    settingsStat("24", "SHOTS")
-                                    settingsStat("15", "MAKES")
-                                    settingsStat("62.5%", "MAKE %")
+                                    settingsStat(summary.shots, "SHOTS")
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("\(summary.shots) SHOTS")
+                                        .accessibilityIdentifier("settings-total-shots")
+                                    settingsStat(summary.makes, "MAKES")
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("\(summary.makes) MAKES")
+                                        .accessibilityIdentifier("settings-total-makes")
+                                    settingsStat(summary.makeRate, "MAKE %")
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("\(summary.makeRate) MAKE %")
+                                        .accessibilityIdentifier("settings-make-rate")
                                     VStack(spacing: 3) {
-                                        Text("+8.1%").shotiqBody(12, weight: .bold)
+                                        Text(summary.trend).shotiqBody(12, weight: .bold)
                                             .foregroundStyle(ShotIQColor.confirmGreen)
+                                            .accessibilityIdentifier("settings-trend")
                                         Text("VS LAST SESSION").shotiqBody(6.5, weight: .medium)
                                             .foregroundStyle(ShotIQColor.graphite)
                                             .lineLimit(1).minimumScaleFactor(0.6)
@@ -4235,12 +4343,14 @@ struct SettingsHubView: View {      // 071
                         .padding(.top, 8)
                         ShotIQCard {
                             VStack(spacing: 0) {
-                                settingsRow("bell", "Notifications", "Manage alerts, reminders, and updates.",
+                                settingsRow("notifications", "bell", "Notifications", "Manage alerts, reminders, and updates.",
                                             status: notifs ? "3 ON" : "OFF", statusColor: ShotIQColor.analysisBlue) {
-                                    CameraService.openSystemSettings()
+                                    openAfterFeedback(.info("Opening Settings", "Update notification permissions in iOS Settings.")) {
+                                        CameraService.openSystemSettings()
+                                    }
                                 }
                                 HRule().padding(.leading, 14)
-                                settingsRow("arrow.triangle.2.circlepath", "Automation",
+                                settingsRow("automation", "arrow.triangle.2.circlepath", "Automation",
                                             "Auto-analysis, uploads, and data handling.",
                                             status: "\([autoAnalysis, dataBackup].filter { $0 }.count) ACTIVE",
                                             statusColor: ShotIQColor.confirmGreen) {
@@ -4255,7 +4365,7 @@ struct SettingsHubView: View {      // 071
                                         .padding(.leading, 26)
                                 }
                                 HRule().padding(.leading, 14)
-                                settingsRow("lock.shield", "Data and privacy",
+                                settingsRow("data-privacy", "lock.shield", "Data and privacy",
                                             "Control your data, export, and permissions.",
                                             status: nil, statusColor: nil) {
                                     withAnimation { showPrivacy.toggle() }
@@ -4269,17 +4379,20 @@ struct SettingsHubView: View {      // 071
                                         .padding(.leading, 26)
                                 }
                                 HRule().padding(.leading, 14)
-                                settingsRow("questionmark.circle", "Help and support",
+                                settingsRow("help-support", "questionmark.circle", "Help and support",
                                             "FAQs, guides, and contact options.",
                                             status: nil, statusColor: nil) {
                                     if let url = URL(string: "mailto:support@shotiq.app?subject=ShotIQ%20Support") {
-                                        UIApplication.shared.open(url)
+                                        openAfterFeedback(.info("Opening Support", "Preparing an email to ShotIQ support.")) {
+                                            UIApplication.shared.open(url)
+                                        }
                                     }
                                 }
                                 HRule().padding(.leading, 14)
-                                settingsRow("info.circle", "About ShotIQ",
+                                settingsRow("about-shotiq", "info.circle", "About ShotIQ",
                                             "Version 1.0.0, terms, and app information.",
                                             status: nil, statusColor: nil) {
+                                    toast = .info("About ShotIQ", "Version details opened.")
                                     showAbout = true
                                 }
                             }
@@ -4311,7 +4424,55 @@ struct SettingsHubView: View {      // 071
                 }
             }
         }
+        .task { await loadProductionContext() }
         .shotiqToast($toast)
+    }
+    private static func displayName(user: APIUser?, profile: APIProfileDTO?) -> String {
+        if let profileName = profile?.displayName, !profileName.isEmpty { return profileName }
+        if let userName = user?.displayName, !userName.isEmpty { return userName }
+        let full = [profile?.firstName ?? user?.firstName,
+                    profile?.lastName ?? user?.lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if !full.isEmpty { return full }
+        return user?.email?.split(separator: "@").first.map(String.init) ?? "ShotIQ Athlete"
+    }
+    private static func initials(for name: String) -> String {
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return parts.prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
+        }
+        return String(name.prefix(2)).uppercased()
+    }
+    private static func titleCase(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
+    }
+    private static func groupedNumber(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+    private static func numberOrDash(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return "\(value)"
+    }
+    private static func percentTrend(_ value: Double?) -> String? {
+        guard let value else { return nil }
+        return String(format: "%+.1f%%", value)
+    }
+    private static func localStreakDays(from workouts: [TrainingWorkoutRecord]) -> Int {
+        let calendar = Calendar.current
+        let activeDays = Set(workouts.map { calendar.startOfDay(for: $0.completedAt) })
+        var streak = 0
+        var cursor = calendar.startOfDay(for: Date())
+        while activeDays.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return max(streak, activeDays.isEmpty ? 0 : 1)
     }
     private func settingsStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
@@ -4333,7 +4494,7 @@ struct SettingsHubView: View {      // 071
         .padding(14)
         .accessibilityIdentifier("settings-toggle-\(id)")
     }
-    private func settingsRow(_ icon: String, _ title: String, _ caption: String,
+    private func settingsRow(_ id: String, _ icon: String, _ title: String, _ caption: String,
                              status: String?, statusColor: Color?,
                              action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -4356,6 +4517,7 @@ struct SettingsHubView: View {      // 071
             }
             .padding(14)
         }
+        .accessibilityIdentifier("settings-row-\(id)")
     }
 }
 

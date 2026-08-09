@@ -701,7 +701,7 @@ final class ShotIQUITests: XCTestCase {
         let coachingAudio = "settings-toggle-coaching-audio"
 
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetSettings",
-                "-uiTestStage", "settings-hub"])
+                "-uiTestResetTrainingWorkouts", "-uiTestStage", "settings-hub"])
         XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
         assertSwitch(id: coachingAudio, isOn: true)
 
@@ -717,6 +717,81 @@ final class ShotIQUITests: XCTestCase {
         tapSwitch(id: coachingAudio)
         XCTAssertTrue(waitForToastContaining("Settings saved"))
         assertSwitch(id: coachingAudio, isOn: true)
+    }
+
+    func testSettingsPreservesCanonicalDemoStatsWithoutWorkoutHistory() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+        assertElement(id: "settings-display-name", contains: "JORDAN ELLIS")
+        assertElement(id: "settings-subtitle", contains: "Right-handed")
+        assertElement(id: "settings-day-streak", contains: "6")
+        assertElement(id: "settings-points", contains: "2,840")
+        assertElement(id: "settings-form-score", contains: "82")
+        assertElement(id: "settings-total-shots", contains: "24")
+        assertElement(id: "settings-total-makes", contains: "15")
+        assertElement(id: "settings-make-rate", contains: "62.5%")
+        assertElement(id: "settings-trend", contains: "+8.1%")
+    }
+
+    func testSettingsUsesWorkoutHistoryStats() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+        assertElement(id: "settings-display-name", contains: "JORDAN ELLIS")
+        assertElement(id: "settings-day-streak", contains: "1")
+        assertElement(id: "settings-points", contains: "85")
+        assertElement(id: "settings-form-score", contains: "99")
+        assertElement(id: "settings-total-shots", contains: "6")
+        assertElement(id: "settings-total-makes", contains: "5")
+        assertElement(id: "settings-make-rate", contains: "83.3%")
+        assertElement(id: "settings-trend", contains: "+29")
+        XCTAssertFalse(app.staticTexts["2,840"].exists)
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
+    }
+
+    func testSettingsRowsRevealControlsAndShowFeedback() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetSettings",
+                "-uiTestResetTrainingWorkouts", "-uiTestStage", "settings-hub"])
+        XCTAssertTrue(screen("screen-ios-settings-hub").waitForExistence(timeout: 8))
+
+        tapButton(id: "settings-row-automation")
+        XCTAssertTrue(app.switches["settings-toggle-auto-analysis"].waitForExistence(timeout: 2))
+        tapSwitch(id: "settings-toggle-auto-analysis")
+        XCTAssertTrue(waitForToastContaining("Settings saved"))
+        XCTAssertTrue(waitForToastContaining("Auto-analysis refresh"))
+
+        tapButton(id: "settings-row-data-privacy")
+        XCTAssertTrue(app.switches["settings-toggle-anonymous-analytics"].waitForExistence(timeout: 2))
+        tapSwitch(id: "settings-toggle-anonymous-analytics")
+        XCTAssertTrue(waitForToastContaining("Settings saved"))
+        XCTAssertTrue(waitForToastContaining("Anonymous analytics"))
+
+        tapButton(id: "settings-row-notifications")
+        XCTAssertTrue(waitForToastContaining("Opening Settings"))
+
+        tapButton(id: "settings-row-help-support")
+        XCTAssertTrue(waitForToastContaining("Opening Support"))
+
+        tapButton(id: "settings-row-about-shotiq")
+        XCTAssertTrue(app.alerts["ShotIQ 1.0.0"].waitForExistence(timeout: 2))
+        app.alerts["ShotIQ 1.0.0"].buttons["OK"].tap()
     }
 
     func testVideoUploadShowsFullScreenSourceOptions() throws {

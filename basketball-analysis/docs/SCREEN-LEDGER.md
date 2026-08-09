@@ -36,6 +36,34 @@ iOS 001 -> 072, then desktop 077 -> 096.
 | 004 | create-account | IN PROGRESS | — | whole screen **11.457 -> 5.3669**, verified in built captures. THIS ROUND (all three solves matched their in-page prediction to four decimals, which is the evidence for rule 47): overlay viewBox origin +0.48/+0.50 device px — twelve features, twelve negative deltas, one container offset, nine bands better from one parameter; plate 10.5487 -> **8.4842** (createLab scaleX 0.90 -> 0.7845, height exact against a 14.7% advance); signin 6.6987 -> **5.1897** (signinLab 21.0/0.90 -> 18.95/0.9092, both axes 11% over within 0.7% of each other — the OPPOSITE diagnosis to createLab on a run seeded identically); wordmark 8.7161 -> **4.1879** (ty 1.2670, NOT dy — see rule 47). Carried by the overlay alone: checkbox 9.3142 -> 7.1859, orrow 3.1520 -> 2.4379, fieldPass 5.2310 -> 4.6804, fieldConf 5.1655 -> 4.7994, fieldFirst 3.4513 -> 3.1399, fieldLast 3.3287 -> 2.9323, eyePass 8.7305 -> 8.1379, eyeConf 7.4985 -> 7.1219, fieldEmail 10.5242 -> 10.1237. EARLIER: display 89.96->14.801, lede 21.19->12.770, terms 20.078->10.666, five labels jointly 44.347->28.342, oneacct 12.912->6.329, helpPass 10.949->4.571. monogram **13.8039 -> 5.5289** — its "unreachable residual" was an artefact of the sweep rule 40 discredited; re-solved against a clean control, a 1.20px translation was worth 8.3 of the 13.8. The remaining 5.5289 IS the shape error (L +1.05 R -0.35 T -1.13 B -0.21: 1.40px narrow, 0.92px tall, aspect 1.291 vs 1.343) and is left as measured — closing it means re-tracing Marks004.tsx, and a non-uniform scale would buy the extents with the stroke widths. display **14.8012 -> 14.3046** on the CORRECTED window (ty -0.3455 + stroke 0.15; the first attempt at this band was scored on a window that clipped 20 of its 78 ink rows and is retracted — see rule 49/50). lede 12.7701 INVESTIGATED, NOT SHIPPED: not colour and not weight (rule 51 control), position already optimal (control beats every offset), stems median 2.0 in both. A (size,scale) valley floor of ~12.01 exists — 13.00/0.976 = 12.013, 12.94/0.980 = 12.057, 13.06/0.972 = 12.167 — but it is the rule 32 degeneracy, a diagonal ridge the band mean cannot resolve into one pair, and the attempt to pin the size independently used an x-height estimator that spanned BOTH lede lines (rule 45) and is void. Not shipped on an undetermined pair. OPEN, largest first: display 14.3046, lede 12.7701, terms 10.6657, fieldEmail 10.1237, plate 8.4842, labConfirm 8.3835, eyePass 8.1379, checkbox 7.1859, eyeConf 7.1219, oneacct 6.3291, monogram 5.5289 (shape). INDEPENDENTLY VERIFIED (not the builder's self-report): `.next-r9` predated the current 004 sources by two days and could not have contained this work, so it was reclaimed and a clean production build made into `.next-004v`, served by `next start` on 3181 and captured with the shipping harness. `python3 -m measure.report004` reproduces EVERY band to four decimals — whole screen 5.3669, display 14.3046, lede 12.7701, terms 10.6657, fieldEmail 10.1237, plate 8.4842, monogram 5.5289, orrow 2.4379. The work is real and it is in the built output. For calibration 003 graded A at 3.644, so 5.3669 is not yet there. SENT TO AN INDEPENDENT GRADER, brief at scratchpad/BRIEF-004.md. NOT GRADED YET. |
 | 005+ | … | not started | — | |
 
+## Native functional fixes outside the pixel queue
+
+### 2026-08-08 — iOS 071 settings hub
+
+Screen 071 (`ios.settings-hub`) now uses real app state instead of permanently
+showing the canonical demo numbers. Empty UI-test demo state still preserves the
+canonical Jordan Ellis header, but real completed shot-tracker workouts drive
+streak, points, form score, shots, makes, make percentage and trend. Production
+profile, badge and analysis-history APIs are loaded when not in UI-test demo
+mode. The settings action rows now show toast feedback before opening external
+destinations, and UI-test mode suppresses those external opens so the feedback is
+deterministic.
+
+Proof on the laptop, all build outputs on `/Volumes/TBF SKILLZ.INC/CodexWork`:
+Swift app typecheck passed (20 files), Swift UI-test typecheck passed (2 files),
+XcodeGen regenerated `ShotIQ.xcodeproj`, generic iOS Xcode build passed, and
+generic iOS Simulator `build-for-testing` passed with the new Screen 071 tests
+compiled into `ShotIQUITests-Runner.app`.
+
+Runtime UI execution is still blocked by host setup, not the ShotIQ code:
+CoreSimulator can enumerate the iOS 26.3 runtime, but cannot create simulator
+devices on the external APFS volume while that volume is mounted with ownership
+disabled (`NSPOSIXErrorDomain Code=1 Operation not permitted` saving
+`Devices/device_set.plist`). `sudo -n diskutil enableOwnership` failed fast with
+`password is required`, so no password prompt was triggered. The connected phone
+was not visible to `devicectl`, `xctrace`, or USB system profiler during this
+run.
+
 ## The native app has layout defects the 72 web rows above never measured
 
 **Measured, with the type clamp in place, on the accessibility-size capture
