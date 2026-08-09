@@ -160,7 +160,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G059 | VERIFYING | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Analytics Detailed now derives trend, latest value, confidence, phase scorecard, comparison rows, release offset, consistency, range changes, metric changes, and customer-visible filter feedback from locally completed Shot Tracker history when history exists, while preserving the canonical no-history analytics sample. Focused UI proof creates two real shot-tracker sessions and verifies `+28.4%`, `98.4%`, `+29`, release `99`, Form Score comparison, `+14°` release offset, metric/range filter toasts, and canonical/demo stability. Backend analysis-history reload/API parity, physical-device proof, per-session angle/elbow history, and iOS/web parity remain before `DONE`. |
 | G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. My Media's header now switches from canonical shot/make/accuracy samples to real media counts and the current analysis target when selected media exists, and segment/filter/sort/select controls show customer-visible feedback. Focused UI proof verifies real header values, filter counts, sort toast, selection toast, selected-photo handoff, canonical media stability, and the broader Profile/My Media screenshot path. Backend reload/web-library proof remains before `DONE`. |
 | G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target/date context, suppresses fake sample shot-event stats for real selected media, opens the linked saved analysis, and deletes unsynced in-session media with progress/success feedback instead of claiming it is sample-only. Backend reload, server-backed playback/share/download/delete, physical-device media proof, and web parity remain before `DONE`. |
-| G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
+| G062 | VERIFYING | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Profile now replaces canned header stats with real completed-workout totals when local history exists, including day streak, points, shots, makes, make rate, and recent activity; production Profile also loads `/api/profile` and `/api/badges` for signed-in identity, handedness/level, streak, and points. Focused simulator proof creates two Shot Tracker sessions and verifies `1` streak day, `85` points, `6` shots, `5` makes, `83.3%`, and real activity while removing the canned `2,840`/`62.5%` values. Signed-in backend history reload, backend shot/make aggregates, badge-list UI, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G063 | VERIFYING | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings toggles persist locally across app relaunch and show a customer-visible `Settings saved` toast; each toggle also fire-and-forget syncs through `/api/settings`. Backend reload proof and provenance for the fixed header analytics remain before `DONE`. |
 | G064 | VERIFYING | P1 | `#control` `#media` `#analytics` | 072 | Share latest real result. | Share Results now consumes the latest remembered selected native analysis instead of always rendering the 82/24/15/62.5% canonical sample. Focused UI proof walks selected photo -> pose analysis -> My Media -> Media Detail -> linked Analysis -> Share Results, verifies the shared text and page stats reflect the selected unavailable-score/image/pose-detected analysis, confirms canned `62.5%` / `24` values are absent, and verifies Copy feedback. Export renderer proof still produces a shareable image. Backend/web/system share-sheet proof remains before `DONE`. |
 
@@ -2255,6 +2255,60 @@ navigation with deterministic seeded real media and the canonical sample path.
 It does not yet prove backend media reload after relaunch, server-backed media
 playback/share/download/delete, physical-device picker/camera behavior, or
 iOS/web media parity; those remain required before G061 can move to `DONE`.
+
+### 2026-08-08 Profile Real-History Stats Proof
+
+Implementation:
+
+- Screen 070 Profile now derives header stats from completed Shot Tracker
+  history when local workout history exists: day streak, total points, shots,
+  makes, make percentage, and recent activity are no longer the canonical
+  `6`/`2,840`/`24`/`15`/`62.5%` sample values.
+- Signed-in production Profile now attempts to load `/api/profile` and
+  `/api/badges`, using profile display name/handedness/level plus backend
+  badge streak/points when those DTOs are available.
+- Physical profile values now read the same saved profile measurements used by
+  Edit Profile, and the header/activity/measurement fields expose stable
+  accessibility identifiers for direct proof.
+- Canonical/demo launches with no workout history still preserve the Jordan
+  Ellis sample state for screenshot parity.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-profile-live-20260808-1.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testProfileUsesWorkoutHistoryStatsAndActivity`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It created a 2/3 Shot Tracker session and a 3/3 Shot Tracker
+  session through the native UI, launched Profile, and verified `JORDAN ELLIS`,
+  `1` day streak, `85` points, `6` shots, `5` makes, `83.3%` make rate, latest
+  `Shot Tracker Session` activity, and absence of the canned `2,840` and
+  `62.5%` sample values.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-profile-canonical-20260808-2.xcresult`
+  ran `ShotIQUITests/ShotIQUITests/testProfileImageSurfacesWork`. The run
+  ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`,
+  re-proving the canonical screen-070 profile sample values, physical/shooting
+  profile cards, player-card entry, completion card, and lower profile rows.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-profile-final-20260808-1.xcresult`
+  regenerated `ShotIQ.xcodeproj` from `basketball-analysis/ios-native/project.yml`
+  and reran both focused screen-070 tests after the final source cleanup. The
+  run ended with `** TEST SUCCEEDED **`, `Executed 2 tests, with 0 failures`.
+
+Superseded mixed regression:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-profile-regression-20260808-1.xcresult`
+  ran the big canonical progress/profile screenshot route plus the isolated
+  Profile image-surface test. The isolated Profile test passed in that bundle,
+  but the bundle ended red because `test07ProgressAndProfileScreens` hit the
+  known reset-route timing issue and missed `My media` while still on Home. The
+  clean isolated canonical rerun above is the accepted screen-070 evidence.
+
+Remaining limitations: this proves screen 070 in simulator production
+navigation with locally completed workout history and confirms canonical
+profile stability. It does not yet prove signed-in backend profile/badge reload
+against a live account, backend shot/make aggregates, badge-list UI, physical
+device behavior, or iOS/web parity; those remain required before G062 can move
+to `DONE`.
 
 ### 2026-08-08 Late-Page Isolated Regression Proof
 

@@ -3437,6 +3437,12 @@ struct MediaDetailView: View {      // 069
 
 struct ProfileView: View {          // 070
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWeightLbs") private var weightLbs = 185
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @State private var showEditProfile = false
     /// The wordmark bar's gear used to be inert on this screen (TopBar's
     /// onSettings defaults to a no-op); on Profile it opens the settings hub.
@@ -3445,6 +3451,94 @@ struct ProfileView: View {          // 070
     @State private var enhancingBio = false
     @State private var bioError: String?
     @State private var toast: ShotIQToast?
+    @State private var productionProfile: APIProfileDTO?
+    @State private var productionBadges: BadgesResponseDTO?
+    @State private var loadedProductionContext = false
+
+    private struct ProfileSummary {
+        var streak: String
+        var points: String
+        var shots: String
+        var makes: String
+        var makeRate: String
+        var completionPct: Double
+        var completionText: String
+        var activity: [(String, String)]
+    }
+
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+
+    private var isCanonicalProfileDemo: Bool {
+        UITestHooks.demoData && workouts.isEmpty && productionBadges == nil
+    }
+
+    private var displayName: String {
+        if let profileName = productionProfile?.displayName, !profileName.isEmpty { return profileName }
+        if let userName = app.user?.displayName, !userName.isEmpty { return userName }
+        let full = [productionProfile?.firstName ?? app.user?.firstName,
+                    productionProfile?.lastName ?? app.user?.lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if !full.isEmpty { return full }
+        return isCanonicalProfileDemo ? "Jordan Ellis" : (app.user?.email?.split(separator: "@").first.map(String.init) ?? "ShotIQ Athlete")
+    }
+
+    private var profileInitialsText: String {
+        let parts = displayName.split(separator: " ")
+        if parts.count >= 2 {
+            return parts.prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
+        }
+        return String(displayName.prefix(2)).uppercased()
+    }
+
+    private var subtitleText: String {
+        let profileHand = productionProfile?.dominantHand ?? hand
+        let profileLevel = productionProfile?.experienceLevel ?? level
+        return "\(Self.titleCase(profileHand))-handed • \(Self.titleCase(profileLevel))"
+    }
+
+    private var profileSummary: ProfileSummary {
+        if isCanonicalProfileDemo {
+            return ProfileSummary(streak: "6",
+                                  points: "2,840",
+                                  shots: "24",
+                                  makes: "15",
+                                  makeRate: "62.5%",
+                                  completionPct: 0.82,
+                                  completionText: "82%",
+                                  activity: [("Quick Release Builder", "Today at 8:24 AM"),
+                                             ("Catch & Shoot Review", "May 11, 2024"),
+                                             ("Mid-Range Mechanics", "May 10, 2024")])
+        }
+
+        let totalShots = workouts.reduce(0) { $0 + $1.shots }
+        let totalMakes = workouts.reduce(0) { $0 + $1.makes }
+        let localPoints = workouts.reduce(0) { $0 + $1.pointsEarned }
+        let makeRate = totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100)
+        let activityRows = workouts.prefix(3).map { ($0.drillName, Self.activityDateText($0.completedAt)) }
+        let completedSections = [displayName.isEmpty == false,
+                                 heightIn > 0 && weightLbs > 0 && wingspanIn > 0,
+                                 hand.isEmpty == false && level.isEmpty == false,
+                                 bio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false]
+            .filter { $0 }.count
+        let completionPct = Double(completedSections) / 4.0
+        let stats = productionBadges?.stats
+        return ProfileSummary(streak: Self.numberOrDash(stats?.currentStreak) ?? (workouts.isEmpty ? "--" : "\(Self.localStreakDays(from: workouts))"),
+                              points: Self.groupedNumber(stats?.totalPoints) ?? (workouts.isEmpty ? "--" : Self.groupedNumber(localPoints) ?? "\(localPoints)"),
+                              shots: totalShots == 0 ? "--" : "\(totalShots)",
+                              makes: totalShots == 0 ? "--" : "\(totalMakes)",
+                              makeRate: makeRate,
+                              completionPct: completionPct,
+                              completionText: "\(Int((completionPct * 100).rounded()))%",
+                              activity: activityRows.isEmpty ? [("No tracked sessions yet", "Track shots to build history")] : activityRows)
+    }
+
+    private var heightText: String { Self.inchesText(heightIn) }
+    private var weightText: String { "\(weightLbs) lbs" }
+    private var wingspanText: String { Self.inchesText(wingspanIn) }
 
     /// POST /api/enhance-bio — LLM-expanded bio (shape per src/app/api/enhance-bio/route.ts).
     private func enhanceBio() {
@@ -3467,6 +3561,16 @@ struct ProfileView: View {          // 070
             enhancingBio = false
         }
     }
+
+    private func loadProductionContext() async {
+        guard !loadedProductionContext, !UITestHooks.demoData else { return }
+        loadedProductionContext = true
+        async let profile = try? APIClient.shared.profile()
+        async let badges = try? APIClient.shared.badges()
+        productionProfile = await profile ?? nil
+        productionBadges = await badges ?? nil
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-profile") {
             ScrollView {
@@ -3476,7 +3580,7 @@ struct ProfileView: View {          // 070
                         HStack(spacing: 16) {
                             ZStack(alignment: .bottomTrailing) {
                                 Circle().fill(ShotIQColor.rule).frame(width: 86, height: 86)
-                                    .overlay(Text(shotiqInitials(app.user))
+                                    .overlay(Text(profileInitialsText)
                                         .shotiqBody(26, weight: .bold)
                                         .foregroundStyle(ShotIQColor.graphite))
                                 Button { showEditProfile = true } label: {
@@ -3488,29 +3592,36 @@ struct ProfileView: View {          // 070
                                 .accessibilityLabel("Edit profile")
                             }
                             VStack(alignment: .leading, spacing: 4) {
-                                Text((app.user?.displayName ?? "Jordan Ellis").uppercased()).shotiqDisplay(32)
-                                Text("Right-handed • Advanced").shotiqBody(14)
+                                Text(displayName.uppercased()).shotiqDisplay(32)
+                                    .accessibilityIdentifier("profile-display-name")
+                                Text(subtitleText).shotiqBody(14)
                                     .foregroundStyle(ShotIQColor.graphite)
+                                    .accessibilityIdentifier("profile-subtitle")
                             }
                         }
                         .padding(.top, 18)
                         HStack(spacing: 0) {
                             NavigationLink { WorkoutCalendarView() } label: {
-                                HeaderStat(icon: "film", value: "6", label: "DAY STREAK").frame(maxWidth: .infinity)
+                                HeaderStat(icon: "film", value: profileSummary.streak, label: "DAY STREAK").frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityIdentifier("profile-day-streak")
                             VRule(height: 46)
                             NavigationLink { PlayerCardView() } label: {
-                                HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                HeaderStat(icon: "circle.hexagongrid", value: profileSummary.points, label: "POINTS")
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityIdentifier("profile-points")
                             VRule(height: 46)
-                            profileStat("24", "SHOTS")
+                            profileStat(profileSummary.shots, "SHOTS")
+                                .accessibilityIdentifier("profile-total-shots")
                             VRule(height: 46)
-                            profileStat("15", "MAKES")
+                            profileStat(profileSummary.makes, "MAKES")
+                                .accessibilityIdentifier("profile-total-makes")
                             VRule(height: 46)
-                            profileStat("62.5%", "MAKE %")
+                            profileStat(profileSummary.makeRate, "MAKE %")
+                                .accessibilityIdentifier("profile-make-rate")
                         }
                         .padding(.vertical, 16)
                         PrimaryButton(title: "Edit player profile", icon: "camera.viewfinder") {
@@ -3520,11 +3631,14 @@ struct ProfileView: View {          // 070
                             VStack(alignment: .leading, spacing: 12) {
                                 SectionLabel(text: "PHYSICAL PROFILE")
                                 HStack(spacing: 0) {
-                                    physCol("ruler", "6'3\"", "HEIGHT")
+                                    physCol("ruler", heightText, "HEIGHT")
+                                        .accessibilityIdentifier("profile-height")
                                     VRule(height: 48)
-                                    physCol("scalemass", "185 lbs", "WEIGHT")
+                                    physCol("scalemass", weightText, "WEIGHT")
+                                        .accessibilityIdentifier("profile-weight")
                                     VRule(height: 48)
-                                    physCol("figure.arms.open", "6'5\"", "WINGSPAN")
+                                    physCol("figure.arms.open", wingspanText, "WINGSPAN")
+                                        .accessibilityIdentifier("profile-wingspan")
                                 }
                             }
                             .padding(14)
@@ -3626,15 +3740,16 @@ struct ProfileView: View {          // 070
                                 HStack {
                                     SectionLabel(text: "PROFILE COMPLETION")
                                     Spacer()
-                                    Text("82%").font(.custom("Tungsten-Medium", size: 24))
+                                    Text(profileSummary.completionText).font(.custom("Tungsten-Medium", size: 24))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .accessibilityIdentifier("profile-completion-pct")
                                 }
-                                ScoreBar(pct: 0.82)
+                                ScoreBar(pct: profileSummary.completionPct)
                                 HStack(spacing: 0) {
                                     completionItem(true, "Profile info")
                                     completionItem(true, "Physical profile")
                                     completionItem(true, "Shooting profile")
-                                    completionItem(false, "Bio")
+                                    completionItem(bio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false, "Bio")
                                 }
                             }
                             .padding(14)
@@ -3654,9 +3769,10 @@ struct ProfileView: View {          // 070
                             ShotIQCard {
                                 VStack(alignment: .leading, spacing: 8) {
                                     SectionLabel(text: "RECENT ACTIVITY")
-                                    activityRow("Quick Release Builder", "Today at 8:24 AM")
-                                    activityRow("Catch & Shoot Review", "May 11, 2024")
-                                    activityRow("Mid-Range Mechanics", "May 10, 2024")
+                                    ForEach(Array(profileSummary.activity.enumerated()), id: \.offset) { index, item in
+                                        activityRow(item.0, item.1)
+                                            .accessibilityIdentifier("profile-activity-\(index)")
+                                    }
                                 }
                                 .padding(12)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -3688,8 +3804,49 @@ struct ProfileView: View {          // 070
         }
         .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
         .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
+        .task { await loadProductionContext() }
         .shotiqToast($toast)
     }
+
+    private static func titleCase(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
+    }
+
+    private static func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private static func groupedNumber(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+
+    private static func numberOrDash(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return "\(value)"
+    }
+
+    private static func localStreakDays(from workouts: [TrainingWorkoutRecord]) -> Int {
+        let calendar = Calendar.current
+        let activeDays = Set(workouts.map { calendar.startOfDay(for: $0.completedAt) })
+        var streak = 0
+        var cursor = calendar.startOfDay(for: Date())
+        while activeDays.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return max(streak, activeDays.isEmpty ? 0 : 1)
+    }
+
+    private static func activityDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "'Today at' h:mm a" : "MMM d 'at' h:mm a"
+        return formatter.string(from: date)
+    }
+
     private func profileStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
             Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)

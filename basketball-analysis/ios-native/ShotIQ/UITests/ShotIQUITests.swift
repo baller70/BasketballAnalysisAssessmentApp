@@ -1595,7 +1595,8 @@ final class ShotIQUITests: XCTestCase {
     }
 
     func testProfileImageSurfacesWork() throws {
-        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "profile"])
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "profile"])
         XCTAssertTrue(screen("screen-ios-profile").waitForExistence(timeout: 8))
         for item in ["JORDAN ELLIS", "6", "DAY STREAK", "2,840", "POINTS",
                      "24", "SHOTS", "15", "MAKES", "62.5%", "MAKE %",
@@ -1603,6 +1604,37 @@ final class ShotIQUITests: XCTestCase {
                      "PROFILE COMPLETION", "82%"] {
             assertVisible(item)
         }
+    }
+
+    func testProfileUsesWorkoutHistoryStatsAndActivity() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-miss")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "shot-tracker"])
+        XCTAssertTrue(screen("screen-ios-shot-tracker").waitForExistence(timeout: 8))
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-mark-make")
+        tapButton(id: "tracker-end-workout")
+        XCTAssertTrue(screen("screen-ios-workout-completion").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "profile"])
+        XCTAssertTrue(screen("screen-ios-profile").waitForExistence(timeout: 8))
+        assertElement(id: "profile-display-name", contains: "JORDAN ELLIS")
+        assertElement(id: "profile-day-streak", contains: "1")
+        assertElement(id: "profile-points", contains: "85")
+        assertElement(id: "profile-total-shots", contains: "6")
+        assertElement(id: "profile-total-makes", contains: "5")
+        assertElement(id: "profile-make-rate", contains: "83.3%")
+        assertVisibleElement(id: "profile-activity-0", contains: "Shot Tracker Session", maxSwipes: 3)
+        XCTAssertFalse(app.staticTexts["2,840"].exists)
+        XCTAssertFalse(app.staticTexts["62.5%"].exists)
     }
 
     func testPlayerCardImageSurfacesWork() throws {
