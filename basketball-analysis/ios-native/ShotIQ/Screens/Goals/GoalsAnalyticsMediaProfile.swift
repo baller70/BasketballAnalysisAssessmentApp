@@ -4623,8 +4623,9 @@ struct ShareResultsView: View {     // 072
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-share-results") {
-            ScrollView {
-                VStack(spacing: 0) {
+            ZStack(alignment: .top) {
+                ScrollView {
+                    VStack(spacing: 0) {
                     Text("SHARE RESULTS").shotiqDisplay(34).padding(.top, 24)
                     Text("Preview what others will see. Private data is excluded.")
                         .shotiqBody(14).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
@@ -4779,6 +4780,10 @@ struct ShareResultsView: View {     // 072
                     .foregroundStyle(ShotIQColor.graphite)
                     .padding(.horizontal, 20)
                     .padding(.top, 14).padding(.bottom, 30)
+                    }
+                }
+                if copied {
+                    copyFeedbackBadge
                 }
             }
         }
@@ -4844,6 +4849,19 @@ struct ShareResultsView: View {     // 072
         }
         .frame(maxWidth: .infinity).frame(height: 76)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+    }
+
+    private var copyFeedbackBadge: some View {
+        Text("Copied")
+            .shotiqBody(12, weight: .bold)
+            .foregroundStyle(ShotIQColor.confirmGreen)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.confirmGreen.opacity(0.55)))
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+            .accessibilityIdentifier("share-results-copy-badge")
+            .padding(.top, 64)
     }
 
     private func copyShareText() {
