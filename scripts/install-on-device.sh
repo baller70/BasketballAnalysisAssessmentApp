@@ -271,10 +271,9 @@ security list-keychains -d user -s "$signing_keychain"
 security default-keychain -d user -s "$signing_keychain"
 security set-key-partition-list -S apple-tool:,apple:,codesign: \
   -k "$signing_password" "$signing_keychain" >/dev/null 2>&1 || true
-unset signing_password
 
 note "Signing into ${signing_keychain}"
-note 'xcodebuild will create a development certificate here through the API key.'
+note 'A fresh development identity will be imported here before xcodebuild runs.'
 
 # A previous device build's certificate has its private key in a deleted
 # throwaway keychain; Apple refuses to mint a new one while that orphan
@@ -284,6 +283,19 @@ note 'xcodebuild will create a development certificate here through the API key.
 step 'Revoking orphaned development certificates'
 node_bin="$(command -v node || echo /opt/homebrew/bin/node)"
 "$node_bin" "${repo_root}/scripts/revoke-stale-dev-cert.mjs" --confirm || true
+
+if [ "${SHOTIQ_CREATE_DEV_CERT:-1}" != "0" ]; then
+  step 'Creating a local Apple Development signing identity'
+  signing_work_root="${SHOTIQ_SIGNING_WORK_ROOT:-${XCODE_WORK_ROOT:-${repo_root}/artifacts}/device-signing}"
+  mkdir -p "$signing_work_root"
+  signing_work="$(mktemp -d "${signing_work_root%/}/manual-cert.XXXXXX")"
+  "$node_bin" "${repo_root}/scripts/create-dev-certificate.mjs" \
+    --keychain "$signing_keychain" \
+    --keychain-password "$signing_password" \
+    --work-dir "$signing_work" \
+    --common-name 'ShotIQ Device Development'
+fi
+unset signing_password
 
 # ------------------------------------------------------------------ install --
 
