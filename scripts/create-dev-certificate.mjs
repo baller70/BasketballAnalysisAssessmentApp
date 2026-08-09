@@ -153,7 +153,7 @@ execFileSync('certtool', ['V', csr], { stdio: 'inherit' })
 const csrContent = fs.readFileSync(csr, 'utf8')
 let certificate
 let lastError
-for (const certificateType of [process.env.SHOTIQ_DEV_CERT_TYPE ?? 'DEVELOPMENT', 'IOS_DEVELOPMENT']) {
+for (const certificateType of [process.env.SHOTIQ_DEV_CERT_TYPE ?? 'IOS_DEVELOPMENT', 'DEVELOPMENT']) {
   try {
     certificate = await api('POST', '/v1/certificates', {
       data: {

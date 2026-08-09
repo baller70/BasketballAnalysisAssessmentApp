@@ -77,12 +77,21 @@ async function api(method, endpoint) {
   return text ? JSON.parse(text) : {}
 }
 
-const certs = await api('GET', '/v1/certificates?filter[certificateType]=DEVELOPMENT&limit=50')
-const list = certs.data ?? []
-console.log(`Apple Development certificates on the team: ${list.length}`)
+const seen = new Set()
+const list = []
+for (const type of ['DEVELOPMENT', 'IOS_DEVELOPMENT']) {
+  const certs = await api('GET', `/v1/certificates?filter[certificateType]=${type}&limit=50`)
+  for (const cert of certs.data ?? []) {
+    if (seen.has(cert.id)) continue
+    seen.add(cert.id)
+    list.push(cert)
+  }
+}
+
+console.log(`Apple/iOS Development certificates on the team: ${list.length}`)
 for (const cert of list) {
   const a = cert.attributes ?? {}
-  console.log(`  - ${cert.id}: "${a.name}" serial ${a.serialNumber}, expires ${a.expirationDate}`)
+  console.log(`  - ${cert.id}: "${a.name}" type ${a.certificateType} serial ${a.serialNumber}, expires ${a.expirationDate}`)
   if (confirm) {
     await api('DELETE', `/v1/certificates/${cert.id}`)
     console.log('    revoked — xcodebuild will mint a fresh one on the next device build')
