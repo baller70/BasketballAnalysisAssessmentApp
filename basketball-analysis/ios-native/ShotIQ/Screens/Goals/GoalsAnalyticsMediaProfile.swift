@@ -3053,6 +3053,7 @@ struct MediaDetailView: View {      // 069
     /// Server id of the backing UserAnalysis row, when opened from real data —
     /// enables the authoritative DELETE /api/media?analysisId=… call.
     var analysisId: String? = nil
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var playing = false
     @State private var speedIndex = 1
@@ -3081,6 +3082,18 @@ struct MediaDetailView: View {      // 069
         guard isRealAnalysis else { return "Indoor Court - iPhone 15 Pro - 1080p - 60fps" }
         return "\(presentation.mediaLabel) - \(presentation.provenanceSummary)"
     }
+    private var linkedAnalysisDateText: String {
+        isRealAnalysis ? "• \(presentation.recordedLabel)" : "• May 21, 2025"
+    }
+    private var downloadUnavailableMessage: String {
+        guard isRealAnalysis else {
+            return "This clip is stored on the ShotIQ server. On-device downloads are coming to a future build."
+        }
+        if analysisId == nil {
+            return "This media is saved in the current app session. Server-backed downloads are coming after media sync."
+        }
+        return "This media is stored on the ShotIQ server. On-device downloads are coming to a future build."
+    }
     private var shotEventValues: (shots: String, makes: String, pct: String, streak: String, points: String) {
         isRealAnalysis ? ("--", "--", "--", "--", "--") : ("24", "15", "62.5%", "6", "2,840")
     }
@@ -3091,7 +3104,20 @@ struct MediaDetailView: View {      // 069
     private func deleteMedia() {
         guard !deleting else { return }
         guard let analysisId else {
-            toast = .info("Sample media only", "There is no server item to delete yet.")
+            guard let analysis else {
+                toast = .info("Sample media only", "There is no server item to delete yet.")
+                return
+            }
+            deleting = true
+            toast = .progress("Removing media", "Deleting this in-session result.", progress: 0.45)
+            Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                app.recentMedia.removeAll { $0.id == analysis.id }
+                toast = .success("Media removed", "Returning to your library.")
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                deleting = false
+                dismiss()
+            }
             return
         }
         deleting = true
@@ -3137,6 +3163,7 @@ struct MediaDetailView: View {      // 069
                                 .font(.system(size: 19, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                         }
                         .accessibilityLabel("Back")
+                        .accessibilityIdentifier("media-detail-back")
                         Text("MEDIA DETAIL").shotiqDisplay(26)
                         Spacer()
                         Menu {
@@ -3148,6 +3175,7 @@ struct MediaDetailView: View {      // 069
                             Image(systemName: "ellipsis").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
                                 .frame(width: 36, height: 36, alignment: .trailing)
                         }
+                        .accessibilityIdentifier("media-detail-more-menu")
                     }
                     .padding(.horizontal, 20).frame(height: 52)
                     .overlay(HRule(), alignment: .bottom)
@@ -3168,6 +3196,7 @@ struct MediaDetailView: View {      // 069
                                         .foregroundStyle(ShotIQColor.ink))
                             }
                             .accessibilityLabel(playing ? "Pause" : "Play")
+                            .accessibilityIdentifier("media-detail-hero-play")
                         }
                         .overlay(alignment: .topLeading) {
                             Text(mediaDurationText).font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
@@ -3186,6 +3215,7 @@ struct MediaDetailView: View {      // 069
                                     .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
                             }
                             .accessibilityLabel("Playback speed")
+                            .accessibilityIdentifier("media-detail-playback-speed")
                             .padding(10)
                         }
                         .padding(.top, 14)
@@ -3210,6 +3240,7 @@ struct MediaDetailView: View {      // 069
                                                         lineWidth: i == selectedFrame ? 2 : 1))
                                     }
                                     .accessibilityLabel("Frame \(i + 1)")
+                                    .accessibilityIdentifier("media-detail-frame-\(i + 1)")
                                 }
                             }
                             .padding(.vertical, 2)
@@ -3218,8 +3249,10 @@ struct MediaDetailView: View {      // 069
                         SectionLabel(text: "CAPTURE DETAILS").padding(.top, 18)
                         Text(captureDateText).font(.custom("Tungsten-Medium", size: 24))
                             .padding(.top, 6)
+                            .accessibilityIdentifier("media-detail-capture-date")
                         Text(captureMetaText)
                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
+                            .accessibilityIdentifier("media-detail-capture-meta")
                         SectionLabel(text: "LINKED ANALYSIS").padding(.top, 18)
                         ShotIQCard {
                             HStack(spacing: 12) {
@@ -3239,9 +3272,10 @@ struct MediaDetailView: View {      // 069
                                         // part that may abbreviate.
                                         Text("Shot Analysis").shotiqBody(14, weight: .bold)
                                             .lineLimit(1).fixedSize()
-                                        Text("• May 21, 2025").shotiqBody(11)
+                                        Text(linkedAnalysisDateText).shotiqBody(11)
                                             .foregroundStyle(ShotIQColor.graphite)
                                             .lineLimit(1).minimumScaleFactor(0.7)
+                                            .accessibilityIdentifier("media-detail-linked-date")
                                     }
                                     Text("Form Score").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                     HStack(spacing: 8) {
@@ -3261,6 +3295,7 @@ struct MediaDetailView: View {      // 069
                                     .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.analysisBlue))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
+                                .accessibilityIdentifier("media-detail-open-analysis")
                             }
                             .padding(12)
                         }
@@ -3295,8 +3330,12 @@ struct MediaDetailView: View {      // 069
                             .padding(.vertical, 14)
                             .overlay(HRule(), alignment: .top)
                             .overlay(HRule(), alignment: .bottom)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Primary coaching target \(presentation.coachingTarget)")
+                        .accessibilityIdentifier("media-detail-primary-target")
                         .padding(.top, 18)
                         SectionLabel(text: "ACTIONS").padding(.top, 16)
                         HStack(spacing: 8) {
@@ -3305,6 +3344,7 @@ struct MediaDetailView: View {      // 069
                                 playing.toggle()
                                 toast = .info(playing ? "Playing clip" : "Clip paused")
                             }
+                                         .accessibilityIdentifier("media-detail-action-play")
                             ShareLink(item: shareText) {
                                 actionLabel("square.and.arrow.up", "Share", ShotIQColor.ink)
                             }
@@ -3328,7 +3368,7 @@ struct MediaDetailView: View {      // 069
                         .alert("Download unavailable", isPresented: $showDownloadInfo) {
                             Button("OK", role: .cancel) {}
                         } message: {
-                            Text("This clip is stored on the ShotIQ server. On-device downloads are coming to a future build.")
+                            Text(downloadUnavailableMessage)
                         }
                         HStack(spacing: 10) {
                             Image(systemName: "trash").font(.system(size: 15))

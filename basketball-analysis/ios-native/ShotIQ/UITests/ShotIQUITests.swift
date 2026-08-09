@@ -1020,6 +1020,38 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(waitForToastContaining("1 item selected"))
     }
 
+    func testMediaDetailUsesRealAnalysisDateTargetAndLocalDeleteFeedback() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "my-media"])
+        XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        tapButton(id: "my-media-tile-0")
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+        assertElement(id: "media-detail-capture-meta", contains: "Image")
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "MMM d"
+        let expectedRecordedDay = dateFormatter.string(from: Date())
+        assertElement(id: "media-detail-linked-date", contains: expectedRecordedDay)
+        XCTAssertFalse(app.staticTexts["• May 21, 2025"].exists)
+
+        tapButton(id: "media-detail-playback-speed")
+        XCTAssertTrue(waitForToastContaining("Playback speed changed"))
+        tapButton(id: "media-detail-frame-2")
+        XCTAssertTrue(waitForToastContaining("Frame 2"))
+        tapButton(id: "media-detail-primary-target")
+        XCTAssertTrue(screen("screen-ios-goals").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "my-media"])
+        XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        tapButton(id: "my-media-tile-0")
+        XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
+        tapButton(id: "media-detail-delete-media-button")
+        XCTAssertTrue(waitForToastContaining("Media removed"))
+        XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        assertStaticText(id: "my-media-visible-count", contains: "6 ITEMS")
+    }
+
     func testLatestPhotoAnalysisFeedsPlayerCardAndCustomizationFeedback() throws {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestHomeVariant", "standard",
                 "-uiTestSampleMedia", "-uiTestSampleMediaName", "photo-068-visual-004",

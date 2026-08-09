@@ -159,7 +159,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G058 | VERIFYING | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | Analytics Cards now derive the summary score/verdict/target, trend, total shots/makes/accuracy, latest-session delta, session cards, share text, media filter counts, empty state, and Open Session route from completed Shot Tracker history when present, while preserving the canonical demo summary and sample cards for no-history screenshot parity. Focused UI proof creates two real shot-tracker sessions and verifies `99` score, `GREAT`, `Stack elbow higher`, `6` shots, `5` makes, `83.3%`, `+29`, latest session `3/3`, share text, Live/Photo filter toasts, empty state, and Analytics Detail navigation. Backend reload/API parity, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G059 | VERIFYING | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Analytics Detailed now derives trend, latest value, confidence, phase scorecard, comparison rows, release offset, consistency, range changes, metric changes, and customer-visible filter feedback from locally completed Shot Tracker history when history exists, while preserving the canonical no-history analytics sample. Focused UI proof creates two real shot-tracker sessions and verifies `+28.4%`, `98.4%`, `+29`, release `99`, Form Score comparison, `+14°` release offset, metric/range filter toasts, and canonical/demo stability. Backend analysis-history reload/API parity, physical-device proof, per-session angle/elbow history, and iOS/web parity remain before `DONE`. |
 | G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. My Media's header now switches from canonical shot/make/accuracy samples to real media counts and the current analysis target when selected media exists, and segment/filter/sort/select controls show customer-visible feedback. Focused UI proof verifies real header values, filter counts, sort toast, selection toast, selected-photo handoff, canonical media stability, and the broader Profile/My Media screenshot path. Backend reload/web-library proof remains before `DONE`. |
-| G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target context, suppresses fake sample shot-event stats for real selected media, and opens the linked saved analysis. Real backend playback/share/delete and web parity remain before `DONE`. |
+| G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target/date context, suppresses fake sample shot-event stats for real selected media, opens the linked saved analysis, and deletes unsynced in-session media with progress/success feedback instead of claiming it is sample-only. Backend reload, server-backed playback/share/download/delete, physical-device media proof, and web parity remain before `DONE`. |
 | G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
 | G063 | VERIFYING | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings toggles persist locally across app relaunch and show a customer-visible `Settings saved` toast; each toggle also fire-and-forget syncs through `/api/settings`. Backend reload proof and provenance for the fixed header analytics remain before `DONE`. |
 | G064 | VERIFYING | P1 | `#control` `#media` `#analytics` | 072 | Share latest real result. | Share Results now consumes the latest remembered selected native analysis instead of always rendering the 82/24/15/62.5% canonical sample. Focused UI proof walks selected photo -> pose analysis -> My Media -> Media Detail -> linked Analysis -> Share Results, verifies the shared text and page stats reflect the selected unavailable-score/image/pose-detected analysis, confirms canned `62.5%` / `24` values are absent, and verifies Copy feedback. Export renderer proof still produces a shareable image. Backend/web/system share-sheet proof remains before `DONE`. |
@@ -2200,6 +2200,61 @@ does not yet prove backend media reload after relaunch, shared web media-library
 visibility, physical-device picker/camera behavior, or persisted backend
 share/export/delete records; those remain required before G060 can move to
 `DONE`.
+
+### 2026-08-08 Media Detail Real-Date And Local Delete Proof
+
+Implementation:
+
+- Screen 069 Media Detail now uses the selected analysis recorded date in the
+  linked-analysis row instead of the canonical `May 21, 2025` sample date when
+  real media is opened.
+- Unsynced in-session media can now be removed locally from `AppState.recentMedia`
+  with `Removing media` progress and `Media removed` success feedback, instead
+  of returning the incorrect `Sample media only` message.
+- The primary coaching-target row is an explicitly hittable accessibility
+  button for the linked Goals route, and Media Detail action/frame/date/meta
+  controls now expose stable identifiers for focused proof.
+- The download alert copy now distinguishes canonical sample/server-backed
+  media from real local session media that has not synced to the server yet.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-media-detail-live-20260808-4.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testMediaDetailUsesRealAnalysisDateTargetAndLocalDeleteFeedback`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It launched My Media with a seeded weak real analysis, opened
+  Media Detail, verified the real image meta and current recorded day, confirmed
+  the canonical `May 21, 2025` linked date is absent, proved playback-speed and
+  frame-selection toasts, tapped the primary coaching target into Goals,
+  relaunched, deleted the unsynced local media, verified `Media removed`, and
+  confirmed the library count dropped from `7 ITEMS` to `6 ITEMS`.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-media-detail-regression-20260808-1.xcresult`
+  ran
+  `testCanonicalMediaLibraryAndDetailStillRenderSampleSurfaces`,
+  `testMediaDetailImageSurfacesWork`, and
+  `testSecondaryControlsShowFeedbackAndDialogs`. The run ended with `** TEST
+  SUCCEEDED **`, `Executed 3 tests, with 0 failures`, re-proving canonical
+  sample surfaces, Media Detail hero/playback/frame/open-analysis behavior, and
+  download/delete customer feedback paths.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-media-detail-live-20260808-1.xcresult`
+  failed because the first test expected the real linked date label to contain
+  `Today`; the app correctly rendered a concrete recorded label such as
+  `Aug 8 • 8:19 PM`, so the test now checks the current `MMM d` day.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-media-detail-live-20260808-2.xcresult`
+  proved the real date and toast checks, then failed at the primary coaching
+  target because SwiftUI exposed the navigation row's child as the hittable
+  element. The row now has an explicit combined button identity, and the
+  passing rerun above proves the route.
+
+Remaining limitations: this proves screen 069 in simulator production
+navigation with deterministic seeded real media and the canonical sample path.
+It does not yet prove backend media reload after relaunch, server-backed media
+playback/share/download/delete, physical-device picker/camera behavior, or
+iOS/web media parity; those remain required before G061 can move to `DONE`.
 
 ### 2026-08-08 Late-Page Isolated Regression Proof
 
