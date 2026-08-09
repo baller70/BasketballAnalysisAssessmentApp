@@ -434,6 +434,8 @@ struct HomeNewPlayerView: View {   // 017
 struct HomeStandardView: View {    // 018
     @ObservedObject var vm: HomeViewModel
     @Binding var showMenu: Bool
+    @State private var showLatestAnalysis = false
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-home-standard") {
             ScrollView {
@@ -452,7 +454,9 @@ struct HomeStandardView: View {    // 018
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
-                    NavigationLink { AnalysisResultOverviewView() } label: {
+                    Button {
+                        showLatestAnalysis = true
+                    } label: {
                         HStack(spacing: 12) {
                             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "doc.text"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                             Text("View latest analysis").shotiqBody(16, weight: .medium)
@@ -462,8 +466,14 @@ struct HomeStandardView: View {    // 018
                         }
                         .padding(16)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("home-view-latest-analysis")
                     .padding(.horizontal, 20).padding(.top, 12)
+                    .navigationDestination(isPresented: $showLatestAnalysis) {
+                        AnalysisResultOverviewView()
+                    }
 
                     HStack {
                         SectionLabel(text: "LATEST ANALYSIS")
