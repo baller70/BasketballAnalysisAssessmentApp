@@ -243,7 +243,15 @@ trap cleanup EXIT INT TERM
 
 step 'Preparing a keychain codesign can actually use'
 
-signing_keychain="$(mktemp -d)/device-signing.keychain-db"
+signing_root="${SHOTIQ_SIGNING_KEYCHAIN_ROOT:-}"
+if [ -n "$signing_root" ]; then
+  mkdir -p "$signing_root"
+  chmod 700 "$signing_root" 2>/dev/null || true
+  signing_dir="$(mktemp -d "${signing_root%/}/device-signing.XXXXXX")"
+else
+  signing_dir="$(mktemp -d)"
+fi
+signing_keychain="${signing_dir}/device-signing.keychain-db"
 signing_password="$(openssl rand -base64 24)"
 
 original_keychains=""
