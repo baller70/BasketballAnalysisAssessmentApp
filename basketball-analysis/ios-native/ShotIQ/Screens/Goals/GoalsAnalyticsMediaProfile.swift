@@ -4582,6 +4582,7 @@ struct ShareResultsView: View {     // 072
     @EnvironmentObject var app: AppState
     @State private var renderedCard: UIImage?
     @State private var copied = false
+    @State private var toast: ShotIQToast?
 
     private var presentation: AnalysisResultPresentation {
         if let latest = app.recentMedia.first?.analysis {
@@ -4751,17 +4752,24 @@ struct ShareResultsView: View {     // 072
                             .accessibilityIdentifier("share-results-text")
                         imageShareControl("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
                         imageShareControl("arrow.down.to.line", "Save image", ShotIQColor.ink)
-                        Button {
-                            UIPasteboard.general.string = shareText
-                            copied = true
-                            Task { try? await Task.sleep(for: .seconds(2)); copied = false }
-                        } label: {
+                        Button { copyShareText() } label: {
                             shareOption(copied ? "checkmark" : "square.on.square",
                                         copied ? "Copied" : "Copy", ShotIQColor.ink)
                         }
                         ShareLink(item: shareText) { shareOption("ellipsis", "More", ShotIQColor.ink) }
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
+                    if copied {
+                        HStack(spacing: 7) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Copied")
+                                .shotiqBody(12, weight: .bold)
+                        }
+                        .foregroundStyle(ShotIQColor.confirmGreen)
+                        .accessibilityIdentifier("share-results-copy-feedback")
+                        .padding(.top, 10)
+                    }
                     HStack(spacing: 6) {
                         Image(systemName: "lock").font(.system(size: 11))
                         Text("Private media, session clips, and personal notes are not included.")
@@ -4774,6 +4782,7 @@ struct ShareResultsView: View {     // 072
                 }
             }
         }
+        .shotiqToast($toast)
     }
     /// "Share image" / "Save image". Both hand the reader the rendered card;
     /// until it exists the control rasterises it and the ShareLink takes over,
@@ -4835,5 +4844,15 @@ struct ShareResultsView: View {     // 072
         }
         .frame(maxWidth: .infinity).frame(height: 76)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+    }
+
+    private func copyShareText() {
+        UIPasteboard.general.string = shareText
+        copied = true
+        toast = .success("Copied", "Results summary copied to clipboard.")
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await MainActor.run { copied = false }
+        }
     }
 }
