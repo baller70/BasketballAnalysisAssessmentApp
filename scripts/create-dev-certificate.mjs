@@ -107,7 +107,7 @@ const csr = path.join(workDir, 'apple-development.csr')
 const certDer = path.join(workDir, 'apple-development.cer')
 const certPem = path.join(workDir, 'apple-development.pem')
 const p12 = path.join(workDir, 'apple-development.p12')
-const p12Password = crypto.randomBytes(24).toString('base64')
+const p12Password = crypto.randomBytes(24).toString('hex')
 
 execFileSync('openssl', ['genrsa', '-out', privateKey, '2048'], { stdio: 'inherit' })
 execFileSync('openssl', [
@@ -157,7 +157,7 @@ execFileSync('openssl', [
   certPem,
   '-out',
   p12,
-  '-password',
+  '-passout',
   `pass:${p12Password}`,
   '-name',
   attrs.name ?? 'Apple Development',
