@@ -102,24 +102,53 @@ async function api(method, endpoint, body) {
 }
 
 fs.mkdirSync(workDir, { recursive: true, mode: 0o700 })
-const privateKey = path.join(workDir, 'apple-development.key')
 const csr = path.join(workDir, 'apple-development.csr')
 const certDer = path.join(workDir, 'apple-development.cer')
-const certPem = path.join(workDir, 'apple-development.pem')
-const p12 = path.join(workDir, 'apple-development.p12')
-const p12Password = crypto.randomBytes(24).toString('hex')
 
-execFileSync('openssl', ['genrsa', '-out', privateKey, '2048'], { stdio: 'inherit' })
-execFileSync('openssl', [
-  'req',
-  '-new',
-  '-key',
-  privateKey,
-  '-out',
-  csr,
-  '-subj',
-  `/CN=${commonName}/C=US`,
-], { stdio: 'inherit' })
+function tclQuote(value) {
+  return `{${String(value).replaceAll('\\', '\\\\').replaceAll('}', '\\}')}}`
+}
+
+const expectScript = path.join(workDir, 'create-csr.expect')
+fs.writeFileSync(expectScript, `
+set timeout 30
+set csr ${tclQuote(csr)}
+set keychain ${tclQuote(keychain)}
+spawn certtool r $csr k=$keychain a
+expect "Enter key and certificate label:"
+send "${commonName.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}\\r"
+expect "Select key algorithm by letter:"
+send "r\\r"
+expect "Enter key size in bits or CR for default:"
+send "2048\\r"
+expect "OK (y/anything)?"
+send "y\\r"
+expect "Enter cert/key usage"
+send "s\\r"
+expect "Select signature algorithm by letter:"
+send "2\\r"
+expect "OK (y/anything)?"
+send "y\\r"
+expect "Enter challenge string:"
+send "shotiq\\r"
+expect "Common Name"
+send "${commonName.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}\\r"
+expect "Country"
+send "US\\r"
+expect "Organization"
+send "Kevin Houston\\r"
+expect "Organization Unit"
+send "DD9G8RP575\\r"
+expect "State/Province"
+send "\\r"
+expect "Email Address"
+send "khouston721@gmail.com\\r"
+expect "Is this OK"
+send "y\\r"
+expect eof
+`)
+execFileSync('expect', [expectScript], { stdio: 'inherit' })
+execFileSync('certtool', ['V', csr], { stdio: 'inherit' })
 
 const csrContent = fs.readFileSync(csr, 'utf8')
 let certificate
@@ -147,37 +176,7 @@ const attrs = certificate.data?.attributes ?? {}
 if (!attrs.certificateContent) throw new Error('App Store Connect did not return certificateContent.')
 
 fs.writeFileSync(certDer, Buffer.from(attrs.certificateContent, 'base64'))
-execFileSync('openssl', ['x509', '-inform', 'DER', '-in', certDer, '-out', certPem], { stdio: 'inherit' })
-execFileSync('openssl', [
-  'pkcs12',
-  '-export',
-  '-inkey',
-  privateKey,
-  '-in',
-  certPem,
-  '-out',
-  p12,
-  '-passout',
-  `pass:${p12Password}`,
-  '-name',
-  attrs.name ?? 'Apple Development',
-  '-keypbe',
-  'PBE-SHA1-3DES',
-  '-certpbe',
-  'PBE-SHA1-3DES',
-  '-macalg',
-  'sha1',
-], { stdio: 'inherit' })
-
-const toolTrust = [
-  '/usr/bin/codesign',
-  '/usr/bin/security',
-  '/usr/bin/productbuild',
-  '/usr/bin/productsign',
-  '/Volumes/APPLICATIONS/02_STORAGE_AND_RUNTIME/mac-storage/xcode-archive/Xcode.app/Contents/Developer/usr/bin/xcodebuild',
-].flatMap((tool) => (fs.existsSync(tool) ? ['-T', tool] : []))
-
-execFileSync('security', ['import', p12, '-k', keychain, '-P', p12Password, '-A', ...toolTrust], { stdio: 'inherit' })
+execFileSync('certtool', ['i', certDer, `k=${keychain}`, 'd'], { stdio: 'inherit' })
 execFileSync('security', [
   'set-key-partition-list',
   '-S',
