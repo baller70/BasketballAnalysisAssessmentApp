@@ -941,10 +941,18 @@ final class ShotIQUITests: XCTestCase {
         app.buttons["Continue to analysis"].tap()
         XCTAssertTrue(screen("screen-ios-analysis-result-overview").waitForExistence(timeout: 30))
 
-        app.buttons["Profile"].tap()
+        tapButton(id: "tab-profile")
         XCTAssertTrue(screen("screen-ios-profile").waitForExistence(timeout: 8))
         tapControl("My media")
         XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        assertStaticText(id: "my-media-header-score", contains: "--")
+        assertStaticText(id: "my-media-header-verdict", contains: "UNAVAILABLE")
+        assertStaticText(id: "my-media-header-stat-0-value", contains: "1")
+        assertStaticText(id: "my-media-header-stat-0-label", contains: "MEDIA")
+        assertStaticText(id: "my-media-header-stat-1-value", contains: "1")
+        assertStaticText(id: "my-media-header-stat-1-label", contains: "IMAGE")
+        assertStaticText(id: "my-media-header-stat-2-value", contains: "0")
+        assertStaticText(id: "my-media-header-stat-2-label", contains: "VIDEOS")
         XCTAssertNotNil(findControl("Side View Analysis"), "Selected analysis must appear in My Media.")
         XCTAssertNotNil(findControl("Just now"), "Selected analysis must be surfaced as the newest media item.")
         XCTAssertTrue(screen("media-real-surface").waitForExistence(timeout: 5),
@@ -974,6 +982,42 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["24"].exists)
         tapControl("Copy")
         XCTAssertTrue(app.staticTexts["Copied"].waitForExistence(timeout: 3))
+    }
+
+    func testMyMediaUsesLatestAnalysisHeaderFiltersSortAndSelectionFeedback() throws {
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "my-media"])
+        XCTAssertTrue(screen("screen-ios-my-media").waitForExistence(timeout: 8))
+        assertStaticText(id: "my-media-primary-target", contains: "Stack elbow higher")
+        assertStaticText(id: "my-media-header-score", contains: "82")
+        assertStaticText(id: "my-media-header-verdict", contains: "GOOD")
+        assertStaticText(id: "my-media-header-stat-0-value", contains: "1")
+        assertStaticText(id: "my-media-header-stat-0-label", contains: "MEDIA")
+        assertStaticText(id: "my-media-header-stat-1-value", contains: "1")
+        assertStaticText(id: "my-media-header-stat-1-label", contains: "IMAGE")
+        assertStaticText(id: "my-media-header-stat-2-value", contains: "0")
+        assertStaticText(id: "my-media-header-stat-2-label", contains: "VIDEOS")
+        assertStaticText(id: "my-media-visible-count", contains: "7 ITEMS")
+
+        tapButton(id: "my-media-segment-Images")
+        XCTAssertTrue(waitForToastContaining("Images: 3 items visible"))
+        assertStaticText(id: "my-media-visible-count", contains: "3 ITEMS")
+
+        tapButton(id: "my-media-filter")
+        tapDialogOption("REVIEW")
+        XCTAssertTrue(waitForToastContaining("REVIEW: 1 items visible"))
+        assertStaticText(id: "my-media-visible-count", contains: "1 ITEMS")
+
+        tapButton(id: "my-media-sort")
+        XCTAssertTrue(waitForToastContaining("Oldest first"))
+
+        tapButton(id: "my-media-select")
+        XCTAssertTrue(waitForToastContaining("Tap items to add"))
+        tapControl("Spot-Up")
+        XCTAssertTrue(waitForToastContaining("Spot-Up"))
+        assertVisible("Done (1)")
+        tapButton(id: "my-media-select")
+        XCTAssertTrue(waitForToastContaining("1 item selected"))
     }
 
     func testLatestPhotoAnalysisFeedsPlayerCardAndCustomizationFeedback() throws {

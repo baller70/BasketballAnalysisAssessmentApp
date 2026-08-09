@@ -889,6 +889,7 @@ struct ShotIQTabBar: View {
                 // buttons with the app tint — the salmon capsules on device.
                 .buttonStyle(.plain)
                 .accessibilityLabel(t.rawValue)
+                .accessibilityIdentifier("tab-\(t.rawValue.lowercased())")
             }
         }
         .padding(.top, 10).padding(.bottom, 22)

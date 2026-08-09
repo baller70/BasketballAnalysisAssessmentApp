@@ -2697,6 +2697,11 @@ struct MyMediaView: View {          // 068
     @State private var selecting = false
     @State private var selectedTiles: Set<Int> = []
     @State private var showGradeFilter = false
+    @State private var toast: ShotIQToast?
+    private struct MediaHeaderStat {
+        let value: String
+        let label: String
+    }
     private struct MediaItem {
         let title, time, score, grade: String
         let color: Color
@@ -2753,6 +2758,38 @@ struct MyMediaView: View {          // 068
     private var showYesterday: Bool {
         (segment == "All" || segment == "Videos") && gradeFilter == "All results"
     }
+    private var latestPresentation: AnalysisResultPresentation? {
+        app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+    private var headerScoreText: String {
+        latestPresentation?.scoreText ?? "82"
+    }
+    private var headerScoreVerdict: String {
+        latestPresentation?.scoreVerdict ?? "GOOD"
+    }
+    private var headerScoreColor: Color {
+        headerScoreVerdict == "UNAVAILABLE" || headerScoreVerdict == "REVIEW"
+            ? ShotIQColor.reviewRed
+            : ShotIQColor.analysisBlue
+    }
+    private var headerScorePct: Double {
+        Double(headerScoreText).map { min(max($0 / 100, 0), 1) } ?? 0
+    }
+    private var primaryTargetText: String {
+        latestPresentation?.coachingTarget ?? "Keep elbow stacked through release"
+    }
+    private var headerStats: [MediaHeaderStat] {
+        guard realMedia.isEmpty == false else {
+            return [MediaHeaderStat(value: "24", label: "SHOTS"),
+                    MediaHeaderStat(value: "15", label: "MAKES"),
+                    MediaHeaderStat(value: "62.5%", label: "ACCURACY")]
+        }
+        let imageCount = realMedia.filter { $0.kind == "Images" }.count
+        let videoCount = realMedia.filter { $0.kind == "Videos" }.count
+        return [MediaHeaderStat(value: "\(realMedia.count)", label: "MEDIA"),
+                MediaHeaderStat(value: "\(imageCount)", label: imageCount == 1 ? "IMAGE" : "IMAGES"),
+                MediaHeaderStat(value: "\(videoCount)", label: videoCount == 1 ? "VIDEO" : "VIDEOS")]
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-my-media") {
             ScrollView {
@@ -2762,26 +2799,28 @@ struct MyMediaView: View {          // 068
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Primary target").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             .padding(.top, 12)
-                        Text("Keep elbow stacked through release").shotiqBody(14, weight: .semibold)
+                        Text(primaryTargetText).shotiqBody(14, weight: .semibold)
                             .padding(.top, 2)
+                            .accessibilityIdentifier("my-media-primary-target")
                         ShotIQCard {
                             HStack(spacing: 0) {
                                 VStack(spacing: 3) {
                                     Text("FORM SCORE").shotiqBody(8, weight: .semibold).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Medium", size: 26))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("GOOD").shotiqBody(8, weight: .bold)
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                    ScoreBar(pct: 0.82, color: ShotIQColor.analysisBlue).frame(width: 44)
+                                    Text(headerScoreText).font(.custom("Tungsten-Medium", size: 26))
+                                        .foregroundStyle(headerScoreColor)
+                                        .accessibilityIdentifier("my-media-header-score")
+                                    Text(headerScoreVerdict).shotiqBody(8, weight: .bold)
+                                        .foregroundStyle(headerScoreColor)
+                                        .accessibilityIdentifier("my-media-header-verdict")
+                                    ScoreBar(pct: headerScorePct, color: headerScoreColor).frame(width: 44)
+                                        .accessibilityIdentifier("my-media-header-score-bar")
                                 }
                                 .frame(maxWidth: .infinity)
-                                VRule(height: 48)
-                                mediaStat("24", "SHOTS")
-                                VRule(height: 48)
-                                mediaStat("15", "MAKES")
-                                VRule(height: 48)
-                                mediaStat("62.5%", "ACCURACY")
+                                ForEach(Array(headerStats.enumerated()), id: \.offset) { index, stat in
+                                    VRule(height: 48)
+                                    mediaStat(stat.value, stat.label, idPrefix: "my-media-header-stat-\(index)")
+                                }
                                 VRule(height: 48)
                                 PhaseGlyph(active: true, size: 34).frame(maxWidth: .infinity)
                             }
@@ -2806,7 +2845,10 @@ struct MyMediaView: View {          // 068
                             .shotiqBody(13).foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                         HStack(spacing: 0) {
                             ForEach(["All", "Images", "Videos", "Live", "Workouts"], id: \.self) { s in
-                                Button { segment = s } label: {
+                                Button {
+                                    segment = s
+                                    toast = .success("Media view updated", "\(s): \(filteredCount(segment: s, grade: gradeFilter)) items visible.")
+                                } label: {
                                     Text(s).shotiqBody(13, weight: segment == s ? .semibold : .regular)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                         .frame(maxWidth: .infinity).frame(height: 38)
@@ -2814,6 +2856,7 @@ struct MyMediaView: View {          // 068
                                                     in: RoundedRectangle(cornerRadius: 6))
                                         .foregroundStyle(segment == s ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 }
+                                .accessibilityIdentifier("my-media-segment-\(s)")
                             }
                         }
                         .padding(4)
@@ -2823,19 +2866,33 @@ struct MyMediaView: View {          // 068
                             mediaTool("slider.horizontal.3",
                                       gradeFilter == "All results" ? "Filter" : gradeFilter,
                                       active: gradeFilter != "All results") { showGradeFilter = true }
+                                      .accessibilityIdentifier("my-media-filter")
                             mediaTool("arrow.up.arrow.down", sortNewest ? "Sort: Newest" : "Sort: Oldest",
-                                      active: false) { sortNewest.toggle() }
+                                      active: false) {
+                                sortNewest.toggle()
+                                toast = .success("Sort updated", sortNewest ? "Newest first." : "Oldest first.")
+                            }
+                                      .accessibilityIdentifier("my-media-sort")
                             mediaTool("viewfinder", selecting ? "Done (\(selectedTiles.count))" : "Select",
                                       active: selecting) {
                                 selecting.toggle()
-                                if !selecting { selectedTiles.removeAll() }
+                                if selecting {
+                                    toast = .success("Select media", "Tap items to add them.")
+                                } else {
+                                    toast = .success("Selection finished", "\(selectedTiles.count) item\(selectedTiles.count == 1 ? "" : "s") selected.")
+                                    selectedTiles.removeAll()
+                                }
                             }
+                                      .accessibilityIdentifier("my-media-select")
                         }
                         .padding(.top, 10)
                         .confirmationDialog("Filter by result", isPresented: $showGradeFilter,
                                             titleVisibility: .visible) {
                             ForEach(["All results", "GOOD", "REVIEW", "EXCELLENT"], id: \.self) { g in
-                                Button(g) { gradeFilter = g }
+                                Button(g) {
+                                    gradeFilter = g
+                                    toast = .success("Filter updated", "\(g): \(filteredCount(segment: segment, grade: g)) items visible.")
+                                }
                             }
                             Button("Cancel", role: .cancel) {}
                         }
@@ -2844,20 +2901,27 @@ struct MyMediaView: View {          // 068
                             Spacer()
                             Text("\(filteredToday.count) ITEMS").shotiqBody(10, weight: .semibold).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("my-media-visible-count")
                         }
                         .padding(.top, 18)
                         if filteredToday.isEmpty {
                             Text("Nothing in this view yet.")
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                 .frame(maxWidth: .infinity).padding(.vertical, 24)
+                                .accessibilityIdentifier("my-media-empty-state")
                         }
                         let cols = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
                         LazyVGrid(columns: cols, spacing: 14) {
                             ForEach(filteredToday, id: \.0) { i, t in
                                 if selecting {
                                     Button {
-                                        if selectedTiles.contains(i) { selectedTiles.remove(i) }
-                                        else { selectedTiles.insert(i) }
+                                        if selectedTiles.contains(i) {
+                                            selectedTiles.remove(i)
+                                            toast = .success("Removed from selection", "\(t.title) removed.")
+                                        } else {
+                                            selectedTiles.insert(i)
+                                            toast = .success("Added to selection", "\(t.title) selected.")
+                                        }
                                     } label: {
                                         mediaTile(t)
                                             .overlay(alignment: .topLeading) {
@@ -2870,10 +2934,12 @@ struct MyMediaView: View {          // 068
                                             }
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier("my-media-tile-\(i)")
                                 } else {
                                     NavigationLink { MediaDetailView(analysis: t.analysis) } label: {
                                         mediaTile(t)
                                     }
+                                    .accessibilityIdentifier("my-media-tile-\(i)")
                                 }
                             }
                         }
@@ -2912,13 +2978,22 @@ struct MyMediaView: View {          // 068
                 }
             }
         }
+        .shotiqToast($toast)
     }
-    private func mediaStat(_ value: String, _ label: String) -> some View {
+    private func filteredCount(segment selectedSegment: String, grade selectedGrade: String) -> Int {
+        allToday.filter {
+            (selectedSegment == "All" || $0.kind == selectedSegment)
+            && (selectedGrade == "All results" || $0.grade == selectedGrade)
+        }.count
+    }
+    private func mediaStat(_ value: String, _ label: String, idPrefix: String) -> some View {
         VStack(spacing: 3) {
             Text(value).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
+                .accessibilityIdentifier("\(idPrefix)-value")
             Text(label).shotiqBody(8, weight: .medium).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
+                .accessibilityIdentifier("\(idPrefix)-label")
         }
         .frame(maxWidth: .infinity)
     }

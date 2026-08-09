@@ -158,7 +158,7 @@ The first pass should fix root causes before polishing dependent screens:
 | G057 | VERIFYING | P1 | `#analytics` | 065 | Goal detail uses real linked sessions and technique snapshot. | Goal Detail now resolves linked sessions, trend endpoint, elbow angle, form score, and release offset from saved local workout/analysis records when present, while preserving the canonical demo-only static sample for screenshot parity. Focused UI proof creates a real shot-tracker session, seeds weak analysis, verifies the screen shows 3 shots, 66.7% make rate, 70% goal score, 118° elbow, 150°–180° target range, +14° release offset, and opens Analytics Detail from the linked session. Add Drill now has its own progress/success feedback path separate from opening the drill. Backend reload, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G058 | VERIFYING | P0 | `#analytics` `#backend` | 066 | Analytics cards load real history. | Analytics Cards now derive the summary score/verdict/target, trend, total shots/makes/accuracy, latest-session delta, session cards, share text, media filter counts, empty state, and Open Session route from completed Shot Tracker history when present, while preserving the canonical demo summary and sample cards for no-history screenshot parity. Focused UI proof creates two real shot-tracker sessions and verifies `99` score, `GREAT`, `Stack elbow higher`, `6` shots, `5` makes, `83.3%`, `+29`, latest session `3/3`, share text, Live/Photo filter toasts, empty state, and Analytics Detail navigation. Backend reload/API parity, physical-device proof, and iOS/web parity remain before `DONE`. |
 | G059 | VERIFYING | P0 | `#analytics` `#backend` | 067 | Detailed analytics aggregate real history. | Analytics Detailed now derives trend, latest value, confidence, phase scorecard, comparison rows, release offset, consistency, range changes, metric changes, and customer-visible filter feedback from locally completed Shot Tracker history when history exists, while preserving the canonical no-history analytics sample. Focused UI proof creates two real shot-tracker sessions and verifies `+28.4%`, `98.4%`, `+29`, release `99`, Form Score comparison, `+14°` release offset, metric/range filter toasts, and canonical/demo stability. Backend analysis-history reload/API parity, physical-device proof, per-session angle/elbow history, and iOS/web parity remain before `DONE`. |
-| G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. Backend reload/web-library proof remains before `DONE`. |
+| G060 | VERIFYING | P0 | `#media` `#backend` | 068 | Media library lists real uploaded/captured media. | Selected native photo/video analyses are now remembered in app state, shown first in My Media with a real media surface, score/verdict, and `Just now` timestamp; sample media remains available only for canonical/default states. My Media's header now switches from canonical shot/make/accuracy samples to real media counts and the current analysis target when selected media exists, and segment/filter/sort/select controls show customer-visible feedback. Focused UI proof verifies real header values, filter counts, sort toast, selection toast, selected-photo handoff, canonical media stability, and the broader Profile/My Media screenshot path. Backend reload/web-library proof remains before `DONE`. |
 | G061 | VERIFYING | P0 | `#media` `#analytics` | 069 | Media detail opens selected real media and analysis. | Media Detail now accepts the selected analysis, renders its image/video surface, displays saved score/source/target context, suppresses fake sample shot-event stats for real selected media, and opens the linked saved analysis. Real backend playback/share/delete and web parity remain before `DONE`. |
 | G062 | OPEN | P1 | `#analytics` `#backend` | 070 | Profile analytics from backend. | Points/score/shots/makes/badges match API data. |
 | G063 | VERIFYING | P2 | `#control` `#analytics` | 071 | Settings actions plus real analytics context. | Settings toggles persist locally across app relaunch and show a customer-visible `Settings saved` toast; each toggle also fire-and-forget syncs through `/api/settings`. Backend reload proof and provenance for the fixed header analytics remain before `DONE`. |
@@ -2134,6 +2134,72 @@ backend after relaunch, appears in the web media library from the same shared
 database, or that share/export/delete operate against a persisted backend media
 record. Those are still required before P0-005/G060/G061 can move from
 `VERIFYING` to `DONE`.
+
+### 2026-08-08 My Media Header And Controls Proof
+
+Implementation:
+
+- Screen 068 My Media now switches its summary header based on real media
+  provenance. With no selected media it preserves the canonical `82`, `24`,
+  `15`, and `62.5%` sample header. When selected media exists it shows the
+  latest analysis target plus real media counts (`MEDIA`, `IMAGE(S)`,
+  `VIDEO(S)`) instead of presenting sample shot/make/accuracy totals as player
+  history.
+- The segment, result filter, sort, select-mode, and tile-selection controls now
+  emit customer-visible toast feedback so the customer gets confirmation that
+  the page responded.
+- Screen 068 now exposes stable identifiers for its target, header score,
+  header media counts, visible count, filters, sort, select mode, empty state,
+  and media tiles. The shared tab bar also exposes `tab-home`, `tab-capture`,
+  `tab-train`, `tab-progress`, and `tab-profile` so long journeys can tap the
+  real customer tab controls instead of ambiguous text.
+
+Evidence captured on the laptop, all external-drive backed:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-my-media-live-20260808-2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testMyMediaUsesLatestAnalysisHeaderFiltersSortAndSelectionFeedback`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It launched My Media with a seeded weak real analysis and verified
+  target `Stack elbow higher`, header score `82`, `1 MEDIA`, `1 IMAGE`,
+  `0 VIDEOS`, visible count `7 ITEMS`, Images segment toast `3 items visible`,
+  REVIEW filter toast `1 items visible`, sort toast `Oldest first`, select-mode
+  toast, tile-selection toast, `Done (1)`, and final `1 item selected`
+  feedback.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-my-media-image-20260808-1.xcresult`
+  ran `ShotIQUITests/ShotIQUITests/testMediaLibraryImageSurfacesWork`. The run
+  ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0 failures`, and
+  re-proved the canonical screen-068 sample media grid plus Images filter and
+  select/done behavior.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-my-media-selected-photo-20260808-2.xcresult`
+  ran
+  `ShotIQUITests/ShotIQUITests/testSelectedPhotoAnalysisAppearsInMyMediaAndDetail`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`. It followed Home -> Upload image -> sample all views -> crop ->
+  quality check -> analysis overview -> Profile -> My Media -> real selected
+  tile -> Media Detail -> linked analysis -> Share Results, and verified My
+  Media switches to unavailable selected-image score plus `1 MEDIA`, `1 IMAGE`,
+  and `0 VIDEOS` instead of canonical shot totals.
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-my-media-canonical-20260808-1.xcresult`
+  ran `ShotIQUITests/CanonicalScreenshotTests/test07ProgressAndProfileScreens`.
+  The run ended with `** TEST SUCCEEDED **`, `Executed 1 test, with 0
+  failures`, capturing Analytics Cards, Analytics Detailed, Profile, Player
+  Card, Customize Player Card, My Media, Goals, Create Goal, Goal Detail,
+  Settings, and Share Results through the production-style tab/navigation path.
+
+Superseded failed attempts:
+
+- `/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-evidence/ios-ui-my-media-selected-photo-20260808-1.xcresult`
+  reached the selected-photo analysis result but failed while tapping an
+  ambiguous `Profile` button from the result screen. The app now gives tab
+  buttons stable identifiers, and the passing rerun above uses `tab-profile`.
+
+Remaining limitations: this proves screen 068 in simulator production
+navigation with in-session selected media and deterministic seeded analysis. It
+does not yet prove backend media reload after relaunch, shared web media-library
+visibility, physical-device picker/camera behavior, or persisted backend
+share/export/delete records; those remain required before G060 can move to
+`DONE`.
 
 ### 2026-08-08 Late-Page Isolated Regression Proof
 
