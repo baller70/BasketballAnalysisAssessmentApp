@@ -522,6 +522,33 @@ final class PlaceholderReplacementTests: XCTestCase {
                        .image(url))
     }
 
+    func testDetectedLocalPhotoWinsOverRemoteImageSoNativeSkeletonCanRender() {
+        let localURL = URL(fileURLWithPath: "/tmp/shotiq-selected-photo-with-pose.jpg")
+        var result = ShotIQLocalAnalysisFactory.photo(localImageURL: localURL,
+                                                      detectedPose: .uiTestSample)
+        result.media.imageUrl = "https://media.test/uploaded-shot.jpg"
+
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(presentation.mediaURL?.absoluteString, localURL.absoluteString)
+        XCTAssertNotNil(presentation.detectedPose)
+        XCTAssertEqual(AnalysisResultMediaSurfaceResolver.source(for: presentation,
+                                                                 fallbackKey: "038-visual-001"),
+                       .image(localURL))
+    }
+
+    func testRemoteImageStillWinsWhenNoNativePoseIsAvailable() {
+        let localURL = URL(fileURLWithPath: "/tmp/shotiq-selected-photo-no-pose.jpg")
+        var result = ShotIQLocalAnalysisFactory.photo(localImageURL: localURL,
+                                                      detectedPose: nil)
+        result.media.imageUrl = "https://media.test/uploaded-shot.jpg"
+
+        let presentation = AnalysisResultPresentation(result: result)
+
+        XCTAssertEqual(presentation.mediaURL?.absoluteString, "https://media.test/uploaded-shot.jpg")
+        XCTAssertNil(presentation.detectedPose)
+    }
+
     func testAnalysisMediaSurfaceUsesRealVideoBeforeCanonicalFallback() {
         let url = URL(fileURLWithPath: "/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-fixtures/placeholder-proof.mov")
         let clip = PickedVideoClip(url: url,

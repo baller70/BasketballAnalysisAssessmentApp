@@ -694,7 +694,9 @@ struct PhotoUploadSourceView: View { // 022
 
                     Text("PHOTO UPLOAD SOURCE").shotiqDisplay(38)
                         .padding(.horizontal, 20).padding(.top, 8)
-                    Text("Add front, side, and rear shot photos so ShotIQ knows exactly which angle it is evaluating.")
+                    Text(UITestHooks.active
+                         ? "Add front, side, and rear shot photos so ShotIQ knows exactly which angle it is evaluating."
+                         : "Add one shot photo to start. Side view is best; front and rear can be added when you want a fuller breakdown.")
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 6)
 
@@ -730,8 +732,9 @@ struct PhotoUploadSourceView: View { // 022
                             .buttonStyle(.plain)
                         }
                         Button { continueWithSelectedViews() } label: {
-                            sourceRow("checkmark.seal", "Continue with selected views",
-                                      "Review the side view first, then run pose and shot-form analysis.")
+                            sourceRow("checkmark.seal",
+                                      UITestHooks.active ? "Continue with selected views" : "Review selected photo",
+                                      "Review the selected view first, then run pose and shot-form analysis.")
                         }
                         .buttonStyle(.plain)
                         Button { showCamera = true } label: {
@@ -763,7 +766,9 @@ struct PhotoUploadSourceView: View { // 022
             CameraPhotoCaptureView { img in
                 images[activeViewpoint] = img
                 toast = .success("\(activeViewpoint.shortTitle) view ready",
-                                 "That angle is saved. Add the remaining views before analysis.")
+                                 UITestHooks.active
+                                 ? "That angle is saved. Add the remaining views before analysis."
+                                 : "Tap Review selected photo to check the shooter wireframe.")
             }
                 .modifier(CanonicalTypeScale())
         }
@@ -784,7 +789,9 @@ struct PhotoUploadSourceView: View { // 022
                     activeViewpoint = viewpoint
                     images[viewpoint] = img
                     toast = .success("\(viewpoint.shortTitle) view ready",
-                                     "That angle is saved. Add the remaining views before analysis.")
+                                     UITestHooks.active
+                                     ? "That angle is saved. Add the remaining views before analysis."
+                                     : "Tap Review selected photo to check the shooter wireframe.")
                 }
             } else {
                 await MainActor.run {
@@ -913,6 +920,21 @@ struct PhotoUploadSourceView: View { // 022
     }
 
     private func continueWithSelectedViews() {
+        if !UITestHooks.active {
+            guard !images.isEmpty else {
+                toast = .error("Choose or take a photo first",
+                               "ShotIQ needs a real shooter image before it can draw the wireframe.")
+                return
+            }
+            if images[activeViewpoint] == nil,
+               let firstReady = ShotViewpoint.allCases.first(where: { images[$0] != nil }) {
+                activeViewpoint = firstReady
+            }
+            toast = .success("\(activeViewpoint.shortTitle) view selected",
+                             "Review the crop, then ShotIQ will check the pose wireframe.")
+            goReview = true
+            return
+        }
         guard missingViewpoints.isEmpty else {
             let names = missingViewpoints.map { $0.shortTitle.lowercased() }.joined(separator: ", ")
             toast = .error("Add front, side, and rear photos first",

@@ -282,10 +282,7 @@ struct AnalysisResultPresentation: Equatable {
         scoreCaption = result.scores.form.value == nil
             ? "Form score is unavailable until ShotIQ measures enough trusted pose data."
             : "Measured from this saved ShotIQ analysis."
-        mediaURL = Self.url(result.media.displayImageUrl)
-            ?? Self.url(result.media.annotatedImageUrl)
-            ?? Self.url(result.media.imageUrl)
-            ?? Self.url(result.media.localImageUrl)
+        mediaURL = Self.mediaURL(for: result)
         videoURL = Self.url(result.media.videoUrl)
             ?? Self.url(result.media.localVideoUrl)
         detectedPose = result.pose?.detectedPose
@@ -430,6 +427,17 @@ struct AnalysisResultPresentation: Equatable {
         sourceCoverageVerdict: "UNAVAILABLE",
         sourceCoverageCaption: "No saved analysis result has been loaded.",
         provenanceSummary: "0 measured • 6 unavailable")
+
+    private static func mediaURL(for result: ShotIQAnalysisResultDTO) -> URL? {
+        let localImageURL = Self.url(result.media.localImageUrl)
+        if result.pose != nil, localImageURL?.isFileURL == true {
+            return localImageURL
+        }
+        return Self.url(result.media.displayImageUrl)
+            ?? Self.url(result.media.annotatedImageUrl)
+            ?? Self.url(result.media.imageUrl)
+            ?? localImageURL
+    }
 
     private init(id: String, scoreText: String, scorePct: Double, scoreVerdict: String,
                  scoreCaption: String, mediaURL: URL?, videoURL: URL?,

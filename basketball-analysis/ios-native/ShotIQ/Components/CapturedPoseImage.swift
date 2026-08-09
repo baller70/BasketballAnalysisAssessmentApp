@@ -76,15 +76,29 @@ struct CapturedPoseImage: View {
             // Say plainly when nothing was found rather than leaving the player
             // to guess whether the app looked. Silence here reads as "your form
             // was analysed", which would be the same lie the constant figure told.
-            if showsPose && detectionFinished && pose == nil {
-                Text(detectionUnavailable
-                     ? "Pose detector unavailable on this simulator/device."
-                     : "No shooter detected — reframe with your full body in view.")
-                    .shotiqBody(11)
+            if showsPose {
+                if !detectionFinished {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .tint(.white)
+                        Text("Detecting shooter pose...")
+                            .shotiqBody(11)
+                    }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8).padding(.vertical, 5)
                     .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 4))
                     .padding(8)
+                } else if pose == nil {
+                    Text(detectionUnavailable
+                         ? "Pose detector unavailable on this simulator/device."
+                         : "No shooter detected - reframe with your full body in view.")
+                        .shotiqBody(11)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8).padding(.vertical, 5)
+                        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 4))
+                        .padding(8)
+                }
             }
         }
         .task(id: image) {
