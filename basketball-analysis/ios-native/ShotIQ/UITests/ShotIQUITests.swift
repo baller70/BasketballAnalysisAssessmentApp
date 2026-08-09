@@ -1057,6 +1057,8 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["24"].exists)
         tapControl("Copy")
         XCTAssertTrue(screen("share-results-copy-badge").waitForExistence(timeout: 1) ||
+                      screen("share-results-copy-feedback").waitForExistence(timeout: 1) ||
+                      app.buttons["Copied"].waitForExistence(timeout: 1) ||
                       waitForToastContaining("Copied", timeout: 3))
     }
 
@@ -1949,6 +1951,8 @@ final class ShotIQUITests: XCTestCase {
         }
         tapControl("Copy")
         XCTAssertTrue(screen("share-results-copy-badge").waitForExistence(timeout: 1) ||
+                      screen("share-results-copy-feedback").waitForExistence(timeout: 1) ||
+                      app.buttons["Copied"].waitForExistence(timeout: 1) ||
                       waitForToastContaining("Copied", timeout: 3))
         tapControl("Share image")
         XCTAssertTrue(app.buttons["Share image"].waitForExistence(timeout: 3))

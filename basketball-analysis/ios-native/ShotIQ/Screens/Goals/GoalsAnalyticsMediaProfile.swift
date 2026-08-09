@@ -4757,6 +4757,8 @@ struct ShareResultsView: View {     // 072
                             shareOption(copied ? "checkmark" : "square.on.square",
                                         copied ? "Copied" : "Copy", ShotIQColor.ink)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("share-results-copy-button")
                         ShareLink(item: shareText) { shareOption("ellipsis", "More", ShotIQColor.ink) }
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
@@ -4768,6 +4770,8 @@ struct ShareResultsView: View {     // 072
                                 .shotiqBody(12, weight: .bold)
                         }
                         .foregroundStyle(ShotIQColor.confirmGreen)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Copied")
                         .accessibilityIdentifier("share-results-copy-feedback")
                         .padding(.top, 10)
                     }
@@ -4860,16 +4864,20 @@ struct ShareResultsView: View {     // 072
             .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.confirmGreen.opacity(0.55)))
             .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Copied")
             .accessibilityIdentifier("share-results-copy-badge")
             .padding(.top, 64)
     }
 
     private func copyShareText() {
-        UIPasteboard.general.string = shareText
-        copied = true
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+            copied = true
+        }
         toast = .success("Copied", "Results summary copied to clipboard.")
+        UIPasteboard.general.string = shareText
         Task {
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(4))
             await MainActor.run { copied = false }
         }
     }
