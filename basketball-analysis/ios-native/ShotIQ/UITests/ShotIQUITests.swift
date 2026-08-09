@@ -1033,7 +1033,7 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("media-real-surface").waitForExistence(timeout: 5),
                       "My Media must render the selected image/video surface.")
 
-        tapControl("Side View Analysis")
+        tapButton(id: "my-media-tile-0")
         XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
         XCTAssertTrue(screen("media-real-surface").waitForExistence(timeout: 5),
                       "Media detail must render the selected media surface.")

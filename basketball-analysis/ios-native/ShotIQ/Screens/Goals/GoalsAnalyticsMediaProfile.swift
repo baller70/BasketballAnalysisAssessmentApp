@@ -2938,7 +2938,9 @@ struct MyMediaView: View {          // 068
                                 } else {
                                     NavigationLink { MediaDetailView(analysis: t.analysis) } label: {
                                         mediaTile(t)
+                                            .contentShape(Rectangle())
                                     }
+                                    .buttonStyle(.plain)
                                     .accessibilityIdentifier("my-media-tile-\(i)")
                                 }
                             }
@@ -2967,7 +2969,9 @@ struct MyMediaView: View {          // 068
                                                     .padding(4)
                                             }
                                             .frame(maxWidth: .infinity)
+                                            .contentShape(Rectangle())
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.top, 10)
