@@ -161,6 +161,12 @@ execFileSync('openssl', [
   `pass:${p12Password}`,
   '-name',
   attrs.name ?? 'Apple Development',
+  '-keypbe',
+  'PBE-SHA1-3DES',
+  '-certpbe',
+  'PBE-SHA1-3DES',
+  '-macalg',
+  'sha1',
 ], { stdio: 'inherit' })
 
 const toolTrust = [

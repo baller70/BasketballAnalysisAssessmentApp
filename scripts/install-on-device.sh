@@ -208,8 +208,6 @@ original_keychains=""
 original_default=""
 
 cleanup() {
-  local status=$?
-
   rm -f "$devices_json"
 
   # The keychain search path and default are *per-user* settings, shared with
@@ -240,10 +238,14 @@ cleanup() {
       printf '         Run: security list-keychains -d user -s %s\n' "$login" >&2
     fi
   fi
-
-  return "$status"
 }
-trap cleanup EXIT INT TERM
+
+on_exit() {
+  local status=$?
+  cleanup
+  exit "$status"
+}
+trap on_exit EXIT INT TERM
 
 step 'Preparing a keychain codesign can actually use'
 
