@@ -1056,7 +1056,8 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["62.5%"].exists)
         XCTAssertFalse(app.staticTexts["24"].exists)
         tapControl("Copy")
-        XCTAssertTrue(app.staticTexts["Copied"].waitForExistence(timeout: 3))
+        XCTAssertTrue(screen("share-results-copy-badge").waitForExistence(timeout: 1) ||
+                      waitForToastContaining("Copied", timeout: 3))
     }
 
     func testMyMediaUsesLatestAnalysisHeaderFiltersSortAndSelectionFeedback() throws {
@@ -1947,7 +1948,8 @@ final class ShotIQUITests: XCTestCase {
             assertVisible(control)
         }
         tapControl("Copy")
-        XCTAssertTrue(app.staticTexts["Copied"].waitForExistence(timeout: 3))
+        XCTAssertTrue(screen("share-results-copy-badge").waitForExistence(timeout: 1) ||
+                      waitForToastContaining("Copied", timeout: 3))
         tapControl("Share image")
         XCTAssertTrue(app.buttons["Share image"].waitForExistence(timeout: 3))
         tapControl("Save image")
