@@ -4753,12 +4753,7 @@ struct ShareResultsView: View {     // 072
                             .accessibilityIdentifier("share-results-text")
                         imageShareControl("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
                         imageShareControl("arrow.down.to.line", "Save image", ShotIQColor.ink)
-                        Button { copyShareText() } label: {
-                            shareOption(copied ? "checkmark" : "square.on.square",
-                                        copied ? "Copied" : "Copy", ShotIQColor.ink)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("share-results-copy-button")
+                        copyShareControl
                         ShareLink(item: shareText) { shareOption("ellipsis", "More", ShotIQColor.ink) }
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
@@ -4855,6 +4850,19 @@ struct ShareResultsView: View {     // 072
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
     }
 
+    private var copyShareControl: some View {
+        Button(action: copyShareText) {
+            shareOption(copied ? "checkmark" : "square.on.square",
+                        copied ? "Copied" : "Copy", ShotIQColor.ink)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(copied ? "Copied" : "Copy")
+        .accessibilityIdentifier("share-results-copy-button")
+        .highPriorityGesture(TapGesture().onEnded { copyShareText() })
+    }
+
     private var copyFeedbackBadge: some View {
         Text("Copied")
             .shotiqBody(12, weight: .bold)
@@ -4875,7 +4883,11 @@ struct ShareResultsView: View {     // 072
             copied = true
         }
         toast = .success("Copied", "Results summary copied to clipboard.")
-        UIPasteboard.general.string = shareText
+        let textToCopy = shareText
+        Task { @MainActor in
+            await Task.yield()
+            UIPasteboard.general.string = textToCopy
+        }
         Task {
             try? await Task.sleep(for: .seconds(4))
             await MainActor.run { copied = false }
