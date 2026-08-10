@@ -752,16 +752,12 @@ struct VideoPoseResultSurface: View {
     }
 
     private var finalBorderStatus: VideoPoseQualityStatus {
-        guard let frame = poseFrame else {
-            switch presentation.scoreVerdict.uppercased() {
-            case "EXCELLENT", "GOOD":
-                return .good
-            default:
-                return .problem
-            }
+        switch presentation.scoreVerdict.uppercased() {
+        case "EXCELLENT", "GOOD":
+            return .good
+        default:
+            return presentation.scorePct >= 0.72 ? .good : .problem
         }
-        let status = frameOverallStatus(frame)
-        return status == .problem ? .problem : .good
     }
 
     private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
@@ -785,32 +781,33 @@ struct VideoPoseResultSurface: View {
         poseFrame ?? selectedPoseFrame ?? playbackFrames.first
     }
 
-    private var frameFlipIsGreen: Bool {
+    private var frameBeatIsHigh: Bool {
         guard let frameIndex = activeBorderFrame?.frameIndex else { return true }
-        return ((frameIndex / 3) % 2) == 0
+        return frameIndex.isMultiple(of: 2)
     }
 
-    private var frameFlipColor: Color {
-        frameFlipIsGreen ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed
+    private var skeletonFlashStatus: VideoPoseQualityStatus {
+        let statuses = activeFrameStatuses(activeBorderFrame)
+        let skeletonSequence = statuses.reduce(into: [VideoPoseQualityStatus]()) { partial, status in
+            if !partial.contains(status) {
+                partial.append(status)
+            }
+        }
+        guard let frameIndex = activeBorderFrame?.frameIndex,
+              !skeletonSequence.isEmpty else {
+            return frameOverallStatus(activeBorderFrame)
+        }
+        return skeletonSequence[abs(frameIndex) % skeletonSequence.count]
     }
 
-    private var frameFlipOppositeColor: Color {
-        frameFlipIsGreen ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen
+    private var skeletonFlashColor: Color {
+        skeletonFlashStatus.main
     }
 
     private var liveBorderColors: [Color] {
-        let primary = frameFlipColor
-        let opposite = frameFlipOppositeColor
-        let status = frameOverallStatus(activeBorderFrame).main
-        return [
-            primary,
-            status,
-            opposite,
-            primary,
-            opposite.opacity(0.92),
-            status,
-            primary
-        ]
+        let colors = activeFrameStatuses(activeBorderFrame).map(\.main)
+        let sequenced = colors.isEmpty ? [skeletonFlashColor] : colors
+        return sequenced + sequenced.reversed() + [sequenced.first ?? skeletonFlashColor]
     }
 
     private var liveBorderLineWidth: CGFloat {
@@ -847,7 +844,8 @@ struct VideoPoseResultSurface: View {
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
-            let flip = frameFlipColor
+            let flash = skeletonFlashColor
+            let flashOn = frameBeatIsHigh
             ZStack {
                 shape
                     .stroke(
@@ -855,19 +853,19 @@ struct VideoPoseResultSurface: View {
                                         center: .center,
                                         startAngle: .degrees(borderRotation),
                                         endAngle: .degrees(borderRotation + 360)),
-                        lineWidth: liveBorderLineWidth
+                        lineWidth: liveBorderLineWidth + (flashOn ? 5 : 2)
                     )
                 shape
-                    .stroke(flip.opacity(borderBeat ? 0.88 : 0.42),
-                            lineWidth: borderBeat ? 18 : 7)
-                    .blur(radius: borderBeat ? 8 : 3.5)
+                    .stroke(flash.opacity(flashOn ? 0.94 : 0.62),
+                            lineWidth: flashOn ? 24 : 12)
+                    .blur(radius: flashOn ? 10 : 5)
                 shape
-                    .stroke(flip.opacity(borderBeat ? 0.98 : 0.78),
-                            lineWidth: borderBeat ? 6 : 3.5)
+                    .stroke(flash.opacity(flashOn ? 1.0 : 0.90),
+                            lineWidth: flashOn ? 8 : 4.5)
                 shape
-                    .stroke(.white.opacity(borderBeat ? 0.46 : 0.16), lineWidth: 1.3)
+                    .stroke(.white.opacity(flashOn ? 0.50 : 0.22), lineWidth: 1.5)
             }
-            .shadow(color: flip.opacity(borderBeat ? 0.76 : 0.34), radius: borderBeat ? 32 : 13)
+            .shadow(color: flash.opacity(flashOn ? 0.86 : 0.48), radius: flashOn ? 38 : 18)
             .padding(2)
             .accessibilityHidden(true)
         }
@@ -1132,9 +1130,49 @@ struct ShotIQVideoAnalysisOverlay: View {
             let nearJointX = anchorPoint.x - width * 0.84
             edgeAnchoredX = min(clearBodyX, nearJointX)
         }
-        let rawY = anchorPoint.y + size.height * spec.verticalOffset
+        let rawY = labelY(anchorPoint: anchorPoint, spec: spec, size: size)
         return CGPoint(x: min(max(edgeAnchoredX, width / 2 + margin), size.width - width / 2 - margin),
                        y: min(max(rawY, height / 2 + margin), size.height - height / 2 - margin))
+    }
+
+    private func labelY(anchorPoint: CGPoint, spec: VideoPoseAnnotationSpec, size: CGSize) -> CGFloat {
+        if spec.title == "ELBOW ANGLE",
+           let torsoY = torsoControlBandY(size: size) {
+            return torsoY
+        }
+        return anchorPoint.y + size.height * spec.verticalOffset
+    }
+
+    private func torsoControlBandY(size: CGSize) -> CGFloat? {
+        let shoulderPoints = [pose.joints[.leftShoulder], pose.joints[.rightShoulder]]
+            .compactMap { $0 }
+            .map { displayPoint(for: $0, size: size) }
+        let hipPoints = [pose.joints[.leftHip], pose.joints[.rightHip]]
+            .compactMap { $0 }
+            .map { displayPoint(for: $0, size: size) }
+
+        if let shoulderY = averageY(shoulderPoints),
+           let hipY = averageY(hipPoints) {
+            return shoulderY + (hipY - shoulderY) * 0.54
+        }
+
+        if let neck = pose.joints[.neck],
+           let hipY = averageY(hipPoints) {
+            let neckY = displayPoint(for: neck, size: size).y
+            return neckY + (hipY - neckY) * 0.58
+        }
+
+        let bounds = poseDisplayBounds(size: size).standardized
+        if bounds.width > 0, bounds.height > 0 {
+            return bounds.minY + bounds.height * 0.48
+        }
+
+        return nil
+    }
+
+    private func averageY(_ points: [CGPoint]) -> CGFloat? {
+        guard !points.isEmpty else { return nil }
+        return points.map(\.y).reduce(0, +) / CGFloat(points.count)
     }
 
     private func poseDisplayBounds(size: CGSize) -> CGRect {
@@ -1320,6 +1358,8 @@ fileprivate struct VideoGamePoseOverlay: View {
                 displayPoint(for: p, size: size)
             }
 
+            drawBodyCenterline(context: &ctx, size: size)
+
             if showBones {
                 for pair in ShotIQPose.bones {
                     guard let a = pose.joints[pair.0], let b = pose.joints[pair.1] else { continue }
@@ -1358,6 +1398,79 @@ fileprivate struct VideoGamePoseOverlay: View {
                 drawBall(context: &ctx, center: pt(wrist))
             }
         }
+    }
+
+    private func drawBodyCenterline(context ctx: inout GraphicsContext, size: CGSize) {
+        guard let x = centerlineX(size: size),
+              let range = centerlineYRange(size: size) else { return }
+        let start = CGPoint(x: x, y: range.minY)
+        let end = CGPoint(x: x, y: range.maxY)
+        var line = Path()
+        line.move(to: start)
+        line.addLine(to: end)
+        ctx.stroke(line,
+                   with: .color(.black.opacity(0.30)),
+                   style: StrokeStyle(lineWidth: 5,
+                                      lineCap: .round,
+                                      lineJoin: .round,
+                                      dash: [7, 8]))
+        ctx.stroke(line,
+                   with: .color(.white.opacity(0.58)),
+                   style: StrokeStyle(lineWidth: 2.4,
+                                      lineCap: .round,
+                                      lineJoin: .round,
+                                      dash: [7, 8]))
+        ctx.stroke(line,
+                   with: .color(ShotIQColor.shotiqOrange.opacity(0.40)),
+                   style: StrokeStyle(lineWidth: 1.2,
+                                      lineCap: .round,
+                                      lineJoin: .round,
+                                      dash: [7, 8]))
+    }
+
+    private func centerlineX(size: CGSize) -> CGFloat? {
+        if let nose = pose.joints[.nose] {
+            return displayPoint(for: nose, size: size).x
+        }
+        if let neck = pose.joints[.neck] {
+            return displayPoint(for: neck, size: size).x
+        }
+        if let left = pose.joints[.leftShoulder],
+           let right = pose.joints[.rightShoulder] {
+            return (displayPoint(for: left, size: size).x + displayPoint(for: right, size: size).x) / 2
+        }
+        if let left = pose.joints[.leftHip],
+           let right = pose.joints[.rightHip] {
+            return (displayPoint(for: left, size: size).x + displayPoint(for: right, size: size).x) / 2
+        }
+        return nil
+    }
+
+    private func centerlineYRange(size: CGSize) -> (minY: CGFloat, maxY: CGFloat)? {
+        let topCandidates: [CGPoint] = [
+            pose.joints[.nose],
+            pose.joints[.leftEye],
+            pose.joints[.rightEye],
+            pose.joints[.neck],
+            pose.joints[.leftShoulder],
+            pose.joints[.rightShoulder]
+        ].compactMap { $0 }.map { displayPoint(for: $0, size: size) }
+
+        let bottomCandidates: [CGPoint] = [
+            pose.joints[.leftAnkle],
+            pose.joints[.rightAnkle],
+            pose.joints[.leftKnee],
+            pose.joints[.rightKnee],
+            pose.joints[.leftHip],
+            pose.joints[.rightHip]
+        ].compactMap { $0 }.map { displayPoint(for: $0, size: size) }
+
+        guard let top = topCandidates.map(\.y).min(),
+              let bottom = bottomCandidates.map(\.y).max(),
+              bottom > top else { return nil }
+
+        let padding = size.height * 0.025
+        return (max(0, top - padding), min(size.height, bottom + padding))
     }
 
     private var sourceSize: CGSize? {
@@ -1506,7 +1619,7 @@ fileprivate struct VideoFramePlaybackPanel: View {
     @State private var showAnnotations = true
     @State private var showBall = false
     @State private var showFullFrame = false
-    @State private var storyMode = false
+    @State private var storyMode = true
     @State private var toast: ShotIQToast?
 
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
@@ -1555,9 +1668,9 @@ fileprivate struct VideoFramePlaybackPanel: View {
                         toast = .success(storyMode ? "STORY VIEW SELECTED" : "LANDSCAPE VIEW SELECTED")
                     } label: {
                         HStack(spacing: 5) {
-                            Image(systemName: storyMode ? "rectangle.portrait" : "rectangle")
+                            Image(systemName: storyMode ? "rectangle" : "rectangle.portrait")
                                 .font(.system(size: 11, weight: .heavy))
-                            Text(storyMode ? "STORY" : "LANDSCAPE")
+                            Text(storyMode ? "LANDSCAPE" : "STORY")
                                 .shotiqBody(10, weight: .heavy)
                                 .kerning(0.5)
                         }
