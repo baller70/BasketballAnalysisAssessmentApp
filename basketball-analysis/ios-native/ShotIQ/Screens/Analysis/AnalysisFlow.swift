@@ -331,6 +331,7 @@ struct VideoPoseResultSurface: View {
     var phase: String? = "RELEASE"
     var overrideFrame: VideoPoseFrameRecord? = nil
     var showsAdvancedControls = false
+    var showsPoseStatusPill = true
     @State private var player: AVPlayer?
     @State private var loadedURL: URL?
     @State private var naturalVideoSize: CGSize?
@@ -341,6 +342,7 @@ struct VideoPoseResultSurface: View {
     @State private var durationSeconds = 0.0
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
+    @State private var borderPulse = false
 
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
@@ -403,10 +405,10 @@ struct VideoPoseResultSurface: View {
                                                showAnnotations: showAngles,
                                                displayPhase: displayPhase)
                         .frame(width: proxy.size.width, height: proxy.size.height)
-                    if showAngles {
+                    if showAngles && showsPoseStatusPill {
                         videoPosePill(frame)
                     }
-                } else if showAngles {
+                } else if showAngles && showsPoseStatusPill {
                     videoPosePill(nil)
                 }
 
@@ -416,6 +418,8 @@ struct VideoPoseResultSurface: View {
                 if showsAdvancedControls {
                     advancedPlaybackControls
                 }
+
+                analysisFrameBorder
             }
         }
         .frame(height: height)
@@ -432,6 +436,11 @@ struct VideoPoseResultSurface: View {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.72).repeatForever(autoreverses: true)) {
+                borderPulse = true
+            }
         }
     }
 
@@ -747,6 +756,47 @@ struct VideoPoseResultSurface: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
+    }
+
+    private var hasFinalShotFeedback: Bool {
+        let phase = displayPhase.uppercased()
+        return phase == "RELEASE" || phase == "FOLLOW-THROUGH"
+    }
+
+    private var finalBorderColor: Color {
+        switch presentation.scoreVerdict.uppercased() {
+        case "EXCELLENT", "GOOD":
+            return ShotIQColor.confirmGreen
+        default:
+            return ShotIQColor.reviewRed
+        }
+    }
+
+    @ViewBuilder
+    private var analysisFrameBorder: some View {
+        let shape = RoundedRectangle(cornerRadius: 8)
+        if hasFinalShotFeedback {
+            shape
+                .stroke(finalBorderColor, lineWidth: borderPulse ? 7 : 4)
+                .shadow(color: finalBorderColor.opacity(borderPulse ? 0.86 : 0.34),
+                        radius: borderPulse ? 18 : 7)
+                .padding(2)
+                .accessibilityHidden(true)
+        } else {
+            shape
+                .stroke(
+                    AngularGradient(colors: [
+                        ShotIQColor.confirmGreen,
+                        ShotIQColor.shotiqOrange,
+                        ShotIQColor.reviewRed,
+                        ShotIQColor.confirmGreen
+                    ], center: .center),
+                    lineWidth: 5
+                )
+                .shadow(color: ShotIQColor.shotiqOrange.opacity(0.45), radius: 10)
+                .padding(2)
+                .accessibilityHidden(true)
+        }
     }
 }
 
@@ -1604,10 +1654,7 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                             Text(selectedPhase)
                                 .shotiqCondensed(24, weight: .heavy)
                                 .foregroundStyle(.white)
-                            Text(presentation.mediaLabel.uppercased())
-                                .shotiqBody(11, weight: .bold)
-                                .kerning(0.6)
-                                .foregroundStyle(.white.opacity(0.72))
+                            phaseMenu
                         }
                         Spacer()
                         Button {
@@ -1629,36 +1676,56 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                        presentation.mediaLabel.uppercased().contains("VIDEO") || presentation.videoURL != nil {
                         VideoPoseResultSurface(url: url,
                                                presentation: presentation,
-                                               height: max(320, proxy.size.height - 198),
+                                               height: max(420, proxy.size.height - 104),
                                                showSkeleton: true,
                                                showJoints: true,
                                                showBall: false,
                                                showAngles: true,
                                                phase: selectedPhase,
                                                overrideFrame: overrideFrame?.phaseLabel == selectedPhase ? overrideFrame : nil,
-                                               showsAdvancedControls: true)
+                                               showsAdvancedControls: true,
+                                               showsPoseStatusPill: false)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .padding(.horizontal, 10)
                     } else {
                         AnalysisResultMediaSurface(presentation: presentation,
                                                    fallbackKey: fallbackKey,
-                                                   height: max(320, proxy.size.height - 198),
+                                                   height: max(420, proxy.size.height - 104),
                                                    phase: selectedPhase,
                                                    showGuidanceLabels: true)
                             .padding(.horizontal, 10)
                     }
-
-                    FlexiblePhaseButtons(phases: ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"],
-                                         active: selectedPhase) { phase in
-                        selectedPhase = phase
-                        toast = .success("\(phase.capitalized) selected")
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 14)
                 }
             }
         }
         .shotiqToast($toast)
+    }
+
+    private var phaseMenu: some View {
+        Menu {
+            ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { phase in
+                Button(phase.replacingOccurrences(of: "-", with: " ").capitalized) {
+                    selectedPhase = phase
+                    toast = .success("\(phase.replacingOccurrences(of: "-", with: " ").capitalized) selected")
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text("Jump to \(selectedPhase.replacingOccurrences(of: "-", with: " ").capitalized)")
+                    .shotiqBody(11, weight: .bold)
+                    .kerning(0.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundStyle(.white.opacity(0.82))
+            .padding(.horizontal, 10)
+            .frame(height: 28)
+            .background(.white.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Select shot phase")
     }
 }
 
