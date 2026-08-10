@@ -1817,6 +1817,7 @@ fileprivate struct VideoGamePoseOverlay: View {
 
             if showBones {
                 for pair in ShotIQPose.bones {
+                    guard !isFaceBone(pair) else { continue }
                     guard let a = pose.joints[pair.0], let b = pose.joints[pair.1] else { continue }
                     let status = segmentStatus(pair)
                     let start = pt(a)
@@ -1965,37 +1966,61 @@ fileprivate struct VideoGamePoseOverlay: View {
                            center: CGPoint,
                            status: VideoPoseQualityStatus,
                            isMain: Bool,
-                           isFace: Bool = false) {
-        let radius: CGFloat = isFace ? 5.8 : (isMain ? 7.5 : 5.5)
+                           isFace: Bool) {
+        if isFace {
+            drawTransparentFaceJoint(context: &ctx, center: center)
+            return
+        }
+
+        let radius: CGFloat = isMain ? 7.5 : 5.5
         let glowRect = CGRect(x: center.x - radius - 6,
                               y: center.y - radius - 6,
                               width: (radius + 6) * 2,
                               height: (radius + 6) * 2)
-        ctx.fill(Path(ellipseIn: glowRect), with: .color(status.glow.opacity(isFace ? 0.10 : 0.58)))
+        ctx.fill(Path(ellipseIn: glowRect), with: .color(status.glow.opacity(0.58)))
         ctx.stroke(Path(ellipseIn: CGRect(x: center.x - radius - 3,
                                           y: center.y - radius - 3,
                                           width: (radius + 3) * 2,
                                           height: (radius + 3) * 2)),
-                   with: .color(status.main.opacity(isFace ? 0.22 : 1)),
-                   lineWidth: isFace ? 1.3 : 2)
+                   with: .color(status.main),
+                   lineWidth: 2)
         ctx.fill(Path(ellipseIn: CGRect(x: center.x - radius,
                                         y: center.y - radius,
                                         width: radius * 2,
                                         height: radius * 2)),
-                 with: .color(status.main.opacity(isFace ? 0.08 : 1)))
+                 with: .color(status.main))
         ctx.stroke(Path(ellipseIn: CGRect(x: center.x - radius + 2,
                                           y: center.y - radius + 2,
                                           width: (radius - 2) * 2,
                                           height: (radius - 2) * 2)),
-                   with: .color(.black.opacity(isFace ? 0.10 : 0.35)),
-                   lineWidth: isFace ? 0.8 : 1.3)
-        if !isFace {
-            ctx.fill(Path(ellipseIn: CGRect(x: center.x - radius + 4,
-                                            y: center.y - radius + 4,
-                                            width: (radius - 4) * 2,
-                                            height: (radius - 4) * 2)),
-                     with: .color(.white))
-        }
+                   with: .color(.black.opacity(0.35)),
+                   lineWidth: 1.3)
+        ctx.fill(Path(ellipseIn: CGRect(x: center.x - radius + 4,
+                                        y: center.y - radius + 4,
+                                        width: (radius - 4) * 2,
+                                        height: (radius - 4) * 2)),
+                 with: .color(.white))
+    }
+
+    private func drawTransparentFaceJoint(context ctx: inout GraphicsContext, center: CGPoint) {
+        let radius: CGFloat = 5.8
+        let outer = CGRect(x: center.x - radius,
+                           y: center.y - radius,
+                           width: radius * 2,
+                           height: radius * 2)
+        let inner = CGRect(x: center.x - radius + 2.2,
+                           y: center.y - radius + 2.2,
+                           width: (radius - 2.2) * 2,
+                           height: (radius - 2.2) * 2)
+        ctx.stroke(Path(ellipseIn: outer),
+                   with: .color(.black.opacity(0.20)),
+                   lineWidth: 3.2)
+        ctx.stroke(Path(ellipseIn: outer),
+                   with: .color(.white.opacity(0.36)),
+                   lineWidth: 1.8)
+        ctx.stroke(Path(ellipseIn: inner),
+                   with: .color(.white.opacity(0.18)),
+                   lineWidth: 1)
     }
 
     private func drawBall(context ctx: inout GraphicsContext, center: CGPoint) {
@@ -2074,6 +2099,10 @@ fileprivate struct VideoGamePoseOverlay: View {
             || joint == .rightEye
             || joint == .leftEar
             || joint == .rightEar
+    }
+
+    private func isFaceBone(_ pair: (DetectedPose.Joint, DetectedPose.Joint)) -> Bool {
+        isFaceJoint(pair.0) || isFaceJoint(pair.1)
     }
 }
 
