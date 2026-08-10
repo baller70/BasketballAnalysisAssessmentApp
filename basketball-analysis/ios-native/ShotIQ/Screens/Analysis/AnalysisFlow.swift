@@ -343,6 +343,7 @@ struct VideoPoseResultSurface: View {
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
     @State private var borderPulse = false
+    @State private var borderSweep = false
 
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
@@ -440,6 +441,9 @@ struct VideoPoseResultSurface: View {
         .onAppear {
             withAnimation(.easeInOut(duration: 0.72).repeatForever(autoreverses: true)) {
                 borderPulse = true
+            }
+            withAnimation(.linear(duration: 1.45).repeatForever(autoreverses: false)) {
+                borderSweep = true
             }
         }
     }
@@ -764,12 +768,43 @@ struct VideoPoseResultSurface: View {
     }
 
     private var finalBorderColor: Color {
-        switch presentation.scoreVerdict.uppercased() {
-        case "EXCELLENT", "GOOD":
-            return ShotIQColor.confirmGreen
-        default:
-            return ShotIQColor.reviewRed
+        finalBorderStatus == .problem ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen
+    }
+
+    private var finalBorderStatus: VideoPoseQualityStatus {
+        guard let frame = poseFrame else {
+            switch presentation.scoreVerdict.uppercased() {
+            case "EXCELLENT", "GOOD":
+                return .good
+            default:
+                return .problem
+            }
         }
+        let status = frameOverallStatus(frame)
+        return status == .problem ? .problem : .good
+    }
+
+    private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
+        let statuses = activeFrameStatuses(frame)
+        if statuses.contains(.problem) { return .problem }
+        if statuses.contains(.warning) { return .warning }
+        return .good
+    }
+
+    private func activeFrameStatuses(_ frame: VideoPoseFrameRecord?) -> [VideoPoseQualityStatus] {
+        guard let frame else { return [.warning, .good, .problem, .warning] }
+        return [
+            VideoPoseQualityStatus.status(value: frame.elbowAngle, ideal: 150...180, warning: 130...190),
+            VideoPoseQualityStatus.status(value: frame.kneeAngle, ideal: 70...120, warning: 55...145),
+            VideoPoseQualityStatus.status(value: frame.shoulderAngle, ideal: 55...95, warning: 40...115),
+            VideoPoseQualityStatus.status(value: frame.hipAngle, ideal: 55...95, warning: 40...115)
+        ]
+    }
+
+    private var liveBorderColors: [Color] {
+        let statuses = activeFrameStatuses(poseFrame)
+        let colors = statuses.map(\.main)
+        return borderSweep ? colors + [colors.first ?? ShotIQColor.confirmGreen] : colors.reversed() + [colors.last ?? ShotIQColor.shotiqOrange]
     }
 
     @ViewBuilder
@@ -785,15 +820,11 @@ struct VideoPoseResultSurface: View {
         } else {
             shape
                 .stroke(
-                    AngularGradient(colors: [
-                        ShotIQColor.confirmGreen,
-                        ShotIQColor.shotiqOrange,
-                        ShotIQColor.reviewRed,
-                        ShotIQColor.confirmGreen
-                    ], center: .center),
-                    lineWidth: 5
+                    AngularGradient(colors: liveBorderColors, center: .center),
+                    lineWidth: borderPulse ? 6 : 4
                 )
-                .shadow(color: ShotIQColor.shotiqOrange.opacity(0.45), radius: 10)
+                .shadow(color: frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first).glow,
+                        radius: borderPulse ? 13 : 7)
                 .padding(2)
                 .accessibilityHidden(true)
         }
@@ -1063,28 +1094,37 @@ fileprivate struct VideoPoseAnnotationSpec {
     var verticalOffset: CGFloat
 }
 
+fileprivate enum VideoPoseQualityStatus: Equatable {
+    case good
+    case warning
+    case problem
+
+    var main: Color {
+        switch self {
+        case .good: return Color(red: 0.13, green: 0.77, blue: 0.37)
+        case .warning: return Color(red: 0.92, green: 0.70, blue: 0.03)
+        case .problem: return Color(red: 0.94, green: 0.27, blue: 0.27)
+        }
+    }
+
+    var glow: Color { main.opacity(0.36) }
+
+    static func status(value: Double?,
+                       ideal: ClosedRange<Double>,
+                       warning: ClosedRange<Double>) -> VideoPoseQualityStatus {
+        guard let value else { return .good }
+        if ideal.contains(value) { return .good }
+        if warning.contains(value) { return .warning }
+        return .problem
+    }
+}
+
 fileprivate struct VideoGamePoseOverlay: View {
     var frame: VideoPoseFrameRecord
     var pose: DetectedPose
     var showBones: Bool
     var showJoints: Bool
     var showBall: Bool
-
-    private enum Status {
-        case good
-        case warning
-        case problem
-
-        var main: Color {
-            switch self {
-            case .good: return Color(red: 0.13, green: 0.77, blue: 0.37)
-            case .warning: return Color(red: 0.92, green: 0.70, blue: 0.03)
-            case .problem: return Color(red: 0.94, green: 0.27, blue: 0.27)
-            }
-        }
-
-        var glow: Color { main.opacity(0.36) }
-    }
 
     var body: some View {
         Canvas { ctx, size in
@@ -1166,7 +1206,7 @@ fileprivate struct VideoGamePoseOverlay: View {
 
     private func drawJoint(context ctx: inout GraphicsContext,
                            center: CGPoint,
-                           status: Status,
+                           status: VideoPoseQualityStatus,
                            isMain: Bool) {
         let radius: CGFloat = isMain ? 7.5 : 5.5
         let glowRect = CGRect(x: center.x - radius - 6,
@@ -1219,7 +1259,7 @@ fileprivate struct VideoGamePoseOverlay: View {
                  with: .color(ShotIQColor.shotiqOrange))
     }
 
-    private func segmentStatus(_ pair: (DetectedPose.Joint, DetectedPose.Joint)) -> Status {
+    private func segmentStatus(_ pair: (DetectedPose.Joint, DetectedPose.Joint)) -> VideoPoseQualityStatus {
         if isArmJoint(pair.0) || isArmJoint(pair.1) {
             return status(value: frame.elbowAngle, ideal: 150...180, warning: 130...190)
         }
@@ -1229,7 +1269,7 @@ fileprivate struct VideoGamePoseOverlay: View {
         return .good
     }
 
-    private func jointStatus(_ joint: DetectedPose.Joint) -> Status {
+    private func jointStatus(_ joint: DetectedPose.Joint) -> VideoPoseQualityStatus {
         if isArmJoint(joint) {
             return status(value: frame.elbowAngle, ideal: 150...180, warning: 130...190)
         }
@@ -1239,11 +1279,10 @@ fileprivate struct VideoGamePoseOverlay: View {
         return .good
     }
 
-    private func status(value: Double?, ideal: ClosedRange<Double>, warning: ClosedRange<Double>) -> Status {
-        guard let value else { return .good }
-        if ideal.contains(value) { return .good }
-        if warning.contains(value) { return .warning }
-        return .problem
+    private func status(value: Double?,
+                        ideal: ClosedRange<Double>,
+                        warning: ClosedRange<Double>) -> VideoPoseQualityStatus {
+        VideoPoseQualityStatus.status(value: value, ideal: ideal, warning: warning)
     }
 
     private func isArmJoint(_ joint: DetectedPose.Joint) -> Bool {
@@ -1643,6 +1682,9 @@ fileprivate struct AnalysisFullScreenMediaView: View {
     var overrideFrame: VideoPoseFrameRecord? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var toast: ShotIQToast?
+    @State private var showsPhasePicker = false
+
+    private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
     var body: some View {
         ZStack {
@@ -1654,10 +1696,11 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                             Text(selectedPhase)
                                 .shotiqCondensed(24, weight: .heavy)
                                 .foregroundStyle(.white)
-                            phaseMenu
+                            phaseDropdown
                         }
                         Spacer()
                         Button {
+                            showsPhasePicker = false
                             dismiss()
                         } label: {
                             Image(systemName: "xmark")
@@ -1671,6 +1714,7 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
+                    .zIndex(20)
 
                     if let url = presentation.videoURL ?? presentation.mediaURL,
                        presentation.mediaLabel.uppercased().contains("VIDEO") || presentation.videoURL != nil {
@@ -1701,31 +1745,87 @@ fileprivate struct AnalysisFullScreenMediaView: View {
         .shotiqToast($toast)
     }
 
-    private var phaseMenu: some View {
-        Menu {
-            ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { phase in
-                Button(phase.replacingOccurrences(of: "-", with: " ").capitalized) {
-                    selectedPhase = phase
-                    toast = .success("\(phase.replacingOccurrences(of: "-", with: " ").capitalized) selected")
-                }
+    private var phaseDropdown: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.16)) {
+                showsPhasePicker.toggle()
             }
         } label: {
-            HStack(spacing: 6) {
-                Text("Jump to \(selectedPhase.replacingOccurrences(of: "-", with: " ").capitalized)")
-                    .shotiqBody(11, weight: .bold)
-                    .kerning(0.6)
+            HStack(spacing: 9) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 13, weight: .bold))
+                Text("PHASE: \(phaseDisplay(selectedPhase))")
+                    .shotiqBody(12, weight: .heavy)
+                    .kerning(0.7)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 10, weight: .bold))
+                    .minimumScaleFactor(0.65)
+                Image(systemName: showsPhasePicker ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 11, weight: .heavy))
             }
-            .foregroundStyle(.white.opacity(0.82))
-            .padding(.horizontal, 10)
-            .frame(height: 28)
-            .background(.white.opacity(0.12), in: Capsule())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .frame(width: 214, height: 38)
+            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.shotiqOrange, lineWidth: 1.6))
+            .shadow(color: ShotIQColor.shotiqOrange.opacity(0.26), radius: 8, x: 0, y: 2)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Select shot phase")
+        .overlay(alignment: .topLeading) {
+            if showsPhasePicker {
+                VStack(spacing: 0) {
+                    ForEach(phases, id: \.self) { phase in
+                        Button {
+                            selectedPhase = phase
+                            toast = .success("\(phaseDisplay(phase)) SELECTED")
+                            withAnimation(.easeInOut(duration: 0.16)) {
+                                showsPhasePicker = false
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                PhaseGlyph(phase: ShotPhase(label: phase),
+                                           active: phase == selectedPhase,
+                                           size: 30)
+                                Text(phaseDisplay(phase))
+                                    .shotiqBody(12, weight: phase == selectedPhase ? .heavy : .bold)
+                                    .kerning(0.7)
+                                    .foregroundStyle(phase == selectedPhase ? ShotIQColor.shotiqOrange : .white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.72)
+                                Spacer()
+                                if phase == selectedPhase {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 12, weight: .heavy))
+                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                            .frame(height: 46)
+                            .background(phase == selectedPhase ? ShotIQColor.shotiqOrange.opacity(0.13) : Color.clear)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Jump to \(phaseDisplay(phase))")
+
+                        if phase != phases.last {
+                            Rectangle()
+                                .fill(.white.opacity(0.10))
+                                .frame(height: 1)
+                        }
+                    }
+                }
+                .frame(width: 246)
+                .background(.black.opacity(0.92), in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.16), lineWidth: 1))
+                .shadow(color: .black.opacity(0.58), radius: 16, x: 0, y: 8)
+                .offset(y: 44)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(40)
+            }
+        }
+    }
+
+    private func phaseDisplay(_ phase: String) -> String {
+        phase.replacingOccurrences(of: "-", with: " ").uppercased()
     }
 }
 
