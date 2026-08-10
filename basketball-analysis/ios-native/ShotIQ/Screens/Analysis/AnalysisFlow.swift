@@ -728,10 +728,11 @@ struct VideoPoseResultSurface: View {
 
     private var lockedShotBorderStatus: VideoPoseQualityStatus? {
         guard let frame = activeBorderFrame,
-              isShotCycleCompleteFrame(frame) else {
+              let releaseFrame = releaseDecisionFrame,
+              hasReachedRelease(active: frame, release: releaseFrame) else {
             return nil
         }
-        return shotResultStatus(for: frame)
+        return shotResultStatus(for: releaseFrame)
     }
 
     private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
@@ -810,7 +811,7 @@ struct VideoPoseResultSurface: View {
     }
 
     private func shotResultStatus(for frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus {
-        shotFrameStatus(for: frame)
+        repStatusCounts(through: frame).dominantStatus
     }
 
     private func bodyStatus(for frame: VideoPoseFrameRecord?,
@@ -835,7 +836,8 @@ struct VideoPoseResultSurface: View {
     private func score(_ status: VideoPoseQualityStatus) -> Double {
         switch status {
         case .good: return 1.0
-        case .warning: return 0.58
+        case .warning: return 0.66
+        case .caution: return 0.35
         case .problem: return 0.0
         }
     }
@@ -864,10 +866,68 @@ struct VideoPoseResultSurface: View {
             ?? bodyStatus(for: frame, greenThreshold: 0.70, yellowThreshold: 0.43)
     }
 
+    private var releaseDecisionFrame: VideoPoseFrameRecord? {
+        if let release = presentation.releaseVideoPoseFrame {
+            return nearestPlaybackFrame(to: release.timestampSeconds) ?? release
+        }
+        return playbackFrames.first { $0.phaseLabel.uppercased() == "RELEASE" }
+            ?? playbackFrames.last { isShotReleaseOrFinishFrame($0) }
+            ?? playbackFrames.last
+    }
+
+    private func nearestPlaybackFrame(to seconds: Double) -> VideoPoseFrameRecord? {
+        guard !playbackFrames.isEmpty else { return nil }
+        return playbackFrames.min {
+            abs($0.timestampSeconds - seconds) < abs($1.timestampSeconds - seconds)
+        }
+    }
+
+    private func hasReachedRelease(active: VideoPoseFrameRecord, release: VideoPoseFrameRecord) -> Bool {
+        if let activeIndex = playbackIndex(of: active),
+           let releaseIndex = playbackIndex(of: release) {
+            return activeIndex >= releaseIndex
+        }
+        return active.timestampSeconds >= release.timestampSeconds - 0.01
+    }
+
+    private func playbackIndex(of frame: VideoPoseFrameRecord) -> Int? {
+        playbackFrames.firstIndex { candidate in
+            candidate.frameIndex == frame.frameIndex
+                || abs(candidate.timestampSeconds - frame.timestampSeconds) < 0.01
+        }
+    }
+
+    private func repFrames(through releaseFrame: VideoPoseFrameRecord) -> [VideoPoseFrameRecord] {
+        guard !playbackFrames.isEmpty else { return [releaseFrame] }
+        let releaseIndex = playbackIndex(of: releaseFrame) ?? playbackFrames.index(before: playbackFrames.endIndex)
+        let prefixRange = playbackFrames.startIndex...releaseIndex
+        let setupIndex = playbackFrames[prefixRange].indices.first { index in
+            playbackFrames[index].phaseLabel.uppercased() == "SETUP"
+        }
+        let fallbackStartIndex = playbackFrames[prefixRange].indices.first { index in
+            let phase = playbackFrames[index].phaseLabel.uppercased()
+            return phase == "SETUP" || phase == "LOAD"
+        }
+        let startIndex = setupIndex ?? fallbackStartIndex ?? playbackFrames.startIndex
+        return Array(playbackFrames[startIndex...releaseIndex])
+    }
+
+    private func repStatusCounts(through releaseFrame: VideoPoseFrameRecord) -> VideoPoseStatusCounts {
+        var counts = VideoPoseStatusCounts()
+        var previousStatus: VideoPoseQualityStatus?
+        for frame in repFrames(through: releaseFrame) {
+            let status = shotFrameStatus(for: frame)
+            guard status != previousStatus else { continue }
+            counts.add(status)
+            previousStatus = status
+        }
+        return counts
+    }
+
     private func movingBodyPartStatus(for frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus? {
         guard let frame,
               let currentPose = frame.detectedPose,
-              let previousPose = previousBorderFrame?.detectedPose else {
+              let previousPose = previousFrame(before: frame)?.detectedPose else {
             return nil
         }
         let movingStatuses = bodyTrackedJoints.compactMap { joint -> (distance: CGFloat, status: VideoPoseQualityStatus)? in
@@ -902,13 +962,15 @@ struct VideoPoseResultSurface: View {
 
     private func mostSevereStatus(in statuses: [VideoPoseQualityStatus]) -> VideoPoseQualityStatus {
         if statuses.contains(.problem) { return .problem }
+        if statuses.contains(.caution) { return .caution }
         if statuses.contains(.warning) { return .warning }
         return .good
     }
 
     private func status(forScore score: Double) -> VideoPoseQualityStatus {
         if score >= 0.70 { return .good }
-        if score >= 0.43 { return .warning }
+        if score >= 0.55 { return .warning }
+        if score >= 0.35 { return .caution }
         return .problem
     }
 
@@ -962,7 +1024,7 @@ struct VideoPoseResultSurface: View {
         }
         let forearmRaised = wrist.y < elbow.y
         let releaseNearCenter = frame.releaseAngle.map { abs($0) <= 18 } ?? false
-        guard let previousPose = previousBorderFrame?.detectedPose,
+        guard let previousPose = previousFrame(before: frame)?.detectedPose,
               let previousArm = shootingArm(in: previousPose),
               let previousWrist = previousArm.wrist else {
             return forearmRaised && releaseNearCenter
@@ -990,13 +1052,24 @@ struct VideoPoseResultSurface: View {
             : (pose.joints[.leftShoulder], pose.joints[.leftElbow], pose.joints[.leftWrist])
     }
 
+    private func previousFrame(before frame: VideoPoseFrameRecord) -> VideoPoseFrameRecord? {
+        guard !playbackFrames.isEmpty else { return nil }
+        if let index = playbackIndex(of: frame),
+           index > playbackFrames.startIndex {
+            return playbackFrames[playbackFrames.index(before: index)]
+        }
+        return playbackFrames.last {
+            $0.timestampSeconds < frame.timestampSeconds - 0.01
+        } ?? playbackFrames.first
+    }
+
     @ViewBuilder
     private var analysisFrameBorder: some View {
         let shape = RoundedRectangle(cornerRadius: 8)
         if let lockedShotBorderStatus {
             shape
-                .stroke(lockedShotBorderStatus.main, lineWidth: 5)
-                .padding(2)
+                .stroke(lockedShotBorderStatus.main, lineWidth: 7)
+                .padding(1)
                 .accessibilityHidden(true)
         } else {
             shape
@@ -1458,17 +1531,27 @@ fileprivate struct VideoPoseAnnotationSpec {
 fileprivate enum VideoPoseQualityStatus: Equatable {
     case good
     case warning
+    case caution
     case problem
 
     var main: Color {
         switch self {
         case .good: return Color(red: 0.13, green: 0.77, blue: 0.37)
         case .warning: return Color(red: 0.92, green: 0.70, blue: 0.03)
+        case .caution: return ShotIQColor.shotiqOrange
         case .problem: return Color(red: 0.94, green: 0.27, blue: 0.27)
         }
     }
 
     var glow: Color { main.opacity(0.36) }
+    var severity: Int {
+        switch self {
+        case .good: return 0
+        case .warning: return 1
+        case .caution: return 2
+        case .problem: return 3
+        }
+    }
 
     static func status(value: Double?,
                        ideal: ClosedRange<Double>,
@@ -1476,7 +1559,48 @@ fileprivate enum VideoPoseQualityStatus: Equatable {
         guard let value else { return .good }
         if ideal.contains(value) { return .good }
         if warning.contains(value) { return .warning }
+        if value < warning.lowerBound {
+            let miss = warning.lowerBound - value
+            let orangeBand = max(ideal.lowerBound - warning.lowerBound, 6)
+            return miss <= orangeBand ? .caution : .problem
+        }
+        let miss = value - warning.upperBound
+        let orangeBand = max(warning.upperBound - ideal.upperBound, 6)
+        if miss <= orangeBand { return .caution }
         return .problem
+    }
+}
+
+fileprivate struct VideoPoseStatusCounts {
+    private(set) var green = 0
+    private(set) var yellow = 0
+    private(set) var orange = 0
+    private(set) var red = 0
+
+    mutating func add(_ status: VideoPoseQualityStatus) {
+        switch status {
+        case .good: green += 1
+        case .warning: yellow += 1
+        case .caution: orange += 1
+        case .problem: red += 1
+        }
+    }
+
+    var dominantStatus: VideoPoseQualityStatus {
+        let candidates: [(status: VideoPoseQualityStatus, count: Int)] = [
+            (.good, green),
+            (.warning, yellow),
+            (.caution, orange),
+            (.problem, red)
+        ]
+        return candidates
+            .sorted {
+                if $0.count == $1.count {
+                    return $0.status.severity > $1.status.severity
+                }
+                return $0.count > $1.count
+            }
+            .first(where: { $0.count > 0 })?.status ?? .warning
     }
 }
 
