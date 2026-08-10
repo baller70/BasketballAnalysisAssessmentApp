@@ -337,7 +337,8 @@ struct VideoPoseResultSurface: View {
     var showsPoseStatusPill = true
     var showsPlaybackControl = true
     var isMuted = false
-    var onVerdictToastVisibleChange: ((Bool) -> Void)? = nil
+    var showsRepVerdictToastOverlay = true
+    var onVerdictToastChange: ((RepVerdictToast?, Bool) -> Void)? = nil
     @State private var player: AVPlayer?
     @State private var loadedURL: URL?
     @State private var naturalVideoSize: CGSize?
@@ -436,7 +437,9 @@ struct VideoPoseResultSurface: View {
                 }
 
                 analysisFrameBorder
-                repVerdictToastOverlay
+                if showsRepVerdictToastOverlay {
+                    repVerdictToastOverlay
+                }
             }
         }
         .frame(height: height)
@@ -459,7 +462,7 @@ struct VideoPoseResultSurface: View {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
-            onVerdictToastVisibleChange?(false)
+            onVerdictToastChange?(nil, false)
         }
     }
 
@@ -788,12 +791,14 @@ struct VideoPoseResultSurface: View {
             return
         }
         lastRepVerdictToastKey = key
-        repVerdictToast = RepVerdictToast(status: verdict.status,
-                                          frameIndex: verdict.frame.frameIndex + 1)
-        onVerdictToastVisibleChange?(true)
+        let toast = RepVerdictToast(status: verdict.status,
+                                    frameIndex: verdict.frame.frameIndex + 1)
+        repVerdictToast = toast
         repVerdictBurst = false
+        onVerdictToastChange?(toast, false)
         withAnimation(.spring(response: 0.26, dampingFraction: 0.48)) {
             repVerdictBurst = true
+            onVerdictToastChange?(toast, true)
         }
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 950_000_000)
@@ -801,8 +806,8 @@ struct VideoPoseResultSurface: View {
             withAnimation(.easeOut(duration: 0.18)) {
                 repVerdictToast = nil
                 repVerdictBurst = false
+                onVerdictToastChange?(nil, false)
             }
-            onVerdictToastVisibleChange?(false)
         }
     }
 
@@ -1660,7 +1665,7 @@ fileprivate struct VideoPoseAnnotationSpec {
     var verticalOffset: CGFloat
 }
 
-fileprivate enum VideoPoseQualityStatus: Equatable {
+enum VideoPoseQualityStatus: Equatable {
     case good
     case warning
     case caution
@@ -1721,7 +1726,7 @@ fileprivate enum VideoPoseQualityStatus: Equatable {
     }
 }
 
-fileprivate struct RepVerdictToast: Equatable {
+struct RepVerdictToast: Equatable {
     var status: VideoPoseQualityStatus
     var frameIndex: Int
 }
@@ -2459,7 +2464,8 @@ fileprivate struct AnalysisFullScreenMediaView: View {
     @State private var toast: ShotIQToast?
     @State private var showsPhasePicker = false
     @State private var isMuted = false
-    @State private var hidesTitleForVerdict = false
+    @State private var headerVerdictToast: RepVerdictToast?
+    @State private var headerVerdictBurst = false
 
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
@@ -2469,29 +2475,33 @@ fileprivate struct AnalysisFullScreenMediaView: View {
             GeometryReader { proxy in
                 VStack(spacing: 10) {
                     ZStack {
-                        Text(phaseDisplay(selectedPhase))
-                            .shotiqCondensed(23, weight: .heavy)
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
-                            .opacity(hidesTitleForVerdict ? 0 : 1)
-                            .animation(.easeInOut(duration: 0.14), value: hidesTitleForVerdict)
+                        if let headerVerdictToast {
+                            RepVerdictToastBanner(toast: headerVerdictToast, burst: headerVerdictBurst)
+                                .transition(.scale(scale: 0.72, anchor: .center).combined(with: .opacity))
+                        } else {
+                            Text(phaseDisplay(selectedPhase))
+                                .shotiqCondensed(23, weight: .heavy)
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                                .transition(.opacity)
+                        }
 
                         HStack {
                             Spacer()
                             closeButton
                         }
                     }
-                    .frame(height: 44)
+                    .frame(height: 58)
                     .padding(.horizontal, 16)
-                    .padding(.top, 10)
+                    .padding(.top, 6)
                     .zIndex(30)
 
                     if let url = presentation.videoURL ?? presentation.mediaURL,
                        presentation.mediaLabel.uppercased().contains("VIDEO") || presentation.videoURL != nil {
                         VideoPoseResultSurface(url: url,
                                                presentation: presentation,
-                                               height: max(450, proxy.size.height - 74),
+                                               height: max(450, proxy.size.height - 88),
                                                showSkeleton: true,
                                                showJoints: true,
                                                showBall: false,
@@ -2501,8 +2511,10 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                                                showsAdvancedControls: true,
                                                showsPoseStatusPill: false,
                                                isMuted: isMuted,
-                                               onVerdictToastVisibleChange: { visible in
-                                                   hidesTitleForVerdict = visible
+                                               showsRepVerdictToastOverlay: false,
+                                               onVerdictToastChange: { toast, burst in
+                                                   headerVerdictToast = toast
+                                                   headerVerdictBurst = burst
                                                })
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(alignment: .topLeading) {
@@ -2513,7 +2525,7 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                     } else {
                         AnalysisResultMediaSurface(presentation: presentation,
                                                    fallbackKey: fallbackKey,
-                                                   height: max(450, proxy.size.height - 74),
+                                                   height: max(450, proxy.size.height - 88),
                                                    phase: selectedPhase,
                                                    showGuidanceLabels: true)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
