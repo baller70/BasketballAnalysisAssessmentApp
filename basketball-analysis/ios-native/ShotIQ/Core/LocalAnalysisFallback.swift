@@ -95,6 +95,8 @@ enum ShotIQLocalAnalysisFactory {
         track("angles.knee", summary?.releaseKneeAngle)
         track("angles.wrist", summary?.releaseWristAngle)
         track("angles.release", summary?.releaseAngle)
+        track("measurements.releaseHeightInches", summary?.releaseHeightInches)
+        track("measurements.centerlineDeviationDeg", summary?.centerlineDeviationDeg)
         if !hasFrames { missing.append("pose.frames") } else { measured.append("pose.frames") }
 
         return ShotIQAnalysisResultDTO(
@@ -125,7 +127,11 @@ enum ShotIQLocalAnalysisFactory {
                 hip: metric(summary?.releaseHipAngle, unit: "deg"),
                 release: metric(summary?.releaseAngle, unit: "deg"),
                 kneeMin: metric(summary?.kneeAngleMin, unit: "deg")),
-            measurements: missingMeasurements(),
+            measurements: AnalysisMeasurementsDTO(
+                releaseHeightInches: metric(summary?.releaseHeightInches, unit: "in"),
+                releaseDistanceInches: metric(nil, unit: "in"),
+                verticalJumpInches: metric(nil, unit: "in"),
+                centerlineDeviationDeg: metric(summary?.centerlineDeviationDeg, unit: "deg")),
             phase: AnalysisTextMetricDTO(value: summary?.releaseFrameIndex == nil ? nil : "release",
                                          unit: nil,
                                          source: summary?.releaseFrameIndex == nil ? "missing" : "measured"),
@@ -134,6 +140,28 @@ enum ShotIQLocalAnalysisFactory {
                                               estimated: [],
                                               demo: []),
             bodyPositions: poseAnalysis?.frames)
+    }
+
+    static func fillVideoMeasurements(_ analysis: inout ShotIQAnalysisResultDTO,
+                                      poseAnalysis: VideoPoseAnalysis?) {
+        guard let summary = poseAnalysis?.summary else { return }
+        if analysis.measurements.releaseHeightInches.value == nil,
+           let releaseHeight = summary.releaseHeightInches {
+            analysis.measurements.releaseHeightInches = metric(releaseHeight, unit: "in")
+            markMeasured("measurements.releaseHeightInches", in: &analysis)
+        }
+        if analysis.measurements.centerlineDeviationDeg.value == nil,
+           let centerline = summary.centerlineDeviationDeg {
+            analysis.measurements.centerlineDeviationDeg = metric(centerline, unit: "deg")
+            markMeasured("measurements.centerlineDeviationDeg", in: &analysis)
+        }
+    }
+
+    private static func markMeasured(_ key: String, in analysis: inout ShotIQAnalysisResultDTO) {
+        analysis.provenance.missing.removeAll { $0 == key }
+        if !analysis.provenance.measured.contains(key) {
+            analysis.provenance.measured.append(key)
+        }
     }
 
     private static func metric(_ value: Double?, unit: String?) -> AnalysisMetricDTO {

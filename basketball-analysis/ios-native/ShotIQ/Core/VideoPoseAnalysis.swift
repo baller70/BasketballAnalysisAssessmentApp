@@ -54,6 +54,8 @@ struct VideoPoseAnalysisSummary: Codable, Equatable {
     var releaseHipAngle: Double?
     var releaseAngle: Double?
     var kneeAngleMin: Double?
+    var releaseHeightInches: Double?
+    var centerlineDeviationDeg: Double?
     var averageConfidence: Double?
     var overallScore: Double?
     var formScore: Double?
@@ -489,6 +491,8 @@ enum VideoPoseAnalyzer {
         let releaseScore = score(value: release?.elbowAngle, idealMin: 150, idealMax: 180)
         let wristScore = score(value: release?.wristAngle, idealMin: 50, idealMax: 100)
         let verticalReleaseScore = score(value: release?.releaseAngle, idealMin: -5, idealMax: 5)
+        let releaseHeight = release.flatMap(releaseHeightInches)
+        let centerline = release.flatMap(centerlineDeviationDeg)
         let formScore = average([
             releaseScore,
             wristScore,
@@ -511,6 +515,8 @@ enum VideoPoseAnalyzer {
             releaseHipAngle: release?.hipAngle,
             releaseAngle: release?.releaseAngle,
             kneeAngleMin: kneeMin,
+            releaseHeightInches: releaseHeight,
+            centerlineDeviationDeg: centerline,
             averageConfidence: averageConfidence,
             overallScore: overallScore,
             formScore: formScore,
@@ -523,6 +529,48 @@ enum VideoPoseAnalyzer {
         if value >= idealMin && value <= idealMax { return 100 }
         let miss = value < idealMin ? idealMin - value : value - idealMax
         return min(max(100 - miss * 2, 0), 100)
+    }
+
+    private static func releaseHeightInches(frame: VideoPoseFrameRecord) -> Double? {
+        guard let pose = frame.detectedPose,
+              let wrist = shootingWrist(in: pose),
+              let body = bodyVerticalSpan(in: pose),
+              body.height > 0.12 else { return nil }
+        let normalizedHeight = (body.floorY - wrist.y) / body.height
+        let estimatedStandingHeight = 75.0
+        return min(max(Double(normalizedHeight) * estimatedStandingHeight, 48), 118)
+    }
+
+    private static func centerlineDeviationDeg(frame: VideoPoseFrameRecord) -> Double? {
+        guard let pose = frame.detectedPose,
+              let wrist = shootingWrist(in: pose),
+              let hipCenter = midpoint(pose.joints[.leftHip], pose.joints[.rightHip])
+                    ?? midpoint(pose.joints[.leftShoulder], pose.joints[.rightShoulder]) else { return nil }
+        let dx = abs(Double(wrist.x - hipCenter.x))
+        let dy = max(abs(Double(hipCenter.y - wrist.y)), 0.04)
+        return min(45, atan2(dx, dy) * 180 / Double.pi)
+    }
+
+    private static func bodyVerticalSpan(in pose: DetectedPose) -> (topY: CGFloat, floorY: CGFloat, height: CGFloat)? {
+        let headCandidates = [pose.joints[.nose], pose.joints[.leftEye], pose.joints[.rightEye], pose.joints[.neck]]
+            .compactMap { $0?.y }
+        let footCandidates = [pose.joints[.leftAnkle], pose.joints[.rightAnkle], pose.joints[.leftKnee], pose.joints[.rightKnee]]
+            .compactMap { $0?.y }
+        guard let top = headCandidates.min(),
+              let floor = footCandidates.max(),
+              floor > top else { return nil }
+        return (top, floor, floor - top)
+    }
+
+    private static func shootingWrist(in pose: DetectedPose) -> CGPoint? {
+        let side = shootingSide(in: pose)
+        return side == .right ? pose.joints[.rightWrist] ?? pose.joints[.leftWrist]
+            : pose.joints[.leftWrist] ?? pose.joints[.rightWrist]
+    }
+
+    private static func midpoint(_ a: CGPoint?, _ b: CGPoint?) -> CGPoint? {
+        guard let a, let b else { return a ?? b }
+        return CGPoint(x: (a.x + b.x) / 2, y: (a.y + b.y) / 2)
     }
 
     private static func average(_ values: [Double?]) -> Double? {

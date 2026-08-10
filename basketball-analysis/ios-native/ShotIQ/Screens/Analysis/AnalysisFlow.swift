@@ -134,6 +134,7 @@ fileprivate struct AnalysisResultMediaSurface: View {
     var height: CGFloat
     var phase: String? = "RELEASE"
     var showGuidanceLabels = false
+    var showsPlaybackControl = true
 
     var body: some View {
         ZStack {
@@ -146,7 +147,9 @@ fileprivate struct AnalysisResultMediaSurface: View {
                                        showJoints: true,
                                        showBall: false,
                                        showAngles: showGuidanceLabels,
-                                       phase: phase)
+                                       phase: phase,
+                                       showsPoseStatusPill: showGuidanceLabels,
+                                       showsPlaybackControl: showsPlaybackControl)
             case .image(let url):
                 if url.isFileURL {
                     if let image = UIImage(contentsOfFile: url.path) {
@@ -332,6 +335,7 @@ struct VideoPoseResultSurface: View {
     var overrideFrame: VideoPoseFrameRecord? = nil
     var showsAdvancedControls = false
     var showsPoseStatusPill = true
+    var showsPlaybackControl = true
     @State private var player: AVPlayer?
     @State private var loadedURL: URL?
     @State private var naturalVideoSize: CGSize?
@@ -421,7 +425,7 @@ struct VideoPoseResultSurface: View {
                     videoPosePill(nil)
                 }
 
-                if !showsAdvancedControls {
+                if showsPlaybackControl && !showsAdvancedControls {
                     playbackControl
                 }
                 if showsAdvancedControls {
@@ -1408,6 +1412,7 @@ fileprivate struct VideoFramePlaybackPanel: View {
     @State private var showAnnotations = true
     @State private var showBall = false
     @State private var showFullFrame = false
+    @State private var storyMode = false
     @State private var toast: ShotIQToast?
 
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
@@ -1432,6 +1437,8 @@ fileprivate struct VideoFramePlaybackPanel: View {
     private var videoURL: URL? {
         presentation.videoURL ?? presentation.mediaURL
     }
+    private var reviewHeight: CGFloat { storyMode ? 430 : 240 }
+    private var reviewWidth: CGFloat? { storyMode ? 246 : nil }
 
     var body: some View {
         ShotIQCard {
@@ -1449,6 +1456,24 @@ fileprivate struct VideoFramePlaybackPanel: View {
                             .foregroundStyle(ShotIQColor.graphite)
                     }
                     Spacer()
+                    Button {
+                        storyMode.toggle()
+                        toast = .success(storyMode ? "STORY VIEW SELECTED" : "LANDSCAPE VIEW SELECTED")
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: storyMode ? "rectangle.portrait" : "rectangle")
+                                .font(.system(size: 11, weight: .heavy))
+                            Text(storyMode ? "STORY" : "LANDSCAPE")
+                                .shotiqBody(10, weight: .heavy)
+                                .kerning(0.5)
+                        }
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .padding(.horizontal, 9)
+                        .frame(height: 30)
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange, lineWidth: 1.2))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(storyMode ? "Switch to landscape video view" : "Switch to story video view")
                     NavigationLink { VideoUploadView() } label: {
                         Text("New Video").shotiqBody(11, weight: .bold)
                             .padding(.horizontal, 10)
@@ -1470,23 +1495,26 @@ fileprivate struct VideoFramePlaybackPanel: View {
                         if let url = videoURL {
                             VideoPoseResultSurface(url: url,
                                                    presentation: presentation,
-                                                   height: 240,
+                                                   height: reviewHeight,
                                                    showSkeleton: showSkeleton,
                                                    showJoints: showJoints,
                                                    showBall: showBall,
                                                    showAngles: false,
                                                    phase: selectedPhase,
                                                    overrideFrame: selectedFrame)
+                            .frame(width: reviewWidth)
                         } else {
                             AnalysisResultMediaSurface(presentation: presentation,
                                                        fallbackKey: "042-visual-002",
-                                                       height: 240,
+                                                       height: reviewHeight,
                                                        phase: selectedPhase)
+                            .frame(width: reviewWidth)
                         }
                         mediaExpandPill
                     }
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .center)
 
                 phaseThumbnailStrip
 
@@ -1935,6 +1963,14 @@ fileprivate enum AnalysisResultTab: String, CaseIterable {
     }
 }
 
+fileprivate struct CoachingActionItem {
+    var id: String
+    var icon: String
+    var title: String
+    var detail: String
+    var tint: Color
+}
+
 fileprivate struct FlexiblePhaseButtons: View {
     var phases: [String]
     var active: String
@@ -2375,6 +2411,7 @@ struct AnalysisProcessingView: View { // 036
                         ? "Video uploaded and saved, but no usable body pose was detected in the selected trim window."
                         : "Video uploaded and analyzed from sampled frames inside the selected trim window."))
             var analysis = saved.analysisResult ?? saved.analysis ?? localFallback
+            ShotIQLocalAnalysisFactory.fillVideoMeasurements(&analysis, poseAnalysis: poseAnalysis)
             if analysis.bodyPositions?.isEmpty != false {
                 analysis.bodyPositions = poseAnalysis.frames
             }
@@ -2782,7 +2819,8 @@ struct AnalysisResultOverviewView: View { // 038
                         AnalysisResultMediaSurface(presentation: p,
                                                    fallbackKey: "038-visual-001",
                                                    height: 220,
-                                                   phase: selectedPhase)
+                                                   phase: "FOLLOW-THROUGH",
+                                                   showsPlaybackControl: false)
                         if p.id == "canonical-demo" { SkeletonOverlay() }
                         mediaExpandPill
                     }
@@ -2890,63 +2928,98 @@ struct AnalysisResultOverviewView: View { // 038
 
     private func actionButtons(_ p: AnalysisResultPresentation,
                                hasLoadedAnalysis: Bool) -> some View {
-        Group {
-            NavigationLink {
-                if hasLoadedAnalysis {
-                    ShotBreakdownView(presentation: p)
-                } else {
-                    AnalyzeHubView()
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel(text: "COACHING ACTIONS")
+            ShotIQCard {
+                VStack(spacing: 0) {
+                    ForEach(Array(coachingActionItems(p).enumerated()), id: \.offset) { index, item in
+                        Button {
+                            handleCoachingAction(item.id, p: p, hasLoadedAnalysis: hasLoadedAnalysis)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: item.icon)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundStyle(index == 0 ? .white : item.tint)
+                                    .frame(width: 32, height: 32)
+                                    .background(index == 0 ? item.tint : item.tint.opacity(0.12),
+                                                in: Circle())
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.title)
+                                        .shotiqBody(15, weight: .bold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.72)
+                                    Text(item.detail)
+                                        .shotiqBody(11)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(2)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .frame(minHeight: 58)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(item.title)
+
+                        if index != coachingActionItems(p).count - 1 {
+                            Rectangle().fill(ShotIQColor.rule).frame(height: 1)
+                        }
+                    }
                 }
-            } label: {
-                HStack(spacing: 10) {
-                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-upload-video",
-                                             size: 18,
-                                             label: nil)
-                    Text("View shot breakdown").shotiqBody(17, weight: .medium)
-                }
-                .frame(maxWidth: .infinity).frame(height: 54)
-                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
-                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
             }
-            .simultaneousGesture(TapGesture().onEnded {
-                if hasLoadedAnalysis {
-                    toast = .info("Opening shot breakdown")
-                } else {
-                    toast = .info("Analyze a shot first",
-                                  "Upload a photo or video before opening shot breakdown.")
-                }
-            })
-            .padding(.top, 20)
-            NavigationLink {
-                if hasLoadedAnalysis {
-                    ShareResultsView(presentationOverride: p,
-                                     analysisOverride: initialResult)
-                } else {
-                    AnalyzeHubView()
-                }
-            } label: {
-                HStack {
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 16))
-                    Text("Share analysis").shotiqBody(16)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                }
-                .foregroundStyle(ShotIQColor.ink)
-                .padding(.horizontal, 16).frame(height: 52)
-                .contentShape(Rectangle())
-                .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
-            }
-            .simultaneousGesture(TapGesture().onEnded {
-                if hasLoadedAnalysis {
-                    toast = .info("Opening share results")
-                } else {
-                    toast = .info("Analyze a shot first",
-                                  "Create an analysis before sharing results.")
-                }
-            })
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("Share analysis")
-            .padding(.top, 10)
+        }
+        .padding(.top, 20)
+    }
+
+    private func coachingActionItems(_ p: AnalysisResultPresentation) -> [CoachingActionItem] {
+        let goodShot = (Int(p.scoreText) ?? 0) >= 85
+        if goodShot {
+            return [
+                CoachingActionItem(id: "breakdown", icon: "film.stack", title: "REVIEW THIS FORM", detail: "Open the full frame breakdown and lock in what worked.", tint: ShotIQColor.confirmGreen),
+                CoachingActionItem(id: "release-height", icon: "arrow.up.to.line", title: "CHECK RELEASE HEIGHT", detail: "Confirm the ball leaves high and clean.", tint: ShotIQColor.analysisBlue),
+                CoachingActionItem(id: "centerline", icon: "scope", title: "CHECK CENTERLINE", detail: "Make sure the ball path stays stacked to the rim.", tint: ShotIQColor.analysisBlue),
+                CoachingActionItem(id: "compare", icon: "person.2", title: "COMPARE ELITE MATCH", detail: "See how this rep lines up against the selected pro.", tint: ShotIQColor.analysisBlue),
+                CoachingActionItem(id: "share", icon: "square.and.arrow.up", title: "SHARE ANALYSIS", detail: "Send this ShotIQ result or save it as proof.", tint: ShotIQColor.shotiqOrange),
+            ]
+        }
+        let flawTitle = p.flaws.first?.title ?? p.coachingTarget
+        return [
+            CoachingActionItem(id: "target", icon: "target", title: "FIX PRIMARY TARGET", detail: flawTitle, tint: ShotIQColor.reviewRed),
+            CoachingActionItem(id: "breakdown", icon: "film.stack", title: "REVIEW FRAME BREAKDOWN", detail: "Step through setup, load, rise, release, and follow-through.", tint: ShotIQColor.shotiqOrange),
+            CoachingActionItem(id: "release-height", icon: "arrow.up.to.line", title: "CHECK RELEASE HEIGHT", detail: "Use the release frame to see if the ball is high enough.", tint: ShotIQColor.analysisBlue),
+            CoachingActionItem(id: "centerline", icon: "scope", title: "CHECK CENTERLINE", detail: "Track whether the ball drifts left or right from your body line.", tint: ShotIQColor.analysisBlue),
+            CoachingActionItem(id: "share", icon: "square.and.arrow.up", title: "SHARE ANALYSIS", detail: "Send this result after reviewing the correction.", tint: ShotIQColor.graphite),
+        ]
+    }
+
+    private func handleCoachingAction(_ id: String,
+                                      p: AnalysisResultPresentation,
+                                      hasLoadedAnalysis: Bool) {
+        guard hasLoadedAnalysis else {
+            toast = .info("Analyze a shot first", "Upload a photo or video before opening coaching actions.")
+            return
+        }
+        switch id {
+        case "target":
+            selectedTab = .flaws
+            toast = .info("Opening primary target", p.coachingTarget)
+        case "compare":
+            selectedTab = .compare
+            toast = .info("Opening elite comparison")
+        case "release-height":
+            toast = .info("Release height", p.releaseHeightText == "--" ? "Measurement unavailable" : p.releaseHeightText)
+        case "centerline":
+            let centerline = p.metrics.first { $0.label == "CENTERLINE" }?.value ?? "--"
+            toast = .info("Centerline", centerline == "--" ? "Measurement unavailable" : centerline)
+        case "share":
+            toast = .info("Share analysis", "Use the share screen to export this result.")
+        default:
+            toast = .info("Opening frame breakdown")
         }
     }
 
