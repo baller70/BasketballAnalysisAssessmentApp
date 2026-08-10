@@ -2717,7 +2717,6 @@ struct VideoUploadView: View {      // 026
     @State private var selectedVideo: PickedVideoClip?
     @State private var loadingVideo = false
     @State private var videoError: String?
-    @State private var showFileImporter = false
     @State private var route: VideoUploadRoute?
     @State private var toast: ShotIQToast?
 
@@ -2751,8 +2750,7 @@ struct VideoUploadView: View {      // 026
                             Label("Images - Upload 3-7 photos", systemImage: "photo.stack")
                         }
                         Button {
-                            toast = .info("Opening Files", "Choose a local MP4, MOV, or M4V.")
-                            showFileImporter = true
+                            toast = .info("Video selected", "Use Browse video or the upload area to choose a shooting clip.")
                         } label: {
                             Label("Video - Upload a 10-second video", systemImage: "video")
                         }
@@ -2813,13 +2811,13 @@ struct VideoUploadView: View {      // 026
                     }
 
                     HStack(spacing: 10) {
-                        Button {
-                            toast = .info("Opening Files", "Choose a local MP4, MOV, or M4V.")
-                            showFileImporter = true
-                        } label: {
-                            compactVideoAction("folder", "Browse files")
+                        PhotosPicker(selection: $pick, matching: .videos) {
+                            compactVideoAction("film", "Browse video")
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening video library", "Choose a real shooting clip.")
+                        })
                         .disabled(loadingVideo)
 
                         Button {
@@ -2890,22 +2888,6 @@ struct VideoUploadView: View {      // 026
             Task {
                 let clip = await loadPickedVideoClip(from: item)
                 await MainActor.run { finishLoadingVideo(clip) }
-            }
-        }
-        .fileImporter(isPresented: $showFileImporter,
-                      allowedContentTypes: [.movie, .mpeg4Movie, .quickTimeMovie],
-                      allowsMultipleSelection: false) { result in
-            switch result {
-            case .success(let urls):
-                guard let url = urls.first else { return }
-                beginLoadingVideo()
-                Task {
-                    let clip = await loadVideoClip(fromFileURL: url)
-                    await MainActor.run { finishLoadingVideo(clip) }
-                }
-            case .failure:
-                videoError = "Couldn't open that file. Choose a local MP4 or MOV and try again."
-                toast = .error("File not opened", "Choose a local MP4 or MOV and try again.")
             }
         }
         .navigationDestination(item: $route) { route in

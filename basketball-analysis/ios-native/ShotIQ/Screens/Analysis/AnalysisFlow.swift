@@ -2719,6 +2719,16 @@ fileprivate struct CoachingActionItem {
     var tint: Color
 }
 
+fileprivate enum CoachingActionRoute: String, Identifiable {
+    case breakdown
+    case releaseHeight
+    case centerline
+    case compare
+    case share
+
+    var id: String { rawValue }
+}
+
 fileprivate struct FlexiblePhaseButtons: View {
     var phases: [String]
     var active: String
@@ -3493,7 +3503,7 @@ struct AnalysisResultOverviewView: View { // 038
     @State private var toast: ShotIQToast?
     @State private var selectedTab: AnalysisResultTab = .result
     @State private var selectedPhase = "RELEASE"
-    @State private var showFullMedia = false
+    @State private var coachingRoute: CoachingActionRoute?
 
     init(initialResult: ShotIQAnalysisResultDTO? = nil) {
         self.initialResult = initialResult
@@ -3540,10 +3550,8 @@ struct AnalysisResultOverviewView: View { // 038
         }
         .shotiqToast($toast)
         .analysisInfoAlert($info)
-        .fullScreenCover(isPresented: $showFullMedia) {
-            AnalysisFullScreenMediaView(presentation: resolvedPresentation,
-                                        fallbackKey: "038-visual-001",
-                                        selectedPhase: $selectedPhase)
+        .navigationDestination(item: $coachingRoute) { route in
+            coachingDestination(route, presentation: resolvedPresentation)
         }
         .onAppear {
             if let initialResult {
@@ -3674,21 +3682,16 @@ struct AnalysisResultOverviewView: View { // 038
                                hasLoadedAnalysis: Bool) -> some View {
         Group {
             HStack(alignment: .top, spacing: 18) {
-                Button {
-                    showFullMedia = true
-                    toast = .info("Opening full view", selectedPhase.capitalized)
-                } label: {
-                    ZStack(alignment: .topLeading) {
-                        AnalysisResultMediaSurface(presentation: p,
-                                                   fallbackKey: "038-visual-001",
-                                                   height: 220,
-                                                   phase: "FOLLOW-THROUGH",
-                                                   showsPlaybackControl: false)
-                        if p.id == "canonical-demo" { SkeletonOverlay() }
-                        mediaExpandPill
+                ZStack(alignment: .topLeading) {
+                    AnalysisResultMediaSurface(presentation: p,
+                                               fallbackKey: "038-visual-001",
+                                               height: 220,
+                                               phase: "FOLLOW-THROUGH",
+                                               showsPlaybackControl: false)
+                    if p.id == "canonical-demo" {
+                        SkeletonOverlay()
                     }
                 }
-                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
                 VStack(alignment: .leading, spacing: 0) {
                     NavigationLink { FormScoreView(presentation: p) } label: {
@@ -3706,11 +3709,6 @@ struct AnalysisResultOverviewView: View { // 038
                     .padding(.top, 14)
                 }
                 .frame(width: 140, alignment: .leading)
-            }
-            .padding(.top, 16)
-            TappablePhaseStrip(active: selectedPhase) { phase in
-                selectedPhase = phase
-                toast = .success("\(phase.capitalized) selected", "Media moved to this shot phase.")
             }
             .padding(.top, 16)
             if p.videoURL != nil || !p.videoPoseFrames.isEmpty {
@@ -3872,18 +3870,51 @@ struct AnalysisResultOverviewView: View { // 038
             selectedTab = .flaws
             toast = .info("Opening primary target", p.coachingTarget)
         case "compare":
-            selectedTab = .compare
+            coachingRoute = .compare
             toast = .info("Opening elite comparison")
+        case "breakdown":
+            coachingRoute = .breakdown
+            toast = .info("Opening frame breakdown")
         case "release-height":
-            toast = .info("Release height", p.releaseHeightText == "--" ? "Measurement unavailable" : p.releaseHeightText)
+            coachingRoute = .releaseHeight
+            toast = .info("Opening release height", p.releaseHeightText == "--" ? "Measurement unavailable" : p.releaseHeightText)
         case "centerline":
             let centerline = p.metrics.first { $0.label == "CENTERLINE" }?.value ?? "--"
-            toast = .info("Centerline", centerline == "--" ? "Measurement unavailable" : centerline)
+            coachingRoute = .centerline
+            toast = .info("Opening centerline", centerline == "--" ? "Measurement unavailable" : centerline)
         case "share":
-            toast = .info("Share analysis", "Use the share screen to export this result.")
+            coachingRoute = .share
+            toast = .info("Opening share analysis")
         default:
+            coachingRoute = .breakdown
             toast = .info("Opening frame breakdown")
         }
+    }
+
+    @ViewBuilder
+    private func coachingDestination(_ route: CoachingActionRoute,
+                                     presentation p: AnalysisResultPresentation) -> some View {
+        switch route {
+        case .breakdown:
+            FrameDetailSkeletonView(presentation: p)
+        case .releaseHeight:
+            metricDestination("RELEASE HEIGHT", presentation: p)
+        case .centerline:
+            metricDestination("CENTERLINE", presentation: p)
+        case .compare:
+            EliteMatchView(presentation: p)
+        case .share:
+            ShareResultsView(presentationOverride: p)
+        }
+    }
+
+    private func metricDestination(_ label: String,
+                                   presentation p: AnalysisResultPresentation) -> some View {
+        let tile = p.metrics.first { $0.label == label }
+        return MetricDetailView(metric: tile?.detailMetric ?? label.capitalized,
+                                value: tile?.detailValue ?? 0,
+                                valueText: tile?.value,
+                                presentation: p)
     }
 
     private func flawsInlineContent(_ p: AnalysisResultPresentation) -> some View {
