@@ -3818,7 +3818,7 @@ struct MediaDetailView: View {      // 069
                             .accessibilityLabel(playing ? "Pause" : "Play")
                             .accessibilityIdentifier("media-detail-hero-play")
                         }
-                        .overlay(alignment: .bottomTrailing) {
+                        .overlay(alignment: .bottomLeading) {
                             Button {
                                 showFullMedia = true
                                 toast = .info("Opening full view", "\(selectedPhase.capitalized) frame ready.")
@@ -3887,13 +3887,6 @@ struct MediaDetailView: View {      // 069
                             .padding(.vertical, 2)
                         }
                         .padding(.top, 10)
-                        VStack(alignment: .leading, spacing: 8) {
-                            SectionLabel(text: "JUMP TO PHASE")
-                            MediaDetailPhaseButtons(phases: phaseLabels, active: selectedPhase) { phase in
-                                selectPhase(phase)
-                            }
-                        }
-                        .padding(.top, 12)
                         SectionLabel(text: "CAPTURE DETAILS").padding(.top, 18)
                         Text(captureDateText).font(.custom("Tungsten-Medium", size: 24))
                             .padding(.top, 6)

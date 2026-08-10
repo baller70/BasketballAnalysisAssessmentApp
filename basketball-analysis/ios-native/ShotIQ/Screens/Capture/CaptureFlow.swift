@@ -1781,7 +1781,7 @@ struct UploadQualityCheckView: View { // 024
         }
         busy = true
         uploadError = nil
-        toast = .progress("Checking photo", "Preparing your shot preview.", progress: 0.18)
+        toast = .progress("Locking in your shot", "Preparing your ShotIQ media preview.", progress: 0.18)
         defer { busy = false }
 
         // 1. Upload the raw frame (field "image", uploadType "user").
@@ -1802,7 +1802,7 @@ struct UploadQualityCheckView: View { // 024
             return
         }
         toast = .progress("Uploading \(viewpoint.shortTitle.lowercased()) view",
-                          "Sending your shot to ShotIQ analysis.", progress: 0.25)
+                          "Sending your shot into the ShotIQ breakdown.", progress: 0.25)
         var imageUrl: String?
         if let respData = try? await APIClient.shared.uploadImage(
             jpeg,
@@ -1814,8 +1814,8 @@ struct UploadQualityCheckView: View { // 024
             let r = try? JSONDecoder().decode(UploadResp.self, from: respData)
             imageUrl = r?.url ?? r?.imageUrl
         }
-        toast = .progress("Analyzing \(viewpoint.shortTitle.lowercased()) mechanics",
-                          "Detecting pose and shot form.", progress: 0.55)
+        toast = .progress("Tracking body mechanics",
+                          "Reading pose, release path, ball slot, and centerline.", progress: 0.55)
 
         // 2. Coach-centric vision analysis (same contract the web client uses).
         struct VisionBody: Codable {
@@ -4573,7 +4573,7 @@ private struct CaptureVideoPoseSurface: View {
                 if measuring {
                     HStack(spacing: 6) {
                         ProgressView().scaleEffect(0.7)
-                        Text("Measuring pose").shotiqBody(10, weight: .bold).kerning(0.4)
+                        Text("Locking pose").shotiqBody(10, weight: .bold).kerning(0.4)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)

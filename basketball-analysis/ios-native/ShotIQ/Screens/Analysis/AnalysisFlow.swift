@@ -2164,9 +2164,9 @@ fileprivate struct VideoFramePlaybackPanel: View {
                         toast = .success(storyMode ? "STORY VIEW SELECTED" : "LANDSCAPE VIEW SELECTED")
                     } label: {
                         HStack(spacing: 5) {
-                            Image(systemName: storyMode ? "rectangle" : "rectangle.portrait")
+                            Image(systemName: storyMode ? "rectangle.portrait" : "rectangle")
                                 .font(.system(size: 11, weight: .heavy))
-                            Text(storyMode ? "LANDSCAPE" : "STORY")
+                            Text(storyMode ? "STORY" : "LANDSCAPE")
                                 .shotiqBody(10, weight: .heavy)
                                 .kerning(0.5)
                         }
@@ -2922,8 +2922,8 @@ struct AnalysisProcessingView: View { // 036
     private let processingStages: [ProcessingStage] = [
         .init(id: 0,
               assetName: "shotiq-processing-upload-media",
-              title: "LOCKING IN YOUR VIDEO",
-              detail: "Securing the upload, trim range, frame rate, and shot window.",
+              title: "LOCKING IN YOUR SHOT",
+              detail: "Securing the media, trim range, frame rate, and shot window.",
               start: 0.00,
               end: 0.16),
         .init(id: 1,
@@ -2946,7 +2946,7 @@ struct AnalysisProcessingView: View { // 036
               end: 0.70),
         .init(id: 4,
               assetName: "shotiq-processing-elite-database",
-              title: "MATCHING ELITE SHOOTERS",
+              title: "COMPARING TO ELITE SHOOTERS",
               detail: "Comparing your motion against ShotIQ's elite shooter database.",
               start: 0.70,
               end: 0.86),
@@ -2966,7 +2966,7 @@ struct AnalysisProcessingView: View { // 036
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
                             Text("ANALYSIS PROCESSING").shotiqDisplay(34).padding(.top, 18)
-                            Text("ShotIQ AI is breaking down your shooting form, comparing elite mechanics, and building your coaching plan.")
+                            Text("ShotIQ AI is breaking down your shooting form, reading every key angle, and comparing your mechanics to elite shooters.")
                                 .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                                 .padding(.top, 4)
                             ShotIQCard {
@@ -3009,7 +3009,7 @@ struct AnalysisProcessingView: View { // 036
                                             } else {
                                                 HStack(spacing: 6) {
                                                     ProgressView().scaleEffect(0.7)
-                                                    Text("Sampling pose").shotiqBody(10, weight: .bold).kerning(0.4)
+                                                    Text("Locking pose").shotiqBody(10, weight: .bold).kerning(0.4)
                                                 }
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 6)
@@ -3088,7 +3088,7 @@ struct AnalysisProcessingView: View { // 036
     }
 
     private var processingSummary: String {
-        guard let videoJob else { return "1080p • 24s • 30fps" }
+        guard let videoJob else { return "Shooting media ready for ShotIQ breakdown" }
         return "\(videoJob.clip.orientationText) • \(videoJob.trimWindowText) • \(videoJob.clip.frameRateText)"
     }
 
@@ -3099,9 +3099,9 @@ struct AnalysisProcessingView: View { // 036
         let isActive = progress > 0 && progress < 1
         HStack(alignment: .center, spacing: 14) {
             ShotIQApprovedRasterIcon(assetName: stage.assetName,
-                                     size: 58,
+                                     size: 64,
                                      label: stage.title)
-                .frame(width: 58, height: 58)
+                .frame(width: 64, height: 64)
                 .opacity(progress == 0 ? 0.42 : 1)
                 .scaleEffect(isDone ? 1.04 : 1)
             VStack(alignment: .leading, spacing: 6) {
@@ -3293,15 +3293,15 @@ struct AnalysisTakingLongerView: View { // 037
                                     .frame(width: 96, height: 96)
                                     Text("ANALYSIS TAKING LONGER").shotiqDisplay(28)
                                         .multilineTextAlignment(.center).padding(.top, 20)
-                                    Text("High-quality biomechanical analysis can take several minutes. Your shot is being processed in the background.")
+                                    Text("ShotIQ is still breaking down your form, checking release angles, and comparing the rep to elite mechanics in the background.")
                                         .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                         .multilineTextAlignment(.center).padding(.top, 6)
                                     HStack(alignment: .top, spacing: 8) {
-                                        stage("film", "Upload complete", "100%", false)
+                                        stage("checkmark.circle", "Shot locked", "100%", false)
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 24, height: 1).padding(.top, 16)
-                                        stage("point.3.connected.trianglepath.dotted", "Analyzing motion", "Estimating key angles", true)
+                                        stage("point.3.connected.trianglepath.dotted", "Tracking mechanics", "Reading key angles", true)
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 24, height: 1).padding(.top, 16)
-                                        stage("doc.text", "Building insights", "Pending", false)
+                                        stage("figure.basketball", "Building plan", "Queued", false)
                                     }
                                     .padding(.top, 22)
                                     Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 20)
@@ -6462,7 +6462,7 @@ struct FlawsOverviewView: View {    // 046
                 addedAll = true
                 toast = .success("Added to training plan", "\(flaws.count) coaching checkpoint\(flaws.count == 1 ? "" : "s") saved.")
             } catch {
-                addAllError = "Couldn't add flaws to your plan. Check your connection and try again."
+                addAllError = "Couldn't add checkpoints to your plan. Check your connection and try again."
                 toast = .error("Plan save failed", "Check your connection and try again.")
             }
             addingAll = false
@@ -6573,8 +6573,8 @@ fileprivate struct FlawEvidenceThumbnail: View {
                                         fallbackKey: "047-visual-001",
                                         height: height,
                                         phase: phase,
-                                        showSkeleton: true,
-                                        showJoints: true,
+                                        showSkeleton: false,
+                                        showJoints: false,
                                         showBall: false,
                                         showAngles: false)
             } else {
