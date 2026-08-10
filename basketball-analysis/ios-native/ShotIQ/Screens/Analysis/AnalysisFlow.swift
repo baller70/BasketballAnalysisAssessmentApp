@@ -492,6 +492,7 @@ struct VideoPoseResultSurface: View {
                currentSeconds >= analyzedEndSeconds - 0.035 {
                 seek(to: analyzedStartSeconds)
             }
+            triggerBorderBeat()
             player.playImmediately(atRate: Float(playbackRate))
         }
         isPlaying.toggle()
@@ -736,7 +737,8 @@ struct VideoPoseResultSurface: View {
         }
     }
 
-    private var hasFinalShotFeedback: Bool {
+    private var shouldShowFinalShotFeedback: Bool {
+        guard !isPlaying, !isScrubbing else { return false }
         let phase = displayPhase.uppercased()
         return phase == "RELEASE" || phase == "FOLLOW-THROUGH"
     }
@@ -807,7 +809,7 @@ struct VideoPoseResultSurface: View {
     @ViewBuilder
     private var analysisFrameBorder: some View {
         let shape = RoundedRectangle(cornerRadius: 8)
-        if hasFinalShotFeedback {
+        if shouldShowFinalShotFeedback {
             shape
                 .stroke(finalBorderColor, lineWidth: borderPulse ? 7 : 4)
                 .shadow(color: finalBorderColor.opacity(borderPulse ? 0.86 : 0.34),
@@ -815,18 +817,26 @@ struct VideoPoseResultSurface: View {
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
-            shape
-                .stroke(
-                    AngularGradient(gradient: Gradient(colors: liveBorderColors),
-                                    center: .center,
-                                    startAngle: .degrees(borderRotation),
-                                    endAngle: .degrees(borderRotation + 360)),
-                    lineWidth: liveBorderLineWidth
-                )
-                .shadow(color: frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first).glow,
-                        radius: borderBeat ? 24 : 10)
-                .padding(2)
-                .accessibilityHidden(true)
+            let status = frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first)
+            ZStack {
+                shape
+                    .stroke(
+                        AngularGradient(gradient: Gradient(colors: liveBorderColors),
+                                        center: .center,
+                                        startAngle: .degrees(borderRotation),
+                                        endAngle: .degrees(borderRotation + 360)),
+                        lineWidth: liveBorderLineWidth
+                    )
+                shape
+                    .stroke(status.main.opacity(borderBeat ? 0.72 : 0.18),
+                            lineWidth: borderBeat ? 15 : 5)
+                    .blur(radius: borderBeat ? 7 : 2.5)
+                shape
+                    .stroke(.white.opacity(borderBeat ? 0.42 : 0.10), lineWidth: 1.3)
+            }
+            .shadow(color: status.glow, radius: borderBeat ? 30 : 12)
+            .padding(2)
+            .accessibilityHidden(true)
         }
     }
 }
