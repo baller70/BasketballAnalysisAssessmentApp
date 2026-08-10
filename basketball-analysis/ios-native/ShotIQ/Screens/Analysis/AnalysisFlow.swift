@@ -347,7 +347,6 @@ struct VideoPoseResultSurface: View {
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
     @State private var isScrubbing = false
-    @State private var borderHeartbeat = false
 
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
@@ -447,11 +446,6 @@ struct VideoPoseResultSurface: View {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.58).repeatForever(autoreverses: true)) {
-                borderHeartbeat = true
-            }
         }
     }
 
@@ -776,8 +770,7 @@ struct VideoPoseResultSurface: View {
     }
 
     private var liveBorderStatus: VideoPoseQualityStatus {
-        movingBodyPartStatus(for: activeBorderFrame)
-            ?? bodyStatus(for: activeBorderFrame, greenThreshold: 0.70, yellowThreshold: 0.43)
+        shotFrameStatus(for: activeBorderFrame)
     }
 
     private var bodyTrackedJoints: [DetectedPose.Joint] {
@@ -791,25 +784,6 @@ struct VideoPoseResultSurface: View {
             .leftKnee, .rightKnee,
             .leftAnkle, .rightAnkle
         ]
-    }
-
-    private var borderMotionIntensity: CGFloat {
-        guard let currentPose = activeBorderFrame?.detectedPose,
-              let previousPose = previousBorderFrame?.detectedPose else {
-            return 0.18
-        }
-        let distances = bodyTrackedJoints.compactMap { joint -> CGFloat? in
-            guard let current = currentPose.joints[joint],
-                  let previous = previousPose.joints[joint] else { return nil }
-            return hypot(current.x - previous.x, current.y - previous.y)
-        }
-        guard !distances.isEmpty else { return 0.18 }
-        let average = distances.reduce(0, +) / CGFloat(distances.count)
-        return min(max(average * 30, 0.12), 1.0)
-    }
-
-    private var liveBorderLineWidth: CGFloat {
-        4.2 + borderMotionIntensity * 5.2
     }
 
     private func isShotCycleCompleteFrame(_ frame: VideoPoseFrameRecord) -> Bool {
@@ -836,7 +810,7 @@ struct VideoPoseResultSurface: View {
     }
 
     private func shotResultStatus(for frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus {
-        bodyStatus(for: frame, greenThreshold: 0.70, yellowThreshold: 0.43)
+        shotFrameStatus(for: frame)
     }
 
     private func bodyStatus(for frame: VideoPoseFrameRecord?,
@@ -884,6 +858,12 @@ struct VideoPoseResultSurface: View {
         return coverage * 0.65 + confidence * 0.35
     }
 
+    private func shotFrameStatus(for frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
+        movingBodyPartStatus(for: frame)
+            ?? visibleBodyPartStatus(for: frame)
+            ?? bodyStatus(for: frame, greenThreshold: 0.70, yellowThreshold: 0.43)
+    }
+
     private func movingBodyPartStatus(for frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus? {
         guard let frame,
               let currentPose = frame.detectedPose,
@@ -899,12 +879,31 @@ struct VideoPoseResultSurface: View {
             return (hypot(current.x - previous.x, current.y - previous.y), status)
         }
         .sorted { $0.distance > $1.distance }
-        .prefix(5)
+        .filter { $0.distance > 0.004 }
+        .prefix(6)
         .map(\.status)
 
         guard !movingStatuses.isEmpty else { return nil }
-        let average = movingStatuses.map(score).reduce(0, +) / Double(movingStatuses.count)
-        return status(forScore: average)
+        return mostSevereStatus(in: movingStatuses)
+    }
+
+    private func visibleBodyPartStatus(for frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus? {
+        guard let frame,
+              let pose = frame.detectedPose else {
+            return nil
+        }
+        let statuses = bodyTrackedJoints.compactMap { joint -> VideoPoseQualityStatus? in
+            guard pose.joints[joint] != nil else { return nil }
+            return jointStatus(joint, in: frame)
+        }
+        guard !statuses.isEmpty else { return nil }
+        return mostSevereStatus(in: statuses)
+    }
+
+    private func mostSevereStatus(in statuses: [VideoPoseQualityStatus]) -> VideoPoseQualityStatus {
+        if statuses.contains(.problem) { return .problem }
+        if statuses.contains(.warning) { return .warning }
+        return .good
     }
 
     private func status(forScore score: Double) -> VideoPoseQualityStatus {
@@ -995,33 +994,15 @@ struct VideoPoseResultSurface: View {
     private var analysisFrameBorder: some View {
         let shape = RoundedRectangle(cornerRadius: 8)
         if let lockedShotBorderStatus {
-            let color = lockedShotBorderStatus.main
             shape
-                .stroke(color, lineWidth: 6.2)
-                .shadow(color: color.opacity(0.50), radius: 11)
+                .stroke(lockedShotBorderStatus.main, lineWidth: 5)
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
-            let statusColor = liveBorderStatus.main
-            let intensity = borderMotionIntensity
-            let beat: CGFloat = borderHeartbeat ? 1 : 0
-            ZStack {
-                shape
-                    .stroke(statusColor, lineWidth: liveBorderLineWidth + beat * 2.4)
-                shape
-                    .stroke(statusColor.opacity(0.18 + intensity * 0.28 + beat * 0.18),
-                            lineWidth: 10 + intensity * 15 + beat * 14)
-                    .blur(radius: 5 + intensity * 7 + beat * 3)
-                shape
-                    .stroke(statusColor.opacity(0.54 + intensity * 0.22 + beat * 0.14),
-                            lineWidth: 3.4 + intensity * 3.8 + beat * 3.4)
-                shape
-                    .stroke(.white.opacity(0.10 + intensity * 0.12 + beat * 0.08), lineWidth: 1.2)
-            }
-            .shadow(color: statusColor.opacity(0.22 + intensity * 0.30 + beat * 0.18),
-                    radius: 10 + intensity * 16 + beat * 9)
-            .padding(2)
-            .accessibilityHidden(true)
+            shape
+                .stroke(liveBorderStatus.main, lineWidth: 5)
+                .padding(2)
+                .accessibilityHidden(true)
         }
     }
 }
