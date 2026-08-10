@@ -781,14 +781,40 @@ struct VideoPoseResultSurface: View {
         ]
     }
 
+    private var activeBorderFrame: VideoPoseFrameRecord? {
+        poseFrame ?? selectedPoseFrame ?? playbackFrames.first
+    }
+
+    private var frameFlipIsGreen: Bool {
+        guard let frameIndex = activeBorderFrame?.frameIndex else { return true }
+        return ((frameIndex / 3) % 2) == 0
+    }
+
+    private var frameFlipColor: Color {
+        frameFlipIsGreen ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed
+    }
+
+    private var frameFlipOppositeColor: Color {
+        frameFlipIsGreen ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen
+    }
+
     private var liveBorderColors: [Color] {
-        let statuses = activeFrameStatuses(poseFrame)
-        let colors = statuses.map(\.main)
-        return colors + [colors.first ?? ShotIQColor.confirmGreen]
+        let primary = frameFlipColor
+        let opposite = frameFlipOppositeColor
+        let status = frameOverallStatus(activeBorderFrame).main
+        return [
+            primary,
+            status,
+            opposite,
+            primary,
+            opposite.opacity(0.92),
+            status,
+            primary
+        ]
     }
 
     private var liveBorderLineWidth: CGFloat {
-        let status = frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first)
+        let status = frameOverallStatus(activeBorderFrame)
         let base: CGFloat
         switch status {
         case .good: base = 4
@@ -821,7 +847,7 @@ struct VideoPoseResultSurface: View {
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
-            let status = frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first)
+            let flip = frameFlipColor
             ZStack {
                 shape
                     .stroke(
@@ -832,13 +858,16 @@ struct VideoPoseResultSurface: View {
                         lineWidth: liveBorderLineWidth
                     )
                 shape
-                    .stroke(status.main.opacity(borderBeat ? 0.72 : 0.18),
-                            lineWidth: borderBeat ? 15 : 5)
-                    .blur(radius: borderBeat ? 7 : 2.5)
+                    .stroke(flip.opacity(borderBeat ? 0.88 : 0.42),
+                            lineWidth: borderBeat ? 18 : 7)
+                    .blur(radius: borderBeat ? 8 : 3.5)
                 shape
-                    .stroke(.white.opacity(borderBeat ? 0.42 : 0.10), lineWidth: 1.3)
+                    .stroke(flip.opacity(borderBeat ? 0.98 : 0.78),
+                            lineWidth: borderBeat ? 6 : 3.5)
+                shape
+                    .stroke(.white.opacity(borderBeat ? 0.46 : 0.16), lineWidth: 1.3)
             }
-            .shadow(color: status.glow, radius: borderBeat ? 30 : 12)
+            .shadow(color: flip.opacity(borderBeat ? 0.76 : 0.34), radius: borderBeat ? 32 : 13)
             .padding(2)
             .accessibilityHidden(true)
         }
@@ -955,14 +984,8 @@ struct ShotIQVideoAnalysisOverlay: View {
     private var analysisBrand: some View {
         VStack(alignment: .trailing, spacing: 7) {
             HStack(spacing: 9) {
-                RoundedRectangle(cornerRadius: 9)
-                    .stroke(.white, lineWidth: 2)
+                ShotIQBrainBallLogoMark(lineWidth: 2.1)
                     .frame(width: 44, height: 44)
-                    .overlay(
-                        Image(systemName: "basketball.fill")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(.white)
-                    )
                 VStack(alignment: .trailing, spacing: 0) {
                     Text("SHOTIQ")
                         .font(.system(size: 25, weight: .black))
@@ -980,14 +1003,8 @@ struct ShotIQVideoAnalysisOverlay: View {
 
     private var compactBrand: some View {
         HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(.white, lineWidth: 1.6)
+            ShotIQBrainBallLogoMark(lineWidth: 1.7)
                 .frame(width: 34, height: 34)
-                .overlay(
-                    Image(systemName: "basketball.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                )
             VStack(alignment: .trailing, spacing: 0) {
                 Text("SHOTIQ")
                     .font(.system(size: 19, weight: .black))
@@ -1172,6 +1189,83 @@ struct ShotIQVideoAnalysisOverlay: View {
     private func formStatus(_ value: Double?, ideal: ClosedRange<Double>) -> String {
         guard let value else { return "TRACKING" }
         return ideal.contains(value) ? "GOOD FORM" : "ADJUST FORM"
+    }
+}
+
+private struct ShotIQBrainBallLogoMark: View {
+    var lineWidth: CGFloat
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = min(proxy.size.width, proxy.size.height)
+            let scale = size / 44
+            let inset = size * 0.13
+            let rect = CGRect(x: inset,
+                              y: inset,
+                              width: size - inset * 2,
+                              height: size - inset * 2)
+            let dividerX = rect.midX
+            let brainCenterX = rect.midX + rect.width * 0.22
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 9 * scale)
+                    .stroke(.white, lineWidth: lineWidth)
+
+                Path { path in
+                    path.addArc(center: CGPoint(x: dividerX, y: rect.midY),
+                                radius: rect.height * 0.47,
+                                startAngle: .degrees(90),
+                                endAngle: .degrees(270),
+                                clockwise: false)
+                    path.move(to: CGPoint(x: dividerX, y: rect.minY + 1.5 * scale))
+                    path.addLine(to: CGPoint(x: dividerX, y: rect.maxY - 1.5 * scale))
+                    path.move(to: CGPoint(x: rect.minX + rect.width * 0.08, y: rect.midY))
+                    path.addLine(to: CGPoint(x: dividerX, y: rect.midY))
+                    path.move(to: CGPoint(x: rect.minX + rect.width * 0.17, y: rect.minY + rect.height * 0.13))
+                    path.addQuadCurve(to: CGPoint(x: dividerX, y: rect.midY),
+                                      control: CGPoint(x: rect.minX + rect.width * 0.28, y: rect.minY + rect.height * 0.38))
+                    path.move(to: CGPoint(x: rect.minX + rect.width * 0.17, y: rect.maxY - rect.height * 0.13))
+                    path.addQuadCurve(to: CGPoint(x: dividerX, y: rect.midY),
+                                      control: CGPoint(x: rect.minX + rect.width * 0.28, y: rect.maxY - rect.height * 0.38))
+                }
+                .stroke(.white, style: StrokeStyle(lineWidth: lineWidth,
+                                                   lineCap: .round,
+                                                   lineJoin: .round))
+
+                Path { path in
+                    path.move(to: CGPoint(x: dividerX + rect.width * 0.07, y: rect.minY + rect.height * 0.15))
+                    path.addCurve(to: CGPoint(x: brainCenterX, y: rect.minY + rect.height * 0.25),
+                                  control1: CGPoint(x: dividerX + rect.width * 0.20, y: rect.minY - rect.height * 0.01),
+                                  control2: CGPoint(x: brainCenterX + rect.width * 0.02, y: rect.minY + rect.height * 0.08))
+                    path.addCurve(to: CGPoint(x: brainCenterX - rect.width * 0.01, y: rect.minY + rect.height * 0.42),
+                                  control1: CGPoint(x: brainCenterX + rect.width * 0.17, y: rect.minY + rect.height * 0.26),
+                                  control2: CGPoint(x: brainCenterX + rect.width * 0.14, y: rect.minY + rect.height * 0.43))
+                    path.addCurve(to: CGPoint(x: brainCenterX + rect.width * 0.02, y: rect.minY + rect.height * 0.58),
+                                  control1: CGPoint(x: brainCenterX + rect.width * 0.20, y: rect.minY + rect.height * 0.46),
+                                  control2: CGPoint(x: brainCenterX + rect.width * 0.18, y: rect.minY + rect.height * 0.63))
+                    path.addCurve(to: CGPoint(x: brainCenterX + rect.width * 0.02, y: rect.maxY - rect.height * 0.18),
+                                  control1: CGPoint(x: brainCenterX + rect.width * 0.20, y: rect.maxY - rect.height * 0.35),
+                                  control2: CGPoint(x: brainCenterX + rect.width * 0.17, y: rect.maxY - rect.height * 0.16))
+                    path.addCurve(to: CGPoint(x: dividerX + rect.width * 0.07, y: rect.maxY - rect.height * 0.14),
+                                  control1: CGPoint(x: brainCenterX - rect.width * 0.08, y: rect.maxY - rect.height * 0.03),
+                                  control2: CGPoint(x: dividerX + rect.width * 0.10, y: rect.maxY - rect.height * 0.01))
+                    path.move(to: CGPoint(x: dividerX + rect.width * 0.10, y: rect.minY + rect.height * 0.36))
+                    path.addCurve(to: CGPoint(x: brainCenterX + rect.width * 0.05, y: rect.minY + rect.height * 0.37),
+                                  control1: CGPoint(x: dividerX + rect.width * 0.19, y: rect.minY + rect.height * 0.27),
+                                  control2: CGPoint(x: brainCenterX - rect.width * 0.02, y: rect.minY + rect.height * 0.28))
+                    path.move(to: CGPoint(x: dividerX + rect.width * 0.10, y: rect.minY + rect.height * 0.63))
+                    path.addCurve(to: CGPoint(x: brainCenterX + rect.width * 0.06, y: rect.minY + rect.height * 0.63),
+                                  control1: CGPoint(x: dividerX + rect.width * 0.21, y: rect.minY + rect.height * 0.73),
+                                  control2: CGPoint(x: brainCenterX - rect.width * 0.01, y: rect.minY + rect.height * 0.73))
+                }
+                .stroke(.white, style: StrokeStyle(lineWidth: lineWidth + 0.35,
+                                                   lineCap: .round,
+                                                   lineJoin: .round))
+            }
+            .frame(width: size, height: size)
+            .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+        }
+        .accessibilityHidden(true)
     }
 }
 
