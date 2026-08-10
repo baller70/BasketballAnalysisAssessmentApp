@@ -340,11 +340,8 @@ struct AnalysisResultPresentation: Equatable {
                              label: "CENTERLINE",
                              metric: "Centerline",
                              value: result.measurements.centerlineDeviationDeg,
-                             formatter: { Self.degrees($0) }),
-            Self.textTile(icon: "viewfinder",
-                          label: "PHASE",
-                          metric: "Phase",
-                          value: result.phase),
+                             formatter: { Self.degrees($0, signed: true) }),
+            Self.ballSlotTile(result.measurements.centerlineDeviationDeg),
         ]
         provenanceSummary = "\(result.provenance.measured.count) measured • \(result.provenance.missing.count) unavailable"
         scoreBreakdown = [
@@ -391,8 +388,8 @@ struct AnalysisResultPresentation: Equatable {
             AnalysisMetricTile(icon: "angle", label: "RELEASE ANGLE", value: "52°", verdict: "GOOD", isPositive: true, detailMetric: "Release", detailValue: 0.52, source: "demo"),
             AnalysisMetricTile(icon: "point.3.filled.connected.trianglepath.dotted", label: "ELBOW ALIGNMENT", value: "93%", verdict: "GOOD", isPositive: true, detailMetric: "Elbow", detailValue: 0.93, source: "demo"),
             AnalysisMetricTile(icon: "point.bottomleft.forward.to.point.topright.scurvepath", label: "SHOT ARC", value: "46°", verdict: "GOOD", isPositive: true, detailMetric: "Shot Arc", detailValue: 0.46, source: "demo"),
-            AnalysisMetricTile(icon: "scope", label: "SPIN RATE", value: "8.6", verdict: "GOOD", isPositive: true, detailMetric: "Spin Rate", detailValue: 0.86, source: "demo"),
-            AnalysisMetricTile(icon: "viewfinder", label: "CENTEREDNESS", value: "92%", verdict: "EXCELLENT", isPositive: true, detailMetric: "Centeredness", detailValue: 0.92, source: "demo"),
+            AnalysisMetricTile(icon: "scope", label: "CENTERLINE", value: "+1°", verdict: "GOOD", isPositive: true, detailMetric: "Centerline", detailValue: 0.95, source: "demo"),
+            AnalysisMetricTile(icon: "basketball", label: "BALL SLOT", value: "CENTER", verdict: "EXCELLENT", isPositive: true, detailMetric: "Ball Slot", detailValue: 0.92, source: "demo"),
         ],
         scoreBreakdown: [
             AnalysisScoreBreakdownItem(metric: "Form", scoreText: "84", scorePct: 0.84, verdict: "GOOD", caption: "Solid mechanics overall.", detail: "Alignment, posture, efficiency", impact: "High", source: "demo"),
@@ -440,7 +437,7 @@ struct AnalysisResultPresentation: Equatable {
             AnalysisMetricTile(icon: "point.3.filled.connected.trianglepath.dotted", label: "ELBOW ANGLE", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Elbow", detailValue: 0, source: "missing"),
             AnalysisMetricTile(icon: "point.bottomleft.forward.to.point.topright.scurvepath", label: "WRIST ANGLE", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Wrist", detailValue: 0, source: "missing"),
             AnalysisMetricTile(icon: "scope", label: "CENTERLINE", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Centerline", detailValue: 0, source: "missing"),
-            AnalysisMetricTile(icon: "viewfinder", label: "PHASE", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Phase", detailValue: 0, source: "missing"),
+            AnalysisMetricTile(icon: "basketball", label: "BALL SLOT", value: "--", verdict: "UNAVAILABLE", isPositive: false, detailMetric: "Ball Slot", detailValue: 0, source: "missing"),
         ],
         scoreBreakdown: [
             AnalysisScoreBreakdownItem(metric: "Form", scoreText: "--", scorePct: 0, verdict: "UNAVAILABLE", caption: "No saved score loaded.", detail: "Missing score source", impact: "High", source: "missing"),
@@ -570,6 +567,29 @@ struct AnalysisResultPresentation: Equatable {
                                   source: value.source)
     }
 
+    private static func ballSlotTile(_ centerline: AnalysisMetricDTO) -> AnalysisMetricTile {
+        guard let value = centerline.value, centerline.source != "missing" else {
+            return AnalysisMetricTile(icon: "basketball",
+                                      label: "BALL SLOT",
+                                      value: "--",
+                                      verdict: "UNAVAILABLE",
+                                      isPositive: false,
+                                      detailMetric: "Ball Slot",
+                                      detailValue: 0,
+                                      source: centerline.source)
+        }
+        let absolute = abs(value)
+        let slot = absolute <= 3 ? "CENTER" : (value > 0 ? "RIGHT" : "LEFT")
+        return AnalysisMetricTile(icon: "basketball",
+                                  label: "BALL SLOT",
+                                  value: slot,
+                                  verdict: absolute <= 3 ? "GOOD" : "DRIFT",
+                                  isPositive: absolute <= 3,
+                                  detailMetric: "Ball Slot",
+                                  detailValue: min(max(1 - absolute / 20, 0), 1),
+                                  source: centerline.source)
+    }
+
     private static func scoreItem(metric: String, value: AnalysisMetricDTO,
                                   caption: String, detail: String, impact: String) -> AnalysisScoreBreakdownItem {
         let text = scoreText(value.value)
@@ -610,6 +630,20 @@ struct AnalysisResultPresentation: Equatable {
                                                      phase: phase,
                                                      trendEnd: trendEnd,
                                                      source: source)))
+        }
+
+        func addCheckpoint(title: String, description: String, confidence: String,
+                           phase: String, trendEnd: String, source: String) {
+            guard !items.contains(where: { $0.item.title == title }) else { return }
+            add(priority: 4,
+                title: title,
+                impact: "ON TRACK",
+                description: description,
+                confidence: confidence,
+                cta: "Review \(title.lowercased())",
+                phase: phase,
+                trendEnd: trendEnd,
+                source: source)
         }
 
         func scoreFlaw(_ title: String, metric: String, value: AnalysisMetricDTO,
@@ -680,15 +714,17 @@ struct AnalysisResultPresentation: Equatable {
 
         if let centerline = result.measurements.centerlineDeviationDeg.value,
            result.measurements.centerlineDeviationDeg.source != "missing",
-           centerline > 3 {
-            add(priority: centerline >= 8 ? 1 : 2,
+           abs(centerline) > 3 {
+            let distance = abs(centerline)
+            let direction = centerline > 0 ? "right of centerline" : "left of centerline"
+            add(priority: distance >= 8 ? 1 : 2,
                 title: "CENTERLINE DEVIATION",
-                impact: impact(distance: centerline, high: 8),
-                description: "Centerline deviation is \(degrees(centerline)); target is under 3°.",
+                impact: impact(distance: distance, high: 8),
+                description: "Ball path is \(degrees(distance)) \(direction); target is centered or slightly on the shooting-side lane.",
                 confidence: confidence(result.measurements.centerlineDeviationDeg),
                 cta: "Review centerline",
                 phase: "RELEASE",
-                trendEnd: "\(Int(centerline.rounded()))",
+                trendEnd: "\(Int(distance.rounded()))",
                 source: result.measurements.centerlineDeviationDeg.source + ".measurements.centerline")
         }
 
@@ -706,12 +742,75 @@ struct AnalysisResultPresentation: Equatable {
                 source: "missing.provenance")
         }
 
+        if let elbow = result.angles.elbow.value, result.angles.elbow.source != "missing",
+           elbow >= 150, elbow <= 180 {
+            addCheckpoint(title: "ELBOW STACK CHECK",
+                          description: "Elbow angle is \(degrees(elbow)); it is inside the 150°-180° target band.",
+                          confidence: confidence(result.angles.elbow),
+                          phase: "RELEASE",
+                          trendEnd: "\(Int(elbow.rounded()))",
+                          source: result.angles.elbow.source + ".checkpoint.elbow")
+        }
+        if let wrist = result.angles.wrist.value, result.angles.wrist.source != "missing",
+           wrist >= 50, wrist <= 100 {
+            addCheckpoint(title: "WRIST SNAP CHECK",
+                          description: "Wrist angle is \(degrees(wrist)); the release is inside the 50°-100° control band.",
+                          confidence: confidence(result.angles.wrist),
+                          phase: "RELEASE",
+                          trendEnd: "\(Int(wrist.rounded()))",
+                          source: result.angles.wrist.source + ".checkpoint.wrist")
+        }
+        if let release = result.angles.release.value, result.angles.release.source != "missing",
+           abs(release) <= 5 {
+            addCheckpoint(title: "RELEASE PATH CHECK",
+                          description: "Release offset is \(degrees(release, signed: true)); it is inside the -5° to +5° target lane.",
+                          confidence: confidence(result.angles.release),
+                          phase: "RELEASE",
+                          trendEnd: "\(Int(abs(release).rounded()))",
+                          source: result.angles.release.source + ".checkpoint.release")
+        }
+        if let centerline = result.measurements.centerlineDeviationDeg.value,
+           result.measurements.centerlineDeviationDeg.source != "missing",
+           abs(centerline) <= 3 {
+            addCheckpoint(title: "BALL CENTERLINE CHECK",
+                          description: "Ball slot is \(degrees(centerline, signed: true)); the ball stays close to the body centerline.",
+                          confidence: confidence(result.measurements.centerlineDeviationDeg),
+                          phase: "RELEASE",
+                          trendEnd: "\(Int(abs(centerline).rounded()))",
+                          source: result.measurements.centerlineDeviationDeg.source + ".checkpoint.centerline")
+        }
+        if let knee = result.angles.kneeMin.value, result.angles.kneeMin.source != "missing",
+           knee >= 70, knee <= 120 {
+            addCheckpoint(title: "LOAD + BALANCE CHECK",
+                          description: "Lowest knee angle is \(degrees(knee)); the load stays inside the target power band.",
+                          confidence: confidence(result.angles.kneeMin),
+                          phase: "LOAD",
+                          trendEnd: "\(Int(knee.rounded()))",
+                          source: result.angles.kneeMin.source + ".checkpoint.load")
+        }
+
+        let fallbackCheckpoints: [(title: String, description: String, phase: String)] = [
+            ("FOLLOW-THROUGH HOLD CHECK", "Review the finish frame to confirm the wrist stays high and the guide side clears cleanly.", "FOLLOW-THROUGH"),
+            ("SHOT TIMING CHECK", "Use frame playback to compare setup, load, rise, release, and follow-through timing.", "RISE"),
+            ("ELITE MATCH READINESS", "Saved measurements are ready for elite shooter comparison once the closest match is selected.", "RELEASE"),
+            ("COACHING PLAN CHECK", "ShotIQ converted this analysis into trainable correction targets for the next session.", "SETUP"),
+            ("MEDIA QUALITY CHECK", "Keep the full body visible so ShotIQ can keep every landmark measured.", "SETUP"),
+        ]
+        for fallback in fallbackCheckpoints where items.count < 5 {
+            addCheckpoint(title: fallback.title,
+                          description: fallback.description,
+                          confidence: result.provenance.measured.isEmpty ? "0%" : "72%",
+                          phase: fallback.phase,
+                          trendEnd: result.provenance.measured.isEmpty ? "0" : "72",
+                          source: "checkpoint.fallback.\(fallback.title.lowercased().replacingOccurrences(of: " ", with: "-"))")
+        }
+
         return items
             .sorted { left, right in
                 if left.priority != right.priority { return left.priority < right.priority }
                 return left.item.title < right.item.title
             }
-            .prefix(3)
+            .prefix(5)
             .enumerated()
             .map { index, entry in
                 var item = entry.item

@@ -2194,7 +2194,7 @@ fileprivate struct VideoFramePlaybackPanel: View {
                     showFullFrame = true
                     toast = .info("Opening full frame", selectedPhase.capitalized)
                 } label: {
-                    ZStack(alignment: .topTrailing) {
+                    ZStack(alignment: .topLeading) {
                         if let url = videoURL {
                             VideoPoseResultSurface(url: url,
                                                    presentation: presentation,
@@ -2275,29 +2275,23 @@ fileprivate struct VideoFramePlaybackPanel: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    SectionLabel(text: "JUMP TO PHASE")
-                    FlexiblePhaseButtons(phases: phases, active: selectedPhase) { phase in
-                        jump(to: phase)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
                     SectionLabel(text: "FORM ANALYSIS BREAKDOWN")
-                    ForEach(Array(presentation.flaws.prefix(4)).indices, id: \.self) { idx in
+                    ForEach(Array(presentation.flaws.prefix(5)).indices, id: \.self) { idx in
                         let item = presentation.flaws[idx]
+                        let needsFix = item.impact.contains("IMPACT")
                         HStack(spacing: 10) {
                             Circle()
-                                .fill(idx == 0 ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
+                                .fill(needsFix ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
                                 .frame(width: 8, height: 8)
                             Text("#\(idx + 1)").shotiqBody(11, weight: .bold).foregroundStyle(ShotIQColor.graphite)
                             Text(item.title).shotiqBody(13, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                 .lineLimit(1).minimumScaleFactor(0.65)
                             Spacer()
-                            Text(idx == 0 ? "FIX THIS" : "GOOD")
+                            Text(needsFix ? "FIX THIS" : "GOOD")
                                 .shotiqBody(9, weight: .bold)
-                                .foregroundStyle(idx == 0 ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
+                                .foregroundStyle(needsFix ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
                                 .padding(.horizontal, 7).frame(height: 20)
-                                .background((idx == 0 ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen).opacity(0.12),
+                                .background((needsFix ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen).opacity(0.12),
                                             in: RoundedRectangle(cornerRadius: 4))
                         }
                         .padding(.horizontal, 10)
@@ -2901,6 +2895,15 @@ fileprivate struct FrameDetailMediaSurface: View {
 }
 
 struct AnalysisProcessingView: View { // 036
+    private struct ProcessingStage: Identifiable {
+        var id: Int
+        var assetName: String
+        var title: String
+        var detail: String
+        var start: Double
+        var end: Double
+    }
+
     /// One route out of processing. Two `navigationDestination(isPresented:)`
     /// modifiers on the same view conflict — the second silently wins — so the
     /// screen drives a single item-based destination instead.
@@ -2916,12 +2919,43 @@ struct AnalysisProcessingView: View { // 036
     @State private var completedResult: ShotIQAnalysisResultDTO?
     @State private var previewPoseFrame: VideoPoseFrameRecord?
     @State private var startedVideoSessionId: String?
-    private let steps: [(String, String, Int)] = [ // icon, label, state: 0 done, 1 active, 2 queued
-        ("viewfinder", "Upload complete", 0),
-        ("point.3.connected.trianglepath.dotted", "Detecting pose & landmarks", 1),
-        ("angle", "Scoring mechanics", 2),
-        ("chart.dots.scatter", "Comparing to your baseline", 2),
-        ("doc.text", "Building coaching plan", 2),
+    private let processingStages: [ProcessingStage] = [
+        .init(id: 0,
+              assetName: "shotiq-processing-upload-media",
+              title: "LOCKING IN YOUR VIDEO",
+              detail: "Securing the upload, trim range, frame rate, and shot window.",
+              start: 0.00,
+              end: 0.16),
+        .init(id: 1,
+              assetName: "shotiq-processing-pose-lock",
+              title: "TRACKING BODY MECHANICS",
+              detail: "Finding eyes, shoulders, elbows, wrists, hips, knees, ankles, and release landmarks.",
+              start: 0.16,
+              end: 0.38),
+        .init(id: 2,
+              assetName: "shotiq-processing-release-angles",
+              title: "BREAKING DOWN RELEASE ANGLES",
+              detail: "Measuring elbow stack, wrist snap, release path, ball slot, and centerline.",
+              start: 0.38,
+              end: 0.56),
+        .init(id: 3,
+              assetName: "shotiq-processing-footwork-balance",
+              title: "CHECKING FOOTWORK + BALANCE",
+              detail: "Reading base, load, rise, lower-body timing, and follow-through stability.",
+              start: 0.56,
+              end: 0.70),
+        .init(id: 4,
+              assetName: "shotiq-processing-elite-database",
+              title: "MATCHING ELITE SHOOTERS",
+              detail: "Comparing your motion against ShotIQ's elite shooter database.",
+              start: 0.70,
+              end: 0.86),
+        .init(id: 5,
+              assetName: "shotiq-processing-coaching-plan",
+              title: "BUILDING YOUR COACHING PLAN",
+              detail: "Turning the measurements into targets you can train on the next rep.",
+              start: 0.86,
+              end: 1.00),
     ]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-processing") {
@@ -2932,12 +2966,12 @@ struct AnalysisProcessingView: View { // 036
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
                             Text("ANALYSIS PROCESSING").shotiqDisplay(34).padding(.top, 18)
-                            Text("Shot Rail AI is reviewing your mechanics and building your results.")
+                            Text("ShotIQ AI is breaking down your shooting form, comparing elite mechanics, and building your coaching plan.")
                                 .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                                 .padding(.top, 4)
                             ShotIQCard {
                                 VStack(alignment: .leading, spacing: 0) {
-                                    Text("PROCESSING VIDEO").font(.custom("Tungsten-Medium", size: 19))
+                                    Text("SHOTIQ AI IS BUILDING YOUR REPORT").font(.custom("Tungsten-Medium", size: 19))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text(processingSummary).shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
@@ -2947,25 +2981,8 @@ struct AnalysisProcessingView: View { // 036
                                             .foregroundStyle(ShotIQColor.analysisBlue)
                                     }
                                     .padding(.top, 14)
-                                    ForEach(steps, id: \.1) { icon, label, state in
-                                        HStack(spacing: 14) {
-                                            Image(systemName: icon).font(.system(size: 17))
-                                                .foregroundStyle(state == 2 ? ShotIQColor.ink : ShotIQColor.analysisBlue)
-                                                .frame(width: 26)
-                                            Text(label).shotiqBody(15)
-                                            Spacer()
-                                            switch state {
-                                            case 0:
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .font(.system(size: 20)).foregroundStyle(ShotIQColor.analysisBlue)
-                                            case 1:
-                                                ProgressView().tint(ShotIQColor.analysisBlue)
-                                            default:
-                                                Text("Queued").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                                            }
-                                        }
-                                        .padding(.vertical, 13)
-                                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                                    ForEach(processingStages) { stage in
+                                        processingStageRow(stage)
                                     }
                                     .padding(.top, 2)
                                 }
@@ -3073,6 +3090,64 @@ struct AnalysisProcessingView: View { // 036
     private var processingSummary: String {
         guard let videoJob else { return "1080p • 24s • 30fps" }
         return "\(videoJob.clip.orientationText) • \(videoJob.trimWindowText) • \(videoJob.clip.frameRateText)"
+    }
+
+    @ViewBuilder
+    private func processingStageRow(_ stage: ProcessingStage) -> some View {
+        let progress = stageProgress(stage)
+        let isDone = progress >= 1
+        let isActive = progress > 0 && progress < 1
+        HStack(alignment: .center, spacing: 14) {
+            ShotIQApprovedRasterIcon(assetName: stage.assetName,
+                                     size: 58,
+                                     label: stage.title)
+                .frame(width: 58, height: 58)
+                .opacity(progress == 0 ? 0.42 : 1)
+                .scaleEffect(isDone ? 1.04 : 1)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(stage.title)
+                        .shotiqBody(14, weight: .heavy)
+                        .foregroundStyle(isDone ? ShotIQColor.confirmGreen : (isActive ? ShotIQColor.analysisBlue : ShotIQColor.ink))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.66)
+                    Spacer(minLength: 6)
+                    if isDone {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(ShotIQColor.confirmGreen)
+                            .transition(.scale.combined(with: .opacity))
+                    } else if isActive {
+                        Text("\(Int((progress * 100).rounded()))%")
+                            .font(.custom("Tungsten-Medium", size: 18))
+                            .foregroundStyle(ShotIQColor.analysisBlue)
+                    } else {
+                        Text("Queued")
+                            .shotiqBody(11, weight: .semibold)
+                            .foregroundStyle(ShotIQColor.graphite)
+                    }
+                }
+                Text(stage.detail)
+                    .shotiqBody(11)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+                ScoreBar(pct: progress, color: isDone ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                    .frame(height: 5)
+                    .opacity(progress == 0 ? 0.34 : 1)
+            }
+        }
+        .padding(.vertical, 11)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+        .animation(.spring(response: 0.32, dampingFraction: 0.74), value: isDone)
+        .animation(.easeOut(duration: 0.2), value: progress)
+    }
+
+    private func stageProgress(_ stage: ProcessingStage) -> Double {
+        guard stage.end > stage.start else { return 0 }
+        if pct <= stage.start { return 0 }
+        if pct >= stage.end { return 1 }
+        return min(max((pct - stage.start) / (stage.end - stage.start), 0), 1)
     }
 
     private func processVideo(job: VideoAnalysisJob) async {
@@ -3569,7 +3644,7 @@ struct AnalysisResultOverviewView: View { // 038
                     showFullMedia = true
                     toast = .info("Opening full view", selectedPhase.capitalized)
                 } label: {
-                    ZStack(alignment: .topTrailing) {
+                    ZStack(alignment: .topLeading) {
                         AnalysisResultMediaSurface(presentation: p,
                                                    fallbackKey: "038-visual-001",
                                                    height: 220,
@@ -3782,8 +3857,8 @@ struct AnalysisResultOverviewView: View { // 038
             CoachTargetCard(title: p.coachingTarget)
                 .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
             Text(p.flaws.isEmpty
-                 ? "AI analysis detected no priority flaws from the saved measurements."
-                 : "AI analysis detected \(p.flaws.count) priority flaw\(p.flaws.count == 1 ? "" : "s") impacting this saved shot.")
+                 ? "AI analysis built no coaching checkpoints from the saved measurements."
+                 : "AI analysis built \(p.flaws.count) coaching checkpoint\(p.flaws.count == 1 ? "" : "s") from this saved shot.")
                 .shotiqBody(14)
                 .foregroundStyle(ShotIQColor.graphite)
             if p.flaws.isEmpty {
@@ -6322,7 +6397,7 @@ struct FlawsOverviewView: View {    // 046
                                                          size: 24,
                                                          label: nil)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Add all \(flaws.count) flaws to your training plan")
+                                    Text("Add all \(flaws.count) checkpoints to your training plan")
                                         .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                     Text("Get personalized drills to fix these issues.")
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -6375,7 +6450,7 @@ struct FlawsOverviewView: View {    // 046
         guard !addingAll, !addedAll else { return }
         addingAll = true
         addAllError = nil
-        toast = .progress("Adding flaws to plan", "Saving \(flaws.count) correction target\(flaws.count == 1 ? "" : "s").", progress: 0.65)
+        toast = .progress("Adding checkpoints to plan", "Saving \(flaws.count) correction target\(flaws.count == 1 ? "" : "s").", progress: 0.65)
         Task {
             struct Body: Encodable { let name: String; let drillCount: Int; let drillIds: [String] }
             struct Resp: Decodable { let success: Bool }
@@ -6385,7 +6460,7 @@ struct FlawsOverviewView: View {    // 046
                     body: Body(name: "Flaw correction plan", drillCount: flaws.count,
                                drillIds: flaws.map { $0.title.lowercased().replacingOccurrences(of: " ", with: "-") }))
                 addedAll = true
-                toast = .success("Added to training plan", "\(flaws.count) flaw correction target\(flaws.count == 1 ? "" : "s") saved.")
+                toast = .success("Added to training plan", "\(flaws.count) coaching checkpoint\(flaws.count == 1 ? "" : "s") saved.")
             } catch {
                 addAllError = "Couldn't add flaws to your plan. Check your connection and try again."
                 toast = .error("Plan save failed", "Check your connection and try again.")
@@ -6398,14 +6473,15 @@ struct FlawsOverviewView: View {    // 046
         if currentFlaws.isEmpty {
             return presentation.id == AnalysisResultPresentation.noResult.id
                 ? "No saved analysis is loaded yet."
-                : "AI analysis detected no priority flaws from the saved measurements."
+                : "AI analysis built no coaching checkpoints from the saved measurements."
         }
-        return "AI analysis detected \(currentFlaws.count) priority flaw\(currentFlaws.count == 1 ? "" : "s") impacting your shot efficiency."
+        return "AI analysis built \(currentFlaws.count) coaching checkpoint\(currentFlaws.count == 1 ? "" : "s") from this saved shot."
     }
     private func tint(for flaw: AnalysisFlawItem) -> Color {
         switch flaw.impact {
         case "HIGH IMPACT": return ShotIQColor.reviewRed
         case "MEDIUM IMPACT": return ShotIQColor.shotiqOrange
+        case "ON TRACK": return ShotIQColor.confirmGreen
         default: return ShotIQColor.muted
         }
     }

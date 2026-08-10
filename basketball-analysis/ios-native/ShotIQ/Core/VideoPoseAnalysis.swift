@@ -546,9 +546,9 @@ enum VideoPoseAnalyzer {
               let wrist = shootingWrist(in: pose),
               let hipCenter = midpoint(pose.joints[.leftHip], pose.joints[.rightHip])
                     ?? midpoint(pose.joints[.leftShoulder], pose.joints[.rightShoulder]) else { return nil }
-        let dx = abs(Double(wrist.x - hipCenter.x))
+        let dx = Double(wrist.x - hipCenter.x)
         let dy = max(abs(Double(hipCenter.y - wrist.y)), 0.04)
-        return min(45, atan2(dx, dy) * 180 / Double.pi)
+        return min(max(atan2(dx, dy) * 180 / Double.pi, -45), 45)
     }
 
     private static func bodyVerticalSpan(in pose: DetectedPose) -> (topY: CGFloat, floorY: CGFloat, height: CGFloat)? {
