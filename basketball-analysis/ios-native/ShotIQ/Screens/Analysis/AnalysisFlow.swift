@@ -347,6 +347,7 @@ struct VideoPoseResultSurface: View {
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
     @State private var isScrubbing = false
+    @State private var borderHeartbeat = false
 
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
@@ -446,6 +447,11 @@ struct VideoPoseResultSurface: View {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.58).repeatForever(autoreverses: true)) {
+                borderHeartbeat = true
+            }
         }
     }
 
@@ -728,29 +734,19 @@ struct VideoPoseResultSurface: View {
 
     private var lockedShotBorderStatus: VideoPoseQualityStatus? {
         guard let frame = activeBorderFrame,
-              isShotReleaseOrFinishFrame(frame) else {
+              isShotCycleCompleteFrame(frame) else {
             return nil
         }
         return shotResultStatus(for: frame)
     }
 
     private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
-        let statuses = activeBodyPartStatuses(frame)
-        if statuses.contains(.problem) { return .problem }
-        if statuses.contains(.warning) { return .warning }
-        return .good
+        bodyStatus(for: frame, greenThreshold: 0.70, yellowThreshold: 0.43)
     }
 
     private func activeBodyPartStatuses(_ frame: VideoPoseFrameRecord?) -> [VideoPoseQualityStatus] {
         guard let frame else { return [.warning, .good, .warning] }
-        var statuses = [
-            VideoPoseQualityStatus.status(value: frame.elbowAngle, ideal: 150...180, warning: 130...190),
-            VideoPoseQualityStatus.status(value: frame.kneeAngle, ideal: 70...120, warning: 55...145),
-            VideoPoseQualityStatus.status(value: frame.shoulderAngle, ideal: 55...95, warning: 40...115),
-            VideoPoseQualityStatus.status(value: frame.hipAngle, ideal: 55...95, warning: 40...115),
-            VideoPoseQualityStatus.status(value: frame.wristAngle, ideal: 50...100, warning: 35...120),
-            VideoPoseQualityStatus.status(value: frame.releaseAngle.map(abs), ideal: 0...5, warning: 0...12)
-        ]
+        var statuses = bodyTrackedJoints.compactMap { jointStatus($0, in: frame) }
         if frame.confidence < 0.5 {
             statuses.append(.problem)
         } else if frame.confidence < 0.72 {
@@ -772,12 +768,29 @@ struct VideoPoseResultSurface: View {
         } ?? playbackFrames.first
     }
 
+    private var nextBorderFrame: VideoPoseFrameRecord? {
+        guard let activeBorderFrame else { return nil }
+        return playbackFrames.first {
+            $0.timestampSeconds > activeBorderFrame.timestampSeconds + 0.01
+        }
+    }
+
     private var liveBorderStatus: VideoPoseQualityStatus {
-        let statuses = activeBodyPartStatuses(activeBorderFrame)
-        guard !statuses.isEmpty else { return .warning }
-        if statuses.contains(.problem) { return .problem }
-        if statuses.contains(.warning) { return .warning }
-        return .good
+        movingBodyPartStatus(for: activeBorderFrame)
+            ?? bodyStatus(for: activeBorderFrame, greenThreshold: 0.70, yellowThreshold: 0.43)
+    }
+
+    private var bodyTrackedJoints: [DetectedPose.Joint] {
+        [
+            .nose, .leftEye, .rightEye, .leftEar, .rightEar,
+            .neck,
+            .leftShoulder, .rightShoulder,
+            .leftElbow, .rightElbow,
+            .leftWrist, .rightWrist,
+            .leftHip, .rightHip,
+            .leftKnee, .rightKnee,
+            .leftAnkle, .rightAnkle
+        ]
     }
 
     private var borderMotionIntensity: CGFloat {
@@ -785,16 +798,7 @@ struct VideoPoseResultSurface: View {
               let previousPose = previousBorderFrame?.detectedPose else {
             return 0.18
         }
-        let joints: [DetectedPose.Joint] = [
-            .leftAnkle, .rightAnkle,
-            .leftKnee, .rightKnee,
-            .leftHip, .rightHip,
-            .leftShoulder, .rightShoulder,
-            .leftElbow, .rightElbow,
-            .leftWrist, .rightWrist,
-            .neck, .nose, .leftEye, .rightEye
-        ]
-        let distances = joints.compactMap { joint -> CGFloat? in
+        let distances = bodyTrackedJoints.compactMap { joint -> CGFloat? in
             guard let current = currentPose.joints[joint],
                   let previous = previousPose.joints[joint] else { return nil }
             return hypot(current.x - previous.x, current.y - previous.y)
@@ -805,14 +809,22 @@ struct VideoPoseResultSurface: View {
     }
 
     private var liveBorderLineWidth: CGFloat {
-        let status = liveBorderStatus
-        let base: CGFloat
-        switch status {
-        case .good: base = 3.8
-        case .warning: base = 4.4
-        case .problem: base = 5.0
+        4.2 + borderMotionIntensity * 5.2
+    }
+
+    private func isShotCycleCompleteFrame(_ frame: VideoPoseFrameRecord) -> Bool {
+        if playbackFrames.last?.frameIndex == frame.frameIndex {
+            return true
         }
-        return base + borderMotionIntensity * 2.6
+        guard isShotReleaseOrFinishFrame(frame),
+              let nextBorderFrame else {
+            return false
+        }
+        let nextPhase = nextBorderFrame.phaseLabel.uppercased()
+        if nextPhase == "SETUP" || nextPhase == "LOAD" {
+            return true
+        }
+        return !hasArmsAboveHead(in: nextBorderFrame) && !hasWristSnap(in: nextBorderFrame)
     }
 
     private func isShotReleaseOrFinishFrame(_ frame: VideoPoseFrameRecord) -> Bool {
@@ -824,8 +836,112 @@ struct VideoPoseResultSurface: View {
     }
 
     private func shotResultStatus(for frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus {
+        bodyStatus(for: frame, greenThreshold: 0.70, yellowThreshold: 0.43)
+    }
+
+    private func bodyStatus(for frame: VideoPoseFrameRecord?,
+                            greenThreshold: Double,
+                            yellowThreshold: Double) -> VideoPoseQualityStatus {
+        let score = bodyMetricScore(for: frame)
+        if score >= greenThreshold { return .good }
+        if score >= yellowThreshold { return .warning }
+        return .problem
+    }
+
+    private func bodyMetricScore(for frame: VideoPoseFrameRecord?) -> Double {
+        guard let frame else { return 0.5 }
         let statuses = activeBodyPartStatuses(frame)
-        return statuses.contains(.problem) ? .problem : .good
+        let metricScores = statuses.map(score)
+        let poseScore = namedBodyPartCoverageScore(for: frame)
+        let combined = metricScores + [poseScore]
+        guard !combined.isEmpty else { return 0.5 }
+        return combined.reduce(0, +) / Double(combined.count)
+    }
+
+    private func score(_ status: VideoPoseQualityStatus) -> Double {
+        switch status {
+        case .good: return 1.0
+        case .warning: return 0.58
+        case .problem: return 0.0
+        }
+    }
+
+    private func namedBodyPartCoverageScore(for frame: VideoPoseFrameRecord) -> Double {
+        guard let pose = frame.detectedPose else { return 0 }
+        let required: [DetectedPose.Joint] = [
+            .nose, .leftEye, .rightEye, .leftEar, .rightEar,
+            .neck,
+            .leftShoulder, .rightShoulder,
+            .leftElbow, .rightElbow,
+            .leftWrist, .rightWrist,
+            .leftHip, .rightHip,
+            .leftKnee, .rightKnee,
+            .leftAnkle, .rightAnkle
+        ]
+        let found = required.filter { pose.joints[$0] != nil }.count
+        let coverage = Double(found) / Double(required.count)
+        let confidence = min(max(frame.confidence, 0), 1)
+        return coverage * 0.65 + confidence * 0.35
+    }
+
+    private func movingBodyPartStatus(for frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus? {
+        guard let frame,
+              let currentPose = frame.detectedPose,
+              let previousPose = previousBorderFrame?.detectedPose else {
+            return nil
+        }
+        let movingStatuses = bodyTrackedJoints.compactMap { joint -> (distance: CGFloat, status: VideoPoseQualityStatus)? in
+            guard let current = currentPose.joints[joint],
+                  let previous = previousPose.joints[joint],
+                  let status = jointStatus(joint, in: frame) else {
+                return nil
+            }
+            return (hypot(current.x - previous.x, current.y - previous.y), status)
+        }
+        .sorted { $0.distance > $1.distance }
+        .prefix(5)
+        .map(\.status)
+
+        guard !movingStatuses.isEmpty else { return nil }
+        let average = movingStatuses.map(score).reduce(0, +) / Double(movingStatuses.count)
+        return status(forScore: average)
+    }
+
+    private func status(forScore score: Double) -> VideoPoseQualityStatus {
+        if score >= 0.70 { return .good }
+        if score >= 0.43 { return .warning }
+        return .problem
+    }
+
+    private func jointStatus(_ joint: DetectedPose.Joint, in frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus? {
+        if joint == .leftShoulder || joint == .rightShoulder {
+            return VideoPoseQualityStatus.status(value: frame.shoulderAngle, ideal: 55...95, warning: 40...115)
+        }
+        if joint == .leftElbow || joint == .rightElbow {
+            return VideoPoseQualityStatus.status(value: frame.elbowAngle, ideal: 150...180, warning: 130...190)
+        }
+        if joint == .leftWrist || joint == .rightWrist {
+            let wrist = VideoPoseQualityStatus.status(value: frame.wristAngle, ideal: 50...100, warning: 35...120)
+            let release = VideoPoseQualityStatus.status(value: frame.releaseAngle.map(abs), ideal: 0...5, warning: 0...12)
+            return status(forScore: (score(wrist) + score(release)) / 2)
+        }
+        if joint == .leftHip || joint == .rightHip {
+            return VideoPoseQualityStatus.status(value: frame.hipAngle, ideal: 55...95, warning: 40...115)
+        }
+        if joint == .leftKnee || joint == .rightKnee || joint == .leftAnkle || joint == .rightAnkle {
+            return VideoPoseQualityStatus.status(value: frame.kneeAngle, ideal: 70...120, warning: 55...145)
+        }
+        if joint == .neck {
+            let shoulder = VideoPoseQualityStatus.status(value: frame.shoulderAngle, ideal: 55...95, warning: 40...115)
+            let hip = VideoPoseQualityStatus.status(value: frame.hipAngle, ideal: 55...95, warning: 40...115)
+            return status(forScore: (score(shoulder) + score(hip)) / 2)
+        }
+        if joint == .nose || joint == .leftEye || joint == .rightEye || joint == .leftEar || joint == .rightEar {
+            if frame.confidence >= 0.72 { return .good }
+            if frame.confidence >= 0.5 { return .warning }
+            return .problem
+        }
+        return nil
     }
 
     private func hasArmsAboveHead(in frame: VideoPoseFrameRecord) -> Bool {
@@ -881,28 +997,29 @@ struct VideoPoseResultSurface: View {
         if let lockedShotBorderStatus {
             let color = lockedShotBorderStatus.main
             shape
-                .stroke(color, lineWidth: 5.6)
-                .shadow(color: color.opacity(0.46), radius: 10)
+                .stroke(color, lineWidth: 6.2)
+                .shadow(color: color.opacity(0.50), radius: 11)
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
             let statusColor = liveBorderStatus.main
             let intensity = borderMotionIntensity
+            let beat: CGFloat = borderHeartbeat ? 1 : 0
             ZStack {
                 shape
-                    .stroke(statusColor, lineWidth: liveBorderLineWidth)
+                    .stroke(statusColor, lineWidth: liveBorderLineWidth + beat * 2.4)
                 shape
-                    .stroke(statusColor.opacity(0.15 + intensity * 0.24),
-                            lineWidth: 8 + intensity * 10)
-                    .blur(radius: 4 + intensity * 5)
+                    .stroke(statusColor.opacity(0.18 + intensity * 0.28 + beat * 0.18),
+                            lineWidth: 10 + intensity * 15 + beat * 14)
+                    .blur(radius: 5 + intensity * 7 + beat * 3)
                 shape
-                    .stroke(statusColor.opacity(0.48 + intensity * 0.22),
-                            lineWidth: 2.4 + intensity * 2.8)
+                    .stroke(statusColor.opacity(0.54 + intensity * 0.22 + beat * 0.14),
+                            lineWidth: 3.4 + intensity * 3.8 + beat * 3.4)
                 shape
-                    .stroke(.white.opacity(0.10 + intensity * 0.12), lineWidth: 1.1)
+                    .stroke(.white.opacity(0.10 + intensity * 0.12 + beat * 0.08), lineWidth: 1.2)
             }
-            .shadow(color: statusColor.opacity(0.18 + intensity * 0.22),
-                    radius: 8 + intensity * 13)
+            .shadow(color: statusColor.opacity(0.22 + intensity * 0.30 + beat * 0.18),
+                    radius: 10 + intensity * 16 + beat * 9)
             .padding(2)
             .accessibilityHidden(true)
         }
