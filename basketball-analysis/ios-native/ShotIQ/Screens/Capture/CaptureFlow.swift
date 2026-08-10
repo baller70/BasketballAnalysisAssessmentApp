@@ -3116,7 +3116,7 @@ struct VideoReviewView: View {      // 027
     @State private var trimEnd: Double = 1
     @State private var route: ReviewRoute?
     @State private var toast: ShotIQToast?
-    @State private var isPreparingAnalysis = false
+    @State private var reviewPreviewProgress = 0.18
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-review") {
             ScrollView {
@@ -3186,10 +3186,9 @@ struct VideoReviewView: View {      // 027
                                         .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
                                         .padding(8)
                                 }
-                                .overlay {
-                                    if isPreparingAnalysis {
-                                        videoReviewProcessingOverlay
-                                    }
+                                .overlay(alignment: .topLeading) {
+                                    reviewPreviewProcessingPill
+                                        .padding(10)
                                 }
                         } else {
                             CanonicalMediaSurface(key: "027-visual-001", height: 300, duration: "0:06")
@@ -3273,7 +3272,6 @@ struct VideoReviewView: View {      // 027
                                    icon: video == nil ? "film" : "camera.metering.center.weighted")
                     }
                         .buttonStyle(.plain)
-                        .disabled(isPreparingAnalysis)
                         .accessibilityElement(children: .combine)
                         .accessibilityAddTraits(.isButton)
                         .accessibilityLabel("Analyze video")
@@ -3295,6 +3293,7 @@ struct VideoReviewView: View {      // 027
                 }
             }
         }
+        .onAppear { beginReviewPreviewProcessing() }
         .navigationDestination(item: $route) { route in
             switch route {
             case .processing(let job):
@@ -3317,30 +3316,41 @@ struct VideoReviewView: View {      // 027
         .frame(maxWidth: .infinity)
     }
 
-    private var videoReviewProcessingOverlay: some View {
-        ZStack {
-            LinearGradient(colors: [.black.opacity(0.62), .black.opacity(0.28)],
-                           startPoint: .bottom,
-                           endPoint: .top)
-            VStack(spacing: 12) {
-                ProgressView()
-                    .tint(.white)
-                    .scaleEffect(1.15)
-                Text("PREPARING SHOTIQ BREAKDOWN")
-                    .shotiqBody(14, weight: .heavy)
-                    .kerning(0.6)
+    private var reviewPreviewProcessingPill: some View {
+        let isReady = reviewPreviewProgress >= 1
+        return VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                Image(systemName: isReady ? "checkmark.circle.fill" : "camera.metering.center.weighted")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(isReady ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                Text(isReady ? "SHOT PREVIEW READY" : "PROCESSING")
+                    .shotiqBody(11, weight: .heavy)
+                    .kerning(0.7)
                     .foregroundStyle(.white)
-                Text("Locking trim range, checking pose, and setting up your analysis.")
-                    .shotiqBody(11, weight: .semibold)
-                    .foregroundStyle(.white.opacity(0.84))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 18)
-                ScoreBar(pct: 0.72, color: ShotIQColor.shotiqOrange)
-                    .frame(width: 210, height: 6)
+            }
+            ScoreBar(pct: reviewPreviewProgress,
+                     color: isReady ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                .frame(width: 142, height: 5)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 7))
+        .overlay(RoundedRectangle(cornerRadius: 7).stroke(.white.opacity(0.18), lineWidth: 1))
+    }
+
+    private func beginReviewPreviewProcessing() {
+        guard video != nil else { return }
+        reviewPreviewProgress = 0.18
+        Task {
+            for value in [0.34, 0.52, 0.70, 0.86, 1.0] {
+                try? await Task.sleep(for: .milliseconds(360))
+                await MainActor.run {
+                    withAnimation(.easeOut(duration: 0.28)) {
+                        reviewPreviewProgress = value
+                    }
+                }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .transition(.opacity)
     }
 
     private func analyzeVideo() {
@@ -3348,7 +3358,6 @@ struct VideoReviewView: View {      // 027
             showMissingVideoToast()
             return
         }
-        isPreparingAnalysis = true
         let job = VideoAnalysisJob(
             clientSessionId: "ios-video-\(UUID().uuidString)",
             clip: video,
@@ -3356,11 +3365,8 @@ struct VideoReviewView: View {      // 027
             trimEndFraction: trimEnd)
         toast = .progress("Preparing analysis", "Trim window \(job.trimWindowText).", progress: 0.35)
         Task {
-            try? await Task.sleep(for: .milliseconds(700))
-            await MainActor.run {
-                route = .processing(job)
-                isPreparingAnalysis = false
-            }
+            try? await Task.sleep(for: .milliseconds(250))
+            await MainActor.run { route = .processing(job) }
         }
     }
 

@@ -2925,36 +2925,36 @@ struct AnalysisProcessingView: View { // 036
               title: "LOCKING IN YOUR SHOT",
               detail: "Securing the media, trim range, frame rate, and shot window.",
               start: 0.00,
-              end: 0.16),
+              end: 1.0 / 6.0),
         .init(id: 1,
               assetName: "shotiq-processing-pose-lock",
               title: "TRACKING BODY MECHANICS",
               detail: "Finding eyes, shoulders, elbows, wrists, hips, knees, ankles, and release landmarks.",
-              start: 0.16,
-              end: 0.38),
+              start: 1.0 / 6.0,
+              end: 2.0 / 6.0),
         .init(id: 2,
               assetName: "shotiq-processing-release-angles",
               title: "BREAKING DOWN RELEASE ANGLES",
               detail: "Measuring elbow stack, wrist snap, release path, ball slot, and centerline.",
-              start: 0.38,
-              end: 0.56),
+              start: 2.0 / 6.0,
+              end: 3.0 / 6.0),
         .init(id: 3,
               assetName: "shotiq-processing-footwork-balance",
               title: "CHECKING FOOTWORK + BALANCE",
               detail: "Reading base, load, rise, lower-body timing, and follow-through stability.",
-              start: 0.56,
-              end: 0.70),
+              start: 3.0 / 6.0,
+              end: 4.0 / 6.0),
         .init(id: 4,
               assetName: "shotiq-processing-elite-database",
               title: "COMPARING TO ELITE SHOOTERS",
               detail: "Comparing your motion against ShotIQ's elite shooter database.",
-              start: 0.70,
-              end: 0.86),
+              start: 4.0 / 6.0,
+              end: 5.0 / 6.0),
         .init(id: 5,
               assetName: "shotiq-processing-coaching-plan",
               title: "BUILDING YOUR COACHING PLAN",
               detail: "Turning the measurements into targets you can train on the next rep.",
-              start: 0.86,
+              start: 5.0 / 6.0,
               end: 1.00),
     ]
     var body: some View {
@@ -3072,10 +3072,7 @@ struct AnalysisProcessingView: View { // 036
                 route = .takingLonger
             }
             defer { watchdog.cancel() }
-            for _ in 0..<8 {
-                try? await Task.sleep(for: .seconds(0.5))
-                pct = min(0.94, pct + 0.11)
-            }
+            await runEvenProcessingPace(totalSeconds: 12, maxProgress: 0.94)
             if route == nil {
                 await finishAllProcessingStages()
             }
@@ -3154,22 +3151,48 @@ struct AnalysisProcessingView: View { // 036
 
     @MainActor
     private func finishAllProcessingStages() async {
-        withAnimation(.easeOut(duration: 0.28)) {
-            pct = 1.0
+        for boundary in processingStages.map(\.end) where pct < boundary {
+            withAnimation(.easeOut(duration: 0.34)) {
+                pct = boundary
+            }
+            try? await Task.sleep(for: .milliseconds(650))
         }
+        withAnimation(.easeOut(duration: 0.28)) { pct = 1.0 }
         try? await Task.sleep(for: .milliseconds(850))
         guard route == nil else { return }
         route = .results
     }
 
+    private func runEvenProcessingPace(totalSeconds: Double, maxProgress: Double = 0.94) async {
+        let tickSeconds = 0.12
+        let tickCount = max(Int(totalSeconds / tickSeconds), 1)
+        let step = maxProgress / Double(tickCount)
+        for _ in 0..<tickCount {
+            guard !Task.isCancelled else { return }
+            try? await Task.sleep(for: .milliseconds(Int(tickSeconds * 1000)))
+            await MainActor.run {
+                guard route == nil else { return }
+                withAnimation(.linear(duration: tickSeconds)) {
+                    pct = min(maxProgress, pct + step)
+                }
+            }
+        }
+    }
+
+    private func expectedProcessingSeconds(for job: VideoAnalysisJob) -> Double {
+        min(max(job.trimmedDurationSeconds * 2.4, 18), 45)
+    }
+
     private func processVideo(job: VideoAnalysisJob) async {
-        pct = 0.18
+        pct = 0.02
+        let paceTask = Task {
+            await runEvenProcessingPace(totalSeconds: expectedProcessingSeconds(for: job), maxProgress: 0.94)
+        }
         let poseAnalysis = await VideoPoseAnalyzer.analyze(job: job)
         previewPoseFrame = poseAnalysis.frames.first { $0.frameIndex == poseAnalysis.summary.releaseFrameIndex }
             ?? poseAnalysis.frames.first
         let localFallback = ShotIQLocalAnalysisFactory.video(job: job, poseAnalysis: poseAnalysis)
         do {
-            pct = 0.42
             let uploadedURL = try await APIClient.shared.uploadVideo(
                 job.clip.url,
                 filename: job.clip.filename,
@@ -3177,7 +3200,6 @@ struct AnalysisProcessingView: View { // 036
                 sizeBytes: job.clip.fileSizeBytes,
                 clientSessionId: job.clientSessionId,
                 durationSeconds: job.clip.durationSeconds)
-            pct = 0.72
 
             struct VideoVisionAnalysis: Codable {
                 var source: String
@@ -3264,12 +3286,12 @@ struct AnalysisProcessingView: View { // 036
             }
             completedResult = analysis
             app.rememberAnalysisMedia(analysis, title: "Analyzed Video")
-            pct = 0.94
+            paceTask.cancel()
             await finishAllProcessingStages()
         } catch {
             completedResult = localFallback
             app.rememberAnalysisMedia(localFallback, title: "Analyzed Video")
-            pct = 0.94
+            paceTask.cancel()
             await finishAllProcessingStages()
         }
     }
