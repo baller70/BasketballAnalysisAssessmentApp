@@ -365,11 +365,22 @@ struct VideoPoseResultSurface: View {
     private var seekKey: String {
         "\(url.absoluteString)|\(phase ?? "")|\(overrideFrame?.frameIndex ?? -1)|\(selectedPoseFrame?.timestampSeconds ?? -1)"
     }
+    private var lockedStillFrame: VideoPoseFrameRecord? {
+        guard !isPlaying, !showsControlTray else { return nil }
+        return overrideFrame ?? selectedPoseFrame
+    }
 
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topLeading) {
-                if let player {
+                if let lockedStillFrame {
+                    ShotIQVideoStillThumbnail(url: url,
+                                              seconds: lockedStillFrame.timestampSeconds,
+                                              width: proxy.size.width,
+                                              height: proxy.size.height,
+                                              cornerRadius: 0)
+                    .accessibilityLabel("Exact saved analysis frame")
+                } else if let player {
                     ShotIQAspectFillVideoPlayer(player: player)
                         .accessibilityLabel("Saved analysis video with pose overlay")
                 } else {
