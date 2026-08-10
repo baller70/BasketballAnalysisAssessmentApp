@@ -944,7 +944,7 @@ struct VideoPoseResultSurface: View {
         .map(\.status)
 
         guard !movingStatuses.isEmpty else { return nil }
-        return mostSevereStatus(in: movingStatuses)
+        return bodyPartDistributionStatus(in: movingStatuses)
     }
 
     private func visibleBodyPartStatus(for frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus? {
@@ -957,14 +957,12 @@ struct VideoPoseResultSurface: View {
             return jointStatus(joint, in: frame)
         }
         guard !statuses.isEmpty else { return nil }
-        return mostSevereStatus(in: statuses)
+        return bodyPartDistributionStatus(in: statuses)
     }
 
-    private func mostSevereStatus(in statuses: [VideoPoseQualityStatus]) -> VideoPoseQualityStatus {
-        if statuses.contains(.problem) { return .problem }
-        if statuses.contains(.caution) { return .caution }
-        if statuses.contains(.warning) { return .warning }
-        return .good
+    private func bodyPartDistributionStatus(in statuses: [VideoPoseQualityStatus]) -> VideoPoseQualityStatus {
+        let averageScore = statuses.map(score).reduce(0, +) / Double(statuses.count)
+        return status(forScore: averageScore)
     }
 
     private func status(forScore score: Double) -> VideoPoseQualityStatus {
