@@ -270,6 +270,56 @@ fileprivate struct RemoteCapturedPoseImage: View {
     }
 }
 
+fileprivate struct PhaseMediaThumbnail: View {
+    var presentation: AnalysisResultPresentation
+    var fallbackKey: String
+    var height: CGFloat
+    var phase: String
+
+    private var phaseSeconds: Double {
+        presentation.videoPoseFrame(for: phase)?.timestampSeconds
+            ?? presentation.videoPoseFrames.sorted { $0.frameIndex < $1.frameIndex }.first?.timestampSeconds
+            ?? 0
+    }
+
+    var body: some View {
+        ZStack {
+            if let url = presentation.videoURL ?? (presentation.mediaLabel.uppercased().contains("VIDEO") ? presentation.mediaURL : nil) {
+                ShotIQVideoStillThumbnail(url: url,
+                                          seconds: phaseSeconds,
+                                          height: height,
+                                          cornerRadius: 2)
+            } else if let url = presentation.mediaURL {
+                if url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .failure:
+                            CanonicalPhoto(fallbackKey, height: height, cornerRadius: 2)
+                        default:
+                            Rectangle()
+                                .fill(ShotIQColor.warmCanvas)
+                                .overlay { ProgressView().tint(ShotIQColor.shotiqOrange) }
+                        }
+                    }
+                }
+            } else {
+                CanonicalPhoto(fallbackKey, height: height, cornerRadius: 2)
+            }
+        }
+        .frame(height: height)
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 2))
+        .accessibilityLabel("Clean phase thumbnail for \(phase.lowercased())")
+    }
+}
+
 struct VideoPoseResultSurface: View {
     var url: URL
     var presentation: AnalysisResultPresentation
@@ -1407,15 +1457,6 @@ fileprivate struct VideoFramePlaybackPanel: View {
                                                           width: 62,
                                                           height: 52,
                                                           cornerRadius: 5)
-                                if let pose = frame.detectedPose {
-                                    VideoGamePoseOverlay(frame: frame,
-                                                         pose: pose,
-                                                         showBones: showSkeleton,
-                                                         showJoints: showJoints,
-                                                         showBall: false)
-                                        .frame(width: 62, height: 52)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                                }
                             } else {
                                 CanonicalPhoto("042-visual-002", width: 62, height: 52, cornerRadius: 5)
                             }
@@ -3332,10 +3373,10 @@ struct ShotBreakdownView: View {    // 041
                                     VStack(spacing: 8) {
                                         if presentation.id != "canonical-demo",
                                            presentation.mediaURL != nil || presentation.videoURL != nil {
-                                            AnalysisResultMediaSurface(presentation: presentation,
-                                                                       fallbackKey: "041-visual-002",
-                                                                       height: 190,
-                                                                       phase: phase)
+                                            PhaseMediaThumbnail(presentation: presentation,
+                                                                fallbackKey: "041-visual-002",
+                                                                height: 190,
+                                                                phase: phase)
                                         } else if let key = Self.phaseFrameKey(phase) {
                                             // Canonical phase frame — pose overlay already in the pixels.
                                             CanonicalPhoto(key, height: 190, cornerRadius: 2)

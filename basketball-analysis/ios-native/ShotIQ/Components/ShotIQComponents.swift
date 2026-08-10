@@ -444,6 +444,8 @@ struct ShotIQVideoStillThumbnail: View {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 640, height: 640)
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
         do {
             let cgImage = try generator.copyCGImage(at: CMTime(seconds: max(0, seconds),
                                                               preferredTimescale: 600),
