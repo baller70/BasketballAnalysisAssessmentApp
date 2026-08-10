@@ -195,14 +195,6 @@ private struct CapturedPoseGuidanceOverlay: View {
                 .font(.system(size: 22, weight: .black))
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.65), radius: 4)
-            HStack(spacing: 5) {
-                Image(systemName: "bolt.fill").font(.system(size: 10, weight: .bold))
-                Text("AI Processing").font(.system(size: 11, weight: .bold))
-            }
-            .foregroundStyle(ShotIQColor.shotiqOrange)
-            .padding(.horizontal, 9)
-            .frame(height: 26)
-            .background(.black.opacity(0.76), in: RoundedRectangle(cornerRadius: 6))
         }
     }
 

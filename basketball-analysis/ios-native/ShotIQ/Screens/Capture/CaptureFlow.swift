@@ -2827,11 +2827,6 @@ struct VideoUploadView: View {      // 026
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 
-                    if let selectedVideo {
-                        PickedVideoThumbnailView(clip: selectedVideo, height: 136, compact: true)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                        .padding(.horizontal, 20).padding(.top, 10)
-                    }
                     if let videoError {
                         Text(videoError).shotiqBody(12).foregroundStyle(ShotIQColor.reviewRed)
                             .padding(.horizontal, 20).padding(.top, 8)

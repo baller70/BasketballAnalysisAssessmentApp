@@ -343,7 +343,9 @@ struct VideoPoseResultSurface: View {
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
     @State private var borderPulse = false
-    @State private var borderSweep = false
+    @State private var borderBeat = false
+    @State private var borderRotation = 0.0
+    @State private var isScrubbing = false
 
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
@@ -359,7 +361,7 @@ struct VideoPoseResultSurface: View {
     }
     private var selectedPoseFrame: VideoPoseFrameRecord? { overrideFrame ?? presentation.videoPoseFrame(for: phase) }
     private var poseFrame: VideoPoseFrameRecord? {
-        if isPlaying || showsControlTray { return activePoseFrame ?? selectedPoseFrame }
+        if isPlaying || isScrubbing || showsControlTray { return activePoseFrame ?? selectedPoseFrame }
         return selectedPoseFrame ?? activePoseFrame
     }
     private var displayPhase: String {
@@ -369,8 +371,14 @@ struct VideoPoseResultSurface: View {
         "\(url.absoluteString)|\(phase ?? "")|\(overrideFrame?.frameIndex ?? -1)|\(selectedPoseFrame?.timestampSeconds ?? -1)"
     }
     private var lockedStillFrame: VideoPoseFrameRecord? {
-        guard !isPlaying, !showsControlTray else { return nil }
+        guard !isPlaying, !isScrubbing, !showsControlTray else { return nil }
         return overrideFrame ?? selectedPoseFrame
+    }
+    private var scrubProgress: Double {
+        let lower = hasPlaybackBounds ? analyzedStartSeconds : 0
+        let upper = hasPlaybackBounds ? analyzedEndSeconds : max(durationSeconds, 1)
+        let span = max(upper - lower, 0.001)
+        return min(max((currentSeconds - lower) / span, 0), 1)
     }
 
     var body: some View {
@@ -433,6 +441,9 @@ struct VideoPoseResultSurface: View {
             activePoseFrame = selectedPoseFrame
             seekToSelectedFrame()
         }
+        .onChange(of: poseFrame?.frameIndex) { _ in
+            triggerBorderBeat()
+        }
         .onDisappear {
             player?.pause()
             removeTimeObserver()
@@ -442,8 +453,8 @@ struct VideoPoseResultSurface: View {
             withAnimation(.easeInOut(duration: 0.72).repeatForever(autoreverses: true)) {
                 borderPulse = true
             }
-            withAnimation(.linear(duration: 1.45).repeatForever(autoreverses: false)) {
-                borderSweep = true
+            withAnimation(.linear(duration: 1.35).repeatForever(autoreverses: false)) {
+                borderRotation = 360
             }
         }
     }
@@ -507,6 +518,13 @@ struct VideoPoseResultSurface: View {
         player?.seek(to: CMTime(seconds: bounded, preferredTimescale: 600),
                      toleranceBefore: .zero,
                      toleranceAfter: .zero)
+    }
+
+    @MainActor
+    private func seekToProgress(_ progress: Double) {
+        let lower = hasPlaybackBounds ? analyzedStartSeconds : 0
+        let upper = hasPlaybackBounds ? analyzedEndSeconds : max(durationSeconds, 1)
+        seek(to: lower + (upper - lower) * min(max(progress, 0), 1))
     }
 
     private func preparePlayer() async {
@@ -642,93 +660,61 @@ struct VideoPoseResultSurface: View {
     private var advancedPlaybackControls: some View {
         VStack {
             Spacer()
-            VStack(spacing: 8) {
-                if showsControlTray {
-                    VStack(spacing: 8) {
-                        Slider(value: Binding(
-                            get: { currentSeconds },
-                            set: { seek(to: $0) }),
-                               in: 0...max(durationSeconds, playbackFrames.last?.timestampSeconds ?? 1))
-                            .tint(ShotIQColor.shotiqOrange)
-                        HStack(spacing: 8) {
-                            transportButton("backward.frame.fill", "Previous frame") {
-                                if let frame = previousFrame() { seek(to: frame.timestampSeconds) }
-                            }
-                            transportButton("gobackward.5", "Back five seconds") {
-                                seek(to: currentSeconds - 5)
-                            }
-                            transportButton("goforward.5", "Forward five seconds") {
-                                seek(to: currentSeconds + 5)
-                            }
-                            transportButton("forward.frame.fill", "Next frame") {
-                                if let frame = nextFrame() { seek(to: frame.timestampSeconds) }
-                            }
-                            Button {
-                                cycleRate()
-                            } label: {
-                                Text(rateLabel)
-                                    .shotiqBody(11, weight: .bold)
-                                    .foregroundStyle(.white)
-                                    .frame(width: 48, height: 34)
-                                    .background(.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 7))
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Change playback speed")
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.18)) {
-                                    showsControlTray = false
-                                }
-                            } label: {
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 34, height: 34)
-                                    .background(.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 7))
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Hide video controls")
-                        }
-                    }
-                    .padding(10)
-                    .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 10))
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-                HStack(spacing: 10) {
-                    Button {
-                        togglePlayback()
-                    } label: {
-                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 46, height: 46)
-                            .background(ShotIQColor.shotiqOrange, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(isPlaying ? "Pause full-screen video" : "Play full-screen video")
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            showsControlTray.toggle()
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "slider.horizontal.3")
-                                .font(.system(size: 13, weight: .bold))
-                            Text("Controls")
-                                .shotiqBody(11, weight: .bold)
-                        }
+            HStack(spacing: 12) {
+                Button {
+                    togglePlayback()
+                } label: {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.white)
-                        .frame(height: 36)
-                        .padding(.horizontal, 12)
-                        .background(.black.opacity(0.64), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(showsControlTray ? "Hide video controls" : "Show video controls")
-                    Spacer()
+                        .frame(width: 58, height: 58)
+                        .background(ShotIQColor.shotiqOrange, in: Circle())
+                        .shadow(color: ShotIQColor.shotiqOrange.opacity(0.38), radius: 14, x: 0, y: 6)
                 }
-                .padding(.horizontal, 12)
+                .buttonStyle(.plain)
+                .accessibilityLabel(isPlaying ? "Pause full-screen video" : "Play full-screen video")
+
+                VideoScrubWheel(progress: scrubProgress,
+                                tint: frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first).main,
+                                timeText: PickedVideoClip.timeText(currentSeconds),
+                                onScrubBegan: {
+                                    player?.pause()
+                                    isPlaying = false
+                                    isScrubbing = true
+                                },
+                                onScrubChanged: { progress in
+                                    seekToProgress(progress)
+                                },
+                                onScrubEnded: {
+                                    isScrubbing = false
+                                })
+
+                Button {
+                    cycleRate()
+                } label: {
+                    VStack(spacing: 1) {
+                        Text(rateLabel.uppercased())
+                            .shotiqBody(13, weight: .heavy)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text("SLOW")
+                            .shotiqBody(8, weight: .bold)
+                            .kerning(0.7)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(width: 58, height: 48)
+                    .background(.white.opacity(playbackRate < 1.0 ? 0.22 : 0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(playbackRate < 1.0 ? ShotIQColor.shotiqOrange : .white.opacity(0.18), lineWidth: 1.3))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Change slow motion speed")
             }
             .padding(.horizontal, 12)
-            .padding(.bottom, 10)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.46), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.10), lineWidth: 1))
+            .padding(.horizontal, 14)
+            .padding(.bottom, 12)
         }
     }
 
@@ -748,18 +734,6 @@ struct VideoPoseResultSurface: View {
         if isPlaying {
             player?.rate = Float(playbackRate)
         }
-    }
-
-    private func transportButton(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 38, height: 38)
-                .background(.white.opacity(0.16), in: RoundedRectangle(cornerRadius: 7))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 
     private var hasFinalShotFeedback: Bool {
@@ -804,7 +778,30 @@ struct VideoPoseResultSurface: View {
     private var liveBorderColors: [Color] {
         let statuses = activeFrameStatuses(poseFrame)
         let colors = statuses.map(\.main)
-        return borderSweep ? colors + [colors.first ?? ShotIQColor.confirmGreen] : colors.reversed() + [colors.last ?? ShotIQColor.shotiqOrange]
+        return colors + [colors.first ?? ShotIQColor.confirmGreen]
+    }
+
+    private var liveBorderLineWidth: CGFloat {
+        let status = frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first)
+        let base: CGFloat
+        switch status {
+        case .good: base = 4
+        case .warning: base = 5
+        case .problem: base = 6
+        }
+        return base + (borderBeat ? 4 : 0)
+    }
+
+    @MainActor
+    private func triggerBorderBeat() {
+        withAnimation(.easeOut(duration: 0.08)) {
+            borderBeat = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+            withAnimation(.easeOut(duration: 0.18)) {
+                borderBeat = false
+            }
+        }
     }
 
     @ViewBuilder
@@ -820,14 +817,84 @@ struct VideoPoseResultSurface: View {
         } else {
             shape
                 .stroke(
-                    AngularGradient(colors: liveBorderColors, center: .center),
-                    lineWidth: borderPulse ? 6 : 4
+                    AngularGradient(gradient: Gradient(colors: liveBorderColors),
+                                    center: .center,
+                                    startAngle: .degrees(borderRotation),
+                                    endAngle: .degrees(borderRotation + 360)),
+                    lineWidth: liveBorderLineWidth
                 )
                 .shadow(color: frameOverallStatus(poseFrame ?? selectedPoseFrame ?? playbackFrames.first).glow,
-                        radius: borderPulse ? 13 : 7)
+                        radius: borderBeat ? 24 : 10)
                 .padding(2)
                 .accessibilityHidden(true)
         }
+    }
+}
+
+fileprivate struct VideoScrubWheel: View {
+    var progress: Double
+    var tint: Color
+    var timeText: String
+    var onScrubBegan: () -> Void
+    var onScrubChanged: (Double) -> Void
+    var onScrubEnded: () -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = max(proxy.size.width, 1)
+            let clamped = min(max(progress, 0), 1)
+            let knobX = width * clamped
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(.white.opacity(0.16))
+                    .frame(height: 2)
+                    .position(x: width / 2, y: 19)
+                Capsule()
+                    .fill(tint)
+                    .frame(width: max(8, knobX), height: 3)
+                    .position(x: max(4, knobX / 2), y: 19)
+
+                HStack(alignment: .center, spacing: 0) {
+                    ForEach(0..<31, id: \.self) { index in
+                        let major = index % 5 == 0
+                        Capsule()
+                            .fill(.white.opacity(major ? 0.62 : 0.30))
+                            .frame(width: major ? 3 : 1.5, height: major ? 34 : 20)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(height: 42)
+                .position(x: width / 2, y: 38)
+
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(tint.opacity(0.28))
+                    .frame(width: 30, height: 54)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(tint, lineWidth: 2))
+                    .position(x: min(max(knobX, 16), width - 16), y: 38)
+
+                Text(timeText)
+                    .shotiqBody(11, weight: .heavy)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .frame(height: 24)
+                    .background(.black.opacity(0.46), in: Capsule())
+                    .position(x: min(max(knobX, 34), width - 34), y: 8)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        onScrubBegan()
+                        onScrubChanged(Double(min(max(value.location.x / width, 0), 1)))
+                    }
+                    .onEnded { value in
+                        onScrubChanged(Double(min(max(value.location.x / width, 0), 1)))
+                        onScrubEnded()
+                    }
+            )
+        }
+        .frame(height: 68)
+        .accessibilityLabel("Scrub video wheel")
     }
 }
 
@@ -894,18 +961,6 @@ struct ShotIQVideoAnalysisOverlay: View {
                         .lineLimit(1)
                 }
             }
-
-            HStack(spacing: 6) {
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 11, weight: .bold))
-                Text("AI Processing")
-                    .font(.system(size: 12, weight: .bold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(ShotIQColor.shotiqOrange)
-            .padding(.horizontal, 10)
-            .frame(height: 30)
-            .background(.black.opacity(0.76), in: RoundedRectangle(cornerRadius: 7))
         }
     }
 
@@ -943,9 +998,9 @@ struct ShotIQVideoAnalysisOverlay: View {
                     let anchorPoint = displayPoint(for: anchor, size: size)
                     let labelCenter = labelCenter(for: anchor, spec: spec, size: size)
                     let width = calloutWidth(size)
+                    let connectorX = labelCenter.x < anchorPoint.x ? labelCenter.x + width / 2 : labelCenter.x - width / 2
                     connector(from: anchorPoint,
-                              to: CGPoint(x: labelCenter.x + (spec.side == .left ? width / 2 : -width / 2),
-                                          y: labelCenter.y),
+                              to: CGPoint(x: connectorX, y: labelCenter.y),
                               tint: spec.tint)
                     analysisCallout(title: spec.title,
                                     value: spec.value,
@@ -1032,11 +1087,36 @@ struct ShotIQVideoAnalysisOverlay: View {
         let anchorPoint = displayPoint(for: anchor, size: size)
         let width = calloutWidth(size)
         let height = calloutHeight(size)
-        let sideOffset = max(width * 1.05, size.width * 0.28)
-        let rawX = spec.side == .left ? anchorPoint.x - sideOffset : anchorPoint.x + sideOffset
+        let bodyRect = poseDisplayBounds(size: size).insetBy(dx: -14, dy: -10)
+        let margin: CGFloat = 10
+
+        let edgeAnchoredX: CGFloat
+        switch spec.side {
+        case .right:
+            let clearBodyX = bodyRect.maxX + width / 2 + margin
+            let nearJointX = anchorPoint.x + width * 0.84
+            edgeAnchoredX = max(clearBodyX, nearJointX)
+        case .left:
+            let clearBodyX = bodyRect.minX - width / 2 - margin
+            let nearJointX = anchorPoint.x - width * 0.84
+            edgeAnchoredX = min(clearBodyX, nearJointX)
+        }
         let rawY = anchorPoint.y + size.height * spec.verticalOffset
-        return CGPoint(x: min(max(rawX, width / 2 + 10), size.width - width / 2 - 10),
-                       y: min(max(rawY, height / 2 + 10), size.height - height / 2 - 10))
+        return CGPoint(x: min(max(edgeAnchoredX, width / 2 + margin), size.width - width / 2 - margin),
+                       y: min(max(rawY, height / 2 + margin), size.height - height / 2 - margin))
+    }
+
+    private func poseDisplayBounds(size: CGSize) -> CGRect {
+        let points = pose.joints.values.map { displayPoint(for: $0, size: size) }
+        guard let first = points.first else {
+            return CGRect(x: size.width * 0.25,
+                          y: size.height * 0.18,
+                          width: size.width * 0.5,
+                          height: size.height * 0.68)
+        }
+        return points.dropFirst().reduce(CGRect(origin: first, size: .zero)) { partial, point in
+            partial.union(CGRect(origin: point, size: .zero))
+        }
     }
 
     private func calloutWidth(_ size: CGSize) -> CGFloat {
