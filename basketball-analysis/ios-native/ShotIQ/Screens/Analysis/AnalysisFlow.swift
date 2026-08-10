@@ -336,6 +336,8 @@ struct VideoPoseResultSurface: View {
     var showsAdvancedControls = false
     var showsPoseStatusPill = true
     var showsPlaybackControl = true
+    var isMuted = false
+    var onVerdictToastVisibleChange: ((Bool) -> Void)? = nil
     @State private var player: AVPlayer?
     @State private var loadedURL: URL?
     @State private var naturalVideoSize: CGSize?
@@ -450,10 +452,14 @@ struct VideoPoseResultSurface: View {
         .onChange(of: repVerdictToastKey) { key in
             showRepVerdictToast(for: key)
         }
+        .onChange(of: isMuted) { muted in
+            player?.isMuted = muted
+        }
         .onDisappear {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
+            onVerdictToastVisibleChange?(false)
         }
     }
 
@@ -529,6 +535,7 @@ struct VideoPoseResultSurface: View {
         if loadedURL != url {
             let next = AVPlayer(url: url)
             next.actionAtItemEnd = .pause
+            next.isMuted = isMuted
             await MainActor.run {
                 removeTimeObserver()
                 player = next
@@ -536,6 +543,10 @@ struct VideoPoseResultSurface: View {
                 activePoseFrame = selectedPoseFrame
                 isPlaying = false
                 installTimeObserver(on: next)
+            }
+        } else {
+            await MainActor.run {
+                player?.isMuted = isMuted
             }
         }
         let size = await loadNaturalVideoSize()
@@ -779,6 +790,7 @@ struct VideoPoseResultSurface: View {
         lastRepVerdictToastKey = key
         repVerdictToast = RepVerdictToast(status: verdict.status,
                                           frameIndex: verdict.frame.frameIndex + 1)
+        onVerdictToastVisibleChange?(true)
         repVerdictBurst = false
         withAnimation(.spring(response: 0.26, dampingFraction: 0.48)) {
             repVerdictBurst = true
@@ -790,6 +802,7 @@ struct VideoPoseResultSurface: View {
                 repVerdictToast = nil
                 repVerdictBurst = false
             }
+            onVerdictToastVisibleChange?(false)
         }
     }
 
@@ -2445,6 +2458,8 @@ fileprivate struct AnalysisFullScreenMediaView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var toast: ShotIQToast?
     @State private var showsPhasePicker = false
+    @State private var isMuted = false
+    @State private var hidesTitleForVerdict = false
 
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
@@ -2452,37 +2467,31 @@ fileprivate struct AnalysisFullScreenMediaView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             GeometryReader { proxy in
-                VStack(spacing: 14) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(selectedPhase)
-                                .shotiqCondensed(24, weight: .heavy)
-                                .foregroundStyle(.white)
-                            phaseDropdown
+                VStack(spacing: 10) {
+                    ZStack {
+                        Text(phaseDisplay(selectedPhase))
+                            .shotiqCondensed(23, weight: .heavy)
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                            .opacity(hidesTitleForVerdict ? 0 : 1)
+                            .animation(.easeInOut(duration: 0.14), value: hidesTitleForVerdict)
+
+                        HStack {
+                            Spacer()
+                            closeButton
                         }
-                        Spacer()
-                        Button {
-                            showsPhasePicker = false
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundStyle(.white)
-                                .frame(width: 40, height: 40)
-                                .background(.white.opacity(0.16), in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Close full view")
                     }
+                    .frame(height: 44)
                     .padding(.horizontal, 16)
-                    .padding(.top, 14)
-                    .zIndex(20)
+                    .padding(.top, 10)
+                    .zIndex(30)
 
                     if let url = presentation.videoURL ?? presentation.mediaURL,
                        presentation.mediaLabel.uppercased().contains("VIDEO") || presentation.videoURL != nil {
                         VideoPoseResultSurface(url: url,
                                                presentation: presentation,
-                                               height: max(420, proxy.size.height - 104),
+                                               height: max(450, proxy.size.height - 74),
                                                showSkeleton: true,
                                                showJoints: true,
                                                showBall: false,
@@ -2490,15 +2499,28 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                                                phase: selectedPhase,
                                                overrideFrame: overrideFrame?.phaseLabel == selectedPhase ? overrideFrame : nil,
                                                showsAdvancedControls: true,
-                                               showsPoseStatusPill: false)
+                                               showsPoseStatusPill: false,
+                                               isMuted: isMuted,
+                                               onVerdictToastVisibleChange: { visible in
+                                                   hidesTitleForVerdict = visible
+                                               })
                             .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(alignment: .topLeading) {
+                                phaseDropdown
+                                    .padding(12)
+                            }
                             .padding(.horizontal, 10)
                     } else {
                         AnalysisResultMediaSurface(presentation: presentation,
                                                    fallbackKey: fallbackKey,
-                                                   height: max(420, proxy.size.height - 104),
+                                                   height: max(450, proxy.size.height - 74),
                                                    phase: selectedPhase,
                                                    showGuidanceLabels: true)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(alignment: .topLeading) {
+                                phaseDropdown
+                                    .padding(12)
+                            }
                             .padding(.horizontal, 10)
                     }
                 }
@@ -2507,29 +2529,34 @@ fileprivate struct AnalysisFullScreenMediaView: View {
         .shotiqToast($toast)
     }
 
+    private var closeButton: some View {
+        Button {
+            showsPhasePicker = false
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 19, weight: .heavy))
+                .foregroundStyle(.white)
+                .frame(width: 42, height: 42)
+                .background(.black.opacity(0.20), in: Circle())
+                .overlay(Circle().stroke(.white.opacity(0.24), lineWidth: 1.2))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Close full view")
+    }
+
     private var phaseDropdown: some View {
         Button {
             withAnimation(.easeInOut(duration: 0.16)) {
                 showsPhasePicker.toggle()
             }
         } label: {
-            HStack(spacing: 9) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 13, weight: .bold))
-                Text("PHASE: \(phaseDisplay(selectedPhase))")
-                    .shotiqBody(12, weight: .heavy)
-                    .kerning(0.7)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.65)
-                Image(systemName: showsPhasePicker ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 11, weight: .heavy))
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .frame(width: 214, height: 38)
-            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.shotiqOrange, lineWidth: 1.6))
-            .shadow(color: ShotIQColor.shotiqOrange.opacity(0.26), radius: 8, x: 0, y: 2)
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 18, weight: .heavy))
+                .foregroundStyle(.white)
+                .frame(width: 42, height: 42)
+                .background(.black.opacity(0.24), in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.22), lineWidth: 1.1))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Select shot phase")
@@ -2574,12 +2601,40 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                                 .frame(height: 1)
                         }
                     }
+                    Rectangle()
+                        .fill(.white.opacity(0.10))
+                        .frame(height: 1)
+                    Button {
+                        isMuted.toggle()
+                        toast = .success(isMuted ? "AUDIO MUTED" : "AUDIO ON")
+                        withAnimation(.easeInOut(duration: 0.16)) {
+                            showsPhasePicker = false
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                .font(.system(size: 18, weight: .heavy))
+                                .foregroundStyle(isMuted ? ShotIQColor.shotiqOrange : .white)
+                                .frame(width: 30, height: 30)
+                            Text(isMuted ? "UNMUTE AUDIO" : "MUTE AUDIO")
+                                .shotiqBody(12, weight: .heavy)
+                                .kerning(0.7)
+                                .foregroundStyle(isMuted ? ShotIQColor.shotiqOrange : .white)
+                                .lineLimit(1)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 12)
+                        .frame(height: 46)
+                        .background(isMuted ? ShotIQColor.shotiqOrange.opacity(0.13) : Color.clear)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(isMuted ? "Unmute video audio" : "Mute video audio")
                 }
                 .frame(width: 246)
                 .background(.black.opacity(0.92), in: RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.16), lineWidth: 1))
                 .shadow(color: .black.opacity(0.58), radius: 16, x: 0, y: 8)
-                .offset(y: 44)
+                .offset(y: 48)
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .zIndex(40)
             }
