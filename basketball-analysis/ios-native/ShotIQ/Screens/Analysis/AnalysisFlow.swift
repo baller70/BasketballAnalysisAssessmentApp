@@ -346,8 +346,6 @@ struct VideoPoseResultSurface: View {
     @State private var durationSeconds = 0.0
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
-    @State private var borderPulse = false
-    @State private var borderBeat = false
     @State private var borderRotation = 0.0
     @State private var isScrubbing = false
 
@@ -445,19 +443,13 @@ struct VideoPoseResultSurface: View {
             activePoseFrame = selectedPoseFrame
             seekToSelectedFrame()
         }
-        .onChange(of: poseFrame?.frameIndex) { _ in
-            triggerBorderBeat()
-        }
         .onDisappear {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.72).repeatForever(autoreverses: true)) {
-                borderPulse = true
-            }
-            withAnimation(.linear(duration: 1.35).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: 3.1).repeatForever(autoreverses: false)) {
                 borderRotation = 360
             }
         }
@@ -496,7 +488,6 @@ struct VideoPoseResultSurface: View {
                currentSeconds >= analyzedEndSeconds - 0.035 {
                 seek(to: analyzedStartSeconds)
             }
-            triggerBorderBeat()
             player.playImmediately(atRate: Float(playbackRate))
         }
         isPlaying.toggle()
@@ -761,76 +752,97 @@ struct VideoPoseResultSurface: View {
     }
 
     private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
-        let statuses = activeFrameStatuses(frame)
+        let statuses = activeBodyPartStatuses(frame)
         if statuses.contains(.problem) { return .problem }
         if statuses.contains(.warning) { return .warning }
         return .good
     }
 
-    private func activeFrameStatuses(_ frame: VideoPoseFrameRecord?) -> [VideoPoseQualityStatus] {
-        guard let frame else { return [.warning, .good, .problem, .warning] }
-        return [
+    private func activeBodyPartStatuses(_ frame: VideoPoseFrameRecord?) -> [VideoPoseQualityStatus] {
+        guard let frame else { return [.warning, .good, .warning] }
+        var statuses = [
             VideoPoseQualityStatus.status(value: frame.elbowAngle, ideal: 150...180, warning: 130...190),
             VideoPoseQualityStatus.status(value: frame.kneeAngle, ideal: 70...120, warning: 55...145),
             VideoPoseQualityStatus.status(value: frame.shoulderAngle, ideal: 55...95, warning: 40...115),
-            VideoPoseQualityStatus.status(value: frame.hipAngle, ideal: 55...95, warning: 40...115)
+            VideoPoseQualityStatus.status(value: frame.hipAngle, ideal: 55...95, warning: 40...115),
+            VideoPoseQualityStatus.status(value: frame.wristAngle, ideal: 50...100, warning: 35...120),
+            VideoPoseQualityStatus.status(value: frame.releaseAngle.map(abs), ideal: 0...5, warning: 0...12)
         ]
+        if frame.confidence < 0.5 {
+            statuses.append(.problem)
+        } else if frame.confidence < 0.72 {
+            statuses.append(.warning)
+        } else {
+            statuses.append(.good)
+        }
+        return statuses
     }
 
     private var activeBorderFrame: VideoPoseFrameRecord? {
         poseFrame ?? selectedPoseFrame ?? playbackFrames.first
     }
 
-    private var frameBeatIsHigh: Bool {
-        guard let frameIndex = activeBorderFrame?.frameIndex else { return true }
-        return frameIndex.isMultiple(of: 2)
+    private var previousBorderFrame: VideoPoseFrameRecord? {
+        guard let activeBorderFrame else { return nil }
+        return playbackFrames.last {
+            $0.timestampSeconds < activeBorderFrame.timestampSeconds - 0.01
+        } ?? playbackFrames.first
     }
 
-    private var skeletonFlashStatus: VideoPoseQualityStatus {
-        let statuses = activeFrameStatuses(activeBorderFrame)
-        let skeletonSequence = statuses.reduce(into: [VideoPoseQualityStatus]()) { partial, status in
-            if !partial.contains(status) {
-                partial.append(status)
-            }
+    private var liveBorderStatus: VideoPoseQualityStatus {
+        let statuses = activeBodyPartStatuses(activeBorderFrame)
+        guard !statuses.isEmpty else { return .warning }
+        let problemCount = statuses.filter { $0 == .problem }.count
+        let goodCount = statuses.filter { $0 == .good }.count
+        if Double(problemCount) / Double(statuses.count) >= 0.34 {
+            return .problem
         }
-        guard let frameIndex = activeBorderFrame?.frameIndex,
-              !skeletonSequence.isEmpty else {
-            return frameOverallStatus(activeBorderFrame)
+        if Double(goodCount) / Double(statuses.count) >= 0.56 {
+            return .good
         }
-        return skeletonSequence[abs(frameIndex) % skeletonSequence.count]
-    }
-
-    private var skeletonFlashColor: Color {
-        skeletonFlashStatus.main
+        return .warning
     }
 
     private var liveBorderColors: [Color] {
-        let colors = activeFrameStatuses(activeBorderFrame).map(\.main)
-        let sequenced = colors.isEmpty ? [skeletonFlashColor] : colors
-        return sequenced + sequenced.reversed() + [sequenced.first ?? skeletonFlashColor]
+        let colors = activeBodyPartStatuses(activeBorderFrame).map(\.main)
+        let fallback = liveBorderStatus.main
+        let sequenced = colors.isEmpty ? [fallback] : colors
+        return sequenced + [sequenced.last ?? fallback, sequenced.first ?? fallback]
+    }
+
+    private var borderMotionIntensity: CGFloat {
+        guard let currentPose = activeBorderFrame?.detectedPose,
+              let previousPose = previousBorderFrame?.detectedPose else {
+            return 0.18
+        }
+        let joints: [DetectedPose.Joint] = [
+            .leftAnkle, .rightAnkle,
+            .leftKnee, .rightKnee,
+            .leftHip, .rightHip,
+            .leftShoulder, .rightShoulder,
+            .leftElbow, .rightElbow,
+            .leftWrist, .rightWrist,
+            .neck, .nose, .leftEye, .rightEye
+        ]
+        let distances = joints.compactMap { joint -> CGFloat? in
+            guard let current = currentPose.joints[joint],
+                  let previous = previousPose.joints[joint] else { return nil }
+            return hypot(current.x - previous.x, current.y - previous.y)
+        }
+        guard !distances.isEmpty else { return 0.18 }
+        let average = distances.reduce(0, +) / CGFloat(distances.count)
+        return min(max(average * 30, 0.12), 1.0)
     }
 
     private var liveBorderLineWidth: CGFloat {
-        let status = frameOverallStatus(activeBorderFrame)
+        let status = liveBorderStatus
         let base: CGFloat
         switch status {
-        case .good: base = 4
-        case .warning: base = 5
-        case .problem: base = 6
+        case .good: base = 3.8
+        case .warning: base = 4.4
+        case .problem: base = 5.0
         }
-        return base + (borderBeat ? 4 : 0)
-    }
-
-    @MainActor
-    private func triggerBorderBeat() {
-        withAnimation(.easeOut(duration: 0.08)) {
-            borderBeat = true
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-            withAnimation(.easeOut(duration: 0.18)) {
-                borderBeat = false
-            }
-        }
+        return base + borderMotionIntensity * 2.6
     }
 
     @ViewBuilder
@@ -838,14 +850,13 @@ struct VideoPoseResultSurface: View {
         let shape = RoundedRectangle(cornerRadius: 8)
         if shouldShowFinalShotFeedback {
             shape
-                .stroke(finalBorderColor, lineWidth: borderPulse ? 7 : 4)
-                .shadow(color: finalBorderColor.opacity(borderPulse ? 0.86 : 0.34),
-                        radius: borderPulse ? 18 : 7)
+                .stroke(finalBorderColor, lineWidth: 5.2)
+                .shadow(color: finalBorderColor.opacity(0.42), radius: 10)
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
-            let flash = skeletonFlashColor
-            let flashOn = frameBeatIsHigh
+            let statusColor = liveBorderStatus.main
+            let intensity = borderMotionIntensity
             ZStack {
                 shape
                     .stroke(
@@ -853,19 +864,20 @@ struct VideoPoseResultSurface: View {
                                         center: .center,
                                         startAngle: .degrees(borderRotation),
                                         endAngle: .degrees(borderRotation + 360)),
-                        lineWidth: liveBorderLineWidth + (flashOn ? 5 : 2)
+                        lineWidth: liveBorderLineWidth
                     )
                 shape
-                    .stroke(flash.opacity(flashOn ? 0.94 : 0.62),
-                            lineWidth: flashOn ? 24 : 12)
-                    .blur(radius: flashOn ? 10 : 5)
+                    .stroke(statusColor.opacity(0.15 + intensity * 0.24),
+                            lineWidth: 8 + intensity * 10)
+                    .blur(radius: 4 + intensity * 5)
                 shape
-                    .stroke(flash.opacity(flashOn ? 1.0 : 0.90),
-                            lineWidth: flashOn ? 8 : 4.5)
+                    .stroke(statusColor.opacity(0.48 + intensity * 0.22),
+                            lineWidth: 2.4 + intensity * 2.8)
                 shape
-                    .stroke(.white.opacity(flashOn ? 0.50 : 0.22), lineWidth: 1.5)
+                    .stroke(.white.opacity(0.10 + intensity * 0.12), lineWidth: 1.1)
             }
-            .shadow(color: flash.opacity(flashOn ? 0.86 : 0.48), radius: flashOn ? 38 : 18)
+            .shadow(color: statusColor.opacity(0.18 + intensity * 0.22),
+                    radius: 8 + intensity * 13)
             .padding(2)
             .accessibilityHidden(true)
         }
