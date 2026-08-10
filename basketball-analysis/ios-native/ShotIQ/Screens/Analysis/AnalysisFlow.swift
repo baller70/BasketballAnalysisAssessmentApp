@@ -728,8 +728,7 @@ struct VideoPoseResultSurface: View {
 
     private var lockedShotBorderStatus: VideoPoseQualityStatus? {
         guard let frame = activeBorderFrame,
-              let releaseFrame = releaseDecisionFrame,
-              hasReachedRelease(active: frame, release: releaseFrame) else {
+              let releaseFrame = lockedReleaseFrame(for: frame) else {
             return nil
         }
         return shotResultStatus(for: releaseFrame)
@@ -810,6 +809,23 @@ struct VideoPoseResultSurface: View {
         return hasArmsAboveHead(in: frame) && hasWristSnap(in: frame)
     }
 
+    private func isReleaseDecisionFrame(_ frame: VideoPoseFrameRecord) -> Bool {
+        if frame.phaseLabel.uppercased() == "RELEASE" {
+            return true
+        }
+        return hasArmsAboveHead(in: frame) && hasWristSnap(in: frame)
+    }
+
+    private func isRepResetFrame(_ frame: VideoPoseFrameRecord) -> Bool {
+        guard let pose = frame.detectedPose,
+              let arm = shootingArm(in: pose),
+              let wrist = arm.wrist,
+              let shoulder = arm.shoulder else {
+            return false
+        }
+        return wrist.y >= shoulder.y - 0.02 && !hasWristSnap(in: frame)
+    }
+
     private func shotResultStatus(for frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus {
         repStatusCounts(through: frame).dominantStatus
     }
@@ -882,12 +898,43 @@ struct VideoPoseResultSurface: View {
         }
     }
 
-    private func hasReachedRelease(active: VideoPoseFrameRecord, release: VideoPoseFrameRecord) -> Bool {
-        if let activeIndex = playbackIndex(of: active),
-           let releaseIndex = playbackIndex(of: release) {
-            return activeIndex >= releaseIndex
+    private func lockedReleaseFrame(for active: VideoPoseFrameRecord) -> VideoPoseFrameRecord? {
+        guard !playbackFrames.isEmpty,
+              let activeIndex = playbackIndex(of: active) else {
+            return nil
         }
-        return active.timestampSeconds >= release.timestampSeconds - 0.01
+        let startIndex: Int
+        if let resetIndex = lastResetIndex(atOrBefore: activeIndex) {
+            let nextIndex = playbackFrames.index(after: resetIndex)
+            guard nextIndex <= activeIndex else { return nil }
+            startIndex = nextIndex
+        } else {
+            startIndex = playbackFrames.startIndex
+        }
+        return playbackFrames[startIndex...activeIndex].indices
+            .last { isReleaseDecisionFrame(playbackFrames[$0]) }
+            .map { playbackFrames[$0] }
+    }
+
+    private func lastResetIndex(atOrBefore index: Int) -> Int? {
+        guard !playbackFrames.isEmpty else { return nil }
+        return playbackFrames[playbackFrames.startIndex...index].indices
+            .last { isRepResetFrame(playbackFrames[$0]) }
+    }
+
+    private func currentRepStartIndex(endingAt releaseIndex: Int) -> Int {
+        guard releaseIndex > playbackFrames.startIndex,
+              let resetIndex = playbackFrames[playbackFrames.startIndex..<releaseIndex].indices
+                  .last(where: { isRepResetFrame(playbackFrames[$0]) }) else {
+            return playbackFrames.startIndex
+        }
+        var startIndex = resetIndex
+        while startIndex > playbackFrames.startIndex {
+            let previousIndex = playbackFrames.index(before: startIndex)
+            guard isRepResetFrame(playbackFrames[previousIndex]) else { break }
+            startIndex = previousIndex
+        }
+        return startIndex
     }
 
     private func playbackIndex(of frame: VideoPoseFrameRecord) -> Int? {
@@ -900,15 +947,16 @@ struct VideoPoseResultSurface: View {
     private func repFrames(through releaseFrame: VideoPoseFrameRecord) -> [VideoPoseFrameRecord] {
         guard !playbackFrames.isEmpty else { return [releaseFrame] }
         let releaseIndex = playbackIndex(of: releaseFrame) ?? playbackFrames.index(before: playbackFrames.endIndex)
-        let prefixRange = playbackFrames.startIndex...releaseIndex
-        let setupIndex = playbackFrames[prefixRange].indices.first { index in
+        let repStartIndex = currentRepStartIndex(endingAt: releaseIndex)
+        let repRange = repStartIndex...releaseIndex
+        let setupIndex = playbackFrames[repRange].indices.first { index in
             playbackFrames[index].phaseLabel.uppercased() == "SETUP"
         }
-        let fallbackStartIndex = playbackFrames[prefixRange].indices.first { index in
+        let fallbackStartIndex = playbackFrames[repRange].indices.first { index in
             let phase = playbackFrames[index].phaseLabel.uppercased()
             return phase == "SETUP" || phase == "LOAD"
         }
-        let startIndex = setupIndex ?? fallbackStartIndex ?? playbackFrames.startIndex
+        let startIndex = setupIndex ?? fallbackStartIndex ?? repStartIndex
         return Array(playbackFrames[startIndex...releaseIndex])
     }
 
