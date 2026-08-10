@@ -346,7 +346,6 @@ struct VideoPoseResultSurface: View {
     @State private var durationSeconds = 0.0
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
-    @State private var borderRotation = 0.0
     @State private var isScrubbing = false
 
     private var playbackFrames: [VideoPoseFrameRecord] {
@@ -447,11 +446,6 @@ struct VideoPoseResultSurface: View {
             player?.pause()
             removeTimeObserver()
             isPlaying = false
-        }
-        .onAppear {
-            withAnimation(.linear(duration: 3.1).repeatForever(autoreverses: false)) {
-                borderRotation = 360
-            }
         }
     }
 
@@ -732,23 +726,12 @@ struct VideoPoseResultSurface: View {
         }
     }
 
-    private var shouldShowFinalShotFeedback: Bool {
-        guard !isPlaying, !isScrubbing else { return false }
-        let phase = displayPhase.uppercased()
-        return phase == "RELEASE" || phase == "FOLLOW-THROUGH"
-    }
-
-    private var finalBorderColor: Color {
-        finalBorderStatus == .problem ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen
-    }
-
-    private var finalBorderStatus: VideoPoseQualityStatus {
-        switch presentation.scoreVerdict.uppercased() {
-        case "EXCELLENT", "GOOD":
-            return .good
-        default:
-            return presentation.scorePct >= 0.72 ? .good : .problem
+    private var lockedShotBorderStatus: VideoPoseQualityStatus? {
+        guard let frame = activeBorderFrame,
+              isShotReleaseOrFinishFrame(frame) else {
+            return nil
         }
+        return shotResultStatus(for: frame)
     }
 
     private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
@@ -792,22 +775,9 @@ struct VideoPoseResultSurface: View {
     private var liveBorderStatus: VideoPoseQualityStatus {
         let statuses = activeBodyPartStatuses(activeBorderFrame)
         guard !statuses.isEmpty else { return .warning }
-        let problemCount = statuses.filter { $0 == .problem }.count
-        let goodCount = statuses.filter { $0 == .good }.count
-        if Double(problemCount) / Double(statuses.count) >= 0.34 {
-            return .problem
-        }
-        if Double(goodCount) / Double(statuses.count) >= 0.56 {
-            return .good
-        }
-        return .warning
-    }
-
-    private var liveBorderColors: [Color] {
-        let colors = activeBodyPartStatuses(activeBorderFrame).map(\.main)
-        let fallback = liveBorderStatus.main
-        let sequenced = colors.isEmpty ? [fallback] : colors
-        return sequenced + [sequenced.last ?? fallback, sequenced.first ?? fallback]
+        if statuses.contains(.problem) { return .problem }
+        if statuses.contains(.warning) { return .warning }
+        return .good
     }
 
     private var borderMotionIntensity: CGFloat {
@@ -845,13 +815,74 @@ struct VideoPoseResultSurface: View {
         return base + borderMotionIntensity * 2.6
     }
 
+    private func isShotReleaseOrFinishFrame(_ frame: VideoPoseFrameRecord) -> Bool {
+        let phase = frame.phaseLabel.uppercased()
+        if phase == "RELEASE" || phase == "FOLLOW-THROUGH" {
+            return true
+        }
+        return hasArmsAboveHead(in: frame) && hasWristSnap(in: frame)
+    }
+
+    private func shotResultStatus(for frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus {
+        let statuses = activeBodyPartStatuses(frame)
+        return statuses.contains(.problem) ? .problem : .good
+    }
+
+    private func hasArmsAboveHead(in frame: VideoPoseFrameRecord) -> Bool {
+        guard let pose = frame.detectedPose,
+              let arm = shootingArm(in: pose),
+              let wrist = arm.wrist,
+              let shoulder = arm.shoulder else {
+            return false
+        }
+        return wrist.y < shoulder.y - 0.03
+    }
+
+    private func hasWristSnap(in frame: VideoPoseFrameRecord) -> Bool {
+        guard let pose = frame.detectedPose,
+              let arm = shootingArm(in: pose),
+              let wrist = arm.wrist,
+              let elbow = arm.elbow else {
+            return false
+        }
+        let forearmRaised = wrist.y < elbow.y
+        let releaseNearCenter = frame.releaseAngle.map { abs($0) <= 18 } ?? false
+        guard let previousPose = previousBorderFrame?.detectedPose,
+              let previousArm = shootingArm(in: previousPose),
+              let previousWrist = previousArm.wrist else {
+            return forearmRaised && releaseNearCenter
+        }
+        let upwardSnap = previousWrist.y - wrist.y > 0.012
+        return forearmRaised && (releaseNearCenter || upwardSnap)
+    }
+
+    private func shootingArm(in pose: DetectedPose) -> (shoulder: CGPoint?, elbow: CGPoint?, wrist: CGPoint?)? {
+        let leftWrist = pose.joints[.leftWrist]
+        let rightWrist = pose.joints[.rightWrist]
+        let useRight: Bool
+        switch (leftWrist, rightWrist) {
+        case let (left?, right?):
+            useRight = right.y <= left.y
+        case (nil, _?):
+            useRight = true
+        case (_?, nil):
+            useRight = false
+        default:
+            return nil
+        }
+        return useRight
+            ? (pose.joints[.rightShoulder], pose.joints[.rightElbow], pose.joints[.rightWrist])
+            : (pose.joints[.leftShoulder], pose.joints[.leftElbow], pose.joints[.leftWrist])
+    }
+
     @ViewBuilder
     private var analysisFrameBorder: some View {
         let shape = RoundedRectangle(cornerRadius: 8)
-        if shouldShowFinalShotFeedback {
+        if let lockedShotBorderStatus {
+            let color = lockedShotBorderStatus.main
             shape
-                .stroke(finalBorderColor, lineWidth: 5.2)
-                .shadow(color: finalBorderColor.opacity(0.42), radius: 10)
+                .stroke(color, lineWidth: 5.6)
+                .shadow(color: color.opacity(0.46), radius: 10)
                 .padding(2)
                 .accessibilityHidden(true)
         } else {
@@ -859,13 +890,7 @@ struct VideoPoseResultSurface: View {
             let intensity = borderMotionIntensity
             ZStack {
                 shape
-                    .stroke(
-                        AngularGradient(gradient: Gradient(colors: liveBorderColors),
-                                        center: .center,
-                                        startAngle: .degrees(borderRotation),
-                                        endAngle: .degrees(borderRotation + 360)),
-                        lineWidth: liveBorderLineWidth
-                    )
+                    .stroke(statusColor, lineWidth: liveBorderLineWidth)
                 shape
                     .stroke(statusColor.opacity(0.15 + intensity * 0.24),
                             lineWidth: 8 + intensity * 10)
