@@ -351,6 +351,7 @@ struct VideoPoseResultSurface: View {
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
     }
+    private var minimumRepResultHoldSeconds: Double { 1.05 }
     private var analyzedStartSeconds: Double {
         playbackFrames.first?.timestampSeconds ?? 0
     }
@@ -923,7 +924,7 @@ struct VideoPoseResultSurface: View {
         guard nextIndex <= activeIndex else { return false }
         let releaseSeconds = playbackFrames[releaseIndex].timestampSeconds
         return playbackFrames[nextIndex...activeIndex].contains { frame in
-            frame.timestampSeconds - releaseSeconds >= 0.65 && isRepResetFrame(frame)
+            frame.timestampSeconds - releaseSeconds >= minimumRepResultHoldSeconds && isRepResetFrame(frame)
         }
     }
 
@@ -937,7 +938,7 @@ struct VideoPoseResultSurface: View {
         guard searchStart < releaseIndex,
               let resetIndex = playbackFrames[searchStart..<releaseIndex].indices
                   .first(where: { frameIndex in
-                      playbackFrames[frameIndex].timestampSeconds - playbackFrames[previousReleaseIndex].timestampSeconds >= 0.65
+                      playbackFrames[frameIndex].timestampSeconds - playbackFrames[previousReleaseIndex].timestampSeconds >= minimumRepResultHoldSeconds
                           && isRepResetFrame(playbackFrames[frameIndex])
                   }) else {
             return searchStart
