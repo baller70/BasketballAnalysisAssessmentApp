@@ -347,6 +347,9 @@ struct VideoPoseResultSurface: View {
     @State private var playbackRate = 1.0
     @State private var showsControlTray = false
     @State private var isScrubbing = false
+    @State private var repVerdictToast: RepVerdictToast?
+    @State private var repVerdictBurst = false
+    @State private var lastRepVerdictToastKey: String?
 
     private var playbackFrames: [VideoPoseFrameRecord] {
         presentation.videoPoseFrames.sorted { $0.timestampSeconds < $1.timestampSeconds }
@@ -431,6 +434,7 @@ struct VideoPoseResultSurface: View {
                 }
 
                 analysisFrameBorder
+                repVerdictToastOverlay
             }
         }
         .frame(height: height)
@@ -442,6 +446,9 @@ struct VideoPoseResultSurface: View {
         .onChange(of: seekKey) { _ in
             activePoseFrame = selectedPoseFrame
             seekToSelectedFrame()
+        }
+        .onChange(of: repVerdictToastKey) { key in
+            showRepVerdictToast(for: key)
         }
         .onDisappear {
             player?.pause()
@@ -728,11 +735,62 @@ struct VideoPoseResultSurface: View {
     }
 
     private var lockedShotBorderStatus: VideoPoseQualityStatus? {
+        lockedShotVerdict?.status
+    }
+
+    private var lockedShotVerdict: (frame: VideoPoseFrameRecord, status: VideoPoseQualityStatus)? {
         guard let frame = activeBorderFrame,
               let releaseFrame = lockedReleaseFrame(for: frame) else {
             return nil
         }
-        return shotResultStatus(for: releaseFrame)
+        return (releaseFrame, shotResultStatus(for: releaseFrame))
+    }
+
+    private var repVerdictToastKey: String {
+        guard showsAdvancedControls,
+              let verdict = lockedShotVerdict else {
+            return "none"
+        }
+        return "\(verdict.frame.frameIndex)-\(verdict.status.toastTitle)"
+    }
+
+    @ViewBuilder
+    private var repVerdictToastOverlay: some View {
+        if let repVerdictToast {
+            HStack {
+                Spacer()
+                RepVerdictToastBanner(toast: repVerdictToast, burst: repVerdictBurst)
+                Spacer()
+            }
+            .padding(.top, 12)
+            .padding(.horizontal, 14)
+            .transition(.scale(scale: 0.72, anchor: .top).combined(with: .opacity))
+            .accessibilityHidden(true)
+        }
+    }
+
+    @MainActor
+    private func showRepVerdictToast(for key: String) {
+        guard key != "none",
+              key != lastRepVerdictToastKey,
+              let verdict = lockedShotVerdict else {
+            return
+        }
+        lastRepVerdictToastKey = key
+        repVerdictToast = RepVerdictToast(status: verdict.status,
+                                          frameIndex: verdict.frame.frameIndex + 1)
+        repVerdictBurst = false
+        withAnimation(.spring(response: 0.26, dampingFraction: 0.48)) {
+            repVerdictBurst = true
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 950_000_000)
+            guard lastRepVerdictToastKey == key else { return }
+            withAnimation(.easeOut(duration: 0.18)) {
+                repVerdictToast = nil
+                repVerdictBurst = false
+            }
+        }
     }
 
     private func frameOverallStatus(_ frame: VideoPoseFrameRecord?) -> VideoPoseQualityStatus {
@@ -1614,6 +1672,24 @@ fileprivate enum VideoPoseQualityStatus: Equatable {
         }
     }
 
+    var toastTitle: String {
+        switch self {
+        case .good: return "GOOD REP"
+        case .warning: return "CLOSE REP"
+        case .caution: return "ADJUST REP"
+        case .problem: return "FIX REP"
+        }
+    }
+
+    var toastSubtitle: String {
+        switch self {
+        case .good: return "SHOTIQ LOCKED IT"
+        case .warning: return "ONE DETAIL OFF"
+        case .caution: return "FORM NEEDS WORK"
+        case .problem: return "REBUILD THE REP"
+        }
+    }
+
     static func status(value: Double?,
                        ideal: ClosedRange<Double>,
                        warning: ClosedRange<Double>) -> VideoPoseQualityStatus {
@@ -1629,6 +1705,47 @@ fileprivate enum VideoPoseQualityStatus: Equatable {
         let orangeBand = max(warning.upperBound - ideal.upperBound, 6)
         if miss <= orangeBand { return .caution }
         return .problem
+    }
+}
+
+fileprivate struct RepVerdictToast: Equatable {
+    var status: VideoPoseQualityStatus
+    var frameIndex: Int
+}
+
+fileprivate struct RepVerdictToastBanner: View {
+    var toast: RepVerdictToast
+    var burst: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: toast.status == .good ? "checkmark.seal.fill" : "bolt.fill")
+                .font(.system(size: 18, weight: .heavy))
+                .foregroundStyle(toast.status.main)
+                .scaleEffect(burst ? 1.15 : 0.82)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(toast.status.toastTitle)
+                    .shotiqBody(18, weight: .heavy)
+                    .foregroundStyle(Color(red: 1.0, green: 0.82, blue: 0.08))
+                    .lineLimit(1)
+                Text("\(toast.status.toastSubtitle) • FRAME \(toast.frameIndex)")
+                    .shotiqBody(8, weight: .bold)
+                    .kerning(0.8)
+                    .foregroundStyle(.white.opacity(0.84))
+                    .lineLimit(1)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .background(.black.opacity(0.78), in: Capsule())
+        .overlay(Capsule().stroke(toast.status.main, lineWidth: 2))
+        .shadow(color: toast.status.main.opacity(burst ? 0.72 : 0.22),
+                radius: burst ? 17 : 5,
+                x: 0,
+                y: burst ? 4 : 1)
+        .scaleEffect(burst ? 1.0 : 0.68)
+        .opacity(burst ? 1 : 0.25)
     }
 }
 
