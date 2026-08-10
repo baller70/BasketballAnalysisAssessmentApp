@@ -130,37 +130,39 @@ struct SplashView: View {          // 001 · ios.splash
     @EnvironmentObject var app: AppState
     var body: some View {
         CanonicalScreen(testID: "screen-ios-splash") {
-            VStack(spacing: 0) {
-                Spacer()
-                // App-icon tile + wordmark lockup.
-                HStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15).fill(ShotIQColor.ink)
-                        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-shot-catch-shoot",
-                                                 size: 34,
-                                                 label: nil)
+            ZStack {
+                Image("photo-generated-splash-001")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .opacity(0.78)
+                    .saturation(0.9)
+                    .clipped()
+                    .ignoresSafeArea()
+                LinearGradient(colors: [.black.opacity(0.66), .black.opacity(0.24), .black.opacity(0.70)],
+                               startPoint: .top,
+                               endPoint: .bottom)
+                    .ignoresSafeArea()
+                VStack(spacing: 0) {
+                    Spacer()
+                    Image("shotiq-header-logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 330)
+                        .accessibilityLabel("ShotIQ AI Analysis")
+                        .padding(.top, 22)
+                    VStack(spacing: 4) {
+                        Text("SEE THE DETAILS.")
+                            .shotiqDisplay(32)
+                            .foregroundStyle(.white)
+                        (Text("BUILD ").foregroundColor(ShotIQColor.shotiqOrange)
+                            + Text("THE HABIT.").foregroundColor(.white))
+                            .shotiqCondensed(25.6, weight: .heavy)
                     }
-                    .frame(width: 62, height: 62)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Wordmark(size: 46)
-                        Text("AI ANALYSIS")
-                            .shotiqBody(17, weight: .semibold)
-                            .kerning(5)
-                            .foregroundStyle(ShotIQColor.graphite)
-                    }
+                    .padding(.top, 312)
+                    Spacer()
+                    Spacer()
                 }
-                SplashTraceGlyph()
-                    .frame(width: 140, height: 140)
-                    .padding(.top, 64)
-                VStack(spacing: 4) {
-                    Text("SEE THE DETAILS.").shotiqDisplay(32)
-                    (Text("BUILD ").foregroundColor(ShotIQColor.shotiqOrange)
-                        + Text("THE HABIT.").foregroundColor(ShotIQColor.graphite))
-                        .shotiqCondensed(25.6, weight: .heavy)
-                }
-                .padding(.top, 64)
-                Spacer()
-                Spacer()
             }
         }
         // Tapping the brand moment moves on immediately. In the shipped app that
@@ -184,7 +186,9 @@ struct AuthFlowView: View {
             // arrives in an email, so the screenshot walk could never see
             // either. `UITestHooks.stage` is nil in a shipped launch, so both
             // branches are dead code there — see UITestHooks.stage.
-            if UITestHooks.stage == "verify-email" {
+            if UITestHooks.stage == "create-account" {
+                CreateAccountView()
+            } else if UITestHooks.stage == "verify-email" {
                 // Canonical 005 addresses the code to marcus@example.com.
                 VerifyEmailView(email: "marcus@example.com")
             } else if UITestHooks.stage == "reset-password" {
@@ -198,6 +202,7 @@ struct AuthFlowView: View {
 }
 
 struct WelcomeView: View {         // 002 · ios.welcome
+    @State private var toast: ShotIQToast?
     private let features: [(String, String, Bool, String)] = [
         ("camera.metering.center.weighted", "CAPTURE", false, "Record from any angle."),
         ("film", "ANALYZE", true, "AI breaks down every rep."),
@@ -249,9 +254,9 @@ struct WelcomeView: View {         // 002 · ios.welcome
                                 // 002's four pillars are four different canonical
                                 // marks; CAPTURE and TRAIN shipped as two of the
                                 // three symbols the whole app was reusing.
-                                ShotIQConceptGlyph(concept: f.1, fallback: f.0, size: 26)
+                                ShotIQConceptGlyph(concept: f.1, fallback: f.0, size: 32)
                                     .foregroundStyle(ShotIQColor.ink)
-                                    .frame(height: 30)
+                                    .frame(height: 34)
                                 Text(f.1)
                                     .shotiqCondensed(13, weight: .heavy)
                                     .kerning(0.5)
@@ -270,6 +275,9 @@ struct WelcomeView: View {         // 002 · ios.welcome
                         NavigationLink { SignInView() } label: {
                             primaryLabel("Sign in")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening sign in")
+                        })
                         NavigationLink { CreateAccountView() } label: {
                             Text("Create account")
                                 .shotiqBody(17, weight: .medium)
@@ -278,12 +286,16 @@ struct WelcomeView: View {         // 002 · ios.welcome
                                     .stroke(ShotIQColor.shotiqOrange))
                                 .foregroundStyle(ShotIQColor.ink)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening account setup")
+                        })
                     }
                     .padding(.top, 34).padding(.bottom, 36)
                 }
                 .padding(.horizontal, 24)
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -312,9 +324,30 @@ struct SignInView: View {          // 003 · ios.sign-in
     @StateObject private var vm = SignInViewModel()
     @State private var showPassword = false
     @State private var rememberMe = false
+    @State private var toast: ShotIQToast?
 
     private var emailValid: Bool { vm.email.contains("@") && vm.email.contains(".") }
     private var passwordValid: Bool { vm.password.count >= 8 }
+
+    private func submitSignIn() {
+        guard emailValid else {
+            vm.error = "Enter a valid email address."
+            toast = .error("Check email", "Use the email address on your ShotIQ account.")
+            return
+        }
+        guard passwordValid else {
+            vm.error = "Password must be at least 8 characters."
+            toast = .error("Check password", "Use at least 8 characters.")
+            return
+        }
+        toast = .progress("Signing in", "Checking your ShotIQ account.", progress: 0.45)
+        Task {
+            await vm.submit(app: app)
+            if let error = vm.error {
+                toast = .error("Sign in failed", error)
+            }
+        }
+    }
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-sign-in") {
@@ -378,7 +411,11 @@ struct SignInView: View {          // 003 · ios.sign-in
                         }
 
                         HStack {
-                            Button { rememberMe.toggle() } label: {
+                            Button {
+                                rememberMe.toggle()
+                                toast = .success(rememberMe ? "Remember me on" : "Remember me off",
+                                                 rememberMe ? "ShotIQ will keep this sign-in preference." : "ShotIQ will ask again next time.")
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: rememberMe ? "checkmark.square.fill" : "square")
                                         .font(.system(size: 19))
@@ -402,7 +439,7 @@ struct SignInView: View {          // 003 · ios.sign-in
 
                         PrimaryButton(title: vm.busy ? "Signing in…" : "Sign in",
                                       icon: "camera.metering.center.weighted") {
-                            Task { await vm.submit(app: app) }
+                            submitSignIn()
                         }
                         .disabled(vm.busy)
                         .padding(.top, 24)
@@ -410,15 +447,21 @@ struct SignInView: View {          // 003 · ios.sign-in
 
                         OrDivider().padding(.top, 26)
 
-                        // Mirrors the web sign-in page: the backend is credentials-only
-                        // (see /api/auth/providers), so these surface the same inline notice.
-                        SecondaryButton(title: "Continue with Apple", icon: "apple.logo") {
-                            vm.error = "Apple sign-in isn't enabled on this server yet — use your email and password."
+                        NavigationLink { CreateAccountView() } label: {
+                            authRouteLabel("person.badge.plus", "Create email account")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening account creation", "Create a ShotIQ email login.")
+                        })
+                        .buttonStyle(.plain)
                         .padding(.top, 18)
-                        SecondaryButton(title: "Continue with Google", icon: "g.circle") {
-                            vm.error = "Google sign-in isn't enabled on this server yet — use your email and password."
+                        NavigationLink { ForgotPasswordView() } label: {
+                            authRouteLabel("key", "Reset email password")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening password reset", "Send a reset link to your email.")
+                        })
+                        .buttonStyle(.plain)
                         .padding(.top, 12)
 
                         VStack(spacing: 10) {
@@ -436,6 +479,20 @@ struct SignInView: View {          // 003 · ios.sign-in
                 }
             }
         }
+        .shotiqToast($toast)
+    }
+
+    private func authRouteLabel(_ icon: String, _ title: String) -> some View {
+        HStack(spacing: 10) {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                     size: 18,
+                                     label: nil)
+            Text(title).shotiqBody(ShotIQType.button)
+        }
+        .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
+        .background(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
+        .foregroundStyle(ShotIQColor.ink)
+        .frame(minHeight: 44)
     }
 }
 
@@ -447,25 +504,58 @@ struct CreateAccountView: View {   // 004 · ios.create-account
     @State private var busy = false
     @State private var error: String?
     @State private var goVerify = false
+    @State private var toast: ShotIQToast?
+
+    private var cleanFirstName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var cleanLastName: String { lastName.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var cleanEmail: String { email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+    private var emailValid: Bool { cleanEmail.contains("@") && cleanEmail.contains(".") }
 
     @MainActor
     private func createAccount() async {
-        guard password == confirm else { error = "Passwords do not match."; return }
-        guard password.count >= 8 else { error = "Use at least 8 characters for your password."; return }
+        guard !cleanFirstName.isEmpty, !cleanLastName.isEmpty else {
+            error = "Enter your first and last name."
+            toast = .error("Name required", "Add your first and last name.")
+            return
+        }
+        guard emailValid else {
+            error = "Enter a valid email address."
+            toast = .error("Check email", "Use a valid email for verification.")
+            return
+        }
+        guard agreed else {
+            error = "Accept the terms before creating an account."
+            toast = .error("Terms required", "Accept the Terms of Use and Privacy Policy.")
+            return
+        }
+        guard password == confirm else {
+            error = "Passwords do not match."
+            toast = .error("Passwords do not match", "Confirm password must match your password.")
+            return
+        }
+        guard password.count >= 8 else {
+            error = "Use at least 8 characters for your password."
+            toast = .error("Password too short", "Use at least 8 characters.")
+            return
+        }
         busy = true; error = nil
+        toast = .progress("Creating account", "Saving your ShotIQ profile.", progress: 0.45)
         struct SignupResp: Codable { var user: APIUser }
         do {
             let _: SignupResp = try await APIClient.shared.call(
                 "/api/auth/signup", method: "POST",
-                body: ["email": email, "password": password,
-                       "firstName": name, "lastName": lastName])
+                body: ["email": cleanEmail, "password": password,
+                       "firstName": cleanFirstName, "lastName": cleanLastName])
             // Store mobile access/refresh tokens so the rest of the flow is authenticated.
-            _ = try? await APIClient.shared.signIn(email: email, password: password)
+            _ = try? await APIClient.shared.signIn(email: cleanEmail, password: password)
+            toast = .success("Account created", "Check your email to verify ShotIQ.")
             goVerify = true
         } catch APIClient.APIError.http(400) {
             error = "Could not create the account — that email may already be registered."
+            toast = .error("Account not created", "That email may already be registered.")
         } catch {
             self.error = "Could not create the account. Check your connection and try again."
+            toast = .error("Account not created", "Check your connection and try again.")
         }
         busy = false
     }
@@ -535,7 +625,11 @@ struct CreateAccountView: View {   // 004 · ios.create-account
                     }
                     .padding(.top, 8)
 
-                    Button { agreed.toggle() } label: {
+                    Button {
+                        agreed.toggle()
+                        toast = .success(agreed ? "Terms accepted" : "Terms unchecked",
+                                         agreed ? "You can create your ShotIQ account." : "Accept terms to create an account.")
+                    } label: {
                         HStack(spacing: 10) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 5)
@@ -570,7 +664,7 @@ struct CreateAccountView: View {   // 004 · ios.create-account
                         primaryLabel(busy ? "Creating account…" : "Create account",
                                      icon: "camera.metering.center.weighted")
                     }
-                    .disabled(!agreed || email.isEmpty || password.isEmpty || busy)
+                    .disabled(busy)
                     .padding(.top, 20)
                     .navigationDestination(isPresented: $goVerify) { VerifyEmailView(email: email) }
 
@@ -584,18 +678,21 @@ struct CreateAccountView: View {   // 004 · ios.create-account
                 .padding(.horizontal, 24)
             }
         }
+        .shotiqToast($toast)
     }
 }
 
 struct VerifyEmailView: View {     // 005 · ios.verify-email
     var email: String = "you@example.com"
-    /// Canonical 005 shows a half-typed code: 2847 in the first four boxes and
-    /// the caret in the fifth. Test-only — `UITestHooks.stage` is nil in a
-    /// shipped launch, so a real player still starts on an empty field.
-    @State private var code: String = UITestHooks.stage == "verify-email" ? "2847" : ""
+    /// Production verification is link-based: the emailed link hits
+    /// /api/auth/verify-email, then this screen checks account status through
+    /// /api/auth/resend-verification.
     @State private var resendBusy = false
+    @State private var verifyBusy = false
     @State private var resendNote: String?
     @State private var resendOK = false
+    @State private var verifyError: String?
+    @State private var toast: ShotIQToast?
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
 
@@ -611,6 +708,8 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
     private func resend() async {
         guard !resendBusy else { return }
         resendBusy = true; resendNote = nil
+        verifyError = nil
+        toast = .progress("Sending email", "Requesting a new ShotIQ verification link.", progress: 0.5)
         struct Resp: Codable { var success: Bool?; var alreadyVerified: Bool? }
         do {
             let r: Resp = try await APIClient.shared.call("/api/auth/resend-verification", method: "POST")
@@ -618,18 +717,54 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
             resendNote = (r.alreadyVerified ?? false)
                 ? "Your email is already verified — you're all set."
                 : "Verification email sent — check your inbox."
+            toast = .success((r.alreadyVerified ?? false) ? "Already verified" : "Email sent",
+                             resendNote)
         } catch {
             resendOK = false
             resendNote = "Could not send the email. Try again shortly."
+            toast = .error("Email not sent", resendNote)
         }
         resendBusy = false
     }
 
+    /// The backend verifies email by link, then exposes the signed-in user's
+    /// verification state through GET /api/auth/resend-verification. Do not gate
+    /// this on a fake one-time code; the real customer action is opening the
+    /// newest ShotIQ email link and asking the app to check again.
+    @MainActor
+    private func verifyCode() async {
+        guard !verifyBusy else { return }
+        verifyBusy = true
+        verifyError = nil
+        toast = .progress("Checking verification", "Confirming whether your ShotIQ email link was opened.", progress: 0.5)
+        struct StatusResp: Codable { var success: Bool?; var verified: Bool?; var email: String? }
+        do {
+            let r: StatusResp = try await APIClient.shared.call("/api/auth/resend-verification", method: "GET")
+            if r.verified == true {
+                toast = .success("Email verified", "Continuing to player setup.")
+                app.signedIn(APIUser(email: r.email ?? email, profileComplete: false))
+            } else {
+                verifyError = "Open the newest ShotIQ verification link from your email, then tap Check status."
+                toast = .error("Email not verified", "Open the latest ShotIQ email link, then check again.")
+            }
+        } catch {
+            verifyError = "Could not check verification. Check your connection and try again."
+            toast = .error("Verification check failed", "Check your connection and try again.")
+        }
+        verifyBusy = false
+    }
+
     @MainActor
     private func helpAction(_ text: String) {
-        if text.contains("spam") { openMailApp() }
+        if text.contains("spam") {
+            toast = .info("Opening email", "Check spam or promotions for ShotIQ.")
+            openMailApp()
+        }
         else if text.contains("Resend") { Task { await resend() } }
-        else { UIApplication.shared.open(supportGuideURL) }
+        else {
+            toast = .info("Opening help", "Loading ShotIQ support.")
+            UIApplication.shared.open(supportGuideURL)
+        }
     }
 
     var body: some View {
@@ -639,7 +774,10 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                 ScrollView {
                     VStack(spacing: 0) {
                         HStack {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Returning to account setup")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                            } label: {
                                 Image(systemName: "arrow.left")
                                     .font(.system(size: 22, weight: .semibold))
                                     .foregroundStyle(ShotIQColor.ink)
@@ -651,7 +789,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
 
                         Text("VERIFY YOUR EMAIL").shotiqDisplay(52)
                             .multilineTextAlignment(.center).padding(.top, 22)
-                        (Text("Enter the code we sent to\n")
+                        (Text("Open the verification link we sent to\n")
                             + Text(email).fontWeight(.semibold).foregroundColor(ShotIQColor.ink)
                             + Text("."))
                             .shotiqBody(17)
@@ -659,45 +797,35 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                             .multilineTextAlignment(.center)
                             .padding(.top, 12)
 
-                        // Six code boxes over an invisible entry field.
-                        ZStack {
-                            HStack(spacing: 10) {
-                                ForEach(0..<6, id: \.self) { i in
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.paper)
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(i == code.count ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
-                                        if i < code.count {
-                                            Text(String(Array(code)[i]))
-                                                .font(.custom("Tungsten-Medium", size: 34))
-                                                .foregroundStyle(ShotIQColor.ink)
-                                        } else if i == code.count {
-                                            Rectangle().fill(ShotIQColor.shotiqOrange)
-                                                .frame(width: 2, height: 26)
-                                        }
-                                    }
-                                    .frame(width: 48, height: 58)
+                        ShotIQCard {
+                            HStack(alignment: .center, spacing: 14) {
+                                ZStack {
+                                    Circle().fill(ShotIQColor.warmCanvas)
+                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-upload",
+                                                             size: 32,
+                                                             label: nil)
                                 }
+                                .frame(width: 58, height: 58)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("EMAIL LINK REQUIRED")
+                                        .shotiqBody(11, weight: .bold).kerning(0.6)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    Text("Open the newest ShotIQ email link, then tap Check verification status.")
+                                        .shotiqBody(15)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 0)
                             }
-                            TextField("", text: $code)
-                                .keyboardType(.numberPad)
-                                .textContentType(.oneTimeCode)
-                                .foregroundStyle(.clear)
-                                .tint(.clear)
-                                .frame(height: 58)
-                                .contentShape(Rectangle())
-                                .onChange(of: code) { _, new in
-                                    code = String(new.filter(\.isNumber).prefix(6))
-                                }
                         }
                         .padding(.top, 30)
 
-                        (Text("Resend code in ").foregroundColor(ShotIQColor.graphite)
-                            + Text("0:42").foregroundColor(ShotIQColor.shotiqOrange).fontWeight(.semibold))
+                        (Text("Resend link in ").foregroundColor(ShotIQColor.graphite)
+                            + Text("2:00").foregroundColor(ShotIQColor.shotiqOrange).fontWeight(.semibold))
                             .font(.system(size: 17))
                             .padding(.top, 26)
 
-                        Button(resendBusy ? "Sending…" : "Resend email") { Task { await resend() } }
+                        Button(resendBusy ? "Sending…" : "Resend verification link") { Task { await resend() } }
                             .font(.system(size: 17))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                             .underline()
@@ -711,15 +839,28 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 10)
                         }
-
-                        PrimaryButton(title: "Open email app", icon: "envelope") {
-                            openMailApp()
-                            // Continue into the app either way — verification is non-blocking.
-                            app.signedIn(APIUser(email: email, profileComplete: false))
+                        if let verifyError {
+                            Text(verifyError)
+                                .shotiqBody(14)
+                                .foregroundStyle(ShotIQColor.reviewRed)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 10)
                         }
+
+                        PrimaryButton(title: verifyBusy ? "Checking…" : "Check verification status", icon: "checkmark.shield") {
+                            Task { await verifyCode() }
+                        }
+                        .disabled(verifyBusy)
                         .padding(.top, 26)
 
+                        SecondaryButton(title: "Open email app", icon: "envelope") {
+                            toast = .info("Opening email", "Open the newest ShotIQ verification link.")
+                            openMailApp()
+                        }
+                        .padding(.top, 12)
+
                         SecondaryButton(title: "Use a different email", icon: "envelope.badge") {
+                            toast = .info("Use a different email")
                             dismiss()
                         }
                         .padding(.top, 12)
@@ -738,10 +879,8 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                             ForEach(helpRows, id: \.1) { icon, text in
                                 Button { helpAction(text) } label: {
                                     HStack(spacing: 14) {
-                                        Image(systemName: icon)
-                                            .font(.system(size: 20))
-                                            .foregroundStyle(ShotIQColor.ink)
-                                            .frame(width: 32)
+                                        ShotIQConceptGlyph(concept: text, fallback: icon, size: 32)
+                                            .frame(width: 36)
                                         Text(text).shotiqBody(16).foregroundStyle(ShotIQColor.ink)
                                         Spacer()
                                         Image(systemName: "chevron.right")
@@ -758,9 +897,9 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                         .padding(.top, 4)
 
                         HStack(spacing: 16) {
-                            Image(systemName: "checkmark.shield")
-                                .font(.system(size: 34, weight: .light))
-                                .foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-privacy-info",
+                                                     size: 42,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Your account is safe").shotiqBody(17, weight: .semibold)
                                     .foregroundStyle(ShotIQColor.ink)
@@ -775,6 +914,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                 }
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -783,6 +923,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
     @State private var sent = false
     @State private var busy = false
     @State private var errorText: String?
+    @State private var toast: ShotIQToast?
     @Environment(\.dismiss) private var dismiss
 
     private var emailValid: Bool { email.contains("@") && email.contains(".") }
@@ -790,14 +931,22 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
     /// POST /api/auth/forgot-password — issues the reset token and emails the link.
     @MainActor
     private func sendReset() async {
+        guard emailValid else {
+            errorText = "Enter a valid account email first."
+            toast = .error("Check email", "Use the email address on your ShotIQ account.")
+            return
+        }
         busy = true; errorText = nil
+        toast = .progress("Sending reset link", "Checking your ShotIQ account email.", progress: 0.55)
         struct Resp: Codable { var success: Bool?; var message: String? }
         do {
             let _: Resp = try await APIClient.shared.call(
                 "/api/auth/forgot-password", method: "POST", body: ["email": email])
             sent = true
+            toast = .success("Reset link sent", "Check your email for the secure reset link.")
         } catch {
             errorText = "Could not send the reset link. Check your connection and try again."
+            toast = .error("Reset link not sent", "Check your connection and try again.")
         }
         busy = false
     }
@@ -808,7 +957,10 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                 TopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to sign in")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                        } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "arrow.left")
                                     .font(.system(size: 20, weight: .semibold))
@@ -825,8 +977,9 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
 
                         SectionLabel(text: "EMAIL ADDRESS").padding(.top, 26)
                         FieldShell(valid: emailValid) {
-                            Image(systemName: "envelope")
-                                .font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "envelope"),
+                                                     size: 22,
+                                                     label: nil)
                             TextField("Enter your email", text: $email)
                                 .keyboardType(.emailAddress).autocapitalization(.none)
                             if emailValid {
@@ -839,9 +992,9 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
 
                         Button { Task { await sendReset() } } label: {
                             HStack(spacing: 10) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
-                                                         size: 18,
-                                                         label: nil)
+                                Image(systemName: "envelope.open.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.white)
                                 Text(busy ? "SENDING…" : "SEND RESET LINK")
                                     .shotiqCondensed(18, weight: .heavy)
                                     .kerning(1.5)
@@ -850,7 +1003,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
                             .foregroundStyle(.white)
                         }
-                        .disabled(busy || !emailValid)
+                        .disabled(busy)
                         .padding(.top, 24)
 
                         if let errorText {
@@ -888,12 +1041,17 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                         // the new password here.
                         NavigationLink { ResetPasswordView() } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "key").font(.system(size: 15))
+                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-check-ring",
+                                                         size: 18,
+                                                         label: nil)
                                 Text(sent ? "Enter your new password" : "I already have a reset link")
                                     .shotiqBody(15, weight: .medium)
                             }
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening password reset", "Enter and confirm your new password.")
+                        })
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("Enter your new password")
                         .frame(maxWidth: .infinity)
@@ -901,7 +1059,10 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
 
                         OrDivider().padding(.top, 34)
 
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to sign in")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                        } label: {
                             HStack(spacing: 8) {
                                 Text("BACK TO SIGN IN")
                                     .shotiqBody(15, weight: .bold).kerning(1.5)
@@ -913,7 +1074,10 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                         .frame(maxWidth: .infinity)
                         .padding(.top, 26)
 
-                        Button { UIApplication.shared.open(supportGuideURL) } label: {
+                        Button {
+                            toast = .info("Opening help", "Loading ShotIQ support.")
+                            UIApplication.shared.open(supportGuideURL)
+                        } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "questionmark.circle").font(.system(size: 17))
                                 Text("Need help?").shotiqBody(16).underline()
@@ -927,6 +1091,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                 }
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -941,6 +1106,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
     @State private var successText: String?
     @State private var errorText: String?
     @State private var showForgot = false
+    @State private var toast: ShotIQToast?
     @Environment(\.dismiss) private var dismiss
 
     /// POST /api/auth/reset-password — consumes the emailed token and sets the
@@ -949,9 +1115,16 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
     private func resetPassword() async {
         guard let token, !token.isEmpty else {
             errorText = "This screen needs the reset link from your email. Request a new link below."
+            toast = .error("Reset link needed", "Open the secure link from your email or request a new one.")
+            return
+        }
+        guard passwordReady else {
+            errorText = "Finish every password requirement before resetting."
+            toast = .error("Password not ready", "Meet every requirement and confirm the password.")
             return
         }
         busy = true; errorText = nil
+        toast = .progress("Resetting password", "Saving your new ShotIQ password.", progress: 0.55)
         struct Resp: Codable { var success: Bool?; var message: String? }
         do {
             let r: Resp = try await APIClient.shared.call(
@@ -959,10 +1132,13 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                 body: ["token": token, "password": p1])
             done = true
             successText = r.message ?? "Your password has been reset. You can now sign in."
+            toast = .success("Password reset", "You can now sign in with your new password.")
         } catch APIClient.APIError.http(400) {
             errorText = "This reset link is invalid or has expired. Request a new one below."
+            toast = .error("Reset link expired", "Request a new secure reset link.")
         } catch {
             errorText = "Something went wrong. Please try again."
+            toast = .error("Password not reset", "Something went wrong. Please try again.")
         }
         busy = false
     }
@@ -974,6 +1150,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
     /// meter render that satisfied state directly. `UITestHooks.stage` is nil in
     /// a shipped launch, so a real player always sees their own progress.
     private var stagedCanonicalState: Bool { UITestHooks.stage == "reset-password" }
+    private var hasResetToken: Bool { !(token ?? "").isEmpty }
 
     private var checks: [(String, Bool)] {
         [("At least 8 characters long", stagedCanonicalState || p1.count >= 8),
@@ -986,6 +1163,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
     }
     private var strength: Int { checks.prefix(5).filter(\.1).count }
     private var strengthLabel: String { strength >= 5 ? "STRONG" : strength >= 3 ? "GOOD" : "WEAK" }
+    private var passwordReady: Bool { checks.allSatisfy(\.1) }
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-reset-password") {
@@ -995,7 +1173,10 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(alignment: .top, spacing: 16) {
                             VStack(alignment: .leading, spacing: 0) {
-                                Button { dismiss() } label: {
+                                Button {
+                                    toast = .info("Returning to sign in")
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { dismiss() }
+                                } label: {
                                     HStack(spacing: 10) {
                                         Image(systemName: "arrow.left")
                                             .font(.system(size: 20, weight: .semibold))
@@ -1009,28 +1190,22 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                     .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 8)
                             }
-                            ZStack(alignment: .bottomTrailing) {
-                                CanonicalPhoto("002-visual-005", width: 150, height: 180, cornerRadius: 10)
-                                ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-privacy-info",
-                                                         size: 28,
-                                                         label: nil)
-                                    .padding(8)
-                                    .background(.white.opacity(0.9), in: Circle())
-                                    .padding(8)
-                            }
+                            CanonicalPhoto("generated-splash-001", width: 150, height: 180, cornerRadius: 10)
                             .frame(width: 150, height: 180)
                         }
                         .padding(.top, 18)
 
                         HStack(spacing: 16) {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
-                                                     size: 30,
+                            ShotIQApprovedRasterIcon(assetName: hasResetToken ? "shotiq-approved-v2-ui-check-ring" : "shotiq-approved-v2-ui-privacy-info",
+                                                     size: 34,
                                                      label: nil)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("RESET LINK VERIFIED")
+                                Text(hasResetToken ? "RESET LINK VERIFIED" : "RESET LINK REQUIRED")
                                     .shotiqBody(15, weight: .bold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.ink)
-                                Text("This reset link is valid.\nYou can set a new password.")
+                                Text(hasResetToken
+                                     ? "This reset link is valid.\nYou can set a new password."
+                                     : "Open the newest ShotIQ reset email before setting a new password.")
                                     .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
@@ -1117,27 +1292,35 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                 .padding(.top, 20)
                         }
 
-                        PrimaryButton(title: busy ? "Resetting…" : done ? "Password reset" : "Reset password",
-                                      icon: "camera.metering.center.weighted") {
-                            Task { await resetPassword() }
+                        PrimaryButton(title: !hasResetToken ? "Open reset email" : (busy ? "Resetting…" : done ? "Password reset" : "Reset password"),
+                                      icon: hasResetToken ? "key.fill" : "envelope.open.fill") {
+                            if hasResetToken {
+                                Task { await resetPassword() }
+                            } else {
+                                toast = .info("Opening email", "Open the newest ShotIQ reset link.")
+                                openMailApp()
+                            }
                         }
                         // Canonical 007 draws this CTA live, not dimmed.
-                        .disabled(!stagedCanonicalState && (p1.isEmpty || p1 != p2 || busy || done))
+                        .disabled(busy || done)
                         .padding(.top, 24)
 
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 28)
 
                         HStack(alignment: .top, spacing: 16) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 30, weight: .light))
-                                .foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-mechanics-routine-refresh",
+                                                     size: 34,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("RESET LINK EXPIRED?")
                                     .shotiqBody(15, weight: .bold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("For your security, reset links expire after 15 minutes.")
                                     .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
-                                Button("Request a new reset link") { showForgot = true }
+                                Button("Request a new reset link") {
+                                    toast = .info("Opening password reset", "Request a fresh secure reset link.")
+                                    showForgot = true
+                                }
                                     .font(.system(size: 14))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                             }
@@ -1153,5 +1336,6 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
             NavigationStack { ForgotPasswordView() }
                 .modifier(CanonicalTypeScale())
         }
+        .shotiqToast($toast)
     }
 }

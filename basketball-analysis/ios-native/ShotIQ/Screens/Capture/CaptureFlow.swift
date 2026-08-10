@@ -109,6 +109,7 @@ private struct HoopCalibrationBackdrop: View {
 struct CameraPhotoCaptureView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var camera = CameraService.live
+    @State private var toast: ShotIQToast?
     var onCapture: (UIImage) -> Void
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -122,6 +123,7 @@ struct CameraPhotoCaptureView: View {
             }
             VStack(spacing: 14) {
                 Button {
+                    toast = .progress("Capturing photo", "Hold still while ShotIQ saves this frame.", progress: 0.6)
                     camera.capturePhoto()
                 } label: {
                     Circle().stroke(.white, lineWidth: 4).frame(width: 76, height: 76)
@@ -130,17 +132,22 @@ struct CameraPhotoCaptureView: View {
                 .buttonStyle(.plain)
                 .disabled(camera.status != .ready)
                 .accessibilityLabel("Take photo")
-                Button { dismiss() } label: {
+                Button {
+                    toast = .info("Camera closed", "Returning without changing the selected photo.")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { dismiss() }
+                } label: {
                     Text("Cancel").shotiqBody(16, weight: .medium).foregroundStyle(.white)
                 }
                 .buttonStyle(.plain)
             }
             .padding(.bottom, 34)
         }
+        .shotiqToast($toast)
         .onAppear { camera.lastPhoto = nil; camera.start() }
         .onDisappear { camera.stop() }
         .onChange(of: camera.lastPhoto) { _, data in
             if let data, let img = UIImage(data: data) {
+                toast = .success("Photo captured", "Sending this frame back for review.")
                 onCapture(img)
                 dismiss()
             }
@@ -267,6 +274,15 @@ struct ShotIQPhotoVisionAnalysisPayload: Codable, Equatable {
     var scoreSource: String
 }
 
+struct ShotIQPhotoBodyPosition: Codable, Equatable {
+    var x: Double
+    var y: Double
+    var label: String
+    var angle: Double?
+    var status: String
+    var note: String?
+}
+
 enum ShotViewpoint: String, CaseIterable, Identifiable {
     case front
     case side
@@ -317,8 +333,27 @@ enum ShotViewpoint: String, CaseIterable, Identifiable {
     var imageCategory: String { "form_\(rawValue)" }
 }
 
+enum ShotImageOrientation: String, CaseIterable, Identifiable {
+    case landscape
+    case story
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .landscape: return "Landscape"
+        case .story: return "Story 9:16"
+        }
+    }
+    var mediaHeight: CGFloat {
+        switch self {
+        case .landscape: return 150
+        case .story: return 220
+        }
+    }
+}
+
 private func shotiqPersistLocalJPEG(_ data: Data, prefix: String = "shotiq-photo") -> URL? {
-    guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+    guard let dir = shotiqPersistentMediaDirectory() else {
         return nil
     }
     let url = dir.appendingPathComponent("\(prefix)-\(UUID().uuidString).jpg")
@@ -328,6 +363,39 @@ private func shotiqPersistLocalJPEG(_ data: Data, prefix: String = "shotiq-photo
     } catch {
         return nil
     }
+}
+
+private func shotiqPersistLocalVideo(_ data: Data, filename: String) -> URL? {
+    guard let dir = shotiqPersistentMediaDirectory() else {
+        return nil
+    }
+    let cleanName = filename.isEmpty ? "shotiq-\(UUID().uuidString).mov" : filename
+    let url = dir.appendingPathComponent(cleanName)
+    do {
+        try data.write(to: url, options: [.atomic])
+        return url
+    } catch {
+        return nil
+    }
+}
+
+private func shotiqPersistentMediaDirectory() -> URL? {
+    guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
+                                              in: .userDomainMask).first else {
+        return nil
+    }
+    let dir = base.appendingPathComponent("ShotIQMedia", isDirectory: true)
+    do {
+        try FileManager.default.createDirectory(at: dir,
+                                                withIntermediateDirectories: true)
+        return dir
+    } catch {
+        return nil
+    }
+}
+
+private func shotiqBundledPhoto(_ key: String) -> UIImage? {
+    UIImage(named: "photo-\(key)")
 }
 
 // MARK: - Shared canonical chrome for the capture screens
@@ -347,7 +415,7 @@ private struct CaptureHeader: View {
 private func captureCTA(_ title: String, icon: String? = nil,
                         color: Color = ShotIQColor.shotiqOrange) -> some View {
     HStack(spacing: 10) {
-        if let icon { Image(systemName: icon).font(.system(size: 18, weight: .medium)) }
+        if let icon { Image(systemName: icon).font(.system(size: 24, weight: .medium)) }
         Text(title).shotiqBody(17, weight: .semibold)
     }
     // Was 56 — the same over-height primary CTA the review measured at 58pt on
@@ -362,7 +430,7 @@ private func captureCTA(_ title: String, icon: String? = nil,
 /// Bordered secondary label used inside NavigationLinks / plain buttons.
 private func captureOutline(_ title: String, icon: String? = nil) -> some View {
     HStack(spacing: 10) {
-        if let icon { Image(systemName: icon).font(.system(size: 16)) }
+        if let icon { Image(systemName: icon).font(.system(size: 24)) }
         Text(title).shotiqBody(16)
     }
     .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
@@ -382,6 +450,8 @@ private func captureDark(_ height: CGFloat, radius: CGFloat = 8) -> some View {
 /// PRIMARY COACHING TARGET row (canonical 026/028/030/031/032/034).
 /// Tapping it opens the coaching-target detail (FlawDetailView) everywhere.
 private struct CaptureCoachingRow: View {
+    @EnvironmentObject private var app: AppState
+    @State private var toast: ShotIQToast?
     var boxed = false
     var body: some View {
         let row = VStack(alignment: .leading, spacing: 5) {
@@ -397,7 +467,19 @@ private struct CaptureCoachingRow: View {
             }
         }
         NavigationLink {
-            FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+            if let latest = app.recentMedia.first {
+                FlawDetailView(
+                    title: "Keep elbow stacked through release",
+                    severity: "PRIMARY TARGET",
+                    presentation: AnalysisResultPresentation(result: latest.analysis))
+            } else if UITestHooks.demoData {
+                FlawDetailView(
+                    title: "Keep elbow stacked through release",
+                    severity: "PRIMARY TARGET",
+                    presentation: .canonicalDemo)
+            } else {
+                AnalyzeHubView()
+            }
         } label: {
             Group {
                 if boxed {
@@ -410,6 +492,15 @@ private struct CaptureCoachingRow: View {
             }
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture().onEnded {
+            if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                toast = .info("Opening coaching target")
+            } else {
+                toast = .info("Analyze a shot first",
+                              "Record or upload media before opening measured correction details.")
+            }
+        })
+        .shotiqToast($toast)
     }
 }
 
@@ -455,7 +546,7 @@ struct CaptureGuideView: View {
                                 HStack(spacing: 14) {
                                     // Each capture tip is a different readiness
                                     // check, so each gets its own bracket mark.
-                                    ShotIQConceptGlyph(concept: t, fallback: icon, size: 22)
+                                    ShotIQConceptGlyph(concept: t, fallback: icon, size: 34)
                                         .foregroundStyle(ShotIQColor.ink).frame(width: 34)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(t).shotiqCondensed(14, weight: .heavy).kerning(0.5)
@@ -481,20 +572,105 @@ struct CaptureGuideView: View {
     }
 }
 
+private struct CaptureSummaryValues {
+    var score: String
+    var shots: String
+    var makes: String
+    var makePercent: String
+    var trend: String
+    var trendCaption: String
+    var hasRealData: Bool
+
+    static func resolve(app: AppState, completedWorkoutsPayload: String) -> CaptureSummaryValues {
+        let latestWorkout = TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
+        let latestPresentation = app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+
+        if let workout = latestWorkout {
+            return CaptureSummaryValues(
+                score: latestPresentation?.scoreText ?? "\(workout.formScore)",
+                shots: "\(workout.shots)",
+                makes: "\(workout.makes)",
+                makePercent: workout.accuracyText,
+                trend: workout.shots > 0 ? "SAVED" : "--",
+                trendCaption: workout.drillName,
+                hasRealData: true)
+        }
+
+        if let latestPresentation {
+            return CaptureSummaryValues(
+                score: latestPresentation.scoreText,
+                shots: "--",
+                makes: "--",
+                makePercent: "--",
+                trend: latestPresentation.sourceCoverageVerdict,
+                trendCaption: "latest analysis",
+                hasRealData: true)
+        }
+
+        if UITestHooks.demoData {
+            return CaptureSummaryValues(score: "82",
+                                        shots: "24",
+                                        makes: "15",
+                                        makePercent: "62.5%",
+                                        trend: "+8.1%",
+                                        trendCaption: "vs last session",
+                                        hasRealData: false)
+        }
+
+        return CaptureSummaryValues(score: "--",
+                                    shots: "--",
+                                    makes: "--",
+                                    makePercent: "--",
+                                    trend: "--",
+                                    trendCaption: "analyze a shot",
+                                    hasRealData: false)
+    }
+}
+
+private struct CaptureSummaryStrip: View {
+    @EnvironmentObject private var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    var scoreSize: CGFloat = 26
+    var body: some View {
+        let values = CaptureSummaryValues.resolve(app: app,
+                                                  completedWorkoutsPayload: completedWorkoutsPayload)
+        HStack(alignment: .center, spacing: 0) {
+            captureStat(values.score, "FORM SCORE",
+                        color: values.score == "--" ? ShotIQColor.graphite : ShotIQColor.shotiqOrange,
+                        size: scoreSize)
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+            captureStat(values.shots, "SHOTS", size: scoreSize)
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+            captureStat(values.makes, "MAKES", size: scoreSize)
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+            captureStat(values.makePercent, "MAKE %", size: scoreSize)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Form score \(values.score), shots \(values.shots), makes \(values.makes), make percentage \(values.makePercent)")
+    }
+}
+
 /// LATEST SESSION stats strip: shots / makes / make % / trend delta.
 private struct CaptureSessionStats: View {
+    @EnvironmentObject private var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     var body: some View {
+        let values = CaptureSummaryValues.resolve(app: app,
+                                                  completedWorkoutsPayload: completedWorkoutsPayload)
         HStack(alignment: .center, spacing: 18) {
-            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
-            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
-            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
+            StatBlock(value: values.shots, label: "SHOTS", valueSize: ShotIQType.numeric)
+            StatBlock(value: values.makes, label: "MAKES", valueSize: ShotIQType.numeric)
+            StatBlock(value: values.makePercent, label: "MAKE %", valueSize: ShotIQType.numeric)
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 3) {
-                TrendLine(points: [2, 3.1, 2.6, 4.2], stroke: ShotIQColor.confirmGreen)
+                TrendLine(points: values.hasRealData || UITestHooks.demoData ? [2, 3.1, 2.6, 4.2] : [2, 2, 2, 2],
+                          stroke: values.hasRealData || UITestHooks.demoData ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
                     .frame(width: 86, height: 28)
                 HStack(spacing: 3) {
-                    Text("+8.1%").shotiqBody(11, weight: .semibold).foregroundStyle(ShotIQColor.confirmGreen)
-                    Text("vs last session").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                    Text(values.trend).shotiqBody(11, weight: .semibold)
+                        .foregroundStyle(values.hasRealData || UITestHooks.demoData ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
+                    Text(values.trendCaption).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1).minimumScaleFactor(0.7)
                 }
             }
         }
@@ -515,6 +691,7 @@ private func captureStat(_ value: String, _ label: String,
 
 struct AnalyzeHubView: View {       // 021
     @EnvironmentObject var app: AppState
+    @State private var toast: ShotIQToast?
     // Fourth field is the canonical crop for that thumbnail. All four are
     // bundled now (021-visual-001…004); it used to be only the 2nd and 4th.
     private let recents: [(String, String, String, String?)] = [
@@ -542,18 +719,27 @@ struct AnalyzeHubView: View {       // 021
                         NavigationLink { LiveCameraSetupView() } label: {
                             hubOption("dot.radiowaves.left.and.right", "Live camera", "Record a new shot in real time.")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening live camera", "Set up the phone before recording.")
+                        })
                         NavigationLink { VideoUploadView() } label: {
                             hubOption("film", "Upload video", "Analyze footage from your device.")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening video upload", "Choose a real shot video.")
+                        })
                         NavigationLink { PhotoUploadSourceView() } label: {
                             hubOption("photo", "Upload image", "Analyze a single frame or photo.")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening image upload", "Choose or capture a real shot photo.")
+                        })
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     NavigationLink { CaptureGuideView() } label: {
                         HStack(spacing: 12) {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "doc.text"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "doc.text"), size: 42).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                             Text("View capture guide").shotiqBody(16, weight: .medium)
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
@@ -562,6 +748,9 @@ struct AnalyzeHubView: View {       // 021
                         .padding(16)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .info("Opening capture guide", "Use the guide to frame the shooter.")
+                    })
                     .buttonStyle(.plain)
                     .padding(.horizontal, 20).padding(.top, 12)
 
@@ -574,6 +763,9 @@ struct AnalyzeHubView: View {       // 021
                                 Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
                             }
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening upload queue", "Queued media and retries are there.")
+                        })
                     }
                     .padding(.horizontal, 20).padding(.top, 22)
 
@@ -591,26 +783,49 @@ struct AnalyzeHubView: View {       // 021
                     // screen, with the cards landing within ~2pt of canonical.
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 7.5) {
-                            ForEach(recents, id: \.1) { dur, when, kind, photo in
-                                NavigationLink { MediaDetailView() } label: {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        ZStack(alignment: .bottomTrailing) {
-                                            if let photo {
-                                                CanonicalPhoto(photo, width: 85, height: 130, cornerRadius: 4)
-                                            } else {
-                                                captureDark(130, radius: 4).frame(width: 85)
-                                            }
-                                            Text(dur).font(.custom("Tungsten-Medium", size: 12)).foregroundStyle(.white)
-                                                .padding(.horizontal, 6).padding(.vertical, 3)
-                                                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
-                                                .padding(6)
+                            if app.recentMedia.isEmpty {
+                                ForEach(recents, id: \.1) { dur, when, kind, photo in
+                                    NavigationLink {
+                                        if UITestHooks.demoData {
+                                            MediaDetailView(analysis: nil,
+                                                            title: kind,
+                                                            fallbackPhoto: photo ?? "069-visual-002",
+                                                            fallbackLinkedPhoto: photo ?? "069-visual-004",
+                                                            fallbackDuration: dur,
+                                                            fallbackCaptureDate: when.uppercased(),
+                                                            fallbackCaptureMeta: "Sample capture - \(kind) - ready for review",
+                                                            fallbackShotEvents: ("--", "--", "--", "--", "--"))
+                                        } else {
+                                            UploadQueueView()
                                         }
-                                        Text(when).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                        Text(kind).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.ink)
+                                    } label: {
+                                        demoRecentCard(duration: dur, when: when, kind: kind, photo: photo)
                                     }
-                                    .frame(width: 85)
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        if UITestHooks.demoData {
+                                            toast = .info("Opening \(kind)",
+                                                          "Sample media detail is ready.")
+                                        } else {
+                                            toast = .info("No saved media yet",
+                                                          "Add a photo or video to create real recent media.")
+                                        }
+                                    })
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
+                            } else {
+                                ForEach(Array(app.recentMedia.prefix(4))) { entry in
+                                    NavigationLink {
+                                        MediaDetailView(analysis: entry.analysis,
+                                                        analysisId: entry.analysis.id)
+                                    } label: {
+                                        realRecentCard(entry)
+                                    }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .success("Opening \(entry.title)",
+                                                         "This is your saved \(entry.kind.lowercased()).")
+                                    })
+                                    .buttonStyle(.plain)
+                                }
                             }
                         }
                         .padding(.horizontal, 20)
@@ -618,7 +833,7 @@ struct AnalyzeHubView: View {       // 021
                     .padding(.top, 10)
 
                     HStack(alignment: .center, spacing: 14) {
-                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "point.topleft.down.curvedto.point.bottomright.up"), size: 32)
+                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "point.topleft.down.curvedto.point.bottomright.up"), size: 44)
                             .font(.system(size: 24)).foregroundStyle(ShotIQColor.analysisBlue)
                         Text("Film from the side at chest height, showing your full body from feet to fingertips with good lighting and a clear background.")
                             .shotiqBody(13).foregroundStyle(ShotIQColor.ink)
@@ -639,6 +854,57 @@ struct AnalyzeHubView: View {       // 021
         .navigationTitle("").toolbar(.hidden, for: .navigationBar)
         // Returning to the hub means the live flow ended — release the camera.
         .onAppear { CameraService.live.stop() }
+        .shotiqToast($toast)
+    }
+
+    private func demoRecentCard(duration: String, when: String, kind: String, photo: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ZStack(alignment: .bottomTrailing) {
+                if let photo {
+                    CanonicalPhoto(photo, width: 85, height: 130, cornerRadius: 4)
+                } else {
+                    CanonicalPhoto("021-visual-003", width: 85, height: 130, cornerRadius: 4)
+                }
+                durationBadge(duration)
+            }
+            Text(when).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+            Text(kind).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.ink)
+        }
+        .frame(width: 85)
+    }
+
+    private func realRecentCard(_ entry: ShotIQRecentMediaEntry) -> some View {
+        let presentation = AnalysisResultPresentation(result: entry.analysis)
+        return VStack(alignment: .leading, spacing: 4) {
+            ZStack(alignment: .bottomTrailing) {
+                if let url = presentation.mediaURL,
+                   url.isFileURL,
+                   let image = UIImage(contentsOfFile: url.path) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 85, height: 130)
+                        .clipped()
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                } else {
+                    CanonicalPhoto(entry.kind == "Videos" ? "021-visual-003" : "021-visual-001",
+                                   width: 85, height: 130, cornerRadius: 4)
+                }
+                durationBadge(entry.durationText)
+            }
+            Text(presentation.recordedLabel).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+            Text(entry.title).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(width: 85)
+    }
+
+    private func durationBadge(_ text: String) -> some View {
+        Text(text).font(.custom("Tungsten-Medium", size: 12)).foregroundStyle(.white)
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .padding(.horizontal, 6).padding(.vertical, 3)
+            .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
+            .padding(6)
     }
 
     private func hubOption(_ icon: String, _ t: String, _ d: String) -> some View {
@@ -647,9 +913,9 @@ struct AnalyzeHubView: View {       // 021
             // broadcast triple out of the system set.
             Group {
                 if let source = CaptureSource(sourceLabel: t) {
-                    CaptureSourceGlyph(source: source, size: 26)
+                    CaptureSourceGlyph(source: source, size: 42)
                 } else {
-                    Image(systemName: icon).font(.system(size: 26))
+                    Image(systemName: icon).font(.system(size: 42))
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
@@ -672,6 +938,11 @@ struct PhotoUploadSourceView: View { // 022
     @State private var sidePick: PhotosPickerItem?
     @State private var rearPick: PhotosPickerItem?
     @State private var images: [ShotViewpoint: UIImage] = [:]
+    @State private var orientationByViewpoint: [ShotViewpoint: ShotImageOrientation] = [
+        .front: .landscape,
+        .side: .landscape,
+        .rear: .landscape
+    ]
     @State private var activeViewpoint: ShotViewpoint = .side
     @State private var goReview = false
     @State private var showCamera = false
@@ -682,7 +953,10 @@ struct PhotoUploadSourceView: View { // 022
                 VStack(alignment: .leading, spacing: 0) {
                     TopBar()
 
-                    Button { dismiss() } label: {
+                    Button {
+                        toast = .info("Returning to analyze shot")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                    } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
                             Text("ANALYZE SHOT").shotiqBody(13, weight: .bold).kerning(1)
@@ -732,17 +1006,22 @@ struct PhotoUploadSourceView: View { // 022
                             .buttonStyle(.plain)
                         }
                         Button { continueWithSelectedViews() } label: {
-                            sourceRow("checkmark.seal",
-                                      UITestHooks.active ? "Continue with selected views" : "Review selected photo",
-                                      "Review the selected view first, then run pose and shot-form analysis.")
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18, weight: .semibold))
+                                Text(UITestHooks.active ? "Review selected views" : "Review selected photo")
+                                    .shotiqBody(17, weight: .medium)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: ShotIQType.controlHeight)
+                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+                            .foregroundStyle(.white)
                         }
                         .buttonStyle(.plain)
-                        Button { showCamera = true } label: {
-                            sourceRow("camera", "Take \(activeViewpoint.shortTitle.lowercased()) photo",
-                                      "Capture the currently selected \(activeViewpoint.shortTitle.lowercased()) angle.")
-                        }
-                        .buttonStyle(.plain)
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Photo upload cancelled", "Returning to analyze options.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                        } label: {
                             Text("Cancel").shotiqBody(16)
                                 .frame(maxWidth: .infinity).frame(height: 52)
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -808,9 +1087,9 @@ struct PhotoUploadSourceView: View { // 022
         VStack(spacing: 4) {
             Group {
                 if let format = MediaFormatKind(formatLabel: t) {
-                    MediaFormatGlyph(kind: format, size: 24)
+                    MediaFormatGlyph(kind: format, size: 32)
                 } else {
-                    Image(systemName: icon).font(.system(size: 20))
+                    Image(systemName: icon).font(.system(size: 32))
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
@@ -822,6 +1101,7 @@ struct PhotoUploadSourceView: View { // 022
 
     private func viewpointSlot(_ viewpoint: ShotViewpoint) -> some View {
         let ready = images[viewpoint] != nil
+        let orientation = orientationByViewpoint[viewpoint] ?? .landscape
         return VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
                 Group {
@@ -831,7 +1111,7 @@ struct PhotoUploadSourceView: View { // 022
                         CanonicalPhoto(viewpoint.placeholderPhoto, cornerRadius: 0)
                     }
                 }
-                .frame(height: 150).frame(maxWidth: .infinity).clipped()
+                .frame(height: orientation.mediaHeight).frame(maxWidth: .infinity).clipped()
                 Text(viewpoint.title).shotiqBody(12, weight: .bold).foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(ready ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue, in: Capsule())
@@ -839,7 +1119,7 @@ struct PhotoUploadSourceView: View { // 022
             }
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: ready ? "checkmark.circle.fill" : "plus.circle")
-                    .font(.system(size: 20))
+                    .font(.system(size: 28))
                     .foregroundStyle(ready ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(ready ? "\(viewpoint.shortTitle.uppercased()) READY" : "ADD \(viewpoint.shortTitle.uppercased()) PHOTO")
@@ -857,9 +1137,17 @@ struct PhotoUploadSourceView: View { // 022
                         .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.rule))
                 }
                 .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    activeViewpoint = viewpoint
+                    toast = .info("Opening photo library",
+                                  "Choose the \(viewpoint.shortTitle.lowercased()) angle.")
+                })
                 .accessibilityLabel("Choose \(viewpoint.shortTitle.lowercased()) photo")
                 Button {
                     activeViewpoint = viewpoint
+                    toast = .progress("Opening camera",
+                                      "Capture the \(viewpoint.shortTitle.lowercased()) angle.",
+                                      progress: 0.5)
                     showCamera = true
                 } label: {
                     Text("Camera").shotiqBody(13, weight: .semibold)
@@ -871,17 +1159,50 @@ struct PhotoUploadSourceView: View { // 022
             }
             .foregroundStyle(ShotIQColor.ink)
             .padding(.horizontal, 10).padding(.bottom, 10)
+            orientationPicker(for: viewpoint)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 10)
         }
         .background(ShotIQColor.paper)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-        .onTapGesture { activeViewpoint = viewpoint }
+        .onTapGesture {
+            activeViewpoint = viewpoint
+            toast = .info("\(viewpoint.shortTitle) view selected")
+        }
         .accessibilityElement(children: .contain)
+    }
+
+    private func orientationPicker(for viewpoint: ShotViewpoint) -> some View {
+        HStack(spacing: 8) {
+            ForEach(ShotImageOrientation.allCases) { option in
+                let selected = (orientationByViewpoint[viewpoint] ?? .landscape) == option
+                Button {
+                    activeViewpoint = viewpoint
+                    orientationByViewpoint[viewpoint] = option
+                    toast = .info("\(viewpoint.shortTitle) orientation set", option.title)
+                } label: {
+                    Text(option.title)
+                        .shotiqBody(12, weight: .semibold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 34)
+                        .background(selected ? ShotIQColor.shotiqOrange : ShotIQColor.paper,
+                                    in: RoundedRectangle(cornerRadius: 7))
+                        .overlay(RoundedRectangle(cornerRadius: 7)
+                            .stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
+                        .foregroundStyle(selected ? .white : ShotIQColor.ink)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .accessibilityLabel("\(viewpoint.shortTitle) orientation")
     }
 
     private func sourceRow(_ icon: String, _ t: String, _ d: String) -> some View {
         HStack(spacing: 16) {
-            ShotIQConceptGlyph(concept: t, fallback: icon, size: 26,
+            ShotIQConceptGlyph(concept: t, fallback: icon, size: 40,
                                accent: ShotIQColor.shotiqOrange)
                 .foregroundStyle(ShotIQColor.shotiqOrange).frame(width: 40)
             VStack(alignment: .leading, spacing: 2) {
@@ -964,6 +1285,7 @@ struct PhotoUploadSourceView: View { // 022
         sidePick = nil
         rearPick = nil
         activeViewpoint = .side
+        orientationByViewpoint = [.front: .landscape, .side: .landscape, .rear: .landscape]
     }
 }
 
@@ -985,7 +1307,10 @@ struct PhotoReviewCropView: View {  // 023
                     // Centered wordmark bar with back arrow (canonical 023)
                     ZStack {
                         HStack {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Returning to photo source")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                            } label: {
                                 Image(systemName: "arrow.left").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                             }
                             .buttonStyle(.plain)
@@ -1103,7 +1428,7 @@ struct PhotoReviewCropView: View {  // 023
                                 toast = .error("Choose a photo first", "A real image is required before cropping.")
                             }
                         } label: {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "rotate.right"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "rotate.right"), size: 44).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Rotate right")
@@ -1111,9 +1436,12 @@ struct PhotoReviewCropView: View {  // 023
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     HStack(spacing: 10) {
-                        Button { showCamera = true } label: {
+                        Button {
+                            toast = .progress("Opening camera", "Retake the \(viewpoint.shortTitle.lowercased()) view.", progress: 0.5)
+                            showCamera = true
+                        } label: {
                             HStack(spacing: 8) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 32).font(.system(size: 15))
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 42).font(.system(size: 15))
                                 Text("RETAKE").shotiqCondensed(13, weight: .heavy).kerning(0.5)
                             }
                             .frame(maxWidth: .infinity).frame(height: 52)
@@ -1130,7 +1458,7 @@ struct PhotoReviewCropView: View {  // 023
                             }
                         } label: {
                             HStack(spacing: 8) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "crop"), size: 32).font(.system(size: 15))
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "crop"), size: 42).font(.system(size: 15))
                                 Text("CROP").shotiqCondensed(13, weight: .heavy).kerning(0.5)
                             }
                             .frame(maxWidth: .infinity).frame(height: 52)
@@ -1139,11 +1467,15 @@ struct PhotoReviewCropView: View {  // 023
                         }
                         .buttonStyle(.plain)
                         Button {
-                            guard image != nil else {
-                                toast = .error("Choose a photo first", "A real image is required before analysis.")
+                            if image == nil, UITestHooks.demoData, let sample = shotiqBundledPhoto("023-visual-001") {
+                                image = sample
+                                toast = .success("Sample photo loaded", "Checking the shooter wireframe next.")
+                            } else if image == nil {
+                                toast = .error("Choose a photo first", "ShotIQ needs a real shooter image before it can draw the wireframe.")
                                 return
+                            } else {
+                                toast = .success("\(viewpoint.shortTitle) view selected", "Checking upload quality next.")
                             }
-                            toast = .success("\(viewpoint.shortTitle) view selected", "Checking upload quality next.")
                             goQuality = true
                         } label: {
                             HStack(spacing: 8) {
@@ -1209,7 +1541,17 @@ struct UploadQualityCheckView: View { // 024
     /// "Entire body is visible · Good" printed over a picture with nobody in it
     /// is the app telling the player something it never checked.
     private var checks: [(String, String, String, Bool)] {
-        guard let image else { return canonicalChecks }
+        guard let image else {
+            guard UITestHooks.demoData else {
+                return [
+                    ("Photo selected", "Choose or capture a real shooter photo before analysis.", "Required", false),
+                    ("Pose wireframe", "ShotIQ draws body key points after a real image is selected.", "Waiting", false),
+                    ("Shooting hand visibility", "Hand and ball checks run on the selected player image.", "Waiting", false),
+                    ("Score readiness", "Angles and coaching notes are created after upload.", "Waiting", false)
+                ]
+            }
+            return canonicalChecks
+        }
         let quality = ShotIQPhotoQuality.evaluate(image)
         guard poseChecked else {
             return [quality.lightingRow,
@@ -1307,7 +1649,7 @@ struct UploadQualityCheckView: View { // 024
                             // Vision runs on device over these very pixels, and the
                             // skeleton is the evidence for the checks; when nothing
                             // is found the view says so instead of implying a read.
-                            CapturedPoseImage(image: image, height: 240, cornerRadius: 8) { found in
+                            CapturedPoseImage(image: image, height: 240, cornerRadius: 8, showAngles: true) { found in
                                 detectedPose = found
                                 poseChecked = true
                             }
@@ -1383,7 +1725,10 @@ struct UploadQualityCheckView: View { // 024
                         Text(uploadError).shotiqBody(12).foregroundStyle(ShotIQColor.reviewRed)
                             .padding(.horizontal, 20).padding(.top, 8)
                     }
-                    Button { dismiss() } label: { captureOutline("Choose another") }
+                    Button {
+                        toast = .info("Choose another photo", "Returning to the photo source screen.")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                    } label: { captureOutline("Choose another") }
                         .buttonStyle(.plain)
                         .disabled(busy)
                         .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
@@ -1427,7 +1772,8 @@ struct UploadQualityCheckView: View { // 024
     /// POST /api/vision-analyze on the same frame, then POST /api/save-analysis
     /// to persist the session — before showing the processing screen.
     private func analyze() async {
-        guard let selectedImage = image,
+        let analysisImage = image ?? (UITestHooks.demoData ? shotiqBundledPhoto("024-visual-001") : nil)
+        guard let selectedImage = analysisImage,
               let jpeg = selectedImage.jpegData(compressionQuality: 0.7) else {
             uploadError = "Choose or capture a photo before starting analysis."
             toast = .error("Choose a photo first", "ShotIQ needs real media before it can analyze.")
@@ -1442,6 +1788,11 @@ struct UploadQualityCheckView: View { // 024
         let localImageURL = shotiqPersistLocalJPEG(jpeg, prefix: "shotiq-\(viewpoint.rawValue)")
         let detectedPose = await ShotIQPose.detect(in: selectedImage)
             ?? (UITestHooks.forceSamplePose ? .uiTestSample : nil)
+        let photoFrame = detectedPose.map {
+            VideoPoseAnalyzer.frameRecord(index: 0, timestamp: 0, pose: $0)
+        }
+        let photoPoseData = detectedPose.map(AnalysisPoseDTO.init)
+        let photoBodyPositions = photoFrame.map { bodyPositions(from: $0) }
         let localFallback = ShotIQLocalAnalysisFactory.photo(localImageURL: localImageURL,
                                                              detectedPose: detectedPose)
         if UITestHooks.analysisFailure {
@@ -1496,7 +1847,11 @@ struct UploadQualityCheckView: View { // 024
             var clientSessionId: String; var recordedAt: String; var mediaType: String
             var visionAnalysis: ShotIQPhotoVisionAnalysisPayload?
             var imageUrl: String?; var overallScore: Double?; var coachingNotes: String?
-            var shootingPhase: String?; var visualOverlays: [String: String]?
+            var roboflowPoseData: [String: AnalysisPosePointDTO]?
+            var bodyPositions: [String: ShotIQPhotoBodyPosition]?
+            var shootingPhase: String?; var elbowAngle: Double?; var kneeAngle: Double?
+            var wristAngle: Double?; var shoulderAngle: Double?; var hipAngle: Double?
+            var releaseAngle: Double?; var visualOverlays: [String: String]?
         }
         struct SaveResp: Codable {
             var success: Bool?
@@ -1514,7 +1869,15 @@ struct UploadQualityCheckView: View { // 024
                                imageUrl: imageUrl,
                                overallScore: photoVision?.measuredOverallScore,
                                coachingNotes: photoVision?.coachingNotes,
+                               roboflowPoseData: photoPoseData?.keypoints,
+                               bodyPositions: photoBodyPositions,
                                shootingPhase: viewpoint.uploadAngle,
+                               elbowAngle: photoFrame?.elbowAngle,
+                               kneeAngle: photoFrame?.kneeAngle,
+                               wristAngle: photoFrame?.wristAngle,
+                               shoulderAngle: photoFrame?.shoulderAngle,
+                               hipAngle: photoFrame?.hipAngle,
+                               releaseAngle: photoFrame?.releaseAngle,
                                visualOverlays: ["shootingAngle": viewpoint.uploadAngle,
                                                 "imageCategory": viewpoint.imageCategory]))
             var analysis = saved.analysisResult ?? saved.analysis ?? localFallback
@@ -1536,13 +1899,103 @@ struct UploadQualityCheckView: View { // 024
             route = .processing
         }
     }
+
+    private func bodyPositions(from frame: VideoPoseFrameRecord) -> [String: ShotIQPhotoBodyPosition] {
+        var positions: [String: ShotIQPhotoBodyPosition] = [:]
+        for (name, point) in frame.keypoints {
+            let angle = angle(for: name, frame: frame)
+            let guidance = guidance(for: name, angle: angle)
+            positions[name] = ShotIQPhotoBodyPosition(
+                x: point.x * 100,
+                y: point.y * 100,
+                label: name
+                    .replacingOccurrences(of: "_", with: " ")
+                    .split(separator: " ")
+                    .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+                    .joined(separator: " "),
+                angle: angle,
+                status: guidance.status,
+                note: guidance.note)
+        }
+        return positions
+    }
+
+    private func angle(for jointName: String, frame: VideoPoseFrameRecord) -> Double? {
+        if jointName.contains("elbow") { return frame.elbowAngle }
+        if jointName.contains("knee") { return frame.kneeAngle }
+        if jointName.contains("wrist") { return frame.wristAngle }
+        if jointName.contains("shoulder") { return frame.shoulderAngle }
+        if jointName.contains("hip") { return frame.hipAngle }
+        return nil
+    }
+
+    private func guidance(for jointName: String, angle: Double?) -> (status: String, note: String?) {
+        guard let angle else { return ("good", nil) }
+        if jointName.contains("elbow") {
+            if angle >= 150 && angle <= 180 { return ("good", "Release band") }
+            if angle >= 135 && angle < 150 { return ("warning", "Stack higher") }
+            return ("critical", angle < 135 ? "Too tight" : "Too extended")
+        }
+        if jointName.contains("wrist") {
+            if angle >= 50 && angle <= 100 { return ("good", "Wrist band") }
+            if angle >= 40 && angle < 50 { return ("warning", "Hold set") }
+            return ("critical", angle < 40 ? "Too flat" : "Too steep")
+        }
+        if jointName.contains("knee") {
+            if angle >= 70 && angle <= 120 { return ("good", "Loaded base") }
+            if angle > 120 && angle <= 150 { return ("warning", "Bend more") }
+            return ("critical", angle < 70 ? "Too deep" : "Too upright")
+        }
+        return ("good", nil)
+    }
 }
 
 struct UploadQueueView: View {      // 025
-    struct Item: Identifiable { let id = UUID(); var name: String; var pct: Double; var state: String }
+    enum QueuedMedia {
+        case image(UIImage)
+        case video(PickedVideoClip)
+
+        var title: String {
+            switch self {
+            case .image: return "Image"
+            case .video: return "Video"
+            }
+        }
+
+        var detail: String {
+            switch self {
+            case .image(let image):
+                let pixels = image.cgImage.map { "\($0.width) x \($0.height)" } ?? "Selected photo"
+                return "\(pixels) • ready for pose check"
+            case .video(let clip):
+                return "\(clip.durationText) • \(clip.orientationText) • \(clip.fileSizeText)"
+            }
+        }
+    }
+
+    struct Item: Identifiable {
+        let id = UUID()
+        var name: String
+        var pct: Double
+        var state: String
+        var media: QueuedMedia?
+        var source: PhotosPickerItem? = nil
+        var queuedAt = Date()
+
+        var queuedAtText: String {
+            queuedAt.formatted(date: .abbreviated, time: .shortened)
+        }
+    }
+
+    enum QueueRoute: Hashable { case imageReview, videoReview }
+
     @State private var items: [Item] = []
     @State private var addPick: PhotosPickerItem?
-    @State private var goAnalyze = false
+    @State private var loadingMedia = false
+    @State private var showFileImporter = false
+    @State private var selectedImage: UIImage?
+    @State private var selectedVideo: PickedVideoClip?
+    @State private var route: QueueRoute?
     @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-queue") {
@@ -1550,15 +2003,7 @@ struct UploadQueueView: View {      // 025
                 VStack(alignment: .leading, spacing: 0) {
                     CaptureHeader()
 
-                    HStack(alignment: .center, spacing: 0) {
-                        captureStat("82", "FORM SCORE")
-                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                        captureStat("24", "SHOTS")
-                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                        captureStat("15", "MAKES")
-                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                        captureStat("62.5%", "SHOOTING %")
-                    }
+                    CaptureSummaryStrip()
                     .padding(.horizontal, 20).padding(.top, 14)
 
                     HStack(alignment: .top) {
@@ -1568,17 +2013,34 @@ struct UploadQueueView: View {      // 025
                                 .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
-                        PhotosPicker(selection: $addPick, matching: .any(of: [.images, .videos])) {
-                            VStack(spacing: 5) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
-                                                         size: 32,
-                                                         label: nil)
-                                Text("Add media").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
+                        VStack(spacing: 8) {
+                            PhotosPicker(selection: $addPick, matching: .any(of: [.images, .videos])) {
+                                VStack(spacing: 5) {
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: loadingMedia ? "hourglass" : "plus.viewfinder"),
+                                                             size: 42,
+                                                             label: nil)
+                                    Text(loadingMedia ? "Loading" : "Add media").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
+                                }
+                                .padding(.horizontal, 16).padding(.vertical, 12)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                             }
-                            .padding(.horizontal, 16).padding(.vertical, 12)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening media picker",
+                                              "Choose a real photo or video to add to the queue.")
+                            })
+                            .disabled(loadingMedia)
+                            Button {
+                                toast = .info("Opening Files", "Choose a local image, MP4, MOV, or M4V.")
+                                showFileImporter = true
+                            } label: {
+                                Text("Browse files")
+                                    .shotiqBody(12, weight: .semibold)
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(loadingMedia)
                         }
-                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 20)
 
@@ -1600,24 +2062,24 @@ struct UploadQueueView: View {      // 025
                     ShotIQCard {
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(spacing: 14) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "wifi"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.analysisBlue)
-                                    .frame(width: 30)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "checkmark.seal"), size: 38).font(.system(size: 20)).foregroundStyle(ShotIQColor.analysisBlue)
+                                    .frame(width: 38)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Uploads will continue in the background")
+                                    Text("Queued media is ready for review")
                                         .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                    Text("You can close ShotIQ and we'll finish uploading.")
+                                    Text("Pick an item, then ShotIQ opens the image or video analysis path.")
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                 }
                             }
                             .padding(.bottom, 12)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                             HStack(spacing: 14) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "icloud.slash"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.graphite)
-                                    .frame(width: 30)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrow.clockwise"), size: 38).font(.system(size: 20)).foregroundStyle(ShotIQColor.graphite)
+                                    .frame(width: 38)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Connection protection")
+                                    Text("Retry by re-adding media")
                                         .shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                    Text("We'll automatically resume if your connection drops.")
+                                    Text("If a file does not load, choose it again or use Browse files.")
                                         .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                 }
                             }
@@ -1632,10 +2094,10 @@ struct UploadQueueView: View {      // 025
                             toast = .info("Add media first", "Queue an image or video before starting analysis.")
                             return
                         }
-                        toast = .progress("Starting analysis", "Preparing the selected queue item.", progress: 0.45)
-                        goAnalyze = true
+                        startAnalyzingSelected()
                     } label: { captureCTA(items.isEmpty ? "Add media to analyze" : "Analyze selected (1)") }
                         .buttonStyle(.plain)
+                        .disabled(loadingMedia)
                         .accessibilityIdentifier("Analyze now")
                         .padding(.horizontal, 20).padding(.top, 16)
                     Button {
@@ -1659,28 +2121,185 @@ struct UploadQueueView: View {      // 025
         }
         .onChange(of: addPick) { _, item in
             guard item != nil else { return }
-            withAnimation {
-                items.append(Item(name: "selected-media-\(items.count + 1)", pct: 0, state: "Queued"))
-            }
-            toast = .success("Media queued", "ShotIQ will upload it when ready.")
-            addPick = nil
+            loadQueuedMedia(item)
         }
-        .navigationDestination(isPresented: $goAnalyze) { AnalysisProcessingView() }
+        .fileImporter(isPresented: $showFileImporter,
+                      allowedContentTypes: [.image, .movie, .mpeg4Movie, .quickTimeMovie],
+                      allowsMultipleSelection: false) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                loadQueuedFile(url)
+            case .failure:
+                toast = .error("File not opened", "Choose a local image, MP4, MOV, or M4V.")
+            }
+        }
+        .navigationDestination(item: $route) { route in
+            switch route {
+            case .imageReview:
+                UploadQualityCheckView(image: selectedImage, viewpoint: .side)
+            case .videoReview:
+                VideoReviewView(video: selectedVideo)
+            }
+        }
         .shotiqToast($toast)
     }
 
     private var queueSummary: String {
         guard items.isEmpty == false else { return "No media queued" }
-        let up = items.filter { $0.state == "Uploading" }.count
+        let up = items.filter { $0.state == "Uploading" || $0.state == "Loading" }.count
         let done = items.filter { $0.state == "Complete" }.count
-        return "\(up) uploading • \(done) completed"
+        let failed = items.filter { $0.state == "Failed" }.count
+        return "\(up) uploading • \(done) completed • \(failed) failed"
+    }
+
+    private func loadQueuedMedia(_ item: PhotosPickerItem?) {
+        guard let item else { return }
+        loadingMedia = true
+        toast = .progress("Loading media", "Reading the selected image or video.", progress: 0.25)
+        let nextIndex = items.count + 1
+        Task {
+            let loaded = await makeQueuedItem(from: item, index: nextIndex)
+            await MainActor.run {
+                loadingMedia = false
+                addPick = nil
+                guard let loaded else {
+                    let failed = Item(name: "selected-media-\(nextIndex)",
+                                      pct: 0,
+                                      state: "Failed",
+                                      media: nil,
+                                      source: item)
+                    withAnimation { items.insert(failed, at: 0) }
+                    toast = .error("Media not loaded", "Choose a photo, MP4, MOV, or M4V and try again.")
+                    return
+                }
+                withAnimation { items.insert(loaded, at: 0) }
+                toast = .success("Media queued", "\(loaded.name) is ready to analyze.")
+            }
+        }
+    }
+
+    private func makeQueuedItem(from item: PhotosPickerItem, index: Int) async -> Item? {
+        if let data = try? await item.loadTransferable(type: Data.self),
+           let image = UIImage(data: data) {
+            return Item(name: "selected-image-\(index).jpg",
+                        pct: 1,
+                        state: "Complete",
+                        media: .image(image),
+                        source: item)
+        }
+        if let clip = await loadPickedVideoClip(from: item) {
+            return Item(name: clip.filename,
+                        pct: 1,
+                        state: "Complete",
+                        media: .video(clip),
+                        source: item)
+        }
+        return nil
+    }
+
+    private func loadQueuedFile(_ url: URL) {
+        loadingMedia = true
+        toast = .progress("Loading file", "Reading the selected media from Files.", progress: 0.25)
+        let nextIndex = items.count + 1
+        Task {
+            let loaded = await makeQueuedItem(fromFileURL: url, index: nextIndex)
+            await MainActor.run {
+                loadingMedia = false
+                guard let loaded else {
+                    let failed = Item(name: url.lastPathComponent.isEmpty ? "selected-file-\(nextIndex)" : url.lastPathComponent,
+                                      pct: 0,
+                                      state: "Failed",
+                                      media: nil)
+                    withAnimation { items.insert(failed, at: 0) }
+                    toast = .error("File not loaded", "Choose a readable image, MP4, MOV, or M4V.")
+                    return
+                }
+                withAnimation { items.insert(loaded, at: 0) }
+                toast = .success("File queued", "\(loaded.name) is ready to analyze.")
+            }
+        }
+    }
+
+    private func makeQueuedItem(fromFileURL url: URL, index: Int) async -> Item? {
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didAccess { url.stopAccessingSecurityScopedResource() }
+        }
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        if let image = UIImage(data: data) {
+            return Item(name: url.lastPathComponent.isEmpty ? "selected-image-\(index).jpg" : url.lastPathComponent,
+                        pct: 1,
+                        state: "Complete",
+                        media: .image(image))
+        }
+        if let clip = await loadVideoClip(data: data, ext: url.pathExtension.isEmpty ? "mov" : url.pathExtension) {
+            return Item(name: url.lastPathComponent.isEmpty ? clip.filename : url.lastPathComponent,
+                        pct: 1,
+                        state: "Complete",
+                        media: .video(clip))
+        }
+        return nil
+    }
+
+    private func retryQueuedItem(_ item: Item) {
+        guard let source = item.source else {
+            toast = .error("Retry unavailable", "Choose the media again from Photos.")
+            return
+        }
+        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
+        items[index].state = "Loading"
+        items[index].pct = 0.2
+        toast = .progress("Retrying media", "Loading \(item.name) again.", progress: 0.35)
+        Task {
+            let loaded = await makeQueuedItem(from: source, index: index + 1)
+            await MainActor.run {
+                guard let current = items.firstIndex(where: { $0.id == item.id }) else { return }
+                if let loaded {
+                    withAnimation { items[current] = loaded }
+                    toast = .success("Media queued", "\(loaded.name) is ready to analyze.")
+                } else {
+                    items[current].state = "Failed"
+                    items[current].pct = 0
+                    toast = .error("Retry failed", "Choose another photo, MP4, MOV, or M4V.")
+                }
+            }
+        }
+    }
+
+    private func startAnalyzingSelected() {
+        guard let item = items.first(where: { $0.state == "Complete" && $0.media != nil }),
+              item.media != nil else {
+            toast = .info("Add media first", "Queue a real image or video before starting analysis.")
+            return
+        }
+        startAnalyzing(item)
+    }
+
+    private func startAnalyzing(_ item: Item) {
+        guard let media = item.media else {
+            toast = .info("Media still loading", "Wait for this queue item to finish loading.")
+            return
+        }
+        switch media {
+        case .image(let image):
+            selectedImage = image
+            selectedVideo = nil
+            toast = .progress("Opening image analysis", "Checking pose and framing next.", progress: 0.45)
+            route = .imageReview
+        case .video(let clip):
+            selectedVideo = clip
+            selectedImage = nil
+            toast = .progress("Opening video review", "Trim the selected clip before analysis.", progress: 0.45)
+            route = .videoReview
+        }
     }
 
     private var emptyQueueCard: some View {
         ShotIQCard {
             HStack(alignment: .center, spacing: 14) {
                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
-                                         size: 44,
+                                         size: 54,
                                          label: nil)
                     .frame(width: 54, height: 54)
                 VStack(alignment: .leading, spacing: 4) {
@@ -1699,8 +2318,8 @@ struct UploadQueueView: View {      // 025
         ShotIQCard {
             HStack(alignment: .top, spacing: 12) {
                 ZStack(alignment: .topLeading) {
-                    captureDark(104, radius: 4).frame(width: 118)
-                    Image(systemName: it.state == "Complete" ? "photo" : "play.circle")
+                    queuePreview(it).frame(width: 118)
+                    Image(systemName: it.mediaIcon)
                         .font(.system(size: 15)).foregroundStyle(.white)
                         .padding(6)
                         .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 4))
@@ -1713,7 +2332,7 @@ struct UploadQueueView: View {      // 025
                             .font(.system(size: 17))
                             .foregroundStyle(it.state == "Complete" ? ShotIQColor.confirmGreen :
                                 (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
-                        Text(it.state == "Complete" ? "Image" : "Video")
+                        Text(it.media?.title ?? (it.state == "Complete" ? "Image" : "Video"))
                             .shotiqBody(16, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                             .lineLimit(1).fixedSize()
                         Text("•").foregroundStyle(ShotIQColor.graphite)
@@ -1727,28 +2346,73 @@ struct UploadQueueView: View {      // 025
                                 (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
                         Spacer()
                         Menu {
+                            if it.state == "Failed" {
+                                Button("Retry upload") {
+                                    retryQueuedItem(it)
+                                }
+                            }
                             Button("Remove from queue", role: .destructive) {
                                 withAnimation { items.removeAll { $0.id == it.id } }
+                                toast = .info("Removed from queue", it.name)
                             }
                         } label: {
                             Image(systemName: "ellipsis").foregroundStyle(ShotIQColor.graphite)
                                 .padding(.vertical, 4).padding(.leading, 8)
                         }
                     }
-                    Text("May 21, 2025 at 8:24 AM").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                    Text(it.queuedAtText).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                     Text(it.name).shotiqBody(13, weight: .medium).foregroundStyle(ShotIQColor.ink)
                         .lineLimit(1).minimumScaleFactor(0.8)
-                    if it.state == "Complete" {
+                    if let detail = it.media?.detail {
+                        Text(detail).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                    if it.state == "Failed" {
+                        Text("Media failed to load").shotiqBody(13, weight: .medium)
+                            .foregroundStyle(ShotIQColor.reviewRed)
+                        HStack(spacing: 8) {
+                            Button {
+                                retryQueuedItem(it)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.clockwise")
+                                    Text("Retry").shotiqBody(13, weight: .medium)
+                                }
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                .frame(maxWidth: .infinity).frame(height: 38)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("upload-queue-retry-\(it.id.uuidString)")
+
+                            Button {
+                                withAnimation { items.removeAll { $0.id == it.id } }
+                                toast = .info("Removed from queue", it.name)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "trash")
+                                    Text("Remove").shotiqBody(13, weight: .medium)
+                                }
+                                .foregroundStyle(ShotIQColor.graphite)
+                                .frame(maxWidth: .infinity).frame(height: 38)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("upload-queue-remove-\(it.id.uuidString)")
+                        }
+                    } else if it.state == "Complete" {
                         Text("Ready to analyze").shotiqBody(13, weight: .medium)
                             .foregroundStyle(ShotIQColor.confirmGreen)
                         // Shares the screen's one route to processing with
                         // "Analyze selected" — a second NavigationLink to the same
                         // destination competed with the screen's
                         // navigationDestination and the tap went nowhere.
-                        Button { goAnalyze = true } label: {
+                        Button {
+                            startAnalyzing(it)
+                        } label: {
                             HStack(spacing: 8) {
                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
-                                                         size: 15,
+                                                         size: 24,
                                                          label: nil)
                                 Text("Analyze now").shotiqBody(14, weight: .medium)
                             }
@@ -1772,7 +2436,9 @@ struct UploadQueueView: View {      // 025
                             Spacer()
                             Button {
                                 if let idx = items.firstIndex(where: { $0.id == it.id }) {
-                                    items[idx].state = items[idx].state == "Uploading" ? "Paused" : "Uploading"
+                                    let paused = items[idx].state == "Uploading"
+                                    items[idx].state = paused ? "Paused" : "Uploading"
+                                    toast = .info(paused ? "Upload paused" : "Upload resumed", it.name)
                                 }
                             } label: {
                                 Image(systemName: it.state == "Uploading" ? "pause" : "play")
@@ -1792,9 +2458,38 @@ struct UploadQueueView: View {      // 025
             .padding(12)
         }
     }
+
+    @ViewBuilder
+    private func queuePreview(_ item: Item) -> some View {
+        switch item.media {
+        case .image(let image):
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(height: 104)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        case .video(let clip):
+            CaptureVideoPoseSurface(url: clip.url,
+                                    height: 104,
+                                    cornerRadius: 4,
+                                    accessibilityID: "upload-queue-video-pose-preview")
+        case .none:
+            CanonicalPhoto("021-visual-004", height: 104, cornerRadius: 4)
+        }
+    }
 }
 
-struct PickedVideoClip: Identifiable, Equatable {
+private extension UploadQueueView.Item {
+    var mediaIcon: String {
+        switch media {
+        case .image: return "photo"
+        case .video: return "play.circle"
+        case .none: return state == "Complete" ? "photo" : "play.circle"
+        }
+    }
+}
+
+struct PickedVideoClip: Identifiable, Equatable, Hashable {
     var id: String { url.path }
     var url: URL
     var filename: String
@@ -1803,6 +2498,17 @@ struct PickedVideoClip: Identifiable, Equatable {
     var durationSeconds: Double
     var dimensions: CGSize?
     var frameRate: Float?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+        hasher.combine(filename)
+        hasher.combine(contentType)
+        hasher.combine(fileSizeBytes)
+        hasher.combine(durationSeconds)
+        hasher.combine(dimensions?.width)
+        hasher.combine(dimensions?.height)
+        hasher.combine(frameRate)
+    }
 
     var durationText: String { Self.timeText(durationSeconds) }
 
@@ -1843,7 +2549,7 @@ struct PickedVideoClip: Identifiable, Equatable {
     }
 }
 
-struct VideoAnalysisJob: Equatable {
+struct VideoAnalysisJob: Equatable, Hashable {
     var clientSessionId: String
     var clip: PickedVideoClip
     var trimStartFraction: Double
@@ -1866,6 +2572,96 @@ struct VideoAnalysisJob: Equatable {
     }
 }
 
+private struct PickedVideoThumbnailView: View {
+    var clip: PickedVideoClip
+    var height: CGFloat
+    var compact = false
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            Group {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Rectangle()
+                        .fill(ShotIQColor.warmCanvas)
+                        .overlay {
+                            if failed {
+                                Image(systemName: "video")
+                                    .font(.system(size: compact ? 20 : 32, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                            } else {
+                                ProgressView()
+                                    .tint(ShotIQColor.shotiqOrange)
+                            }
+                        }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .clipped()
+
+            LinearGradient(colors: [.black.opacity(0.0), .black.opacity(0.76)],
+                           startPoint: .top,
+                           endPoint: .bottom)
+
+            HStack(alignment: .bottom, spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: compact ? 16 : 20, weight: .semibold))
+                    .foregroundStyle(ShotIQColor.confirmGreen)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(compact ? "Video ready" : clip.filename)
+                        .shotiqBody(compact ? 12 : 13, weight: .bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                    Text("\(clip.durationText) • \(clip.orientationText) • \(clip.fileSizeText)")
+                        .shotiqBody(compact ? 10 : 11, weight: .semibold)
+                        .foregroundStyle(.white.opacity(0.84))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "play.fill")
+                    .font(.system(size: compact ? 12 : 15, weight: .bold))
+                    .foregroundStyle(.black)
+                    .frame(width: compact ? 30 : 38, height: compact ? 30 : 38)
+                    .background(ShotIQColor.shotiqOrange, in: Circle())
+            }
+            .padding(12)
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .task(id: clip.id) { await loadThumbnail() }
+        .accessibilityLabel("Selected video preview")
+    }
+
+    private func loadThumbnail() async {
+        image = nil
+        failed = false
+        let asset = AVURLAsset(url: clip.url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 900, height: 900)
+        let seconds = min(max(clip.durationSeconds * 0.1, 0.05), 1.0)
+        let time = CMTime(seconds: seconds, preferredTimescale: 600)
+        do {
+            let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+            await MainActor.run {
+                image = UIImage(cgImage: cgImage)
+            }
+        } catch {
+            await MainActor.run {
+                failed = true
+            }
+        }
+    }
+}
+
 private func loadPickedVideoClip(from item: PhotosPickerItem) async -> PickedVideoClip? {
     guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
     let ext = item.supportedContentTypes.first?.preferredFilenameExtension ?? "mov"
@@ -1885,10 +2681,7 @@ private func loadVideoClip(fromFileURL sourceURL: URL) async -> PickedVideoClip?
 private func loadVideoClip(data: Data, ext: String) async -> PickedVideoClip? {
     let contentType = PickedVideoClip.contentType(forExtension: ext)
     let filename = "shotiq-\(UUID().uuidString).\(ext)"
-    let url = FileManager.default.temporaryDirectory.appending(path: filename)
-    do {
-        try data.write(to: url, options: [.atomic])
-    } catch {
+    guard let url = shotiqPersistLocalVideo(data, filename: filename) else {
         return nil
     }
 
@@ -1918,87 +2711,124 @@ private func loadVideoClip(data: Data, ext: String) async -> PickedVideoClip? {
 }
 
 struct VideoUploadView: View {      // 026
+    @EnvironmentObject private var app: AppState
+    enum VideoUploadRoute: Hashable { case review(PickedVideoClip), imageUpload, recordVideo, uploadQueue, captureGuide }
     @State private var pick: PhotosPickerItem?
     @State private var selectedVideo: PickedVideoClip?
     @State private var loadingVideo = false
     @State private var videoError: String?
     @State private var showFileImporter = false
-    @State private var go = false
+    @State private var route: VideoUploadRoute?
     @State private var toast: ShotIQToast?
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-upload") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     CaptureHeader()
 
-                    Text("VIDEO UPLOAD").shotiqDisplay(38).padding(.horizontal, 20).padding(.top, 24)
-                    Text("Upload a clear video of your shot for AI analysis.")
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("UPLOAD YOUR SHOOTING MEDIA")
+                            .shotiqCondensed(22, weight: .heavy)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 24)
+                    Text("Choose to upload images or a video of your shooting form for comprehensive biomechanical analysis.")
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
-                    SectionLabel(text: "VIDEO SOURCE")
+                    SectionLabel(text: "SELECT MEDIA TYPE")
                         .padding(.horizontal, 20).padding(.top, 22)
-                    Text("Choose how you want to add footage. Each option opens a real next step.")
-                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                        .padding(.horizontal, 20).padding(.top, 3)
+
+                    Menu {
+                        Button {
+                            route = .imageUpload
+                            toast = .info("Opening image upload", "Upload 3-7 photos or choose one real shot image.")
+                        } label: {
+                            Label("Images - Upload 3-7 photos", systemImage: "photo.stack")
+                        }
+                        Button {
+                            toast = .info("Opening Files", "Choose a local MP4, MOV, or M4V.")
+                            showFileImporter = true
+                        } label: {
+                            Label("Video - Upload a 10-second video", systemImage: "video")
+                        }
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "video")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                .frame(width: 42, height: 42)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.55)))
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Video").shotiqBody(17, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                Text("Upload a 10-second video").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 8)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Video Requirements", systemImage: "exclamationmark.triangle")
+                            .shotiqBody(13, weight: .bold)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        videoRequirement("Maximum 10 seconds, under 50MB", highlight: true)
+                        videoRequirement("Full body visible throughout the shot")
+                        videoRequirement("Single shooter, clear view")
+                        videoRequirement("Good lighting, minimal camera shake")
+                        videoRequirement("Side or 45-degree angle preferred")
+                        videoRequirement("Include the shooting motion, not just dribbling")
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    .padding(.horizontal, 20).padding(.top, 26)
 
                     PhotosPicker(selection: $pick, matching: .videos) {
-                        videoSourceRow(loadingVideo ? "hourglass" : "photo.on.rectangle",
-                                       loadingVideo ? "Loading video" : "Video library",
-                                       "Choose a clip from Photos",
-                                       tint: ShotIQColor.shotiqOrange)
+                        videoUploadDropzone
                     }
+                    .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .info("Opening video library", "Choose a real shooting clip.")
+                    })
                     .disabled(loadingVideo)
-                    .padding(.horizontal, 20).padding(.top, 10)
+                    .padding(.horizontal, 20).padding(.top, 14)
 
-                    Button {
-                        showFileImporter = true
-                    } label: {
-                        videoSourceRow("folder", "Browse files", "Import MP4, MOV, or M4V from Files",
-                                       tint: ShotIQColor.analysisBlue)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(loadingVideo)
-                    .padding(.horizontal, 20).padding(.top, 10)
+                    HStack(spacing: 10) {
+                        Button {
+                            toast = .info("Opening Files", "Choose a local MP4, MOV, or M4V.")
+                            showFileImporter = true
+                        } label: {
+                            compactVideoAction("folder", "Browse files")
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(loadingVideo)
 
-                    NavigationLink { LiveCameraSetupView() } label: {
-                        videoSourceRow("camera.metering.center.weighted", "Record video", "Use your camera",
-                                       tint: ShotIQColor.confirmGreen)
+                        Button {
+                            route = .recordVideo
+                            toast = .info("Opening camera setup", "Position the phone before recording.")
+                        } label: {
+                            compactVideoAction("record.circle", "Record video")
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20).padding(.top, 10)
-
-                    NavigationLink { UploadQueueView() } label: {
-                        videoSourceRow("tray.full", "Upload queue", "Manage pending videos and retry uploads",
-                                       tint: ShotIQColor.ink)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20).padding(.top, 10)
-
-                    NavigationLink { CaptureGuideView() } label: {
-                        videoSourceRow("point.topleft.down.curvedto.point.bottomright.up",
-                                       "View filming tips",
-                                       "Learn the best way to film your shot",
-                                       tint: ShotIQColor.analysisBlue)
-                    }
-                    .buttonStyle(.plain)
                     .padding(.horizontal, 20).padding(.top, 10)
 
                     if let selectedVideo {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 18))
-                                .foregroundStyle(ShotIQColor.confirmGreen)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(selectedVideo.filename).shotiqBody(13, weight: .semibold)
-                                    .foregroundStyle(ShotIQColor.ink)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                                Text("\(selectedVideo.durationText) • \(selectedVideo.orientationText) • \(selectedVideo.fileSizeText)")
-                                    .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            Spacer()
-                        }
-                        .padding(12)
+                        PickedVideoThumbnailView(clip: selectedVideo, height: 136, compact: true)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         .padding(.horizontal, 20).padding(.top, 10)
                     }
@@ -2007,61 +2837,50 @@ struct VideoUploadView: View {      // 026
                             .padding(.horizontal, 20).padding(.top, 8)
                     }
 
-                    SectionLabel(text: "FRAMING GUIDE").padding(.horizontal, 20).padding(.top, 22)
-                    Text("Full body in frame from feet to above release.")
-                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                        .padding(.horizontal, 20).padding(.top, 2)
-                    HStack(spacing: 12) {
-                        framingCard("GOOD", good: true)
-                        framingCard("TOO CLOSE", photo: "026-visual-001", good: false)
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "lightbulb.fill")
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("The system detects your shooting motion and extracts key frames for setup, release, and follow-through analysis.")
+                            .shotiqBody(12)
+                            .foregroundStyle(ShotIQColor.graphite)
                     }
-                    .padding(.horizontal, 20).padding(.top, 10)
-
-                    // Profile summary (canonical warm panel)
-                    VStack(alignment: .leading, spacing: 0) {
-                        SectionLabel(text: "YOUR PROFILE SUMMARY").padding(.bottom, 10)
-                        HStack(alignment: .center, spacing: 0) {
-                            captureStat("24", "SHOTS", size: 30)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            captureStat("15", "MAKES", size: 30)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            captureStat("62.5%", "MAKE %", size: 30)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            VStack(spacing: 3) {
-                                Text("82").font(.custom("Tungsten-Medium", size: 30))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                Text("FORM SCORE").shotiqBody(9, weight: .medium).kerning(0.5)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                ScoreBar(pct: 0.82).frame(width: 64)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .padding(.bottom, 14)
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-                        NavigationLink {
-                            FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("PRIMARY COACHING TARGET")
-                                    .shotiqBody(10, weight: .medium).kerning(0.7)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                HStack {
-                                    Text("Keep elbow stacked through release")
-                                        .shotiqBody(17, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(1).minimumScaleFactor(0.7)
-                                    Spacer()
-                                    Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                                }
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 12)
-                    }
-                    .padding(16)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
-                    .padding(.horizontal, 20).padding(.top, 18)
+                    .padding(.horizontal, 20).padding(.top, 16)
 
-                    PhaseStrip().padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
+                    Button { analyzeSelectedVideo() } label: {
+                        captureCTA("Analyze My Shooting Form",
+                                   icon: selectedVideo == nil ? "sparkles" : "camera.metering.center.weighted")
+                            .opacity(selectedVideo == nil ? 0.45 : 1)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(loadingVideo)
+                    .accessibilityIdentifier("video-upload-analyze")
+                    .padding(.horizontal, 20).padding(.top, 24)
+
+                    Text(selectedVideo == nil
+                         ? "Choose a video first. ShotIQ will analyze pose, angles, and release frames."
+                         : "Video ready. Tap Analyze to review and process this shot.")
+                        .shotiqBody(12)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 20).padding(.top, 8)
+
+                    HStack(spacing: 10) {
+                        Button {
+                            route = .uploadQueue
+                            toast = .info("Opening upload queue", "Queued media and retries are there.")
+                        } label: { captureOutline("Upload queue", icon: "tray.full") }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            route = .captureGuide
+                            toast = .info("Opening filming tips", "Use the guide to frame the shooter.")
+                        } label: { captureOutline("Filming tips", icon: "point.topleft.down.curvedto.point.bottomright.up") }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
         }
@@ -2089,8 +2908,85 @@ struct VideoUploadView: View {      // 026
                 toast = .error("File not opened", "Choose a local MP4 or MOV and try again.")
             }
         }
-        .navigationDestination(isPresented: $go) { VideoReviewView(video: selectedVideo) }
+        .navigationDestination(item: $route) { route in
+            switch route {
+            case .review(let clip):
+                VideoReviewView(video: clip)
+            case .imageUpload:
+                PhotoUploadSourceView()
+            case .recordVideo:
+                LiveCameraSetupView()
+            case .uploadQueue:
+                UploadQueueView()
+            case .captureGuide:
+                CaptureGuideView()
+            }
+        }
         .shotiqToast($toast)
+    }
+
+    private var videoUploadDropzone: some View {
+        Group {
+            if let selectedVideo, !loadingVideo {
+                PickedVideoThumbnailView(clip: selectedVideo, height: 188)
+            } else {
+                VStack(spacing: 10) {
+                    Image(systemName: loadingVideo ? "hourglass" : "video")
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .frame(width: 62, height: 62)
+                        .overlay(Circle().stroke(ShotIQColor.shotiqOrange.opacity(0.65), lineWidth: 2))
+                    Text(uploadTitle)
+                        .shotiqBody(16, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.ink)
+                    Text(uploadSubtitle)
+                        .shotiqBody(12)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                .frame(maxWidth: .infinity, minHeight: 188)
+                .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+            }
+        }
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 4])).foregroundStyle(ShotIQColor.rule))
+    }
+
+    private var uploadTitle: String {
+        if loadingVideo { return "Loading video" }
+        return "Click to upload video"
+    }
+
+    private var uploadSubtitle: String {
+        if loadingVideo { return "Reading duration, size, and frame rate" }
+        return "MP4, MOV, M4V (max 10 sec, 50MB)"
+    }
+
+    private func videoRequirement(_ text: String, highlight: Bool = false) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text("•").shotiqBody(12, weight: .bold)
+            Text(text).shotiqBody(12, weight: highlight ? .semibold : .regular)
+        }
+        .foregroundStyle(highlight ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+    }
+
+    private func compactVideoAction(_ icon: String, _ title: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 14, weight: .semibold))
+            Text(title).shotiqBody(13, weight: .semibold)
+        }
+        .foregroundStyle(ShotIQColor.ink)
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
+    private func analyzeSelectedVideo() {
+        guard let selectedVideo else {
+            videoError = "Choose a video before starting analysis."
+            toast = .error("Choose a video first", "ShotIQ needs a real shot video before analysis.")
+            return
+        }
+        toast = .progress("Preparing analysis", "Opening video review for \(selectedVideo.durationText).", progress: 0.35)
+        route = .review(selectedVideo)
     }
 
     @MainActor
@@ -2106,8 +3002,7 @@ struct VideoUploadView: View {      // 026
         pick = nil
         if let clip {
             selectedVideo = clip
-            toast = .success("Video ready", "\(clip.durationText) • \(clip.orientationText)")
-            go = true
+            toast = .success("Video ready", "Tap Analyze My Shooting Form when you're ready.")
         } else {
             videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
             toast = .error("Video not loaded", "Choose a local MP4 or MOV and try again.")
@@ -2162,11 +3057,11 @@ struct VideoUploadView: View {      // 026
 
 struct VideoReviewView: View {      // 027
     var video: PickedVideoClip? = nil
+    enum ReviewRoute: Hashable { case processing(VideoAnalysisJob), upload }
     @Environment(\.dismiss) private var dismiss
-    @State private var trimStart: Double = 0.1
-    @State private var trimEnd: Double = 0.8
-    @State private var pendingJob: VideoAnalysisJob?
-    @State private var goProcessing = false
+    @State private var trimStart: Double = 0
+    @State private var trimEnd: Double = 1
+    @State private var route: ReviewRoute?
     @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-review") {
@@ -2176,7 +3071,10 @@ struct VideoReviewView: View {      // 027
 
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Returning to video upload")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "arrow.left").font(.system(size: 14, weight: .semibold))
                                     Text("AI ANALYSIS").shotiqBody(13, weight: .bold).kerning(1)
@@ -2195,19 +3093,12 @@ struct VideoReviewView: View {      // 027
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
-                    HStack(alignment: .center, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 10) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Jordan Ellis").shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                             Text("Right-handed • Advanced").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        captureStat("82", "FORM SCORE", color: ShotIQColor.shotiqOrange, size: 24)
-                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
-                        captureStat("24", "SHOTS", size: 24)
-                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
-                        captureStat("15", "MAKES", size: 24)
-                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
-                        captureStat("62.5%", "%", size: 24)
+                        CaptureSummaryStrip(scoreSize: 24)
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
@@ -2229,9 +3120,10 @@ struct VideoReviewView: View {      // 027
 
                     Group {
                         if let video {
-                            VideoPlayer(player: AVPlayer(url: video.url))
-                                .frame(height: 300)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            CaptureVideoPoseSurface(url: video.url,
+                                                    height: 300,
+                                                    cornerRadius: 8,
+                                                    accessibilityID: "video-review-pose-preview")
                                 .overlay(alignment: .bottomTrailing) {
                                     Text(video.durationText)
                                         .font(.custom("Tungsten-Medium", size: 13))
@@ -2267,6 +3159,9 @@ struct VideoReviewView: View {      // 027
                                 .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("trimTrack"))
                                     .onChanged { v in
                                         trimStart = min(max(0, v.location.x / w), trimEnd - 0.08)
+                                    }
+                                    .onEnded { _ in
+                                        toast = .info("Trim start set", video?.timeText(at: trimStart) ?? "Start adjusted")
                                     })
                             RoundedRectangle(cornerRadius: 5).fill(ShotIQColor.shotiqOrange)
                                 .frame(width: 18, height: 54)
@@ -2275,6 +3170,9 @@ struct VideoReviewView: View {      // 027
                                 .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("trimTrack"))
                                     .onChanged { v in
                                         trimEnd = max(min(1, v.location.x / w), trimStart + 0.08)
+                                    }
+                                    .onEnded { _ in
+                                        toast = .info("Trim end set", video?.timeText(at: trimEnd) ?? "End adjusted")
                                     })
                         }
                         .coordinateSpace(name: "trimTrack")
@@ -2311,50 +3209,46 @@ struct VideoReviewView: View {      // 027
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    captureCTA("Analyze video", icon: "camera.metering.center.weighted")
-                        .contentShape(RoundedRectangle(cornerRadius: 8))
-                        .onTapGesture { analyzeVideo() }
+                    Button { analyzeVideo() } label: {
+                        captureCTA(video == nil ? "Choose video to analyze" : "Analyze video",
+                                   icon: video == nil ? "film" : "camera.metering.center.weighted")
+                    }
+                        .buttonStyle(.plain)
                         .accessibilityElement(children: .combine)
                         .accessibilityAddTraits(.isButton)
                         .accessibilityLabel("Analyze video")
-                        .accessibilityAction { analyzeVideo() }
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     HStack(spacing: 10) {
                         Button {
-                            // Snap the handles back to the AI-detected shot window.
-                            withAnimation(.easeInOut(duration: 0.25)) { trimStart = 0.1; trimEnd = 0.8 }
-                            toast = .success("Trim reset", "Using ShotIQ's suggested shot window.")
+                            withAnimation(.easeInOut(duration: 0.25)) { trimStart = 0; trimEnd = 1 }
+                            toast = .success("Trim reset", "Using the full uploaded clip.")
                         } label: { captureOutline("Trim", icon: "crop") }.buttonStyle(.plain)
                         Button {
                             toast = .info("Choose another video", "Returning to upload source.")
-                            dismiss()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
                         } label: { captureOutline("Change video", icon: "square.and.arrow.up") }.buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 
-                    NavigationLink { ProfileView() } label: {
-                        HStack(spacing: 12) {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person"), size: 32).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
-                            Text("Edit player profile").shotiqBody(15).foregroundStyle(ShotIQColor.ink)
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                        }
-                        .padding(14)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
+                    Spacer(minLength: 26)
                 }
             }
         }
-        .navigationDestination(isPresented: $goProcessing) { AnalysisProcessingView(videoJob: pendingJob) }
+        .navigationDestination(item: $route) { route in
+            switch route {
+            case .processing(let job):
+                AnalysisProcessingView(videoJob: job)
+            case .upload:
+                VideoUploadView()
+            }
+        }
         .shotiqToast($toast)
     }
 
     private func detailCol(_ icon: String, _ v: String, _ l: String) -> some View {
         VStack(spacing: 4) {
-            ShotIQConceptGlyph(concept: l, fallback: icon, size: 19)
+            ShotIQConceptGlyph(concept: l, fallback: icon, size: 30)
                 .foregroundStyle(ShotIQColor.ink)
             Text(v).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -2373,22 +3267,26 @@ struct VideoReviewView: View {      // 027
             clip: video,
             trimStartFraction: trimStart,
             trimEndFraction: trimEnd)
-        pendingJob = job
         toast = .progress("Preparing analysis", "Trim window \(job.trimWindowText).", progress: 0.35)
         Task {
             try? await Task.sleep(for: .milliseconds(250))
-            await MainActor.run { goProcessing = true }
+            await MainActor.run { route = .processing(job) }
         }
     }
 
     private func showMissingVideoToast() {
-        toast = .error("Choose a video first", "ShotIQ needs a real clip before analysis.")
+        toast = .info("Choose a video first", "Opening video upload so ShotIQ can analyze a real clip.")
+        Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            await MainActor.run { route = .upload }
+        }
     }
 }
 
 struct LiveCameraSetupView: View {  // 028
     @ObservedObject private var camera = CameraService.live
     @State private var rightHanded = true
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-camera-setup") {
             ScrollView {
@@ -2396,35 +3294,8 @@ struct LiveCameraSetupView: View {  // 028
                     CaptureHeader()
 
                     ShotIQCard {
-                        HStack(alignment: .center, spacing: 0) {
-                            VStack(spacing: 2) {
-                                Text("FORM SCORE").shotiqBody(9, weight: .medium).kerning(0.5)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                    Text("82").font(.custom("Tungsten-Medium", size: 26))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("/100").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            captureStat("24", "SHOTS", size: 24)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            captureStat("15", "MAKES", size: 24)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            captureStat("62.5%", "ACCURACY", size: 24)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("PRIMARY TARGET").shotiqBody(8, weight: .medium).kerning(0.4)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                Text("Keep elbow stacked through release")
-                                    .shotiqBody(10).foregroundStyle(ShotIQColor.ink)
-                                    .lineLimit(2).minimumScaleFactor(0.8)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.leading, 6)
-                        }
-                        .padding(.vertical, 12).padding(.horizontal, 8)
+                        CaptureSummaryStrip(scoreSize: 24)
+                            .padding(.vertical, 12).padding(.horizontal, 8)
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
 
@@ -2435,7 +3306,10 @@ struct LiveCameraSetupView: View {  // 028
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
-                        Button { camera.flipCamera() } label: {
+                        Button {
+                            camera.flipCamera()
+                            toast = .info("Switching camera", "Use the view that keeps your full body and hoop visible.")
+                        } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 15))
                                 Text("Switch camera").shotiqBody(13, weight: .medium)
@@ -2483,7 +3357,10 @@ struct LiveCameraSetupView: View {  // 028
                             VStack(spacing: 10) {
                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 32).font(.system(size: 30)).foregroundStyle(.white)
                                 Text("Camera permission needed").shotiqBody(14).foregroundStyle(.white)
-                                Button("Allow camera") { camera.start() }
+                                Button("Allow camera") {
+                                    toast = .progress("Opening camera permission", "Allow camera access to use live capture.", progress: 0.5)
+                                    camera.start()
+                                }
                                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                         }
@@ -2507,14 +3384,20 @@ struct LiveCameraSetupView: View {  // 028
                                 }
                                 Spacer()
                                 HStack(spacing: 0) {
-                                    Button { rightHanded = false } label: {
+                                    Button {
+                                        rightHanded = false
+                                        toast = .success("Shooting hand set", "Left hand selected.")
+                                    } label: {
                                         Text("LEFT").shotiqBody(12, weight: .bold).kerning(0.5)
                                             .padding(.horizontal, 14).padding(.vertical, 9)
                                             .background(rightHanded ? ShotIQColor.paper : ShotIQColor.shotiqOrange)
                                             .foregroundStyle(rightHanded ? ShotIQColor.ink : .white)
                                     }
                                     .buttonStyle(.plain)
-                                    Button { rightHanded = true } label: {
+                                    Button {
+                                        rightHanded = true
+                                        toast = .success("Shooting hand set", "Right hand selected.")
+                                    } label: {
                                         Text("RIGHT").shotiqBody(12, weight: .bold).kerning(0.5)
                                             .padding(.horizontal, 14).padding(.vertical, 9)
                                             .background(rightHanded ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
@@ -2534,10 +3417,16 @@ struct LiveCameraSetupView: View {  // 028
                     NavigationLink { HoopCalibrationView() } label: {
                         captureCTA("Set up camera", icon: "camera.metering.center.weighted")
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .progress("Opening calibration", "Center the hoop before recording.", progress: 0.5)
+                    })
                     .padding(.horizontal, 20).padding(.top, 16)
                     NavigationLink { VideoUploadView() } label: {
                         captureOutline("Use uploaded video", icon: "square.and.arrow.up")
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .info("Opening video upload", "Choose a real shot video from your library.")
+                    })
                     .buttonStyle(.plain)
                     .padding(.horizontal, 20).padding(.top, 10)
 
@@ -2545,13 +3434,14 @@ struct LiveCameraSetupView: View {  // 028
                 }
             }
         }
+        .shotiqToast($toast)
     }
 
     private func setupRow(_ icon: String, _ t: String, _ d: String) -> some View {
         HStack(spacing: 14) {
             // Four different readiness checks, four different bracket marks —
             // this row shipped `camera.metering...` beside `figure.stand`.
-            ShotIQConceptGlyph(concept: t, fallback: icon, size: 22)
+            ShotIQConceptGlyph(concept: t, fallback: icon, size: 34)
                 .foregroundStyle(ShotIQColor.ink).frame(width: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(t).shotiqCondensed(14, weight: .heavy).kerning(0.5)
@@ -2573,6 +3463,7 @@ struct HoopCalibrationView: View {  // 029
     /// into the lower canonical crop, so the drawn rule lands on top of it
     /// instead of beside it.
     @State private var hoopPos = CGPoint(x: 0.498, y: 0.373)
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-hoop-calibration") {
             ScrollView {
@@ -2646,6 +3537,7 @@ struct HoopCalibrationView: View {  // 029
                                     guard case .second(true, let drag?) = value else { return }
                                     hoopPos = CGPoint(x: min(max(drag.location.x / w, 0.15), 0.85),
                                                       y: min(max(drag.location.y / h, 0.15), 0.85))
+                                    toast = .info("Hoop target moved", "Align the crosshair with the rim.")
                                 }
                         )
                         .accessibilityLabel("Hoop calibration viewfinder — press and hold, then drag, to move the crosshair")
@@ -2671,17 +3563,26 @@ struct HoopCalibrationView: View {  // 029
                     .padding(.top, 14)
 
                     HStack(spacing: 10) {
-                        Button { camera.flipCamera() } label: { captureOutline("Switch camera", icon: "arrow.triangle.2.circlepath") }
+                        Button {
+                            camera.flipCamera()
+                            toast = .info("Switching camera", "Keep the rim centered in frame.")
+                        } label: { captureOutline("Switch camera", icon: "arrow.triangle.2.circlepath") }
                             .buttonStyle(.plain)
                         NavigationLink { ReadinessCheckView() } label: {
                             captureOutline("Skip calibration", icon: "viewfinder")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Skipping calibration", "ShotIQ will use the current framing.")
+                        })
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     NavigationLink { ReadinessCheckView() } label: {
                         captureCTA("Confirm hoop", icon: "scope", color: ShotIQColor.confirmGreen)
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .success("Hoop confirmed", "Readiness check is next.")
+                    })
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("Confirm hoop")
                     .padding(.horizontal, 20).padding(.top, 10)
@@ -2690,12 +3591,15 @@ struct HoopCalibrationView: View {  // 029
                 }
             }
         }
+        .shotiqToast($toast)
     }
 }
 
 struct ReadinessCheckView: View {   // 030
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var app: AppState
     @ObservedObject private var camera = CameraService.live
+    @State private var toast: ShotIQToast?
     private let checks = [("Full body", "GOOD"), ("Lighting", "GOOD"), ("Stability", "GOOD"),
                           ("Hoop visible", "GOOD"), ("Ball visible", "GOOD"), ("Pose confidence", "92%")]
     var body: some View {
@@ -2704,7 +3608,10 @@ struct ReadinessCheckView: View {   // 030
                 VStack(alignment: .leading, spacing: 0) {
                     CaptureHeader()
 
-                    Button { dismiss() } label: {
+                    Button {
+                        toast = .info("Returning to calibration", "Readiness check closed.")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                    } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "arrow.left").font(.system(size: 16, weight: .semibold))
                             Text("AI ANALYSIS").shotiqBody(13, weight: .bold).kerning(1)
@@ -2782,7 +3689,19 @@ struct ReadinessCheckView: View {   // 030
                     PhaseStrip().padding(.horizontal, 20).padding(.top, 8)
 
                     NavigationLink {
-                        FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+                        if let latest = app.recentMedia.first {
+                            FlawDetailView(
+                                title: "Keep elbow stacked through release",
+                                severity: "PRIMARY TARGET",
+                                presentation: AnalysisResultPresentation(result: latest.analysis))
+                        } else if UITestHooks.demoData {
+                            FlawDetailView(
+                                title: "Keep elbow stacked through release",
+                                severity: "PRIMARY TARGET",
+                                presentation: .canonicalDemo)
+                        } else {
+                            AnalyzeHubView()
+                        }
                     } label: {
                         HStack(alignment: .center, spacing: 14) {
                             TrendLine(points: [1, 2.4, 3.4, 4], stroke: ShotIQColor.shotiqOrange)
@@ -2801,25 +3720,41 @@ struct ReadinessCheckView: View {   // 030
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .info("Opening coaching target",
+                                      "Review the elbow-stack correction before recording.")
+                    })
                     .buttonStyle(.plain)
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     NavigationLink { CaptureReadyView() } label: {
                         captureCTA("Keep position", color: ShotIQColor.confirmGreen)
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .success("Readiness confirmed", "Starting capture countdown.")
+                    })
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("Keep position")
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     HStack(spacing: 10) {
                         NavigationLink { CaptureGuideView() } label: { captureOutline("Camera help", icon: "camera") }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening camera help", "Review positioning tips before recording.")
+                            })
                             .buttonStyle(.plain)
-                        Button { dismiss() } label: { captureOutline("Cancel") }.buttonStyle(.plain)
+                        Button {
+                            toast = .info("Capture cancelled", "Returning to the previous screen.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                dismiss()
+                            }
+                        } label: { captureOutline("Cancel") }.buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -2829,6 +3764,7 @@ struct CaptureReadyView: View {     // 031
     @State private var count = 3
     @State private var go = false
     @State private var cancelled = false
+    @State private var toast: ShotIQToast?
     private let readiness = [("Camera", "Positioned"), ("Full Body", "In Frame"), ("Lighting", "Good"),
                              ("Space", "Clear"), ("Battery", "Sufficient")]
     var body: some View {
@@ -2900,7 +3836,12 @@ struct CaptureReadyView: View {     // 031
                     SectionLabel(text: "LATEST SESSION").padding(.horizontal, 20).padding(.top, 12)
                     CaptureSessionStats().padding(.horizontal, 20).padding(.top, 8)
 
-                    Button { go = true } label: {
+                    Button {
+                        toast = .progress("Starting recording", "ShotIQ is opening the live recording HUD.", progress: 0.8)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            go = true
+                        }
+                    } label: {
                         captureCTA("Start recording", icon: "record.circle", color: ShotIQColor.confirmGreen)
                     }
                     .buttonStyle(.plain)
@@ -2909,11 +3850,13 @@ struct CaptureReadyView: View {     // 031
                     HStack(spacing: 10) {
                         Button {
                             cancelled = true
+                            toast = .info("Adjust setup", "Returning to the readiness screen.")
                             dismiss() // back to the readiness/setup screens
                         } label: { captureOutline("Adjust setup", icon: "slider.horizontal.3") }.buttonStyle(.plain)
                         Button {
                             cancelled = true
                             CameraService.live.stop()
+                            toast = .info("Capture cancelled", "Camera session stopped.")
                             dismiss()
                         } label: { captureOutline("Cancel", icon: "xmark") }.buttonStyle(.plain)
                     }
@@ -2926,11 +3869,13 @@ struct CaptureReadyView: View {     // 031
                 try? await Task.sleep(for: .seconds(1))
                 if cancelled { return }
                 count -= 1
+                toast = .info("Auto-start in \(count)", "Stay in position.")
             }
             try? await Task.sleep(for: .seconds(1))
             if !cancelled { go = true }
         }
         .navigationDestination(isPresented: $go) { LiveRecordingView() }
+        .shotiqToast($toast)
     }
 }
 
@@ -2959,10 +3904,12 @@ struct LiveRecordingView: View {    // 032
     @State private var timer: Timer?
     @State private var paused = false
     @State private var stats = LiveRecordingStats()
+    @State private var toast: ShotIQToast?
+    @State private var pendingLiveVideo: PickedVideoClip?
     /// Single item-based route out of recording: two
     /// `navigationDestination(isPresented:)` modifiers on one view conflict and
     /// only the last one presents, which left "Stop recording" going nowhere.
-    enum RecordingRoute: Hashable { case feedback, detected }
+    enum RecordingRoute: Hashable { case feedback, detected, videoReview }
     @State private var route: RecordingRoute?
     private var clock: String { String(format: "%02d:%02d", seconds / 60, seconds % 60) }
     var body: some View {
@@ -3109,8 +4056,12 @@ struct LiveRecordingView: View {    // 032
                             paused.toggle()
                             if paused {
                                 camera.stopRecording()
+                                toast = .info("Recording paused", "Tap resume when the shooter is ready.")
                             } else if camera.status == .ready {
                                 camera.startRecording()
+                                toast = .success("Recording resumed", "ShotIQ is tracking this session.")
+                            } else {
+                                toast = .info("Camera warming up", "Keep the phone aimed at the shooter.")
                             }
                         } label: {
                             VStack(spacing: 8) {
@@ -3126,7 +4077,8 @@ struct LiveRecordingView: View {    // 032
                         Spacer()
                         Button {
                             camera.stopRecording()
-                            route = .feedback
+                            toast = .progress("Stopping recording", "Preparing recorded clip for review.", progress: 0.75)
+                            Task { await finishRecordingToReview(fallback: .feedback) }
                         } label: {
                             VStack(spacing: 8) {
                                 Circle().fill(ShotIQColor.shotiqOrange).frame(width: 84, height: 84)
@@ -3141,11 +4093,12 @@ struct LiveRecordingView: View {    // 032
                         Spacer()
                         Button {
                             camera.stopRecording()
-                            route = .detected
+                            toast = .progress("Ending round", "Opening shot confirmation.", progress: 0.75)
+                            Task { await finishRecordingToDetected() }
                         } label: {
                             VStack(spacing: 8) {
                                 Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
-                                    .overlay(ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "flag.fill"), size: 32).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
+                                    .overlay(ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "flag.fill"), size: 44).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
                                 Text("END ROUND").shotiqBody(10, weight: .medium).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
@@ -3166,13 +4119,54 @@ struct LiveRecordingView: View {    // 032
             camera.start()
             try? await Task.sleep(for: .seconds(0.6))
             if camera.status == .ready && !camera.isRecording && !paused { camera.startRecording() }
+            if camera.status == .ready {
+                toast = .success("Recording started", "ShotIQ is tracking shots and form.")
+            }
         }
         .navigationDestination(item: $route) { r in
             switch r {
             case .feedback: LiveFormFeedbackView()
             case .detected: ShotDetectedView()
+            case .videoReview:
+                if let pendingLiveVideo {
+                    VideoReviewView(video: pendingLiveVideo)
+                } else {
+                    LiveFormFeedbackView()
+                }
             }
         }
+        .shotiqToast($toast)
+    }
+
+    private func finishRecordingToReview(fallback: RecordingRoute) async {
+        for _ in 0..<24 {
+            if let url = camera.lastVideoURL,
+               let clip = await loadVideoClip(fromFileURL: url) {
+                pendingLiveVideo = clip
+                toast = .success("Recording ready", "Review the live clip before analysis.")
+                route = .videoReview
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(125))
+        }
+
+        toast = .info("Opening live feedback", "The recorded clip is still finalizing.")
+        route = fallback
+    }
+
+    private func finishRecordingToDetected() async {
+        for _ in 0..<24 {
+            if let url = camera.lastVideoURL,
+               (await loadVideoClip(fromFileURL: url)) != nil {
+                toast = .success("Shot clip ready", "Confirm make or miss with the recorded frame.")
+                route = .detected
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(125))
+        }
+
+        toast = .info("Opening shot confirmation", "The recorded clip is still finalizing.")
+        route = .detected
     }
 
     private func liveRecordingStat(_ label: String, _ value: String) -> some View {
@@ -3184,7 +4178,7 @@ struct LiveRecordingView: View {    // 032
 
     private func liveMetric(_ icon: String, _ label: String, _ value: String) -> some View {
         VStack(spacing: 4) {
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 18)
+            ShotIQConceptGlyph(concept: label, fallback: icon, size: 28)
                 .foregroundStyle(ShotIQColor.ink)
             Text(label).shotiqBody(8, weight: .medium).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -3234,6 +4228,10 @@ struct LiveFormFeedbackView: View { // 033
     @ObservedObject private var camera = CameraService.live
     @State private var muted = false
     @State private var feedback = LiveFormFeedbackState.waiting
+    @State private var liveFrame: VideoPoseFrameRecord?
+    @State private var lastAnalyzedFrameID = -1
+    @State private var announcedLivePose = false
+    @State private var toast: ShotIQToast?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-form-feedback") {
             ScrollView {
@@ -3264,6 +4262,15 @@ struct LiveFormFeedbackView: View { // 033
                     ZStack(alignment: .topLeading) {
                         captureDark(368)
                         LiveViewfinder(camera: camera, fallback: "033-visual-001").frame(height: 368)
+                        if camera.isLive, let pose = liveFrame?.detectedPose {
+                            SkeletonOverlay(pose: pose,
+                                            showBones: true,
+                                            showJoints: true,
+                                            showBall: false,
+                                            boneColor: .white,
+                                            jointColor: ShotIQColor.shotiqOrange)
+                                .accessibilityIdentifier("live-feedback-pose-overlay")
+                        }
                         if camera.isLive {
                             HStack(spacing: 6) {
                                 Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
@@ -3281,6 +4288,13 @@ struct LiveFormFeedbackView: View { // 033
                             .frame(width: 160, alignment: .leading)
                             .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 10))
                             .padding(.trailing, 12)
+                        }
+                    }
+                    .overlay(alignment: .bottom) {
+                        if camera.isLive, let liveFrame {
+                            LiveFeedbackAngleRail(frame: liveFrame)
+                                .padding(.horizontal, 12)
+                                .padding(.bottom, 12)
                         }
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
@@ -3318,6 +4332,7 @@ struct LiveFormFeedbackView: View { // 033
                                                  confidence: 0.72,
                                                  phase: "Release",
                                                  cue: "Keep elbow stacked.")
+                            toast = .success("Live feedback updated", "Pose measurement is now visible.")
                         }
                         .accessibilityIdentifier("Simulate live feedback")
                         .font(.system(size: 12, weight: .semibold))
@@ -3330,7 +4345,10 @@ struct LiveFormFeedbackView: View { // 033
                     HStack(alignment: .top) {
                         Spacer()
                         VStack(spacing: 8) {
-                            Button { muted.toggle() } label: {
+                            Button {
+                                muted.toggle()
+                                toast = .info(muted ? "Coaching muted" : "Coaching unmuted")
+                            } label: {
                                 Circle().stroke(muted ? ShotIQColor.shotiqOrange : ShotIQColor.rule, lineWidth: 1.5)
                                     .frame(width: 62, height: 62)
                                     .overlay(Image(systemName: muted ? "speaker.wave.2" : "speaker.slash")
@@ -3347,18 +4365,30 @@ struct LiveFormFeedbackView: View { // 033
                                 Circle().fill(ShotIQColor.confirmGreen).frame(width: 74, height: 74)
                                     .overlay(RoundedRectangle(cornerRadius: 5).fill(.white).frame(width: 22, height: 22))
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                camera.stopRecording()
+                                toast = .progress("Stopping capture", "Opening shot confirmation.", progress: 0.65)
+                            })
                             Text("Stop").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
                     }
                     .padding(.top, 20)
 
-                    Button { dismiss() } label: { captureCTA("Keep shooting", color: ShotIQColor.confirmGreen) }
+                    Button {
+                        toast = .success("Keeping capture live", "Returning to the recording screen.")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                    } label: { captureCTA("Keep shooting", color: ShotIQColor.confirmGreen) }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
             }
         }
+        .task {
+            camera.start()
+            await measureLivePoseLoop()
+        }
+        .shotiqToast($toast)
     }
 
     private var liveResultCard: some View {
@@ -3400,6 +4430,293 @@ struct LiveFormFeedbackView: View { // 033
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, label == "FORM SCORE" ? 0 : 10)
     }
+
+    private func measureLivePoseLoop() async {
+        while !Task.isCancelled {
+            guard camera.isLive,
+                  let image = camera.latestFrame,
+                  camera.latestFrameID != lastAnalyzedFrameID else {
+                try? await Task.sleep(for: .milliseconds(450))
+                continue
+            }
+
+            let frameID = camera.latestFrameID
+            lastAnalyzedFrameID = frameID
+            switch await ShotIQPose.detectResult(in: image) {
+            case .detected(let pose):
+                let frame = VideoPoseAnalyzer.frameRecord(index: frameID,
+                                                          timestamp: Date().timeIntervalSince1970,
+                                                          pose: pose)
+                liveFrame = frame
+                feedback = feedbackState(from: frame)
+                if !announcedLivePose {
+                    announcedLivePose = true
+                    toast = .success("Live pose measured", "Wireframe and angles are updating from the camera.")
+                }
+            case .noPose:
+                liveFrame = nil
+                feedback = .waiting
+            case .unavailable(let message):
+                liveFrame = nil
+                feedback = .waiting
+                if !announcedLivePose {
+                    announcedLivePose = true
+                    toast = .error("Pose detection unavailable", message)
+                }
+            }
+
+            try? await Task.sleep(for: .milliseconds(900))
+        }
+    }
+
+    private func feedbackState(from frame: VideoPoseFrameRecord) -> LiveFormFeedbackState {
+        let score = average([
+            score(value: frame.elbowAngle, idealMin: 150, idealMax: 180),
+            score(value: frame.wristAngle, idealMin: 50, idealMax: 100),
+            score(value: frame.releaseAngle, idealMin: -5, idealMax: 5),
+            score(value: frame.kneeAngle, idealMin: 70, idealMax: 120)
+        ]) ?? (frame.confidence * 100)
+
+        return .measured(formScore: Int(score.rounded()),
+                         confidence: frame.confidence,
+                         phase: frame.phaseLabel.capitalized,
+                         cue: liveCue(for: frame))
+    }
+
+    private func liveCue(for frame: VideoPoseFrameRecord) -> String {
+        if let elbow = frame.elbowAngle, elbow < 150 { return "Raise shooting elbow into the 150-180 degree band." }
+        if let elbow = frame.elbowAngle, elbow > 180 { return "Relax the elbow; it is past the release band." }
+        if let wrist = frame.wristAngle, wrist < 50 { return "Lift the wrist angle into the 50-100 degree band." }
+        if let wrist = frame.wristAngle, wrist > 100 { return "Soften the wrist; it is above the target band." }
+        if let release = frame.releaseAngle, abs(release) > 5 { return "Keep forearm closer to vertical at release." }
+        if frame.elbowAngle == nil || frame.wristAngle == nil { return "Keep the shooting arm fully in frame." }
+        return "Form is inside the current release targets."
+    }
+
+    private func score(value: Double?, idealMin: Double, idealMax: Double) -> Double? {
+        guard let value else { return nil }
+        if value >= idealMin && value <= idealMax { return 100 }
+        let miss = value < idealMin ? idealMin - value : value - idealMax
+        return min(max(100 - miss * 2, 0), 100)
+    }
+
+    private func average(_ values: [Double?]) -> Double? {
+        let measured = values.compactMap { $0 }
+        guard !measured.isEmpty else { return nil }
+        return measured.reduce(0, +) / Double(measured.count)
+    }
+}
+
+private struct LiveFeedbackAngleRail: View {
+    var frame: VideoPoseFrameRecord
+
+    var body: some View {
+        HStack(spacing: 8) {
+            angleBadge("ELBOW", frame.elbowAngle)
+            angleBadge("WRIST", frame.wristAngle)
+            angleBadge("RELEASE", frame.releaseAngle, signed: true)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+        .accessibilityIdentifier("live-feedback-angle-rail")
+    }
+
+    private func angleBadge(_ label: String, _ value: Double?, signed: Bool = false) -> some View {
+        VStack(spacing: 1) {
+            Text(label).shotiqBody(8, weight: .bold).kerning(0.5).foregroundStyle(.white.opacity(0.72))
+            Text(text(value, signed: signed))
+                .font(.custom("Tungsten-Medium", size: 18))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func text(_ value: Double?, signed: Bool) -> String {
+        guard let value else { return "--" }
+        let rounded = Int(value.rounded())
+        if signed, rounded > 0 { return "+\(rounded)°" }
+        return "\(rounded)°"
+    }
+}
+
+private struct CaptureVideoPoseSurface: View {
+    var url: URL
+    var height: CGFloat
+    var cornerRadius: CGFloat
+    var accessibilityID: String
+    var showAnnotations: Bool = false
+    @State private var frames: [VideoPoseFrameRecord] = []
+    @State private var frame: VideoPoseFrameRecord?
+    @State private var timeObserver: Any?
+    @State private var measuring = true
+    @State private var player: AVPlayer?
+    @State private var naturalVideoSize: CGSize?
+    @State private var isPlaying = false
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .topTrailing) {
+                if let player {
+                    ShotIQAspectFillVideoPlayer(player: player)
+                        .accessibilityLabel("Shot video preview")
+                } else {
+                    Color.black
+                }
+                if let frame, let pose = frame.detectedPose {
+                    ShotIQVideoAnalysisOverlay(frame: frame,
+                                               pose: pose,
+                                               presentation: .canonicalDemo,
+                                               showSkeleton: true,
+                                               showJoints: true,
+                                               showBall: false,
+                                               showAnnotations: showAnnotations,
+                                               displayPhase: frame.phaseLabel)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .accessibilityIdentifier("\(accessibilityID)-pose-overlay")
+                }
+                if measuring {
+                    HStack(spacing: 6) {
+                        ProgressView().scaleEffect(0.7)
+                        Text("Measuring pose").shotiqBody(10, weight: .bold).kerning(0.4)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 6))
+                    .foregroundStyle(.white)
+                    .padding(8)
+                }
+                playbackControl
+            }
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .clipped()
+        .accessibilityIdentifier(accessibilityID)
+        .onAppear {
+            if player == nil {
+                let next = AVPlayer(url: url)
+                next.isMuted = true
+                installTimeObserver(on: next)
+                player = next
+            }
+        }
+        .onDisappear {
+            player?.pause()
+            isPlaying = false
+            removeTimeObserver()
+        }
+        .task(id: url) {
+            await measurePose()
+            naturalVideoSize = await loadNaturalVideoSize()
+        }
+    }
+
+    private var playbackControl: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button {
+                    togglePlayback()
+                } label: {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 52, height: 52)
+                        .background(ShotIQColor.shotiqOrange, in: Circle())
+                        .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 3)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isPlaying ? "Pause uploaded video preview" : "Play uploaded video preview")
+                .padding(12)
+            }
+        }
+    }
+
+    @MainActor
+    private func togglePlayback() {
+        guard let player else { return }
+        if isPlaying {
+            player.pause()
+        } else {
+            player.play()
+        }
+        isPlaying.toggle()
+    }
+
+    private func measurePose() async {
+        await MainActor.run { measuring = true }
+        guard let clip = await loadVideoClip(fromFileURL: url) else {
+            await MainActor.run { measuring = false }
+            return
+        }
+        let analysis = await VideoPoseAnalyzer.analyze(
+            job: VideoAnalysisJob(clientSessionId: "capture-video-\(UUID().uuidString)",
+                                  clip: clip,
+                                  trimStartFraction: 0,
+                                  trimEndFraction: 1)
+        )
+        let sorted = analysis.frames.sorted { $0.timestampSeconds < $1.timestampSeconds }
+        let release = sorted.first { $0.frameIndex == analysis.summary.releaseFrameIndex } ?? sorted.first
+        await MainActor.run {
+            frames = sorted
+            frame = release
+            measuring = false
+        }
+    }
+
+    private func loadNaturalVideoSize() async -> CGSize? {
+        let asset = AVURLAsset(url: url)
+        guard let track = try? await asset.loadTracks(withMediaType: .video).first,
+              let natural = try? await track.load(.naturalSize),
+              let transform = try? await track.load(.preferredTransform) else {
+            return nil
+        }
+        let rect = CGRect(origin: .zero, size: natural).applying(transform)
+        let size = CGSize(width: abs(rect.width), height: abs(rect.height))
+        guard size.width > 0, size.height > 0 else { return nil }
+        return size
+    }
+
+    private func fittedOverlaySize(for frame: VideoPoseFrameRecord, container: CGSize) -> CGSize {
+        let frameSize: CGSize? = {
+            guard let width = frame.sourceWidth,
+                  let height = frame.sourceHeight,
+                  width > 0,
+                  height > 0 else { return nil }
+            return CGSize(width: width, height: height)
+        }()
+        guard let sourceSize = frameSize ?? naturalVideoSize else {
+            return container
+        }
+        return ShotIQPose.filledSize(image: sourceSize, in: container)
+    }
+
+    @MainActor
+    private func installTimeObserver(on player: AVPlayer) {
+        let interval = CMTime(seconds: 1.0 / 30.0, preferredTimescale: 600)
+        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
+            let seconds = time.seconds
+            guard seconds.isFinite else { return }
+            frame = nearestPoseFrame(to: seconds) ?? frame
+        }
+    }
+
+    @MainActor
+    private func removeTimeObserver() {
+        if let timeObserver, let player {
+            player.removeTimeObserver(timeObserver)
+        }
+        timeObserver = nil
+    }
+
+    private func nearestPoseFrame(to seconds: Double) -> VideoPoseFrameRecord? {
+        guard !frames.isEmpty else { return frame }
+        return frames.min {
+            abs($0.timestampSeconds - seconds) < abs($1.timestampSeconds - seconds)
+        }
+    }
 }
 
 struct LiveCaptureSessionSummary: Equatable {
@@ -3431,10 +4748,13 @@ struct LiveCaptureSessionSummary: Equatable {
 
 struct ShotDetectedView: View {     // 034
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @ObservedObject private var camera = CameraService.live
     @State private var goReview = false
     @State private var toast: ShotIQToast?
     @State private var summary = LiveCaptureSessionSummary()
+    @State private var reviewVideo: PickedVideoClip?
     private let context = [("Catch & Shoot", "Off the Dribble"), ("Top of Key", "17.5 ft"),
                            ("Release Height", "7.6 ft"), ("Defender", "4.2 ft Away")]
 
@@ -3454,12 +4774,20 @@ struct ShotDetectedView: View {     // 034
                 }
                 summary.record(made: made)
             }
+            if let url = await MainActor.run(body: { camera.lastVideoURL }),
+               let clip = await loadVideoClip(fromFileURL: url) {
+                await MainActor.run { reviewVideo = clip }
+            }
             try? await Task.sleep(for: .milliseconds(900))
             await MainActor.run { goReview = true }
         }
     }
 
     var body: some View {
+        let values = CaptureSummaryValues.resolve(app: app,
+                                                  completedWorkoutsPayload: completedWorkoutsPayload)
+        let scorePct = (Double(values.score) ?? 0) / 100
+        let hasScore = values.score != "--"
         CanonicalScreen(testID: "screen-ios-shot-detected") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -3486,7 +4814,7 @@ struct ShotDetectedView: View {     // 034
                             }
                             HStack(spacing: 0) {
                                 HStack(spacing: 10) {
-                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 42).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("8:24:10 AM").font(.custom("Tungsten-Medium", size: 19)).foregroundStyle(ShotIQColor.ink)
                                         Text("Today").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -3495,7 +4823,7 @@ struct ShotDetectedView: View {     // 034
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
                                 HStack(spacing: 10) {
-                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "waveform.path.ecg"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "waveform.path.ecg"), size: 42).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("97%").font(.custom("Tungsten-Medium", size: 19)).foregroundStyle(ShotIQColor.ink)
                                         Text("CONFIDENCE").shotiqBody(10, weight: .medium).kerning(0.6)
@@ -3514,9 +4842,10 @@ struct ShotDetectedView: View {     // 034
                             // Nothing but the pose skeleton and release arc is
                             // baked in, and the app draws neither over this slot.
                             if let url = camera.lastVideoURL {
-                                VideoPlayer(player: AVPlayer(url: url))
-                                    .frame(height: 211)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                CaptureVideoPoseSurface(url: url,
+                                                        height: 211,
+                                                        cornerRadius: 6,
+                                                        accessibilityID: "shot-detected-pose-video")
                             } else {
                                 CanonicalPhoto("034-visual-001", height: 211, cornerRadius: 6)
                             }
@@ -3526,13 +4855,13 @@ struct ShotDetectedView: View {     // 034
                                     Text("FORM SCORE").shotiqBody(10, weight: .medium).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     HStack(alignment: .center, spacing: 10) {
-                                        Text("82").font(.custom("Tungsten-Medium", size: 46))
-                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        Text(values.score).font(.custom("Tungsten-Medium", size: 46))
+                                            .foregroundStyle(hasScore ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                         VStack(alignment: .leading, spacing: 3) {
-                                            ScoreBar(pct: 0.82).frame(width: 80)
-                                            Text("GOOD").shotiqBody(12, weight: .bold)
+                                            ScoreBar(pct: scorePct).frame(width: 80)
+                                            Text(hasScore ? "READY" : "WAITING").shotiqBody(12, weight: .bold)
                                                 .foregroundStyle(ShotIQColor.analysisBlue)
-                                            Text("Keep building consistency.")
+                                            Text(hasScore ? "Latest measured form score." : "Analyze this clip to create a form score.")
                                                 .shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                                         }
                                     }
@@ -3540,7 +4869,19 @@ struct ShotDetectedView: View {     // 034
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 66)
                                 NavigationLink {
-                                    FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+                                    if let latest = app.recentMedia.first {
+                                        FlawDetailView(
+                                            title: "Keep elbow stacked through release",
+                                            severity: "PRIMARY TARGET",
+                                            presentation: AnalysisResultPresentation(result: latest.analysis))
+                                    } else if UITestHooks.demoData {
+                                        FlawDetailView(
+                                            title: "Keep elbow stacked through release",
+                                            severity: "PRIMARY TARGET",
+                                            presentation: .canonicalDemo)
+                                    } else {
+                                        AnalyzeHubView()
+                                    }
                                 } label: {
                                     HStack(alignment: .center, spacing: 8) {
                                         VStack(alignment: .leading, spacing: 5) {
@@ -3554,6 +4895,15 @@ struct ShotDetectedView: View {     // 034
                                         Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                     }
                                 }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                        toast = .info("Opening coaching target",
+                                                      "Review the detected release issue.")
+                                    } else {
+                                        toast = .info("Analyze a shot first",
+                                                      "Save or analyze media before opening measured correction details.")
+                                    }
+                                })
                                 .buttonStyle(.plain)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 14)
@@ -3590,7 +4940,10 @@ struct ShotDetectedView: View {     // 034
                             .foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Shot ignored", "Returning to live capture.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                        } label: {
                             VStack(spacing: 8) {
                                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "viewfinder"),
                                                          size: 20,
@@ -3625,16 +4978,19 @@ struct ShotDetectedView: View {     // 034
             }
         }
         .shotiqToast($toast)
-        .navigationDestination(isPresented: $goReview) { CaptureReviewView(summary: summary) }
+        .navigationDestination(isPresented: $goReview) { CaptureReviewView(summary: summary, liveVideo: reviewVideo) }
     }
 }
 
 struct CaptureReviewView: View {    // 035
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var app: AppState
     var summary = LiveCaptureSessionSummary()
+    var liveVideo: PickedVideoClip?
     @State private var filter = "needs-review"
     @State private var lowestFirst = true
     @State private var confirmDiscard = false
+    @State private var toast: ShotIQToast?
     private var filters: [(String, String)] {
         [("all", "All (\(summary.shots))"),
          ("needs-review", "Needs review (\(summary.needReview))"),
@@ -3661,7 +5017,10 @@ struct CaptureReviewView: View {    // 035
                 VStack(alignment: .leading, spacing: 0) {
                     TopBar()
 
-                    Button { dismiss() } label: {
+                    Button {
+                        toast = .info("Returning to summary", "Leaving capture review.")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                    } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "arrow.left").font(.system(size: 15, weight: .semibold))
                             Text("Back to session summary").shotiqBody(15)
@@ -3703,10 +5062,33 @@ struct CaptureReviewView: View {    // 035
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
+                    if let liveVideo {
+                        ShotIQCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                CaptureVideoPoseSurface(url: liveVideo.url,
+                                                        height: 190,
+                                                        cornerRadius: 6,
+                                                        accessibilityID: "capture-review-live-video")
+                                HStack(spacing: 0) {
+                                    captureStat(liveVideo.durationText, "RECORDED CLIP", color: ShotIQColor.analysisBlue, size: 26)
+                                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                                    captureStat(liveVideo.fileSizeText, "FILE SIZE", size: 26)
+                                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                                    captureStat(liveVideo.frameRateText, "FRAME RATE", size: 26)
+                                }
+                            }
+                            .padding(12)
+                        }
+                        .padding(.horizontal, 20).padding(.top, 14)
+                    }
+
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(filters, id: \.0) { key, label in
-                                Button { withAnimation { filter = key } } label: {
+                                Button {
+                                    withAnimation { filter = key }
+                                    toast = .info("Filter updated", label)
+                                } label: {
                                     filterChip(label, selected: filter == key)
                                 }
                                 .buttonStyle(.plain)
@@ -3719,7 +5101,11 @@ struct CaptureReviewView: View {    // 035
                     HStack {
                         SectionLabel(text: selectedFilterLabel.uppercased())
                         Spacer()
-                        Button { withAnimation { lowestFirst.toggle() } } label: {
+                        Button {
+                            withAnimation { lowestFirst.toggle() }
+                            toast = .info("Review order updated",
+                                          lowestFirst ? "Lowest confidence first." : "Highest confidence first.")
+                        } label: {
                             HStack(spacing: 6) {
                                 Text(lowestFirst ? "Review lowest confidence first" : "Review highest confidence first")
                                     .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -3743,7 +5129,8 @@ struct CaptureReviewView: View {    // 035
                                     if let key = shotThumbs[n] {
                                         CanonicalPhoto(key, width: 116, height: 132, cornerRadius: 4)
                                     } else {
-                                        captureDark(132, radius: 4).frame(width: 116)
+                                        CanonicalPhoto("035-visual-002", width: 116, height: 132, cornerRadius: 4)
+                                            .overlay(SkeletonOverlay().opacity(0.72))
                                     }
                                     Text(dur).font(.custom("Tungsten-Medium", size: 12)).foregroundStyle(.white)
                                         .padding(.horizontal, 6).padding(.vertical, 3)
@@ -3767,7 +5154,7 @@ struct CaptureReviewView: View {    // 035
                                             .lineLimit(1).fixedSize()
                                     }
                                     HStack(spacing: 6) {
-                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gauge.with.needle"), size: 32).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gauge.with.needle"), size: 42).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
                                         Text("Low confidence").shotiqBody(12).foregroundStyle(ShotIQColor.ink)
                                             .lineLimit(1).fixedSize()
                                     }
@@ -3787,12 +5174,28 @@ struct CaptureReviewView: View {    // 035
                                             .font(.custom("Tungsten-Medium", size: 19)).foregroundStyle(ShotIQColor.ink))
                                     Text("CONFIDENCE").shotiqBody(7, weight: .medium).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    NavigationLink { ShotBreakdownView() } label: {
+                                    NavigationLink {
+                                        if let latest = app.recentMedia.first {
+                                            ShotBreakdownView(presentation: AnalysisResultPresentation(result: latest.analysis))
+                                        } else if UITestHooks.demoData {
+                                            ShotBreakdownView(presentation: .canonicalDemo)
+                                        } else {
+                                            AnalyzeHubView()
+                                        }
+                                    } label: {
                                         Text("Review").shotiqBody(13, weight: .medium)
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                             .padding(.horizontal, 18).padding(.vertical, 8)
                                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
                                     }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                            toast = .info("Opening shot review", "Shot \(n) breakdown is ready.")
+                                        } else {
+                                            toast = .info("Analyze a shot first",
+                                                          "Save or analyze media before opening shot breakdown.")
+                                        }
+                                    })
                                     .buttonStyle(.plain)
                                 }
                             }
@@ -3801,13 +5204,27 @@ struct CaptureReviewView: View {    // 035
                         .padding(.horizontal, 20).padding(.top, 12)
                     }
 
-                    Button { confirmDiscard = true } label: { captureOutline("Discard session", icon: "trash") }
+                    Button {
+                        toast = .info("Confirm discard", "Review the warning before deleting this session.")
+                        confirmDiscard = true
+                    } label: { captureOutline("Discard session", icon: "trash") }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20).padding(.top, 18)
 
-                    NavigationLink { AnalysisProcessingView() } label: {
+                    NavigationLink {
+                        if let liveVideo {
+                            VideoReviewView(video: liveVideo)
+                        } else {
+                            AnalysisProcessingView()
+                        }
+                    } label: {
                         captureCTA("Analyze session", icon: "camera.metering.center.weighted")
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .progress("Analyzing session",
+                                          liveVideo == nil ? "ShotIQ is preparing the captured shots." : "Opening the recorded clip for trim and analysis.",
+                                          progress: 0.7)
+                    })
                     .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
@@ -3815,11 +5232,19 @@ struct CaptureReviewView: View {    // 035
         // End of the live flow — release the shared camera.
         .onAppear { CameraService.live.stop() }
         .alert("Discard this session?", isPresented: $confirmDiscard) {
-            Button("Discard", role: .destructive) { dismiss() }
-            Button("Cancel", role: .cancel) {}
+            Button("Discard", role: .destructive) {
+                toast = .info("Session discarded", "Captured shots were removed.")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    dismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                toast = .success("Session kept", "You can keep reviewing or analyze the capture.")
+            }
         } message: {
             Text("All \(summary.shots) captured shots from this session will be deleted.")
         }
+        .shotiqToast($toast)
     }
 
     private func filterChip(_ t: String, selected: Bool) -> some View {

@@ -857,8 +857,8 @@ enum HandKind { case right, left }
 extension ShotIQApprovedIconAsset {
     static func assetName(for kind: HandKind) -> String {
         switch kind {
-        case .right: return "shotiq-approved-v2-hand-right"
-        case .left: return "shotiq-approved-v2-hand-left"
+        case .right: return "shotiq-correction-hand-right"
+        case .left: return "shotiq-correction-hand-left"
         }
     }
 }
@@ -896,9 +896,9 @@ enum BodyMetricKind { case age, height, weight, wingspan }
 extension ShotIQApprovedIconAsset {
     static func assetName(for kind: BodyMetricKind) -> String {
         switch kind {
-        case .age: return "shotiq-approved-v2-body-age"
-        case .height: return "shotiq-approved-v2-body-height"
-        case .weight: return "shotiq-approved-v2-body-weight"
+        case .age: return "shotiq-correction-age"
+        case .height: return "shotiq-correction-height"
+        case .weight: return "shotiq-correction-weight"
         case .wingspan: return "shotiq-approved-v2-body-wingspan"
         }
     }
@@ -1013,10 +1013,10 @@ enum AbilityKind { case developing, intermediate, advanced, elite, professional 
 extension ShotIQApprovedIconAsset {
     static func assetName(for kind: AbilityKind) -> String {
         switch kind {
-        case .developing: return "shotiq-approved-v2-ability-developing"
+        case .developing: return "shotiq-correction-developing-experience"
         case .intermediate: return "shotiq-approved-v2-ability-intermediate"
-        case .advanced: return "shotiq-approved-v2-ability-advanced"
-        case .elite: return "shotiq-approved-v2-ability-elite"
+        case .advanced: return "shotiq-correction-advanced-experience"
+        case .elite: return "shotiq-correction-elite-experience"
         case .professional: return "shotiq-approved-v2-ability-professional"
         }
     }
@@ -1051,6 +1051,132 @@ extension AbilityKind {
         case k.contains("elite"): self = .elite
         case k.contains("pro"): self = .professional
         default: return nil
+        }
+    }
+}
+
+// MARK: - Onboarding correction-board icons
+
+enum OnboardingBenefitKind { case personalizedAnalysis, betterComparisons, smarterCoaching }
+
+struct OnboardingBenefitGlyph: View {
+    var kind: OnboardingBenefitKind
+    var size: CGFloat = 34
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .personalizedAnalysis:
+                p.captureBrackets(inset: 4, arm: 3.5)
+                p.circle(12, 8, r: 2.4)
+                p.line(12, 10.5, 12, 17.5)
+                p.line(8.5, 13, 15.5, 13)
+                p.line(12, 17.5, 9, 21)
+                p.line(12, 17.5, 15, 21)
+                p.basketball(18, 6.5, r: 2.0)
+            case .betterComparisons:
+                p.circle(8, 7.5, r: 2.0)
+                p.line(8, 9.8, 8, 17.2)
+                p.line(5.6, 12.5, 10.4, 12.5)
+                p.line(8, 17.2, 5.5, 20.5)
+                p.line(8, 17.2, 10.5, 20.5)
+                p.circle(16, 7.5, r: 2.0)
+                p.line(16, 9.8, 16, 17.2)
+                p.line(13.6, 12.5, 18.4, 12.5)
+                p.line(16, 17.2, 13.5, 20.5)
+                p.line(16, 17.2, 18.5, 20.5)
+                p.line(11.1, 5.1, 12.9, 5.1, accent: true)
+                p.line(11.1, 18.8, 12.9, 18.8, accent: true)
+                p.basketball(12, 12.4, r: 2.0)
+            case .smarterCoaching:
+                p.circle(12, 10.8, r: 5.6)
+                p.line(8.4, 16, 15.6, 16)
+                p.line(10, 19, 14, 19)
+                p.line(12, 5.2, 12, 3.4, accent: true)
+                p.line(6.3, 6.3, 5, 5, accent: true)
+                p.line(17.7, 6.3, 19, 5, accent: true)
+                p.basketball(12, 10.8, r: 2.1)
+            }
+        }
+    }
+}
+
+enum RecordingInfoKind { case fullBodyMotion, ballTrajectory, timingSequence }
+
+struct RecordingInfoGlyph: View {
+    var kind: RecordingInfoKind
+    var size: CGFloat = 40
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .fullBodyMotion:
+                p.captureBrackets(inset: 3.6, arm: 3.6)
+                p.circle(12, 6.5, r: 2.0)
+                p.line(12, 8.8, 11, 13.2)
+                p.line(11, 13.2, 8, 19.5)
+                p.line(11, 13.2, 15.5, 19.2)
+                p.line(11.5, 10.5, 7.2, 12.2)
+                p.line(11.5, 10.5, 16.7, 9.2)
+                p.basketball(18.2, 8.8, r: 1.8)
+            case .ballTrajectory:
+                p.line(4.5, 18, 19.5, 18)
+                p.arc(12, 18, r: 9.2, from: -170, to: -22, accent: true, dash: [1.2, 2.2])
+                p.basketball(5.3, 14.5, r: 1.9)
+                p.basketball(19.1, 14.5, r: 1.9)
+                p.node(12, 9.1, r: 1.15, accent: true, filled: true, knockout: false)
+            case .timingSequence:
+                p.line(5, 7, 19, 7)
+                p.line(5, 12, 19, 12)
+                p.line(5, 17, 19, 17)
+                p.node(7, 7, r: 1.4)
+                p.node(12, 12, r: 1.4)
+                p.node(17, 17, r: 1.4)
+                p.line(7, 7, 12, 12, accent: true)
+                p.line(12, 12, 17, 17, accent: true)
+                p.basketball(18.6, 5.3, r: 1.7)
+            }
+        }
+    }
+}
+
+enum PhotoAccessKind { case selectedPhotos, privateSecure, usedForAnalysis }
+
+struct PhotoAccessGlyph: View {
+    var kind: PhotoAccessKind
+    var size: CGFloat = 34
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .selectedPhotos:
+                p.rect(4, 5, 14, 12, radius: 1.4)
+                p.poly([CGPoint(x: 6, y: 15), CGPoint(x: 9.5, y: 11),
+                        CGPoint(x: 12, y: 13.4), CGPoint(x: 15.5, y: 9)])
+                p.basketball(18.2, 17.5, r: 2.0)
+                p.node(8, 8, r: 1.1, accent: true, filled: true, knockout: false)
+            case .privateSecure:
+                p.poly([CGPoint(x: 12, y: 3.2), CGPoint(x: 19, y: 6.2),
+                        CGPoint(x: 18, y: 14.3), CGPoint(x: 12, y: 20.5),
+                        CGPoint(x: 6, y: 14.3), CGPoint(x: 5, y: 6.2),
+                        CGPoint(x: 12, y: 3.2)])
+                p.rect(8.2, 10, 7.6, 5.8, radius: 1.2, accent: true)
+                p.arc(12, 10.2, r: 2.5, from: 180, to: 360, accent: true)
+                p.node(12, 13.1, r: 0.9, accent: true, filled: true, knockout: false)
+            case .usedForAnalysis:
+                p.captureBrackets(inset: 3.8, arm: 3.5)
+                p.circle(10, 10, r: 3.1)
+                p.line(12.4, 12.4, 18.2, 18.2, accent: true)
+                p.node(7.8, 17.2, r: 1.3)
+                p.node(12, 15, r: 1.3, accent: true, filled: true, knockout: false)
+                p.node(16.2, 13.2, r: 1.3)
+            }
         }
     }
 }
@@ -1297,7 +1423,12 @@ enum ShotIQConcept {
         }
         if k.contains("upload video") || k.contains("choose video") { return .source(.uploadVideo) }
         if k.contains("upload image") || k.contains("upload photo")
-            || k.contains("library") { return .source(.uploadImage) }
+            || k.contains("library") || k.contains("selected photos") {
+            return .source(.uploadImage)
+        }
+        if k.contains("select camera") || k.contains("camera access") {
+            return .source(.liveCamera)
+        }
 
         // 5. Capture readiness checks. 017's four-row checklist and 030's
         //    setup rows each need four different bracket marks.

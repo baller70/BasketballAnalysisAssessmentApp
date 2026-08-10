@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         kneeAngleMin: true,
         releaseHeightInches: true, releaseDistanceInches: true,
         verticalJumpInches: true, centerlineDeviationDeg: true,
-        roboflowPoseData: true, roboflowDetection: true, visualOverlays: true,
+        roboflowPoseData: true, roboflowDetection: true, bodyPositions: true, visualOverlays: true,
         strengths: true, improvements: true, drills: true,
         matchedShooterId: true, matchConfidence: true, similarShooters: true,
       },

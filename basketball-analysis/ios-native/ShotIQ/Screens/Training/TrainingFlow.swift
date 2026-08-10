@@ -135,6 +135,34 @@ enum TrainingSavedDrillStore {
     }
 }
 
+enum TrainingHiddenDrillStore {
+    static let key = "shotiq.training.hiddenDrills.v1"
+
+    static func decode(_ payload: String) -> Set<String> {
+        guard let data = payload.data(using: .utf8),
+              let names = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(names)
+    }
+
+    static func encode(_ names: Set<String>) -> String {
+        guard let data = try? JSONEncoder().encode(Array(names).sorted()),
+              let payload = String(data: data, encoding: .utf8) else { return "[]" }
+        return payload
+    }
+
+    static func hide(_ name: String, in payload: String) -> String {
+        var hidden = decode(payload)
+        hidden.insert(name.lowercased())
+        return encode(hidden)
+    }
+
+    static func unhide(_ name: String, in payload: String) -> String {
+        var hidden = decode(payload)
+        hidden.remove(name.lowercased())
+        return encode(hidden)
+    }
+}
+
 struct TrainingWorkoutRecord: Identifiable, Codable, Equatable {
     var id: String
     var drillName: String
@@ -440,6 +468,7 @@ struct TrainingHomeView: View {     // 054
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
+    @State private var toast: ShotIQToast?
     private var homeData: TrainingHomeData {
         TrainingHomeData.resolve(latestAnalysis: app.recentMedia.first?.analysis,
                                  completedWorkoutsPayload: completedWorkoutsPayload,
@@ -485,7 +514,36 @@ struct TrainingHomeView: View {     // 054
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                             .foregroundStyle(.white)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening quick start workout")
+                        })
                         .padding(.top, 14)
+
+                        HStack(spacing: 10) {
+                            NavigationLink { LiveCameraSetupView() } label: {
+                                trainingHomeAction("record.circle", "Record workout", primary: true)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .progress("Opening live camera",
+                                                  "Record this workout from the Workout tab.",
+                                                  progress: 0.35)
+                            })
+                            .accessibilityLabel("Record workout video")
+                            .accessibilityIdentifier("training-home-record-workout")
+
+                            NavigationLink { VideoUploadView() } label: {
+                                trainingHomeAction("square.and.arrow.up", "Upload clip", primary: false)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening video upload",
+                                              "Choose a saved workout clip to analyze.")
+                            })
+                            .accessibilityLabel("Upload workout video")
+                            .accessibilityIdentifier("training-home-upload-clip")
+                        }
+                        .padding(.top, 10)
 
                         HStack(spacing: 10) {
                             optionCard("bookmark", "My drills", MyDrillsView())
@@ -504,6 +562,9 @@ struct TrainingHomeView: View {     // 054
                                 }
                                 .foregroundStyle(ShotIQColor.graphite)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening saved drills")
+                            })
                         }
                         .padding(.top, 22)
                         ShotIQCard {
@@ -535,6 +596,9 @@ struct TrainingHomeView: View {     // 054
                                         }
                                         .padding(10)
                                     }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening \(d.title)")
+                                    })
                                     if i < homeData.drills.count - 1 {
                                         HRule().padding(.leading, 10)
                                     }
@@ -590,6 +654,9 @@ struct TrainingHomeView: View {     // 054
                                 }
                             }
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening shot tracker")
+                        })
                         .accessibilityIdentifier("training-home-recent-workout-card")
                         .accessibilityLabel("Recent workout")
                         .padding(.top, 8)
@@ -600,11 +667,24 @@ struct TrainingHomeView: View {     // 054
                 }
             }
         }
+        .shotiqToast($toast)
+    }
+    private func trainingHomeAction(_ icon: String, _ label: String, primary: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 24, weight: .semibold))
+            Text(label).shotiqBody(14, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity).frame(height: 46)
+        .foregroundStyle(primary ? .white : ShotIQColor.ink)
+        .background(primary ? ShotIQColor.ink : ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(primary ? ShotIQColor.ink : ShotIQColor.rule))
+        .contentShape(Rectangle())
     }
     private func optionCard(_ icon: String, _ title: String, _ dest: some View) -> some View {
         NavigationLink { dest } label: {
             VStack(spacing: 8) {
-                ShotIQConceptGlyph(concept: title, fallback: icon, size: 24)
+                ShotIQConceptGlyph(concept: title, fallback: icon, size: 40)
                     .foregroundStyle(ShotIQColor.ink)
                     .accessibilityHidden(true)
                 Text(title).shotiqBody(14, weight: .medium).foregroundStyle(ShotIQColor.ink)
@@ -619,6 +699,9 @@ struct TrainingHomeView: View {     // 054
             .accessibilityLabel(title)
             .accessibilityIdentifier(title)
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            toast = .info("Opening \(title)")
+        })
         .accessibilityLabel(title)
         .accessibilityIdentifier(title)
     }
@@ -631,6 +714,7 @@ struct QuickStartView: View {       // 055
     @State private var shotTarget = 24
     @State private var makeTarget = 15
     @State private var targetsSeeded = false
+    @State private var toast: ShotIQToast?
     private var quickData: QuickStartData {
         QuickStartData.resolve(latestAnalysis: app.recentMedia.first?.analysis,
                                completedWorkoutsPayload: completedWorkoutsPayload,
@@ -688,6 +772,9 @@ struct QuickStartView: View {       // 055
                             .overlay(HRule(), alignment: .top)
                             .overlay(HRule(), alignment: .bottom)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening coaching target goals")
+                        })
                         .padding(.top, 18)
                         SectionLabel(text: "WORKOUT TARGETS").padding(.top, 16)
                         HStack(alignment: .top, spacing: 12) {
@@ -697,6 +784,24 @@ struct QuickStartView: View {       // 055
                             targetCard("MAKE TARGET", icon: "chart.line.uptrend.xyaxis", value: $makeTarget,
                                        unit: "MAKES", caption: quickData.makeCaption,
                                        idPrefix: "quick-start-make-target")
+                        }
+                        .padding(.top, 10)
+                        SectionLabel(text: "CAPTURE WORKOUT VIDEO").padding(.top, 16)
+                        HStack(spacing: 12) {
+                            NavigationLink { LiveCameraSetupView() } label: {
+                                mediaActionButton(icon: "record.circle", title: "Record video", subtitle: "Live camera")
+                            }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening camera setup", "Record a real workout video.")
+                            })
+                            .accessibilityIdentifier("quick-start-record-video")
+                            NavigationLink { VideoUploadView() } label: {
+                                mediaActionButton(icon: "square.and.arrow.up", title: "Upload video", subtitle: "Library or Files")
+                            }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening video upload", "Choose a real workout clip.")
+                            })
+                            .accessibilityIdentifier("quick-start-upload-video")
                         }
                         .padding(.top, 10)
                         NavigationLink { DrillExecutionView(drillName: quickData.drillName) } label: {
@@ -710,6 +815,9 @@ struct QuickStartView: View {       // 055
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                             .foregroundStyle(.white)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .success("Starting \(quickData.drillName)")
+                        })
                         .padding(.vertical, 22)
                         .accessibilityIdentifier("quick-start-start-tracking")
                     }
@@ -717,6 +825,7 @@ struct QuickStartView: View {       // 055
                 }
             }
         }
+        .shotiqToast($toast)
         .onAppear {
             guard !targetsSeeded else { return }
             shotTarget = quickData.shotTarget
@@ -733,7 +842,7 @@ struct QuickStartView: View {       // 055
                     .accessibilityIdentifier(idPrefix)
                 Spacer()
                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                         size: 24,
+                                         size: 38,
                                          label: nil)
             }
             Text(caption).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
@@ -741,17 +850,44 @@ struct QuickStartView: View {       // 055
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 10) {
                 Spacer()
-                stepButton("minus", id: "\(idPrefix)-minus") { value.wrappedValue = max(0, value.wrappedValue - 1) }
-                stepButton("plus", id: "\(idPrefix)-plus") { value.wrappedValue += 1 }
+                stepButton("minus", id: "\(idPrefix)-minus") {
+                    value.wrappedValue = max(0, value.wrappedValue - 1)
+                    toast = .success("\(unit.capitalized) target set to \(value.wrappedValue)")
+                }
+                stepButton("plus", id: "\(idPrefix)-plus") {
+                    value.wrappedValue += 1
+                    toast = .success("\(unit.capitalized) target set to \(value.wrappedValue)")
+                }
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
     }
+
+    private func mediaActionButton(icon: String, title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
+                                     size: 36,
+                                     label: nil)
+            Text(title).shotiqBody(15, weight: .bold)
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+            Text(subtitle).shotiqBody(11, weight: .medium)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 106, alignment: .leading)
+        .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
     private func stepButton(_ icon: String, id: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 14, weight: .medium))
+            Image(systemName: icon).font(.system(size: 24, weight: .medium))
                 .frame(width: 38, height: 38)
                 .overlay(Circle().stroke(ShotIQColor.rule))
                 .foregroundStyle(ShotIQColor.ink)
@@ -763,6 +899,7 @@ struct QuickStartView: View {       // 055
 struct DiscoverDrillsView: View {   // 056
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
+    @AppStorage(TrainingHiddenDrillStore.key) private var hiddenDrillsPayload = "[]"
     @State private var query = ""
     // Each browse chip is a real filter dimension backed by a picker dialog.
     @State private var flawFilter = "All Flaws"
@@ -819,6 +956,7 @@ struct DiscoverDrillsView: View {   // 056
         case "All Difficulties": difficultyFilter = value
         default: durationFilter = value
         }
+        toast = .success("Filter updated", "\(value): \(filteredDrills.count) drill\(filteredDrills.count == 1 ? "" : "s") visible.")
     }
     private func saved(_ d: (String, String, String, String)) -> Bool {
         TrainingSavedDrillStore.contains(d.0, in: savedDrillsPayload)
@@ -832,6 +970,7 @@ struct DiscoverDrillsView: View {   // 056
         let savedDrill = TrainingSavedDrill.catalog(name: d.0, difficulty: d.1,
                                                     duration: d.2, description: d.3,
                                                     photo: d.0 == "STACK & SHOOT" ? "056-visual-001" : nil)
+        hiddenDrillsPayload = TrainingHiddenDrillStore.unhide(d.0, in: hiddenDrillsPayload)
         savedDrillsPayload = TrainingSavedDrillStore.save(savedDrill, in: savedDrillsPayload)
         toast = .success("Drill saved", "\(d.0) added to My Drills.")
         Task { await APIClient.shared.send("/api/saved-workouts",
@@ -855,7 +994,10 @@ struct DiscoverDrillsView: View {   // 056
                             }
                             .padding(.horizontal, 12).frame(height: 46)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                            Button { showFilterMenu = true } label: {
+                            Button {
+                                toast = .info("Opening drill filters", "Choose difficulty, duration, or reset filters.")
+                                showFilterMenu = true
+                            } label: {
                                 HStack(spacing: 6) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-settings",
                                                              size: 15,
@@ -867,14 +1009,26 @@ struct DiscoverDrillsView: View {   // 056
                                 .foregroundStyle(ShotIQColor.ink)
                             }
                             .confirmationDialog("Filter drills", isPresented: $showFilterMenu, titleVisibility: .visible) {
-                                Button("Beginner only") { difficultyFilter = "Beginner" }
-                                Button("Intermediate only") { difficultyFilter = "Intermediate" }
-                                Button("Under 10 minutes") { durationFilter = "Under 10 min" }
+                                Button("Beginner only") {
+                                    difficultyFilter = "Beginner"
+                                    toast = .success("Filter updated", "\(filteredDrills.count) beginner drill\(filteredDrills.count == 1 ? "" : "s") visible.")
+                                }
+                                Button("Intermediate only") {
+                                    difficultyFilter = "Intermediate"
+                                    toast = .success("Filter updated", "\(filteredDrills.count) intermediate drill\(filteredDrills.count == 1 ? "" : "s") visible.")
+                                }
+                                Button("Under 10 minutes") {
+                                    durationFilter = "Under 10 min"
+                                    toast = .success("Filter updated", "\(filteredDrills.count) short drill\(filteredDrills.count == 1 ? "" : "s") visible.")
+                                }
                                 Button("Reset all filters") {
                                     flawFilter = "All Flaws"; phaseFilter = "All Phases"
                                     difficultyFilter = "All Difficulties"; durationFilter = "Any Duration"
+                                    toast = .success("Filters reset", "\(filteredDrills.count) drills visible.")
                                 }
-                                Button("Cancel", role: .cancel) {}
+                                Button("Cancel", role: .cancel) {
+                                    toast = .info("Filters unchanged")
+                                }
                             }
                         }
                         .padding(.top, 12)
@@ -928,7 +1082,10 @@ struct DiscoverDrillsView: View {   // 056
                             HStack(spacing: 8) {
                                 ForEach(["All Flaws", "All Phases", "All Difficulties", "Any Duration"], id: \.self) { f in
                                     let selected = chipLabel(for: f) != f
-                                    Button { activeChip = f } label: {
+                                    Button {
+                                        activeChip = f
+                                        toast = .info("Opening \(f.lowercased())", "Pick a drill filter value.")
+                                    } label: {
                                         HStack(spacing: 4) {
                                             Text(chipLabel(for: f)).shotiqBody(13, weight: selected ? .semibold : .regular)
                                             Image(systemName: "chevron.down").font(.system(size: 9))
@@ -950,14 +1107,19 @@ struct DiscoverDrillsView: View {   // 056
                                     Button(option) { setChip(dim, to: option) }
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Filter unchanged")
+                            }
                         }
                         HStack(spacing: 5) {
                             Image(systemName: "arrow.up.arrow.down").font(.system(size: 12))
                             Text("Sort:").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                             Menu {
                                 ForEach(["Recommended", "Shortest first", "Name A–Z"], id: \.self) { s in
-                                    Button(s) { sortMode = s }
+                                    Button(s) {
+                                        sortMode = s
+                                        toast = .success("Sort updated", s)
+                                    }
                                 }
                             } label: {
                                 HStack(spacing: 5) {
@@ -1195,6 +1357,7 @@ struct DrillDetailView: View {      // 057
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
+    @AppStorage(TrainingHiddenDrillStore.key) private var hiddenDrillsPayload = "[]"
     @State private var bookmarked = false
     @State private var toast: ShotIQToast?
     private var detail: DrillDetailData {
@@ -1205,7 +1368,10 @@ struct DrillDetailView: View {      // 057
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to drills")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             Image(systemName: "arrow.left")
                                 .font(.system(size: 19, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                         }
@@ -1225,6 +1391,9 @@ struct DrillDetailView: View {      // 057
                             ShareLink(item: "Check out the \(detail.name) drill on ShotIQ 🏀") {
                                 Image(systemName: "square.and.arrow.up").foregroundStyle(ShotIQColor.ink)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening share sheet", "\(detail.name) is ready to share.")
+                            })
                         }
                         .font(.system(size: 17))
                     }
@@ -1328,7 +1497,7 @@ struct DrillDetailView: View {      // 057
                                 SectionLabel(text: "TARGET MECHANICS")
                                 ForEach(detail.mechanics, id: \.0) { m in
                                     HStack(alignment: .top, spacing: 8) {
-                                        MechanicGlyph(kind: .init(metricLabel: m.0), size: 18)
+                                        MechanicGlyph(kind: .init(metricLabel: m.0), size: 28)
                                             .foregroundStyle(ShotIQColor.ink)
                                         VStack(alignment: .leading, spacing: 1) {
                                             Text(m.0).shotiqBody(12, weight: .semibold)
@@ -1365,9 +1534,19 @@ struct DrillDetailView: View {      // 057
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .success("Starting \(detail.name)", "Opening active drill controls.")
+                            })
                             .accessibilityIdentifier("drill-detail-start-drill")
                             squareNav("calendar", id: "drill-detail-calendar") { WorkoutCalendarView() }
-                            squareNav("play.rectangle", id: "drill-detail-media") { MediaDetailView() }
+                            squareNav("play.rectangle", id: "drill-detail-media") {
+	                                if let analysis = app.recentMedia.first?.analysis {
+	                                    MediaDetailView(analysis: analysis,
+	                                                    analysisId: analysis.id)
+	                                } else {
+                                    VideoUploadView()
+                                }
+                            }
                         }
                         .padding(.vertical, 22)
                     }
@@ -1392,6 +1571,7 @@ struct DrillDetailView: View {      // 057
                                                     duration: detail.duration,
                                                     description: detail.description,
                                                     photo: detail.photo)
+        hiddenDrillsPayload = TrainingHiddenDrillStore.unhide(detail.name, in: hiddenDrillsPayload)
         savedDrillsPayload = TrainingSavedDrillStore.save(savedDrill, in: savedDrillsPayload)
         bookmarked = true
         toast = .success("Drill saved", "\(detail.name) added to My Drills.")
@@ -1400,7 +1580,7 @@ struct DrillDetailView: View {      // 057
     }
     private func factColumn(_ icon: String, _ label: String, _ value: String, id: String) -> some View {
         VStack(spacing: 4) {
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 17)
+            ShotIQConceptGlyph(concept: label, fallback: icon, size: 24)
                 .foregroundStyle(ShotIQColor.ink)
             Text(label).shotiqBody(8, weight: .semibold).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -1420,7 +1600,7 @@ struct DrillDetailView: View {      // 057
     private func buildColumn(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 5) {
             // TARGET MECHANICS: one diagram per mechanic being built.
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 22)
+            ShotIQConceptGlyph(concept: label, fallback: icon, size: 32)
                 .foregroundStyle(ShotIQColor.ink)
             Text(label).shotiqBody(7.5, weight: .semibold).kerning(0.4)
                 .foregroundStyle(ShotIQColor.ink)
@@ -1430,9 +1610,9 @@ struct DrillDetailView: View {      // 057
     }
     private func equipCard(_ icon: String, _ title: String, _ caption: String) -> some View {
         HStack(spacing: 10) {
-            ShotIQConceptGlyph(concept: title, fallback: icon, size: 26)
+            ShotIQConceptGlyph(concept: title, fallback: icon, size: 36)
                 .foregroundStyle(ShotIQColor.ink)
-                .frame(width: 26)
+                .frame(width: 36)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).shotiqBody(13, weight: .semibold)
                 Text(caption).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
@@ -1454,12 +1634,21 @@ struct DrillDetailView: View {      // 057
     private func squareNav(_ icon: String, id: String, @ViewBuilder dest: @escaping () -> some View) -> some View {
         NavigationLink { dest() } label: {
             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                     size: 18,
+                                     size: 54,
                                      label: nil)
                 .frame(width: 54, height: 54)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
         }
         .accessibilityIdentifier(id)
+        .simultaneousGesture(TapGesture().onEnded {
+            if id == "drill-detail-media" {
+                toast = app.recentMedia.isEmpty
+                    ? .info("Opening video upload", "Add a workout clip to analyze.")
+                    : .success("Opening latest media", "Your saved analysis media is ready.")
+            } else {
+                toast = .info("Opening workout calendar")
+            }
+        })
     }
 }
 
@@ -1492,9 +1681,11 @@ struct MyDrillsView: View {         // 058
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
+    @AppStorage(TrainingHiddenDrillStore.key) private var hiddenDrillsPayload = "[]"
     @State private var tab = 1                  // 0 TRAIN · 1 MY DRILLS · 2 ASSIGNED
     @State private var sortMode = "Newest"
     @State private var phaseFilter = "All phases"
+    @State private var toast: ShotIQToast?
     private let drills: [TrainingSavedDrill] = [
         TrainingSavedDrill(name: "Quick Release Builder",
                            description: "Keep elbow stacked through release",
@@ -1525,10 +1716,14 @@ struct MyDrillsView: View {         // 058
     private var savedCatalogDrills: [TrainingSavedDrill] {
         TrainingSavedDrillStore.decode(savedDrillsPayload)
     }
+    private var hiddenDrillNames: Set<String> {
+        TrainingHiddenDrillStore.decode(hiddenDrillsPayload)
+    }
     private var allDrills: [TrainingSavedDrill] {
-        savedCatalogDrills + drills.filter { canonical in
+        (savedCatalogDrills + drills.filter { canonical in
             !savedCatalogDrills.contains { $0.name.caseInsensitiveCompare(canonical.name) == .orderedSame }
-        }
+        })
+        .filter { !hiddenDrillNames.contains($0.name.lowercased()) }
     }
     private var visibleDrills: [TrainingSavedDrill] {
         var out = allDrills.filter { phaseFilter == "All phases" || $0.phase == phaseFilter }
@@ -1555,6 +1750,9 @@ struct MyDrillsView: View {         // 058
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                             .foregroundStyle(.white)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening shot analysis")
+                        })
                         .padding(.top, 16)
                         HStack(spacing: 0) {
                             tabButton("figure.run", "TRAIN", "Drills & workouts", 0)
@@ -1566,8 +1764,14 @@ struct MyDrillsView: View {         // 058
                             SectionLabel(text: "\(visibleDrills.count) DRILLS")
                             Spacer()
                             Menu {
-                                Button("Newest") { sortMode = "Newest" }
-                                Button("Best accuracy") { sortMode = "Best accuracy" }
+                                Button("Newest") {
+                                    sortMode = "Newest"
+                                    toast = .success("Sorted by newest")
+                                }
+                                Button("Best accuracy") {
+                                    sortMode = "Best accuracy"
+                                    toast = .success("Sorted by best accuracy")
+                                }
                             } label: {
                                 HStack(spacing: 4) {
                                     Text("Sort:").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
@@ -1580,7 +1784,10 @@ struct MyDrillsView: View {         // 058
                             VRule(height: 14).padding(.horizontal, 8)
                             Menu {
                                 ForEach(["All phases", "SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                                    Button(p) { phaseFilter = p }
+                                    Button(p) {
+                                        phaseFilter = p
+                                        toast = .success(p == "All phases" ? "Showing all phases" : "Filtering \(p)")
+                                    }
                                 }
                             } label: {
                                 HStack(spacing: 5) {
@@ -1632,6 +1839,9 @@ struct MyDrillsView: View {         // 058
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                 }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening drill discovery")
+                                })
                             }
                             .padding(12)
                         }
@@ -1643,17 +1853,24 @@ struct MyDrillsView: View {         // 058
                 }
             }
         }
+        .shotiqToast($toast)
     }
     private func tabButton(_ icon: String, _ title: String, _ caption: String, _ index: Int) -> some View {
         let selected = tab == index
         // TRAIN pops back to the training home this screen was pushed from;
         // the other two switch the visible list in place.
         return Button {
-            if index == 0 { dismiss() } else { tab = index }
+            if index == 0 {
+                toast = .info("Returning to training")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+            } else {
+                tab = index
+                toast = .success("Showing \(title.capitalized)")
+            }
         } label: {
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
-                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 16)
+                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 24)
                     Text(title).shotiqBody(12, weight: .bold).kerning(0.5)
                         .lineLimit(1).minimumScaleFactor(0.7)
                 }
@@ -1672,12 +1889,18 @@ struct MyDrillsView: View {         // 058
                 NavigationLink { DrillDetailView(name: d.name) } label: {
                     PhotoThumb(width: 84, height: 150, photo: d.photo)
                 }
+                .simultaneousGesture(TapGesture().onEnded {
+                    toast = .info("Opening \(d.name)")
+                })
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .top, spacing: 8) {
                         NavigationLink { DrillDetailView(name: d.name) } label: {
                             Text(d.name.uppercased()).shotiqDisplay(18)
                                 .multilineTextAlignment(.leading)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening \(d.name)")
+                        })
                         Spacer(minLength: 4)
                         NavigationLink { DrillExecutionView(drillName: d.name) } label: {
                             Text("Start drill").shotiqBody(12, weight: .semibold)
@@ -1685,6 +1908,25 @@ struct MyDrillsView: View {         // 058
                                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .success("Starting \(d.name)")
+                        })
+                        Menu {
+                            Button("Move to top") {
+                                hiddenDrillsPayload = TrainingHiddenDrillStore.unhide(d.name, in: hiddenDrillsPayload)
+                                savedDrillsPayload = TrainingSavedDrillStore.save(d, in: savedDrillsPayload)
+                                toast = .success("Drill moved to top", d.name)
+                            }
+                            Button("Remove from My Drills", role: .destructive) {
+                                removeDrill(d)
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(ShotIQColor.graphite)
+                                .padding(.vertical, 4)
+                        }
+                        .accessibilityLabel("Drill actions")
                     }
                     Text(d.description).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
@@ -1729,6 +1971,11 @@ struct MyDrillsView: View {         // 058
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+    private func removeDrill(_ drill: TrainingSavedDrill) {
+        savedDrillsPayload = TrainingSavedDrillStore.remove(drill.name, from: savedDrillsPayload)
+        hiddenDrillsPayload = TrainingHiddenDrillStore.hide(drill.name, in: hiddenDrillsPayload)
+        toast = .success("Drill removed", drill.name)
+    }
 }
 
 struct WorkoutCalendarView: View {  // 059
@@ -1738,6 +1985,7 @@ struct WorkoutCalendarView: View {  // 059
     @State private var monthIndex = 4          // 0-based; 4 = May 2025 (has data)
     @State private var displayYear = 2025
     @State private var dayCardExpanded = true
+    @State private var toast: ShotIQToast?
     private let monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
                               "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
     private let daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -1783,6 +2031,9 @@ struct WorkoutCalendarView: View {  // 059
     private var selectedStatusText: String {
         selectedLocalWorkout == nil ? "IN PROGRESS" : "COMPLETED"
     }
+    private var selectedWorkoutName: String {
+        selectedLocalWorkout?.drillName ?? "Combo Ladder"
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-workout-calendar") {
             ScrollView {
@@ -1810,7 +2061,14 @@ struct WorkoutCalendarView: View {  // 059
                         .padding(.top, 16)
                         // Month header
                         HStack {
-                            Button { if monthIndex > 0 { monthIndex -= 1 } } label: {
+                            Button {
+                                if monthIndex > 0 {
+                                    monthIndex -= 1
+                                    toast = .success("Showing \(monthNames[monthIndex]) \(displayYear)")
+                                } else {
+                                    toast = .info("Already at January")
+                                }
+                            } label: {
                                 Image(systemName: "chevron.left").font(.system(size: 17))
                                     .foregroundStyle(monthIndex > 0 ? ShotIQColor.ink : ShotIQColor.muted)
                             }
@@ -1818,7 +2076,14 @@ struct WorkoutCalendarView: View {  // 059
                             Spacer()
                             Text("\(monthNames[monthIndex]) \(displayYear)").shotiqDisplay(26)
                             Spacer()
-                            Button { if monthIndex < 11 { monthIndex += 1 } } label: {
+                            Button {
+                                if monthIndex < 11 {
+                                    monthIndex += 1
+                                    toast = .success("Showing \(monthNames[monthIndex]) \(displayYear)")
+                                } else {
+                                    toast = .info("Already at December")
+                                }
+                            } label: {
                                 Image(systemName: "chevron.right").font(.system(size: 17))
                                     .foregroundStyle(monthIndex < 11 ? ShotIQColor.ink : ShotIQColor.muted)
                             }
@@ -1869,7 +2134,10 @@ struct WorkoutCalendarView: View {  // 059
                                         .foregroundStyle(selectedLocalWorkout == nil ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen)
                                         .accessibilityIdentifier("calendar-selected-status")
                                     Spacer()
-                                    Button { withAnimation { dayCardExpanded.toggle() } } label: {
+                                    Button {
+                                        withAnimation { dayCardExpanded.toggle() }
+                                        toast = .info(dayCardExpanded ? "Workout details expanded" : "Workout details collapsed")
+                                    } label: {
                                         Image(systemName: dayCardExpanded ? "chevron.up" : "chevron.down")
                                             .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
                                     }
@@ -1882,7 +2150,7 @@ struct WorkoutCalendarView: View {  // 059
                                         Text(selectedLocalWorkout?.drillName.uppercased() ?? "COMBO LADDER").shotiqDisplay(22)
                                             .accessibilityIdentifier("calendar-selected-workout-name")
                                         HStack(spacing: 5) {
-                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 32).font(.system(size: 11))
+                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 42).font(.system(size: 11))
                                             Text(selectedLocalWorkout.map { "Completed • \($0.shots) shots • \($0.accuracyText)" } ?? "Day 4 of 7 • 17 min").shotiqBody(12, weight: .semibold)
                                                 .accessibilityIdentifier("calendar-selected-workout-summary")
                                         }
@@ -1897,7 +2165,7 @@ struct WorkoutCalendarView: View {  // 059
                                         }
                                     }
                                 }
-                                NavigationLink { DrillExecutionView(drillName: "Combo Ladder") } label: {
+                                NavigationLink { DrillExecutionView(drillName: selectedWorkoutName) } label: {
                                     HStack(spacing: 8) {
                                         ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
                                                                  size: 18,
@@ -1908,6 +2176,9 @@ struct WorkoutCalendarView: View {  // 059
                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                     .foregroundStyle(.white)
                                 }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .success("Opening \(selectedWorkoutName)")
+                                })
                                 }
                             }
                             .padding(14)
@@ -1919,6 +2190,7 @@ struct WorkoutCalendarView: View {  // 059
                 }
             }
         }
+        .shotiqToast($toast)
         .onAppear(perform: syncLatestWorkoutSelection)
     }
     private func syncLatestWorkoutSelection() {
@@ -1945,7 +2217,19 @@ struct WorkoutCalendarView: View {  // 059
     }
     @ViewBuilder
     private func dayCell(_ d: Int) -> some View {
-        Button { selected = d; dayCardExpanded = true } label: {
+        Button {
+            selected = d
+            dayCardExpanded = true
+            if isLocalWorkoutMonth && d == latestComponents?.day {
+                toast = .success("Loaded completed workout for day \(d)")
+            } else if completed.contains(d) {
+                toast = .success("Loaded completed workout for May \(d)")
+            } else if missed.contains(d) {
+                toast = .info("May \(d) was marked missed")
+            } else {
+                toast = .info("Selected May \(d)")
+            }
+        } label: {
             VStack(spacing: 3) {
                 if isLocalWorkoutMonth && d == latestComponents?.day {
                     Text("\(d)").shotiqBody(12, weight: .bold)
@@ -2073,6 +2357,7 @@ final class DrillSessionModel: ObservableObject {
 
 struct DrillExecutionView: View {   // 060
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     var drillName = "Pound Crossover Foundation"
     @StateObject private var m = DrillSessionModel()
     @State private var viewAngle = "FRONT VIEW"
@@ -2158,6 +2443,31 @@ struct DrillExecutionView: View {   // 060
                             .padding(14)
                         }
                         .padding(.top, 10)
+                        HStack(spacing: 10) {
+                            NavigationLink { LiveCameraSetupView() } label: {
+                                workoutPrimaryAction("record.circle", "Record workout")
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .progress("Opening live camera",
+                                                  "Set up the phone to record this workout.",
+                                                  progress: 0.35)
+                            })
+                            .accessibilityLabel("Record workout video")
+                            .accessibilityIdentifier("drill-execution-record-workout")
+
+                            NavigationLink { VideoUploadView() } label: {
+                                workoutSecondaryAction("square.and.arrow.up", "Upload clip")
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening video upload",
+                                              "Choose a saved workout clip to analyze.")
+                            })
+                            .accessibilityLabel("Upload workout video")
+                            .accessibilityIdentifier("drill-execution-upload-clip")
+                        }
+                        .padding(.top, 10)
                         ZStack(alignment: .top) {
                             CanonicalMediaSurface(key: executionData.mediaKey, height: 290)
                                 .accessibilityIdentifier("drill-execution-media")
@@ -2191,6 +2501,35 @@ struct DrillExecutionView: View {   // 060
                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
                             }
                             .padding(10)
+                            VStack {
+                                Spacer()
+                                HStack(spacing: 8) {
+                                    NavigationLink { LiveCameraSetupView() } label: {
+                                        mediaActionPill("record.circle", "Record")
+                                    }
+                                    .buttonStyle(.plain)
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .progress("Opening live camera",
+                                                          "Set up the phone to record this workout.",
+                                                          progress: 0.35)
+                                    })
+                                    .accessibilityLabel("Record workout video")
+                                    .accessibilityIdentifier("drill-execution-record-video")
+
+                                    NavigationLink { VideoUploadView() } label: {
+                                        mediaActionPill("square.and.arrow.up", "Upload")
+                                    }
+                                    .buttonStyle(.plain)
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening video upload",
+                                                      "Choose a saved workout clip to analyze.")
+                                    })
+                                    .accessibilityLabel("Upload workout video")
+                                    .accessibilityIdentifier("drill-execution-upload-video")
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(10)
+                            }
                         }
                         .padding(.top, 12)
                         PhaseStrip().padding(.top, 16)
@@ -2198,6 +2537,11 @@ struct DrillExecutionView: View {   // 060
                             .padding(.top, 10)
                         HStack(spacing: 10) {
                             Button {
+                                guard m.shots.isEmpty == false else {
+                                    toast = .info("No shots to undo",
+                                                  "Mark a make or miss before using undo.")
+                                    return
+                                }
                                 m.undo()
                                 toast = .info("Last shot removed", "\(m.shots.count) shots remaining")
                             } label: {
@@ -2229,8 +2573,19 @@ struct DrillExecutionView: View {   // 060
                         .padding(.top, 10)
                         Button {
                             Task {
+                                guard !m.shots.isEmpty else {
+                                    toast = .info("Record a shot first",
+                                                  "Mark a make or miss before ending this workout.")
+                                    return
+                                }
                                 toast = .progress("Saving workout", "Syncing shots and workout summary.", progress: 0.65)
                                 await m.finish(drillName: executionData.drillName)   // persist shots + workout
+                                let workout = TrainingWorkoutRecord.manualSession(
+                                    drillName: executionData.drillName,
+                                    shots: m.shots.count,
+                                    makes: m.makes,
+                                    durationSeconds: m.elapsed)
+                                completedWorkoutsPayload = TrainingWorkoutStore.save(workout, in: completedWorkoutsPayload)
                                 toast = .success("Workout saved", "Opening your completion summary.")
                                 try? await Task.sleep(nanoseconds: 650_000_000)
                                 showCompletion = true
@@ -2256,7 +2611,10 @@ struct DrillExecutionView: View {   // 060
         }
         .shotiqToast($toast)
         .safeAreaInset(edge: .bottom) {
-            shotActionButtons
+            VStack(spacing: 8) {
+                workoutVideoActionButtons
+                shotActionButtons
+            }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
                 .background(.ultraThinMaterial)
@@ -2315,6 +2673,33 @@ struct DrillExecutionView: View {   // 060
         }
     }
 
+    private var workoutVideoActionButtons: some View {
+        HStack(spacing: 10) {
+            NavigationLink { LiveCameraSetupView() } label: {
+                workoutPrimaryAction("record.circle", "Record workout")
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture().onEnded {
+                toast = .progress("Opening live camera",
+                                  "Set up the phone to record this workout.",
+                                  progress: 0.35)
+            })
+            .accessibilityLabel("Record workout video")
+            .accessibilityIdentifier("drill-execution-bottom-record-workout")
+
+            NavigationLink { VideoUploadView() } label: {
+                workoutSecondaryAction("square.and.arrow.up", "Upload clip")
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture().onEnded {
+                toast = .info("Opening video upload",
+                              "Choose a saved workout clip to analyze.")
+            })
+            .accessibilityLabel("Upload workout video")
+            .accessibilityIdentifier("drill-execution-bottom-upload-clip")
+        }
+    }
+
     @ViewBuilder private var drillFeedbackStrip: some View {
         if let toast = drillFeedback {
             HStack(spacing: 10) {
@@ -2354,6 +2739,40 @@ struct DrillExecutionView: View {   // 060
         }
         .frame(maxWidth: .infinity)
     }
+    private func workoutPrimaryAction(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 14, weight: .bold))
+            Text(label).shotiqBody(13, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 42)
+        .foregroundStyle(.white)
+        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+    }
+    private func workoutSecondaryAction(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 14, weight: .bold))
+            Text(label).shotiqBody(13, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 42)
+        .foregroundStyle(ShotIQColor.ink)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+    private func mediaActionPill(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 12, weight: .bold))
+            Text(label).shotiqBody(12, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 11)
+        .frame(height: 34)
+        .background(.black.opacity(0.76), in: Capsule())
+        .overlay(Capsule().stroke(.white.opacity(0.22)))
+    }
 }
 
 struct ShotTrackerView: View {      // 061
@@ -2367,6 +2786,7 @@ struct ShotTrackerView: View {      // 061
     private var shots: Int { m.shots.count }
     private var makes: Int { m.makes }
     private var pct: Double { shots == 0 ? 0 : Double(makes) / Double(shots) }
+    private var latestAnalysis: ShotIQAnalysisResultDTO? { app.recentMedia.first?.analysis }
     private var currentStreak: Int {
         var streak = 0
         for shot in m.shots.reversed() {
@@ -2433,6 +2853,30 @@ struct ShotTrackerView: View {      // 061
                                         .font(.custom("Tungsten-Medium", size: 16))
                                         .accessibilityIdentifier("tracker-session-count")
                                 }
+                                HStack(spacing: 9) {
+                                    NavigationLink { LiveCameraSetupView() } label: {
+                                        trackerPrimaryAction("record.circle", "Record")
+                                    }
+                                    .buttonStyle(.plain)
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .progress("Opening live camera",
+                                                          "Record your workout video from the tracker.",
+                                                          progress: 0.35)
+                                    })
+                                    .accessibilityLabel("Record shot tracker video")
+                                    .accessibilityIdentifier("tracker-record-workout")
+
+                                    NavigationLink { VideoUploadView() } label: {
+                                        trackerSecondaryAction("square.and.arrow.up", "Upload")
+                                    }
+                                    .buttonStyle(.plain)
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening video upload",
+                                                      "Choose a saved workout clip to analyze.")
+                                    })
+                                    .accessibilityLabel("Upload shot tracker video")
+                                    .accessibilityIdentifier("tracker-upload-clip")
+                                }
                                 // This plate stays live because it counts the
                                 // shots the player records in this session.
                                 ZStack(alignment: .bottomLeading) {
@@ -2449,6 +2893,32 @@ struct ShotTrackerView: View {      // 061
                                     .foregroundStyle(.white)
                                     .padding(8)
                                     .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
+                                    .padding(10)
+                                    HStack(spacing: 8) {
+                                        NavigationLink { LiveCameraSetupView() } label: {
+                                            trackerMediaPill("record.circle", "Record")
+                                        }
+                                        .buttonStyle(.plain)
+                                        .simultaneousGesture(TapGesture().onEnded {
+                                            toast = .progress("Opening live camera",
+                                                              "Record your workout video from the tracker.",
+                                                              progress: 0.35)
+                                        })
+                                        .accessibilityLabel("Record shot tracker video")
+                                        .accessibilityIdentifier("tracker-record-video")
+
+                                        NavigationLink { VideoUploadView() } label: {
+                                            trackerMediaPill("square.and.arrow.up", "Upload")
+                                        }
+                                        .buttonStyle(.plain)
+                                        .simultaneousGesture(TapGesture().onEnded {
+                                            toast = .info("Opening video upload",
+                                                          "Choose a saved workout clip to analyze.")
+                                        })
+                                        .accessibilityLabel("Upload shot tracker video")
+                                        .accessibilityIdentifier("tracker-upload-video")
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
                                     .padding(10)
                                 }
                             }
@@ -2479,7 +2949,13 @@ struct ShotTrackerView: View {      // 061
                                 correction("Elbow Height", "Raise elbow")
                                 correction("Shooting Pocket", "Tighten pocket")
                                 correction("Release Arc", "Less forward tilt")
-                                NavigationLink { AnalysisResultOverviewView() } label: {
+                                NavigationLink {
+                                    if let latestAnalysis {
+                                        AnalysisResultOverviewView(initialResult: latestAnalysis)
+                                    } else {
+                                        AnalyzeHubView()
+                                    }
+                                } label: {
                                     HStack(spacing: 6) {
                                         Image(systemName: "list.bullet").font(.system(size: 10))
                                         Text("VIEW ANALYSIS").shotiqBody(9, weight: .bold).kerning(0.4)
@@ -2488,6 +2964,12 @@ struct ShotTrackerView: View {      // 061
                                     .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
                                     .foregroundStyle(ShotIQColor.ink)
                                 }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = latestAnalysis == nil
+                                        ? .info("Analyze a shot first",
+                                                "Record or upload media before opening analysis.")
+                                        : .info("Opening analysis", "Loading your latest ShotIQ result.")
+                                })
                                 .accessibilityIdentifier("tracker-view-analysis")
                             }
                             .frame(width: 128)
@@ -2575,6 +3057,11 @@ struct ShotTrackerView: View {      // 061
                             .accessibilityLabel("Mark miss")
                             .accessibilityIdentifier("tracker-mark-miss")
                             Button {
+                                guard shots > 0 else {
+                                    toast = .info("No shots to undo",
+                                                  "Mark a make or miss before using undo.")
+                                    return
+                                }
                                 m.undo()
                                 toast = .info("Last shot removed", "\(shots) shots tracked")
                             } label: {
@@ -2617,6 +3104,12 @@ struct ShotTrackerView: View {      // 061
             }
         }
         .shotiqToast($toast)
+        .safeAreaInset(edge: .bottom) {
+            trackerVideoActionButtons
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
+        }
         .navigationDestination(isPresented: $showCompletion) {
             WorkoutCompletionView(workout: completedWorkout, shots: shots, makes: makes, drillName: "Shot Tracker Session")
         }
@@ -2637,7 +3130,7 @@ struct ShotTrackerView: View {      // 061
     private func trackerButton(_ icon: String, _ label: String, _ fg: Color, _ bg: Color?) -> some View {
         HStack(spacing: 5) {
             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                     size: 12,
+                                     size: 24,
                                      label: nil)
             Text(label).shotiqBody(10, weight: .bold).kerning(0.3)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -2647,11 +3140,85 @@ struct ShotTrackerView: View {      // 061
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(bg == nil ? ShotIQColor.rule : .clear))
         .foregroundStyle(fg)
     }
+    private var trackerVideoActionButtons: some View {
+        HStack(spacing: 10) {
+            NavigationLink { LiveCameraSetupView() } label: {
+                trackerBottomAction("record.circle", "Record workout", primary: true)
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture().onEnded {
+                toast = .progress("Opening live camera",
+                                  "Record your workout video from the tracker.",
+                                  progress: 0.35)
+            })
+            .accessibilityLabel("Record shot tracker video")
+            .accessibilityIdentifier("tracker-bottom-record-workout")
+
+            NavigationLink { VideoUploadView() } label: {
+                trackerBottomAction("square.and.arrow.up", "Upload clip", primary: false)
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture().onEnded {
+                toast = .info("Opening video upload",
+                              "Choose a saved workout clip to analyze.")
+            })
+            .accessibilityLabel("Upload shot tracker video")
+            .accessibilityIdentifier("tracker-bottom-upload-clip")
+        }
+    }
+    private func trackerBottomAction(_ icon: String, _ label: String, primary: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 14, weight: .bold))
+            Text(label).shotiqBody(13, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .foregroundStyle(primary ? .white : ShotIQColor.ink)
+        .background(primary ? ShotIQColor.shotiqOrange : ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(primary ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
+        .contentShape(Rectangle())
+    }
+    private func trackerPrimaryAction(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 12, weight: .bold))
+            Text(label).shotiqBody(11, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 36)
+        .foregroundStyle(.white)
+        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+    }
+    private func trackerSecondaryAction(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 12, weight: .bold))
+            Text(label).shotiqBody(11, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 36)
+        .foregroundStyle(ShotIQColor.ink)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+    private func trackerMediaPill(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 11, weight: .bold))
+            Text(label).shotiqBody(11, weight: .bold)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 9)
+        .frame(height: 32)
+        .background(.black.opacity(0.76), in: Capsule())
+        .overlay(Capsule().stroke(.white.opacity(0.22)))
+    }
 }
 
 struct WorkoutCompletionView: View { // 062
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @State private var toast: ShotIQToast?
     var workout: TrainingWorkoutRecord?
     var shots = 24; var makes = 15
     var drillName = "Quick Release Builder"
@@ -2688,6 +3255,9 @@ struct WorkoutCompletionView: View { // 062
                             HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening workout calendar")
+                        })
                         .accessibilityLabel("View workout calendar")
                         .accessibilityIdentifier("completion-calendar-link")
                         VRule(height: 46)
@@ -2695,6 +3265,9 @@ struct WorkoutCompletionView: View { // 062
                             HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening player card")
+                        })
                         .accessibilityLabel("View player card points")
                         .accessibilityIdentifier("completion-player-card-link")
                     }
@@ -2832,9 +3405,20 @@ struct WorkoutCompletionView: View { // 062
                         }
                         .accessibilityLabel("Next recommendation Elbow Stack Builder")
                         .accessibilityIdentifier("completion-next-recommendation")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .success("Opening recommended drill", "Elbow Stack Builder")
+                        })
                         .padding(.top, 10)
                         HStack(spacing: 10) {
-                            NavigationLink { ShotBreakdownView() } label: {
+                            NavigationLink {
+                                if let latest = app.recentMedia.first {
+                                    ShotBreakdownView(presentation: AnalysisResultPresentation(result: latest.analysis))
+                                } else if UITestHooks.demoData {
+                                    ShotBreakdownView(presentation: .canonicalDemo)
+                                } else {
+                                    AnalyzeHubView()
+                                }
+                            } label: {
                                 HStack(spacing: 6) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-review",
                                                              size: 14,
@@ -2847,6 +3431,16 @@ struct WorkoutCompletionView: View { // 062
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                             .accessibilityIdentifier("completion-review-shots")
+                            .simultaneousGesture(TapGesture().onEnded {
+                                if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                    toast = .progress("Opening shot review",
+                                                      "Loading your shot breakdown.",
+                                                      progress: 0.45)
+                                } else {
+                                    toast = .info("Analyze a shot first",
+                                                  "Record or upload media before reviewing shot frames.")
+                                }
+                            })
                             ShareLink(item: "ShotIQ workout complete — \(resolvedWorkout.makes)/\(resolvedWorkout.shots) makes (\(accuracy)). 🏀") {
                                 HStack(spacing: 6) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-share",
@@ -2861,6 +3455,9 @@ struct WorkoutCompletionView: View { // 062
                             }
                             .accessibilityLabel("Share progress \(resolvedWorkout.makes) of \(resolvedWorkout.shots) makes \(accuracy)")
                             .accessibilityIdentifier("completion-share-progress")
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening share sheet", "Workout progress is ready.")
+                            })
                             NavigationLink { DrillExecutionView(drillName: drillName) } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "arrow.clockwise").font(.system(size: 12))
@@ -2872,6 +3469,9 @@ struct WorkoutCompletionView: View { // 062
                                 .foregroundStyle(.white)
                             }
                             .accessibilityIdentifier("completion-repeat-drill")
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .success("Repeating drill", drillName)
+                            })
                         }
                         .padding(.vertical, 20)
                     }
@@ -2879,6 +3479,7 @@ struct WorkoutCompletionView: View { // 062
                 }
             }
         }
+        .shotiqToast($toast)
     }
     /// Canonical 062 prints four clearly different marks across this row. The
     /// shipped screen used `scope` for SHOTS and `target` for MAKES — two SF
@@ -2886,7 +3487,7 @@ struct WorkoutCompletionView: View { // 062
     private func completionStat(_ icon: String, _ value: String, _ label: String, _ color: Color,
                                 id: String? = nil) -> some View {
         VStack(spacing: 4) {
-            StatMarkGlyph(kind: StatMarkGlyph.kind(forStatLabel: label) ?? .volume, size: 18)
+            StatMarkGlyph(kind: StatMarkGlyph.kind(forStatLabel: label) ?? .volume, size: 28)
                 .foregroundStyle(ShotIQColor.ink)
             Text(value).font(.custom("Tungsten-Medium", size: 28)).foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.6)

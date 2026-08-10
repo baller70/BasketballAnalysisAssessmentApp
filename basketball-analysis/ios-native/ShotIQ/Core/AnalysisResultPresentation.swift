@@ -236,6 +236,7 @@ struct AnalysisResultPresentation: Equatable {
     var mediaURL: URL?
     var videoURL: URL?
     var detectedPose: DetectedPose?
+    var videoPoseFrames: [VideoPoseFrameRecord]
     var mediaLabel: String
     var recordedLabel: String
     var phaseText: String
@@ -262,6 +263,10 @@ struct AnalysisResultPresentation: Equatable {
     var releaseOffsetText: String { metricValue(label: "RELEASE OFFSET") }
     var elbowAngleText: String { metricValue(label: "ELBOW ANGLE") }
     var wristAngleText: String { metricValue(label: "WRIST ANGLE") }
+    var releaseVideoPoseFrame: VideoPoseFrameRecord? { videoPoseFrame(for: "RELEASE") }
+    var displayPose: DetectedPose? {
+        detectedPose ?? releaseVideoPoseFrame?.detectedPose
+    }
     var formScoreShareText: String {
         "My ShotIQ form score: \(scoreText) (\(scoreVerdict)) from \(mediaLabel.lowercased()) recorded \(recordedLabel)."
     }
@@ -271,6 +276,25 @@ struct AnalysisResultPresentation: Equatable {
 
     func metricShareText(metric: String, valueText: String) -> String {
         "My ShotIQ \(metric.lowercased()) metric: \(valueText) - form score \(scoreText) (\(scoreVerdict))."
+    }
+
+    func videoPoseFrame(for phase: String?) -> VideoPoseFrameRecord? {
+        let frames = videoPoseFrames.sorted { $0.frameIndex < $1.frameIndex }
+        guard !frames.isEmpty else { return nil }
+        switch phase?.uppercased().replacingOccurrences(of: "_", with: "-") {
+        case "SETUP":
+            return frames.first
+        case "LOAD":
+            return frame(in: frames, at: 0.2)
+        case "RISE":
+            return frame(in: frames, at: 0.45)
+        case "RELEASE", nil:
+            return frames.first { $0.phaseLabel == "RELEASE" } ?? frame(in: frames, at: 0.68)
+        case "FOLLOW-THROUGH":
+            return frames.last
+        default:
+            return frames.first
+        }
     }
 
     init(result: ShotIQAnalysisResultDTO) {
@@ -286,6 +310,7 @@ struct AnalysisResultPresentation: Equatable {
         videoURL = Self.url(result.media.videoUrl)
             ?? Self.url(result.media.localVideoUrl)
         detectedPose = result.pose?.detectedPose
+        videoPoseFrames = result.bodyPositions ?? []
         mediaLabel = result.media.type?.capitalized ?? "Analysis media"
         recordedLabel = Self.recordedLabel(result.recordedAt)
         phaseText = result.phase.value?.replacingOccurrences(of: "-", with: " ").capitalized ?? "Unavailable"
@@ -356,6 +381,7 @@ struct AnalysisResultPresentation: Equatable {
         mediaURL: nil,
         videoURL: nil,
         detectedPose: nil,
+        videoPoseFrames: [],
         mediaLabel: "Demo media",
         recordedLabel: "Shot 41 • Today at 8:24 AM",
         phaseText: "Release",
@@ -403,6 +429,7 @@ struct AnalysisResultPresentation: Equatable {
         mediaURL: nil,
         videoURL: nil,
         detectedPose: nil,
+        videoPoseFrames: [],
         mediaLabel: "No saved media",
         recordedLabel: "No saved analysis",
         phaseText: "Unavailable",
@@ -441,7 +468,8 @@ struct AnalysisResultPresentation: Equatable {
 
     private init(id: String, scoreText: String, scorePct: Double, scoreVerdict: String,
                  scoreCaption: String, mediaURL: URL?, videoURL: URL?,
-                 detectedPose: DetectedPose?, mediaLabel: String,
+                 detectedPose: DetectedPose?, videoPoseFrames: [VideoPoseFrameRecord] = [],
+                 mediaLabel: String,
                  recordedLabel: String, phaseText: String, coachingTarget: String,
                  metrics: [AnalysisMetricTile],
                  scoreBreakdown: [AnalysisScoreBreakdownItem],
@@ -458,6 +486,7 @@ struct AnalysisResultPresentation: Equatable {
         self.mediaURL = mediaURL
         self.videoURL = videoURL
         self.detectedPose = detectedPose
+        self.videoPoseFrames = videoPoseFrames
         self.mediaLabel = mediaLabel
         self.recordedLabel = recordedLabel
         self.phaseText = phaseText
@@ -472,7 +501,19 @@ struct AnalysisResultPresentation: Equatable {
     }
 
     private static func url(_ raw: String?) -> URL? {
-        guard let raw, !raw.isEmpty else { return nil }
+        guard let raw = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty else { return nil }
+        if let absolute = URL(string: raw), absolute.scheme != nil {
+            return absolute
+        }
+        let base = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"]
+                       ?? "https://shotiq.194-146-12-139.sslip.io")
+        if raw.hasPrefix("/"), let base {
+            return URL(string: raw, relativeTo: base)?.absoluteURL
+        }
+        if let base {
+            return URL(string: "/" + raw, relativeTo: base)?.absoluteURL
+        }
         return URL(string: raw)
     }
 
@@ -717,5 +758,11 @@ struct AnalysisResultPresentation: Equatable {
 
     private func metricValue(label: String) -> String {
         metrics.first(where: { $0.label == label })?.value ?? "--"
+    }
+
+    private func frame(in frames: [VideoPoseFrameRecord], at fraction: Double) -> VideoPoseFrameRecord {
+        let bounded = min(max(fraction, 0), 1)
+        let index = Int((Double(frames.count - 1) * bounded).rounded())
+        return frames[index]
     }
 }

@@ -82,9 +82,9 @@ private func ftIn(_ inches: Int) -> String { "\(inches / 12)'\(inches % 12)\"" }
 private func primaryLabel(_ title: String, icon: String? = nil, color: Color = ShotIQColor.shotiqOrange) -> some View {
     HStack(spacing: 10) {
         if let icon {
-            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                     size: 18,
-                                     label: nil)
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white)
         }
         Text(title).shotiqBody(17, weight: .medium)
     }
@@ -117,39 +117,64 @@ private struct StepBars: View {
     }
 }
 
-/// Static bottom tab bar shown on the canonical onboarding screens (Home active).
+/// Bottom tab bar shown on onboarding screens.
+///
+/// It used to be purely decorative, which made the app feel broken: the row
+/// looks identical to the real app tab bar but none of the labels responded.
+/// During onboarding, tabs stay locked until setup is done, but every tap now
+/// gives immediate feedback instead of silently eating the gesture.
 private struct OnboardingTabBar: View {
     var initials: String = "SI"
+    @State private var toast: ShotIQToast?
     var body: some View {
         HStack {
-            tab("camera.metering.center.weighted", "Home", active: true)
-            tab("point.3.connected.trianglepath.dotted", "Capture")
-            tab("film", "Train")
-            tab("chart.line.uptrend.xyaxis", "Progress")
-            VStack(spacing: 5) {
-                Text(initials)
-                    .shotiqBody(12, weight: .bold)
-                    .frame(width: 24, height: 24)
-                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(ShotIQColor.graphite, lineWidth: 1.5))
-                Text("Profile").shotiqBody(10)
+            tab("camera.metering.center.weighted", "Home", active: true) {
+                toast = .info("Setup in progress", "Finish onboarding to open Home.")
             }
-            .frame(maxWidth: .infinity)
-            .foregroundStyle(ShotIQColor.graphite)
+            tab("point.3.connected.trianglepath.dotted", "Capture") {
+                toast = .info("Capture unlocks after setup", "Complete your profile and permissions first.")
+            }
+            tab("film", "Train") {
+                toast = .info("Training unlocks after setup", "Complete onboarding to start drills.")
+            }
+            tab("chart.line.uptrend.xyaxis", "Progress") {
+                toast = .info("Progress unlocks after setup", "Your analytics appear after setup and analysis.")
+            }
+            Button {
+                toast = .info("Profile setup is open", "Finish these steps to unlock your full profile tab.")
+            } label: {
+                VStack(spacing: 5) {
+                    Text(initials)
+                        .shotiqBody(12, weight: .bold)
+                        .frame(width: 24, height: 24)
+                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(ShotIQColor.graphite, lineWidth: 1.5))
+                    Text("Profile").shotiqBody(10)
+                }
+                .frame(maxWidth: .infinity)
+                .foregroundStyle(ShotIQColor.graphite)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.top, 10).padding(.bottom, 22)
         .background(ShotIQColor.paper)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+        .shotiqToast($toast)
     }
-    private func tab(_ icon: String, _ label: String, active: Bool = false) -> some View {
-        VStack(spacing: 5) {
-            // Same five marks as the real tab bar — this preview strip used to
-            // draw its own SF set, so Home and Capture read as two more
-            // meanings for `camera.metering...` / `point.3.connected...`.
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 21)
-            Text(label).shotiqBody(10, weight: active ? .bold : .regular)
+    private func tab(_ icon: String, _ label: String, active: Bool = false,
+                     action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                // Same five marks as the real tab bar — this preview strip used to
+                // draw its own SF set, so Home and Capture read as two more
+                // meanings for `camera.metering...` / `point.3.connected...`.
+                ShotIQConceptGlyph(concept: label, fallback: icon, size: 30)
+                Text(label).shotiqBody(10, weight: active ? .bold : .regular)
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
         }
-        .frame(maxWidth: .infinity)
-        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("onboarding-tab-\(label.lowercased())")
     }
 }
 
@@ -192,6 +217,7 @@ private struct OptionCard: View {
     var caption: String? = nil
     var selected: Bool
     var action: () -> Void
+    private let iconSize: CGFloat = 76
 
     /// Only the two handedness cards resolve to a hand; "Right Corner" and the
     /// like must not, so the match is on the word "handed".
@@ -199,32 +225,40 @@ private struct OptionCard: View {
         guard label.lowercased().contains("handed") else { return nil }
         return HandKind(handLabel: label)
     }
+
+    private func rasterAsset(for label: String) -> String? {
+        let k = label.lowercased()
+        if k.contains("right-handed") { return "shotiq-correction-hand-right" }
+        if k.contains("left-handed") { return "shotiq-correction-hand-left" }
+        if k.contains("beginner") || k.contains("developing") { return "shotiq-correction-developing-experience" }
+        if k.contains("intermediate") { return "shotiq-approved-v2-ability-intermediate" }
+        if k.contains("advanced") { return "shotiq-correction-advanced-experience" }
+        if k.contains("elite") { return "shotiq-correction-elite-experience" }
+        if k.contains("professional") { return "shotiq-approved-v2-ability-professional" }
+        return bodyTypeAsset(for: label)
+    }
+
     var body: some View {
         Button(action: action) {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 8) {
-                    // The card's own label picks the mark, so RIGHT-HANDED and
-                    // LEFT-HANDED get the two mirrored hand constellations and
-                    // the three ability grades get three different arc heights.
-                    // Passing SF names in per card is how both pairs ended up
-                    // one dot cluster apart from each other.
                     Group {
-                        if let hand = OptionCard.handKind(for: label) {
-                            HandGlyph(kind: hand, size: 48)
+                        if let raster = rasterAsset(for: label) {
+                            ShotIQApprovedRasterIcon(assetName: raster, size: iconSize, label: nil)
+                        } else if let hand = OptionCard.handKind(for: label) {
+                            HandGlyph(kind: hand, size: iconSize)
                         } else if let ability = AbilityKind(abilityLabel: label) {
-                            AbilityGlyph(kind: ability, size: 42)
+                            AbilityGlyph(kind: ability, size: iconSize)
                         } else if let shot = ShotTypeKind(shotTypeLabel: label) {
-                            ShotTypeGlyph(kind: shot, size: 40)
-                        } else if let body = bodyTypeAsset(for: label) {
-                            ShotIQApprovedRasterIcon(assetName: body, size: 42, label: nil)
+                            ShotTypeGlyph(kind: shot, size: iconSize)
                         } else if !icon.isEmpty {
                             ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                                     size: 42,
+                                                     size: iconSize,
                                                      label: nil)
                         }
                     }
                     .foregroundStyle(ShotIQColor.ink)
-                    .frame(height: 50)
+                    .frame(height: iconSize)
                     Text(label)
                         .shotiqCondensed(14, weight: .heavy)
                         .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
@@ -234,7 +268,7 @@ private struct OptionCard: View {
                             .multilineTextAlignment(.center)
                     }
                 }
-                .padding(.vertical, 18).padding(.horizontal, 8)
+                .padding(.vertical, 14).padding(.horizontal, 8)
                 .frame(maxWidth: .infinity)
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
@@ -329,7 +363,7 @@ private struct UnitToggle: View {
                 .fixedSize(horizontal: true, vertical: false)
                 .foregroundStyle(on ? .white : ShotIQColor.graphite)
                 .padding(.horizontal, 12).frame(height: 30)
-                .background(on ? ShotIQColor.analysisBlue : ShotIQColor.paper)
+                .background(on ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("\(accessibilityPrefix)-unit-\(idSuffix)")
@@ -352,22 +386,29 @@ private struct MeasurementRow: View {
     private var accessibilityKey: String {
         label.lowercased().replacingOccurrences(of: " ", with: "-")
     }
+    private var correctionAsset: String? {
+        let k = label.lowercased()
+        if k == "age" { return "shotiq-correction-age" }
+        if k == "height" { return "shotiq-correction-height" }
+        if k == "weight" { return "shotiq-correction-weight" }
+        if k == "wingspan" { return "shotiq-approved-v2-body-wingspan" }
+        return nil
+    }
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            // Canonical 009 draws a different measuring instrument on each of the
-            // four rows; the shipped screen used generic calendar / ruler /
-            // weight / arrow symbols from three separate system families.
             Group {
-                if let body = BodyMetricKind(measurementLabel: label) {
-                    BodyMetricGlyph(kind: body, size: 30)
+                if let asset = correctionAsset {
+                    ShotIQApprovedRasterIcon(assetName: asset, size: 68, label: nil)
+                } else if let body = BodyMetricKind(measurementLabel: label) {
+                    BodyMetricGlyph(kind: body, size: 68)
                 } else {
                     ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                             size: 30,
+                                             size: 68,
                                              label: nil)
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
-            .frame(width: 52)
+            .frame(width: 68)
             VStack(alignment: .leading, spacing: 4) {
                 Text(label)
                     .shotiqCondensed(20, weight: .heavy)
@@ -450,12 +491,13 @@ extension Array: @retroactive Identifiable where Element == String { public var 
 
 struct OnboardingIntroView: View {
     @EnvironmentObject var app: AppState
-    private let benefits: [(String, String, String)] = [
-        ("camera.metering.center.weighted", "PERSONALIZED ANALYSIS",
+    @State private var toast: ShotIQToast?
+    private let benefits: [(String, String, String, String)] = [
+        ("shotiq-correction-personalized-analysis", "camera.metering.center.weighted", "PERSONALIZED ANALYSIS",
          "Your measurements help tailor angles, ranges, and feedback that fit you."),
-        ("figure.run", "BETTER COMPARISONS",
+        ("shotiq-correction-better-comparisons", "figure.run", "BETTER COMPARISONS",
          "Compare against similar players with a profile like yours."),
-        ("film", "SMARTER COACHING",
+        ("shotiq-correction-smarter-coaching", "film", "SMARTER COACHING",
          "Get coaching cues that adapt as you improve.")
     ]
     var body: some View {
@@ -464,7 +506,12 @@ struct OnboardingIntroView: View {
                 HStack {
                     Wordmark(size: 30)
                     Spacer()
-                    Button("Skip") { app.onboardingComplete = true }
+                    Button("Skip") {
+                        toast = .info("Skipping profile", "You can finish setup from Profile later.")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                            app.onboardingComplete = true
+                        }
+                    }
                         .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite)
                 }
                 .padding(.horizontal, 20).frame(height: 52)
@@ -488,23 +535,7 @@ struct OnboardingIntroView: View {
                                     .shotiqBody(16).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 12)
                             }
-                            ZStack(alignment: .bottom) {
-                                CanonicalPhoto("002-visual-005", width: 138, height: 290, cornerRadius: 12)
-                                LinearGradient(colors: [.clear, .black.opacity(0.58)],
-                                               startPoint: .center,
-                                               endPoint: .bottom)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                HStack(spacing: 8) {
-                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-profile",
-                                                             size: 24,
-                                                             label: nil)
-                                    PhaseGlyph(active: true, size: 22)
-                                }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 9)
-                                .background(.white.opacity(0.88), in: Capsule())
-                                .padding(.bottom, 10)
-                            }
+                            CanonicalPhoto("002-visual-005", width: 138, height: 290, cornerRadius: 12)
                             .frame(width: 138, height: 290)
                         }
                         .padding(.top, 4)
@@ -512,10 +543,10 @@ struct OnboardingIntroView: View {
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 18)
 
                         VStack(spacing: 0) {
-                            ForEach(benefits, id: \.1) { icon, t, d in
+                            ForEach(benefits, id: \.2) { asset, icon, t, d in
                                 HStack(alignment: .top, spacing: 16) {
-                                    ShotIQConceptGlyph(concept: t, fallback: icon, size: 28)
-                                        .frame(width: 46)
+                                    ShotIQApprovedRasterIcon(assetName: asset, size: 70, label: nil)
+                                        .frame(width: 70)
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(t).shotiqBody(15, weight: .bold).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.ink)
@@ -592,7 +623,12 @@ struct OnboardingIntroView: View {
                         }
                         .padding(.top, 18)
 
-                        SecondaryButton(title: "Sign out") { app.signOut() }
+                        SecondaryButton(title: "Sign out") {
+                            toast = .progress("Signing out", "Returning you to sign in.", progress: 0.6)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                                app.signOut()
+                            }
+                        }
                             .padding(.top, 12).padding(.bottom, 24)
                     }
                     .padding(.horizontal, 20)
@@ -601,6 +637,7 @@ struct OnboardingIntroView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -614,6 +651,7 @@ struct PhysicalProfileView: View {
     @State private var heightInFt = true
     @State private var weightInLb = true
     @State private var wingspanInFt = true
+    @State private var toast: ShotIQToast?
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-physical-profile") {
@@ -640,7 +678,7 @@ struct PhysicalProfileView: View {
                             .padding(.top, 10).padding(.horizontal, 16)
 
                         ZStack(alignment: .bottomLeading) {
-                            CanonicalPhoto("002-visual-005", height: 142, cornerRadius: 10)
+                            CanonicalPhoto("generated-physical-profile-009", height: 142, cornerRadius: 10)
                                 .frame(maxWidth: .infinity)
                             LinearGradient(colors: [.clear, .black.opacity(0.6)],
                                            startPoint: .center,
@@ -648,7 +686,7 @@ struct PhysicalProfileView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                             HStack(spacing: 8) {
                                 ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-onboarding-measurements",
-                                                         size: 28,
+                                                         size: 34,
                                                          label: nil)
                                 Text("Measurements tune your analysis ranges.")
                                     .shotiqBody(13, weight: .semibold)
@@ -665,26 +703,50 @@ struct PhysicalProfileView: View {
                                            value: ageInYears ? "\(m.ageYears)" : "\(m.ageYears * 12)",
                                            leftUnit: "YEARS", rightUnit: "MONTHS",
                                            leftSelected: $ageInYears,
-                                           onMinus: { m.ageYears = max(5, m.ageYears - 1) },
-                                           onPlus: { m.ageYears = min(99, m.ageYears + 1) })
+                                           onMinus: {
+                                               m.ageYears = max(5, m.ageYears - 1)
+                                               toast = .info("Age updated", "\(m.ageYears) years")
+                                           },
+                                           onPlus: {
+                                               m.ageYears = min(99, m.ageYears + 1)
+                                               toast = .info("Age updated", "\(m.ageYears) years")
+                                           })
                             MeasurementRow(icon: "ruler", label: "HEIGHT", sub: "Without shoes",
                                            value: heightInFt ? ftIn(m.heightIn) : "\(Int(Double(m.heightIn) * 2.54))",
                                            leftUnit: "FT / IN", rightUnit: "CM",
                                            leftSelected: $heightInFt,
-                                           onMinus: { m.heightIn = max(48, m.heightIn - 1) },
-                                           onPlus: { m.heightIn = min(96, m.heightIn + 1) })
+                                           onMinus: {
+                                               m.heightIn = max(48, m.heightIn - 1)
+                                               toast = .info("Height updated", ftIn(m.heightIn))
+                                           },
+                                           onPlus: {
+                                               m.heightIn = min(96, m.heightIn + 1)
+                                               toast = .info("Height updated", ftIn(m.heightIn))
+                                           })
                             MeasurementRow(icon: "scalemass", label: "WEIGHT", sub: "Without shoes",
                                            value: weightInLb ? "\(m.weightLb)" : "\(Int(Double(m.weightLb) * 0.4536))",
                                            leftUnit: "LBS", rightUnit: "KG",
                                            leftSelected: $weightInLb,
-                                           onMinus: { m.weightLb = max(60, m.weightLb - 1) },
-                                           onPlus: { m.weightLb = min(400, m.weightLb + 1) })
+                                           onMinus: {
+                                               m.weightLb = max(60, m.weightLb - 1)
+                                               toast = .info("Weight updated", "\(m.weightLb) lbs")
+                                           },
+                                           onPlus: {
+                                               m.weightLb = min(400, m.weightLb + 1)
+                                               toast = .info("Weight updated", "\(m.weightLb) lbs")
+                                           })
                             MeasurementRow(icon: "arrow.left.and.right", label: "WINGSPAN", sub: "Fingertip to fingertip",
                                            value: wingspanInFt ? ftIn(m.wingspanIn) : "\(Int(Double(m.wingspanIn) * 2.54))",
                                            leftUnit: "FT / IN", rightUnit: "CM",
                                            leftSelected: $wingspanInFt,
-                                           onMinus: { m.wingspanIn = max(48, m.wingspanIn - 1) },
-                                           onPlus: { m.wingspanIn = min(102, m.wingspanIn + 1) })
+                                           onMinus: {
+                                               m.wingspanIn = max(48, m.wingspanIn - 1)
+                                               toast = .info("Wingspan updated", ftIn(m.wingspanIn))
+                                           },
+                                           onPlus: {
+                                               m.wingspanIn = min(102, m.wingspanIn + 1)
+                                               toast = .info("Wingspan updated", ftIn(m.wingspanIn))
+                                           })
                         }
                         .padding(.top, 16)
 
@@ -692,13 +754,19 @@ struct PhysicalProfileView: View {
                             Text("CONTINUE")
                                 .shotiqCondensed(19, weight: .heavy).kerning(2)
                                 .frame(maxWidth: .infinity).frame(height: 54)
-                                .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+                                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
                                 .foregroundStyle(.white)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .success("Measurements saved", "Experience and body type are next.")
+                        })
                         .padding(.top, 26)
 
                         HStack {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Back", "Returning to the intro screen.")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { dismiss() }
+                            } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "chevron.left")
                                         .font(.system(size: 16, weight: .semibold))
@@ -717,6 +785,7 @@ struct PhysicalProfileView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -726,6 +795,11 @@ struct ExperienceBodyTypeView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @State private var toast: ShotIQToast?
+    private let cardColumns = [
+        GridItem(.flexible(minimum: 0), spacing: 10),
+        GridItem(.flexible(minimum: 0), spacing: 10)
+    ]
 
     private let experienceOptions: [(String, String, String, String)] = [
         ("Beginner", "BEGINNER", "Just getting started", "chart.line.uptrend.xyaxis"),
@@ -749,7 +823,6 @@ struct ExperienceBodyTypeView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: app.user?.displayName ?? "Player",
                                      subtitle: "\(m.hand)-handed • \(m.experience)")
-                            .padding(.horizontal, -20)
 
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 6) {
@@ -776,34 +849,40 @@ struct ExperienceBodyTypeView: View {
                         }
                         .padding(.top, 18)
 
-                        Text("EXPERIENCE & BODY TYPE").shotiqDisplay(52).padding(.top, 12)
+                        Text("EXPERIENCE & BODY TYPE")
+                            .shotiqDisplay(42)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.55)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 12)
                         Text("This helps us tailor analysis and training recommendations to your game.")
-                            .shotiqBody(16).foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
+                            .shotiqBody(16)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 8)
 
                         QuestionLabel(text: "WHAT BEST DESCRIBES YOUR EXPERIENCE?").padding(.top, 24)
-                        // Canonical prints all five tiers across the 353pt content
-                        // width, roughly 64pt each. Pinning them to 112pt inside a
-                        // horizontal ScrollView showed three and hid ELITE and
-                        // PROFESSIONAL behind a swipe with no affordance — two
-                        // choices a user could not see, on a required question.
-                        HStack(alignment: .top, spacing: 6) {
+                        LazyVGrid(columns: cardColumns, alignment: .leading, spacing: 10) {
                             ForEach(experienceOptions, id: \.0) { value, label, caption, icon in
                                 OptionCard(icon: icon, label: label, caption: caption,
                                            selected: m.experience == value) {
                                     m.experience = value
+                                    toast = .success("Experience set", value)
                                 }
-                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: 178)
                             }
                         }
                         .padding(.top, 12)
 
                         QuestionLabel(text: "WHAT BEST DESCRIBES YOUR BODY TYPE?").padding(.top, 24)
-                        HStack(alignment: .top, spacing: 10) {
+                        LazyVGrid(columns: cardColumns, alignment: .leading, spacing: 10) {
                             ForEach(bodyTypeOptions, id: \.0) { value, label, caption, icon in
                                 OptionCard(icon: icon, label: label, caption: caption,
                                            selected: m.bodyType == value) {
                                     m.bodyType = value
+                                    toast = .success("Body type set", value)
                                 }
+                                .frame(minHeight: 178)
                             }
                         }
                         .padding(.top, 12)
@@ -823,16 +902,24 @@ struct ExperienceBodyTypeView: View {
                         NavigationLink { ShootingProfileView() } label: {
                             primaryLabel("Continue")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .success("Profile preferences saved", "Shooting profile is next.")
+                        })
                         .padding(.top, 20)
 
-                        SecondaryButton(title: "Back") { dismiss() }
+                        SecondaryButton(title: "Back") {
+                            toast = .info("Back", "Returning to measurements.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                        }
                             .padding(.top, 12).padding(.bottom, 24)
                     }
                     .padding(.horizontal, 20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -842,6 +929,7 @@ struct ShootingProfileView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @State private var toast: ShotIQToast?
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-shooting-profile") {
@@ -916,20 +1004,35 @@ struct ShootingProfileView: View {
                         sectionHeader("DOMINANT HAND", "The hand you use to shoot.")
                         HStack(spacing: 10) {
                             OptionCard(icon: "", label: "RIGHT-HANDED",
-                                       selected: m.hand == "Right") { m.hand = "Right" }
+                                       selected: m.hand == "Right") {
+                                m.hand = "Right"
+                                toast = .success("Shooting hand set", "Right-handed")
+                            }
                             OptionCard(icon: "", label: "LEFT-HANDED",
-                                       selected: m.hand == "Left") { m.hand = "Left" }
+                                       selected: m.hand == "Left") {
+                                m.hand = "Left"
+                                toast = .success("Shooting hand set", "Left-handed")
+                            }
                         }
                         .padding(.top, 12)
 
                         sectionHeader("ATHLETIC ABILITY", "How would you describe your athletic ability?")
                         HStack(alignment: .top, spacing: 10) {
                             OptionCard(icon: "", label: "DEVELOPING",
-                                       selected: m.ability == "Developing") { m.ability = "Developing" }
+                                       selected: m.ability == "Developing") {
+                                m.ability = "Developing"
+                                toast = .success("Ability set", "Developing")
+                            }
                             OptionCard(icon: "", label: "ADVANCED",
-                                       selected: m.ability == "Advanced") { m.ability = "Advanced" }
+                                       selected: m.ability == "Advanced") {
+                                m.ability = "Advanced"
+                                toast = .success("Ability set", "Advanced")
+                            }
                             OptionCard(icon: "", label: "ELITE",
-                                       selected: m.ability == "Elite") { m.ability = "Elite" }
+                                       selected: m.ability == "Elite") {
+                                m.ability = "Elite"
+                                toast = .success("Ability set", "Elite")
+                            }
                         }
                         .padding(.top, 12)
 
@@ -945,13 +1048,22 @@ struct ShootingProfileView: View {
                         HStack(alignment: .top, spacing: 10) {
                             StyleCard(label: "COMPACT", caption: "Quick, efficient release",
                                       photoKey: "011-visual-004",
-                                      selected: m.styleArc == "Compact") { m.styleArc = "Compact" }
+                                      selected: m.styleArc == "Compact") {
+                                m.styleArc = "Compact"
+                                toast = .success("Shot style set", "Compact")
+                            }
                             StyleCard(label: "BALANCED", caption: "Versatile all-around approach",
                                       photoKey: "011-visual-001",
-                                      selected: m.styleArc == "Balanced") { m.styleArc = "Balanced" }
+                                      selected: m.styleArc == "Balanced") {
+                                m.styleArc = "Balanced"
+                                toast = .success("Shot style set", "Balanced")
+                            }
                             StyleCard(label: "HIGH ARC", caption: "Higher release, maximum arc",
                                       photoKey: "011-visual-003",
-                                      selected: m.styleArc == "High Arc") { m.styleArc = "High Arc" }
+                                      selected: m.styleArc == "High Arc") {
+                                m.styleArc = "High Arc"
+                                toast = .success("Shot style set", "High Arc")
+                            }
                         }
                         .padding(.top, 12)
 
@@ -971,7 +1083,10 @@ struct ShootingProfileView: View {
                         .padding(.top, 20)
 
                         HStack(spacing: 14) {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Back", "Returning to experience and body type.")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                            } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "chevron.left")
                                         .font(.system(size: 15, weight: .semibold))
@@ -987,6 +1102,9 @@ struct ShootingProfileView: View {
                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
                                     .foregroundStyle(.white)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .success("Shooting profile saved", "Player bio is next.")
+                            })
                         }
                         .padding(.top, 20).padding(.bottom, 24)
                     }
@@ -995,6 +1113,7 @@ struct ShootingProfileView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 
     @ViewBuilder
@@ -1017,6 +1136,7 @@ struct PlayerBioView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var enhanceBusy = false
     @State private var enhanceError: String?
+    @State private var toast: ShotIQToast?
 
     /// POST /api/enhance-bio — AI-expands the bio; result lands in the preview card.
     @MainActor
@@ -1024,20 +1144,25 @@ struct PlayerBioView: View {
         let trimmed = m.bio.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 20 else {
             enhanceError = "Write at least 20 characters first so the AI has something to work with."
+            toast = .error("Bio too short", "Write at least 20 characters first.")
             return
         }
         enhanceBusy = true; enhanceError = nil
+        toast = .progress("Enhancing bio", "ShotIQ is rewriting your player bio.", progress: 0.55)
         struct Resp: Codable { var success: Bool?; var enhancedBio: String? }
         do {
             let r: Resp = try await APIClient.shared.call(
                 "/api/enhance-bio", method: "POST", body: ["bio": trimmed])
             if let enhanced = r.enhancedBio, !enhanced.isEmpty {
                 m.enhancedBio = enhanced
+                toast = .success("Bio enhanced", "Review the updated profile copy.")
             } else {
                 enhanceError = "Could not enhance the bio. Try again shortly."
+                toast = .error("Enhance failed", "Try again shortly.")
             }
         } catch {
             enhanceError = "Could not enhance the bio. Try again shortly."
+            toast = .error("Enhance failed", "Check your connection and try again.")
         }
         enhanceBusy = false
     }
@@ -1147,7 +1272,7 @@ struct PlayerBioView: View {
                                         if enhanceBusy {
                                             ProgressView().controlSize(.small).tint(ShotIQColor.shotiqOrange)
                                         } else {
-                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 32).font(.system(size: 13))
+                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 42).font(.system(size: 13))
                                         }
                                         Text(enhanceBusy ? "Enhancing…" : "Enhance bio")
                                             .shotiqBody(14, weight: .medium)
@@ -1196,11 +1321,17 @@ struct PlayerBioView: View {
                         .padding(.top, 12)
 
                         NavigationLink { OnboardingReviewView() } label: {
-                            primaryLabel("Review profile", color: ShotIQColor.confirmGreen)
+                            primaryLabel("Review profile")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .success("Bio saved", "Review your full profile next.")
+                        })
                         .padding(.top, 20)
 
-                        SecondaryButton(title: "Back") { dismiss() }
+                        SecondaryButton(title: "Back") {
+                            toast = .info("Back", "Returning to shooting profile.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismiss() }
+                        }
                             .padding(.top, 12).padding(.bottom, 24)
                     }
                     .padding(.horizontal, 20)
@@ -1208,6 +1339,7 @@ struct PlayerBioView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -1220,6 +1352,7 @@ struct OnboardingReviewView: View {
     @State private var saveError: String?
     @State private var goNext = false
     @State private var focusExpanded = false
+    @State private var toast: ShotIQToast?
 
     /// PUT /api/profile — persists every onboarding field (measurements,
     /// experience, body type, hand, ability, style, bio) and marks the
@@ -1227,18 +1360,22 @@ struct OnboardingReviewView: View {
     @MainActor
     private func completeProfile() async {
         saving = true; saveError = nil
+        toast = .progress("Saving profile", "Personalizing ShotIQ coaching for you.", progress: 0.55)
         struct Resp: Codable { var success: Bool? }
         do {
             let r: Resp = try await APIClient.shared.call(
                 "/api/profile", method: "PUT", body: m.saveBody)
             if r.success == false {
                 saveError = "Could not save your profile. Try again."
+                toast = .error("Profile not saved", "Try again or continue without saving.")
             } else {
                 app.user?.profileComplete = true
+                toast = .success("Profile saved", "Next, set up your permissions.")
                 goNext = true
             }
         } catch {
             saveError = "Could not save your profile. Check your connection and try again."
+            toast = .error("Profile not saved", "Check your connection and try again.")
         }
         saving = false
     }
@@ -1318,7 +1455,7 @@ struct OnboardingReviewView: View {
                                     .frame(maxWidth: .infinity)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
                                 VStack(spacing: 3) {
-                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrow.up.right"), size: 32)
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "arrow.up.right"), size: 42)
                                         .font(.system(size: 15))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                     Text("+8.1%").font(.custom("Tungsten-Medium", size: 24))
@@ -1334,7 +1471,10 @@ struct OnboardingReviewView: View {
                         .padding(.top, 18)
 
                         ShotIQCard {
-                            Button { withAnimation(.easeInOut(duration: 0.2)) { focusExpanded.toggle() } } label: {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) { focusExpanded.toggle() }
+                                toast = .info(focusExpanded ? "Coaching focus expanded" : "Coaching focus collapsed")
+                            } label: {
                                 VStack(alignment: .leading, spacing: 0) {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 6) {
@@ -1401,14 +1541,17 @@ struct OnboardingReviewView: View {
                         }
 
                         Button { Task { await completeProfile() } } label: {
-                            primaryLabel(saving ? "Saving profile…" : "Complete profile", icon: "checkmark.circle")
+                            primaryLabel(saving ? "Saving profile…" : "Complete profile", icon: "checkmark.circle.fill")
                         }
                         .disabled(saving)
                         .padding(.top, 20)
                         .navigationDestination(isPresented: $goNext) { CameraPermissionPrimerView() }
 
                         if saveError != nil {
-                            Button { goNext = true } label: {
+                            Button {
+                                toast = .info("Continuing without saving", "You can update your profile later.")
+                                goNext = true
+                            } label: {
                                 Text("Continue without saving")
                                     .shotiqBody(15)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -1425,19 +1568,23 @@ struct OnboardingReviewView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 
     private func editLink<D: View>(_ icon: String, _ label: String,
                                    @ViewBuilder destination: @escaping () -> D) -> some View {
         NavigationLink { destination() } label: {
             HStack(spacing: 6) {
-                ShotIQConceptGlyph(concept: label, fallback: icon, size: 15)
+                ShotIQConceptGlyph(concept: label, fallback: icon, size: 24)
                 Text(label).shotiqBody(12, weight: .medium)
             }
             .padding(.horizontal, 10).frame(height: 34)
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
             .foregroundStyle(ShotIQColor.ink)
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            toast = .info("Opening \(label)")
+        })
     }
 }
 
@@ -1447,11 +1594,12 @@ struct CameraPermissionPrimerView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
     @State private var goNext = false
+    @State private var toast: ShotIQToast?
 
     private let recordTiles: [(String, String, String)] = [
-        ("figure.basketball", "Full-body motion", "Your movement from setup through follow-through."),
-        ("basketball", "Ball trajectory", "The path and release point of your shot."),
-        ("point.3.connected.trianglepath.dotted", "Timing & sequence", "Key moments and phase transitions.")
+        ("shotiq-correction-full-body-motion", "Full-body motion", "Your movement from setup through follow-through."),
+        ("shotiq-correction-ball-trajectory", "Ball trajectory", "The path and release point of your shot."),
+        ("shotiq-correction-timing-sequence", "Timing & sequence", "Key moments and phase transitions.")
     ]
 
     var body: some View {
@@ -1480,8 +1628,7 @@ struct CameraPermissionPrimerView: View {
                                 VStack(spacing: 8) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
-                                        ShotIQConceptGlyph(concept: title, fallback: icon, size: 34)
-                                            .foregroundStyle(ShotIQColor.graphite)
+                                        ShotIQApprovedRasterIcon(assetName: icon, size: 104, label: title)
                                     }
                                     .frame(height: 110)
                                     Text(title).shotiqBody(15, weight: .semibold)
@@ -1497,9 +1644,9 @@ struct CameraPermissionPrimerView: View {
                         .padding(.top, 12)
 
                         HStack(alignment: .top, spacing: 14) {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "shield"), size: 32)
-                                .font(.system(size: 28, weight: .light))
-                                .foregroundStyle(ShotIQColor.ink)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-privacy-info",
+                                                     size: 38,
+                                                     label: nil)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Your privacy matters")
                                     .shotiqBody(16, weight: .semibold)
@@ -1558,7 +1705,7 @@ struct CameraPermissionPrimerView: View {
                             stepChevron
                             VStack(spacing: 8) {
                                 ZStack(alignment: .trailing) {
-                                    Capsule().fill(ShotIQColor.confirmGreen).frame(width: 40, height: 24)
+                                    Capsule().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 24)
                                     Circle().fill(.white).frame(width: 18, height: 18).padding(.trailing, 3)
                                 }
                                 .frame(height: 30)
@@ -1592,18 +1739,27 @@ struct CameraPermissionPrimerView: View {
                         // screen primes for, then advances.
                         Button {
                             Task {
-                                _ = await AVCaptureDevice.requestAccess(for: .video)
+                                toast = .progress("Requesting camera access",
+                                                  "ShotIQ needs camera access for live capture.",
+                                                  progress: 0.5)
+                                let granted = await AVCaptureDevice.requestAccess(for: .video)
+                                toast = granted
+                                    ? .success("Camera ready", "Live shot capture can use your camera.")
+                                    : .info("Camera not allowed", "You can still upload photos and videos.")
                                 goNext = true
                             }
                         } label: {
-                            primaryLabel("Continue", color: ShotIQColor.confirmGreen)
+                            primaryLabel("Continue", icon: "camera.fill")
                         }
                         .padding(.top, 20)
                         .navigationDestination(isPresented: $goNext) { PhotoLibraryPermissionView() }
 
                         NavigationLink { PhotoLibraryPermissionView() } label: {
-                            secondaryLabel("Not now", tint: ShotIQColor.confirmGreen, border: ShotIQColor.confirmGreen)
+                            secondaryLabel("Not now", tint: ShotIQColor.shotiqOrange, border: ShotIQColor.shotiqOrange)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Camera skipped", "You can allow camera access later in Settings.")
+                        })
                         .padding(.top, 12).padding(.bottom, 24)
                     }
                     .padding(.horizontal, 20)
@@ -1611,6 +1767,7 @@ struct CameraPermissionPrimerView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 
     private var stepChevron: some View {
@@ -1621,7 +1778,7 @@ struct CameraPermissionPrimerView: View {
     }
     private func allowStep(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 8) {
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 26)
+            ShotIQConceptGlyph(concept: label, fallback: icon, size: 30)
                 .foregroundStyle(ShotIQColor.ink)
                 .frame(height: 30)
             Text(label)
@@ -1644,27 +1801,40 @@ struct PhotoLibraryPermissionView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
     @State private var goNext = false
+    @State private var toast: ShotIQToast?
 
     /// Raises the system photo-library prompt this screen primes for, then advances.
     @MainActor
     private func chooseAccess() async {
-        _ = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        toast = .progress("Requesting photo access",
+                          "ShotIQ uses only the photos you choose for analysis.",
+                          progress: 0.5)
+        let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        toast = status == .authorized || status == .limited
+            ? .success("Photos ready", "You can upload real shot images.")
+            : .info("Photos not allowed", "You can still use the camera path.")
         goNext = true
     }
 
     /// Camera path instead of the library: raises the camera prompt, then advances.
     @MainActor
     private func useCameraInstead() async {
-        _ = await AVCaptureDevice.requestAccess(for: .video)
+        toast = .progress("Requesting camera access",
+                          "Opening the camera path for shot capture.",
+                          progress: 0.5)
+        let granted = await AVCaptureDevice.requestAccess(for: .video)
+        toast = granted
+            ? .success("Camera ready", "You can capture a new shot.")
+            : .info("Camera not allowed", "You can change this later in Settings.")
         goNext = true
     }
 
     private let accessRows: [(String, String, String)] = [
-        ("point.3.connected.trianglepath.dotted", "Selected photos only",
+        ("shotiq-correction-selected-photos", "Selected photos only",
          "You pick the photos we analyze. We never scan your entire library."),
-        ("lock", "Private and secure",
+        ("shotiq-correction-private-secure", "Private and secure",
          "Analysis happens in the cloud. Your photos are never shared."),
-        ("magnifyingglass", "Used for analysis",
+        ("shotiq-correction-used-for-analysis", "Used for analysis",
          "Your photos help us deliver accurate form insights.")
     ]
 
@@ -1704,22 +1874,10 @@ struct PhotoLibraryPermissionView: View {
                                     .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 10)
                             }
-                            VStack(spacing: 6) {
-                                HStack(spacing: 6) {
-                                    ForEach(0..<4, id: \.self) { _ in
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(ShotIQColor.warmCanvas)
-                                            .frame(height: 32)
-                                    }
-                                }
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.warmCanvas)
-                                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-media-jpg",
-                                                             size: 44,
-                                                             label: nil)
-                                }
-                                .frame(height: 210)
-                            }
+                            CanonicalPhoto("generated-photo-library-015",
+                                           width: 150,
+                                           height: 250,
+                                           cornerRadius: 10)
                             .frame(width: 150)
                             .padding(.top, 12)
                         }
@@ -1728,8 +1886,8 @@ struct PhotoLibraryPermissionView: View {
                         VStack(spacing: 0) {
                             ForEach(accessRows, id: \.1) { icon, title, caption in
                                 HStack(alignment: .top, spacing: 16) {
-                                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 28)
-                                        .frame(width: 44)
+                                    ShotIQApprovedRasterIcon(assetName: icon, size: 64, label: title)
+                                        .frame(width: 68)
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(title).shotiqBody(16, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.ink)
@@ -1748,7 +1906,7 @@ struct PhotoLibraryPermissionView: View {
                         Button { Task { await useCameraInstead() } } label: {
                             HStack(spacing: 16) {
                                 ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-live-camera",
-                                                         size: 28,
+                                                         size: 42,
                                                          label: nil)
                                     .frame(width: 44)
                                 VStack(alignment: .leading, spacing: 3) {
@@ -1778,28 +1936,35 @@ struct PhotoLibraryPermissionView: View {
 
                         Button { Task { await useCameraInstead() } } label: {
                             HStack(spacing: 10) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 32)
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera"), size: 42)
                                 Text("Use camera instead").shotiqBody(17, weight: .medium)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)
-                            .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.analysisBlue))
-                            .foregroundStyle(ShotIQColor.analysisBlue)
+                            .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.shotiqOrange))
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                         .padding(.top, 12)
 
                         NavigationLink { NotificationPermissionPrimerView() } label: {
                             secondaryLabel("Not now")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Photos skipped", "You can allow photo access later in Settings.")
+                        })
                         .padding(.top, 12)
 
                         HStack(spacing: 6) {
-                            Image(systemName: "lock")
-                                .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-privacy-info",
+                                                     size: 14,
+                                                     label: nil)
                             Text("You can change this anytime in Settings.")
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                            Button("Learn more") { CameraService.openSystemSettings() }
+                            Button("Learn more") {
+                                toast = .info("Opening Settings", "Review photo access controls in iOS Settings.")
+                                CameraService.openSystemSettings()
+                            }
                                 .font(.system(size: 13))
-                                .foregroundStyle(ShotIQColor.analysisBlue)
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 14).padding(.bottom, 24)
@@ -1809,6 +1974,7 @@ struct PhotoLibraryPermissionView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 }
 
@@ -1817,6 +1983,7 @@ struct PhotoLibraryPermissionView: View {
 struct NotificationPermissionPrimerView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
+    @State private var toast: ShotIQToast?
 
     private let reasons: [(String, String, String)] = [
         ("film", "ANALYSIS COMPLETE", "Get notified as soon as your AI analysis is ready to review."),
@@ -1860,7 +2027,7 @@ struct NotificationPermissionPrimerView: View {
                         VStack(spacing: 0) {
                             ForEach(reasons, id: \.1) { icon, title, caption in
                                 HStack(alignment: .center, spacing: 16) {
-                                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 34)
+                                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 58)
                                         .frame(width: 64)
                                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
                                     VStack(alignment: .leading, spacing: 4) {
@@ -1898,18 +2065,32 @@ struct NotificationPermissionPrimerView: View {
                         }
                         .padding(.top, 20)
 
-                        PrimaryButton(title: "Turn on notifications", icon: "bell.badge",
-                                      color: ShotIQColor.confirmGreen) {
+                        PrimaryButton(title: "Turn on notifications", icon: "bell.badge.fill",
+                                      color: ShotIQColor.shotiqOrange) {
                             Task { @MainActor in
+                                toast = .progress("Requesting notifications",
+                                                  "ShotIQ will use these for analysis results and training reminders.",
+                                                  progress: 0.5)
                                 // Raise the real system prompt; onboarding completes either way.
-                                _ = try? await UNUserNotificationCenter.current()
+                                let granted = (try? await UNUserNotificationCenter.current()
                                     .requestAuthorization(options: [.alert, .badge, .sound])
-                                app.onboardingComplete = true
+                                ) ?? false
+                                toast = granted
+                                    ? .success("Notifications on", "You will know when analysis and workouts are ready.")
+                                    : .info("Notifications skipped", "You can turn them on later in Settings.")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                    app.onboardingComplete = true
+                                }
                             }
                         }
                         .padding(.top, 22)
 
-                        SecondaryButton(title: "Not now") { app.onboardingComplete = true }
+                        SecondaryButton(title: "Not now") {
+                            toast = .info("Notifications skipped", "You can turn them on later in Settings.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                app.onboardingComplete = true
+                            }
+                        }
                             .padding(.top, 12).padding(.bottom, 24)
                     }
                     .padding(.horizontal, 20)
@@ -1917,5 +2098,6 @@ struct NotificationPermissionPrimerView: View {
                 OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
+        .shotiqToast($toast)
     }
 }

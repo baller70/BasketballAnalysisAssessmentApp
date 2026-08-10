@@ -238,7 +238,9 @@ enum UITestHooks {
     static let mainShellStages = ["analyze-hub", "photo-upload-source", "photo-review-crop", "upload-quality-check", "video-review",
                                   "live-camera-setup", "hoop-calibration", "readiness-check",
                                   "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
-                                  "analysis-taking-longer", "analysis-error",
+                                  "analysis-processing", "analysis-taking-longer",
+                                  "analysis-result-overview", "analysis-error",
+                                  "flaws-overview",
                                   "training-home", "quick-start", "discover-drills", "drill-detail", "my-drills",
                                   "workout-calendar", "shot-tracker", "workout-completion",
                                   "analytics-cards", "analytics-detailed", "profile",
@@ -261,7 +263,7 @@ enum UITestHooks {
 
 /// App-level state machine: splash → auth → onboarding → main.
 @MainActor
-struct ShotIQRecentMediaEntry: Identifiable, Equatable {
+struct ShotIQRecentMediaEntry: Identifiable, Equatable, Codable {
     var id: String
     var title: String
     var kind: String
@@ -275,10 +277,17 @@ final class AppState: ObservableObject {
     @Published var user: APIUser?
     @Published var onboardingComplete = false
     @Published var tab: RootTab = .home
-    @Published var recentMedia: [ShotIQRecentMediaEntry] = []
+    @Published var recentMedia: [ShotIQRecentMediaEntry] = [] {
+        didSet { persistRecentMedia() }
+    }
+    private var sessionHydrationStarted = false
+    private static let recentMediaKey = "shotiq.recentMedia.v1"
 
     init() {
         applyUITestResets()
+        if !UITestHooks.active {
+            recentMedia = Self.loadPersistedRecentMedia()
+        }
 
         if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
             phase = .welcome
@@ -297,16 +306,56 @@ final class AppState: ObservableObject {
     }
 
     func rememberAnalysisMedia(_ analysis: ShotIQAnalysisResultDTO, title: String? = nil) {
-        let kind = analysis.media.type?.lowercased() == "video" ? "Videos" : "Images"
-        let existing = recentMedia.first { $0.id == analysis.id }
+        let existing = recentMedia.first { entry in
+            entry.id == analysis.id
+            || (analysis.clientSessionId != nil && entry.analysis.clientSessionId == analysis.clientSessionId)
+        }
+        let mergedAnalysis = existing.map { Self.mergeAnalysis(incoming: analysis, existing: $0.analysis) } ?? analysis
+        let kind = mergedAnalysis.media.type?.lowercased() == "video" ? "Videos" : "Images"
         let entry = ShotIQRecentMediaEntry(
-            id: analysis.id,
+            id: mergedAnalysis.id,
             title: title ?? existing?.title ?? (kind == "Videos" ? "Analyzed Video" : "Analyzed Photo"),
             kind: kind,
             durationText: existing?.durationText ?? (kind == "Videos" ? "clip" : "photo"),
-            analysis: analysis)
-        recentMedia.removeAll { $0.id == entry.id }
+            analysis: mergedAnalysis)
+        recentMedia.removeAll { existingEntry in
+            existingEntry.id == entry.id
+            || (entry.analysis.clientSessionId != nil && existingEntry.analysis.clientSessionId == entry.analysis.clientSessionId)
+        }
         recentMedia.insert(entry, at: 0)
+        if recentMedia.count > 24 {
+            recentMedia = Array(recentMedia.prefix(24))
+        }
+    }
+
+    private static func mergeAnalysis(incoming: ShotIQAnalysisResultDTO,
+                                      existing: ShotIQAnalysisResultDTO) -> ShotIQAnalysisResultDTO {
+        var merged = incoming
+        if merged.media.localVideoUrl?.isEmpty != false {
+            merged.media.localVideoUrl = existing.media.localVideoUrl
+        }
+        if merged.media.localImageUrl?.isEmpty != false {
+            merged.media.localImageUrl = existing.media.localImageUrl
+        }
+        if merged.media.videoUrl?.isEmpty != false {
+            merged.media.videoUrl = existing.media.videoUrl
+        }
+        if merged.media.displayImageUrl?.isEmpty != false {
+            merged.media.displayImageUrl = existing.media.displayImageUrl
+        }
+        if merged.media.annotatedImageUrl?.isEmpty != false {
+            merged.media.annotatedImageUrl = existing.media.annotatedImageUrl
+        }
+        if merged.media.imageUrl?.isEmpty != false {
+            merged.media.imageUrl = existing.media.imageUrl
+        }
+        if merged.pose == nil {
+            merged.pose = existing.pose
+        }
+        if merged.bodyPositions?.isEmpty != false {
+            merged.bodyPositions = existing.bodyPositions
+        }
+        return merged
     }
 
     func boot() async {
@@ -381,20 +430,91 @@ final class AppState: ObservableObject {
     /// call more than once — the first caller wins.
     func leaveSplash() {
         guard phase == .splash else { return }
-        // A stored access token means a returning user.
-        phase = KeychainStore.read(key: "accessToken") != nil ? .main : .welcome
+        guard KeychainStore.read(key: "accessToken") != nil else {
+            phase = .welcome
+            return
+        }
+        // A stored access token means a returning user, but the tabs still need
+        // the current profile and latest repo-backed analysis contract.
+        phase = .main
+        hydrateSignedInSessionIfNeeded()
     }
 
     func signedIn(_ user: APIUser) {
         self.user = user
         onboardingComplete = user.profileComplete ?? false
         phase = .main
+        sessionHydrationStarted = false
+        hydrateSignedInSessionIfNeeded()
     }
 
     func signOut() {
         Task { await APIClient.shared.signOut() }
         user = nil
+        recentMedia = []
+        Self.clearPersistedRecentMedia()
+        sessionHydrationStarted = false
         phase = .welcome
+    }
+
+    private static func loadPersistedRecentMedia() -> [ShotIQRecentMediaEntry] {
+        guard let data = UserDefaults.standard.data(forKey: recentMediaKey),
+              let entries = try? JSONDecoder().decode([ShotIQRecentMediaEntry].self, from: data) else {
+            return []
+        }
+        return Array(entries.prefix(24))
+    }
+
+    private func persistRecentMedia() {
+        guard !UITestHooks.active else { return }
+        if recentMedia.isEmpty {
+            Self.clearPersistedRecentMedia()
+            return
+        }
+        if let data = try? JSONEncoder().encode(recentMedia) {
+            UserDefaults.standard.set(data, forKey: Self.recentMediaKey)
+        }
+    }
+
+    private static func clearPersistedRecentMedia() {
+        UserDefaults.standard.removeObject(forKey: recentMediaKey)
+    }
+
+    private func hydrateSignedInSessionIfNeeded() {
+        guard !UITestHooks.active else {
+            seedUITestAnalysisIfNeeded()
+            return
+        }
+        guard !sessionHydrationStarted else { return }
+        sessionHydrationStarted = true
+
+        Task {
+            async let profile: APIProfileDTO? = try? APIClient.shared.profile()
+            async let latest: ShotIQAnalysisResultDTO? = try? APIClient.shared.latestAnalysis()
+
+            if let loadedProfile = await profile {
+                await MainActor.run {
+                    var merged = self.user ?? APIUser()
+                    merged.email = loadedProfile.email ?? merged.email
+                    merged.displayName = loadedProfile.displayName ?? merged.displayName
+                    merged.firstName = loadedProfile.firstName ?? merged.firstName
+                    merged.lastName = loadedProfile.lastName ?? merged.lastName
+                    merged.profileComplete = loadedProfile.profileComplete ?? merged.profileComplete
+                    self.user = merged
+                    if let complete = loadedProfile.profileComplete {
+                        self.onboardingComplete = complete
+                    }
+                }
+            }
+
+            if let latestAnalysis = await latest {
+                await MainActor.run {
+                    let isVideo = latestAnalysis.media.type?.lowercased() == "video"
+                    self.rememberAnalysisMedia(latestAnalysis,
+                                               title: isVideo ? "Latest Video Analysis" : "Latest Photo Analysis")
+                }
+            }
+        }
     }
 }
 
@@ -445,7 +565,10 @@ struct MainTabView: View {
         case "live-recording": LiveRecordingView()
         case "live-form-feedback": LiveFormFeedbackView()
         case "shot-detected": ShotDetectedView()
+        case "analysis-processing": AnalysisProcessingView(initialResult: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis())
         case "analysis-taking-longer": AnalysisTakingLongerView()
+        case "analysis-result-overview": AnalysisResultOverviewView(initialResult: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis())
+        case "flaws-overview": FlawsOverviewView(presentation: AnalysisResultPresentation(result: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis()))
         case "training-home": TrainingHomeView()
         case "quick-start": QuickStartView()
         case "discover-drills": DiscoverDrillsView()

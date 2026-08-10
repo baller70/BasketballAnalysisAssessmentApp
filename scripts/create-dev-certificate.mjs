@@ -104,51 +104,28 @@ async function api(method, endpoint, body) {
 fs.mkdirSync(workDir, { recursive: true, mode: 0o700 })
 const csr = path.join(workDir, 'apple-development.csr')
 const certDer = path.join(workDir, 'apple-development.cer')
+const keyPem = path.join(workDir, 'apple-development.key.pem')
+const certPem = path.join(workDir, 'apple-development.cert.pem')
+const identityP12 = path.join(workDir, 'apple-development.identity.p12')
+const p12Password = crypto.randomBytes(18).toString('hex')
 
-function tclQuote(value) {
-  return `{${String(value).replaceAll('\\', '\\\\').replaceAll('}', '\\}')}}`
-}
-
-const expectScript = path.join(workDir, 'create-csr.expect')
-fs.writeFileSync(expectScript, `
-set timeout 30
-set csr ${tclQuote(csr)}
-set keychain ${tclQuote(keychain)}
-spawn certtool r $csr k=$keychain a
-expect "Enter key and certificate label:"
-send "${commonName.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}\\r"
-expect "Select key algorithm by letter:"
-send "r\\r"
-expect "Enter key size in bits or CR for default:"
-send "2048\\r"
-expect "OK (y/anything)?"
-send "y\\r"
-expect "Enter cert/key usage"
-send "s\\r"
-expect "Select signature algorithm by letter:"
-send "2\\r"
-expect "OK (y/anything)?"
-send "y\\r"
-expect "Enter challenge string:"
-send "shotiq\\r"
-expect "Common Name"
-send "${commonName.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}\\r"
-expect "Country"
-send "US\\r"
-expect "Organization"
-send "Kevin Houston\\r"
-expect "Organization Unit"
-send "DD9G8RP575\\r"
-expect "State/Province"
-send "\\r"
-expect "Email Address"
-send "khouston721@gmail.com\\r"
-expect "Is this OK"
-send "y\\r"
-expect eof
-`)
-execFileSync('expect', [expectScript], { stdio: 'inherit' })
-execFileSync('certtool', ['V', csr], { stdio: 'inherit' })
+execFileSync(
+  'openssl',
+  [
+    'req',
+    '-new',
+    '-newkey',
+    'rsa:2048',
+    '-nodes',
+    '-keyout',
+    keyPem,
+    '-out',
+    csr,
+    '-subj',
+    `/CN=${commonName}/OU=DD9G8RP575/O=Kevin Houston/C=US/emailAddress=khouston721@gmail.com`,
+  ],
+  { stdio: 'inherit' },
+)
 
 const csrContent = fs.readFileSync(csr, 'utf8')
 let certificate
@@ -176,7 +153,63 @@ const attrs = certificate.data?.attributes ?? {}
 if (!attrs.certificateContent) throw new Error('App Store Connect did not return certificateContent.')
 
 fs.writeFileSync(certDer, Buffer.from(attrs.certificateContent, 'base64'))
-execFileSync('certtool', ['i', certDer, `k=${keychain}`, 'd'], { stdio: 'inherit' })
+execFileSync('openssl', ['x509', '-inform', 'DER', '-in', certDer, '-out', certPem], { stdio: 'inherit' })
+execFileSync(
+  'openssl',
+  [
+    'pkcs12',
+    '-export',
+    '-legacy',
+    '-inkey',
+    keyPem,
+    '-in',
+    certPem,
+    '-out',
+    identityP12,
+    '-passout',
+    `pass:${p12Password}`,
+    '-name',
+    attrs.name ?? 'Apple Development: Created via API',
+  ],
+  { stdio: 'inherit' },
+)
+execFileSync(
+  'security',
+  [
+    'import',
+    identityP12,
+    '-f',
+    'pkcs12',
+    '-k',
+    keychain,
+    '-P',
+    p12Password,
+    '-A',
+    '-T',
+    '/usr/bin/codesign',
+    '-T',
+    '/usr/bin/security',
+  ],
+  { stdio: 'inherit' },
+)
+const wwdrPem = path.join(workDir, 'apple-wwdr.pem')
+const wwdrSources = ['/Library/Keychains/System.keychain', path.join(os.homedir(), 'Library/Keychains/login.keychain-db')]
+const wwdrCerts = execFileSync(
+  'security',
+  [
+    'find-certificate',
+    '-a',
+    '-p',
+    '-c',
+    'Apple Worldwide Developer Relations Certification Authority',
+    ...wwdrSources.filter((source) => fs.existsSync(source)),
+  ],
+  { encoding: 'utf8' },
+)
+if (wwdrCerts.includes('BEGIN CERTIFICATE')) {
+  fs.writeFileSync(wwdrPem, wwdrCerts)
+  execFileSync('security', ['import', wwdrPem, '-k', keychain, '-A'], { stdio: 'inherit' })
+}
 execFileSync('security', [
   'set-key-partition-list',
   '-S',

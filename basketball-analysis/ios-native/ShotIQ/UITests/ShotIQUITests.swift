@@ -271,8 +271,15 @@ final class ShotIQUITests: XCTestCase {
         guard app.buttons["Home"].waitForExistence(timeout: 8) else {
             throw XCTSkip("Not signed in — auth-gated run")
         }
-        for tab in ["Capture", "Train", "Progress", "Profile", "Home"] {
+        for (tab, destination) in [("Capture", "screen-ios-analyze-hub"),
+                                   ("Train", "screen-ios-training-home"),
+                                   ("Progress", "screen-ios-analytics-cards"),
+                                   ("Profile", "screen-ios-profile"),
+                                   ("Home", "screen-ios-home-standard")] {
             app.buttons[tab].tap()
+            XCTAssertTrue(screen(destination).waitForExistence(timeout: 8),
+                          "\(tab) tab did not open \(destination)")
+            XCTAssertTrue(waitForToastContaining("Opened \(tab)", timeout: 2) || tab == "Home")
         }
         XCTAssertTrue(app.buttons["Home"].isSelected || app.buttons["Home"].exists)
     }
@@ -334,6 +341,10 @@ final class ShotIQUITests: XCTestCase {
         assertElement(id: "tracker-timer-remaining", contains: ":")
         assertElement(id: "tracker-media", contains: "061-visual-001")
         assertStaticText(id: "tracker-media-status", contains: "READY")
+        assertElement(id: "tracker-record-workout", contains: "Record")
+        assertElement(id: "tracker-upload-clip", contains: "Upload")
+        assertElement(id: "tracker-bottom-record-workout", contains: "Record workout")
+        assertElement(id: "tracker-bottom-upload-clip", contains: "Upload clip")
         assertElement(id: "tracker-progress-1", contains: "Shot 1 open")
         assertStaticText(id: "tracker-phase-0-value", contains: "--")
         assertStaticText(id: "tracker-phase-3-name", contains: "RELEASE")
@@ -406,6 +417,22 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
         assertStaticText(id: "training-home-target", contains: "Stack elbow higher")
         assertStaticText(id: "training-home-recommended-drill-0", contains: "STACK & SHOOT")
+        assertElement(id: "training-home-record-workout", contains: "Record workout")
+        assertElement(id: "training-home-upload-clip", contains: "Upload clip")
+        tapElement(id: "training-home-record-workout")
+        XCTAssertTrue(screen("screen-ios-live-camera-setup").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
+        tapElement(id: "training-home-upload-clip")
+        XCTAssertTrue(screen("screen-ios-video-upload").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts",
+                "-uiTestStage", "training-home"])
+        XCTAssertTrue(screen("screen-ios-training-home").waitForExistence(timeout: 8))
         assertStaticText(id: "training-home-recent-drill", contains: "Start tracking")
         assertElement(id: "training-home-recent-shots", contains: "0")
         assertElement(id: "training-home-recent-makes", contains: "0")
@@ -465,8 +492,22 @@ final class ShotIQUITests: XCTestCase {
         assertVisibleElement(id: "quick-start-note", contains: "last 3-shot session")
         assertElement(id: "quick-start-shot-target", contains: "6")
         assertElement(id: "quick-start-make-target", contains: "4")
+        assertVisibleElement(id: "quick-start-record-video", contains: "Record video")
+        assertVisibleElement(id: "quick-start-upload-video", contains: "Upload video")
         XCTAssertFalse(app.staticTexts["62.5%"].exists)
 
+        tapButton(id: "quick-start-record-video")
+        XCTAssertTrue(screen("screen-ios-live-camera-setup").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "quick-start"])
+        XCTAssertTrue(screen("screen-ios-quick-start").waitForExistence(timeout: 8))
+        tapButton(id: "quick-start-upload-video")
+        XCTAssertTrue(screen("screen-ios-video-upload").waitForExistence(timeout: 8))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestWeakAnalysis",
+                "-uiTestStage", "quick-start"])
+        XCTAssertTrue(screen("screen-ios-quick-start").waitForExistence(timeout: 8))
         tapButton(id: "quick-start-start-tracking")
         XCTAssertTrue(screen("screen-ios-drill-execution").waitForExistence(timeout: 8))
         assertStaticText(id: "drill-execution-drill-name", contains: "STACK & SHOOT")
@@ -572,6 +613,8 @@ final class ShotIQUITests: XCTestCase {
         assertStaticText(id: "drill-execution-shots", contains: "0")
         assertStaticText(id: "drill-execution-make-pct", contains: "0.0%")
         assertStaticText(id: "drill-execution-target-remaining", contains: "15 to target")
+        assertElement(id: "drill-execution-record-workout", contains: "Record")
+        assertElement(id: "drill-execution-upload-clip", contains: "Upload")
 
         tapControl("FRONT VIEW")
         tapDialogOption("SIDE VIEW")
@@ -1468,6 +1511,8 @@ final class ShotIQUITests: XCTestCase {
                            "RECOMMENDED DRILL", "Towel Elbow Stack"] {
             XCTAssertNotNil(findControl(detailItem), "Missing flaw detail item: \(detailItem)")
         }
+        tapButton(id: "flaw-detail-evidence-release")
+        XCTAssertTrue(screen("screen-ios-frame-detail-skeleton").waitForExistence(timeout: 8))
     }
 
     func testFlawsOverviewUsesWeakSavedAnalysisInsteadOfDemoFlaws() throws {
@@ -1531,6 +1576,12 @@ final class ShotIQUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "shotiq-toast").firstMatch.waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Choose a photo first"].exists)
         XCTAssertFalse(app.descendants(matching: .any).matching(identifier: "screen-ios-analysis-processing").firstMatch.waitForExistence(timeout: 1))
+
+        launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "video-review"])
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-video-review").firstMatch.waitForExistence(timeout: 8))
+        tapControl("Edit player profile")
+        XCTAssertTrue(screen("profile-edit-sheet").waitForExistence(timeout: 4) ||
+                      app.staticTexts["EDIT PLAYER PROFILE"].waitForExistence(timeout: 4))
 
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "video-review"])
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-video-review").firstMatch.waitForExistence(timeout: 8))
@@ -1962,16 +2013,18 @@ final class ShotIQUITests: XCTestCase {
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "media-detail"])
         XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
         tapButton(id: "media-detail-download-button")
-        XCTAssertTrue(waitForToastContaining("Download unavailable"))
-        XCTAssertTrue(app.alerts["Download unavailable"].waitForExistence(timeout: 4))
-        app.alerts.buttons["OK"].tap()
+        XCTAssertTrue(waitForToastContaining("Saving media summary", timeout: 1) ||
+                      waitForToastContaining("Saved to Photos", timeout: 4) ||
+                      waitForToastContaining("Photos access needed", timeout: 4) ||
+                      waitForToastContaining("Download failed", timeout: 4))
         tapButton(id: "media-detail-delete-button")
         XCTAssertTrue(waitForToastContaining("Delete confirmation"))
 
         launch(["-uiTestBypassAuth", "-uiTestDemoData", "-uiTestStage", "media-detail"])
         XCTAssertTrue(screen("screen-ios-media-detail").waitForExistence(timeout: 8))
         tapButton(id: "media-detail-delete-media-button")
-        XCTAssertTrue(waitForToastContaining("Sample media only"))
+        XCTAssertTrue(waitForToastContaining("Deleting media", timeout: 1) ||
+                      waitForToastContaining("Media removed", timeout: 4))
     }
 
     func testOnboardingProfileControlsCarryForwardAndPermissionSkipsWork() throws {

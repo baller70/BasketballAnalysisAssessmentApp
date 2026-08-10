@@ -1,7 +1,86 @@
 import SwiftUI
+import UIKit
+import Photos
+import AVKit
 
 // Shared canonical components for the 72 iOS screens (853x1844 sidecar canvas).
 // Charts, gauges and glyphs are SwiftUI Path/Canvas — never raster screenshots.
+
+@MainActor
+enum ShotIQSharePresenter {
+    static func share(_ items: [Any]) {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+              let window = scene.windows.first(where: { $0.isKeyWindow }),
+              let root = window.rootViewController else { return }
+
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.popoverPresentationController?.sourceView = window
+        controller.popoverPresentationController?.sourceRect = CGRect(x: window.bounds.midX,
+                                                                      y: window.bounds.midY,
+                                                                      width: 1,
+                                                                      height: 1)
+
+        var presenter = root
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+        presenter.present(controller, animated: true)
+    }
+}
+
+enum ShotIQPhotoSaver {
+    static func savePNG(_ image: UIImage, filename: String) async throws {
+        guard let data = image.pngData() else { throw CocoaError(.fileWriteUnknown) }
+        let current = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        let status = current == .notDetermined
+            ? await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            : current
+        guard status == .authorized || status == .limited else {
+            throw NSError(domain: "ShotIQPhotoSaver", code: 1)
+        }
+        try await PHPhotoLibrary.shared().performChanges {
+            let options = PHAssetResourceCreationOptions()
+            options.originalFilename = filename
+            let request = PHAssetCreationRequest.forAsset()
+            request.addResource(with: .photo, data: data, options: options)
+        }
+    }
+}
+
+final class ShotIQAspectFillVideoPlayerView: UIView {
+    override class var layerClass: AnyClass { AVPlayerLayer.self }
+
+    var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        playerLayer.videoGravity = .resizeAspectFill
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        backgroundColor = .black
+        playerLayer.videoGravity = .resizeAspectFill
+    }
+}
+
+struct ShotIQAspectFillVideoPlayer: UIViewRepresentable {
+    let player: AVPlayer
+
+    func makeUIView(context: Context) -> ShotIQAspectFillVideoPlayerView {
+        let view = ShotIQAspectFillVideoPlayerView()
+        view.playerLayer.player = player
+        return view
+    }
+
+    func updateUIView(_ uiView: ShotIQAspectFillVideoPlayerView, context: Context) {
+        uiView.playerLayer.player = player
+        uiView.playerLayer.videoGravity = .resizeAspectFill
+    }
+}
 
 // MARK: - Typography helpers bound to the sidecar token roles
 
@@ -247,7 +326,7 @@ struct TopBar: View {
             Wordmark(size: 30)
             Spacer()
             Button { if let onSettings { onSettings() } else { showMenu = true } } label: {
-                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"), size: 32).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"), size: 44).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
             }
             .buttonStyle(.plain)
             // "Menu", not "Settings": this gear opens the profile menu (021),
@@ -304,10 +383,10 @@ struct HeaderStat: View {
     var body: some View {
         VStack(spacing: 3) {
             if let resolvedMark {
-                StatMarkGlyph(kind: resolvedMark, size: 19).foregroundStyle(ShotIQColor.ink)
+                StatMarkGlyph(kind: resolvedMark, size: 26).foregroundStyle(ShotIQColor.ink)
             } else {
                 ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                         size: 19,
+                                         size: 26,
                                          label: nil)
             }
             Text(value).font(.custom("Tungsten-Medium", size: ShotIQType.numeric))
@@ -315,6 +394,67 @@ struct HeaderStat: View {
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)
+        }
+    }
+}
+
+struct ShotIQVideoStillThumbnail: View {
+    var url: URL
+    var seconds: Double
+    var width: CGFloat? = nil
+    var height: CGFloat
+    var cornerRadius: CGFloat = 5
+
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Rectangle()
+                    .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                    .overlay {
+                        if failed {
+                            Image(systemName: "video")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.8))
+                        } else {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(ShotIQColor.shotiqOrange)
+                        }
+                    }
+            }
+        }
+        .frame(width: width, height: height)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .task(id: "\(url.absoluteString)-\(seconds)") { await loadStill() }
+        .accessibilityLabel("Video frame thumbnail")
+    }
+
+    private func loadStill() async {
+        image = nil
+        failed = false
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 640, height: 640)
+        do {
+            let cgImage = try generator.copyCGImage(at: CMTime(seconds: max(0, seconds),
+                                                              preferredTimescale: 600),
+                                                    actualTime: nil)
+            await MainActor.run {
+                image = UIImage(cgImage: cgImage)
+            }
+        } catch {
+            await MainActor.run {
+                failed = true
+            }
         }
     }
 }
@@ -354,9 +494,9 @@ struct PrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 if let icon {
-                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                             size: 18,
-                                             label: nil)
+                    Image(systemName: icon)
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
                 Text(title).shotiqBody(ShotIQType.button, weight: .medium)
             }
@@ -377,7 +517,7 @@ struct SecondaryButton: View {
             HStack(spacing: 10) {
                 if let icon {
                     ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: icon),
-                                             size: 18,
+                                             size: 28,
                                              label: nil)
                 }
                 Text(title).shotiqBody(ShotIQType.button)
@@ -456,7 +596,7 @@ private struct ShotIQToastView: View {
                         .tint(toast.kind.tint)
                 } else {
                     ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: toast.kind.icon),
-                                             size: 16,
+                                             size: 24,
                                              label: nil)
                 }
                 VStack(alignment: .leading, spacing: 2) {
@@ -736,7 +876,7 @@ struct MediaSurface: View {
         ZStack(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 4).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
             HStack(spacing: 10) {
-                Image(systemName: "play.fill").font(.system(size: 13)).foregroundStyle(.white)
+                Image(systemName: "play.fill").font(.system(size: 20)).foregroundStyle(.white)
                 Text("0:00 / \(duration)").font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
@@ -745,7 +885,7 @@ struct MediaSurface: View {
                     }
                 }
                 .frame(height: 3)
-                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 12)).foregroundStyle(.white)
+                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 18)).foregroundStyle(.white)
             }
             .padding(.horizontal, 14).padding(.bottom, 14)
         }
@@ -868,10 +1008,18 @@ enum RootTab: String, CaseIterable {
 struct ShotIQTabBar: View {
     @Binding var tab: RootTab
     @EnvironmentObject private var app: AppState
+    @State private var toast: ShotIQToast?
     var body: some View {
         HStack {
             ForEach(RootTab.allCases, id: \.self) { t in
-                Button { tab = t } label: {
+                Button {
+                    if tab == t {
+                        toast = .info("\(t.rawValue) is open", "You are already on this tab.")
+                    } else {
+                        tab = t
+                        toast = .success("Opened \(t.rawValue)", tabMessage(for: t))
+                    }
+                } label: {
                     VStack(spacing: 5) {
                         if let mark = t.navMark {
                             NavGlyph(mark: mark, size: 21, active: tab == t)
@@ -895,5 +1043,16 @@ struct ShotIQTabBar: View {
         .padding(.top, 10).padding(.bottom, 22)
         .background(ShotIQColor.paper)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+        .shotiqToast($toast)
+    }
+
+    private func tabMessage(for tab: RootTab) -> String {
+        switch tab {
+        case .home: return "Dashboard, latest analysis, and next actions."
+        case .analyze: return "Capture, upload, or review shot media."
+        case .training: return "Drills, workouts, and shot tracking."
+        case .progress: return "Analytics, goals, and trends."
+        case .profile: return "Profile, media, settings, and sharing."
+        }
     }
 }

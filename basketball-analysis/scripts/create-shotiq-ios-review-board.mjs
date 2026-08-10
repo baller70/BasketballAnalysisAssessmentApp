@@ -9,8 +9,11 @@ const functionalityPath = path.join(appRoot, "docs/shotiq/ios-72-feature-functio
 const canonicalDir = path.join(appRoot, "docs/shotiq/canonical")
 const currentDir = process.env.SHOTIQ_IOS_CURRENT_SHOTS
   || "/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-ios-review-board/current-simshots"
+const fullScrollDir = process.env.SHOTIQ_IOS_FULL_SCROLL_SHOTS
+  || "/Volumes/TBF SKILLZ.INC/CodexWork/shotiq-ios-review-board/full-scroll-stitched"
 const outDir = path.join(appRoot, "public/shotiq-ios-review-board")
 const imageOutDir = path.join(outDir, "screens")
+const fullScrollOutDir = path.join(outDir, "full-scroll")
 
 function cleanDir(dir) {
   fs.rmSync(dir, { recursive: true, force: true })
@@ -57,6 +60,18 @@ function findSourceImage(screen) {
     candidates.push({ file: canonical, source: "canonical fallback" })
   }
   return candidates[0] || null
+}
+
+function findFullScrollImage(screen) {
+  if (!fullScrollDir || !fs.existsSync(fullScrollDir)) return null
+  const exact = path.join(fullScrollDir, `${screen}.png`)
+  if (fs.existsSync(exact)) {
+    return { file: exact, source: "full-scroll simulator capture" }
+  }
+  const slug = screen.replace(/^\d{3}-/, "")
+  const match = fs.readdirSync(fullScrollDir)
+    .find((name) => name.endsWith(".png") && name.replace(/^\d{3}-/, "").replace(/\.png$/, "") === slug)
+  return match ? { file: path.join(fullScrollDir, match), source: "full-scroll simulator capture" } : null
 }
 
 function htmlEscape(value) {
@@ -158,8 +173,30 @@ function renderPage(screens) {
       padding: 14px;
       box-shadow: 0 1px 2px rgba(0,0,0,.04);
     }
+    article.drag-over {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(255,51,13,.16), 0 8px 24px rgba(0,0,0,.12);
+    }
     .shot-wrap {
+      position: relative;
       align-self: stretch;
+    }
+    .shot-wrap::after {
+      content: "Drop screenshot here";
+      position: absolute;
+      inset: 10px;
+      display: none;
+      place-items: center;
+      border: 2px dashed rgba(255,51,13,.82);
+      border-radius: 8px;
+      background: rgba(255,255,255,.88);
+      color: var(--orange);
+      font-size: 13px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+    article.drag-over .shot-wrap::after {
+      display: grid;
     }
     .shot {
       width: 100%;
@@ -168,6 +205,21 @@ function renderPage(screens) {
       background: #111;
       display: block;
       cursor: zoom-in;
+    }
+    .shot-tools {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .full-page-button {
+      width: 100%;
+      height: 38px;
+      border: 0;
+      background: var(--orange);
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(255,51,13,.22);
+      cursor: pointer;
     }
     .meta {
       display: flex;
@@ -198,6 +250,10 @@ function renderPage(screens) {
     .badge.current {
       background: #e8f4ed;
       color: var(--green);
+    }
+    .badge.full {
+      background: #fff1ec;
+      color: var(--orange);
     }
     h2 {
       margin: 0;
@@ -298,19 +354,29 @@ function renderPage(screens) {
     }
     dialog {
       width: min(94vw, 1100px);
+      max-height: 94vh;
       border: 0;
       border-radius: 10px;
       padding: 0;
       background: #111;
       color: #fff;
+      overflow: hidden;
     }
     dialog::backdrop { background: rgba(0,0,0,.75); }
+    dialog.modal-long {
+      width: min(96vw, 780px);
+      overflow: auto;
+    }
     .modal-top {
+      position: sticky;
+      top: 0;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 12px 14px;
       border-bottom: 1px solid rgba(255,255,255,.16);
+      background: #111;
     }
     #modalImg {
       display: block;
@@ -318,6 +384,12 @@ function renderPage(screens) {
       max-height: 82vh;
       object-fit: contain;
       background: #000;
+    }
+    dialog.modal-long #modalImg {
+      width: min(100%, 520px);
+      max-height: none;
+      margin: 0 auto;
+      object-fit: contain;
     }
     .hidden { display: none; }
     @media (max-width: 760px) {
@@ -422,10 +494,11 @@ function renderPage(screens) {
       return el;
     }
 
-    function openImage(title, src) {
+    function openImage(title, src, mode = "normal") {
       modalTitle.textContent = title;
       modalImg.src = src;
       modalImg.alt = title;
+      modal.classList.toggle("modal-long", mode === "long");
       modal.showModal();
     }
 
@@ -479,6 +552,41 @@ function renderPage(screens) {
       }).catch((error) => setSaveStatus(error.message));
     }
 
+    function enableDropTarget(article, screen, uploads) {
+      let depth = 0;
+      const hasImageFiles = (event) => [...(event.dataTransfer?.items || [])]
+        .some((item) => item.kind === "file" && item.type.startsWith("image/"));
+      const clear = () => {
+        depth = 0;
+        article.classList.remove("drag-over");
+      };
+
+      article.addEventListener("dragenter", (event) => {
+        if (!hasImageFiles(event)) return;
+        event.preventDefault();
+        depth += 1;
+        article.classList.add("drag-over");
+      });
+      article.addEventListener("dragover", (event) => {
+        if (!hasImageFiles(event)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        article.classList.add("drag-over");
+      });
+      article.addEventListener("dragleave", (event) => {
+        if (!hasImageFiles(event)) return;
+        event.preventDefault();
+        depth -= 1;
+        if (depth <= 0) clear();
+      });
+      article.addEventListener("drop", (event) => {
+        if (!hasImageFiles(event)) return;
+        event.preventDefault();
+        handleUpload(screen, event.dataTransfer.files, uploads);
+        clear();
+      });
+    }
+
     async function loadServerNotes() {
       try {
         const response = await fetch("/api/shotiq-ios-review-board", { cache: "no-store" });
@@ -517,6 +625,17 @@ function renderPage(screens) {
           openImage(screen.number + " · " + screen.screen, screen.image);
         });
         shotWrap.appendChild(img);
+        if (screen.fullScrollImage) {
+          const shotTools = document.createElement("div");
+          shotTools.className = "shot-tools";
+          const fullShot = document.createElement("button");
+          fullShot.className = "full-page-button";
+          fullShot.type = "button";
+          fullShot.textContent = "Open full page screenshot";
+          fullShot.addEventListener("click", () => openImage(screen.number + " · " + screen.screen + " full page", screen.fullScrollImage, "long"));
+          shotTools.append(fullShot);
+          shotWrap.appendChild(shotTools);
+        }
 
         const meta = document.createElement("div");
         meta.className = "meta";
@@ -527,6 +646,7 @@ function renderPage(screens) {
             <div><dt>Primary Feature</dt><dd>\${screen.primaryFeature}</dd></div>
             <div><dt>Required Functionality</dt><dd>\${screen.requiredFunctionality}</dd></div>
             <div><dt>Media / Proof Surface</dt><dd>\${screen.proofSurface}</dd></div>
+            <div><dt>Full Page Capture</dt><dd>\${screen.fullScrollImage ? '<span class="badge full">4 scroll positions available</span>' : 'Not captured yet'}</dd></div>
           </dl>
         \`;
         const mainNote = textarea(screen, "shouldDo", "What should this page do? List the customer functionality, actions, and expected behavior.");
@@ -539,11 +659,12 @@ function renderPage(screens) {
         const uploads = document.createElement("div");
         uploads.className = "attachments";
         renderAttachments(screen, uploads);
+        enableDropTarget(article, screen, uploads);
         const actions = document.createElement("div");
         actions.className = "screen-actions";
         const upload = document.createElement("label");
         upload.className = "upload-label";
-        upload.textContent = "Upload reference image";
+        upload.textContent = "Upload reference image or drop on card";
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "image/*";
@@ -604,6 +725,7 @@ function renderPage(screens) {
 }
 
 cleanDir(imageOutDir)
+cleanDir(fullScrollOutDir)
 
 const implementationMap = readJson(mapPath)
 const functionality = parseFunctionality(functionalityPath)
@@ -614,8 +736,12 @@ const builtScreens = implementationMap
     const fn = functionality.get(row.screen) || {}
     const source = findSourceImage(row.screen)
     if (!source) throw new Error(`No screenshot found for ${row.screen}`)
+    const fullScrollSource = findFullScrollImage(row.screen)
     const outName = `${row.screen}.png`
     fs.copyFileSync(source.file, path.join(imageOutDir, outName))
+    if (fullScrollSource) {
+      fs.copyFileSync(fullScrollSource.file, path.join(fullScrollOutDir, outName))
+    }
     return {
       number: row.screen.slice(0, 3),
       screen: row.screen,
@@ -628,6 +754,9 @@ const builtScreens = implementationMap
       image: `/shotiq-ios-review-board/screens/${outName}`,
       source: source.source,
       sourceFile: path.basename(source.file),
+      fullScrollImage: fullScrollSource ? `/shotiq-ios-review-board/full-scroll/${outName}` : "",
+      fullScrollSource: fullScrollSource?.source || "",
+      fullScrollSourceFile: fullScrollSource ? path.basename(fullScrollSource.file) : "",
     }
   })
 

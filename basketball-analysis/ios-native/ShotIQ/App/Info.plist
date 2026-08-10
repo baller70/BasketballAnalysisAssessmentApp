@@ -26,6 +26,8 @@
 	<string>ShotIQ records audio with your shot videos for coaching playback.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ShotIQ imports shot photos and videos for analysis.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ShotIQ saves exported player cards, annotated frames, and result summaries to your photo library.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>ShotIQ reminds you about workouts and analysis results.</string>
 	<key>UIAppFonts</key>

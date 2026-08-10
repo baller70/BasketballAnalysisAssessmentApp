@@ -28,6 +28,7 @@ targets:
         NSCameraUsageDescription: ShotIQ analyzes your shooting form from live camera capture.
         NSMicrophoneUsageDescription: ShotIQ records audio with your shot videos for coaching playback.
         NSPhotoLibraryUsageDescription: ShotIQ imports shot photos and videos for analysis.
+        NSPhotoLibraryAddUsageDescription: ShotIQ saves exported player cards, annotated frames, and result summaries to your photo library.
         NSUserNotificationsUsageDescription: ShotIQ reminds you about workouts and analysis results.
         # Wilson X Connect typography bundled in ShotIQ/App/Fonts.
         UIAppFonts:
@@ -80,6 +81,9 @@ targets:
       base:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ShotIQ.app/ShotIQ"
         BUNDLE_LOADER: "$(TEST_HOST)"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: DD9G8RP575
+        PRODUCT_BUNDLE_IDENTIFIER: com.baller70.shotiq.tests
         PRODUCT_NAME: "$(TARGET_NAME)"
         GENERATE_INFOPLIST_FILE: YES
         SDKROOT: iphoneos
@@ -102,6 +106,9 @@ targets:
       base:
         TEST_TARGET_NAME: ShotIQ
         BUNDLE_LOADER: "$(TEST_HOST)"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: DD9G8RP575
+        PRODUCT_BUNDLE_IDENTIFIER: com.baller70.shotiq.uitests
         PRODUCT_NAME: "$(TARGET_NAME)"
         GENERATE_INFOPLIST_FILE: YES
         SDKROOT: iphoneos

@@ -72,6 +72,15 @@ final class CanonicalScreenshotTests: XCTestCase {
             .split(whereSeparator: \.isWhitespace).map(String.init)
     }
 
+    private static var fullScrollScreenshots: Bool {
+        ProcessInfo.processInfo.environment["SIMSHOTS_FULL_SCROLL"] == "1"
+    }
+
+    private static var fullScrollSteps: Int {
+        let raw = ProcessInfo.processInfo.environment["SIMSHOTS_SCROLL_STEPS"] ?? "4"
+        return min(max(Int(raw) ?? 4, 1), 6)
+    }
+
     private func slug(_ screenID: String) -> String {
         screenID.replacingOccurrences(of: "screen-ios-", with: "")
     }
@@ -80,11 +89,33 @@ final class CanonicalScreenshotTests: XCTestCase {
     private func shot(_ name: String) {
         Self.shotIndex += 1
         let full = String(format: "%03d-%@", Self.shotIndex, name)
+        if Self.fullScrollScreenshots {
+            let scroller = scrollContainer()
+            var swipes = 0
+            attachScreenshot("\(full)__scroll-01")
+            if scroller.exists, Self.fullScrollSteps > 1 {
+                for index in 2...Self.fullScrollSteps {
+                    scroller.swipeUp()
+                    swipes += 1
+                    Thread.sleep(forTimeInterval: 0.35)
+                    attachScreenshot(String(format: "%@__scroll-%02d", full, index))
+                }
+                for _ in 0..<swipes {
+                    scroller.swipeDown()
+                    Thread.sleep(forTimeInterval: 0.12)
+                }
+            }
+        } else {
+            attachScreenshot(full)
+        }
+        Self.captured.append(full)
+    }
+
+    private func attachScreenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = full
+        attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
-        Self.captured.append(full)
     }
 
     private func note(_ message: String, required: Bool) {
@@ -497,6 +528,17 @@ final class CanonicalScreenshotTests: XCTestCase {
         // 027, and the queue/error panels on 037/040.
         for slug in ["photo-review-crop", "upload-quality-check", "video-review",
                      "analysis-taking-longer", "analysis-error"] {
+            launch(Self.mainArgs + ["-uiTestStage", slug])
+            expectScreen("screen-ios-\(slug)", timeout: 25)
+        }
+    }
+
+    func test09ReviewBoardMissingScreens() {
+        launch(["-uiTestSignedOut", "-uiTestStage", "create-account"])
+        expectScreen("screen-ios-create-account", timeout: 25)
+
+        for slug in ["analysis-processing", "analysis-result-overview",
+                     "flaws-overview", "workout-completion"] {
             launch(Self.mainArgs + ["-uiTestStage", slug])
             expectScreen("screen-ios-\(slug)", timeout: 25)
         }

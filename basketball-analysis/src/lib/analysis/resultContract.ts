@@ -36,6 +36,7 @@ export interface ShotIQAnalysisResult {
   recordedAt: string
   source: ShotIQResultSource
   media: ShotIQAnalysisMedia
+  bodyPositions: unknown[] | Record<string, unknown> | null
   scores: {
     overall: ShotIQMetric
     form: ShotIQMetric
@@ -91,6 +92,7 @@ export interface ShotIQAnalysisRow {
   videoUrl?: string | null
   roboflowPoseData?: unknown | null
   roboflowDetection?: unknown | null
+  bodyPositions?: unknown | null
   visualOverlays?: unknown | null
   shootingPhase?: string | null
   elbowAngle?: unknown | null
@@ -226,6 +228,11 @@ export function toShotIQAnalysisResult(row: ShotIQAnalysisRow): ShotIQAnalysisRe
       displayImageUrl: row.annotatedImageUrl ?? row.imageUrl ?? null,
       videoUrl: row.videoUrl ?? null,
     },
+    bodyPositions:
+      Array.isArray(row.bodyPositions) ||
+      (row.bodyPositions != null && typeof row.bodyPositions === "object")
+        ? row.bodyPositions as unknown[] | Record<string, unknown>
+        : null,
     scores: {
       overall: metric(row.overallScore, "score"),
       form: metric(row.formScore, "score"),

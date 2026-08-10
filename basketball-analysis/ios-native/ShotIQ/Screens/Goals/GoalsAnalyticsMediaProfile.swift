@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import UserNotifications
 import AVKit
+import Photos
 
 // Remaining flows — goals 063-065, analytics 066-067, media 068-069,
 // profile 070, settings 071, share 072.
@@ -220,12 +221,29 @@ private struct GoalCardStats {
 private struct MediaAnalysisSurface: View {
     var analysis: ShotIQAnalysisResultDTO?
     var fallbackPhoto: String
+    var displayPhase: String? = nil
     var width: CGFloat? = nil
     var height: CGFloat
     var cornerRadius: CGFloat = 6
 
     private var presentation: AnalysisResultPresentation? {
         analysis.map(AnalysisResultPresentation.init)
+    }
+    private var overlayFrame: VideoPoseFrameRecord? {
+        guard let presentation else { return nil }
+        let frames = presentation.videoPoseFrames.sorted { $0.frameIndex < $1.frameIndex }
+        if let displayPhase,
+           let frame = frames.first(where: { $0.phaseLabel.uppercased() == displayPhase.uppercased() && $0.detectedPose != nil }) {
+            return frame
+        }
+        if let frame = presentation.releaseVideoPoseFrame ?? frames.first,
+           frame.detectedPose != nil {
+            return frame
+        }
+        if let pose = presentation.displayPose {
+            return VideoPoseAnalyzer.frameRecord(index: 0, timestamp: 0, pose: pose)
+        }
+        return nil
     }
 
     var body: some View {
@@ -234,25 +252,32 @@ private struct MediaAnalysisSurface: View {
                 switch AnalysisResultMediaSurfaceResolver.source(for: presentation,
                                                                  fallbackKey: fallbackPhoto) {
                 case .video(let url):
-                    VideoPlayer(player: AVPlayer(url: url))
-                        .accessibilityLabel("Saved media video")
+                    VideoPoseResultSurface(url: url,
+                                           presentation: presentation,
+                                           height: height,
+                                           showSkeleton: true,
+                                           showJoints: true,
+                                           showBall: false,
+                                           showAngles: false,
+                                           phase: displayPhase)
                 case .image(let url):
                     if url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
+                        CapturedPoseImage(image: image,
+                                          height: height,
+                                          cornerRadius: cornerRadius,
+                                          showAngles: false,
+                                          initialPose: presentation.detectedPose)
                     } else {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let image): image.resizable().scaledToFill()
-                            default: mediaPlaceholder(presentation.mediaLabel)
-                            }
-                        }
+                        MediaRemotePoseImage(url: url,
+                                             height: height,
+                                             cornerRadius: cornerRadius,
+                                             fallbackPhoto: fallbackPhoto,
+                                             initialPose: presentation.detectedPose)
                     }
                 case .canonicalFallback(let key):
                     CanonicalPhoto(key, width: width, height: height, cornerRadius: cornerRadius)
                 case .placeholder(let label):
-                    mediaPlaceholder(label)
+                    mediaFallback(label)
                 }
             } else {
                 CanonicalPhoto(fallbackPhoto, width: width, height: height, cornerRadius: cornerRadius)
@@ -263,21 +288,94 @@ private struct MediaAnalysisSurface: View {
         .accessibilityIdentifier(analysis == nil ? "media-sample-surface" : "media-real-surface")
     }
 
-    private func mediaPlaceholder(_ label: String) -> some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-            .overlay {
-                VStack(spacing: 6) {
-                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "photo"),
-                                             size: 26,
-                                             label: nil)
-                    Text(label)
-                        .shotiqBody(11, weight: .medium)
+    private func mediaFallback(_ label: String, showsProgress: Bool = false) -> some View {
+        CanonicalPhoto(fallbackPhoto, width: width, height: height, cornerRadius: cornerRadius)
+            .overlay(alignment: .bottomLeading) {
+                HStack(spacing: 6) {
+                    if showsProgress {
+                        ProgressView().controlSize(.small).tint(.white)
+                    } else {
+                        Image(systemName: "photo").font(.system(size: 10, weight: .semibold))
+                    }
+                    Text(label).shotiqBody(10, weight: .semibold)
+                        .lineLimit(1).minimumScaleFactor(0.7)
                 }
-                .foregroundStyle(.white.opacity(0.86))
-                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
                 .padding(8)
             }
+    }
+
+    private func mediaPoseBadge(_ label: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: "point.3.connected.trianglepath.dotted")
+                .font(.system(size: 9, weight: .semibold))
+            Text(label).shotiqBody(9, weight: .bold).kerning(0.4)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 5)
+        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 5))
+        .padding(7)
+    }
+}
+
+private struct MediaRemotePoseImage: View {
+    var url: URL
+    var height: CGFloat
+    var cornerRadius: CGFloat
+    var fallbackPhoto: String
+    var initialPose: DetectedPose?
+
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                CapturedPoseImage(image: image,
+                                  height: height,
+                                  cornerRadius: cornerRadius,
+                                  showAngles: false,
+                                  initialPose: initialPose)
+            } else {
+                CanonicalPhoto(fallbackPhoto, height: height, cornerRadius: cornerRadius)
+                    .overlay {
+                        if failed {
+                            Text("Media unavailable")
+                                .shotiqBody(10, weight: .semibold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8).padding(.vertical, 5)
+                                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
+                        } else {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(.white)
+                                .padding(10)
+                                .background(.black.opacity(0.55), in: Circle())
+                        }
+                    }
+            }
+        }
+        .task(id: url) { await loadImage() }
+    }
+
+    private func loadImage() async {
+        image = nil
+        failed = false
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse,
+                  (200..<300).contains(http.statusCode),
+                  let loaded = UIImage(data: data) else {
+                failed = true
+                return
+            }
+            image = loaded
+        } catch {
+            failed = true
+        }
     }
 }
 
@@ -291,6 +389,7 @@ struct GoalsView: View {            // 063
     @State private var trendMetric = "Form Score"
     @State private var insightsExpanded: Set<String> = []
     @State private var route: GoalsRoute?
+    @State private var toast: ShotIQToast?
     private var completedWorkouts: [TrainingWorkoutRecord] {
         TrainingWorkoutStore.decode(completedWorkoutsPayload)
     }
@@ -320,6 +419,9 @@ struct GoalsView: View {            // 063
                                 NavigationLink { PlayerCardView() } label: {
                                     HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                                 }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening player card")
+                                })
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("Open player card")
                                 .accessibilityIdentifier("goals-player-card-link")
@@ -336,6 +438,9 @@ struct GoalsView: View {            // 063
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening goal builder")
+                            })
                             .accessibilityLabel("Create goal")
                             .accessibilityIdentifier("goals-create-goal")
                             .padding(.top, 16)
@@ -389,6 +494,7 @@ struct GoalsView: View {            // 063
                 }
             }
         }
+        .shotiqToast($toast)
         .task { await vm.load(localGoals: createdGoals) }
         .navigationDestination(item: $route) { route in
             switch route {
@@ -400,7 +506,10 @@ struct GoalsView: View {            // 063
         }
     }
     private func goalsTab(_ label: String, _ index: Int) -> some View {
-        Button { tab = index } label: {
+        Button {
+            tab = index
+            toast = .success("Showing \(index == 0 ? "active" : "completed") goals")
+        } label: {
             VStack(spacing: 8) {
                 Text(label).shotiqBody(13, weight: .bold).kerning(0.5)
                     .foregroundStyle(tab == index ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
@@ -422,7 +531,7 @@ struct GoalsView: View {            // 063
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                        NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load() }) } label: {
+                        NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load(localGoals: CreatedGoalStore.stored()) }) } label: {
                             HStack(alignment: .firstTextBaseline, spacing: 6) {
                                 Text(g.name).shotiqBody(19, weight: .bold)
                                     .multilineTextAlignment(.leading)
@@ -432,6 +541,9 @@ struct GoalsView: View {            // 063
                             }
                             .foregroundStyle(ShotIQColor.ink)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening \(g.name)")
+                        })
                         .buttonStyle(.plain)
                         .accessibilityLabel(g.name)
                         .accessibilityIdentifier("goals-card-title-\(g.id)")
@@ -479,6 +591,7 @@ struct GoalsView: View {            // 063
                         Spacer()
                         Button {
                             trendMetric = trendMetric == "Form Score" ? "Make %" : "Form Score"
+                            toast = .success("Trend changed to \(trendMetric)")
                         } label: {
                             HStack(spacing: 4) {
                                 Text(trendMetric).shotiqBody(12, weight: .semibold)
@@ -509,7 +622,10 @@ struct GoalsView: View {            // 063
                     HStack {
                         SectionLabel(text: "RECENT SESSIONS")
                         Spacer()
-                        Button { route = .analyticsCards } label: {
+                        Button {
+                            toast = .info("Opening all goal sessions")
+                            route = .analyticsCards
+                        } label: {
                             Text("View all").shotiqBody(13, weight: .semibold)
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
@@ -519,7 +635,10 @@ struct GoalsView: View {            // 063
                     if let recentTitle = stats.recentTitle,
                        let recentSummary = stats.recentSummary,
                        let recentScore = stats.recentScore {
-                        Button { route = .recentSession } label: {
+                        Button {
+                            toast = .info("Opening recent session")
+                            route = .recentSession
+                        } label: {
                             HStack(spacing: 10) {
                                 PhotoThumb(width: 62, height: 46, icon: "play.circle", photo: "066-visual-001")
                                 VStack(alignment: .leading, spacing: 3) {
@@ -563,7 +682,7 @@ struct GoalsView: View {            // 063
                     HRule()
                     NavigationLink { AnalyticsDetailedView(metric: "Elbow Alignment") } label: {
                         HStack(alignment: .top, spacing: 8) {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 32).font(.system(size: 14))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 42).font(.system(size: 14))
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             (Text("Tip: ").fontWeight(.bold)
                                 + Text("Your release improved when your elbow stayed stacked in the load and rise phases."))
@@ -575,6 +694,9 @@ struct GoalsView: View {            // 063
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .info("Opening elbow alignment analytics")
+                    })
                     .buttonStyle(.plain)
                 }
                 .padding(12)
@@ -584,6 +706,7 @@ struct GoalsView: View {            // 063
                         if insightsExpanded.contains(g.id) { insightsExpanded.remove(g.id) }
                         else { insightsExpanded.insert(g.id) }
                     }
+                    toast = .info(insightsExpanded.contains(g.id) ? "Goal insights expanded" : "Goal insights collapsed")
                 } label: {
                     HStack(spacing: 5) {
                         Spacer()
@@ -617,12 +740,14 @@ struct GoalsView: View {            // 063
         return HStack(spacing: 0) {
             proofButton(id: "goals-trend-toggle-\(g.id)", label: "Toggle goal trend") {
                 trendMetric = trendMetric == "Form Score" ? "Make %" : "Form Score"
+                toast = .success("Trend changed to \(trendMetric)")
             }
             proofButton(id: "goals-insights-toggle-\(g.id)", label: "Toggle goal insights") {
                 withAnimation {
                     if insightsExpanded.contains(g.id) { insightsExpanded.remove(g.id) }
                     else { insightsExpanded.insert(g.id) }
                 }
+                toast = .info(insightsExpanded.contains(g.id) ? "Goal insights expanded" : "Goal insights collapsed")
             }
             proofMarker(id: "goals-progress-\(g.id)", label: "\(Int(g.progress * 100))%")
             proofMarker(id: "goals-stat-sessions-\(g.id)", label: stats.sessionsValue)
@@ -647,9 +772,11 @@ struct GoalsView: View {            // 063
     private func goalRouteProofButtons(_ g: GoalRecord) -> some View {
         HStack(spacing: 0) {
             proofButton(id: "goals-view-all-\(g.id)", label: "View all goal sessions") {
+                toast = .info("Opening all goal sessions")
                 route = .analyticsCards
             }
             proofButton(id: "goals-recent-session-\(g.id)", label: "Open recent goal session") {
+                toast = .info("Opening recent session")
                 route = .recentSession
             }
         }
@@ -707,6 +834,7 @@ struct GoalsView: View {            // 063
 struct CreateGoalView: View {       // 064
     var onCreated: (() async -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var app: AppState
     @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var title = ""
     @State private var desc = "Maintain a stacked elbow on every rep from rise through release to build repeatable form."
@@ -792,7 +920,10 @@ struct CreateGoalView: View {       // 064
                 VStack(alignment: .leading, spacing: 0) {
                     TopBar()
                     VStack(alignment: .leading, spacing: 0) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to goals")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "chevron.left").font(.system(size: 13, weight: .bold))
                                 Text("GOALS").shotiqBody(13, weight: .bold).kerning(0.8)
@@ -810,6 +941,9 @@ struct CreateGoalView: View {       // 064
                             NavigationLink { WorkoutCalendarView() } label: {
                                 HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening workout calendar")
+                            })
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 8)
@@ -845,7 +979,10 @@ struct CreateGoalView: View {       // 064
                         }
                         .padding(.top, 8)
                         SectionLabel(text: "TARGET").padding(.top, 18)
-                        Button { showTargetPicker = true } label: {
+                        Button {
+                            toast = .info("Opening target picker", "Choose the coaching target for this goal.")
+                            showTargetPicker = true
+                        } label: {
                             HStack(spacing: 0) {
                                 PhotoThumb(width: 150, height: 110, photo: "065-visual-001")
                                 HStack {
@@ -873,7 +1010,9 @@ struct CreateGoalView: View {       // 064
                                     toast = .success("Target linked", t)
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Target unchanged", linkedTarget)
+                            }
                         }
                         .padding(.top, 8)
                         HStack(alignment: .top, spacing: 14) {
@@ -928,13 +1067,35 @@ struct CreateGoalView: View {       // 064
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 4)
-                            NavigationLink { MetricDetailView(metric: "Elbow Alignment", value: 0.87) } label: {
+                            NavigationLink {
+                                if let latest = app.recentMedia.first {
+                                    MetricDetailView(
+                                        metric: "Elbow Alignment",
+                                        value: 0.87,
+                                        presentation: AnalysisResultPresentation(result: latest.analysis))
+                                } else if UITestHooks.demoData {
+                                    MetricDetailView(
+                                        metric: "Elbow Alignment",
+                                        value: 0.87,
+                                        presentation: .canonicalDemo)
+                                } else {
+                                    AnalyzeHubView()
+                                }
+                            } label: {
                                 HStack(spacing: 3) {
                                     Text("Learn how").shotiqBody(12, weight: .semibold)
                                     Image(systemName: "chevron.right").font(.system(size: 10))
                                 }
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                    toast = .info("Opening metric detail", "Elbow alignment target bands are ready.")
+                                } else {
+                                    toast = .info("Analyze a shot first",
+                                                  "Create an analysis before opening measured target bands.")
+                                }
+                            })
                             .buttonStyle(.plain)
                         }
                         .padding(12)
@@ -946,7 +1107,10 @@ struct CreateGoalView: View {       // 064
                                 .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Goal creation cancelled", "Returning to goals.")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                            } label: {
                                 Text("Cancel").shotiqBody(16)
                                     .frame(maxWidth: .infinity).frame(height: 54)
                                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
@@ -966,9 +1130,12 @@ struct CreateGoalView: View {       // 064
         .shotiqToast($toast)
     }
     private func categoryCard(_ icon: String, _ label: String) -> some View {
-        Button { category = label } label: {
+        Button {
+            category = label
+            toast = .success("Category selected", label)
+        } label: {
             VStack(spacing: 7) {
-                ShotIQConceptGlyph(concept: label, fallback: icon, size: 21)
+                ShotIQConceptGlyph(concept: label, fallback: icon, size: 36)
                 Text(label).shotiqBody(11, weight: .medium)
                     .lineLimit(1).minimumScaleFactor(0.6)
             }
@@ -983,7 +1150,10 @@ struct CreateGoalView: View {       // 064
     private func segments(_ options: [String], _ sel: Binding<String>) -> some View {
         HStack(spacing: 6) {
             ForEach(options, id: \.self) { o in
-                Button { sel.wrappedValue = o } label: {
+                Button {
+                    sel.wrappedValue = o
+                    toast = .success("Selection updated", o)
+                } label: {
                     Text(o).shotiqBody(12, weight: o == sel.wrappedValue ? .semibold : .regular)
                         .lineLimit(1).minimumScaleFactor(0.6)
                         .frame(maxWidth: .infinity).frame(height: 42)
@@ -1205,7 +1375,10 @@ struct GoalDetailView: View {       // 065
     }
 
     private func saveDrill(_ name: String) {
-        guard !addedDrills.contains(name) else { return }
+        guard !addedDrills.contains(name) else {
+            toast = .info("Drill already added", "\(name) is already in your saved workouts.")
+            return
+        }
         addedDrills.insert(name)
         toast = .progress("Adding drill", "Saving \(name) to your workouts.", progress: 0.5)
         Task {
@@ -1232,7 +1405,10 @@ struct GoalDetailView: View {       // 065
                 VStack(alignment: .leading, spacing: 0) {
                     TopBar()
                     VStack(alignment: .leading, spacing: 0) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to goals")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "chevron.left").font(.system(size: 13, weight: .bold))
                                 Text("GOALS").shotiqBody(13, weight: .bold).kerning(0.8)
@@ -1355,8 +1531,8 @@ struct GoalDetailView: View {       // 065
                                 .accessibilityIdentifier("goal-detail-linked-count")
                         }
                         .padding(.top, 22)
-                        ForEach(Array(detailData.sessions.enumerated()), id: \.element.id) { index, s in
-                            NavigationLink { AnalyticsDetailedView(metric: s.name) } label: {
+	                        ForEach(Array(detailData.sessions.enumerated()), id: \.element.id) { index, s in
+	                            NavigationLink { AnalyticsDetailedView(metric: s.name) } label: {
                             HStack(spacing: 10) {
                                 PhotoThumb(width: 46, height: 34, icon: "play.circle", photo: "066-visual-002")
                                 VStack(spacing: 1) {
@@ -1396,14 +1572,17 @@ struct GoalDetailView: View {       // 065
                             }
                             .padding(.vertical, 9)
                             .overlay(HRule(), alignment: .bottom)
-                            }
-                            .accessibilityIdentifier("goal-detail-session-\(index)")
-                            .buttonStyle(.plain)
-                        }
+	                            }
+	                            .accessibilityIdentifier("goal-detail-session-\(index)")
+	                            .buttonStyle(.plain)
+	                            .simultaneousGesture(TapGesture().onEnded {
+	                                toast = .info("Opening session", s.name)
+	                            })
+	                        }
                         SectionLabel(text: "RECOMMENDED DRILLS").padding(.top, 20)
                         ForEach(["Quick Release Builder", "Wall Elbow Alignment"], id: \.self) { d in
                             HStack(spacing: 12) {
-                                NavigationLink { DrillDetailView(name: d) } label: {
+	                                NavigationLink { DrillDetailView(name: d) } label: {
                                     HStack(spacing: 12) {
                                         PhotoThumb(width: 56, height: 44, photo: "066-visual-003")
                                         VStack(alignment: .leading, spacing: 2) {
@@ -1416,9 +1595,12 @@ struct GoalDetailView: View {       // 065
                                         Image(systemName: "chevron.right").font(.system(size: 12))
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityIdentifier("goal-detail-drill-open-\(d.lowercased().replacingOccurrences(of: " ", with: "-"))")
+	                                }
+	                                .buttonStyle(.plain)
+	                                .simultaneousGesture(TapGesture().onEnded {
+	                                    toast = .info("Opening drill", d)
+	                                })
+	                                .accessibilityIdentifier("goal-detail-drill-open-\(d.lowercased().replacingOccurrences(of: " ", with: "-"))")
                                 Button {
                                     saveDrill(d)
                                 } label: {
@@ -1459,12 +1641,21 @@ struct GoalDetailView: View {       // 065
                         }
                         HStack(spacing: 12) {
                             PrimaryButton(title: "Log progress", icon: "chart.line.uptrend.xyaxis") {
+                                guard !completed else {
+                                    toast = .info("Goal already complete",
+                                                  "This goal is finished. Edit the goal or create a new target.")
+                                    return
+                                }
                                 logValue = Double(Int(pct * Double(targetValue)))
+                                toast = .info("Opening progress log", "Set the latest value for this goal.")
                                 showLogProgress = true
                             }
                             .accessibilityIdentifier("goal-detail-log-progress")
-                            .disabled(busy || completed)
-                            SecondaryButton(title: "Edit goal", icon: "pencil") { showEdit = true }
+                            .disabled(busy)
+                            SecondaryButton(title: "Edit goal", icon: "pencil") {
+                                toast = .info("Opening goal editor", "Update the goal name or description.")
+                                showEdit = true
+                            }
                                 .accessibilityIdentifier("goal-detail-edit-goal")
                                 .disabled(busy)
                         }
@@ -1570,11 +1761,17 @@ struct GoalDetailView: View {       // 065
                 .padding(14)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
             PrimaryButton(title: busy ? "Saving…" : "Save changes") {
-                patch(GoalPatchBody(name: name, description: desc),
+                let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard cleanName.isEmpty == false else {
+                    errorText = "Goal name is required."
+                    toast = .error("Goal name required", "Name the goal before saving changes.")
+                    return
+                }
+                patch(GoalPatchBody(name: cleanName, description: desc.trimmingCharacters(in: .whitespacesAndNewlines)),
                       progressTitle: "Saving changes",
                       successTitle: "Goal changes saved") { showEdit = false }
             }
-            .disabled(busy || name.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(busy)
             Spacer(minLength: 0)
         }
         .padding(24)
@@ -1733,7 +1930,7 @@ struct AnalyticsCardsView: View {   // 066
     }
 
     private var sessions: [AnalysisSession] {
-        guard workouts.isEmpty == false else { return sampleSessions }
+        guard workouts.isEmpty == false else { return UITestHooks.demoData ? sampleSessions : [] }
         let calendar = Calendar.current
         let now = Date()
         return workouts.prefix(12).enumerated().map { index, workout in
@@ -1802,7 +1999,7 @@ struct AnalyticsCardsView: View {   // 066
 
     private var summary: AnalyticsSummary {
         let visible = filteredSessions
-        if workouts.isEmpty && timeRange == "All time" && mediaFilter == "All media" {
+        if UITestHooks.demoData && workouts.isEmpty && timeRange == "All time" && mediaFilter == "All media" {
             let canonicalTrend: [Double] = [68, 72, 76, 79, 80, 82]
             return AnalyticsSummary(scoreText: "82",
                                     scoreVerdict: "GOOD",
@@ -1820,7 +2017,7 @@ struct AnalyticsCardsView: View {   // 066
         guard let latest = visible.first else {
             return AnalyticsSummary(scoreText: "--",
                                     scoreVerdict: "NO DATA",
-                                    coachingTarget: "Adjust filters to review saved sessions.",
+                                    coachingTarget: "Analyze a shot or finish a workout to build history.",
                                     trendPoints: [0, 0],
                                     trendLabels: ["S1", "S2"],
                                     trendA11y: "No matching sessions",
@@ -1864,9 +2061,15 @@ struct AnalyticsCardsView: View {   // 066
                         HStack(alignment: .center, spacing: 10) {
                             Text("AI ANALYSIS HISTORY").shotiqDisplay(30)
                             Spacer(minLength: 6)
-                            filterChip("calendar", timeRange) { showTimePicker = true }
+                            filterChip("calendar", timeRange) {
+                                toast = .info("Opening time filter", "Choose the analysis history range.")
+                                showTimePicker = true
+                            }
                                 .accessibilityIdentifier("analytics-cards-time-filter")
-                            filterChip("slider.horizontal.3", mediaFilter) { showMediaPicker = true }
+                            filterChip("slider.horizontal.3", mediaFilter) {
+                                toast = .info("Opening media filter", "Choose photo, video, or live sessions.")
+                                showMediaPicker = true
+                            }
                                 .accessibilityIdentifier("analytics-cards-media-filter")
                         }
                         .padding(.top, 16)
@@ -1877,7 +2080,9 @@ struct AnalyticsCardsView: View {   // 066
                                     toast = .success("Filter applied", "Showing \(range.lowercased()) analysis.")
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Time filter unchanged")
+                            }
                         }
                         .confirmationDialog("Media type", isPresented: $showMediaPicker, titleVisibility: .visible) {
                             ForEach(["All media", "Video", "Photo", "Live"], id: \.self) { media in
@@ -1886,7 +2091,9 @@ struct AnalyticsCardsView: View {   // 066
                                     toast = .success("Media filter applied", "\(filteredCount(for: media)) sessions visible.")
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Media filter unchanged")
+                            }
                         }
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
@@ -1943,6 +2150,9 @@ struct AnalyticsCardsView: View {   // 066
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                             .accessibilityIdentifier("analytics-cards-view-all")
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening detailed analytics")
+                            })
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 22)
@@ -1980,7 +2190,10 @@ struct AnalyticsCardsView: View {   // 066
     }
 
     private func filterChip(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            toast = .info(label == timeRange ? "Opening time range" : "Opening media filter")
+            action()
+        } label: {
             HStack(spacing: 5) {
                 Image(systemName: icon).font(.system(size: 11))
                 Text(label).shotiqBody(12, weight: .medium)
@@ -2027,6 +2240,9 @@ struct AnalyticsCardsView: View {   // 066
                             ShareLink(item: session.shareText) {
                                 Label("Share session", systemImage: "square.and.arrow.up")
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening share sheet", "\(session.name) summary is ready.")
+                            })
                         } label: {
                             Image(systemName: "ellipsis").font(.system(size: 13))
                                 .foregroundStyle(ShotIQColor.graphite)
@@ -2074,6 +2290,9 @@ struct AnalyticsCardsView: View {   // 066
                             .foregroundStyle(.white)
                         }
                         .accessibilityIdentifier("analytics-card-session-\(index)-open")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening session", session.name)
+                        })
                     }
                 }
                 .padding(12)
@@ -2205,13 +2424,32 @@ struct AnalyticsDetailedView: View { // 067
     }
     private var exportSummary: String {
         if workouts.isEmpty {
-            return "ShotIQ analysis - \(displayMetric), \(range): 78.2% consistency, form score 82, +6.4% vs previous 30 days."
+            return UITestHooks.demoData
+                ? "ShotIQ analysis - \(displayMetric), \(range): 78.2% consistency, form score 82, +6.4% vs previous 30 days."
+                : "ShotIQ analysis - no saved sessions yet. Analyze a shot or finish a workout to build \(displayMetric) history."
         }
         let summary = metricSummary
         return "ShotIQ analysis - \(displayMetric), \(range): latest \(summary.latestText), change \(summary.trendText), \(summary.rangeCount) sessions in range."
     }
     private var metricSummary: DetailMetricSummary {
         guard workouts.isEmpty == false else {
+            guard UITestHooks.demoData else {
+                return DetailMetricSummary(trendText: "—",
+                                           trendCaption: "no sessions yet",
+                                           latestText: "--",
+                                           latestDate: "--",
+                                           trendPoints: [0, 0],
+                                           trendBadge: "--",
+                                           trendA11y: "\(displayMetric) has no saved sessions yet",
+                                           confidenceText: "Confidence: None",
+                                           confidenceMessage: "Analyze a shot or complete a workout to build analytics history.",
+                                           rangeCount: 0,
+                                           arcLabel: "RELEASE OFFSET",
+                                           arcValue: latestPresentation?.releaseOffsetText ?? "--",
+                                           arcTarget: "TARGET: -5°–5°",
+                                           consistencyText: "--",
+                                           consistencySpread: "—")
+            }
             return DetailMetricSummary(trendText: "+6.4%",
                                        trendCaption: "vs previous 30 days",
                                        latestText: "78.2%",
@@ -2273,6 +2511,13 @@ struct AnalyticsDetailedView: View { // 067
     }
     private var scorecard: [PhaseScoreItem] {
         guard let latest = filteredWorkouts.first else {
+            guard UITestHooks.demoData else {
+                return [PhaseScoreItem(name: "SETUP", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "LOAD", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "RISE", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "RELEASE", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "FOLLOW-THROUGH", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite)]
+            }
             return [PhaseScoreItem(name: "SETUP", score: 84, delta: "+4", verdict: "GOOD", color: ShotIQColor.analysisBlue),
                     PhaseScoreItem(name: "LOAD", score: 79, delta: "+2", verdict: "GOOD", color: ShotIQColor.analysisBlue),
                     PhaseScoreItem(name: "RISE", score: 88, delta: "+5", verdict: "GREAT", color: ShotIQColor.confirmGreen),
@@ -2293,6 +2538,11 @@ struct AnalyticsDetailedView: View { // 067
     }
     private var comparisonHeaders: [ComparisonHeader] {
         if workouts.isEmpty {
+            guard UITestHooks.demoData else {
+                return [ComparisonHeader(date: "NO SESSION", shots: "--", highlight: true),
+                        ComparisonHeader(date: "NO SESSION", shots: "--", highlight: false),
+                        ComparisonHeader(date: "NO SESSION", shots: "--", highlight: false)]
+            }
             return [ComparisonHeader(date: "MAY 24, 8:24 AM", shots: "24 SHOTS", highlight: true),
                     ComparisonHeader(date: "MAY 16, 7:05 AM", shots: "22 SHOTS", highlight: false),
                     ComparisonHeader(date: "MAY 9, 6:40 AM", shots: "21 SHOTS", highlight: false)]
@@ -2307,10 +2557,15 @@ struct AnalyticsDetailedView: View { // 067
         return headers
     }
     private var comparisonChangeLabel: String {
-        workouts.isEmpty ? "(LATEST VS MAY 9)" : "(LATEST VS PREVIOUS)"
+        workouts.isEmpty ? (UITestHooks.demoData ? "(LATEST VS MAY 9)" : "(NO SESSIONS YET)") : "(LATEST VS PREVIOUS)"
     }
     private var comparison: [ComparisonRow] {
         guard workouts.isEmpty == false else {
+            guard UITestHooks.demoData else {
+                return ["Form Score", "Make %", "Release Consistency", "Release Angle", "Elbow Alignment"].map {
+                    ComparisonRow(metric: $0, latest: "--", previous: "--", baseline: "--", change: "—", positive: true)
+                }
+            }
             return [ComparisonRow(metric: "Form Score", latest: "82", previous: "76", baseline: "71", change: "+11", positive: true),
                     ComparisonRow(metric: "Make %", latest: "62.5%", previous: "59.1%", baseline: "52.4%", change: "+10.1%", positive: true),
                     ComparisonRow(metric: "Release Consistency", latest: "78.2%", previous: "71.8%", baseline: "64.0%", change: "+14.2%", positive: true),
@@ -2346,9 +2601,18 @@ struct AnalyticsDetailedView: View { // 067
                         Wordmark(size: 26)
                         Spacer()
                         HStack(spacing: 18) {
-                            Button { dismiss() } label: { toolItem("rectangle.on.rectangle", "Cards") }
-                            Button { showMetricPicker = true } label: { toolItem("slider.horizontal.3", "Select metric") }
+                            Button {
+                                toast = .info("Returning to analytics cards")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                            } label: { toolItem("rectangle.on.rectangle", "Cards") }
+                            Button {
+                                toast = .info("Opening metric picker")
+                                showMetricPicker = true
+                            } label: { toolItem("slider.horizontal.3", "Select metric") }
                             ShareLink(item: exportSummary) { toolItem("square.and.arrow.up", "Export") }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening export sheet", "\(displayMetric) history is ready.")
+                                })
                         }
                     }
                     .padding(.horizontal, 20).frame(height: 56)
@@ -2358,11 +2622,20 @@ struct AnalyticsDetailedView: View { // 067
                         Text("Track your mechanics. See what moves the needle.")
                             .shotiqBody(13).foregroundStyle(ShotIQColor.graphite).padding(.top, 4)
                         HStack(spacing: 8) {
-                            detailChip("calendar", range, chevron: true) { showRangePicker = true }
+                            detailChip("calendar", range, chevron: true) {
+                                toast = .info("Opening range picker")
+                                showRangePicker = true
+                            }
                                 .accessibilityIdentifier("analytics-detailed-range-filter")
-                            detailChip("chart.xyaxis.line", displayMetric, chevron: true) { showMetricPicker = true }
+                            detailChip("chart.xyaxis.line", displayMetric, chevron: true) {
+                                toast = .info("Opening metric picker")
+                                showMetricPicker = true
+                            }
                                 .accessibilityIdentifier("analytics-detailed-metric-filter")
-                            detailChip(nil, summary.confidenceText, chevron: false) { showConfidenceInfo = true }
+                            detailChip(nil, summary.confidenceText, chevron: false) {
+                                toast = .info("Showing confidence details")
+                                showConfidenceInfo = true
+                            }
                                 .accessibilityIdentifier("analytics-detailed-confidence")
                         }
                         .padding(.top, 12)
@@ -2373,7 +2646,9 @@ struct AnalyticsDetailedView: View { // 067
                                     toast = .success("Range updated", "\(r): \(filteredCount(for: r)) sessions.")
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Range unchanged")
+                            }
                         }
                         .confirmationDialog("Select metric", isPresented: $showMetricPicker, titleVisibility: .visible) {
                             ForEach(["Release Consistency", "Form Score", "Make %", "Release Angle", "Elbow Alignment"],
@@ -2383,7 +2658,9 @@ struct AnalyticsDetailedView: View { // 067
                                     toast = .success("Metric updated", "\(m) selected.")
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Metric unchanged")
+                            }
                         }
                         .alert(summary.confidenceText, isPresented: $showConfidenceInfo) {
                             Button("OK", role: .cancel) {}
@@ -2634,7 +2911,7 @@ struct AnalyticsDetailedView: View { // 067
 
     private func toolItem(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 3) {
-            Image(systemName: icon).font(.system(size: 15))
+            Image(systemName: icon).font(.system(size: 24))
             Text(label).shotiqBody(9).lineLimit(1).minimumScaleFactor(0.7)
         }
         .foregroundStyle(ShotIQColor.ink)
@@ -2643,7 +2920,7 @@ struct AnalyticsDetailedView: View { // 067
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
-                if let icon { Image(systemName: icon).font(.system(size: 11)) }
+                if let icon { Image(systemName: icon).font(.system(size: 18)) }
                 Text(label).shotiqBody(11, weight: .medium)
                     .lineLimit(1).minimumScaleFactor(0.6)
                 if chevron { Image(systemName: "chevron.down").font(.system(size: 8)) }
@@ -2696,7 +2973,10 @@ struct MyMediaView: View {          // 068
     @State private var sortNewest = true
     @State private var selecting = false
     @State private var selectedTiles: Set<Int> = []
+    @State private var hiddenSampleMedia: Set<String> = []
     @State private var showGradeFilter = false
+    @State private var confirmRemoveSelection = false
+    @State private var removingSelection = false
     @State private var toast: ShotIQToast?
     private struct MediaHeaderStat {
         let value: String
@@ -2709,6 +2989,7 @@ struct MyMediaView: View {          // 068
         let duration: String
         let photo: String?
         let analysis: ShotIQAnalysisResultDTO?
+        var stableId: String { analysis?.id ?? "\(title)-\(time)-\(duration)" }
     }
     private let today: [MediaItem] = [
         .init(title: "Pull-Up • Right", time: "8:24 AM", score: "82", grade: "GOOD",
@@ -2745,7 +3026,34 @@ struct MyMediaView: View {          // 068
                              analysis: entry.analysis)
         }
     }
-    private var allToday: [MediaItem] { realMedia + today }
+    private var yesterday: [MediaItem] {
+        [
+            .init(title: "Catch & Shoot Review", time: "Yesterday", score: "79", grade: "GOOD",
+                  color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:04",
+                  photo: "068-visual-002", analysis: nil),
+            .init(title: "Right Wing Pull-Up", time: "Yesterday", score: "76", grade: "REVIEW",
+                  color: ShotIQColor.reviewRed, kind: "Videos", duration: "0:05",
+                  photo: "068-visual-001", analysis: nil),
+            .init(title: "Corner Footwork", time: "Yesterday", score: "83", grade: "GOOD",
+                  color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:06",
+                  photo: "068-visual-005", analysis: nil),
+            .init(title: "Release Timing", time: "Yesterday", score: "81", grade: "GOOD",
+                  color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:07",
+                  photo: "068-visual-004", analysis: nil)
+        ]
+    }
+    private var allToday: [MediaItem] {
+        (realMedia + (UITestHooks.demoData ? today : []))
+            .filter { !hiddenSampleMedia.contains($0.stableId) }
+    }
+    private var visibleYesterday: [MediaItem] {
+        guard UITestHooks.demoData else { return [] }
+        return yesterday.filter {
+            !hiddenSampleMedia.contains($0.stableId)
+            && (segment == "All" || segment == $0.kind)
+            && (gradeFilter == "All results" || gradeFilter == $0.grade)
+        }
+    }
     private var filteredToday: [(Int, MediaItem)] {
         var items = Array(allToday.enumerated()).filter { pair in
             (segment == "All" || pair.element.kind == segment)
@@ -2756,19 +3064,24 @@ struct MyMediaView: View {          // 068
     }
     /// Yesterday's four clips are all plain video captures.
     private var showYesterday: Bool {
-        (segment == "All" || segment == "Videos") && gradeFilter == "All results"
+        visibleYesterday.isEmpty == false
     }
     private var latestPresentation: AnalysisResultPresentation? {
         app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
     }
+    private var selectedMediaItems: [MediaItem] {
+        selectedTiles.sorted().compactMap { index in
+            allToday.indices.contains(index) ? allToday[index] : nil
+        }
+    }
     private var headerScoreText: String {
-        latestPresentation?.scoreText ?? "82"
+        latestPresentation?.scoreText ?? (UITestHooks.demoData ? "82" : "--")
     }
     private var headerScoreVerdict: String {
-        latestPresentation?.scoreVerdict ?? "GOOD"
+        latestPresentation?.scoreVerdict ?? (UITestHooks.demoData ? "GOOD" : "NO MEDIA")
     }
     private var headerScoreColor: Color {
-        headerScoreVerdict == "UNAVAILABLE" || headerScoreVerdict == "REVIEW"
+        headerScoreVerdict == "UNAVAILABLE" || headerScoreVerdict == "REVIEW" || headerScoreVerdict == "NO MEDIA"
             ? ShotIQColor.reviewRed
             : ShotIQColor.analysisBlue
     }
@@ -2776,13 +3089,19 @@ struct MyMediaView: View {          // 068
         Double(headerScoreText).map { min(max($0 / 100, 0), 1) } ?? 0
     }
     private var primaryTargetText: String {
-        latestPresentation?.coachingTarget ?? "Keep elbow stacked through release"
+        latestPresentation?.coachingTarget
+            ?? (UITestHooks.demoData ? "Keep elbow stacked through release" : "Analyze a shot to create a coaching target")
     }
     private var headerStats: [MediaHeaderStat] {
         guard realMedia.isEmpty == false else {
-            return [MediaHeaderStat(value: "24", label: "SHOTS"),
-                    MediaHeaderStat(value: "15", label: "MAKES"),
-                    MediaHeaderStat(value: "62.5%", label: "ACCURACY")]
+            if UITestHooks.demoData {
+                return [MediaHeaderStat(value: "24", label: "SHOTS"),
+                        MediaHeaderStat(value: "15", label: "MAKES"),
+                        MediaHeaderStat(value: "62.5%", label: "ACCURACY")]
+            }
+            return [MediaHeaderStat(value: "0", label: "MEDIA"),
+                    MediaHeaderStat(value: "0", label: "IMAGES"),
+                    MediaHeaderStat(value: "0", label: "VIDEOS")]
         }
         let imageCount = realMedia.filter { $0.kind == "Images" }.count
         let videoCount = realMedia.filter { $0.kind == "Videos" }.count
@@ -2830,7 +3149,7 @@ struct MyMediaView: View {          // 068
                         HStack(alignment: .center) {
                             Text("MY MEDIA").shotiqDisplay(38)
                             Spacer()
-                            NavigationLink { PhotoUploadSourceView() } label: {
+                            NavigationLink { AnalyzeHubView() } label: {
                                 HStack(spacing: 7) {
                                     Image(systemName: "square.and.arrow.up")
                                     Text("Upload").shotiqBody(15, weight: .medium)
@@ -2839,6 +3158,9 @@ struct MyMediaView: View {          // 068
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening upload", "Choose image, video, or live capture.")
+                            })
                         }
                         .padding(.top, 16)
                         Text("Review your shots and training sessions.")
@@ -2862,30 +3184,58 @@ struct MyMediaView: View {          // 068
                         .padding(4)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         .padding(.top, 12)
-                        HStack(spacing: 8) {
-                            mediaTool("slider.horizontal.3",
-                                      gradeFilter == "All results" ? "Filter" : gradeFilter,
-                                      active: gradeFilter != "All results") { showGradeFilter = true }
-                                      .accessibilityIdentifier("my-media-filter")
-                            mediaTool("arrow.up.arrow.down", sortNewest ? "Sort: Newest" : "Sort: Oldest",
-                                      active: false) {
-                                sortNewest.toggle()
-                                toast = .success("Sort updated", sortNewest ? "Newest first." : "Oldest first.")
-                            }
-                                      .accessibilityIdentifier("my-media-sort")
-                            mediaTool("viewfinder", selecting ? "Done (\(selectedTiles.count))" : "Select",
-                                      active: selecting) {
-                                selecting.toggle()
-                                if selecting {
-                                    toast = .success("Select media", "Tap items to add them.")
-                                } else {
-                                    toast = .success("Selection finished", "\(selectedTiles.count) item\(selectedTiles.count == 1 ? "" : "s") selected.")
-                                    selectedTiles.removeAll()
+                        Group {
+                            HStack(spacing: 8) {
+                                mediaTool("slider.horizontal.3",
+                                          gradeFilter == "All results" ? "Filter" : gradeFilter,
+                                          active: gradeFilter != "All results") {
+                                    toast = .info("Opening media filter", "Choose which analysis results to show.")
+                                    showGradeFilter = true
                                 }
+                                          .accessibilityIdentifier("my-media-filter")
+                                mediaTool("arrow.up.arrow.down", sortNewest ? "Sort: Newest" : "Sort: Oldest",
+                                          active: false) {
+                                    sortNewest.toggle()
+                                    toast = .success("Sort updated", sortNewest ? "Newest first." : "Oldest first.")
+                                }
+                                          .accessibilityIdentifier("my-media-sort")
+                                mediaTool("viewfinder", selecting ? "Done (\(selectedTiles.count))" : "Select",
+                                          active: selecting) {
+                                    selecting.toggle()
+                                    if selecting {
+                                        toast = .success("Select media", "Tap items to add them.")
+                                    } else {
+                                        toast = .success("Selection finished", "\(selectedTiles.count) item\(selectedTiles.count == 1 ? "" : "s") selected.")
+                                        selectedTiles.removeAll()
+                                    }
+                                }
+                                          .accessibilityIdentifier("my-media-select")
                             }
-                                      .accessibilityIdentifier("my-media-select")
+                            .padding(.top, 10)
+                            if selecting {
+                                HStack(spacing: 8) {
+                                    mediaTool("square.and.arrow.up",
+                                              "Share (\(selectedTiles.count))",
+                                              active: selectedTiles.isEmpty == false) {
+                                        shareSelectedMedia()
+                                    }
+                                              .accessibilityIdentifier("my-media-share-selected")
+                                    mediaTool("trash",
+                                              removingSelection ? "Removing…" : "Remove",
+                                              active: selectedTiles.isEmpty == false && !removingSelection) {
+                                        if selectedTiles.isEmpty {
+                                            toast = .info("Select media first", "Tap one or more items to remove.")
+                                        } else if removingSelection {
+                                            toast = .info("Removal in progress", "ShotIQ is updating your media library.")
+                                        } else {
+                                            confirmRemoveSelection = true
+                                        }
+                                    }
+                                              .accessibilityIdentifier("my-media-remove-selected")
+                                }
+                                .padding(.top, 8)
+                            }
                         }
-                        .padding(.top, 10)
                         .confirmationDialog("Filter by result", isPresented: $showGradeFilter,
                                             titleVisibility: .visible) {
                             ForEach(["All results", "GOOD", "REVIEW", "EXCELLENT"], id: \.self) { g in
@@ -2894,7 +3244,17 @@ struct MyMediaView: View {          // 068
                                     toast = .success("Filter updated", "\(g): \(filteredCount(segment: segment, grade: g)) items visible.")
                                 }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Media filter unchanged")
+                            }
+                        }
+                        .confirmationDialog("Remove selected media?",
+                                            isPresented: $confirmRemoveSelection,
+                                            titleVisibility: .visible) {
+                            Button("Remove selected", role: .destructive) { removeSelectedMedia() }
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Remove cancelled", "Your selected media stayed in the library.")
+                            }
                         }
                         HStack {
                             SectionLabel(text: "TODAY")
@@ -2936,10 +3296,13 @@ struct MyMediaView: View {          // 068
                                     .buttonStyle(.plain)
                                     .accessibilityIdentifier("my-media-tile-\(i)")
                                 } else {
-                                    NavigationLink { MediaDetailView(analysis: t.analysis) } label: {
+                                    NavigationLink { mediaDetailDestination(for: t) } label: {
                                         mediaTile(t)
                                             .contentShape(Rectangle())
                                     }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening \(t.title)", "Media detail is ready.")
+                                    })
                                     .buttonStyle(.plain)
                                     .accessibilityIdentifier("my-media-tile-\(i)")
                                 }
@@ -2950,18 +3313,16 @@ struct MyMediaView: View {          // 068
                             HStack {
                                 SectionLabel(text: "YESTERDAY")
                                 Spacer()
-                                Text("4 ITEMS").shotiqBody(10, weight: .semibold).kerning(0.4)
+                                Text("\(visibleYesterday.count) ITEMS").shotiqBody(10, weight: .semibold).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
                             .padding(.top, 20)
                             HStack(spacing: 8) {
-                                ForEach(0..<4, id: \.self) { i in
-                                    NavigationLink { MediaDetailView() } label: {
-                                        PhotoThumb(height: 66,
-                                                   photo: ["068-visual-002", "068-visual-001",
-                                                           "068-visual-005", "068-visual-004"][i])
+                                ForEach(Array(visibleYesterday.enumerated()), id: \.element.stableId) { i, item in
+                                    NavigationLink { mediaDetailDestination(for: item) } label: {
+                                        PhotoThumb(height: 66, photo: item.photo)
                                             .overlay(alignment: .bottomLeading) {
-                                                Text("0:0\((i + 4) % 9)")
+                                                Text(item.duration)
                                                     .font(.custom("Tungsten-Medium", size: 10))
                                                     .foregroundStyle(.white)
                                                     .padding(.horizontal, 5).padding(.vertical, 2)
@@ -2972,6 +3333,10 @@ struct MyMediaView: View {          // 068
                                             .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier("my-media-yesterday-tile-\(i)")
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening \(item.title)", "Media detail is ready.")
+                                    })
                                 }
                             }
                             .padding(.top, 10)
@@ -2983,6 +3348,55 @@ struct MyMediaView: View {          // 068
             }
         }
         .shotiqToast($toast)
+    }
+    private func shareSelectedMedia() {
+        let items = selectedMediaItems
+        guard items.isEmpty == false else {
+            toast = .info("Select media first", "Tap one or more items to share.")
+            return
+        }
+
+        let summary = items.map { item in
+            "\(item.title): \(item.score) \(item.grade) (\(item.kind.lowercased()), \(item.duration))"
+        }.joined(separator: "\n")
+        toast = .success("Opening share sheet", "\(items.count) media item\(items.count == 1 ? "" : "s") ready.")
+        ShotIQSharePresenter.share(["ShotIQ media selection\n\(summary)"])
+    }
+    private func removeSelectedMedia() {
+        let items = selectedMediaItems
+        let ids = items.compactMap { $0.analysis?.id }
+        let sampleIds = items.filter { $0.analysis == nil }.map(\.stableId)
+        guard items.isEmpty == false else {
+            toast = .info("Select media first", "Tap one or more items to remove.")
+            return
+        }
+
+        removingSelection = true
+        toast = .progress("Removing media",
+                          ids.isEmpty ? "Updating this library view." : "Deleting selected ShotIQ media.",
+                          progress: 0.45)
+        Task {
+            do {
+                for id in ids {
+                    try await APIClient.shared.deleteMedia(analysisId: id)
+                }
+                await MainActor.run {
+                    if ids.isEmpty == false {
+                        app.recentMedia.removeAll { ids.contains($0.id) }
+                    }
+                    sampleIds.forEach { hiddenSampleMedia.insert($0) }
+                    toast = .success("Media removed", "\(items.count) item\(items.count == 1 ? "" : "s") removed.")
+                    selectedTiles.removeAll()
+                    selecting = false
+                    removingSelection = false
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Remove failed", "Check your connection and try again.")
+                    removingSelection = false
+                }
+            }
+        }
     }
     private func filteredCount(segment selectedSegment: String, grade selectedGrade: String) -> Int {
         allToday.filter {
@@ -3050,56 +3464,220 @@ struct MyMediaView: View {          // 068
             }
         }
     }
+    private func mediaDetailDestination(for item: MediaItem) -> MediaDetailView {
+        MediaDetailView(analysis: item.analysis,
+                        title: item.title,
+                        fallbackPhoto: item.photo ?? "069-visual-002",
+                        fallbackLinkedPhoto: item.photo ?? "069-visual-004",
+                        fallbackDuration: item.duration,
+                        fallbackCaptureDate: "\(item.time.uppercased()) - SHOTIQ MEDIA",
+                        fallbackCaptureMeta: "\(item.kind) - \(item.grade) - form score \(item.score)",
+                        fallbackShotEvents: ("--", "--", "--", "--", "--"),
+                        onDeleteLocal: {
+                            hiddenSampleMedia.insert(item.stableId)
+                        },
+                        analysisId: item.analysis?.id)
+    }
+}
+
+private struct MediaDetailExportView: View {
+    let title: String
+    let presentation: AnalysisResultPresentation
+    let captureDate: String
+    let mediaDuration: String
+    let shotEvents: (shots: String, makes: String, pct: String, streak: String, points: String)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 0) {
+                Text("SHOT").shotiqCondensed(16, weight: .black)
+                Text("IQ").shotiqCondensed(16, weight: .black)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                Spacer()
+                Text("MEDIA SUMMARY").shotiqBody(9, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            Text(title.uppercased()).shotiqCondensed(24, weight: .heavy)
+            Text(captureDate).shotiqBody(11, weight: .semibold)
+                .foregroundStyle(ShotIQColor.graphite)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 54))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("FORM SCORE - \(presentation.scoreVerdict)").shotiqBody(11, weight: .bold)
+                        .foregroundStyle(ShotIQColor.analysisBlue)
+                    Text("\(presentation.mediaLabel) - \(mediaDuration) - \(presentation.phaseText)")
+                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                }
+            }
+            HStack(spacing: 0) {
+                exportStat(shotEvents.shots, "SHOTS")
+                VRule(height: 34)
+                exportStat(shotEvents.makes, "MAKES")
+                VRule(height: 34)
+                exportStat(shotEvents.pct, "MAKE %")
+                VRule(height: 34)
+                exportStat(shotEvents.points, "POINTS")
+            }
+            HRule()
+            Text("Primary target: \(presentation.coachingTarget)")
+                .shotiqBody(12, weight: .semibold)
+            Text("SHOTIQ.COM").shotiqBody(9, weight: .semibold)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .padding(20)
+        .frame(width: 390, alignment: .leading)
+        .background(.white)
+        .overlay(Rectangle().stroke(ShotIQColor.rule))
+    }
+
+    private func exportStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.custom("Tungsten-Medium", size: 24))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).shotiqBody(7, weight: .medium).kerning(0.3)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+enum MediaDetailImageRenderer {
+    @MainActor
+    static func render(title: String,
+                       presentation: AnalysisResultPresentation,
+                       captureDate: String,
+                       mediaDuration: String,
+                       shotEvents: (shots: String, makes: String, pct: String, streak: String, points: String)) -> UIImage? {
+        let renderer = ImageRenderer(content: MediaDetailExportView(title: title,
+                                                                    presentation: presentation,
+                                                                    captureDate: captureDate,
+                                                                    mediaDuration: mediaDuration,
+                                                                    shotEvents: shotEvents))
+        renderer.scale = 3
+        return renderer.uiImage
+    }
 }
 
 struct MediaDetailView: View {      // 069
     var analysis: ShotIQAnalysisResultDTO? = nil
+    var title = "ShotIQ Media"
+    var fallbackPhoto = "069-visual-002"
+    var fallbackLinkedPhoto = "069-visual-004"
+    var fallbackDuration = "6:12"
+    var fallbackCaptureDate = "MAY 21, 2025 - 8:24 AM"
+    var fallbackCaptureMeta = "Indoor Court - iPhone 15 Pro - 1080p - 60fps"
+    var fallbackShotEvents: (shots: String, makes: String, pct: String, streak: String, points: String)? = nil
+    var onDeleteLocal: (() -> Void)? = nil
     /// Server id of the backing UserAnalysis row, when opened from real data —
     /// enables the authoritative DELETE /api/media?analysisId=… call.
     var analysisId: String? = nil
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var playing = false
+    @State private var mediaPlayer: AVPlayer?
     @State private var speedIndex = 1
     @State private var selectedFrame = 4
+    @State private var selectedPhase = "RELEASE"
     @State private var deleting = false
     @State private var confirmDelete = false
-    @State private var showDownloadInfo = false
+    @State private var showReanalysis = false
+    @State private var showFullMedia = false
     @State private var toast: ShotIQToast?
     private let speeds = ["SLOW 0.5x", "SLOW 1.0x", "SLOW 2.0x"]
+    private let phaseLabels = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
     private var presentation: AnalysisResultPresentation {
         analysis.map(AnalysisResultPresentation.init) ?? .canonicalDemo
     }
+    private var sortedPoseFrames: [VideoPoseFrameRecord] {
+        presentation.videoPoseFrames.sorted { $0.frameIndex < $1.frameIndex }
+    }
+    private var overlayFrame: VideoPoseFrameRecord? {
+        if let frame = sortedPoseFrames.first(where: {
+            $0.phaseLabel.uppercased() == selectedPhase.uppercased() && $0.detectedPose != nil
+        }) {
+            return frame
+        }
+        if sortedPoseFrames.indices.contains(selectedFrame),
+           sortedPoseFrames[selectedFrame].detectedPose != nil {
+            return sortedPoseFrames[selectedFrame]
+        }
+        if let frame = presentation.releaseVideoPoseFrame ?? sortedPoseFrames.first,
+           frame.detectedPose != nil {
+            return frame
+        }
+        if let pose = presentation.displayPose {
+            return VideoPoseAnalyzer.frameRecord(index: 0, timestamp: 0, pose: pose)
+        }
+        return nil
+    }
+    private var videoURL: URL? { presentation.videoURL }
     private var isRealAnalysis: Bool { analysis != nil }
     private var shareText: String {
         isRealAnalysis
             ? presentation.formScoreShareText
-            : "My ShotIQ session - 15/24 makes (62.5%), form score 82."
+            : "\(title) on ShotIQ - form score \(presentation.scoreText), target: \(presentation.coachingTarget)."
     }
     private var mediaDurationText: String {
-        analysis?.media.type?.lowercased() == "image" ? "photo" : "6:12"
+        analysis?.media.type?.lowercased() == "image" ? "photo" : fallbackDuration
     }
     private var captureDateText: String {
-        isRealAnalysis ? presentation.recordedLabel.uppercased() : "MAY 21, 2025 - 8:24 AM"
+        isRealAnalysis ? presentation.recordedLabel.uppercased() : fallbackCaptureDate
     }
     private var captureMetaText: String {
-        guard isRealAnalysis else { return "Indoor Court - iPhone 15 Pro - 1080p - 60fps" }
+        guard isRealAnalysis else { return fallbackCaptureMeta }
         return "\(presentation.mediaLabel) - \(presentation.provenanceSummary)"
     }
     private var linkedAnalysisDateText: String {
         isRealAnalysis ? "• \(presentation.recordedLabel)" : "• May 21, 2025"
     }
-    private var downloadUnavailableMessage: String {
-        guard isRealAnalysis else {
-            return "This clip is stored on the ShotIQ server. On-device downloads are coming to a future build."
-        }
-        if analysisId == nil {
-            return "This media is saved in the current app session. Server-backed downloads are coming after media sync."
-        }
-        return "This media is stored on the ShotIQ server. On-device downloads are coming to a future build."
-    }
     private var shotEventValues: (shots: String, makes: String, pct: String, streak: String, points: String) {
-        isRealAnalysis ? ("--", "--", "--", "--", "--") : ("24", "15", "62.5%", "6", "2,840")
+        isRealAnalysis ? ("--", "--", "--", "--", "--") : (fallbackShotEvents ?? ("24", "15", "62.5%", "6", "2,840"))
+    }
+
+    @MainActor
+    private func downloadMediaSummary() {
+        toast = .progress("Saving media summary", "Rendering a ShotIQ image for your photo library.", progress: 0.35)
+        guard let image = MediaDetailImageRenderer.render(title: "ShotIQ Media",
+                                                          presentation: presentation,
+                                                          captureDate: captureDateText,
+                                                          mediaDuration: mediaDurationText,
+                                                          shotEvents: shotEventValues),
+              let data = image.pngData() else {
+            toast = .error("Download failed", "ShotIQ could not render this media summary.")
+            return
+        }
+
+        Task {
+            let current = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+            let status = current == .notDetermined
+                ? await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                : current
+
+            guard status == .authorized || status == .limited else {
+                await MainActor.run {
+                    toast = .error("Photos access needed", "Allow ShotIQ to add photos, then tap Download again.")
+                }
+                return
+            }
+
+            do {
+                try await PHPhotoLibrary.shared().performChanges {
+                    let options = PHAssetResourceCreationOptions()
+                    options.originalFilename = "ShotIQ-media-summary.png"
+                    let request = PHAssetCreationRequest.forAsset()
+                    request.addResource(with: .photo, data: data, options: options)
+                }
+                await MainActor.run {
+                    toast = .success("Saved to Photos", "Your ShotIQ media summary image is in your photo library.")
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Download failed", "ShotIQ could not save this image to Photos.")
+                }
+            }
+        }
     }
 
     /// DELETE /api/media?analysisId=… (route requires query params + CSRF, so
@@ -3109,7 +3687,16 @@ struct MediaDetailView: View {      // 069
         guard !deleting else { return }
         guard let analysisId else {
             guard let analysis else {
-                toast = .info("Sample media only", "There is no server item to delete yet.")
+                deleting = true
+                toast = .progress("Removing media", "Taking this item out of the library view.", progress: 0.45)
+                Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    onDeleteLocal?()
+                    toast = .success("Media removed", "Returning to your library.")
+                    try? await Task.sleep(nanoseconds: 650_000_000)
+                    deleting = false
+                    dismiss()
+                }
                 return
             }
             deleting = true
@@ -3149,6 +3736,7 @@ struct MediaDetailView: View {      // 069
                     req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 }
                 _ = try await URLSession.shared.data(for: req)
+                app.recentMedia.removeAll { $0.id == analysisId }
                 toast = .success("Media deleted", "Returning to your library.")
                 try? await Task.sleep(nanoseconds: 650_000_000)
                 dismiss()
@@ -3162,7 +3750,10 @@ struct MediaDetailView: View {      // 069
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 14) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to media library")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             Image(systemName: "arrow.left")
                                 .font(.system(size: 19, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                         }
@@ -3172,6 +3763,9 @@ struct MediaDetailView: View {      // 069
                         Spacer()
                         Menu {
                             ShareLink(item: shareText) { Label("Share", systemImage: "square.and.arrow.up") }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening share sheet", "Your media summary is ready.")
+                                })
                             Button(role: .destructive) { confirmDelete = true } label: {
                                 Label("Delete media", systemImage: "trash")
                             }
@@ -3185,14 +3779,36 @@ struct MediaDetailView: View {      // 069
                     .overlay(HRule(), alignment: .bottom)
                     VStack(alignment: .leading, spacing: 0) {
                         ZStack {
-                            MediaAnalysisSurface(analysis: analysis,
-                                                 fallbackPhoto: "069-visual-002",
-                                                 height: 310,
-                                                 cornerRadius: 8)
+                            if let player = mediaPlayer {
+                                GeometryReader { proxy in
+                                    ZStack(alignment: .topLeading) {
+                                        ShotIQAspectFillVideoPlayer(player: player)
+                                            .accessibilityLabel("Saved media video with pose overlay")
+                                        if let frame = overlayFrame, let pose = frame.detectedPose {
+                                            ShotIQVideoAnalysisOverlay(frame: frame,
+                                                                       pose: pose,
+                                                                       presentation: presentation,
+                                                                       showSkeleton: true,
+                                                                       showJoints: true,
+                                                                       showBall: false,
+                                                                       showAnnotations: false,
+                                                                       displayPhase: selectedPhase)
+                                                .frame(width: proxy.size.width, height: proxy.size.height)
+                                                .accessibilityHidden(true)
+                                        }
+                                    }
+                                }
+                                .frame(height: 310)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            } else {
+                                MediaAnalysisSurface(analysis: analysis,
+                                                     fallbackPhoto: fallbackPhoto,
+                                                     displayPhase: selectedPhase,
+                                                     height: 310,
+                                                     cornerRadius: 8)
+                            }
                             Button {
-                                playing.toggle()
-                                toast = .info(playing ? "Playing clip" : "Clip paused",
-                                              playing ? "Reviewing your shot media." : "Playback paused.")
+                                togglePlayback()
                             } label: {
                                 Circle().fill(.white.opacity(0.9)).frame(width: 52, height: 52)
                                     .overlay(Image(systemName: playing ? "pause.fill" : "play.fill")
@@ -3202,6 +3818,25 @@ struct MediaDetailView: View {      // 069
                             .accessibilityLabel(playing ? "Pause" : "Play")
                             .accessibilityIdentifier("media-detail-hero-play")
                         }
+                        .overlay(alignment: .bottomTrailing) {
+                            Button {
+                                showFullMedia = true
+                                toast = .info("Opening full view", "\(selectedPhase.capitalized) frame ready.")
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.system(size: 10, weight: .bold))
+                                    Text("Full view").shotiqBody(10, weight: .bold)
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 6))
+                                .padding(10)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("media-detail-full-view")
+                        }
                         .overlay(alignment: .topLeading) {
                             Text(mediaDurationText).font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                                 .padding(.horizontal, 8).padding(.vertical, 4)
@@ -3210,8 +3845,7 @@ struct MediaDetailView: View {      // 069
                         }
                         .overlay(alignment: .topTrailing) {
                             Button {
-                                speedIndex = (speedIndex + 1) % speeds.count
-                                toast = .success("Playback speed changed", speeds[speedIndex])
+                                cyclePlaybackSpeed()
                             } label: {
                                 Text(speeds[speedIndex]).shotiqBody(10, weight: .bold).kerning(0.4)
                                     .foregroundStyle(.white)
@@ -3236,9 +3870,12 @@ struct MediaDetailView: View {      // 069
                                 ForEach(0..<8, id: \.self) { i in
                                     Button {
                                         selectedFrame = i
+                                        if sortedPoseFrames.indices.contains(i) {
+                                            selectedPhase = sortedPoseFrames[i].phaseLabel.uppercased()
+                                        }
                                         toast = .info("Frame selected", "Frame \(i + 1) is ready for review.")
                                     } label: {
-                                        CanonicalPhoto("069-visual-004", width: 48, height: 38, cornerRadius: 5)
+                                        mediaFrameThumbnail(index: i)
                                             .overlay(RoundedRectangle(cornerRadius: 5)
                                                 .stroke(i == selectedFrame ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
                                                         lineWidth: i == selectedFrame ? 2 : 1))
@@ -3250,6 +3887,13 @@ struct MediaDetailView: View {      // 069
                             .padding(.vertical, 2)
                         }
                         .padding(.top, 10)
+                        VStack(alignment: .leading, spacing: 8) {
+                            SectionLabel(text: "JUMP TO PHASE")
+                            MediaDetailPhaseButtons(phases: phaseLabels, active: selectedPhase) { phase in
+                                selectPhase(phase)
+                            }
+                        }
+                        .padding(.top, 12)
                         SectionLabel(text: "CAPTURE DETAILS").padding(.top, 18)
                         Text(captureDateText).font(.custom("Tungsten-Medium", size: 24))
                             .padding(.top, 6)
@@ -3263,7 +3907,7 @@ struct MediaDetailView: View {      // 069
                                 // Canonical's linked-analysis row shows a frame of
                                 // the same clip, not a placeholder tile.
                                 MediaAnalysisSurface(analysis: analysis,
-                                                     fallbackPhoto: "069-visual-004",
+                                                     fallbackPhoto: fallbackLinkedPhoto,
                                                      width: 62,
                                                      height: 48)
                                 VStack(alignment: .leading, spacing: 3) {
@@ -3289,7 +3933,15 @@ struct MediaDetailView: View {      // 069
                                     }
                                 }
                                 Spacer(minLength: 4)
-                                NavigationLink { AnalysisResultOverviewView(initialResult: analysis) } label: {
+                                NavigationLink {
+                                    if let analysis {
+                                        AnalysisResultOverviewView(initialResult: analysis)
+                                    } else if UITestHooks.demoData {
+                                        AnalysisResultOverviewView()
+                                    } else {
+                                        AnalyzeHubView()
+                                    }
+                                } label: {
                                     HStack(spacing: 4) {
                                         Text("Open analysis").shotiqBody(12, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -3300,6 +3952,14 @@ struct MediaDetailView: View {      // 069
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
                                 .accessibilityIdentifier("media-detail-open-analysis")
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = analysis == nil && !UITestHooks.demoData
+                                        ? .info("Analyze a shot first",
+                                                "Record or upload media before opening a linked analysis.")
+                                        : .progress("Opening analysis",
+                                                    "Loading the linked ShotIQ result.",
+                                                    progress: 0.45)
+                                })
                             }
                             .padding(12)
                         }
@@ -3340,13 +4000,15 @@ struct MediaDetailView: View {      // 069
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Primary coaching target \(presentation.coachingTarget)")
                         .accessibilityIdentifier("media-detail-primary-target")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening goals", presentation.coachingTarget)
+                        })
                         .padding(.top, 18)
                         SectionLabel(text: "ACTIONS").padding(.top, 16)
                         HStack(spacing: 8) {
                             actionButton(playing ? "pause.fill" : "play.fill",
                                          playing ? "Pause" : "Play", ShotIQColor.ink) {
-                                playing.toggle()
-                                toast = .info(playing ? "Playing clip" : "Clip paused")
+                                togglePlayback()
                             }
                                          .accessibilityIdentifier("media-detail-action-play")
                             ShareLink(item: shareText) {
@@ -3357,10 +4019,7 @@ struct MediaDetailView: View {      // 069
                             })
                             actionButton("arrow.down.to.line", "Download", ShotIQColor.ink,
                                          identifier: "media-detail-download-button") {
-                                toast = .info("Download unavailable", "On-device downloads are coming soon.")
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                                    showDownloadInfo = true
-                                }
+                                downloadMediaSummary()
                             }
                             actionButton("trash", "Delete", ShotIQColor.reviewRed,
                                          identifier: "media-detail-delete-button") {
@@ -3369,11 +4028,30 @@ struct MediaDetailView: View {      // 069
                             }
                         }
                         .padding(.top, 8)
-                        .alert("Download unavailable", isPresented: $showDownloadInfo) {
-                            Button("OK", role: .cancel) {}
-                        } message: {
-                            Text(downloadUnavailableMessage)
+                        Button {
+                            toast = .progress("Reanalyzing media",
+                                              isRealAnalysis ? "Rebuilding this ShotIQ result with the selected media." : "Choose real media to run a new analysis.",
+                                              progress: 0.55)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showReanalysis = true
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Reanalyze media").shotiqBody(14, weight: .semibold)
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(ShotIQColor.analysisBlue, in: RoundedRectangle(cornerRadius: 8))
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("media-detail-reanalyze-button")
+                        .padding(.top, 8)
                         HStack(spacing: 10) {
                             Image(systemName: "trash").font(.system(size: 15))
                                 .foregroundStyle(ShotIQColor.reviewRed)
@@ -3414,12 +4092,128 @@ struct MediaDetailView: View {      // 069
         .confirmationDialog("Delete this media? This cannot be undone.",
                             isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete media", role: .destructive) { deleteMedia() }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                toast = .info("Delete cancelled")
+            }
+        }
+        .navigationDestination(isPresented: $showReanalysis) {
+            if let analysis {
+                AnalysisProcessingView(initialResult: analysis)
+            } else {
+                AnalyzeHubView()
+            }
+        }
+        .fullScreenCover(isPresented: $showFullMedia) {
+            MediaDetailFullScreenMediaView(analysis: analysis,
+                                           fallbackPhoto: fallbackPhoto,
+                                           title: title,
+                                           presentation: presentation,
+                                           selectedPhase: $selectedPhase)
+        }
+        .onAppear(perform: syncMediaPlayer)
+        .onDisappear {
+            mediaPlayer?.pause()
+            playing = false
         }
     }
+
+    private func syncMediaPlayer() {
+        guard let videoURL else {
+            mediaPlayer = nil
+            playing = false
+            return
+        }
+        mediaPlayer = AVPlayer(url: videoURL)
+    }
+
+    @ViewBuilder
+    private func mediaFrameThumbnail(index: Int) -> some View {
+        if let videoURL {
+            ShotIQVideoStillThumbnail(url: videoURL,
+                                      seconds: mediaFrameSeconds(index),
+                                      width: 48,
+                                      height: 38,
+                                      cornerRadius: 5)
+        } else {
+            CanonicalPhoto("069-visual-004", width: 48, height: 38, cornerRadius: 5)
+        }
+    }
+
+    private func mediaFrameSeconds(_ index: Int) -> Double {
+        if sortedPoseFrames.indices.contains(index) {
+            return sortedPoseFrames[index].timestampSeconds
+        }
+        guard let last = sortedPoseFrames.last?.timestampSeconds, last > 0 else {
+            return Double(index) * 0.25
+        }
+        return last * Double(index) / 7.0
+    }
+
+    private func fittedOverlaySize(for frame: VideoPoseFrameRecord, container: CGSize) -> CGSize {
+        guard let width = frame.sourceWidth,
+              let height = frame.sourceHeight,
+              width > 0,
+              height > 0 else {
+            return container
+        }
+        return ShotIQPose.filledSize(image: CGSize(width: width, height: height), in: container)
+    }
+
+    private func togglePlayback() {
+        guard let player = mediaPlayer else {
+            selectedFrame = min(selectedFrame + 1, 7)
+            playing.toggle()
+            toast = .info(playing ? "Previewing frames" : "Preview paused",
+                          "A real uploaded video will play here after import.")
+            return
+        }
+        playing.toggle()
+        if playing {
+            player.playImmediately(atRate: playbackRate)
+        } else {
+            player.pause()
+        }
+        toast = .info(playing ? "Playing clip" : "Clip paused",
+                      playing ? "Reviewing your shot media." : "Playback paused.")
+    }
+
+    private func cyclePlaybackSpeed() {
+        speedIndex = (speedIndex + 1) % speeds.count
+        if playing, let player = mediaPlayer {
+            player.rate = playbackRate
+        }
+        toast = .success("Playback speed changed", speeds[speedIndex])
+    }
+
+    private func selectPhase(_ phase: String) {
+        selectedPhase = phase
+        if let idx = sortedPoseFrames.firstIndex(where: { $0.phaseLabel.uppercased() == phase }) {
+            selectedFrame = idx
+        } else {
+            switch phase {
+            case "SETUP": selectedFrame = 0
+            case "LOAD": selectedFrame = 1
+            case "RISE": selectedFrame = 3
+            case "RELEASE": selectedFrame = 5
+            default: selectedFrame = 7
+            }
+        }
+        playing = false
+        mediaPlayer?.pause()
+        toast = .success("\(phase.capitalized) selected", "The media preview is showing that shot phase.")
+    }
+
+    private var playbackRate: Float {
+        switch speedIndex {
+        case 0: return 0.5
+        case 2: return 2.0
+        default: return 1.0
+        }
+    }
+
     private func actionLabel(_ icon: String, _ label: String, _ color: Color) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 12))
+            Image(systemName: icon).font(.system(size: 22))
             Text(label).shotiqBody(12, weight: .medium)
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
@@ -3436,6 +4230,99 @@ struct MediaDetailView: View {      // 069
                               action: @escaping () -> Void) -> some View {
         Button(action: action) { actionLabel(icon, label, color) }
             .accessibilityIdentifier(identifier ?? label)
+    }
+}
+
+private struct MediaDetailFullScreenMediaView: View {
+    var analysis: ShotIQAnalysisResultDTO?
+    var fallbackPhoto: String
+    var title: String
+    var presentation: AnalysisResultPresentation
+    @Binding var selectedPhase: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var toast: ShotIQToast?
+
+    private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            GeometryReader { proxy in
+                VStack(spacing: 14) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(selectedPhase)
+                                .shotiqCondensed(24, weight: .heavy)
+                                .foregroundStyle(.white)
+                            Text(title.uppercased())
+                                .shotiqBody(11, weight: .bold)
+                                .kerning(0.6)
+                                .foregroundStyle(.white.opacity(0.72))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                        }
+                        Spacer()
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 40, height: 40)
+                                .background(.white.opacity(0.16), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Close full view")
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
+
+                    MediaAnalysisSurface(analysis: analysis,
+                                         fallbackPhoto: fallbackPhoto,
+                                         displayPhase: selectedPhase,
+                                         height: max(320, proxy.size.height - 198),
+                                         cornerRadius: 8)
+                        .padding(.horizontal, 10)
+                        .accessibilityIdentifier("media-detail-full-view-surface")
+
+                    MediaDetailPhaseButtons(phases: phases, active: selectedPhase) { phase in
+                        selectedPhase = phase
+                        toast = .success("\(phase.capitalized) selected")
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 14)
+                }
+            }
+        }
+        .shotiqToast($toast)
+    }
+}
+
+private struct MediaDetailPhaseButtons: View {
+    var phases: [String]
+    var active: String
+    var action: (String) -> Void
+
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+            ForEach(phases, id: \.self) { phase in
+                Button {
+                    action(phase)
+                } label: {
+                    Text(phase)
+                        .shotiqBody(12, weight: active == phase ? .bold : .semibold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .foregroundStyle(active == phase ? .white : ShotIQColor.ink)
+                        .background(active == phase ? ShotIQColor.shotiqOrange : ShotIQColor.warmCanvas,
+                                    in: RoundedRectangle(cornerRadius: 7))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Jump to \(phase)")
+            }
+        }
     }
 }
 
@@ -3543,6 +4430,18 @@ struct ProfileView: View {          // 070
     private var heightText: String { Self.inchesText(heightIn) }
     private var weightText: String { "\(weightLbs) lbs" }
     private var wingspanText: String { Self.inchesText(wingspanIn) }
+    private var shootingMetricSummary: (releaseHeight: String, elbowAngle: String, releaseOffset: String) {
+        if let latest = app.recentMedia.first?.analysis {
+            let presentation = AnalysisResultPresentation(result: latest)
+            return (presentation.releaseHeightText,
+                    presentation.elbowAngleText,
+                    presentation.releaseOffsetText)
+        }
+        if isCanonicalProfileDemo {
+            return ("8'11\"", "58°", "0°")
+        }
+        return ("--", "--", "--")
+    }
 
     /// POST /api/enhance-bio — LLM-expanded bio (shape per src/app/api/enhance-bio/route.ts).
     private func enhanceBio() {
@@ -3579,7 +4478,10 @@ struct ProfileView: View {          // 070
         CanonicalScreen(testID: "screen-ios-profile") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    TopBar(onSettings: { showSettings = true })
+                    TopBar(onSettings: {
+                        toast = .info("Opening settings")
+                        showSettings = true
+                    })
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 16) {
                             ZStack(alignment: .bottomTrailing) {
@@ -3587,7 +4489,10 @@ struct ProfileView: View {          // 070
                                     .overlay(Text(profileInitialsText)
                                         .shotiqBody(26, weight: .bold)
                                         .foregroundStyle(ShotIQColor.graphite))
-                                Button { showEditProfile = true } label: {
+                                Button {
+                                    toast = .info("Opening edit profile")
+                                    showEditProfile = true
+                                } label: {
                                     Circle().fill(ShotIQColor.paper).frame(width: 28, height: 28)
                                         .overlay(Circle().stroke(ShotIQColor.rule))
                                         .overlay(Image(systemName: "pencil").font(.system(size: 12))
@@ -3609,6 +4514,9 @@ struct ProfileView: View {          // 070
                                 HeaderStat(icon: "film", value: profileSummary.streak, label: "DAY STREAK").frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening workout calendar", "Your streak history is ready.")
+                            })
                             .accessibilityIdentifier("profile-day-streak")
                             VRule(height: 46)
                             NavigationLink { PlayerCardView() } label: {
@@ -3616,6 +4524,9 @@ struct ProfileView: View {          // 070
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening player card", "Your points card is ready.")
+                            })
                             .accessibilityIdentifier("profile-points")
                             VRule(height: 46)
                             profileStat(profileSummary.shots, "SHOTS")
@@ -3629,6 +4540,7 @@ struct ProfileView: View {          // 070
                         }
                         .padding(.vertical, 16)
                         PrimaryButton(title: "Edit player profile", icon: "camera.viewfinder") {
+                            toast = .info("Opening edit profile")
                             showEditProfile = true
                         }
                         ShotIQCard {
@@ -3651,12 +4563,13 @@ struct ProfileView: View {          // 070
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
                                 SectionLabel(text: "SHOOTING PROFILE")
+                                let shootingMetrics = shootingMetricSummary
                                 HStack(spacing: 0) {
-                                    physCol("figure.basketball", "8'11\"", "RELEASE HEIGHT")
+                                    physCol("figure.basketball", shootingMetrics.releaseHeight, "RELEASE HEIGHT")
                                     VRule(height: 48)
-                                    physCol("gauge", "58°", "RELEASE ANGLE")
+                                    physCol("gauge", shootingMetrics.elbowAngle, "ELBOW ANGLE")
                                     VRule(height: 48)
-                                    physCol("point.3.connected.trianglepath.dotted", "0°", "SHOT SHAPE • SLIGHT RIGHT")
+                                    physCol("point.3.connected.trianglepath.dotted", shootingMetrics.releaseOffset, "RELEASE OFFSET")
                                 }
                             }
                             .padding(14)
@@ -3705,6 +4618,9 @@ struct ProfileView: View {          // 070
                             }
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening player card", "Your profile card is ready.")
+                        })
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Player card")
                         .accessibilityIdentifier("Player card")
@@ -3719,7 +4635,7 @@ struct ProfileView: View {          // 070
                                             if enhancingBio {
                                                 ProgressView().controlSize(.mini)
                                             } else {
-                                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 32).font(.system(size: 12))
+                                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 42).font(.system(size: 12))
                                             }
                                             Text(enhancingBio ? "Enhancing…" : "Enhance bio")
                                                 .shotiqBody(13, weight: .medium)
@@ -3789,10 +4705,45 @@ struct ProfileView: View {          // 070
                             row("photo.stack", "My media") { MyMediaView() }
                             row("target", "Goals") { GoalsView() }
                             row("gearshape", "Settings") { SettingsHubView() }
-                            row("square.and.arrow.up", "Share results") { ShareResultsView() }
+                            NavigationLink {
+                                if let latest = app.recentMedia.first {
+                                    ShareResultsView(
+                                        presentationOverride: AnalysisResultPresentation(result: latest.analysis),
+                                        analysisOverride: latest.analysis)
+                                } else if UITestHooks.demoData {
+                                    ShareResultsView()
+                                } else {
+                                    AnalyzeHubView()
+                                }
+                            } label: {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "square.and.arrow.up").frame(width: 28)
+                                    Text("Share results").shotiqBody(16)
+                                    Spacer()
+                                    Image(systemName: "chevron.right").foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .padding(.vertical, 14).foregroundStyle(ShotIQColor.ink)
+                                .contentShape(Rectangle())
+                                .overlay(HRule(), alignment: .bottom)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                    toast = .info("Opening Share results")
+                                } else {
+                                    toast = .info("Analyze a shot first",
+                                                  "Create an analysis before sharing results.")
+                                }
+                            })
+                            .accessibilityIdentifier("Share results")
                         }
                         .padding(.top, 4)
-                        Button { app.signOut() } label: {
+                        Button {
+                            toast = .progress("Signing out", "Closing your ShotIQ session.", progress: 0.6)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                app.signOut()
+                            }
+                        } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "rectangle.portrait.and.arrow.right").frame(width: 26)
                                 Text("Sign out").shotiqBody(15, weight: .medium)
@@ -3868,9 +4819,9 @@ struct ProfileView: View {          // 070
             // mark while WEIGHT and WINGSPAN matched nothing and shared another.
             Group {
                 if let body = BodyMetricKind(measurementLabel: label) {
-                    BodyMetricGlyph(kind: body, size: 19)
+                    BodyMetricGlyph(kind: body, size: 28)
                 } else {
-                    MechanicGlyph(kind: .init(metricLabel: label), size: 19)
+                    MechanicGlyph(kind: .init(metricLabel: label), size: 28)
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
@@ -3886,7 +4837,7 @@ struct ProfileView: View {          // 070
     private func completionItem(_ done: Bool, _ label: String) -> some View {
         HStack(spacing: 4) {
             Image(systemName: done ? "checkmark.circle" : "circle.dotted")
-                .font(.system(size: 12))
+                .font(.system(size: 18))
                 .foregroundStyle(done ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
             Text(label).shotiqBody(9).foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -3895,7 +4846,7 @@ struct ProfileView: View {          // 070
     }
     private func accountRow(_ icon: String, _ label: String, _ value: String) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 14)).foregroundStyle(ShotIQColor.ink)
+            Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.ink)
             VStack(alignment: .leading, spacing: 1) {
                 Text(label).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                 Text(value).shotiqBody(12, weight: .semibold)
@@ -3906,7 +4857,7 @@ struct ProfileView: View {          // 070
     private func activityRow(_ title: String, _ date: String) -> some View {
         NavigationLink { MyMediaView() } label: {
             HStack(spacing: 8) {
-                Image(systemName: "play.rectangle").font(.system(size: 13))
+                Image(systemName: "play.rectangle").font(.system(size: 22))
                     .foregroundStyle(ShotIQColor.ink)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title).shotiqBody(11, weight: .semibold)
@@ -3919,6 +4870,9 @@ struct ProfileView: View {          // 070
                     .foregroundStyle(ShotIQColor.graphite)
             }
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            toast = .info("Opening media library", title)
+        })
     }
     /// MORE list row. The destination is built lazily and keeps its concrete
     /// type — the previous `AnyView(...)` argument was constructed eagerly on
@@ -3942,6 +4896,9 @@ struct ProfileView: View {          // 070
             .overlay(HRule(), alignment: .bottom)
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture().onEnded {
+            toast = .info("Opening \(t)")
+        })
         .accessibilityIdentifier(t)
     }
 }
@@ -3998,9 +4955,27 @@ struct EditProfileSheet: View {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("EDIT PLAYER PROFILE").shotiqDisplay(28).padding(.top, 8)
                         .accessibilityIdentifier("profile-edit-title")
-                    measureRow("HEIGHT", inchesLabel(heightIn)) { heightIn = max(48, heightIn - 1) } up: { heightIn = min(96, heightIn + 1) }
-                    measureRow("WEIGHT", "\(weightLbs) lbs") { weightLbs = max(80, weightLbs - 1) } up: { weightLbs = min(350, weightLbs + 1) }
-                    measureRow("WINGSPAN", inchesLabel(wingspanIn)) { wingspanIn = max(48, wingspanIn - 1) } up: { wingspanIn = min(100, wingspanIn + 1) }
+                    measureRow("HEIGHT", inchesLabel(heightIn)) {
+                        heightIn = max(48, heightIn - 1)
+                        return inchesLabel(heightIn)
+                    } up: {
+                        heightIn = min(96, heightIn + 1)
+                        return inchesLabel(heightIn)
+                    }
+                    measureRow("WEIGHT", "\(weightLbs) lbs") {
+                        weightLbs = max(80, weightLbs - 1)
+                        return "\(weightLbs) lbs"
+                    } up: {
+                        weightLbs = min(350, weightLbs + 1)
+                        return "\(weightLbs) lbs"
+                    }
+                    measureRow("WINGSPAN", inchesLabel(wingspanIn)) {
+                        wingspanIn = max(48, wingspanIn - 1)
+                        return inchesLabel(wingspanIn)
+                    } up: {
+                        wingspanIn = min(100, wingspanIn + 1)
+                        return inchesLabel(wingspanIn)
+                    }
                     VStack(alignment: .leading, spacing: 8) {
                         MicroLabel(text: "DOMINANT HAND")
                         HStack(spacing: 6) {
@@ -4031,7 +5006,10 @@ struct EditProfileSheet: View {
                     }
                     PrimaryButton(title: busy ? "Saving…" : "Save profile") { save() }
                         .disabled(busy)
-                    Button { dismiss() } label: {
+                    Button {
+                        toast = .info("Edit cancelled")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                    } label: {
                         Text("Cancel").shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                             .frame(maxWidth: .infinity)
                     }
@@ -4045,21 +5023,27 @@ struct EditProfileSheet: View {
         .shotiqToast($toast)
     }
     private func measureRow(_ label: String, _ value: String,
-                            down: @escaping () -> Void, up: @escaping () -> Void) -> some View {
+                            down: @escaping () -> String, up: @escaping () -> String) -> some View {
         HStack {
             MicroLabel(text: label)
             Spacer()
-            Button(action: down) {
-                Image(systemName: "minus").font(.system(size: 13, weight: .medium))
-                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
-                    .foregroundStyle(ShotIQColor.ink)
-            }
-            Text(value).font(.custom("Tungsten-Medium", size: 24))
-                .frame(width: 84)
-            Button(action: up) {
-                Image(systemName: "plus").font(.system(size: 13, weight: .medium))
-                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
-                    .foregroundStyle(ShotIQColor.ink)
+	            Button {
+	                let updatedValue = down()
+	                toast = .info("\(label.capitalized) updated", updatedValue)
+	            } label: {
+	                Image(systemName: "minus").font(.system(size: 13, weight: .medium))
+	                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
+	                    .foregroundStyle(ShotIQColor.ink)
+	            }
+	            Text(value).font(.custom("Tungsten-Medium", size: 24))
+	                .frame(width: 84)
+	            Button {
+	                let updatedValue = up()
+	                toast = .info("\(label.capitalized) updated", updatedValue)
+	            } label: {
+	                Image(systemName: "plus").font(.system(size: 13, weight: .medium))
+	                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
+	                    .foregroundStyle(ShotIQColor.ink)
             }
         }
         .padding(.vertical, 4)
@@ -4074,7 +5058,10 @@ struct EditProfileSheet: View {
     /// truncates rather than shrinking further.
     private func choice(_ label: String, _ value: String, _ sel: Binding<String>,
                         fill: Bool = true) -> some View {
-        Button { sel.wrappedValue = value } label: {
+        Button {
+            sel.wrappedValue = value
+            toast = .success("\(label) selected")
+        } label: {
             Text(label).shotiqBody(13, weight: sel.wrappedValue == value ? .semibold : .regular)
                 .lineLimit(1).minimumScaleFactor(0.7)
                 .frame(maxWidth: fill ? .infinity : nil)
@@ -4099,6 +5086,7 @@ struct SettingsHubView: View {      // 071
     @AppStorage("dataBackup") private var dataBackup = true
     @AppStorage("anonAnalytics") private var anonAnalytics = true
     @AppStorage("peerComparisons") private var peerComparisons = true
+    @AppStorage("dashboardMode") private var dashboardMode = "Analysis"
     @State private var showAutomation = false
     @State private var showPrivacy = false
     @State private var showAbout = false
@@ -4185,6 +5173,7 @@ struct SettingsHubView: View {      // 071
         struct Automation: Encodable {
             var analyticsRefreshEnabled: Bool
             var dataBackupEnabled: Bool
+            var dashboardMode: String
         }
         var notifications: Notifications
         var privacy: Privacy
@@ -4200,13 +5189,26 @@ struct SettingsHubView: View {      // 071
                            includeInPeerComparisons: peerComparisons,
                            metricUnits: metric),
             automation: .init(analyticsRefreshEnabled: autoAnalysis,
-                              dataBackupEnabled: dataBackup))
+                              dataBackupEnabled: dataBackup,
+                              dashboardMode: dashboardMode.lowercased()))
         Task { await APIClient.shared.send("/api/settings", method: "PUT", body: body) }
     }
 
     private func saveSettingsChange(_ label: String) {
         persistSettings()
         toast = .success("Settings saved", "\(label) updated.")
+    }
+
+    private func saveDashboardMode(_ mode: String) {
+        dashboardMode = mode
+        toast = .progress("Saving dashboard mode",
+                          "Opening ShotIQ to \(mode.lowercased()) next time.",
+                          progress: 0.55)
+        persistSettings()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            toast = .success("Dashboard mode saved", "\(mode) will be your default home view.")
+        }
     }
 
     private func openAfterFeedback(_ feedback: ShotIQToast, action: @escaping @MainActor () -> Void) {
@@ -4312,7 +5314,7 @@ struct SettingsHubView: View {      // 071
                                     EditProfileSheet().modifier(CanonicalTypeScale())
                                 } label: {
                                     HStack(spacing: 12) {
-                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.crop.square"), size: 32)
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.crop.square"), size: 42)
                                             .font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
                                         Text("Edit profile").shotiqBody(15, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.ink)
@@ -4324,17 +5326,69 @@ struct SettingsHubView: View {      // 071
                                 }
                                 .accessibilityIdentifier("settings-edit-profile-link")
                                 .buttonStyle(.plain)
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening edit profile")
+                                })
                             }
                         }
                         .padding(.top, 16)
                         SectionLabel(text: "PREFERENCES").padding(.top, 20)
                         ShotIQCard {
+                            HStack(alignment: .center, spacing: 14) {
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                         size: 32,
+                                                         label: nil)
+                                    .frame(width: 34)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("DASHBOARD MODE").shotiqCondensed(14, weight: .heavy).kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Choose what opens first on the Home tab.")
+                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                HStack(spacing: 0) {
+                                    ForEach(["Analysis", "Training"], id: \.self) { mode in
+                                        Button {
+                                            saveDashboardMode(mode)
+                                        } label: {
+                                            Text(mode).shotiqBody(13, weight: .semibold)
+                                                .lineLimit(1)
+                                                .fixedSize(horizontal: true, vertical: false)
+                                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                                .background(dashboardMode == mode ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
+                                                .foregroundStyle(dashboardMode == mode ? .white : ShotIQColor.ink)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .accessibilityIdentifier("settings-dashboard-mode-\(mode.lowercased())")
+                                    }
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 8)
+                        ShotIQCard {
                             VStack(spacing: 0) {
                                 settingsToggle("notifications", "Workout notifications", "Manage alerts, reminders, and updates.", $notifs)
                                     .onChange(of: notifs) { _, on in
-                                        if on { UNUserNotificationCenter.current()
-                                            .requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in } }
-                                        saveSettingsChange("Workout notifications")
+                                        if on {
+                                            toast = .progress("Requesting notifications",
+                                                              "Allow ShotIQ reminders in the iOS prompt.",
+                                                              progress: 0.5)
+                                            UNUserNotificationCenter.current()
+                                                .requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+                                                    Task { @MainActor in
+                                                        persistSettings()
+                                                        toast = granted
+                                                            ? .success("Notifications on", "Workout reminders are enabled.")
+                                                            : .info("Notifications need permission", "Turn on notifications in iOS Settings when you are ready.")
+                                                    }
+                                                }
+                                        } else {
+                                            saveSettingsChange("Workout notifications")
+                                        }
                                     }
                                 HRule().padding(.leading, 14)
                                 settingsToggle("coaching-audio", "Coaching audio cues", "Voice cues while you train.", $audio)
@@ -4358,7 +5412,9 @@ struct SettingsHubView: View {      // 071
                                             "Auto-analysis, uploads, and data handling.",
                                             status: "\([autoAnalysis, dataBackup].filter { $0 }.count) ACTIVE",
                                             statusColor: ShotIQColor.confirmGreen) {
+                                    let opening = !showAutomation
                                     withAnimation { showAutomation.toggle() }
+                                    toast = .info(opening ? "Automation settings opened" : "Automation settings closed")
                                 }
                                 if showAutomation {
                                     settingsToggle("auto-analysis", "Auto-analysis refresh", "Recompute analytics overnight.", $autoAnalysis)
@@ -4372,7 +5428,9 @@ struct SettingsHubView: View {      // 071
                                 settingsRow("data-privacy", "lock.shield", "Data and privacy",
                                             "Control your data, export, and permissions.",
                                             status: nil, statusColor: nil) {
+                                    let opening = !showPrivacy
                                     withAnimation { showPrivacy.toggle() }
+                                    toast = .info(opening ? "Privacy settings opened" : "Privacy settings closed")
                                 }
                                 if showPrivacy {
                                     settingsToggle("anonymous-analytics", "Anonymous analytics", "Share anonymized usage data.", $anonAnalytics)
@@ -4408,7 +5466,12 @@ struct SettingsHubView: View {      // 071
                             Text("AI-powered basketball shooting analysis.\n© 2025 ShotIQ · shotiq.com\nTerms and privacy policy available on the web.")
                         }
                         ShotIQCard {
-                            Button { app.signOut() } label: {
+                            Button {
+                                toast = .progress("Signing out", "Closing your ShotIQ session.", progress: 0.6)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                    app.signOut()
+                                }
+                            } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: "rectangle.portrait.and.arrow.right")
                                         .font(.system(size: 15)).frame(width: 26)
@@ -4520,6 +5583,7 @@ struct SettingsHubView: View {      // 071
                     .foregroundStyle(ShotIQColor.graphite)
             }
             .padding(14)
+            .contentShape(Rectangle())
         }
         .accessibilityIdentifier("settings-row-\(id)")
     }
@@ -4584,25 +5648,78 @@ enum ShareResultsImageRenderer {
 
 struct ShareResultsView: View {     // 072
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
+    var presentationOverride: AnalysisResultPresentation? = nil
+    var analysisOverride: ShotIQAnalysisResultDTO? = nil
     @State private var renderedCard: UIImage?
     @State private var copied = false
     @State private var toast: ShotIQToast?
+    @State private var routeAnalyze = false
 
     private var presentation: AnalysisResultPresentation {
+        if let presentationOverride {
+            return presentationOverride
+        }
+        if let analysisOverride {
+            return AnalysisResultPresentation(result: analysisOverride)
+        }
         if let latest = app.recentMedia.first?.analysis {
             return AnalysisResultPresentation(result: latest)
         }
         return UITestHooks.active ? .canonicalDemo : .noResult
     }
+    private var latestAnalysis: ShotIQAnalysisResultDTO? {
+        analysisOverride ?? app.recentMedia.first?.analysis
+    }
 
     private var playerName: String { app.user?.displayName ?? "Jordan Ellis" }
 
     private var isCanonicalShareDemo: Bool { presentation.id == "canonical-demo" }
+    private var canShareResult: Bool {
+        isCanonicalShareDemo || presentation.id != AnalysisResultPresentation.noResult.id
+    }
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload)
+            .sorted { $0.completedAt > $1.completedAt }
+    }
+    private var activeGoal: GoalRecord? {
+        CreatedGoalStore.decode(createdGoalsPayload)
+            .filter { $0.completedAt == nil }
+            .sorted { $0.progress > $1.progress }
+            .first
+    }
+    private var shareDayStreak: String {
+        if isCanonicalShareDemo { return "6" }
+        guard !workouts.isEmpty else { return "--" }
+        return "\(Self.localStreakDays(from: workouts))"
+    }
+    private var sharePoints: String {
+        if isCanonicalShareDemo { return "2,840" }
+        let points = workouts.reduce(0) { $0 + $1.pointsEarned }
+        return points == 0 ? "--" : Self.groupedNumber(points)
+    }
+    private var shareGoalTitle: String {
+        if isCanonicalShareDemo { return "ACTIVE GOAL" }
+        return activeGoal?.name.uppercased() ?? "NO ACTIVE GOAL"
+    }
+    private var shareGoalProgressText: String {
+        if isCanonicalShareDemo { return "72%" }
+        guard let activeGoal else { return "--" }
+        return "\(Int((activeGoal.progress * 100).rounded()))%"
+    }
+    private var shareGoalProgress: Double {
+        if isCanonicalShareDemo { return 0.72 }
+        return activeGoal?.progress ?? 0
+    }
 
     private var shareStatLine: String {
         let p = presentation
         if isCanonicalShareDemo {
             return "24 shots · 15 makes · 62.5% · +8.1% vs last session"
+        }
+        if let latestWorkout = workouts.first {
+            return "\(latestWorkout.shots) shots · \(latestWorkout.makes) makes · \(latestWorkout.accuracyText) · \(p.recordedLabel)"
         }
         return "\(p.mediaLabel) · \(p.recordedLabel) · \(p.provenanceSummary)"
     }
@@ -4615,15 +5732,62 @@ struct ShareResultsView: View {     // 072
         return "\(p.formScoreShareText) \(p.coachingTarget)"
     }
 
-    /// Rasterises the share card once, on demand. Nothing on this screen runs it
-    /// on appear any more: a full synchronous `ImageRenderer` pass at scale 3 was
-    /// the one thing this destination did that no other pushed screen does, and
-    /// nothing here displays the bitmap until the reader asks to share it.
-    @MainActor private func renderCard() {
-        guard renderedCard == nil else { return }
-        renderedCard = ShareResultsImageRenderer.render(name: playerName,
-                                                        presentation: presentation,
-                                                        statLine: shareStatLine)
+    @MainActor private func shareResultImage() {
+        guard requireShareableResult() else { return }
+        toast = .progress("Preparing image", "Rendering your ShotIQ results card.", progress: 0.55)
+        let image = renderedCard ?? ShareResultsImageRenderer.render(name: playerName,
+                                                                     presentation: presentation,
+                                                                     statLine: shareStatLine)
+        guard let image else {
+            toast = .error("Share failed", "ShotIQ could not render this results card.")
+            return
+        }
+        renderedCard = image
+        toast = .success("Opening share sheet", "Your ShotIQ results card is ready.")
+        ShotIQSharePresenter.share([image, shareText])
+    }
+
+    @MainActor private func saveResultImageToPhotos() {
+        guard requireShareableResult() else { return }
+        toast = .progress("Saving image", "Rendering your ShotIQ results card.", progress: 0.35)
+        let image = renderedCard ?? ShareResultsImageRenderer.render(name: playerName,
+                                                                     presentation: presentation,
+                                                                     statLine: shareStatLine)
+        guard let image, let data = image.pngData() else {
+            toast = .error("Save failed", "ShotIQ could not render this results card.")
+            return
+        }
+        renderedCard = image
+
+        Task {
+            let current = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+            let status = current == .notDetermined
+                ? await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                : current
+
+            guard status == .authorized || status == .limited else {
+                await MainActor.run {
+                    toast = .error("Photos access needed", "Allow ShotIQ to add photos, then tap Save image again.")
+                }
+                return
+            }
+
+            do {
+                try await PHPhotoLibrary.shared().performChanges {
+                    let options = PHAssetResourceCreationOptions()
+                    options.originalFilename = "ShotIQ-results-card.png"
+                    let request = PHAssetCreationRequest.forAsset()
+                    request.addResource(with: .photo, data: data, options: options)
+                }
+                await MainActor.run {
+                    toast = .success("Saved to Photos", "Your ShotIQ results card is in your photo library.")
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Save failed", "ShotIQ could not save this image to Photos.")
+                }
+            }
+        }
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-share-results") {
@@ -4638,9 +5802,9 @@ struct ShareResultsView: View {     // 072
                             HStack {
                                 Wordmark(size: 24)
                                 Spacer()
-                                shareStat("film", "6", "DAY STREAK")
+                                shareStat("film", shareDayStreak, "DAY STREAK")
                                 VRule(height: 26)
-                                shareStat("circle.hexagongrid", "2,840", "POINTS")
+                                shareStat("circle.hexagongrid", sharePoints, "POINTS")
                             }
                             HRule()
                             HStack(alignment: .top) {
@@ -4673,14 +5837,15 @@ struct ShareResultsView: View {     // 072
                                 }
                                 Spacer(minLength: 8)
                                 VStack(alignment: .trailing, spacing: 5) {
-                                    Text("ACTIVE GOAL").shotiqBody(9, weight: .bold).kerning(0.4)
+                                    Text(shareGoalTitle).shotiqBody(9, weight: .bold).kerning(0.4)
                                         .padding(.horizontal, 7).padding(.vertical, 3)
                                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.confirmGreen))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
+                                        .lineLimit(1).minimumScaleFactor(0.62)
                                     HStack(spacing: 6) {
-                                        Text("72%").shotiqBody(12, weight: .bold)
+                                        Text(shareGoalProgressText).shotiqBody(12, weight: .bold)
                                             .foregroundStyle(ShotIQColor.confirmGreen)
-                                        ScoreBar(pct: 0.72, color: ShotIQColor.confirmGreen).frame(width: 54)
+                                        ScoreBar(pct: shareGoalProgress, color: ShotIQColor.confirmGreen).frame(width: 54)
                                     }
                                 }
                             }
@@ -4692,8 +5857,12 @@ struct ShareResultsView: View {     // 072
                                 // passed. Canonical prints 510x578 at x 41…551,
                                 // y 592…1170 — 210pt tall in this column, and it
                                 // carries no baked chrome, only the pose skeleton.
-                                PhotoThumb(height: 210, photo: "072-visual-001")
+                                MediaAnalysisSurface(analysis: latestAnalysis,
+                                                     fallbackPhoto: "072-visual-001",
+                                                     height: 210,
+                                                     cornerRadius: 6)
                                     .frame(maxWidth: .infinity)
+                                    .accessibilityIdentifier("share-results-real-media")
                                 VStack(alignment: .leading, spacing: 9) {
                                     Text("MECHANICS HIGHLIGHTS")
                                         .shotiqBody(9, weight: .semibold).kerning(0.5)
@@ -4750,6 +5919,34 @@ struct ShareResultsView: View {     // 072
                     .padding(.horizontal, 20).padding(.top, 18)
                     Text("SHARE PREVIEW").shotiqBody(11, weight: .bold).kerning(0.8)
                         .padding(.top, 20)
+                    if !canShareResult {
+                        Button {
+                            routeToAnalysis()
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "viewfinder")
+                                    .font(.system(size: 15, weight: .semibold))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Analyze a shot first")
+                                        .shotiqBody(14, weight: .bold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Upload or record media before exporting results.")
+                                        .shotiqBody(12)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(14)
+                            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                    }
                     HStack(spacing: 10) {
                         Text(shareText)
                             .frame(width: 1, height: 1)
@@ -4758,7 +5955,8 @@ struct ShareResultsView: View {     // 072
                         imageShareControl("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
                         imageShareControl("arrow.down.to.line", "Save image", ShotIQColor.ink)
                         copyShareControl
-                        ShareLink(item: shareText) { shareOption("ellipsis", "More", ShotIQColor.ink) }
+                        Button { shareResultText() } label: { shareOption("ellipsis", "More", ShotIQColor.ink) }
+                            .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
                     if copied {
@@ -4791,26 +5989,23 @@ struct ShareResultsView: View {     // 072
             }
         }
         .shotiqToast($toast)
+        .navigationDestination(isPresented: $routeAnalyze) {
+            AnalyzeHubView()
+        }
     }
-    /// "Share image" / "Save image". Both hand the reader the rendered card;
-    /// until it exists the control rasterises it and the ShareLink takes over,
-    /// which is exactly how PlayerCardView's download control behaves.
     @ViewBuilder
     private func imageShareControl(_ icon: String, _ label: String, _ tint: Color) -> some View {
-        if let renderedCard {
-            ShareLink(item: Image(uiImage: renderedCard),
-                      preview: SharePreview("ShotIQ results", image: Image(uiImage: renderedCard))) {
-                shareOption(icon, label, tint)
-            }
-            .buttonStyle(.plain)
-        } else {
-            Button { renderCard() } label: { shareOption(icon, label, tint) }
+        if label == "Save image" {
+            Button { saveResultImageToPhotos() } label: { shareOption(icon, label, tint) }
                 .buttonStyle(.plain)
+        } else {
+            Button { shareResultImage() } label: { shareOption(icon, label, tint) }
+            .buttonStyle(.plain)
         }
     }
     private func shareStat(_ icon: String, _ value: String, _ label: String) -> some View {
         HStack(spacing: 6) {
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 14)
+            ShotIQConceptGlyph(concept: label, fallback: icon, size: 22)
                 .foregroundStyle(ShotIQColor.ink)
             VStack(alignment: .leading, spacing: 0) {
                 Text(value).font(.custom("Tungsten-Medium", size: 16))
@@ -4824,7 +6019,7 @@ struct ShareResultsView: View {     // 072
             HStack(spacing: 6) {
                 // 072's mechanics highlights: one diagram per mechanic named,
                 // not a generic figure / info-circle / hand triple.
-                ShotIQConceptGlyph(concept: label, fallback: icon, size: 14)
+                ShotIQConceptGlyph(concept: label, fallback: icon, size: 22)
                     .foregroundStyle(ShotIQColor.ink)
                 Text(label).shotiqBody(9, weight: .semibold).kerning(0.3)
                     .foregroundStyle(ShotIQColor.ink)
@@ -4832,7 +6027,7 @@ struct ShareResultsView: View {     // 072
             }
             Text("GOOD").shotiqBody(10, weight: .bold)
                 .foregroundStyle(ShotIQColor.analysisBlue)
-                .padding(.leading, 18)
+                .padding(.leading, 26)
         }
     }
     private func shareBottomStat(_ value: String, _ label: String, _ color: Color) -> some View {
@@ -4846,12 +6041,31 @@ struct ShareResultsView: View {     // 072
     }
     private func shareOption(_ icon: String, _ label: String, _ tint: Color) -> some View {
         VStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 20)).foregroundStyle(tint)
+            Image(systemName: icon).font(.system(size: 36)).foregroundStyle(tint)
             Text(label).shotiqBody(11, weight: .medium).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity).frame(height: 76)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+    }
+
+    private static func groupedNumber(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private static func localStreakDays(from workouts: [TrainingWorkoutRecord]) -> Int {
+        let calendar = Calendar.current
+        let days = Set(workouts.map { calendar.startOfDay(for: $0.completedAt) })
+        var cursor = calendar.startOfDay(for: Date())
+        var streak = 0
+        while days.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return max(streak, workouts.isEmpty ? 0 : 1)
     }
 
     private var copyShareControl: some View {
@@ -4882,7 +6096,9 @@ struct ShareResultsView: View {     // 072
             .padding(.top, 64)
     }
 
+    @MainActor
     private func copyShareText() {
+        guard requireShareableResult() else { return }
         withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
             copied = true
         }
@@ -4895,6 +6111,31 @@ struct ShareResultsView: View {     // 072
         Task {
             try? await Task.sleep(for: .seconds(4))
             await MainActor.run { copied = false }
+        }
+    }
+
+    @MainActor
+    @discardableResult
+    private func requireShareableResult() -> Bool {
+        guard canShareResult else {
+            routeToAnalysis()
+            return false
+        }
+        return true
+    }
+
+    @MainActor
+    private func shareResultText() {
+        guard requireShareableResult() else { return }
+        toast = .success("Opening share sheet", "Your ShotIQ result text is ready.")
+        ShotIQSharePresenter.share([shareText])
+    }
+
+    @MainActor
+    private func routeToAnalysis() {
+        toast = .info("Analyze a shot first", "Record or upload media before sharing results.")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            routeAnalyze = true
         }
     }
 }

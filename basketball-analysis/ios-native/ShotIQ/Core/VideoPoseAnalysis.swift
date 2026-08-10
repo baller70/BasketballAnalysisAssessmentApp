@@ -11,14 +11,34 @@ struct VideoPosePoint: Codable, Equatable {
 struct VideoPoseFrameRecord: Codable, Equatable {
     var frameIndex: Int
     var timestampSeconds: Double
+    var phase: String? = nil
     var confidence: Double
     var keypoints: [String: VideoPosePoint]
+    var sourceWidth: Double? = nil
+    var sourceHeight: Double? = nil
     var elbowAngle: Double?
     var kneeAngle: Double?
     var wristAngle: Double?
     var shoulderAngle: Double?
     var hipAngle: Double?
     var releaseAngle: Double?
+}
+
+extension VideoPoseFrameRecord {
+    var detectedPose: DetectedPose? {
+        var joints: [DetectedPose.Joint: CGPoint] = [:]
+        for (rawName, point) in keypoints {
+            let key = VNRecognizedPointKey(rawValue: rawName)
+            let joint = VNHumanBodyPoseObservation.JointName(rawValue: key)
+            joints[joint] = CGPoint(x: point.x, y: point.y)
+        }
+        let pose = DetectedPose(joints: joints, confidence: Float(confidence))
+        return pose.isUsable ? pose : nil
+    }
+
+    var phaseLabel: String {
+        phase?.uppercased().replacingOccurrences(of: "_", with: "-") ?? "RELEASE"
+    }
 }
 
 struct VideoPoseAnalysisSummary: Codable, Equatable {
@@ -47,7 +67,12 @@ struct VideoPoseAnalysis: Equatable {
 }
 
 enum VideoPoseAnalyzer {
-    static let maxSampledFrames = 12
+    // Match the old ShotIQ live/video feel more closely: the overlay needs
+    // enough temporal density to follow an arm through the release, not just
+    // land on a few key poses.
+    static let maxSampledFrames = 300
+    static let targetFPS = 30.0
+    static let videoJointConfidence: Float = 0.16
 
     static func analyze(job: VideoAnalysisJob) async -> VideoPoseAnalysis {
         let sampleTimes = sampleTimes(start: job.trimStartSeconds,
@@ -57,19 +82,32 @@ enum VideoPoseAnalyzer {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 720, height: 720)
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
 
         var frames: [VideoPoseFrameRecord] = []
+        var preferredCenter: CGPoint?
         for (index, seconds) in sampleTimes.enumerated() {
             let time = CMTime(seconds: seconds, preferredTimescale: 600)
-            guard let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) else {
+            var actualTime = CMTime.invalid
+            guard let cgImage = try? generator.copyCGImage(at: time, actualTime: &actualTime) else {
                 continue
             }
+            let detectedSeconds = actualTime.seconds.isFinite ? actualTime.seconds : seconds
             let image = UIImage(cgImage: cgImage)
-            guard let pose = await ShotIQPose.detect(in: image) else {
+            guard let pose = await ShotIQPose.detect(in: image,
+                                                     minimumConfidence: videoJointConfidence,
+                                                     preferredCenter: preferredCenter) else {
                 continue
             }
-            frames.append(frameRecord(index: index, timestamp: seconds, pose: pose))
+            preferredCenter = pose.trackingCenter ?? preferredCenter
+            frames.append(frameRecord(index: index,
+                                      timestamp: detectedSeconds,
+                                      pose: pose,
+                                      sourceSize: image.size))
         }
+        frames = temporallyStabilizedFrames(frames, sampleTimes: sampleTimes)
+        frames = framesWithPhases(frames)
 
         return VideoPoseAnalysis(summary: summary(from: frames, sampledCount: sampleTimes.count),
                                  frames: frames)
@@ -80,7 +118,8 @@ enum VideoPoseAnalyzer {
         let upper = max(lower, end)
         guard upper > lower, maxCount > 0 else { return [] }
         let duration = upper - lower
-        let count = min(maxCount, max(3, Int(duration.rounded(.up))))
+        let rawCount = max(1, Int((duration * targetFPS).rounded(.down)))
+        let count = min(maxCount, max(3, rawCount))
         if count == 1 { return [lower + duration / 2] }
         return (0..<count).map { index in
             lower + (duration * Double(index) / Double(count - 1))
@@ -118,7 +157,10 @@ enum VideoPoseAnalyzer {
         return armAngle
     }
 
-    private static func frameRecord(index: Int, timestamp: Double, pose: DetectedPose) -> VideoPoseFrameRecord {
+    static func frameRecord(index: Int,
+                            timestamp: Double,
+                            pose: DetectedPose,
+                            sourceSize: CGSize? = nil) -> VideoPoseFrameRecord {
         let j = pose.joints
         let side = shootingSide(in: pose)
         let shoulder = side == .right ? j[.rightShoulder] : j[.leftShoulder]
@@ -136,14 +178,272 @@ enum VideoPoseAnalyzer {
         return VideoPoseFrameRecord(
             frameIndex: index,
             timestampSeconds: timestamp,
+            phase: nil,
             confidence: Double(pose.confidence),
             keypoints: keypoints,
+            sourceWidth: sourceSize.map { Double($0.width) },
+            sourceHeight: sourceSize.map { Double($0.height) },
             elbowAngle: angle(shoulder, elbow, wrist),
             kneeAngle: angle(hip, knee, ankle),
             wristAngle: wristAngle(elbow: elbow, wrist: wrist),
             shoulderAngle: angle(hip, shoulder, elbow),
             hipAngle: angle(shoulder, hip, knee),
             releaseAngle: releaseAngle(elbow: elbow, wrist: wrist))
+    }
+
+    private static func temporallyStabilizedFrames(_ records: [VideoPoseFrameRecord],
+                                                   sampleTimes: [Double]) -> [VideoPoseFrameRecord] {
+        let sorted = records.sorted { $0.timestampSeconds < $1.timestampSeconds }
+        guard sorted.count > 1 else { return sorted }
+
+        let densified = densifiedFrames(sorted, sampleTimes: sampleTimes)
+        let completed = framesWithShortJointGapsFilled(densified)
+        return lowLatencySmoothedFrames(completed)
+    }
+
+    /// Vision sometimes misses a close-up bend/release frame even though the
+    /// frames immediately before and after are locked. The player sees that as
+    /// lag because playback holds the previous pose. Bridge only short holes
+    /// between real detections so the overlay keeps moving with the video.
+    private static func densifiedFrames(_ records: [VideoPoseFrameRecord],
+                                        sampleTimes: [Double]) -> [VideoPoseFrameRecord] {
+        guard !records.isEmpty else { return [] }
+        let byIndex = Dictionary(uniqueKeysWithValues: records.map { ($0.frameIndex, $0) })
+        let maxBridgeSeconds = 0.42
+        var output: [VideoPoseFrameRecord] = []
+
+        for (index, requestedSeconds) in sampleTimes.enumerated() {
+            if let record = byIndex[index] {
+                output.append(record)
+                continue
+            }
+
+            guard let before = records.last(where: { $0.frameIndex < index }),
+                  let after = records.first(where: { $0.frameIndex > index }),
+                  after.timestampSeconds > before.timestampSeconds,
+                  after.timestampSeconds - before.timestampSeconds <= maxBridgeSeconds else {
+                continue
+            }
+
+            let timestamp = min(max(requestedSeconds, before.timestampSeconds), after.timestampSeconds)
+            let fraction = (timestamp - before.timestampSeconds) / (after.timestampSeconds - before.timestampSeconds)
+            if let bridged = interpolatedFrame(index: index,
+                                               timestamp: timestamp,
+                                               before: before,
+                                               after: after,
+                                               fraction: fraction,
+                                               confidenceScale: 0.92) {
+                output.append(bridged)
+            }
+        }
+
+        return output.sorted { $0.timestampSeconds < $1.timestampSeconds }
+    }
+
+    /// Fill missing elbow/wrist/knee points inside otherwise-good frames. This
+    /// handles the close-camera case where Vision keeps the torso but drops an
+    /// arm for a moment as the shooter bends or extends.
+    private static func framesWithShortJointGapsFilled(_ records: [VideoPoseFrameRecord]) -> [VideoPoseFrameRecord] {
+        guard records.count > 1 else { return records }
+        let maxJointBridgeSeconds = 0.36
+        let maxForwardPredictionSeconds = 0.52
+        let allKeys = Set(records.flatMap { $0.keypoints.keys })
+
+        return records.enumerated().compactMap { position, record in
+            var keypoints = record.keypoints
+            for key in allKeys where keypoints[key] == nil {
+                let previous = records[..<position].last { $0.keypoints[key] != nil }
+                let next = records[(position + 1)...].first { $0.keypoints[key] != nil }
+                if let previous,
+                   let next,
+                   let previousPoint = previous.keypoints[key],
+                   let nextPoint = next.keypoints[key],
+                   next.timestampSeconds > previous.timestampSeconds,
+                   next.timestampSeconds - previous.timestampSeconds <= maxJointBridgeSeconds {
+                    let fraction = (record.timestampSeconds - previous.timestampSeconds)
+                        / (next.timestampSeconds - previous.timestampSeconds)
+                    keypoints[key] = interpolate(previousPoint, nextPoint, fraction: fraction)
+                    continue
+                }
+
+                if let predicted = forwardPredictedPoint(for: key,
+                                                         at: record.timestampSeconds,
+                                                         beforePosition: position,
+                                                         records: records,
+                                                         maxAgeSeconds: maxForwardPredictionSeconds) {
+                    keypoints[key] = predicted
+                }
+            }
+            return replacingKeypoints(record, with: keypoints, confidenceScale: keypoints.count > record.keypoints.count ? 0.96 : 1)
+        }
+    }
+
+    /// Smooth only tiny detection jitter. Large changes, like the shooting arm
+    /// extending, pass through almost raw so smoothing does not become visible
+    /// lag.
+    private static func lowLatencySmoothedFrames(_ records: [VideoPoseFrameRecord]) -> [VideoPoseFrameRecord] {
+        guard records.count > 1 else { return records }
+        var output: [VideoPoseFrameRecord] = []
+        var previousKeypoints: [String: VideoPosePoint] = [:]
+
+        for record in records.sorted(by: { $0.timestampSeconds < $1.timestampSeconds }) {
+            var keypoints = record.keypoints
+            for (key, point) in record.keypoints {
+                guard let previous = previousKeypoints[key] else { continue }
+                let distance = hypot(point.x - previous.x, point.y - previous.y)
+                guard distance < 0.08 else { continue }
+                keypoints[key] = blend(previous, point, currentWeight: 0.82)
+            }
+            if let updated = replacingKeypoints(record, with: keypoints, confidenceScale: 1) {
+                output.append(updated)
+                previousKeypoints = updated.keypoints
+            } else {
+                output.append(record)
+                previousKeypoints = record.keypoints
+            }
+        }
+
+        return output
+    }
+
+    private static func interpolatedFrame(index: Int,
+                                          timestamp: Double,
+                                          before: VideoPoseFrameRecord,
+                                          after: VideoPoseFrameRecord,
+                                          fraction: Double,
+                                          confidenceScale: Double) -> VideoPoseFrameRecord? {
+        let keys = Set(before.keypoints.keys).intersection(after.keypoints.keys)
+        var keypoints: [String: VideoPosePoint] = [:]
+        for key in keys {
+            guard let a = before.keypoints[key],
+                  let b = after.keypoints[key] else { continue }
+            keypoints[key] = interpolate(a, b, fraction: fraction)
+        }
+        let confidence = ((before.confidence + after.confidence) / 2) * confidenceScale
+        return frameRecord(index: index,
+                           timestamp: timestamp,
+                           keypoints: keypoints,
+                           confidence: confidence,
+                           sourceWidth: before.sourceWidth ?? after.sourceWidth,
+                           sourceHeight: before.sourceHeight ?? after.sourceHeight)
+    }
+
+    private static func replacingKeypoints(_ record: VideoPoseFrameRecord,
+                                           with keypoints: [String: VideoPosePoint],
+                                           confidenceScale: Double) -> VideoPoseFrameRecord? {
+        frameRecord(index: record.frameIndex,
+                    timestamp: record.timestampSeconds,
+                    keypoints: keypoints,
+                    confidence: record.confidence * confidenceScale,
+                    sourceWidth: record.sourceWidth,
+                    sourceHeight: record.sourceHeight)
+    }
+
+    private static func frameRecord(index: Int,
+                                    timestamp: Double,
+                                    keypoints: [String: VideoPosePoint],
+                                    confidence: Double,
+                                    sourceWidth: Double?,
+                                    sourceHeight: Double?) -> VideoPoseFrameRecord? {
+        guard let pose = detectedPose(keypoints: keypoints, confidence: confidence) else { return nil }
+        let sourceSize: CGSize? = {
+            guard let sourceWidth,
+                  let sourceHeight,
+                  sourceWidth > 0,
+                  sourceHeight > 0 else { return nil }
+            return CGSize(width: sourceWidth, height: sourceHeight)
+        }()
+        return frameRecord(index: index, timestamp: timestamp, pose: pose, sourceSize: sourceSize)
+    }
+
+    private static func detectedPose(keypoints: [String: VideoPosePoint], confidence: Double) -> DetectedPose? {
+        var joints: [DetectedPose.Joint: CGPoint] = [:]
+        for (rawName, point) in keypoints {
+            let key = VNRecognizedPointKey(rawValue: rawName)
+            let joint = VNHumanBodyPoseObservation.JointName(rawValue: key)
+            joints[joint] = CGPoint(x: point.x, y: point.y)
+        }
+        let pose = DetectedPose(joints: joints, confidence: Float(confidence))
+        return pose.isUsable ? pose : nil
+    }
+
+    private static func forwardPredictedPoint(for key: String,
+                                              at timestamp: Double,
+                                              beforePosition: Int,
+                                              records: [VideoPoseFrameRecord],
+                                              maxAgeSeconds: Double) -> VideoPosePoint? {
+        guard let latest = records[..<beforePosition].last(where: { $0.keypoints[key] != nil }),
+              let latestPoint = latest.keypoints[key],
+              timestamp >= latest.timestampSeconds,
+              timestamp - latest.timestampSeconds <= maxAgeSeconds else {
+            return nil
+        }
+
+        guard let previous = records[..<beforePosition].last(where: {
+            $0.frameIndex != latest.frameIndex && $0.keypoints[key] != nil
+        }),
+              let previousPoint = previous.keypoints[key],
+              latest.timestampSeconds > previous.timestampSeconds else {
+            return latestPoint
+        }
+
+        let dt = latest.timestampSeconds - previous.timestampSeconds
+        let lead = timestamp - latest.timestampSeconds
+        guard dt > 0, lead > 0 else { return latestPoint }
+
+        let vx = (latestPoint.x - previousPoint.x) / dt
+        let vy = (latestPoint.y - previousPoint.y) / dt
+        let maxStep = 0.09
+        let dx = min(max(vx * lead, -maxStep), maxStep)
+        let dy = min(max(vy * lead, -maxStep), maxStep)
+        return VideoPosePoint(x: min(max(latestPoint.x + dx, 0), 1),
+                              y: min(max(latestPoint.y + dy, 0), 1))
+    }
+
+    private static func interpolate(_ a: VideoPosePoint,
+                                    _ b: VideoPosePoint,
+                                    fraction: Double) -> VideoPosePoint {
+        let t = min(max(fraction, 0), 1)
+        return VideoPosePoint(x: a.x + (b.x - a.x) * t,
+                              y: a.y + (b.y - a.y) * t)
+    }
+
+    private static func blend(_ previous: VideoPosePoint,
+                              _ current: VideoPosePoint,
+                              currentWeight: Double) -> VideoPosePoint {
+        let weight = min(max(currentWeight, 0), 1)
+        return VideoPosePoint(x: previous.x * (1 - weight) + current.x * weight,
+                              y: previous.y * (1 - weight) + current.y * weight)
+    }
+
+    private static func framesWithPhases(_ records: [VideoPoseFrameRecord]) -> [VideoPoseFrameRecord] {
+        let sorted = records.sorted { $0.timestampSeconds < $1.timestampSeconds }
+        guard !sorted.isEmpty else { return records }
+        let release = releaseFrame(in: sorted)
+        let releasePosition = release.flatMap { target in
+            sorted.firstIndex { $0.frameIndex == target.frameIndex }
+        } ?? Int((Double(sorted.count - 1) * 0.68).rounded())
+
+        return sorted.enumerated().map { position, original in
+            var frame = original
+            frame.phase = phaseLabel(position: position,
+                                     count: sorted.count,
+                                     releasePosition: releasePosition)
+            return frame
+        }
+    }
+
+    private static func phaseLabel(position: Int, count: Int, releasePosition: Int) -> String {
+        guard count > 1 else { return "RELEASE" }
+        let release = min(max(releasePosition, 0), count - 1)
+        if position == 0 { return "SETUP" }
+        if position >= max(release - 1, 0) && position <= min(release + 1, count - 1) {
+            return "RELEASE"
+        }
+        if position > release { return "FOLLOW-THROUGH" }
+
+        let loadCutoff = max(1, Int((Double(max(release, 1)) * 0.45).rounded()))
+        return position <= loadCutoff ? "LOAD" : "RISE"
     }
 
     private enum Side { case left, right }

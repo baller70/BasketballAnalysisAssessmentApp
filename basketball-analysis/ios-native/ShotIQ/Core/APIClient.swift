@@ -76,6 +76,7 @@ struct APIProfileDTO: Codable, Equatable {
     var email: String?
     var firstName: String?
     var lastName: String?
+    var profileComplete: Bool?
     var dominantHand: String?
     var experienceLevel: String?
     var bodyType: String?
@@ -240,6 +241,50 @@ struct ShotIQAnalysisResultDTO: Codable, Identifiable, Equatable {
     var measurements: AnalysisMeasurementsDTO
     var phase: AnalysisTextMetricDTO
     var provenance: AnalysisProvenanceDTO
+    var bodyPositions: [VideoPoseFrameRecord]? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, clientSessionId, captureSessionId, recordedAt, source, media, pose
+        case scores, angles, measurements, phase, provenance, bodyPositions
+    }
+
+    init(id: String, clientSessionId: String?, captureSessionId: String?,
+         recordedAt: String, source: String, media: AnalysisMediaDTO,
+         pose: AnalysisPoseDTO?, scores: AnalysisScoresDTO,
+         angles: AnalysisAnglesDTO, measurements: AnalysisMeasurementsDTO,
+         phase: AnalysisTextMetricDTO, provenance: AnalysisProvenanceDTO,
+         bodyPositions: [VideoPoseFrameRecord]? = nil) {
+        self.id = id
+        self.clientSessionId = clientSessionId
+        self.captureSessionId = captureSessionId
+        self.recordedAt = recordedAt
+        self.source = source
+        self.media = media
+        self.pose = pose
+        self.scores = scores
+        self.angles = angles
+        self.measurements = measurements
+        self.phase = phase
+        self.provenance = provenance
+        self.bodyPositions = bodyPositions
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        clientSessionId = try c.decodeIfPresent(String.self, forKey: .clientSessionId)
+        captureSessionId = try c.decodeIfPresent(String.self, forKey: .captureSessionId)
+        recordedAt = try c.decode(String.self, forKey: .recordedAt)
+        source = try c.decode(String.self, forKey: .source)
+        media = try c.decode(AnalysisMediaDTO.self, forKey: .media)
+        pose = try c.decodeIfPresent(AnalysisPoseDTO.self, forKey: .pose)
+        scores = try c.decode(AnalysisScoresDTO.self, forKey: .scores)
+        angles = try c.decode(AnalysisAnglesDTO.self, forKey: .angles)
+        measurements = try c.decode(AnalysisMeasurementsDTO.self, forKey: .measurements)
+        phase = try c.decode(AnalysisTextMetricDTO.self, forKey: .phase)
+        provenance = try c.decode(AnalysisProvenanceDTO.self, forKey: .provenance)
+        bodyPositions = try? c.decodeIfPresent([VideoPoseFrameRecord].self, forKey: .bodyPositions)
+    }
 }
 
 struct LatestAnalysisResponseDTO: Codable, Equatable {
@@ -433,6 +478,28 @@ actor APIClient {
     func latestAnalysis() async throws -> ShotIQAnalysisResultDTO? {
         let r: LatestAnalysisResponseDTO = try await request("/api/analysis/latest")
         return r.result
+    }
+
+    func deleteMedia(analysisId: String) async throws {
+        try await ensureCsrfToken()
+        guard var comps = URLComponents(url: baseURL.appending(path: "/api/media"),
+                                        resolvingAgainstBaseURL: false) else {
+            throw APIError.network
+        }
+        comps.queryItems = [URLQueryItem(name: "analysisId", value: analysisId)]
+        guard let url = comps.url else { throw APIError.network }
+        var req = URLRequest(url: url)
+        req.httpMethod = "DELETE"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let csrf = csrfToken {
+            req.setValue(csrf, forHTTPHeaderField: "x-csrf-token")
+        }
+        if let token = accessToken {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let (_, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw APIError.network }
+        guard (200..<300).contains(http.statusCode) else { throw APIError.http(http.statusCode) }
     }
 
     func recordShotEvent(drillId: String, made: Bool) async -> Bool {

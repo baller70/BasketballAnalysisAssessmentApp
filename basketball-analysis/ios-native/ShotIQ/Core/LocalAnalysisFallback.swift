@@ -132,7 +132,8 @@ enum ShotIQLocalAnalysisFactory {
             provenance: AnalysisProvenanceDTO(measured: measured,
                                               missing: missing,
                                               estimated: [],
-                                              demo: []))
+                                              demo: []),
+            bodyPositions: poseAnalysis?.frames)
     }
 
     private static func metric(_ value: Double?, unit: String?) -> AnalysisMetricDTO {
