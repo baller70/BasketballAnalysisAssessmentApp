@@ -820,10 +820,15 @@ struct VideoPoseResultSurface: View {
         guard let pose = frame.detectedPose,
               let arm = shootingArm(in: pose),
               let wrist = arm.wrist,
+              let elbow = arm.elbow,
               let shoulder = arm.shoulder else {
             return false
         }
-        return wrist.y >= shoulder.y - 0.02 && !hasWristSnap(in: frame)
+        let hipY = [pose.joints[.leftHip]?.y, pose.joints[.rightHip]?.y].compactMap { $0 }.min()
+        let wristDropped = wrist.y >= shoulder.y + 0.08
+        let elbowDropped = elbow.y >= shoulder.y + 0.03
+        let wristNearLoadPocket = hipY.map { wrist.y >= $0 - 0.10 } ?? wristDropped
+        return wristDropped && elbowDropped && wristNearLoadPocket && !hasWristSnap(in: frame)
     }
 
     private func shotResultStatus(for frame: VideoPoseFrameRecord) -> VideoPoseQualityStatus {
@@ -903,30 +908,39 @@ struct VideoPoseResultSurface: View {
               let activeIndex = playbackIndex(of: active) else {
             return nil
         }
-        let startIndex: Int
-        if let resetIndex = lastResetIndex(atOrBefore: activeIndex) {
-            let nextIndex = playbackFrames.index(after: resetIndex)
-            guard nextIndex <= activeIndex else { return nil }
-            startIndex = nextIndex
-        } else {
-            startIndex = playbackFrames.startIndex
+        guard let releaseIndex = playbackFrames[playbackFrames.startIndex...activeIndex].indices
+            .last(where: { isReleaseDecisionFrame(playbackFrames[$0]) }) else {
+            return nil
         }
-        return playbackFrames[startIndex...activeIndex].indices
-            .last { isReleaseDecisionFrame(playbackFrames[$0]) }
-            .map { playbackFrames[$0] }
+        if hasNextRepLoaded(after: releaseIndex, through: activeIndex) {
+            return nil
+        }
+        return playbackFrames[releaseIndex]
     }
 
-    private func lastResetIndex(atOrBefore index: Int) -> Int? {
-        guard !playbackFrames.isEmpty else { return nil }
-        return playbackFrames[playbackFrames.startIndex...index].indices
-            .last { isRepResetFrame(playbackFrames[$0]) }
+    private func hasNextRepLoaded(after releaseIndex: Int, through activeIndex: Int) -> Bool {
+        let nextIndex = playbackFrames.index(after: releaseIndex)
+        guard nextIndex <= activeIndex else { return false }
+        let releaseSeconds = playbackFrames[releaseIndex].timestampSeconds
+        return playbackFrames[nextIndex...activeIndex].contains { frame in
+            frame.timestampSeconds - releaseSeconds >= 0.65 && isRepResetFrame(frame)
+        }
     }
 
     private func currentRepStartIndex(endingAt releaseIndex: Int) -> Int {
         guard releaseIndex > playbackFrames.startIndex,
-              let resetIndex = playbackFrames[playbackFrames.startIndex..<releaseIndex].indices
-                  .last(where: { isRepResetFrame(playbackFrames[$0]) }) else {
+              let previousReleaseIndex = playbackFrames[playbackFrames.startIndex..<releaseIndex].indices
+                  .last(where: { isReleaseDecisionFrame(playbackFrames[$0]) }) else {
             return playbackFrames.startIndex
+        }
+        let searchStart = playbackFrames.index(after: previousReleaseIndex)
+        guard searchStart < releaseIndex,
+              let resetIndex = playbackFrames[searchStart..<releaseIndex].indices
+                  .first(where: { frameIndex in
+                      playbackFrames[frameIndex].timestampSeconds - playbackFrames[previousReleaseIndex].timestampSeconds >= 0.65
+                          && isRepResetFrame(playbackFrames[frameIndex])
+                  }) else {
+            return searchStart
         }
         var startIndex = resetIndex
         while startIndex > playbackFrames.startIndex {
