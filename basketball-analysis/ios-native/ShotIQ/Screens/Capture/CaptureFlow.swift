@@ -2807,6 +2807,11 @@ struct VideoUploadView: View {      // 026
                     .disabled(loadingVideo)
                     .padding(.horizontal, 20).padding(.top, 14)
 
+                    if selectedVideo != nil || loadingVideo {
+                        uploadMomentumCard
+                            .padding(.horizontal, 20).padding(.top, 12)
+                    }
+
                     HStack(spacing: 10) {
                         Button {
                             toast = .info("Opening Files", "Choose a local MP4, MOV, or M4V.")
@@ -2924,6 +2929,13 @@ struct VideoUploadView: View {      // 026
         Group {
             if let selectedVideo, !loadingVideo {
                 PickedVideoThumbnailView(clip: selectedVideo, height: 188)
+                    .overlay(alignment: .topLeading) {
+                        processingPill(icon: "checkmark.circle.fill",
+                                       title: "SHOT LOCKED",
+                                       subtitle: "READY FOR VIDEO REVIEW",
+                                       color: ShotIQColor.confirmGreen)
+                            .padding(10)
+                    }
             } else {
                 VStack(spacing: 10) {
                     Image(systemName: loadingVideo ? "hourglass" : "video")
@@ -2943,6 +2955,52 @@ struct VideoUploadView: View {      // 026
             }
         }
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 4])).foregroundStyle(ShotIQColor.rule))
+    }
+
+    private var uploadMomentumCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: loadingVideo ? "film.stack" : "checkmark.seal.fill")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(loadingVideo ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(loadingVideo ? "LOCKING IN YOUR SHOT" : "SHOT READY FOR REVIEW")
+                        .shotiqBody(13, weight: .heavy)
+                        .foregroundStyle(loadingVideo ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen)
+                    Text(loadingVideo ? "Reading the clip, frame rate, and shooting window." : "Next, trim the clip before ShotIQ runs the full breakdown.")
+                        .shotiqBody(11)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer(minLength: 0)
+            }
+            ScoreBar(pct: loadingVideo ? 0.56 : 1.0,
+                     color: loadingVideo ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen)
+                .frame(height: 6)
+        }
+        .padding(14)
+        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(loadingVideo ? ShotIQColor.shotiqOrange.opacity(0.35) : ShotIQColor.confirmGreen.opacity(0.35)))
+    }
+
+    private func processingPill(icon: String, title: String, subtitle: String, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                    .shotiqBody(11, weight: .heavy)
+                    .kerning(0.5)
+                Text(subtitle)
+                    .shotiqBody(9, weight: .bold)
+                    .kerning(0.4)
+                    .opacity(0.78)
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 7))
+        .overlay(RoundedRectangle(cornerRadius: 7).stroke(color.opacity(0.75), lineWidth: 1))
     }
 
     private var uploadTitle: String {
@@ -3058,6 +3116,7 @@ struct VideoReviewView: View {      // 027
     @State private var trimEnd: Double = 1
     @State private var route: ReviewRoute?
     @State private var toast: ShotIQToast?
+    @State private var isPreparingAnalysis = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-review") {
             ScrollView {
@@ -3126,6 +3185,11 @@ struct VideoReviewView: View {      // 027
                                         .padding(.horizontal, 8).padding(.vertical, 4)
                                         .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
                                         .padding(8)
+                                }
+                                .overlay {
+                                    if isPreparingAnalysis {
+                                        videoReviewProcessingOverlay
+                                    }
                                 }
                         } else {
                             CanonicalMediaSurface(key: "027-visual-001", height: 300, duration: "0:06")
@@ -3209,6 +3273,7 @@ struct VideoReviewView: View {      // 027
                                    icon: video == nil ? "film" : "camera.metering.center.weighted")
                     }
                         .buttonStyle(.plain)
+                        .disabled(isPreparingAnalysis)
                         .accessibilityElement(children: .combine)
                         .accessibilityAddTraits(.isButton)
                         .accessibilityLabel("Analyze video")
@@ -3252,11 +3317,38 @@ struct VideoReviewView: View {      // 027
         .frame(maxWidth: .infinity)
     }
 
+    private var videoReviewProcessingOverlay: some View {
+        ZStack {
+            LinearGradient(colors: [.black.opacity(0.62), .black.opacity(0.28)],
+                           startPoint: .bottom,
+                           endPoint: .top)
+            VStack(spacing: 12) {
+                ProgressView()
+                    .tint(.white)
+                    .scaleEffect(1.15)
+                Text("PREPARING SHOTIQ BREAKDOWN")
+                    .shotiqBody(14, weight: .heavy)
+                    .kerning(0.6)
+                    .foregroundStyle(.white)
+                Text("Locking trim range, checking pose, and setting up your analysis.")
+                    .shotiqBody(11, weight: .semibold)
+                    .foregroundStyle(.white.opacity(0.84))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 18)
+                ScoreBar(pct: 0.72, color: ShotIQColor.shotiqOrange)
+                    .frame(width: 210, height: 6)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .transition(.opacity)
+    }
+
     private func analyzeVideo() {
         guard let video else {
             showMissingVideoToast()
             return
         }
+        isPreparingAnalysis = true
         let job = VideoAnalysisJob(
             clientSessionId: "ios-video-\(UUID().uuidString)",
             clip: video,
@@ -3264,8 +3356,11 @@ struct VideoReviewView: View {      // 027
             trimEndFraction: trimEnd)
         toast = .progress("Preparing analysis", "Trim window \(job.trimWindowText).", progress: 0.35)
         Task {
-            try? await Task.sleep(for: .milliseconds(250))
-            await MainActor.run { route = .processing(job) }
+            try? await Task.sleep(for: .milliseconds(700))
+            await MainActor.run {
+                route = .processing(job)
+                isPreparingAnalysis = false
+            }
         }
     }
 

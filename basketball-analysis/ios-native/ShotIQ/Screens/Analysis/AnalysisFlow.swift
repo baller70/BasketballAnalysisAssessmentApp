@@ -3076,7 +3076,9 @@ struct AnalysisProcessingView: View { // 036
                 try? await Task.sleep(for: .seconds(0.5))
                 pct = min(0.94, pct + 0.11)
             }
-            if route == nil { route = .results }
+            if route == nil {
+                await finishAllProcessingStages()
+            }
         }
         .navigationDestination(item: $route) { r in
             switch r {
@@ -3148,6 +3150,16 @@ struct AnalysisProcessingView: View { // 036
         if pct <= stage.start { return 0 }
         if pct >= stage.end { return 1 }
         return min(max((pct - stage.start) / (stage.end - stage.start), 0), 1)
+    }
+
+    @MainActor
+    private func finishAllProcessingStages() async {
+        withAnimation(.easeOut(duration: 0.28)) {
+            pct = 1.0
+        }
+        try? await Task.sleep(for: .milliseconds(850))
+        guard route == nil else { return }
+        route = .results
     }
 
     private func processVideo(job: VideoAnalysisJob) async {
@@ -3253,12 +3265,12 @@ struct AnalysisProcessingView: View { // 036
             completedResult = analysis
             app.rememberAnalysisMedia(analysis, title: "Analyzed Video")
             pct = 0.94
-            route = .results
+            await finishAllProcessingStages()
         } catch {
             completedResult = localFallback
             app.rememberAnalysisMedia(localFallback, title: "Analyzed Video")
             pct = 0.94
-            route = .results
+            await finishAllProcessingStages()
         }
     }
 }
