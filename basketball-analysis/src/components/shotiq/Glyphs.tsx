@@ -29,7 +29,7 @@ type GlyphProps = {
  *  56px flaw diagram doesn't render as a blob next to a 20px row mark. */
 const autoStroke = (size: number) => Math.min(1.8, Math.max(0.85, 38 / size))
 
-function Svg({
+export function Svg({
   size = 24, className = "", children, title, weight = 1,
 }: GlyphProps & { children: React.ReactNode; weight?: number }) {
   return (
@@ -168,7 +168,7 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
  * The head and ball radii are opened up to match, so they stay legible rings at
  * that weight instead of closing into blobs.
  */
-const POSE_WEIGHT = 1.6
+export const POSE_WEIGHT = 1.6
 
 const APPROVED_PHASE_ICONS: Record<ShotPhase, string> = {
   setup: "shotiq-approved-phase-setup",
@@ -259,7 +259,7 @@ export type MechanicKind =
   | "centerline" | "balance" | "drift" | "impact" | "tempo" | "consistency"
   | "arcHeight" | "releaseAngle" | "spin" | "flightTime" | "shotShape" | "releasePath"
 
-const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
+export const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
   // Two limb segments meeting at a joint with the measured sweep dotted in.
   angle: (a) => (
     <>
@@ -461,7 +461,7 @@ export function MechanicGlyph({
 
 export type CorrectionKind = "stack" | "square" | "drive"
 
-const CORRECTIONS: Record<CorrectionKind, React.ReactNode> = {
+export const CORRECTIONS: Record<CorrectionKind, React.ReactNode> = {
   // Both hands stacked above the head.
   stack: (
     <>
@@ -647,7 +647,7 @@ export function CoachingTargetGlyph({ size = 28, className = "", title }: GlyphP
 
 export type ReadinessKind = "athlete" | "framing" | "lighting" | "stability"
 
-const BRACKETS = (
+export const BRACKETS = (
   <path d="M3 7.5 V4.5 A1.5 1.5 0 0 1 4.5 3 H7.5 M16.5 3 H19.5 A1.5 1.5 0 0 1 21 4.5 V7.5 M21 16.5 V19.5 A1.5 1.5 0 0 1 19.5 21 H16.5 M7.5 21 H4.5 A1.5 1.5 0 0 1 3 19.5 V16.5" />
 )
 

@@ -37,6 +37,7 @@
 		D366CF3B9BB408E1674F1F8D /* GoalsAnalyticsMediaProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1B7FFC873C50CC28C73611 /* GoalsAnalyticsMediaProfile.swift */; };
 		D94A28C690FB79B9467D8EA4 /* boxedheavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 7DFDB038721B489270DBA1A5 /* boxedheavy.otf */; };
 		F70F48656AC9104E369FF1B9 /* CaptureFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB88B746B85C662B864EB2E /* CaptureFlow.swift */; };
+		FB2934DA92368789886A848A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C8F28191B09539E3528064E8 /* PrivacyInfo.xcprivacy */; };
 		FCD17A4ED5735EB2FDD9AA14 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBF36012146C626940DA84BF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -81,6 +82,7 @@
 		BFD80AB08FF5E5D07D90CCFB /* EliteFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EliteFlow.swift; sourceTree = "<group>"; };
 		C52E59E41C43AE18E51BBC33 /* CanonicalPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalPhoto.swift; sourceTree = "<group>"; };
 		C6E323EC1FF54EEA33E1E0DD /* ShotIQGlyphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQGlyphs.swift; sourceTree = "<group>"; };
+		C8F28191B09539E3528064E8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D1D8C157DBB2712C38D8EAB1 /* AnalysisResultPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisResultPresentation.swift; sourceTree = "<group>"; };
 		D2C7558F26B7588AA0972272 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTokens.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 			children = (
 				EBF36012146C626940DA84BF /* Assets.xcassets */,
 				D8EAB7AFA47FF810A708D966 /* Info.plist */,
+				C8F28191B09539E3528064E8 /* PrivacyInfo.xcprivacy */,
 				38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */,
 				E75D391A383DC6D79F41BF9B /* Fonts */,
 			);
@@ -379,6 +382,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FCD17A4ED5735EB2FDD9AA14 /* Assets.xcassets in Resources */,
+				FB2934DA92368789886A848A /* PrivacyInfo.xcprivacy in Resources */,
 				D94A28C690FB79B9467D8EA4 /* boxedheavy.otf in Resources */,
 				ABEC9459F6FBA7FC1292117C /* boxedmedium.otf in Resources */,
 				519A38CD0839ADD0F0214188 /* boxedsemibold.otf in Resources */,
@@ -458,7 +462,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = DD9G8RP575;
 				ENABLE_TESTABILITY = YES;
@@ -494,7 +498,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = DD9G8RP575;
 				ENABLE_NS_ASSERTIONS = NO;

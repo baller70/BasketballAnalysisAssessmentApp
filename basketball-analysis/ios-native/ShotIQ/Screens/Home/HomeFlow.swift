@@ -233,7 +233,7 @@ private struct HomeSessionValues {
                                      dateLabel: Self.dateText(workout.completedAt),
                                      hasRealData: true)
         }
-        if let historyStats, (historyStats.totalAnalyses ?? 0) > 0 {
+        if let historyStats, historyStats.totalAnalyses > 0 {
             return HomeSessionValues(shots: "--",
                                      makes: "--",
                                      makePercent: "--",

@@ -448,14 +448,14 @@ struct VideoPoseResultSurface: View {
         .task(id: url) {
             await preparePlayer()
         }
-        .onChange(of: seekKey) { _ in
+        .onChange(of: seekKey) { _, _ in
             activePoseFrame = selectedPoseFrame
             seekToSelectedFrame()
         }
-        .onChange(of: repVerdictToastKey) { key in
+        .onChange(of: repVerdictToastKey) { _, key in
             showRepVerdictToast(for: key)
         }
-        .onChange(of: isMuted) { muted in
+        .onChange(of: isMuted) { _, muted in
             player?.isMuted = muted
         }
         .onDisappear {

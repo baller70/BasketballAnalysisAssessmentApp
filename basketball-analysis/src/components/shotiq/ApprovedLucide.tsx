@@ -10,9 +10,13 @@ const ICON_BASE = "/shotiq/icons/approved"
 
 function approvedIcon(concept: string, fallback = concept) {
   const Icon = React.forwardRef<SVGSVGElement, Lucide.LucideProps>(function ApprovedShotIQIcon(
-    { size = 24, className = "", children: _children, color: _color, strokeWidth: _strokeWidth, absoluteStrokeWidth: _absoluteStrokeWidth, style, ...rest },
+    { size = 24, className = "", children, color, strokeWidth, absoluteStrokeWidth, style, ...rest },
     ref,
   ) {
+    void children
+    void color
+    void strokeWidth
+    void absoluteStrokeWidth
     const asset = approvedAssetForConcept(concept, fallback)
     const renderedSize = typeof size === "number" ? Math.max(size, 32) : size
     return (

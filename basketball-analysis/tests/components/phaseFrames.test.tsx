@@ -49,7 +49,7 @@ const stillSrcs = () => screen.queryAllByRole('img')
 
 const figureSrcs = () => Array.from(document.querySelectorAll('img'))
   .map((el) => el.getAttribute('src') ?? '')
-  .filter((src) => src.includes('078-phase-'))
+  .filter((src) => src.includes('shotiq-approved-phase-'))
 
 beforeEach(() => window.localStorage.clear())
 
