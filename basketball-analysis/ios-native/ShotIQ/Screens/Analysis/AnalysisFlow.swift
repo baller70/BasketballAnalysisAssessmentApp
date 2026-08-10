@@ -2468,12 +2468,14 @@ fileprivate struct AnalysisFullScreenMediaView: View {
     @State private var headerVerdictBurst = false
 
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    private let headerHeight: CGFloat = 66
+    private let headerToMediaGap: CGFloat = 16
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             GeometryReader { proxy in
-                VStack(spacing: 10) {
+                VStack(spacing: headerToMediaGap) {
                     ZStack {
                         if let headerVerdictToast {
                             RepVerdictToastBanner(toast: headerVerdictToast, burst: headerVerdictBurst)
@@ -2492,7 +2494,7 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                             closeButton
                         }
                     }
-                    .frame(height: 58)
+                    .frame(height: headerHeight)
                     .padding(.horizontal, 16)
                     .padding(.top, 6)
                     .zIndex(30)
@@ -2501,7 +2503,7 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                        presentation.mediaLabel.uppercased().contains("VIDEO") || presentation.videoURL != nil {
                         VideoPoseResultSurface(url: url,
                                                presentation: presentation,
-                                               height: max(450, proxy.size.height - 88),
+                                               height: max(450, proxy.size.height - headerHeight - headerToMediaGap - 34),
                                                showSkeleton: true,
                                                showJoints: true,
                                                showBall: false,
@@ -2525,7 +2527,7 @@ fileprivate struct AnalysisFullScreenMediaView: View {
                     } else {
                         AnalysisResultMediaSurface(presentation: presentation,
                                                    fallbackKey: fallbackKey,
-                                                   height: max(450, proxy.size.height - 88),
+                                                   height: max(450, proxy.size.height - headerHeight - headerToMediaGap - 34),
                                                    phase: selectedPhase,
                                                    showGuidanceLabels: true)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
