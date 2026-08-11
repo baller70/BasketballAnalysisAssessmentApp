@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — fifty-two, each learned by getting something wrong
+## Method rules — fifty-three, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1333,6 +1333,38 @@ string rolling over at midnight.
     proven otherwise — the build-time twin of rule 30. Check `NODE_ENV`, check
     `pgrep -af "next dev|next start"`, and check whether the same commit builds
     elsewhere, BEFORE editing `_document` or a provider that was never wrong.
+
+53. **Solve sub-pixel placement with a COMPOSITED property, not a layout one —
+    and a null from a lever is a claim about the LEVER.** Screen 004's share
+    mark was recorded here as "measurably immovable": every sub-pixel offset
+    returned `signin` 3.7430 to four decimals. That was checked, as rule 30
+    demands, against a control — the same mark displaced by (40,30) scored
+    4.5120 and hidden scored 3.9234 — so the scorer demonstrably saw it, and
+    the null was written up as a real unreachable residual.
+
+    It was wrong, and the re-grade found it. **Proving the SCORER sees an
+    element does not prove the INJECTION reached it.** The sweep moved `left`
+    and `top`, which are LAYOUT properties; Chromium snaps them to whole device
+    pixels, so every sub-pixel value collapsed into the same render. Measured
+    head to head from the same 3.7430 control:
+
+        transform: translate(0.5px, 0.9px)  ->  3.4560
+        left/top   +0.5, +0.9               ->  3.8692
+        left/top   +0.5, +1.3               ->  3.8692   identical: snapped
+
+    Both eye marks behaved the same way: eyePass 8.1379 -> 7.0040 and eyeConf
+    7.1219 -> 6.8625, reachable only through `transform`.
+
+    So rule 30's control is necessary and NOT sufficient. A control that proves
+    the instrument reads the element still says nothing about whether the knob
+    you turned is connected to it. Verify the LEVER too: move it far enough to
+    be unmissable and confirm the response is proportional, or compare two
+    levers aimed at the same target. Where they disagree, the composited one is
+    telling the truth about the pixels.
+
+    Corollary for this project: any earlier "physically unreachable residual"
+    concluded from a `left`/`top` sweep is suspect and should be re-tested with
+    `transform` before it is trusted.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

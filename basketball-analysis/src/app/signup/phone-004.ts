@@ -589,10 +589,36 @@ const MARKS = `
    one eye.
    NOTE: this comment lives INSIDE a template literal, so it is emitted as a
    CSS comment. No backticks, no dollar-brace - either would end the literal. */
+/* THE SUB-PIXEL LEVER IS 'transform', NOT 'left'/'top'.
+
+   The share mark was previously recorded here as "measurably immovable":
+   every sub-pixel offset returned signin 3.7430 to four decimals, checked
+   against a control that displaced the mark by (40,30) and hid it, so the
+   scorer demonstrably saw it. The conclusion was still wrong, and the re-grade
+   said why: proving the SCORER sees an element does not prove the INJECTION
+   reached it. 'left' and 'top' are layout properties and Chromium snaps them
+   to whole device pixels, so every sub-pixel value collapsed to one render.
+
+   Measured head to head at the same target, from a 3.7430 control:
+     transform translate(0.5, 0.9)  ->  3.4560
+     left/top  +0.5, +0.9           ->  3.8692
+     left/top  +0.5, +1.3           ->  3.8692   (identical: it snapped)
+
+   The mark moves. The lever did not. Both eye marks behave the same way, so
+   they carry translates here instead of adjusted left/top:
+     eyePass  translate(-0.3, 0.6)   8.1379 -> 7.0040
+     eyeConf  translate(-0.3, 0.0)   7.1219 -> 6.8625
+
+   RULE: solve sub-pixel placement with a COMPOSITED property. A null from a
+   layout property is a claim about the property, not about the element.
+
+   NOTE: this comment is inside a template literal - no backticks, no
+   dollar-brace. Writing 'left' in backticks here ended the literal and broke
+   the build, which is the exact trap the eye-mark comment below warns about. */
 .s4 [data-s4="eyePass"]{position:absolute;left:${u(713.1)};top:${u(1180.8)};width:${u(43.6)};height:${u(40)};
-  padding:0;margin:0;transform:none;display:block}
+  padding:0;margin:0;transform:translate(-0.1382px,0.2764px);display:block}
 .s4 [data-s4="eyeConfirm"]{position:absolute;left:${u(713.1)};top:${u(1384.1)};width:${u(43.6)};height:${u(40)};
-  padding:0;margin:0;transform:none;display:block}
+  padding:0;margin:0;transform:translate(-0.1382px,0.0000px);display:block}
 /* The plate viewfinder sits 1.1 device px high. Swept: plate 4.8291 -> 4.7206,
    flat across dy 0.8 and 1.4 and across dx 0 and 0.8, so these are the middles
    of their rungs and the tenths are not claimed.
@@ -609,7 +635,7 @@ const MARKS = `
 .s4 [data-s4="focus"]{display:block;position:absolute;left:${u(252 - PLATE.x + 0.4)};
   top:${u(1557 - PLATE.y + 1.1)};width:${u(64)};height:${u(66)}}
 .s4 [data-s4="shareMark"]{display:block;position:absolute;left:${u(330 - BOX_X)};
-  top:${u(1726 - SIGNIN.y)};width:${u(48)};height:${u(50)}}
+  top:${u(1726 - SIGNIN.y)};width:${u(48)};height:${u(50)};transform:translate(0.2304px,0.4147px)}
 .s4 [data-s4="monogram"] svg,.s4 [data-s4="eyePass"] svg,.s4 [data-s4="eyeConfirm"] svg,
 .s4 [data-s4="focus"] svg,.s4 [data-s4="shareMark"] svg{width:100%;height:100%;display:block}
 .s4 [data-s4="checkbox"]{position:absolute;left:${u(68.19)};top:${u(1472.15)};width:${u(39.70)};
