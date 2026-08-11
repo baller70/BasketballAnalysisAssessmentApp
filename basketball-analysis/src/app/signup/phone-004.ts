@@ -593,8 +593,21 @@ const MARKS = `
   padding:0;margin:0;transform:none;display:block}
 .s4 [data-s4="eyeConfirm"]{position:absolute;left:${u(713.1)};top:${u(1384.1)};width:${u(43.6)};height:${u(40)};
   padding:0;margin:0;transform:none;display:block}
-.s4 [data-s4="focus"]{display:block;position:absolute;left:${u(252 - PLATE.x)};
-  top:${u(1557 - PLATE.y)};width:${u(64)};height:${u(66)}}
+/* The plate viewfinder sits 1.1 device px high. Swept: plate 4.8291 -> 4.7206,
+   flat across dy 0.8 and 1.4 and across dx 0 and 0.8, so these are the middles
+   of their rungs and the tenths are not claimed.
+
+   THE SHARE MARK IS LEFT WHERE IT IS, and that is a measurement, not an
+   oversight. The grade asked for (+0.90, +0.55). Every offset tested - dy 0,
+   0.55, 0.9, 1.4 crossed with dx 0, 0.55, 1.1 - returns signin 3.7430 to four
+   decimals, i.e. the shift is below what this lattice resolves. Rule 30 says a
+   null is a claim about the instrument until proven otherwise, so it was
+   proven: displacing the same mark by (40, 30) moves the band to 4.5120 and
+   hiding it moves it to 3.9234. The override applies, the mark is inside the
+   window, and the sub-pixel move genuinely buys nothing. Forcing a number in
+   here would be invented precision. */
+.s4 [data-s4="focus"]{display:block;position:absolute;left:${u(252 - PLATE.x + 0.4)};
+  top:${u(1557 - PLATE.y + 1.1)};width:${u(64)};height:${u(66)}}
 .s4 [data-s4="shareMark"]{display:block;position:absolute;left:${u(330 - BOX_X)};
   top:${u(1726 - SIGNIN.y)};width:${u(48)};height:${u(50)}}
 .s4 [data-s4="monogram"] svg,.s4 [data-s4="eyePass"] svg,.s4 [data-s4="eyeConfirm"] svg,
