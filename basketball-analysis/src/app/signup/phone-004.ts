@@ -370,8 +370,22 @@ export const RUNS: Record<string, Run> = {
      21.0 -> 18.95 and 0.90 -> 0.9092 by the joint sweep with the overlay held
      at its solved origin: 6.0673 -> 5.1898. ty unresolved again (0.00 and 0.58
      both 5.1898), so dy stands. */
-  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.9092, ls: -0.03,
-               colour: "var(--shotiq-color-ink)", dx: 1.16, dy: 8.52, tx: 0, ty: 0,
+  /* RE-SOLVED after the independent B+ grade: the residual here was TRACKING,
+     not size and not scale. Segmented glyph-for-glyph the render matches
+     canonical 8/8 at a per-glyph width ratio of exactly 1.0000 — the letters
+     are right and the GAPS are not, drifting from +2 device px at the first
+     left edge to +13 at the last, about 1.6 px per gap.
+
+     That is why the affine argmin (sx 0.907) is the wrong prescription: it
+     would shrink glyphs that are already correct to buy back space the
+     tracking is spending. Rule 32's trap wearing a different coat — one
+     estimator cannot tell "wide letters" from "wide gaps", and the per-glyph
+     segmentation can.
+
+     ls -0.03 -> -0.07 with a 1.50 device px left nudge: 5.1897 -> 3.7430.
+     dx is the middle of its rung (2.16, 2.66, 3.16 all score 3.7430). */
+  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.9092, ls: -0.07,
+               colour: "var(--shotiq-color-ink)", dx: 2.66, dy: 8.52, tx: 0, ty: 0,
                ox: BOX_X, oy: SIGNIN.y },
 }
 
