@@ -312,14 +312,43 @@ export const RUNS: Record<string, Run> = {
      measured. Cap heights are not used here at all — the baseline snaps to a
      whole device pixel on this screen, which puts ~5% noise on any cap ratio
      (see the terms run). */
+  /* SOLVED AGAIN after the A- re-grade measured all five ink-lefts 1.17-1.99
+     canonical px LEFT of canonical (canonical puts them in 69.35-69.39; the
+     render put four at 68.198).
+
+     The recipe's earlier note says "dx stays 1.68: dx 1.13 and 1.68 score
+     identically because the layout lattice quantises". That was true and is
+     not contradicted - it is evidence about a 0.55px neighbourhood, and about
+     dx, which is a LAYOUT property that snaps (rule 53). The move actually
+     needed is +1.0 device px, applied through tx, which rides INSIDE
+     transform:scaleX(...) translate(...) and composites.
+
+     Swept per label, control at shipped:
+       labFirst  5.5350 -> 4.6190   +1.0 via tx
+       labEmail  3.5891 -> 2.5239   +1.0
+       labPass   5.5681 -> 4.2860   +1.0
+       labLast   5.2666 -> 3.5723   WIDTH, not shift: scaleX 0.62 -> 0.61 at
+                                    shift 0. Every rightward shift made it
+                                    worse, because it is also ~2.6% too wide
+                                    and moving it right pushes an already-long
+                                    right end further out.
+       labConfirm 8.3835 UNCHANGED  - every (scaleX, shift) pair tested scored
+                                    WORSE than shipping. It is the largest of
+                                    the five and it does not answer to either
+                                    knob, so it is left as measured rather than
+                                    forced. A different parameterisation may
+                                    reach it; this one does not, and a wrong
+                                    result from one parameterisation is a claim
+                                    about the parameterisation (rule 52's
+                                    corollary), not a refutation of the defect. */
   labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0 },
+  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.61, ls: 0.0500,
              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   labEmail: { x: 69.39, top: 931.45, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0 },
   labPass: { x: 69.40, top: 1111.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0 },
   labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
                 colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   /* "Use at least 8 characters." Band 10.949 -> 4.571, size 12.55 -> 10.35 and
