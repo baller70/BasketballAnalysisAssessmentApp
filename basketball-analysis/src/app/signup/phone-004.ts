@@ -433,14 +433,33 @@ function maskCss(name: string, box: [number, number], size: number, ls: number,
     `padding-bottom:0;padding-right:0;margin:0}`
 }
 
+/* The three values sat too HIGH inside boxes that are themselves aligned to a
+   tenth of a device pixel — the independent grade measured the email box top at
+   +0.099 and bottom at -0.082 while its text was 4.2-4.6 device px up. So this
+   is placement of the run, not of the field, and `ty` is the right knob.
+
+   `ty` is raw CSS px (it is not passed through `u`), so a device-px target is
+   divided by 2.170483; `padL` IS passed through `u`, so it stays in device px. */
 export const VALUES = {
-  first: { size: 15.0, weight: 340, scale: 0.90, padL: 25.0, ty: 0, ls: 0 },
-  last: { size: 15.0, weight: 340, scale: 0.90, padL: 27.0, ty: 0, ls: 0 },
-  email: { size: 15.0, weight: 340, scale: 0.90, padL: 24.0, ty: 0, ls: 0 },
+  first: { size: 15.0, weight: 340, scale: 0.90, padL: 24.00, ty: 1.4974, ls: 0 },
+  last: { size: 15.0, weight: 340, scale: 0.90, padL: 24.25, ty: 1.1518, ls: 0 },
+  email: { size: 15.0, weight: 340, scale: 0.90, padL: 26.00, ty: 2.0733, ls: 0 },
 }
+/* Canonical's bullets are BIGGER and TIGHTER than the build was drawing them:
+   h-crossing diameter 10.22 device px against 8.74, on a pitch of 25.510
+   against 31.206 — 14.5% small and 22.3% loose, which walked the ninth bullet
+   44.6 px right of where canonical puts it.
+
+   The comment above records canonical's pitch as 25.52, so the target was
+   already written down and the build simply did not deliver it.
+
+   Size and letter-spacing are the two independent knobs (003's finding). Solving
+   them together: the advance is 0.295375 em before tracking, so diameter fixes
+   size and the residual fixes ls. padL then absorbs the first bullet's centre,
+   because the left side bearing scales with the size change. */
 export const MASKS = {
-  pass: { size: 23.86, ls: 0.3072, padL: 25.0, ty: 0 },
-  confirm: { size: 23.86, ls: 0.3072, padL: 25.0, ty: 0 },
+  pass: { size: 27.9004, ls: 0.12588, padL: 24.1962, ty: 0 },
+  confirm: { size: 27.9004, ls: 0.12588, padL: 24.1962, ty: 0 },
 }
 
 /* Mark placement, in canonical device px.
