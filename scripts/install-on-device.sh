@@ -6,9 +6,15 @@
 #
 # Ported from the hooptrack lane that put HoopTrack on the phone. This is not
 # the App Store path: an app-store-signed IPA cannot be installed on a device
-# directly, so this builds Debug with a *development* identity that xcodebuild
-# creates on demand through the App Store Connect key, and hands the result to
-# devicectl. It never touches the archive, the upload, or anything in review.
+# directly, so this builds a device-installable configuration with a
+# *development* identity that xcodebuild creates on demand through the App
+# Store Connect key, and hands the result to devicectl. It never touches the
+# archive, the upload, or anything in review.
+#
+# Default to Release for phone persistence. Debug installs on modern Xcode can
+# produce a split executable plus <App>.debug.dylib; those debugger-oriented
+# products have failed on Kevin's phone with EBADEXEC when launched normally
+# from the home screen.
 set -Eeuo pipefail
 
 die() { printf 'INSTALL_ERROR: %s\n' "$*" >&2; exit 1; }
@@ -49,6 +55,8 @@ team_id="DD9G8RP575"
 project_dir="basketball-analysis/ios-native"
 project="ShotIQ.xcodeproj"
 scheme="ShotIQ"
+configuration="${SHOTIQ_DEVICE_CONFIGURATION:-Release}"
+products_dir_name="${configuration}-iphoneos"
 
 choose_derived_data() {
   if [ -n "${SHOTIQ_DERIVED_DATA:-}" ]; then
@@ -370,18 +378,19 @@ step "Destinations this project can actually target"
 xcodebuild -showdestinations -project "$project" -scheme "$scheme" 2>&1 \
   | sed -n '/Available destinations/,/^$/p' | head -12 || true
 
-step "Building ${scheme} for the device"
+step "Building ${scheme} (${configuration}) for the device"
 xcodebuild build \
   -project "$project" \
   -scheme "$scheme" \
-  -configuration Debug \
+  -configuration "$configuration" \
   -destination "platform=iOS,id=${device_udid}" \
   -derivedDataPath "$derived_data" \
   -allowProvisioningUpdates \
   "${auth_args[@]+"${auth_args[@]}"}" \
-  DEVELOPMENT_TEAM="$team_id"
+  DEVELOPMENT_TEAM="$team_id" \
+  ENABLE_DEBUG_DYLIB=NO
 
-app_path="${derived_data}/Build/Products/Debug-iphoneos/${scheme}.app"
+app_path="${derived_data}/Build/Products/${products_dir_name}/${scheme}.app"
 [ -d "$app_path" ] || die "no ${scheme}.app at ${app_path}"
 note "Built: ${app_path}"
 
