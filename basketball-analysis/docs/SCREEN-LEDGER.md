@@ -1343,6 +1343,34 @@ string rolling over at midnight.
   them and breaking another metric.
 - Do not commit a tree that fails `tsc` or a screen that breaks its size invariant.
 
+### 004's desktop guard, discharged by blast radius rather than by pixels
+
+The cycle requires confirming the desktop set did not regress. For 004 that was
+answered by SCOPE, not by a second capture, and the reasoning is recorded here
+so it can be checked rather than taken on trust:
+
+  - **/signup has no desktop counterpart.** The graded desktop set is 077-096
+    and none of them is a signup or create-account screen, so unlike /signin
+    (which draws BOTH iOS 003 and desktop 077) there is no shared route.
+  - **The 004 modules are imported nowhere else.** `phone-004.ts` and
+    `Marks004.tsx` are referenced only by `src/app/signup/` — grepped, not
+    assumed.
+  - **No 004 commit touched anything shared.** Every commit touching
+    `src/app/signup/` was inspected for what ELSE it changed. The only
+    non-signup files were `tsconfig.json` twice (the generated build-dir litter,
+    since cleaned) and a batch of iOS `.imageset` PNGs, which cannot reach a
+    desktop web screen.
+  - **`globals.css` is untouched since 2026-08-04 (272d8b0)**, before the 004
+    rounds began. The four measurement-tuned type roles that carry the 20
+    desktop screens graded B+ therefore cannot have moved.
+
+WHAT THIS PROVES AND WHAT IT DOES NOT: it proves no code path reaching a
+desktop screen changed, which is a stronger claim than a pixel diff and costs
+two builds less. It does NOT re-measure desktop pixels, so it would not catch a
+regression arriving from outside this screen's work — a dependency bump, or
+another agent's commit on the shared branch. When 004's own changes are the only
+variable, scope is sufficient. When they are not, run the full guard below.
+
 ## The desktop regression guard — how to run it properly
 
 A screen that shares a route with a desktop screen needs a real before/after,
