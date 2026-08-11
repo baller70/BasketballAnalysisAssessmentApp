@@ -110,6 +110,7 @@ export type Run = {
   size: number      // CSS px
   weight: number
   scale: number     // scaleX
+  sy?: number       // scaleY — cap height WITHOUT touching the advance
   ls: number        // letter-spacing, em
   ws?: number       // word-spacing, CSS px
   stroke?: number   // -webkit-text-stroke-width, CSS px
@@ -226,7 +227,21 @@ export const RUNS: Record<string, Run> = {
 
      Shipped through `ty` and the stroke property, the same levers the sweep
      injected (rule 47). See method rule 50 for the window fault itself. */
-  display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
+  /* sy 1.014 — the cap is 1.8% short at a matched advance. Per-glyph, the
+     render segments 14/14 against canonical at a width ratio of exactly
+     1.0000 and a height ratio of 0.9820, so the advance is right and only the
+     height is wrong. scaleY is the only knob that moves one without the other:
+     14.3046 -> 13.7110.
+
+     A SIZE change cannot do this and the sweep says so. Raising font-size and
+     dividing the advance back out through scaleX was tried first at x1.009,
+     x1.018 and x1.027 and every one of them scored WORSE than shipping
+     (15.09, 15.97, 14.83 against 14.3046) at three different ty. The size
+     route re-rasterises the glyph and moves the hinting; the scaleY route
+     stretches what is already correct. Rule 40 control at the shipped values
+     reproduced 14.3046 exactly in both sweeps. */
+  display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, sy: 1.014,
+             ls: 0.0547,
              ws: 3.85, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
              bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: -0.3455 },
   /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
@@ -419,6 +434,7 @@ function runCss(name: string, r: Run) {
     `letter-spacing:${r.ls}em`,
     `color:${r.colour}`,
     `transform:scaleX(${r.scale})` +
+      (r.sy !== undefined ? ` scaleY(${r.sy})` : "") +
       (r.tx || r.ty ? ` translate(${(r.tx ?? 0).toFixed(4)}px,${(r.ty ?? 0).toFixed(4)}px)` : ""),
     `top:${u(r.top - r.dy - oy)}`,
     `line-height:normal${r.bang ? " !important" : ""}`,
