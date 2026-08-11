@@ -212,7 +212,13 @@ def capture_variants(url, variants, out_dir, steps=(), media_query="@media (max-
         "launchArgs": list(IOS_LAUNCH_ARGS if launch_args is None else launch_args),
         "variants": [{"name": n, "css": c, "out": os.path.join(out_dir, f"{n}.png")} for n, c in items],
     }
-    tmp = tempfile.mkdtemp(prefix="measure-capture-")
+    # The script must live INSIDE the app tree, not in /tmp. Node resolves a
+    # bare `import ... from "playwright"` by walking up from the IMPORTING
+    # FILE's own directory, so a script in /tmp cannot see the app's
+    # node_modules no matter what cwd it is run with, and the sweep dies with
+    # ERR_MODULE_NOT_FOUND before a single variant renders. Writing it beside
+    # capture-ios.mjs lets the ordinary upward resolution work.
+    tmp = tempfile.mkdtemp(prefix=".measure-capture-", dir=os.path.dirname(CAPTURE_IOS))
     script = os.path.join(tmp, "variants.mjs")
     specfile = os.path.join(tmp, "spec.json")
     with open(script, "w") as f:

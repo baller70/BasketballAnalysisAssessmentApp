@@ -338,8 +338,22 @@ export const RUNS: Record<string, Run> = {
      dy is deliberately unchanged. The joint sweep put ty 0.00 / 0.29 / 0.58
      device px at 8.4842 to four decimals — identical, so the lattice does not
      resolve them and moving it would record precision nobody measured. */
-  createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.7845, ls: -0.03,
-               colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
+  /* SOLVED AGAIN after the independent B+ grade measured this label 6.4%
+     oversized (per-glyph height 1.0638, width 1.0667) and ~5 device px low.
+
+     The grade's affine prescription was size 19.74 / sy 0.932. The SHIPPING
+     medium disagrees: swept as CSS in the shipping rasteriser, size 20.0 with
+     scaleX UNCHANGED at 0.7845 is the argmin, 8.4842 -> 4.8291. 19.74 scores
+     6.06 and 19.9 scores 5.14. This is rule 47 in the open — an image-space
+     affine is a bound on the defect, not a prescription for the CSS — and the
+     scale never needed touching at all, only the size and the lift.
+
+     dy 8.52 -> 12.52 lifts it 4.0 device px. The lattice does not resolve the
+     lift any finer: 3.5, 4.0, 4.5 and 5.0 all score 4.8291 to four decimals,
+     so 4.0 is the middle of the rung and not invented precision. Rule 40
+     control at the shipped 21.0/8.52 reproduced 8.4842 exactly. */
+  createLab: { x: 353.65, top: 1577.54, size: 20.0, weight: 480, scale: 0.7845, ls: -0.03,
+               colour: "#FFFFFF", dx: 1.16, dy: 12.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
            colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 0, ty: 0 },
   /* "Sign in" — the OPPOSITE diagnosis to createLab above, which is why the two
