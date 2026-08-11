@@ -1504,6 +1504,31 @@ differences of the kind rule 25 predicts; one is a genuine bug in the old code.
 
 ## Infrastructure notes
 
+### A running grader looks dead if you check the wrong thing
+
+Two traps, both hit in one wakeup while waiting on the 004 grader:
+
+**Its `.output` file's size and mtime are NOT a liveness signal.** The file
+showed 142 bytes, last written 33 minutes earlier, which read as "the agent died
+silently". It had not: the agent was mid-analysis and produced substantial
+results in the same minute the check ran. The path is a symlink to the subagent
+transcript and its stat does not track the agent's progress. **The completion
+notification is the signal.** An agent with no notification is running, and a
+quota death DOES notify — that is how the previous grader's death was learned.
+
+**Do not call `TaskOutput` on a `local_agent` task.** It returns the full JSONL
+transcript — every thinking block, every tool call, every base64 signature —
+and truncation does not save you; a single call dumped tens of thousands of
+tokens of another agent's reasoning into this context for no information that
+the completion notification would not have delivered cleanly. For a background
+BASH task the `.output` file is plain stdout and reading it is correct; for an
+AGENT it is not.
+
+THE RULE: waiting is not a task. If an agent is in flight and nothing else can
+proceed without it, re-arm the wakeup and stop — do not invent a liveness probe,
+and never one that reads its transcript.
+
+
 - **`pkill -f "next start"` kills the shell that runs it.** The pattern matches
   the killer's own command line, so a chain like
   `pkill -f "next start"; rm -rf .next && npx next build` dies at the first
