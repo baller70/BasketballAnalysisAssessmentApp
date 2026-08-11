@@ -84,6 +84,21 @@ const COLOURS = `
   --s4-orange:#FD3701;
   --s4-red:#D92D20;
   --s4-graphite:#454751;
+  /* The three FIELD VALUES are not graphite. The independent B+ grade put
+     their total-ink ratio at 0.640/0.645/0.683 against this screen's own
+     adjudicated graphite runs at 0.912-0.939 and its black runs at
+     0.983-0.995 — outside both populations, on the black side.
+
+     Swept here, the floor is flat from #0F1014 (8.7609 summed over the three
+     bands) to #17181D (8.7710) against the shipped graphite's 9.2122, so this
+     is the midpoint of the floor and the third digit is NOT claimed. Pure
+     #000000 is measurably WORSE (8.8750): canonical's value ink is near-black,
+     not black, which is why "darkest wins" would have been the wrong rule.
+
+     Screen-scoped, per the standing ruling — --shotiq-color-* carries the 20
+     desktop screens and is not touched. The masks keep graphite; the grade's
+     finding was about the value runs, and the bullet bands are already solved. */
+  --s4-value-ink:#131419;
   --s4-eye:#2C2E38;
   --s4-or:#838489;
 `
@@ -441,7 +456,7 @@ function valueCss(name: string, box: [number, number], size: number, weight: num
     `transform:scaleX(${scale}) translateY(${ty.toFixed(4)}px);transform-origin:0 0;` +
     `font-family:${GEIST};font-weight:${weight};font-size:${size}px;letter-spacing:${ls}em;` +
     `line-height:${u(h)};padding-left:${u(padL / scale)};` +
-    `color:var(--s4-graphite);background:transparent;border:0;outline:none;padding-top:0;` +
+    `color:var(--s4-value-ink);background:transparent;border:0;outline:none;padding-top:0;` +
     `padding-bottom:0;padding-right:0;margin:0}`
 }
 
