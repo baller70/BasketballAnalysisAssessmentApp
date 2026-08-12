@@ -125,17 +125,33 @@ export function EnvelopePencilMark() {
           and only their CONTACT is wrong. `diffMark` is the worst diagnostic
           sub-window on the screen at 32.0538.
 
-          The bottom edge ended at x=13 ("h9" from x=4) and the pencil's lower
-          tip sits near x=12.6; at sw 3.0 each is 1.5 units wide, so they cannot
-          help but touch. Shortening the run to "h8" ends it at x=12, one unit
-          clear, which is the smallest change that can separate them and costs
-          about 3 device px of a stroke canonical also stops short of — its
-          envelope component ends at col 72 while the pencil starts at col 51,
-          so canonical's bottom edge is demonstrably not carried across.
+          FIRST ATTEMPT SHORTENED THE WRONG AXIS. Reasoning that the edge ran
+          into the pencil horizontally, "h9" was cut to "h8". Built: diffMark
+          32.0538 -> 32.0003 and STILL ONE COMPONENT of 901. The hypothesis was
+          refuted by the thing it predicted — separation — not by the band.
 
-          BUILT AND MEASURED, not reasoned: if diffMark does not improve this is
-          reverted rather than kept for looking principled. */}
-      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8" />
+          Differencing the two inks against canonical in the contact region
+          (rows 34..56, cols 40..66) says the edge is in the wrong place
+          VERTICALLY:
+
+              rows 50..52, cols 40..47   canonical ink, render NONE
+              rows 55..56, cols 40..51   render ink, canonical none
+
+          so the whole bottom edge sits about 5 device px low, and the pencil
+          descends diagonally through exactly those columns at exactly those
+          rows — hence the bridge. Canonical's edge passes ABOVE the pencil at
+          the same columns, which is why it keeps two components without the
+          two shapes being any further apart.
+
+          The icon's ink spans 64 device px over ~22 viewBox units, k = 2.909,
+          so 5 device px is 1.72 units: the descent from y=6 becomes v9.3 (plus
+          the 2-unit corner arc) instead of v11, putting the edge at y 17.3
+          rather than 19. "h9" is restored, since it was never the problem.
+
+          STILL UNVERIFIED at the time of writing. Same standard as before: if
+          diffMark does not improve AND the component count does not reach
+          canonical's 2, this is reverted rather than kept. */}
+      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.3a2 2 0 0 0 2 2h9" />
       <path d="m21 6.6-8.6 5.5a2 2 0 0 1-2 0L2 6.6" />
       <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
     </Icon>
