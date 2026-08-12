@@ -1,15 +1,15 @@
-whole screen   mean|d| 3.1058   max 255   n_over8 73328
+whole screen   mean|d| 2.9456   max 255   n_over8 71436
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
-lede1         13.3703    254      6514
 display       12.3272    255     11939
-lede2          6.6738    247      3863
-terms          6.3632    255      5071
+lede1         11.4713    254      6283
+lede2          6.1787    234      3794
 labConfirm     5.7730    255      3348
-oneacct        5.7698    254      4232
+terms          5.1276    255      4860
 checkbox       4.6846     83       658
+oneacct        4.5576    235      4084
 eyePass        4.3232    211       655
 fieldEmail     4.1197    254      5090
 eyeConf        3.9912    211       595
@@ -23,10 +23,10 @@ labLast        2.7634    254      1725
 signin         2.3847    255      2250
 labEmail       1.6143    255      1086
 fieldFirst     1.3884    254      1227
-fieldConf      1.1362    103      1277
 orrow          1.1235    197       407
-fieldPass      1.1196    106      1265
 fieldLast      0.9765    254       842
+fieldConf      0.7951    103       646
+fieldPass      0.7887     98       663
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's
