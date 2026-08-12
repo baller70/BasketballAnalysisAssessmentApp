@@ -2615,6 +2615,44 @@ discovered late:
     every capture. It needs pinning for the harness the way canonical's other
     dynamic values are, or the band containing it can never be stable.
 
+### CLOSED, APP-WIDE: every database connection now runs in UTC
+
+Rule 81 says the next instance of a named class is usually within arm's reach of
+the first. The timezone defect had been found TWICE inside the verification-token
+layer, so the schema was swept rather than assumed clean. It was not clean:
+
+  * **all 55 timestamp columns** are `timestamp WITHOUT TIME ZONE`
+  * **~30 default to `CURRENT_TIMESTAMP`**, which is a `timestamptz` cast
+    through the SESSION's TimeZone, while Prisma reads the naive value back as
+    UTC. Measured on a temp table carrying the same default: **0 / +120 / -240
+    min** under UTC / Berlin / New_York.
+
+So the class was never confined to the token layer — it is EVERY
+default-written timestamp in the product, invisible on a UTC container and live
+on a default `initdb`. Sixteen sites compare these against JS time, and the
+load-bearing ones are not cosmetic:
+
+    points cooldown   Date.now() - last.createdAt.getTime() < action.cooldown
+                      west of UTC the gap reads hours too LARGE, so the cooldown
+                      never applies and points can be farmed
+    daily cap / week  createdAt: { gte: dayStart } selects the wrong rows
+    night-owl badge   createdAt.getUTCHours() >= 22 fires on the wrong hours
+
+**Fixed at the connection, not at the call sites**, because fixing thirty would
+leave the thirty-first to be written later — the session timezone is pinned via
+the URL's `options` parameter (not a `SET`, which configures only the pooled
+connection it lands on), and an explicit timezone already in the URL is left
+alone so a deployment can still override deliberately.
+
+Verified with the UNFIXED client as the control, same process, same databases —
+0/+120/-240 unfixed against 0/0/0 fixed — and end to end on a real build across
+all three zones: signup, mailed code verifies 200, stamp written, `created_at`
+drift 0 min, 3/3. Screen 005 unmoved at 6.0591 / n_over8 111868.
+
+The method note worth keeping: this was found by running the sweep a rule
+DEMANDED rather than by a grader finding a third instance. Two rounds in a row
+had shipped the next instance of a class named one commit earlier.
+
 ### NEEDS KEVIN: three paid API routes have no authentication at all
 
 `/api/llm`, `/api/upload` and `/api/vision-analyze` have no session check, no
