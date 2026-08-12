@@ -2739,7 +2739,51 @@ Every screen from 005 on should set its paper from its own canonical's modal
 colour as the FIRST thing it does, not the last — it is the cheapest large
 correction available and it moves every band at once.
 
+### OPEN, CLASS-LEVEL: the phone canvas is pinned LEFT between 394 and 767.98px
+
+Measured on the served 005 dist, `.s5` box and viewport in CSS px:
+
+    viewport   .s5 left..right   gap left / right
+    414        0..393            0 / 21
+    430        0..393            0 / 37
+    480        0..393            0 / 87
+    600        0..393            0 / 207
+    767        0..393            0 / 374
+
+Every pixel of slack is on the RIGHT. `PHONE_CSS` emits `.s5{...width:393px;
+margin:0}` inside the media query, and that `margin:0` defeats the wrapper's
+`mx-auto`, so on any phone wider than the 393pt design width — an iPhone 15 Pro
+Max is 430 — the whole screen sits against the left edge with a blank band down
+the right. `margin:0 auto` is the whole fix, and it is inside the media query so
+the desktop tree cannot move.
+
+CLASS-LEVEL: `phone-003.ts` and `phone-004.ts` carry the identical construction,
+so 003, 004 and 005 all have it. Found on 005 by the fourth grader; not fixed in
+round 5 because the fix belongs to all three screens at once and 004 is DONE at
+A — changing it needs a re-capture of 003 and 004 to confirm the graded numbers
+are untouched (they should be exactly, since capture is at 393 where the margin
+resolves to 0 either way, and that PREDICTION is the thing to verify).
+
 ### OPEN, CLASS-LEVEL: every phone screen scrolls horizontally below 393pt
+
+**005's instance clips a REQUIRED CONTROL, and the markup gate records the
+scroll without asking what got clipped.** The sixth code box sits at x 320..369
+in the fixed 393px canvas, so:
+
+    viewport 320   code box 6 at 320..369   entirely at/past the edge
+    viewport 344   clipped by 25px
+    viewport 360   clipped by 9px
+    viewport 375   clean
+    viewport 393   clean
+
+It is reachable by scrolling horizontally — so this is a usability defect, not a
+functional block, and that distinction is worth keeping straight: the control
+can be typed into, it just cannot be SEEN without scrolling on a 320-360pt
+phone. The gate's reflow probe prints `375 SCROLLS 360 SCROLLS 320 SCROLLS —
+matches the recorded class-level state`, which is rule 74's shape: a baseline
+that encodes a known defect as the expected value, and therefore never asks the
+follow-up question. The probe should assert WHICH elements leave the viewport,
+not merely that the document does.
 
 Found by the sixth grader on 004 and explicitly NOT a 004 defect, so it is
 recorded here rather than counted against that screen. At any viewport narrower
