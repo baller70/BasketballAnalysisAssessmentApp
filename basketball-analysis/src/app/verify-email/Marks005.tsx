@@ -205,8 +205,15 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       {/* the header hairline — full bleed, ink 64.7 units over its band */}
       <rect x={0} y={HEADER_RULE - 1.085} width={853} height={2.17} fill="var(--s5-header-rule)" />
 
-      {/* The six code boxes. The focused one carries canonical's orange border —
-          2.06 device px against the others' 1.02, solved from ink mass rather
+      {/* The six code boxes. The UNFOCUSED border is 2.17 device px, the same
+          physical stroke as the header rule and the help-list dividers —
+          canonical draws them alike and the render had been drawing this one at
+          47% of it. The proof it was a WIDTH error and not a tone error is
+          algebraic: canonical carries 272.3 ink units across this stroke, and
+          1.02 px of even pure black yields 254, so no colour was reachable.
+          See the `--s5-box-rule` note in phone-005.ts.
+          The focused one carries canonical's orange border —
+          2.06 device px, solved from ink mass rather
           than from 50%-crossings, because at two pixels wide the crossings are
           unsharp-mask overshoot (rule 8): canonical carries 387.8 units of
           green ink across it and orange's own green is 66, so 387.8/188 = 2.06.
@@ -215,7 +222,7 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       {BOX_X.map((x, i) => (
         <rect key={x} x={x} y={BOX_Y} width={BOX_W[i]} height={BOX_H} rx={BOX_R}
               stroke={i === focus ? ORANGE : "var(--s5-box-rule)"}
-              strokeWidth={i === focus ? 2.06 : 1.02} fill="none" />
+              strokeWidth={i === focus ? 2.06 : 2.17} fill="none" />
       ))}
 
       {/* the caret in the focused box, only while that box is still empty —

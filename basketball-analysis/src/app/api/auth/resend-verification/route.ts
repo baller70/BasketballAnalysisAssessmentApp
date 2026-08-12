@@ -91,16 +91,39 @@ export async function POST(request: NextRequest) {
       subject: `acct:${accountEmail}`,
     }).response
 
-  const { response: limited } = checkRateLimit(request, {
-    bucket: "resend-verification",
-    limit: 3,
+  // A CHEAP GUARD ON WORK, keyed on whatever the caller typed. This exists only
+  // to bound how much lookup an unidentified caller can force before the real
+  // limit is reached; it is deliberately loose, because a tight limit keyed on
+  // an attacker-chosen string is a lockout waiting to happen.
+  const { response: floodLimited } = checkRateLimit(request, {
+    bucket: "resend-verification-flood",
+    limit: 20,
     windowMs: 60_000,
     subject,
   })
-  if (limited) return limited
+  if (floodLimited) return floodLimited
 
-  // The DAILY ceiling lives further down, keyed on the RESOLVED ACCOUNT rather
-  // than on whatever the caller typed — see `dailyCeiling` below.
+  /**
+   * THE COOLDOWN, and it is ONE budget per account.
+   *
+   * This was keyed on `subject`, which resolves to the ADDRESS for an anonymous
+   * caller and to `u:<id>` for a signed-in one — two budgets for one account.
+   * Measured on a single account inside one minute: 3 of 4 anonymous requests
+   * accepted AND 3 of 4 signed-in requests accepted, i.e. 6 sends where the
+   * comment promises 3. That is the identical defect the daily ceiling below
+   * had, one line above it, fixed there and not here.
+   *
+   * Keyed on the resolved account and charged where the cost is, both callers
+   * share one 3/min window, so `RESEND_COOLDOWN_SECONDS` and the limit agree
+   * for a player who signs in halfway through the countdown.
+   */
+  const perMinute = (accountEmail: string) =>
+    !!checkRateLimit(request, {
+      bucket: "resend-verification",
+      limit: 3,
+      windowMs: 60_000,
+      subject: `acct:${accountEmail}`,
+    }).response
 
   if (!session) {
     if (!bodyEmail) {
@@ -129,7 +152,7 @@ export async function POST(request: NextRequest) {
     // removes the millisecond-scale signal that was actually measurable, not
     // every conceivable one.
     if (user && !user.emailVerified) {
-      if (dailyCeiling(user.email)) {
+      if (perMinute(user.email) || dailyCeiling(user.email)) {
         // Uniform with the success shape: refusing differently here would say
         // "this address exists and has been mailed a lot today".
         return NextResponse.json({ success: true, cooldownSeconds: RESEND_COOLDOWN_SECONDS })
@@ -153,6 +176,13 @@ export async function POST(request: NextRequest) {
   }
   if (user.emailVerified) {
     return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
+  }
+
+  if (perMinute(user.email)) {
+    return NextResponse.json({
+      success: false,
+      error: "Please wait a moment before asking for another email.",
+    }, { status: 429 })
   }
 
   if (dailyCeiling(user.email)) {

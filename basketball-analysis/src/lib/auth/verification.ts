@@ -52,6 +52,14 @@ export type VerificationTokenType =
 // The CODE is shorter-lived still: it is six digits, so its search space is a
 // million where the link's is 2^256, and the defence against guessing is short
 // life + single use + a rate limit on the endpoint rather than entropy.
+/**
+ * How long a `password_reset` token is protected from rotation. See the long
+ * note in `issueToken`: reuse cannot revoke a leaked link and rotation can be
+ * weaponised into a denial of account recovery, so a reset token is immutable
+ * for this window and rotatable after it.
+ */
+const RESET_GRACE_MS = 1000 * 60 * 15
+
 const TTL_MS: Record<VerificationTokenType, number> = {
   email_verify: 1000 * 60 * 60 * 24, // 24h
   email_verify_code: 1000 * 60 * 10, // 10min
@@ -113,17 +121,40 @@ export async function issueToken(
   //
   // The two risks are not the same size. A stale verification code is an
   // availability nuisance against an address; a live reset link that cannot be
-  // revoked is an account-takeover credential. So verification reuses and reset
-  // rotates, and forgot-password's flood risk is carried by its own rate limit
-  // instead.
-  const reusable = type !== "password_reset"
-  if (reusable) {
-    const existing = await prisma.verificationToken.findUnique({
-      where: { uniq_verification_token_user_type: { userId, type } },
-    })
-    if (existing && existing.expiresAt.getTime() > Date.now()) {
-      return { token: existing.token, expiresAt: existing.expiresAt }
-    }
+  // revoked is an account-takeover credential.
+  //
+  // BUT ROTATION IS A WEAPON TOO, and shipping it unqualified was measured as an
+  // unauthenticated, indefinite denial of account RECOVERY:
+  //
+  //     victim requests a reset          -> link d343f28c…
+  //     attacker POSTs the same address  -> 200, rotated to e23982a5…
+  //     victim clicks THEIR link         -> 400 "invalid or has expired"
+  //
+  // 3/3, with the newest link succeeding as the positive control. Any victim's
+  // link is dead within seconds, forever, for anyone who knows the address —
+  // the exact mirror of the denial-of-verification weapon reuse was introduced
+  // to close. Neither policy is safe on its own: reuse cannot revoke, rotation
+  // can be weaponised.
+  //
+  // A GRACE WINDOW buys both. A token younger than `RESET_GRACE_MS` is reused,
+  // so an attacker hammering the endpoint cannot invalidate a link the player
+  // is walking to their inbox to click; once it is older than that, a fresh
+  // request rotates, so a leaked link still has a user-reachable remedy. The
+  // cost is stated rather than hidden: a leaked link stays live for up to the
+  // grace window after the player asks for a new one, and a player who waits
+  // longer than the grace window gets a new link (which is what they asked
+  // for). 15 minutes against a 1-hour TTL puts the denial window well inside
+  // the time it takes to read a mail, and the revocation delay well inside the
+  // token's life.
+  const existing = await prisma.verificationToken.findUnique({
+    where: { uniq_verification_token_user_type: { userId, type } },
+  })
+  const live = !!existing && existing.expiresAt.getTime() > Date.now()
+  const reusable =
+    type !== "password_reset" ||
+    (!!existing && existing.createdAt.getTime() > Date.now() - RESET_GRACE_MS)
+  if (live && reusable && existing) {
+    return { token: existing.token, expiresAt: existing.expiresAt }
   }
 
   return claimToken(userId, type, generateToken(), reusable)
@@ -162,17 +193,44 @@ async function claimToken(
   const expiresAt = new Date(Date.now() + TTL_MS[type])
   const id = randomBytes(12).toString("hex")
 
+  // EVERY TIMESTAMP HERE IS EXPLICITLY UTC, and leaving that implicit was a
+  // total, deployment-dependent failure of the product's whole credential
+  // layer.
+  //
+  // `expires_at` is `timestamp(3) WITHOUT TIME ZONE`. Prisma's typed client
+  // converts a JS Date to UTC before writing one; a raw parameter is handed to
+  // Postgres, which resolves it in the SESSION's TimeZone. Moving from `upsert`
+  // to `$queryRaw` therefore changed the meaning of the same Date. One
+  // variable, both paths, under TimeZone='Europe/Berlin':
+  //
+  //     prisma typed create   JS wrote 15:08:36Z  ->  stored 15:08:36   correct
+  //     $queryRaw (unfixed)   JS wrote 15:07:44Z  ->  stored 17:07:44   +2h
+  //
+  // West of UTC the offset is negative, so a 10-minute code is born already
+  // expired and email verification returns "incorrect or has expired" for
+  // everyone — measured 3/3 under America/New_York, against a 3/3 control on
+  // the same build with the session reset to UTC. East of UTC the sign flips
+  // and the code lives 10 minutes PLUS the offset, which quietly falsifies the
+  // brute-force arithmetic the verify route argues from. `email_verify` and
+  // `password_reset` are the same column and inherit both halves.
+  //
+  // A default `initdb` takes the TimeZone from the host, so this is invisible
+  // on a UTC container and fatal on a self-hosted box — the deployment this
+  // repository documents. `AT TIME ZONE 'UTC'` reads the parameter as an
+  // instant and writes the naive column in UTC, and `now() AT TIME ZONE 'UTC'`
+  // compares against the same clock, so neither the write nor the freshness
+  // test depends on the session any more.
   const rows = reusable
     ? await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
         INSERT INTO verification_tokens (id, user_id, token, type, expires_at)
-        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt})
+        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt}::timestamptz AT TIME ZONE 'UTC')
         ON CONFLICT (user_id, type) DO UPDATE
           SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
-          WHERE verification_tokens.expires_at <= now()
+          WHERE verification_tokens.expires_at <= (now() AT TIME ZONE 'UTC')
         RETURNING token, expires_at`
     : await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
         INSERT INTO verification_tokens (id, user_id, token, type, expires_at)
-        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt})
+        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt}::timestamptz AT TIME ZONE 'UTC')
         ON CONFLICT (user_id, type) DO UPDATE
           SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
         RETURNING token, expires_at`

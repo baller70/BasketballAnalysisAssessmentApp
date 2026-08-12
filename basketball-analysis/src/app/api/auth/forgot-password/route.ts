@@ -34,6 +34,20 @@ export async function POST(request: NextRequest) {
   })
   if (limited) return limited
 
+  // AND A DAILY CEILING, for the reason /api/auth/resend-verification has one:
+  // a per-minute limit is not a limit on VOLUME. 5/min sustained is 7,200 mails
+  // a day into one inbox, aimed by anyone who knows the address — larger than
+  // the 4,320 the resend route's own ceiling exists to prevent, and this route
+  // had no ceiling at all, so the claim that mail to an inbox is bounded was
+  // only true of one of the two routes that send it.
+  const { response: dayLimited } = checkRateLimit(request, {
+    bucket: "auth-forgot-password-daily",
+    limit: 10,
+    windowMs: 24 * 60 * 60_000,
+    subject: email || "anon",
+  })
+  if (dayLimited) return dayLimited
+
   // Generic response used for every outcome (no account enumeration).
   const genericResponse = (devResetUrl?: string) =>
     NextResponse.json({

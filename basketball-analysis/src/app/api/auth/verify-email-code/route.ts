@@ -142,7 +142,30 @@ export async function POST(request: NextRequest) {
         })
       : null
 
-  if (!user) return await fail()
+  // EQUALISE THE WORK, NOT JUST THE CLOCK.
+  //
+  // The floor above closes the oracle while the server is idle, and a floor
+  // cannot hide a difference LARGER than itself. Under load the second query —
+  // the token lookup only an existing account reaches — costs more than 25 ms,
+  // and the separation comes straight back. Measured at 60-way concurrency,
+  // three replicates of n=180 per class:
+  //
+  //     existing median 155.77 ms   absent 133.34 ms   z=5.90  p=3.6e-9
+  //     replicates: median deltas +31.5, +15.5, +21.2 ms, all p < 1e-8
+  //     negative control (both classes ABSENT, same load): z=-0.45, p=0.65
+  //
+  // and the attacker supplies the load themselves, so this is not a lucky
+  // condition. The fix is to make both classes do the SAME WORK: when there is
+  // no account, look a decoy token up anyway. The decoy is shaped like a real
+  // namespaced code value and cannot exist (the namespace is a userId), so it
+  // always misses — but it costs the same indexed probe that the real path
+  // pays, which is the thing being timed.
+  if (!user) {
+    await prisma.verificationToken
+      .findUnique({ where: { token: `${"0".repeat(25)}:${code}` } })
+      .catch(() => null)
+    return await fail()
+  }
 
   // ALREADY-VERIFIED IS A SUCCESS **ONLY FOR A CALLER WHO IS SIGNED IN**, and
   // the first version of this was an account-existence oracle for exactly the

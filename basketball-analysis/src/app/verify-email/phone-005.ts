@@ -90,7 +90,19 @@ const COLOURS = `
   --s5-ink:#000000;
   --s5-graphite:#454751;
   --s5-orange:#FD4201;
-  --s5-box-rule:#6D6D6D;
+  /* THE TONE COULD NEVER BE RIGHT AT THE OLD WIDTH, which is why it kept moving.
+     Canonical's code-box border carries 272.3 ink units across the stroke
+     (median over 250 crossings). At the 1.02 device px the render drew, even
+     pure black yields 254 — so NO colour reached canonical's ink, and the token
+     had been absorbing a geometry error: #050505 matched the ink and not the
+     tone, #6D6D6D matched neither (149 against 272).
+     Calibrated against a role this project has already solved (rule 51):
+     canonical's help-list divider is a known 2.17 px stroke carrying 69.7 units,
+     which implies 221.9 = #DDDDDD — exactly the shipped divider token, so the
+     method reproduces a known answer. The same method on the box border gives
+     272.3 units at a 1.725 px 50%-width, i.e. ~128.5 at 2.17 px. The stroke is
+     widened to 2.17 in Marks005 and the tone set from that. */
+  --s5-box-rule:#808080;
   --s5-divider:#DDDDDD;
   /* THE HEADER RULE KEEPS ITS OWN TOKEN AND ITS OWN VALUE IS THE DIVIDERS',
      which is a measured null rather than an oversight. Canonical carries 65.2
@@ -157,6 +169,18 @@ export const BOX_R = 12.0
 export const BOX_X = [50.45, 180.42, 309.18, 438.06, 567.35, 695.20]
 export const BOX_W = [105.45, 105.32, 105.22, 104.74, 103.89, 105.64]
 export const PLATE = { x: 53.85, y: 904.78, w: 741.81, h: 111.55, r: 11 }
+/* MOVING THIS MOVES NOTHING — the container offset cancels, measured.
+   `diffLab` reads L+1 R+1 and `diffMark` L+2 R+1 T+1 B+1, same-sign on every
+   edge of both, so rule 15 says one cause and their shared container is the
+   obvious place to fix it. Built, it is not: the children are positioned
+   `left: u(x - ox)` with `ox = DIFFBTN.x`, so moving the container LEFT by 1
+   moves each child's own left RIGHT by 1 and the two exactly cancel. The button
+   rect moved, the label did not — diffBtn 9.2547 -> 9.9779 with diffLab
+   unchanged at 23.4138.
+   The border was already aligned; it is the CONTENTS that sit right. So the
+   nudge belongs on the children after all, and rule 15's "one cause, one
+   number" is about the cause, not about which coordinate happens to be shared.
+   x stays where it was measured. */
 export const DIFFBTN = { x: 53.77, y: 1048.14, w: 741.95, h: 111.23, r: 11 }
 export const DIVIDERS = [1208.20, 1380.49, 1486.29, 1599.45]
 export const DIVIDER_X = 56.5
@@ -369,7 +393,10 @@ export const RUNS: Record<string, Run> = {
   /* "Use a different email" inside the outlined button. */
   /* Cap 1.040 over, advance 1.193 over: size 15.6 -> 15.0, scaleX -> 0.837. */
   diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.837, ls: -0.004,
-             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: 0, ty: -0.4607,
+             /* tx +0.5504 = RIGHT 1 device px. The direction was established by
+                BUILDING both: left-1 took this band 23.4138 -> 35.8642 and left
+                the residual asking for right-2, so the sign is not arguable. */
+             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: 0.5504, ty: -0.4607,
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
@@ -580,6 +607,10 @@ export const MARK_BOXES: Record<
   gear: [751, 28.96, 54, 51.0, 0, 0],
   back: [35.54, 127.54, 51.5, 51.5, 0, 0, 1.0, -1.0],
   plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y, 0, 1.0],
+  /* diffMark carries NO nudge: its shift-search optimum is already dy0 dx0 and
+     equals its base (32.0538), so the sixth grade's recommendation to move it
+     was a change with nothing to buy. Built with left-1 it went 32.0538 ->
+     32.4834, which is the confirmation. */
   diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
   helpMark1: [53.65, 1299.8, 67.0, 61.5, 56, 1290],
   helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
