@@ -1,32 +1,32 @@
-whole screen   mean|d| 3.7825   max 255   n_over8 79258
+whole screen   mean|d| 3.6956   max 255   n_over8 76152
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
-lede1         14.1329    255      6702
+lede1         13.8831    255      6700
 display       12.7612    255     12748
-lede2          7.5898    248      4027
-checkbox       7.1859    171       773
-eyePass        7.0040    217       782
+lede2          7.2253    248      3995
 terms          6.8756    255      5266
-eyeConf        6.8625    211       763
-labConfirm     6.6196    255      3417
+labConfirm     6.3993    255      3403
 oneacct        6.3291    255      4362
-monogram       5.5289    255      1414
-fieldEmail     4.8055    255      5868
+checkbox       5.2033     84       734
+eyePass        5.0992    211       716
+eyeConf        5.0148    211       645
+monogram       4.9232    255      1393
+fieldEmail     4.7174    255      5237
 plate          4.0960    255     11259
 wordmark       4.0584    255      2882
-labFirst       3.9349    255      1965
-helpPass       3.6233    202      2353
+labFirst       3.6701    253      1975
 labPass        3.5308    255      2057
-labLast        3.4984    255      1772
-signin         3.0637    255      3119
+helpPass       3.4332    184      2301
+labLast        3.3847    255      1782
+signin         3.0047    255      2344
 labEmail       2.2922    255      1148
-fieldFirst     2.1003    255      1381
-fieldConf      1.9180    166      1627
-fieldPass      1.8008    169      1311
-fieldLast      1.7583    255      1663
-orrow          1.7513    198       417
+fieldFirst     2.0065    255      1274
+fieldConf      1.8667    166      1323
+fieldPass      1.7712    169      1298
+orrow          1.7028    198       416
+fieldLast      1.6517    255       872
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's

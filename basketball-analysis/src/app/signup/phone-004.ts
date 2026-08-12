@@ -815,12 +815,18 @@ export const PHONE_CSS = `@media (max-width: 767.98px){
    full-page screenshot was BYTE-IDENTICAL to the unfocused page. That is a
    WCAG 2.4.7 failure, and it is one the recipe introduced — the checkbox, which
    never had 'outline:none', still shows the UA ring correctly.
-   Restored on ':focus-visible' only, so it is invisible to a pointer user, to
-   the canonical captures and to every band mean: canonical is the FILLED,
-   BLURRED form (rule 17) and the harness blurs before shooting, so no focused
-   control is ever in frame. Drawn INSIDE the field with an inset shadow rather
-   than an outline, because the field border is an SVG rect underneath and an
-   outline would ring the transparent input box instead of the visible border. */
+   Restored on ':focus-visible'. MEASURED, NOT ASSUMED, and the first version of
+   this comment was wrong about it: a TEXT INPUT matches ':focus-visible' on a
+   pointer click too, because it accepts keyboard input — that is the spec, and
+   the ring duly appears on click (box-shadow computed rgb(253,55,1) inset in
+   both paths). Only the two eye BUTTONS get the keyboard-only behaviour.
+   That is fine, and it is not what protects the canonical render. THE BLUR IS:
+   canonical is the FILLED, BLURRED form (rule 17) and the route map's steps end
+   with a blur, so no focused control is ever in frame and every band mean is
+   untouched — confirmed by the round-8 capture landing on its predicted figure.
+   Drawn INSIDE the field with an inset shadow rather than an outline, because
+   the field border is an SVG rect underneath and an outline would ring the
+   transparent input box instead of the visible border. */
 .s4 [data-s4="valFirst"]:focus-visible,
 .s4 [data-s4="valLast"]:focus-visible,
 .s4 [data-s4="valEmail"]:focus-visible,

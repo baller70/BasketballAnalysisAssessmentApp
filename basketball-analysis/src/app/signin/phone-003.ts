@@ -580,10 +580,13 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
    Found by the seventh grade of 004 — which flagged it as class-level rather
    than 004's own — and fixed here in the same change, because 003 is graded A
    and a screen at A should not be sitting on a known failure.
-   ':focus-visible' only, so the pointer path, the canonical captures and every
-   band mean are untouched: canonical is the filled, blurred form and the
-   harness blurs before shooting. Inset shadow rather than outline for the same
-   reason as 004 — the visible border is an SVG rect beneath the input. */
+   ':focus-visible'. Note that a text input matches it on a POINTER click as
+   well — that is the spec for controls that accept keyboard input — so the ring
+   shows either way. What keeps the canonical captures and every band mean
+   untouched is the BLUR, not the pointer/keyboard distinction: canonical is the
+   filled, blurred form and the route map's steps end with a blur. Inset shadow
+   rather than outline for the same reason as 004 — the visible border is an SVG
+   rect beneath the input. */
 .s3 [data-s3="valueEmail"]:focus-visible,
 .s3 [data-s3="valuePass"]:focus-visible{
   outline:none;box-shadow:inset 0 0 0 ${u(3.4)} var(--shotiq-color-ink);border-radius:${u(11.5)}}
