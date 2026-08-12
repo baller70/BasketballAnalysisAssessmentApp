@@ -1,9 +1,9 @@
-whole screen   mean|d| 2.6189   max 255   n_over8 62844
+whole screen   mean|d| 2.6520   max 255   n_over8 63053
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
-lede1          9.8392    254      5419
+lede1         11.2284    254      5628
 display        8.0289    254      9083
 lede2          5.8551    234      3373
 labConfirm     5.6160    254      2826
