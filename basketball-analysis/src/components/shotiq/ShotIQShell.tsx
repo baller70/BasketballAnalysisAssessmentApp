@@ -123,9 +123,23 @@ export function ShotIQShell({
   const go = (href: string) => { setPanel(null); setQuery(""); router.push(href) }
 
   return (
+    /* 900 is the DESKTOP canonical height and it belongs at desktop only. As an
+       inline style it applied at every width, including the 393x852 phone, where
+       it forced the document 48pt taller than the viewport and left a blank band
+       below the fold. /signin and /signup each hit this and each was fixed on its
+       own page — nobody fixed the shell they were copied from, so 42 of the 72
+       phone screens still reported scrollHeight 900 against innerHeight 852 when
+       the capture harness finally grew a vertical arm (rule 56). One line, 42
+       screens.
+
+       Gated with `md:` exactly as those two pages were. The md breakpoint is
+       768px and desktop is 1440, so every desktop screen keeps the identical
+       computed min-height and the B+ set cannot move.
+
+       It is a className and not an inline style for the reason the bug existed:
+       an inline style beats the media query and cannot be scoped. */
     <div
-      className="shotiq-canonical relative mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
-      style={{ minHeight: 900 }}
+      className="shotiq-canonical relative mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px]"
     >
       {/* Canonical phone chrome — top bar + five-item bottom tab bar, below the
           tablet breakpoint only. See ShotIQPhoneChrome.tsx for the measured
