@@ -148,10 +148,25 @@ export function EnvelopePencilMark() {
           the 2-unit corner arc) instead of v11, putting the edge at y 17.3
           rather than 19. "h9" is restored, since it was never the problem.
 
-          STILL UNVERIFIED at the time of writing. Same standard as before: if
-          diffMark does not improve AND the component count does not reach
-          canonical's 2, this is reverted rather than kept. */}
-      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.3a2 2 0 0 0 2 2h9" />
+          VERIFIED AND KEPT: diffMark 32.0003 -> 26.9933, whole screen 5.6109 ->
+          5.5895. The edge is now ON canonical's rows — the same difference map
+          reads "#" across rows 50..52, cols 38..46, where before it read C on
+          canonical's rows and R five rows below.
+
+          IT IS ALSO INCOMPLETE, and the same map says why: at rows 50..52 the
+          render still holds ink alone across cols 47..54, so our bottom edge
+          RUNS ABOUT 8 DEVICE PX FURTHER RIGHT than canonical's, and the pencil
+          descends through those columns. So the first attempt's instinct —
+          shorten the run — was right in kind, and wrong in both order and
+          magnitude: it was applied while the edge was still five rows low,
+          where it could not help, and one unit is a third of what is needed.
+
+          Canonical's edge ends near col 46.5, which at k = 2.909 is x = 11.3,
+          so the run from x=4 is h7.3 rather than h9. Components are still ONE
+          at thresholds 140/180/210 (895/953/995 against canonical's 2), so this
+          is the remaining bridge and the same test still governs it: keep only
+          if diffMark improves and the count reaches 2. */}
+      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.3a2 2 0 0 0 2 2h7.3" />
       <path d="m21 6.6-8.6 5.5a2 2 0 0 1-2 0L2 6.6" />
       <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
     </Icon>
