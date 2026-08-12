@@ -31,11 +31,15 @@ interface VisionAnalysisRequest {
 }
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 30 vision analyses per minute per IP.
+  // 30 a minute, ONE BUCKET FOR EVERYONE — `subject: null` is deliberate, for
+  // the same reason as /api/llm: this guards shared model spend, and the route
+  // resolves no session to key on. One client can exhaust it for everyone; that
+  // needs real client identity to close, not a different key.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'vision-analyze',
     limit: 30,
     windowMs: 60_000,
+    subject: null,
   })
   if (limited) return limited
 

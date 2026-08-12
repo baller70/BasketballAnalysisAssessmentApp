@@ -34,15 +34,6 @@ export async function POST(request: NextRequest) {
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
 
-  // 10 attempts a minute per IP. A million-wide space at that rate is ~95 years
-  // to a 50% chance on one live 10-minute code, and the code is single-use.
-  const { response: limited } = checkRateLimit(request, {
-    bucket: "verify-email-code",
-    limit: 10,
-    windowMs: 60_000,
-  })
-  if (limited) return limited
-
   const body = await request.json().catch(() => null)
   const code = normalizeEmailCode(typeof body?.code === "string" ? body.code : "")
   const bodyEmail =
@@ -57,6 +48,32 @@ export async function POST(request: NextRequest) {
   if (code.length !== EMAIL_CODE_LENGTH) return fail()
 
   const session = await getSessionUser(request)
+
+  // 10 attempts a minute PER ACCOUNT. A million-wide space at that rate is ~95
+  // years to a 50% chance on one live 10-minute code, and the code is
+  // single-use — that arithmetic is unchanged by the key, because 10/min
+  // against one account is 10/min either way.
+  //
+  // What the key changes is who else is affected. Keyed on the client alone it
+  // was keyed on nothing: `request.ip` is undefined under `next start` and the
+  // default trusted-proxy depth is 0, so every caller in the world hashed to
+  // 'unknown' and shared one 10/min budget. Measured: an attacker submitting 10
+  // junk codes at addresses that do not exist made a real player's VALID code
+  // return 429 with `email_verified` still NULL; after the window that same code
+  // returned 200. Ten requests a minute, unauthenticated, from anywhere, denied
+  // this screen's only action to every user of the product.
+  //
+  // The limiter also moved BELOW the body parse so the subject exists to key on.
+  // A caller who names no account cannot succeed here anyway, so it gets its own
+  // bucket rather than sharing one with the callers who can.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: "verify-email-code",
+    limit: 10,
+    windowMs: 60_000,
+    subject: session ? `u:${session.userId}` : bodyEmail || "anon",
+  })
+  if (limited) return limited
+
   const user = session
     ? await prisma.user.findUnique({
         where: { id: session.userId },
@@ -116,6 +133,15 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       data: { emailVerified: new Date() },
     })
+    // THE LINK IS SPENT TOO. Both credentials are issued together and either
+    // one verifies the address, so once the code has done it the emailed link
+    // is a credential that outlives its purpose — it stayed valid for the rest
+    // of its 24 hours, in an inbox, after the thing it authorises had already
+    // happened. Best-effort: the address is verified either way, so a failure
+    // here must not turn a successful verification into a 500.
+    await prisma.verificationToken
+      .deleteMany({ where: { userId, type: "email_verify" } })
+      .catch(() => {})
   } catch (error) {
     console.error("Failed to mark email verified from code:", error)
     return NextResponse.json(

@@ -228,10 +228,53 @@ export const RUNS: Record<string, Run> = {
      run, which no single translation can close and which a per-word optimum
      scatter would have called noise. 26.6613 -> 24.5721, and 0.1654 of whole
      screen. Flat across tx 0.93-1.11 x ws 0.8-1.0 (24.57-24.87), so the
-     trailing digits are the rung, not a precision claim. */
-  display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.586, skew: -6.0,
+     trailing digits are the rung, not a precision claim.
+
+     ROUND 4 — THE SKEW AND THE SCALE ARE ONE TRANSFORM, AND SOLVING THE
+     ADVANCE SILENTLY UNSLANTED THE RUN. The emitted transform is
+     'scaleX(s) skewX(k)', and CSS applies the RIGHT factor first, so the
+     horizontal displacement the skew produces is multiplied by the scale:
+     the matrix c term is s x tan(k), not tan(k). The -6.0 above was measured
+     off canonical correctly and was correct WHEN IT WAS SET, at scale 1.00.
+     Rounds 1 and 2 then moved scaleX 1.00 -> 0.744 -> 0.586 to land the
+     advance, and each of those moves flattened the slant without touching
+     the skew value or naming it in any band. Measured on the left stem of
+     the E of EMAIL, which is a true vertical and fits a line to rms 0.29
+     device px in both images:
+
+       canonical  +6.082 deg      render (skew -6.0)  +3.554 deg
+
+     and 0.586 x tan(6.00deg) = 0.0616 against the readback matrix's
+     -0.0615911, which is the mechanism rather than a coincidence. Holding
+     canonical's slope fixed, the skew that survives the scale is
+     atan(0.10655 / 0.586) = 10.307 deg.
+
+     Swept as a 2-D grid because skew about transform-origin 0 0 TRANSLATES
+     the ink as well as shearing it, so skew and tx are a compensated pair by
+     construction (rules 59, 61) — and the 1-D column proves it, every
+     candidate at the old tx 1.11 scoring 40.5-58.5 against the control's
+     24.57. Coarse 5 x 4 then fine 5 x 5, rule-40 control reproducing 24.5721
+     / 6.7842 exactly on both. Bracketed on both axes at the optimum: skew
+     10.1/10.2/10.3/10.4/10.5 -> 20.2189/20.2367/19.9365/19.9380/20.2745 and
+     tx 4.30/4.45/4.60/4.75/4.90 -> 20.2274/20.0262/19.9365/20.3075/20.7553.
+     The fine grid spans 19.93-20.91, so these are the rung and not a
+     precision claim; 10.3 is kept because it is also the derived value.
+
+     24.5721 -> 19.9365, and 0.3670 of whole screen. The built render's
+     E-stem now reads +6.086 deg against canonical's +6.082.
+
+     TWO THINGS THIS RETIRES. The advance ratio was 1.0076 and is now 1.0019
+     WITHOUT touching scale — the extents were wide because the ink was
+     upright, so the scale is not re-solved here (measured, not assumed). And
+     the '-1 / -4 / -2 device px left' scatter recorded above was the missing
+     slant seen edge-on: a shear displaces ink in proportion to its height, so
+     it reads as a gap opening along the run. Re-measured on the shipped
+     render, the per-word PIXEL optimum is dy0/dx0, dy0/dx-1, dy0/dx0 — worth
+     0.0480 of whole screen in total, against this one value's 0.3670. Per-word
+     placement is not the lever; it was the symptom. */
+  display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.586, skew: -10.3,
              ls: 0.0, colour: "var(--s5-ink)", family: TUNGSTEN, bang: true,
-             ws: 0.8, dx: 1.2, dy: 36.4, tx: 1.11, ty: 0 },
+             ws: 0.8, dx: 1.2, dy: 36.4, tx: 4.60, ty: 0 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
   /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
   /* ty +2 / -2 device px, and the OPPOSITE SIGNS are the finding: the two
@@ -487,14 +530,47 @@ export const MARK_BOXES: Record<string, [number, number, number, number, number,
      bbox against canonical's, which is the only thing that pins a lucide
      drawing's inset — the drawings do not all inset by the same fraction and
      assuming they did left each mark wrong by a different amount. */
-  gear: [751, 26.96, 54, 51.0, 0, 0],
+  /* ROUND 4 — A ONE-UNIT NUDGE HERE IS NOT A ONE-DEVICE-PIXEL MOVE, AND THAT
+     IS WHY HALF OF THIS ROUND'S MARK EDITS WERE REVERTED.
+
+     Each mark's window was scored against canonical at every (dy,dx) in +/-3
+     device px and the minimum taken — a better instrument than comparing ink
+     extents, because an extent is one thresholded row and moves with
+     antialiasing while the minimum is over every pixel. Eight of ten marks
+     showed a 1-2 device px optimum. All eight were applied. The BUILT capture
+     then said:
+
+       gear       11.6112 ->  8.9253   kept      (down 2 units)
+       diffMark   37.9676 -> 32.0538   kept      (down 2 units)
+       chev1       2.9223 ->  2.6768   kept      (up 1, right 1)
+       back        8.1680 ->  9.8710   REVERTED  (worse)
+       helpMark1  22.0527 -> 23.1614   REVERTED  (worse)
+       plateMark  15.3721 -> 15.6625   REVERTED  (worse)
+       chev2/3     unchanged to 4 dp   REVERTED  (the edit did nothing at all)
+
+     The mechanism, measured rather than assumed. These numbers are canonical
+     device px; `u()` converts them to CSS px, the browser lays the box out at a
+     fractional CSS position, and the raster rounds. So the screen move per unit
+     is not 1 — across marks that got the SAME size edit it came out at 1
+     (diffMark), ~1.5 (gear) and 2 (back), and 0 for two of the chevrons. That
+     also explains why three optima did not merely fail to close but flipped
+     sign: back's went (+1,-1) -> (-1,+1), i.e. a 1-unit edit moved it 2.
+
+     So a sub-pixel mark nudge cannot be PREDICTED from the shift search here
+     the way a type parameter can be predicted from a sweep — the sweep injects
+     the property the recipe emits, while this passes through a unit conversion
+     and a rounding. It has to be verified by a build, and the ones that did not
+     survive one are reverted rather than kept because their prediction was
+     pretty. Residual left on the table by the three reverts: 0.0104 of whole
+     screen, stated rather than forced (rule 13). */
+  gear: [751, 28.96, 54, 51.0, 0, 0],
   back: [35.54, 127.54, 51.5, 51.5, 0, 0],
   plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y],
-  diffMark: [242.1, 1070.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
+  diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
   helpMark1: [53.65, 1299.8, 67.0, 61.5, 56, 1290],
   helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
   helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
-  chev1: [761.4, 1310.0, 43.6, 43.2, 56, 1290],
+  chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290],
   chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392],
   chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494],
   shield: [58.8, 1628, 97.4, 105.2, 0, 0],

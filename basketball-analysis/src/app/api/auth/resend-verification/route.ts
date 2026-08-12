@@ -31,18 +31,30 @@ export async function POST(request: NextRequest) {
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
 
-  const { response: limited } = checkRateLimit(request, {
-    bucket: "resend-verification",
-    limit: 3,
-    windowMs: 60_000,
-  })
-  if (limited) return limited
-
   const body = await request.json().catch(() => null)
   const bodyEmail =
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : ""
 
   const session = await getSessionUser(request)
+
+  // 3 a minute PER ACCOUNT, and the per-account part is the fix. Keyed on the
+  // client alone it was keyed on nothing — `request.ip` is undefined under
+  // `next start` and the default trusted-proxy depth is 0, so every caller
+  // shared one 3/min budget. Measured: three junk resends at other addresses
+  // made a real player's own "Resend code" return 429; after the window,
+  // victim-first returned 200. Three requests a minute, unauthenticated, denied
+  // this screen's other action to everyone.
+  //
+  // The limiter sits below the body parse so there is a subject to key on. The
+  // cooldown this route reports is per account too, so the limit and the
+  // countdown still cannot disagree.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: "resend-verification",
+    limit: 3,
+    windowMs: 60_000,
+    subject: session ? `u:${session.userId}` : bodyEmail || "anon",
+  })
+  if (limited) return limited
 
   if (!session) {
     if (!bodyEmail) {

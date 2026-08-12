@@ -36,14 +36,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Rate limit: 5 signups per minute per IP.
-  const { response: limited } = checkRateLimit(request, {
-    bucket: 'auth-signup',
-    limit: 5,
-    windowMs: 60_000,
-  })
-  if (limited) return limited
-
   // CSRF: reject requests that don't echo the double-submit token.
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
@@ -54,6 +46,18 @@ export async function POST(request: NextRequest) {
     const password = typeof body?.password === 'string' ? body.password : ''
     const firstName = typeof body?.firstName === 'string' ? body.firstName : undefined
     const lastName = typeof body?.lastName === 'string' ? body.lastName : undefined
+
+    // 5 signups a minute PER ADDRESS. Keyed per client alone this was keyed on
+    // nothing — every caller resolves to 'unknown' on this deployment — so five
+    // junk signups a minute would deny registration to the whole product.
+    // Moved below the body parse so the address exists to key on.
+    const { response: limited } = checkRateLimit(request, {
+      bucket: 'auth-signup',
+      limit: 5,
+      windowMs: 60_000,
+      subject: email || 'anon',
+    })
+    if (limited) return limited
 
     // Validate input
     if (!email || !password) {

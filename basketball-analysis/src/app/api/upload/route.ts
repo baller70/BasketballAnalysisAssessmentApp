@@ -13,11 +13,17 @@ import {
 import { checkRateLimit } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 20 uploads per minute per IP.
+  // 20 a minute, ONE BUCKET FOR EVERYONE — `subject: null` is deliberate. This
+  // guards shared storage cost, and the only identifier the route has is a
+  // `userId` read out of the form body with nothing authenticating it; keying on
+  // that would let an attacker rotate it and bypass the limit altogether, which
+  // is worse than sharing one bucket. Cost, as above: one client can exhaust
+  // uploads for everyone until real client identity is configured.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'upload',
     limit: 20,
     windowMs: 60_000,
+    subject: null,
   })
   if (limited) return limited
 

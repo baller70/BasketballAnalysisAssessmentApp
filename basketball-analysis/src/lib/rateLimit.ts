@@ -147,9 +147,26 @@ export function rateLimit(
  * Convenience: rate-limit a request by client IP and return a ready-to-send
  * 429 Response when the limit is exceeded, or null when the request may proceed.
  */
+/**
+ * `subject` is REQUIRED, and that is the whole point of its type.
+ *
+ * It was optional for one round. In that round it was added to `signin` and to
+ * nothing else, and the two routes it was omitted from were the two routes
+ * screen 005 is built on — so an unauthenticated attacker could deny email
+ * verification to every user of the product at 13 requests a minute, from
+ * anywhere, while the fix for exactly that defect sat one file away. The same
+ * omission had by then been made in three consecutive rounds.
+ *
+ * An optional parameter records an intention. A required one records a
+ * DECISION, at every call site, checked by the compiler. `null` is still
+ * available and still means "one bucket for the whole application" — but it now
+ * has to be typed out, next to a reason, and it greps.
+ */
+export type RateLimitSubject = string | null
+
 export function checkRateLimit(
   request: NextRequest,
-  options: RateLimitOptions & { subject?: string }
+  options: RateLimitOptions & { subject: RateLimitSubject }
 ): { result: RateLimitResult; response: Response | null } {
   // `subject` NARROWS THE BUCKET, and on this deployment it is the only thing
   // that makes an IP-keyed limiter usable at all.
@@ -174,8 +191,15 @@ export function checkRateLimit(
   // a given player's budget. It does not fix the global bucket — only real
   // client identity does, via SHOTIQ_TRUSTED_PROXY_HOPS or a runtime that
   // exposes the socket — but it removes the trivial whole-app lockout.
+  // THE SUBJECT IS ATTACKER-SUPPLIED, so it is normalised and CAPPED before it
+  // becomes a map key. Narrowing the bucket per account necessarily means the
+  // caller can create keys — that is what "per account" is — but an unbounded
+  // string would let one client mint arbitrarily many arbitrarily large ones
+  // between sweeps, which trades a lockout for a memory cost. Lower-casing also
+  // stops Alice@x and alice@x being two budgets for one account.
   const ip = getClientIp(request)
-  const key = options.subject ? `${ip}|${options.subject}` : ip
+  const subject = options.subject?.trim().toLowerCase().slice(0, 120) || null
+  const key = subject ? `${ip}|${subject}` : ip
   const result = rateLimit(key, options)
 
   if (!result.success) {

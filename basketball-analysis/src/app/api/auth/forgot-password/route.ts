@@ -14,20 +14,25 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * is echoed back to ease local/dev testing (transport is still a stub).
  */
 export async function POST(request: NextRequest) {
-  // Rate limit: 5 requests per minute per IP — resets are sensitive + emailful.
-  const { response: limited } = checkRateLimit(request, {
-    bucket: "auth-forgot-password",
-    limit: 5,
-    windowMs: 60_000,
-  })
-  if (limited) return limited
-
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
 
   const body = await request.json().catch(() => null)
   const email =
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : ""
+
+  // 5 a minute PER ACCOUNT — resets are sensitive and emailful. Keyed per
+  // account rather than per client for the same reason as the two verification
+  // routes: on this deployment every caller resolves to 'unknown', so a single
+  // client sending 5 junk resets a minute would otherwise deny password reset
+  // to the entire product. Moved below the body parse so the subject exists.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: "auth-forgot-password",
+    limit: 5,
+    windowMs: 60_000,
+    subject: email || "anon",
+  })
+  if (limited) return limited
 
   // Generic response used for every outcome (no account enumeration).
   const genericResponse = (devResetUrl?: string) =>

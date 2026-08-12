@@ -36,11 +36,22 @@ import {
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 30 LLM requests per minute per IP.
+  // 30 a minute, ONE BUCKET FOR EVERYONE — `subject: null` is deliberate here,
+  // not an omission. This guards a shared COSTED resource (model spend), so the
+  // budget being global is the thing the limit is about, unlike a credential
+  // guard where a global bucket means anyone can lock out everyone. There is
+  // also no identity to key on: this route resolves no session, and keying on
+  // an unauthenticated caller-supplied id would let an attacker rotate it and
+  // bypass the limit entirely, which is strictly worse than sharing.
+  //
+  // Stated plainly: one client can still exhaust this budget for everyone. That
+  // is a real availability cost, and closing it needs real client identity
+  // (SHOTIQ_TRUSTED_PROXY_HOPS, or a runtime exposing the socket address).
   const { response: limited } = checkRateLimit(request, {
     bucket: 'llm',
     limit: 30,
     windowMs: 60_000,
+    subject: null,
   });
   if (limited) return limited;
 

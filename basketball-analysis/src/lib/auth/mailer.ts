@@ -162,13 +162,38 @@ export async function sendEmail(message: OutboundEmail): Promise<SendEmailResult
 }
 
 /**
- * Resolve the public base URL used to build links inside emails. Falls back to
- * localhost in development.
+ * Resolve the public base URL used to build links inside emails.
+ *
+ * THE FALLBACK IS SILENT NO LONGER. With neither variable set this returned
+ * http://localhost:3000 with no complaint, and it was observed doing exactly
+ * that on a running deployment served on another port — so every emailed
+ * verification and password-reset link pointed at a host the recipient does not
+ * have. That is half of screen 005's feature (the link; the six-digit code is
+ * unaffected because it carries no URL) and all of password reset, failing in a
+ * way nothing in the app surfaces: the mail sends, the link is simply dead.
+ *
+ * It still FALLS BACK rather than throwing, because throwing here would turn a
+ * misconfigured base URL into a failed signup, and the code path would work
+ * fine. In production it now says so, loudly, once per call, instead of
+ * pretending the default is a configuration.
+ *
+ * NOT DERIVED FROM THE REQUEST, deliberately. Building this from the Host or
+ * X-Forwarded-Host header would make it self-configuring and would also let
+ * anyone who can set those headers choose the host in a verification link that
+ * arrives in someone else's inbox — host-header injection, trading a
+ * configuration error for an account-takeover primitive. The base URL is
+ * deployment knowledge, so it stays configuration.
  */
 export function getAppBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
-    "http://localhost:3000"
-  )
+  const configured = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL
+  if (configured) return configured
+
+  if (process.env.NODE_ENV === "production") {
+    console.error(
+      "[mailer] NEXT_PUBLIC_APP_URL and NEXTAUTH_URL are both unset in " +
+        "production — emailed verification and password-reset links will point " +
+        "at http://localhost:3000 and will not work. Set one of them."
+    )
+  }
+  return "http://localhost:3000"
 }

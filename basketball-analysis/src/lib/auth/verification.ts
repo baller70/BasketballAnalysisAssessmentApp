@@ -94,11 +94,16 @@ export async function issueToken(
   const token = generateToken()
   const expiresAt = new Date(Date.now() + TTL_MS[type])
 
-  // Invalidate prior tokens of this type for the user (best-effort).
-  await prisma.verificationToken.deleteMany({ where: { userId, type } })
-
-  await prisma.verificationToken.create({
-    data: { userId, token, type, expiresAt },
+  // ONE STATEMENT, NOT TWO. This was deleteMany-then-create, which makes the
+  // "only the newest token works" invariant in this file's header true only
+  // when nothing races: measured, three concurrent issues left three live rows
+  // for one user and the oldest still verified. The upsert targets the
+  // (userId, type) unique constraint added to the schema for this, so the
+  // database — not the ordering of two round trips — enforces the invariant.
+  await prisma.verificationToken.upsert({
+    where: { uniq_verification_token_user_type: { userId, type } },
+    create: { userId, token, type, expiresAt },
+    update: { token, expiresAt },
   })
 
   return { token, expiresAt }
@@ -118,8 +123,21 @@ export async function consumeToken(
   const record = await prisma.verificationToken.findUnique({ where: { token } })
   if (!record || record.type !== type) return null
 
-  // Always delete the row so the token is single-use, even if expired.
-  await prisma.verificationToken.delete({ where: { id: record.id } }).catch(() => {})
+  // THE DELETE IS THE LOCK, so its result has to be read. This was
+  // `delete(...).catch(() => {})`, i.e. findUnique-check-delete with the
+  // outcome discarded, and two concurrent submissions of one token therefore
+  // both returned success — each found the row, and one of the two deletes was
+  // a no-op nobody looked at. `deleteMany` reports how many rows it actually
+  // removed, and exactly one racer can get 1, so that racer is the one that
+  // consumed the token.
+  //
+  // A wrong TYPE still returns above without deleting, so a password-reset
+  // token submitted to a verify route does not destroy it (there is no
+  // cross-type denial-of-service here).
+  const { count } = await prisma.verificationToken
+    .deleteMany({ where: { id: record.id } })
+    .catch(() => ({ count: 0 }))
+  if (count !== 1) return null
 
   if (record.expiresAt.getTime() < Date.now()) return null
 
@@ -146,9 +164,12 @@ export async function issueEmailCode(
   const type: VerificationTokenType = "email_verify_code"
   const expiresAt = new Date(Date.now() + TTL_MS[type])
 
-  await prisma.verificationToken.deleteMany({ where: { userId, type } })
-  await prisma.verificationToken.create({
-    data: { userId, token: codeTokenValue(userId, code), type, expiresAt },
+  // Same atomicity fix as `issueToken`, and the defect was measured here: three
+  // concurrent resends left three live codes and the oldest verified.
+  await prisma.verificationToken.upsert({
+    where: { uniq_verification_token_user_type: { userId, type } },
+    create: { userId, token: codeTokenValue(userId, code), type, expiresAt },
+    update: { token: codeTokenValue(userId, code), expiresAt },
   })
 
   return { code, expiresAt }

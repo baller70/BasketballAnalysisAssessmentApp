@@ -858,6 +858,19 @@ model VerificationToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId], name: "idx_verification_token_user")
+  // ONE LIVE TOKEN PER (USER, TYPE), ENFORCED BY THE DATABASE.
+  //
+  // `issueToken`/`issueEmailCode` document the invariant "issuing invalidates
+  // the previous one, so only the newest works", and implemented it as
+  // deleteMany-then-create. That is two statements: three concurrent resends
+  // (well within the route's own 3/min budget) left THREE live codes for one
+  // user, and the OLDEST of them still verified. The invariant was true
+  // sequentially and false under any concurrency, which multiplied the
+  // per-account guess surface by the number of racing requests.
+  //
+  // A unique constraint makes it true by construction, and turns the two
+  // statements into one atomic `upsert` on this key.
+  @@unique([userId, type], name: "uniq_verification_token_user_type")
   @@map("verification_tokens")
 }
 

@@ -128,7 +128,25 @@ const PROFILES = {
       // A recorded value must be READ OFF THE GATE, never predicted; and a
       // permanently-red gate is worse than none, because it teaches the next
       // round to scroll past a failure.
-      lede2: { live: 2, control: 2 },
+      // ROUND 4: THE CONTROL VALUE IS BUILD-MODE DEPENDENT, and 2 was read off
+      // a build that was never the one that ships. Same gate, same commit, two
+      // dists:
+      //
+      //     dev-runtime dist    lede2 live 2 / control 2   -> 11/11
+      //     production dist     lede2 live 2 / control 1   -> 10/11
+      //
+      // React's production build merges the two adjacent text nodes that the
+      // development build leaves separate, and the control is exactly the case
+      // that exposes it because it removes the wrapping span between them. The
+      // whole repository had been building with NODE_ENV=development inherited
+      // from the container (see the ledger), so every recorded value here was
+      // taken from the wrong runtime; this one is the only probe whose number
+      // actually differs between them.
+      //
+      // 1 is recorded because the production dist is the artefact that ships.
+      // Re-read this pair on a production build if it ever moves again — and
+      // note the live value 2 is stable across both, so only the control moved.
+      lede2: { live: 2, control: 1 },
       help1: { live: 1, control: 1 },
       help2: { live: 1, control: 1 },
       help3: { live: 1, control: 1 },
