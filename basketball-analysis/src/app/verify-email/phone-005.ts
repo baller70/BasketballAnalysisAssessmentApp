@@ -795,14 +795,27 @@ ${hitbox("diffBtn", DIFFBTN.x, DIFFBTN.y, DIFFBTN.w, DIFFBTN.h, DIFFBTN.r)}
    control this screen exists to offer. Grade 10 measured the rendered box at
    88.5 x 20.3.
 
-   44 pt is 95.5 device px. Held centred on the same midline (806 + 44/2 = 828)
-   the box becomes 780.25..875.75, which clears the plate's hit target at
-   PLATE.y 904.78 by 29 px and overlaps no other control. NOTHING MOVES ON THE
-   CANVAS: on the phone every mark is painted by the overlay at absolute
-   coordinates and these boxes are transparent, so a hit target can grow without
-   touching a measured pixel — which is why this is free and was worth doing
-   before the geometry work that is not. */
-${hitbox("resendLinkBox", 330, 780.25, 192, 95.5, 4)}
+   44 pt is 95.5 device px, and the box GROWS DOWNWARD FROM ITS ORIGINAL TOP.
+   The first attempt held it centred on the same midline (780.25..875.75) on the
+   reasoning that a transparent box paints nothing, so nothing could move. It
+   moved: whole screen 5.6566 -> 5.8340, with 'resendLink' alone +3.3968 and
+   every other band unchanged to four decimals.
+
+   The reason is a specificity accident three lines below. 'hitbox' emits
+   'display:block' at '.s5 [data-s5="..."]' (0,2,0), which beats the button's
+   own Tailwind 'flex' (0,1,0) — so this control is NOT a centred flex box, its
+   label sits on the FIRST LINE BOX at the top edge, and moving the top moved
+   the text with it. The label is the one run on this screen positioned by its
+   container rather than by a 'RUNS' entry, which is exactly why it was the one
+   that could move.
+
+   Keeping y at 806 pins the first line box where it was and spends the extra
+   height downward: 806..901.5, clearing the plate's hit target at PLATE.y
+   904.78 by 3.3 px with no overlap. The tap area now extends below the label
+   instead of around it, which is the correct direction anyway — the plate is
+   the next control down and a thumb travelling from the label towards it should
+   not land in a dead gap. */
+${hitbox("resendLinkBox", 330, 806, 192, 95.5, 4)}
 ${hitbox("helpRow1", 56, 1290, 740, 88, 4)}
 ${hitbox("helpRow2", 56, 1392, 740, 92, 4)}
 ${hitbox("helpRow3", 56, 1494, 740, 100, 4)}
