@@ -324,9 +324,42 @@ export const RUNS: Record<string, Run> = {
      render, the per-word PIXEL optimum is dy0/dx0, dy0/dx-1, dy0/dx0 — worth
      0.0480 of whole screen in total, against this one value's 0.3670. Per-word
      placement is not the lever; it was the symptom. */
-  display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.586, skew: -10.3,
+  /* SIZE 81.94 -> 81.10 WITH scaleX HOLDING THE ADVANCE, AND ty +0.80 TO PUT
+     THE BASELINE BACK. Grade 9 read the run as ~1.6% too tall from cap height
+     measured on the first glyph, the last glyph and the whole run, with the top
+     edge -1 and the bottom edge +1 — edges moving OPPOSITELY, which is rule
+     34's signature for a size error rather than a translation.
+
+     The first build of its recommendation (size 80.63, scale 0.5957) came back
+     19.9365 -> 23.1147, the WORST of six candidates, and the reason is that a
+     font-size change moves the baseline while `top` stays put: the run went up
+     3-4 rows (top 11 -> 8, bottom 136 -> 131), trading a 2px size error for a
+     3px position error. So the prescription was incomplete rather than wrong,
+     and rule 80 caught it again.
+
+     Rule 34's own control decides the diagnosis. A PURE TRANSLATION at the
+     original size is monotonically worse at every offset tried:
+
+         ty +0.40  +0.4952     ty +1.20  +1.5061
+         ty +0.80  +1.4982     ty +1.60  +3.0051
+
+     so the gain is not available from moving the run and the size change is
+     real. Swept as (size, ty) pairs with scaleX = 48.017/size holding the 530px
+     advance, control reproducing 19.9365 exactly on every run:
+
+         81.10 / +0.80   19.3019   extents (11,135,125)  <- canonical exactly
+         81.30 / +0.60   19.3125   extents (11,135,125)
+         80.63 / +1.65   18.9742   extents (12,135,124)
+
+     THE ARGMIN IS NOT SHIPPED. 80.63/+1.65 scores 0.3277 better and gets there
+     by overshooting the correction — cap 124 against canonical's 125, wrong by
+     one row in the other direction, having started wrong by one row at 126.
+     That is exactly the metric win rule 74b calls paper-over, and DoD item 2
+     says the cap must MATCH. 81.10/+0.80 matches canonical's top, bottom and
+     cap exactly, and the 0.3277 is stated rather than taken. */
+  display: { x: 166.352, top: 228.686, size: 81.10, weight: 600, scale: 0.5921, skew: -10.3,
              ls: 0.0, colour: "var(--s5-ink)", family: TUNGSTEN, bang: true,
-             ws: 0.8, dx: 1.2, dy: 36.4, tx: 4.60, ty: 0 },
+             ws: 0.8, dx: 1.2, dy: 36.4, tx: 4.60, ty: 0.80 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
   /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
   /* ty +2 / -2 device px, and the OPPOSITE SIGNS are the finding: the two
