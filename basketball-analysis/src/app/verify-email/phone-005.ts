@@ -481,7 +481,35 @@ export const RUNS: Record<string, Run> = {
   /* 12.2615 -> 8.6672 on the same 2-D grid: weight stays at the honest 700 and
      scaleX 0.784 -> 0.81. Bracketed — 0.84 gives 12.9879 and 0.87 gives
      16.1385, and at 0.81 the weights 750 and 800 give 10.1115 and 11.4236. */
-  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.81, ls: 0.03,
+  /* ls 0.030 -> 0.024, FORCED BY THE APOSTROPHE FIX AND NOT BY THE GRADE.
+     Grade 9 was right that this run sets U+0027 where canonical sets U+2019,
+     and wrong about what that was costing. Swapping the character ALONE took
+     the band 8.6672 -> 9.3021, because `ls` had been tuned around the narrower
+     straight quote. Retuned against the correct glyph it lands 7.7577, which is
+     0.91 better than before the fix.
+
+     THE WIDTH ERROR IS NOT TRACKING, and this is the measurement that says so.
+     Ink edges, threshold 160:
+
+         canonical   left  60  right 331  width 272
+         U+0027      left  59  right 341  width 283
+         U+2019      left  59  right 342  width 284
+
+     so the correct glyph is a pixel WIDER, and the run was already 11px wide
+     before it — the apostrophe was never the cause of the excess. Tracking can
+     buy the width and cannot buy the alignment:
+
+         ls 0.024   band  7.7577   width 281   <- shipped
+         ls 0.018   band  8.3800   width 278
+         ls 0.012   band 10.3709   width 275
+         ls 0.006   band 13.1337   width 272   <- width EXACT, band +5.38
+
+     Matching canonical's width exactly costs 5.38 on the band, because the
+     excess is in the glyph advances rather than the gaps: squeezing the gaps
+     pulls every letter off its canonical position to make the last one land.
+     Same class as `help3` (neither bundled face is canonical's), and stated
+     with its number rather than forced. */
+  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.81, ls: 0.024,
            colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: -0.4607, ty: 0 },
   /* THE THREE HELP LABELS ARE ONE ROLE AND ARE SOLVED JOINTLY (rule 14).
      Canonical sets them at one cap — the first glyph of each measures 22 / 22 /
