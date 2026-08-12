@@ -71,6 +71,35 @@ export async function POST(request: NextRequest) {
   // needs something that bounds mail without bounding recovery: a suppression
   // list the RECIPIENT controls, or a per-account cap that still delivers when
   // no link has been successfully used, neither of which is a rate limiter.
+  //
+  // AND THE PARAGRAPH ABOVE UNDERSTATED IT, which grade 12 measured directly.
+  // It says the residual is mail VOLUME. The 5/min bucket is keyed on
+  // `subject: email || "anon"` — the address the CALLER TYPES, not the caller —
+  // so it is the same denial-of-recovery switch the daily ceiling was removed
+  // for, just on a shorter timer:
+  //
+  //     attacker requests 1-5   200 (generic)
+  //     attacker request 6      429
+  //     the VICTIM's own reset  429
+  //
+  // Five unauthenticated requests a minute, far under the 7,200/day this file
+  // already admits it permits, and the account's owner cannot reset. The
+  // reasoning that removed the ceiling — "a switch for turning off somebody's
+  // account recovery" — applies to this limiter too, and writing the residual
+  // as volume alone made the file look like it had closed a harm it had only
+  // moved. That is the same failure this route was already corrected for once.
+  //
+  // NOT SILENTLY RE-KEYED, because the obvious fix is worse: keying on an
+  // unauthenticated caller-supplied identity lets an attacker rotate it and
+  // bypass the limit entirely, and this deployment resolves every caller to
+  // 'unknown'. What the shape actually needs is a SECOND AXIS — refuse only
+  // when the address already has a live UNSPENT reset token, so repeat requests
+  // are cheap to refuse and a victim with no usable link is always served; or
+  // key anonymous callers by client and authenticated ones by account. Both
+  // change who can be refused and are Kevin's call, so this is recorded in
+  // docs/SCREEN-LEDGER.md as a decision rather than taken inside a screen's
+  // round. What is fixed here is the STATEMENT: the cost is denial of recovery,
+  // not mail volume.
 
   // Generic response used for every outcome (no account enumeration).
   const genericResponse = (devResetUrl?: string) =>

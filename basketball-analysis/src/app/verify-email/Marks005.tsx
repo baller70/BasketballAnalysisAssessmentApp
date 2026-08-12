@@ -165,9 +165,23 @@ export function EnvelopePencilMark() {
           so the run from x=4 is h7.3 rather than h9. Components are still ONE
           at thresholds 140/180/210 (895/953/995 against canonical's 2), so this
           is the remaining bridge and the same test still governs it: keep only
-          if diffMark improves and the count reaches 2. */}
-      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.3a2 2 0 0 0 2 2h7.3" />
-      <path d="m21 6.6-8.6 5.5a2 2 0 0 1-2 0L2 6.6" />
+          if diffMark improves and the count reaches 2.
+
+          IT DID, AND THIS TEXT WAS STALE UNTIL GRADE 12 CAUGHT IT. The shipped
+          build has TWO components at thresholds 140/180/210 — 637/241, 673/264,
+          695/285 against canonical's 627/259, 701/303, 834/328 — so the bridge
+          closed and the sentence above describing it as open was describing a
+          build two rounds old. A comment that outlives its measurement is the
+          same defect class as the two false claims this screen has already been
+          caught making. */}
+      {/* The widest of the three: walls 19 units apart with bw 76.8, so
+          19 x 76.8/24 = 60.80 against canonical's 54.26 — measured 60.77, right
+          wall +7.41 against a left wall of +0.91. The FLAP APEX IS LEFT WHERE
+          IT IS: re-centring it on the new mid-line was measured WORSE (24.18
+          against 22.66), so only the right endpoint moves.
+          Build-verified: diffMark 26.4442 -> 22.6597. */}
+      <path d="M18.96 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.3a2 2 0 0 0 2 2h7.3" />
+      <path d="m18.96 6.6-8.6 5.5a2 2 0 0 1-2 0L2 6.6" />
       <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
     </Icon>
   )
@@ -177,8 +191,32 @@ export function EnvelopePencilMark() {
 export function MailCheckMark() {
   return (
     <Icon name="helpMark1" sw={3.0}>
-      <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      {/* THE ENVELOPE IS TOO WIDE ON THE RIGHT, AND THE BOUNDING BOX HID IT.
+          `helpMark1`'s note says the width "is already exact at 59" — true of
+          the mark's BOUNDING BOX, whose right edge is set by the CHECK, and
+          false of the envelope inside it. Rule 90's extreme-value trap, running
+          in my favour for once: the envelope's own walls disagree by 2 px while
+          the box agrees exactly.
+
+          Mass-weighted sub-pixel wall centroids on rows 1325..1332, where the
+          flap diagonal is clear of both walls:
+
+              canonical separation 53.99   render 55.83   (+1.84)
+              left wall +0.42              right wall +2.26
+
+          Opposite signs, so a size error by rule 34 — which is why a shift
+          search finds nothing. And the mechanism predicts the render exactly:
+          `Icon` sets sx = bw/24, the walls are 20 viewBox units apart and
+          helpMark1's bw is 67.0, so 20 x 67.0/24 = 55.83, the measured value to
+          three decimals.
+
+          The PATH is narrowed rather than the MARK_BOX, because the box also
+          carries the check, whose right extent already matches canonical. Path
+          geometry is in fixed user units inside a fixed transform, so it passes
+          through no layout rounding. Build-verified: helpIcon1 17.6749 ->
+          13.6684. */}
+      <path d="M21.0 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8" />
+      <path d="m21 7-8.47 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
       <path d="m16 19 2 2 4-4" />
     </Icon>
   )
@@ -188,8 +226,12 @@ export function MailCheckMark() {
 export function MailClockMark() {
   return (
     <Icon name="helpMark2" sw={3.0}>
-      <path d="M21 11V6a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9" />
-      <path d="m21 6.6-8.6 5.5a2 2 0 0 1-2 0L1 6.6" />
+      {/* Same defect as MailCheckMark and the same arithmetic: walls 20 units
+          apart, bw 66.3, so 20 x 66.3/24 = 55.25 against canonical's 52.29 —
+          measured 55.14, left wall +0.14, right wall +2.38. Size, not shift.
+          Build-verified: helpIcon2 18.0968 -> 13.3029. */}
+      <path d="M19.93 11V6a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9" />
+      <path d="m19.93 6.6-8.465 5.5a2 2 0 0 1-2 0L1 6.6" />
       {/* THE RING IS 20% TOO BIG, WHICH IS WHY IT MERGES WITH THE ENVELOPE.
           `helpIcon2` is the worst band on the screen (28.0615) and an integer
           shift search returns (0,0) with gain 0.000, so there is no translation
@@ -304,7 +346,14 @@ export function ShieldMark() {
             divided back out exactly as `Icon` does for its marks: scaling a path
             scales its stroke, which is why the ink fell 151 -> 134 against
             canonical's 150 while the extent was becoming correct. */}
-        <g transform={`translate(0 ${-2 / (SHIELD[3] / 24)})`}>
+        {/* -2 LEFT IT 1 px LOW, measured on orange-isolated ink: canonical
+            rows 1668..1691, render 1669..1692 — BOTH edges +1 with the height
+            identical at 24 rows, which is rule 34's translation signature, and
+            an intensity-weighted centroid delta of +1.38 in y against +0.10 in
+            x. So y moves and x does not, even though the shift metric prefers
+            dx+1 (8.41 -> 4.58) — the interior referees, and it says x is
+            aligned. Build-verified: shield 13.7904 -> 13.5296. */}
+        <g transform={`translate(0 ${-3 / (SHIELD[3] / 24)})`}>
           <g transform={`translate(11.95 12.65) scale(${30 / 32} ${24 / 26}) translate(-11.95 -12.65)`}>
             <path d="m8.6 12.4 2.7 2.8 4.4-5.1"
                   stroke={ORANGE}
