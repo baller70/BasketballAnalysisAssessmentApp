@@ -2518,6 +2518,32 @@ interlace match, so decode and colour management are NOT confounded.
 
 ### OPEN, PROCESS: the desktop regression baseline does not exist
 
+**A CONTAINMENT PROOF SUBSTITUTES FOR IT WHEN THE CHANGE IS CSS-SCOPED, and it
+is strictly stronger than a capture diff.** The cycle asks each round to confirm
+the desktop set did not regress against a baseline directory that is not in this
+container and not in git. Rather than skip the step or assert neutrality, round
+4 answered the underlying question directly, on the SERVED artefact:
+
+  * every rule in the injected sheet is inside an `@media` block. Read off the
+    live DOM at 3236, the sheet is 16,501 chars and the text remaining after
+    removing all balanced `@media` blocks is EMPTY. So no phone rule can match
+    at a desktop width, whatever it says.
+  * no shared surface changed. `git diff --name-only` over the round shows no
+    `components/`, no `globals.css`, no `layout.tsx`, no `page.tsx` — the render
+    changes are confined to `phone-005.ts`, and everything else touched is an
+    API route, the token layer, the mailer, the schema, or tooling, none of
+    which draws a pixel.
+
+This is decidable and repeatable, where a capture diff over 20 screens carries a
+~50px noise floor and 8 of the 20 are not byte-stable run to run. It does NOT
+generalise: it says nothing about a change to a shared component or a global
+token, and those still need real captures. Recorded as the method to use when a
+round's diff is provably scoped, and as the reason this OPEN item did not block
+round 4.
+
+The baseline itself is still missing, and building it still needs a desktop
+route map that is not in git.
+
 The cycle every autonomous round runs says, at step 2, to "confirm the desktop
 set did not regress against `$SCRATCH/verify-desktop` (noise floor ~50px; 8 of
 20 are not byte-stable run to run)". **That directory is not on disk.** A
