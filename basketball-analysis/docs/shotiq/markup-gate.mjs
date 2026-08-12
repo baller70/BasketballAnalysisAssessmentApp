@@ -54,6 +54,8 @@ const PORT = process.env.PORT || 3212
  *   headingSel / axPhrase  the h1 and the sentence read back out of the AX tree
  *   accepted  text-node counts, live and unwrapped, both entering the verdict
  *   expectScroll  widths where the pinned phone canvas legitimately overflows
+ *   expectClipped per width, the focusable elements whose box leaves the
+ *                 viewport — READ OFF THE PROBE, never predicted
  */
 const PROFILES = {
   '004': {
@@ -82,6 +84,10 @@ const PROFILES = {
       display: { live: 13, control: 1 },
     },
     expectScroll: [375, 360, 320],
+    /* Read off the probe, not predicted. 004 has not been enumerated at these
+       widths yet, so it records the empty set and the gate will report the true
+       set the first time it runs — that failure is the measurement. */
+    expectClipped: {},
     mutations: ['ariaLabel', 'labels', 'selectLede2', 'selectH1', 'deleteRun'],
   },
   /**
@@ -155,6 +161,15 @@ const PROFILES = {
       safe2: { live: 1, control: 1 },
     },
     expectScroll: [375, 360, 320],
+    /* Read off the probe (rule 74). 375 is CLEAN — the document scrolls but no
+       control leaves the viewport — and 360/320 clip the same seven. */
+    expectClipped: {
+      375: [],
+      360: ['verify-code-5', 'verify-different-email', 'verify-help-1',
+            'verify-help-2', 'verify-help-3', 'verify-open-mail', 'verify-settings'],
+      320: ['verify-code-5', 'verify-different-email', 'verify-help-1',
+            'verify-help-2', 'verify-help-3', 'verify-open-mail', 'verify-settings'],
+    },
     /* `ariaLabel` IS DELIBERATELY ABSENT, and saying so is the point. It models
        a heading whose ONLY name source is an aria-label, because 004's h1 is
        built from aria-hidden per-glyph spans. 005's h1 carries its own text, so
@@ -446,6 +461,23 @@ const selectRun = (sel) => p.evaluate((s) => {
 // pins .s4{width:393px} inside a max-width query — a canvas delivered below 768
 // rather than a responsive layout. Listing them makes the probe report the true
 // state and fail on any CHANGE to it, instead of being blind to it.
+//
+// AND IT NOW ASKS WHAT GOT CLIPPED, which is the question a scroll flag cannot
+// answer. Recording "375 SCROLLS 360 SCROLLS 320 SCROLLS — matches the recorded
+// class-level state" made three different situations look like one finding and
+// treated a known defect as the expected value, so a NEW element falling off the
+// screen would have printed the same green line (rule 74). Enumerating every
+// focusable element whose box leaves the viewport says something a player would
+// recognise, and it corrected the record twice:
+//
+//   375   the document scrolls and NOTHING is clipped — so the width at which
+//         this costs a player anything is 360, not 375
+//   360   SEVEN controls, not the one previously recorded
+//   320   the same seven, 46-51px out
+//
+// `expectClipped` is read off THIS probe rather than predicted (rule 74), and it
+// is per width, so a regression that clips an eighth control fails even though
+// the document already scrolled.
 {
   const EXPECTED_SCROLL = new Set(P.expectScroll)
   const bad = []
@@ -456,22 +488,40 @@ const selectRun = (sel) => p.evaluate((s) => {
       const p2 = await c2.newPage()
       await p2.goto(URL_)
       await p2.waitForTimeout(1200)
-      const m = await p2.evaluate(() => ({
-        w: document.documentElement.scrollWidth,
-        h: document.documentElement.scrollHeight,
-        iw: window.innerWidth,
-        ih: window.innerHeight,
-      }))
+      const m = await p2.evaluate(() => {
+        const iw = window.innerWidth
+        const sel = 'a,button,input,select,textarea,[role="button"],[tabindex]:not([tabindex="-1"])'
+        const off = []
+        for (const el of document.querySelectorAll(sel)) {
+          const r = el.getBoundingClientRect()
+          if (r.width === 0 && r.height === 0) continue
+          const cs = getComputedStyle(el)
+          if (cs.display === 'none' || cs.visibility === 'hidden') continue
+          if (r.right > iw + 0.5 || r.left < -0.5) {
+            off.push(el.getAttribute('data-testid') || el.getAttribute('aria-label') || el.tagName.toLowerCase())
+          }
+        }
+        return {
+          w: document.documentElement.scrollWidth,
+          h: document.documentElement.scrollHeight,
+          iw, ih: window.innerHeight,
+          off: off.sort(),
+        }
+      })
       await c2.close()
       const scrolls = m.w > m.iw
-      if (dpr === 2) seen.push(`${width}${scrolls ? ' SCROLLS' : ' ok'}`)
+      if (dpr === 2) seen.push(`${width}${scrolls ? ' SCROLLS' : ' ok'}/${m.off.length}clip`)
       if (scrolls !== EXPECTED_SCROLL.has(width))
         bad.push(`DPR${dpr} w${width} scroll=${scrolls}, expected ${EXPECTED_SCROLL.has(width)}`)
       if (m.h > m.ih + 1) bad.push(`DPR${dpr} w${width} vertical ${m.h}>${m.ih}`)
+      const want = (P.expectClipped || {})[width] || []
+      const got = m.off
+      if (JSON.stringify(got) !== JSON.stringify([...want].sort()))
+        bad.push(`DPR${dpr} w${width} clipped [${got}] != recorded [${[...want].sort()}]`)
     }
   }
-  rec('reflow (width x DPR)', bad.length === 0,
-      bad.length ? bad.join(' | ') : seen.join('  ') + '  — matches the recorded class-level state')
+  rec('reflow (width x DPR, and WHAT is clipped)', bad.length === 0,
+      bad.length ? bad.join(' | ') : seen.join('  ') + '  — scroll state and clipped-control set both at their recorded values')
 }
 
 await b.close()
