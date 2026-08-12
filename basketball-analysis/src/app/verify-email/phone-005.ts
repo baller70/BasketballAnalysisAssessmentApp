@@ -465,6 +465,30 @@ export const RUNS: Record<string, Run> = {
      landed at the foot of the screen and all three help labels vanished off it
      entirely. Canonical coordinates go in; the parent's origin is subtracted
      out by `runCss`, exactly as `plateLab` and `diffLab` already did. */
+  /* WEIGHT 500 STAYS, AND THE SWEEP THAT SAYS SO ALSO RE-CLASSIFIES THE DEFECT.
+     Grade 11 raised this run's ink as D3, 1.26 heavy on the orange plane, and
+     listed it SEPARATELY from D1 — the finding that no bundled face has
+     canonical's x-height/ascender ratio. Swept against the served build, band
+     and glyph ink move monotonically in OPPOSITE directions:
+
+         weight 340   band 4.4477   ink 0.9203
+         weight 380   band 4.4482   ink 1.0005   <- ink exact, band +0.8814
+         weight 420   band 4.3687   ink 1.0735
+         weight 460   band 4.0230   ink 1.1417
+         weight 500   band 3.5668   ink 1.2176   <- shipped
+         weight 540   band 3.2550   ink 1.2939
+
+     That is the same shape `safe1` and `safe2` produced (+13.08 and +5.76 to
+     match their density), and it is D1's signature rather than a weight
+     problem: when the face sets its x-height too large, extra weight buys back
+     the coverage the wrong proportions cost, so the band optimum sits far from
+     the ink optimum. "Resend email" is mixed-case, so D1 covers it — it simply
+     was not among the nine runs grade 11 measured. D3 IS D1, and that is one
+     fewer independent defect on this screen rather than one more.
+
+     Not forced, per the standing ruling: 0.8814 of band to satisfy DoD item 2
+     on one run, while the cause is a design-asset decision recorded as NEEDS
+     KEVIN. Stated with its numbers instead. */
   resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.825, ls: -0.004,
                 colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.3822, ty: 0,
                 ox: 330, oy: 806 },

@@ -2448,6 +2448,17 @@ WHAT ELSE IT FOUND THAT WAS NEW:
     (1.571/1.571 integrated cross-section), so it is the glyph run alone. The
     source comment had named the dilution that hides it and never measured the
     density.
+
+    ROUND 21 SWEPT IT AND D3 TURNS OUT TO BE D1. Band and glyph ink move
+    monotonically in OPPOSITE directions — weight 380 lands ink 1.0005 exactly
+    and costs 0.8814 of band; 540 buys 0.31 of band for ink 1.2939 — which is
+    the same shape safe1 and safe2 produced at +13.08 and +5.76. That is the
+    face signature, not a weight problem: an x-height set too large costs
+    coverage that extra weight buys back, so the band optimum sits far from the
+    ink optimum. "Resend email" is mixed-case, so D1 covers it; it simply was
+    not among the nine runs grade 11 happened to measure. So this screen has ONE
+    FEWER independent defect than the grade lists, not one more, and the weight
+    is left alone with its numbers stated.
   * `display` is internally scattered even though its bbox and total advance
     match canonical exactly (528 both): best local x-shift per 40px window runs
     -1/+2/-2/-3/-2/-2/+3/+2 and the residual at each window's OWN best shift is
