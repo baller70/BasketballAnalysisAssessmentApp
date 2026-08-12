@@ -1,30 +1,30 @@
-whole screen   mean|d| 7.4356   max 255   n_over8 118852
+whole screen   mean|d| 6.7842   max 255   n_over8 115184
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
 helpIcon2     28.0615    255      1611
 display       24.5721    255     21653
-help2         24.1773    255      6521
 helpIcon1     22.0527    255      1201
-help1         20.3319    255      5491
-help3         15.6514    255      4771
+help2         21.1660    255      6051
 shield        15.4563    255      1551
 safe2         15.1605    240      4667
 resendLab     14.1711    238      3069
-lede2         11.7684    255      4300
+help3         12.8522    255      4380
 gear          11.5208    255       973
 safe1         11.1230    255      3919
 diffBtn        9.8170    255     11405
-lede1          9.5965    228      4020
-box1           9.5693    255      2220
+box1           8.8349    255      2166
 didnt          8.6672    232      3773
 back           8.1680    254       332
-box0           8.0212    255      1879
+lede2          8.0204    255      3698
 helpIcon3      7.8249    255      1031
+help1          7.7874    255      3933
 wordmark       7.7849    255      2713
-box2           7.6699    255      2088
-box3           6.8460    255      1841
+box0           7.5426    255      1849
+box2           7.1114    254      2058
+box3           7.0463    254      1858
+lede1          5.5554    208      3470
 plate          5.1017    255     11882
 box5           4.9558    181      1345
 box4           4.4881    234      1991
@@ -46,10 +46,10 @@ run          mean|d|    max   n_over8
 -------------------------------------
 diffMark     37.9676    255      1924
 diffLab      25.1781    255      3261
-digit1       19.4332    255       868
 plateLab     16.0099    255      4965
+digit1       15.8763    255       814
 plateMark    15.3721    255      1814
-digit0       14.8336    255       661
-digit2       12.5394    255       616
-digit3        9.7860    255       513
+digit0       12.2876    255       631
+digit3       10.7600    254       530
+digit2        9.8760    254       586
 caret         2.1319    140       273
