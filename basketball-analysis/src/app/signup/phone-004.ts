@@ -124,6 +124,26 @@ const COLOURS = `
      desktop screens and is not touched. The masks keep graphite; the grade's
      finding was about the value runs, and the bullet bands are already solved. */
   --s4-value-ink:#131419;
+  /* THE BULLET MASK IS A THIRD INK ROLE, and this ledger recorded the
+     opposite in as many words: 'the masks keep graphite ... the bullet bands
+     are already solved'. That rested on the BAND MEAN, which is the rule-57
+     dilution this project itself codified - the bullets are small ink inside
+     a large solved box.
+     The axis that finds it is registration-invariant INK MASS, which no
+     placement confound can touch. The render is globally 1.92% under-inked
+     and every text band is light with none heavy; the two bullet runs are
+     the LIGHTEST runs on the screen at 0.7868 / 0.7811 - below even the
+     corrected value ink (0.803-0.854) and far below the adjudicated graphite
+     population (0.898-0.916). That is exactly the argument that moved the
+     field values off graphite, applied to the run it was never applied to.
+     Canonical's bullet core reads #272831 against the render's #454751 -
+     thirty units a channel. Bracketed in-page: #292B35 3.0764,
+     #272831 3.0759, #242630 3.0765, with #131419 worse at 3.0922 and pure
+     black much worse at 3.1157. A genuinely distinct third role, not a
+     darker graphite: --s4-graphite also paints lede1, lede2, helpPass and
+     oneacct, and darkening it there regresses all four.
+     Contrast improves on white, so this is a11y-neutral to positive. */
+  --s4-mask-ink:#272831;
   --s4-eye:#2C2E38;
   --s4-or:#838489;
 `

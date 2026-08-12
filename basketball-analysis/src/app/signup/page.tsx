@@ -52,6 +52,8 @@ export default function SignUpPage() {
   const [agreed, setAgreed] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
+  const confirmRef = useRef<HTMLInputElement>(null)
+  const agreeRef = useRef<HTMLInputElement>(null)
 
   // --- preserved account-creation behaviour --------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,16 +89,19 @@ export default function SignUpPage() {
     if (formData.password.length < MIN_PASSWORD) {
       setError(`Password must be at least ${MIN_PASSWORD} characters`)
       setInvalid("password")
+      passwordRef.current?.focus()
       return
     }
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
       setInvalid("confirm")
+      confirmRef.current?.focus()
       return
     }
     if (!agreed) {
       setError("Please agree to the Terms of Use and Privacy Policy")
       setInvalid("agree")
+      agreeRef.current?.focus()
       return
     }
 
@@ -122,6 +127,18 @@ export default function SignUpPage() {
     }
   }
   // --------------------------------------------------------------------------
+
+  // A CORRECTED FIELD MUST STOP BEING WRONG. Both the aria-invalid flag AND
+  // the message survived the user fixing the problem: type a valid address
+  // after an email error and the field still reported aria-invalid="true"
+  // with "Enter a valid email address" still on screen underneath it. The
+  // flag is an AT defect; the stale MESSAGE is read by everyone, which makes
+  // it the worse half. Cleared on the first edit of whichever control the
+  // error was attributed to — not on every keystroke everywhere, so an error
+  // about the password does not vanish because the player edits their name.
+  const clearIfFixing = (who: typeof invalid) => {
+    if (invalid === who) { setInvalid(""); setError("") }
+  }
 
   const busy = isSubmitting || isLoading
   const label = "text-[12px] font-bold tracking-[0.04em] text-[var(--shotiq-color-ink)]"
@@ -224,7 +241,8 @@ export default function SignUpPage() {
                    data-s4="valEmail"
                    className={`${field} mt-[8px]`} placeholder="jordan.ellis@example.com"
                    value={formData.email}
-                   onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                   onChange={(e) => { clearIfFixing("email")
+                                      setFormData({ ...formData, email: e.target.value }) }} />
 
             <label htmlFor="password" data-s4="labPass" className={`${label} mt-[18px] block`}>PASSWORD</label>
             <div data-s4-contents className="relative mt-[8px]">
@@ -236,7 +254,8 @@ export default function SignUpPage() {
                      data-s4="valPass"
                      className={`${field} pr-[44px]`} placeholder="Create a password"
                      value={formData.password}
-                     onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                     onChange={(e) => { clearIfFixing("password")
+                                        setFormData({ ...formData, password: e.target.value }) }} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       data-s4="eyePass"
@@ -251,7 +270,7 @@ export default function SignUpPage() {
 
             <label htmlFor="confirmPassword" data-s4="labConfirm" className={`${label} mt-[16px] block`}>CONFIRM PASSWORD</label>
             <div data-s4-contents className="relative mt-[8px]">
-              <input id="confirmPassword" type={showConfirm ? "text" : "password"}
+              <input id="confirmPassword" ref={confirmRef} type={showConfirm ? "text" : "password"}
                      autoComplete="new-password" data-testid="signup-confirm-password"
                      required
                      aria-invalid={invalid === "confirm" || undefined}
@@ -259,7 +278,8 @@ export default function SignUpPage() {
                      data-s4="valConfirm"
                      className={`${field} pr-[44px]`} placeholder="Repeat your password"
                      value={formData.confirmPassword}
-                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
+                     onChange={(e) => { clearIfFixing("confirm")
+                                        setFormData({ ...formData, confirmPassword: e.target.value }) }} />
               {/* The eye button below is named for ITS OWN field. Both eye
                   buttons said "Show password", so an ARIA snapshot of this page
                   read `button "Show password"` twice and a screen-reader user
@@ -279,7 +299,9 @@ export default function SignUpPage() {
             </div>
 
             <label data-s4-contents className="mt-[18px] flex items-start gap-[10px] text-[13px] leading-[18px]">
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
+              <input type="checkbox" checked={agreed}
+                     onChange={(e) => { clearIfFixing("agree"); setAgreed(e.target.checked) }}
+                     ref={agreeRef}
                      data-testid="signup-agree"
                      aria-invalid={invalid === "agree" || undefined}
                      aria-describedby={invalid === "agree" ? "signup-error" : undefined}

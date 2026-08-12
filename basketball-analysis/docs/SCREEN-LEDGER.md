@@ -1742,6 +1742,31 @@ rather than THROWN, and that is why it could be switched on for all 72 at once �
 a throw would have had to be argued screen by screen before it could ship, and
 these 42 would still be scrolling.
 
+### OPEN, CLASS-LEVEL: NOT ONE of the 72 canonicals has white paper
+
+Rule 63 was found on 004 and confirmed on 003. Measured across the whole
+canonical set — modal colour of each PNG, which for these layouts is the paper:
+
+    (254, 254, 254)   56 screens
+    (253, 253, 253)   16 screens
+    (255, 255, 255)    0 screens
+
+So this is not a property of two screens, it is a property of the design source,
+and every screen this campaign has not yet reached will carry it. On 004 the one
+unit was worth 0.5744 of whole-screen mean |d| — 15.5% of everything left — so
+this is likely to be the single largest available correction on most screens.
+
+Note the 253 group: sixteen screens want a DIFFERENT value, so this is a
+per-screen measurement and not a constant to paste. Measure the modal colour of
+the screen's own canonical.
+
+**001 and 002 are marked DONE and carry this defect**, exactly as 003 did before
+it was fixed. They should get the same one-line screen-scoped correction and be
+re-measured, and their ledger figures restated — the precedent is 003, on the
+principle that a screen at A should not sit on a known defect. Deliberately NOT
+done while 004 is the screen in progress; it is the first thing to do when 004
+lands, before starting 005.
+
 ### OPEN, CLASS-LEVEL: every phone screen scrolls horizontally below 393pt
 
 Found by the sixth grader on 004 and explicitly NOT a 004 defect, so it is
