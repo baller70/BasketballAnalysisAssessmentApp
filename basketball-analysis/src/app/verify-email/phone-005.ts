@@ -438,7 +438,22 @@ export const RUNS: Record<string, Run> = {
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
      2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
      the round-3 reading was the instrument, not the run. */
-  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.845, ls: -0.004,
+  /* WEIGHT 700 -> 600, BETTER ON BOTH METRICS, which is why it was never a
+     trade. Grade 9's D3 measured ink density (perceptual-luminance coverage
+     mass, render/canonical, `wordmark` as control at 1.0011) and found this run
+     14% heavy. Swept against the served build:
+
+         weight 560   band 2.5275   ink 0.9785
+         weight 600   band 2.2172   ink 1.0183   <- shipped
+         weight 640   band 2.2039   ink 1.0696
+         weight 700   band 2.3010   ink 1.1367   <- was shipped
+         weight 740   band 2.5450   ink 1.1875
+
+     600 is 0.0838 BETTER on the band than the 700 it replaces and lands ink
+     density inside 2%. 640 is a hair better again on the band (0.0133) and
+     7% heavy, so it is not taken: DoD item 2 asks the density to match, and
+     nothing here is being traded away to get it. */
+  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 600, scale: 0.845, ls: -0.004,
                colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.4607 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
@@ -509,7 +524,20 @@ export const RUNS: Record<string, Run> = {
      pulls every letter off its canonical position to make the last one land.
      Same class as `help3` (neither bundled face is canonical's), and stated
      with its number rather than forced. */
-  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.81, ls: 0.024,
+  /* WEIGHT 700 -> 650 buys ink density for 0.048 of band, and that is the whole
+     argument. D3 measured this run 11% heavy; swept at the retuned ls above:
+
+         weight 560   band 9.3739   ink 0.9294
+         weight 600   band 8.3600   ink 0.9848
+         weight 650   band 7.8059   ink 1.0525   <- shipped
+         weight 700   band 7.7577   ink 1.1124   <- was shipped
+         weight 740   band 8.7168   ink 1.1589
+
+     650 costs 0.0482 against the band argmin and brings density inside the 6%
+     the grade's own tolerance uses. 600 would land 0.9848 — closer still — and
+     costs 0.60, which is twelve times the price for a difference already inside
+     tolerance, so it is stated rather than taken. */
+  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 650, scale: 0.81, ls: 0.024,
            colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: -0.4607, ty: 0 },
   /* THE THREE HELP LABELS ARE ONE ROLE AND ARE SOLVED JOINTLY (rule 14).
      Canonical sets them at one cap — the first glyph of each measures 22 / 22 /
