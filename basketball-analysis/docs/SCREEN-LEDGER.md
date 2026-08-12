@@ -2302,6 +2302,42 @@ string rolling over at midnight.
     the gate claim was wrong. Start servers with `NODE_ENV=production` and treat
     a startup warning as a finding, not as noise.
 
+### OPEN, 005: helpIcon2 is probably not the icon canonical drew
+
+`helpIcon2` is the hottest band on 005 at **28.0615**, and grade 9 read it as
+"the clock badge's left wall is 5 px out". Measured directly, that is too narrow
+a reading and the recommendation it implies would not have worked.
+
+The bounding boxes agree to within a pixel — canonical rows 11-61 cols 19-83,
+render rows 11-62 cols 20-83 — so by rule 34 this is not a translation and not a
+scale. What differs is the TOPOLOGY. Ink runs per row, threshold 160, window
+(1400,1472,40,140):
+
+    row 18   canon (19,27) (67,74)                 render (20,22) (75,77)
+    row 36   canon (19,22) (66,74)                 render (20,22) (55,59) (74,78)
+    row 48   canon (20,49) (57,59) (68,70) (80,83) render (20,23) (50,53) (66,71) (80,83)
+
+Three different kinds of disagreement, none of them positional. At row 18
+canonical's corners are 9 and 8 px wide against the render's 3 and 3. At row 36
+the render has an extra run canonical does not have at all. At row 48 canonical
+carries a solid 30 px horizontal stroke that the render simply does not draw.
+
+A stroke width cannot add a run, and a nudge cannot remove one. The render is
+lucide `mail-clock` (`Marks005.tsx:135`) and the evidence says canonical drew
+something else — or drew the same glyph at a weight and cut that changes which
+strokes join. THE NEXT STEP IS IDENTIFICATION, NOT ADJUSTMENT: find the shape
+whose run topology matches canonical's row by row, then position it. Guessing at
+path edits against a lossy raster is how a hot band gets a metric win and a
+worse drawing, which is rule 74b.
+
+`helpIcon1` and `helpIcon3` are the same family and carry the same signature —
+ink density 0.8901 and 0.8876 against `wordmark`'s 1.0011 control, i.e. both
+draw about 11% less ink than canonical, which is consistent with grade 9's
+separate measurement that helpIcon3's "?" stem is 4 px against canonical's 7 and
+its dot 3 against 6. Those two are plausibly a stroke-width or path-weight
+question and helpIcon2 is not; they should not be swept as one role until the
+identification above is done.
+
 ### The desktop regression guard, and the baseline that is no longer there
 
 The cycle's step 2 says to confirm the desktop set did not regress against
