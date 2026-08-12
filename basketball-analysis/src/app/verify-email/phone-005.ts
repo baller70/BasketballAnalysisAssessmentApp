@@ -789,7 +789,20 @@ ${BOX_X.map((x, i) => hitbox(`code${i}`, x, BOX_Y, BOX_W[i], BOX_H, BOX_R)).join
 .s5 [data-s5^="code"]::selection{background:transparent}
 ${hitbox("plate", PLATE.x, PLATE.y, PLATE.w, PLATE.h, PLATE.r)}
 ${hitbox("diffBtn", DIFFBTN.x, DIFFBTN.y, DIFFBTN.w, DIFFBTN.h, DIFFBTN.r)}
-${hitbox("resendLinkBox", 330, 806, 192, 44, 4)}
+/* 44 DEVICE px WAS 20.3 pt, AND THE UNIT IS THE WHOLE BUG. Every number in this
+   file is device px at DSF 2.170483, so "h: 44" here read as 44/2.170483 =
+   20.3 CSS pt — less than half the 44 pt iOS asks of a tap target, on the one
+   control this screen exists to offer. Grade 10 measured the rendered box at
+   88.5 x 20.3.
+
+   44 pt is 95.5 device px. Held centred on the same midline (806 + 44/2 = 828)
+   the box becomes 780.25..875.75, which clears the plate's hit target at
+   PLATE.y 904.78 by 29 px and overlaps no other control. NOTHING MOVES ON THE
+   CANVAS: on the phone every mark is painted by the overlay at absolute
+   coordinates and these boxes are transparent, so a hit target can grow without
+   touching a measured pixel — which is why this is free and was worth doing
+   before the geometry work that is not. */
+${hitbox("resendLinkBox", 330, 780.25, 192, 95.5, 4)}
 ${hitbox("helpRow1", 56, 1290, 740, 88, 4)}
 ${hitbox("helpRow2", 56, 1392, 740, 92, 4)}
 ${hitbox("helpRow3", 56, 1494, 740, 100, 4)}

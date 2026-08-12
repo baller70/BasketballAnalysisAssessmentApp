@@ -377,7 +377,8 @@ function VerifyEmailBody() {
               className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
           SHOT<span data-s5-iq className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
-        <Link href="/settings" aria-label="Settings" data-s5="gear" data-testid="verify-settings">
+        <Link href="/settings" aria-label="Settings" data-s5="gear" data-testid="verify-settings"
+              className="relative before:absolute before:-inset-[10px] before:content-['']">
           <span data-s5-off className="hidden md:inline"><Settings className="h-[20px] w-[20px]" /></span>
           <span data-s5-mark className="md:hidden"><GearMark /></span>
         </Link>
@@ -413,7 +414,7 @@ function VerifyEmailBody() {
                   else router.push("/signup")
                 }}
                 data-s5="back"
-                className="mt-[10px] flex h-[26px] w-[26px] items-center md:mt-[16px]">
+                className="relative mt-[10px] flex h-[26px] w-[26px] items-center before:absolute before:-inset-[9px] before:content-[''] md:mt-[16px]">
           <span data-s5-off className="hidden md:inline"><ArrowLeft className="h-[20px] w-[20px]" /></span>
           <span data-s5-mark className="md:hidden"><BackMark /></span>
         </button>
@@ -580,13 +581,38 @@ function VerifyEmailBody() {
             </Link>
             <Link href="/guide#email-delay" data-s5="helpRow2" data-testid="verify-help-2"
                   className="flex items-center gap-[10px] py-[9px] text-[13px]">
-              {/* Clock, not a second MailCheck. All three desktop icons here
-                  used to resolve to only two distinct assets — rows 1 and 2
-                  were the same mail-check, and row 3 was the ShieldCheck that
-                  also draws directly below it — so three semantically distinct
-                  rows rendered as two repeated pictures. The phone marks were
-                  already distinct (MailCheckMark / MailClockMark / HelpMark);
-                  the desktop halves now mirror them. */}
+              {/* Clock, not a second MailCheck — AND THIS DID NOT FIX IT.
+                  The previous comment here claimed "the desktop halves now
+                  mirror" the phone marks. Measured on the served build at
+                  1440x900, reading `<image href>` off each control, they do
+                  not: seven icons on this screen resolve to four distinct
+                  files, and one file carries three unrelated meanings —
+
+                    verify-open-mail        shotiq-approved-v2-ui-success
+                    verify-help-1           shotiq-approved-v2-ui-success
+                    "Your account is safe"  shotiq-approved-v2-ui-success
+                    verify-different-email  shotiq-approved-v2-coaching-target
+                    verify-help-2           shotiq-approved-v2-coaching-target
+
+                  while the phone half draws six distinct marks for the same six
+                  roles. Changing WHICH lucide name is imported cannot fix it,
+                  which is why the last attempt failed: `ApprovedLucide` maps a
+                  name to a CONCEPT STRING and `approvedAssetForConcept` keyword-
+                  matches that string onto a small raster library. `MailCheck` is
+                  "Success complete" and `ShieldCheck` is "Privacy success", so
+                  both hit the `success` branch; `Clock` ("Stopwatch time") and
+                  `Pencil` ("Edit coaching note") match nothing and both fall
+                  through to the same default. The collision is in the library,
+                  not in this file.
+
+                  Glyphs.tsx's own header says a shape must not be reused for a
+                  second concept — "pick another kind, or add one" — and there is
+                  no unused approved asset here that honestly means "spam
+                  folder" or "delivery delay". Adding one is a design-asset
+                  decision, so it is recorded in docs/SCREEN-LEDGER.md for Kevin
+                  rather than invented here. Desktop has no canonical for 005, so
+                  this costs no measured fidelity; it is a real product defect
+                  and it is stated instead of papered over. */}
               <span data-s5="helpMark2" data-s5-mark className="md:hidden"><MailClockMark /></span>
               <Clock data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
               <span data-s5="help2" className="flex-1">Wait a few minutes and tap &ldquo;Resend email&rdquo;</span>
