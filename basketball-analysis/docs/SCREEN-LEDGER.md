@@ -2839,11 +2839,52 @@ residual: the body face is not in this repository and no scaleX is right about
 the letters and the gaps at once. Their density figures are that same fact seen
 on a third axis, not a new defect.
 
+**AND THE EXCESS HAS TWO DIFFERENT CAUSES, so it is not one target list.**
+Profiling the ink itself — darkest pixel, 5th percentile, median, and median
+stroke run-length across each run — separates them cleanly:
+
+    run          darkest   p05   median   n_ink r/c   stroke r/c
+    safe1   c       0.0    0.0     15.0
+            r       0.0    0.0      0.0     1.192        1.250
+    safe2   c      13.0   43.0     99.0
+            r      72.0   72.0     80.0     1.229        1.000
+    didnt   c      17.0   43.0     85.0
+            r      72.0   72.0     72.0     1.095        1.000
+    display c       0.0    0.0      3.0
+            r       0.0    0.0      0.0     1.009        0.917
+
+  * **The GRAPHITE runs are a tonal-range difference, not an ink-volume one.**
+    Canonical's graphite strokes run from a core of 13-17 out to light edges
+    with a median near 99; the render is almost FLAT at 72, which is exactly
+    `--s5-graphite: #454751`. Canonical has a real core-to-edge gradient and the
+    render paints one value. That is not a new defect — it is rule 71's finding
+    arriving on a third axis. Rule 71 already measured the fix direction
+    (canonical's eroded cores are far darker than the shipped token) AND that
+    taking it makes the objective monotonically WORSE, because a per-pixel mean
+    has no legibility term. So this part of the density excess is **recorded as
+    unreachable by the objective**, not as work outstanding.
+
+  * **`safe1` is a genuine stroke-width error.** Both images reach 0, so the
+    colour matches; canonical's median stroke is 4.00 device px against the
+    render's 5.00, a 25% over. That is weight or size, it is measurable, and it
+    is not the face residual — `display`, the same ink role, sits at 0.917 in
+    the other direction with n_ink 1.009, so the two are independent.
+
+  * `resendLink`'s stroke ratio reads 89.5, which is the UNDERLINE being counted
+    as one 179px run. The instrument cannot speak for that run; its n_ink 1.162
+    is the graphite story above.
+
+So of eleven runs flagged, the honest split is: seven are rule 71's colour
+finding restated, one (`safe1`) is a real stroke-width solve, one (`resendLab`)
+is a real cap/advance joint solve, and the help rows are the stated face
+residual. Writing "eleven runs are wrong" would have sent the next round
+chasing a phantom.
+
 NOT ACTED ON in round 6, and stated rather than quietly carried: this was
 measured while the sixth grade was running against the current dist, so no
-source moved. It is the concrete target list for the next round, and it is the
-honest answer to "is DoD item 2 satisfied" — for cap and advance yes, for
-density no.
+source moved. The honest answer to "is DoD item 2 satisfied" — for cap and
+advance yes, for density no, and most of the density gap is a known
+unreachable rather than a missing solve.
 
 ### OPEN, CLASS-LEVEL: the phone canvas is pinned LEFT between 394 and 767.98px
 
