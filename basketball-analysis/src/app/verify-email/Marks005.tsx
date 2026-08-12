@@ -113,7 +113,29 @@ export function EnvelopeMark() {
 export function EnvelopePencilMark() {
   return (
     <Icon name="diffMark" sw={3.0}>
-      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9" />
+      {/* THE ENVELOPE'S BOTTOM EDGE RUNS INTO THE PENCIL, so the two draw as ONE
+          object. Connected components (8-connectivity) in (1070..1145, 232..322):
+
+              canonical  2 components   629 px rows 12..52 cols 15..72
+                                        260 px rows 37..65 cols 51..78
+              render     1 component    902 px rows 12..66 cols 16..79
+
+          Threshold-independent — canonical holds 2 at 140, 180 and 210 — and
+          the totals are within 1.5% (889 against 902), so the shapes are right
+          and only their CONTACT is wrong. `diffMark` is the worst diagnostic
+          sub-window on the screen at 32.0538.
+
+          The bottom edge ended at x=13 ("h9" from x=4) and the pencil's lower
+          tip sits near x=12.6; at sw 3.0 each is 1.5 units wide, so they cannot
+          help but touch. Shortening the run to "h8" ends it at x=12, one unit
+          clear, which is the smallest change that can separate them and costs
+          about 3 device px of a stroke canonical also stops short of — its
+          envelope component ends at col 72 while the pencil starts at col 51,
+          so canonical's bottom edge is demonstrably not carried across.
+
+          BUILT AND MEASURED, not reasoned: if diffMark does not improve this is
+          reverted rather than kept for looking principled. */}
+      <path d="M21 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8" />
       <path d="m21 6.6-8.6 5.5a2 2 0 0 1-2 0L2 6.6" />
       <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
     </Icon>
@@ -137,8 +159,33 @@ export function MailClockMark() {
     <Icon name="helpMark2" sw={3.0}>
       <path d="M21 11V6a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9" />
       <path d="m21 6.6-8.6 5.5a2 2 0 0 1-2 0L1 6.6" />
-      <circle cx="17.5" cy="17.5" r="5.5" />
-      <path d="M17.5 14.6v3l2 1.4" />
+      {/* THE RING IS 20% TOO BIG, WHICH IS WHY IT MERGES WITH THE ENVELOPE.
+          `helpIcon2` is the worst band on the screen (28.0615) and an integer
+          shift search returns (0,0) with gain 0.000, so there is no translation
+          to take. Least-squares circle fit to ~55 outer-arc points:
+
+              canonical  centre (109.76, 1448.57)  outer r 12.98
+              render     centre (106.99, 1446.63)  outer r 15.58
+
+          The OUTER EXTENT is already right — 109.76+12.98 = 122.74 against
+          106.99+15.58 = 122.57, and the same within a pixel at the bottom —
+          which is why the icon's bounding box matched canonical and hid this.
+          A ring that is too large AND centred too far up-left reaches the same
+          bottom-right corner while overrunning the envelope, so canonical draws
+          three components here and the render draws two.
+
+          Solved in viewBox units from the fit. The drawn outer radius is
+          r + sw/2 = 7 units against a measured 15.58 device px, so the icon
+          scale is k = 2.2257 device px per unit:
+
+              r  = 12.98/k - 1.5      = 4.33   (from 5.5)
+              cx = 17.5 + 2.77/k      = 18.74
+              cy = 17.5 + 1.94/k      = 18.37
+
+          The hands move with the dial: their pivot is the centre, so the same
+          delta applies and the 3-unit/1.4-unit arms scale by 4.33/5.5. */}
+      <circle cx="18.74" cy="18.37" r="4.33" />
+      <path d="M18.74 16.07v2.36l1.57 1.1" />
     </Icon>
   )
 }
