@@ -266,8 +266,8 @@ function VerifyEmailBody() {
           SHOT<span data-s5-iq className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
         <Link href="/settings" aria-label="Settings" data-s5="gear" data-testid="verify-settings">
-          <span className="hidden md:inline"><Settings className="h-[20px] w-[20px]" /></span>
-          <span className="block h-full w-full md:hidden"><GearMark /></span>
+          <span data-s5-off className="hidden md:inline"><Settings className="h-[20px] w-[20px]" /></span>
+          <span data-s5-mark className="md:hidden"><GearMark /></span>
         </Link>
       </header>
 
@@ -275,8 +275,8 @@ function VerifyEmailBody() {
         <button type="button" onClick={() => router.back()} aria-label="Go back"
                 data-s5="back" data-testid="verify-back"
                 className="mt-[10px] flex h-[26px] w-[26px] items-center md:mt-[16px]">
-          <span className="hidden md:inline"><ArrowLeft className="h-[20px] w-[20px]" /></span>
-          <span className="block h-full w-full md:hidden"><BackMark /></span>
+          <span data-s5-off className="hidden md:inline"><ArrowLeft className="h-[20px] w-[20px]" /></span>
+          <span data-s5-mark className="md:hidden"><BackMark /></span>
         </button>
 
         <h1 data-s5="display" className="shotiq-display mt-[18px] text-center text-[40px] leading-[44px]">
@@ -360,14 +360,14 @@ function VerifyEmailBody() {
         {/* -------------------------------------------------------- actions */}
         <a href={inboxUrl(email)} data-s5="plate" data-testid="verify-open-mail"
            className="mt-[18px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-semibold text-white">
-          <span data-s5="plateMark" className="md:hidden"><EnvelopeMark /></span>
-          <MailCheck className="hidden h-[18px] w-[18px] md:inline" />
+          <span data-s5="plateMark" data-s5-mark className="md:hidden"><EnvelopeMark /></span>
+          <MailCheck data-s5-off className="hidden h-[18px] w-[18px] md:inline" />
           <span data-s5="plateLab">Open email app</span>
         </a>
 
         <Link href="/signup" data-s5="diffBtn" data-testid="verify-different-email"
               className="mt-[12px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-ink)] bg-white text-[15px]">
-          <span data-s5="diffMark" className="md:hidden"><EnvelopePencilMark /></span>
+          <span data-s5="diffMark" data-s5-mark className="md:hidden"><EnvelopePencilMark /></span>
           <span data-s5="diffLab">Use a different email</span>
         </Link>
 
@@ -383,35 +383,35 @@ function VerifyEmailBody() {
                 anchors; support is the address on the marketing site. */}
             <Link href="/guide#email-spam" data-s5="helpRow1" data-testid="verify-help-1"
                   className="flex items-center gap-[10px] py-[9px] text-[13px]">
-              <span data-s5="helpMark1" className="md:hidden"><MailCheckMark /></span>
-              <MailCheck className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <span data-s5="helpMark1" data-s5-mark className="md:hidden"><MailCheckMark /></span>
+              <MailCheck data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
               <span data-s5="help1" className="flex-1">Check your spam or promotions folder</span>
-              <span data-s5="chev1" className="md:hidden"><ChevronMark /></span>
-              <ChevronRight className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
+              <span data-s5="chev1" data-s5-mark className="md:hidden"><ChevronMark n={1} /></span>
+              <ChevronRight data-s5-off className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
             </Link>
             <Link href="/guide#email-delay" data-s5="helpRow2" data-testid="verify-help-2"
                   className="flex items-center gap-[10px] py-[9px] text-[13px]">
-              <span data-s5="helpMark2" className="md:hidden"><MailClockMark /></span>
-              <MailCheck className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <span data-s5="helpMark2" data-s5-mark className="md:hidden"><MailClockMark /></span>
+              <MailCheck data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
               <span data-s5="help2" className="flex-1">Wait a few minutes and tap &ldquo;Resend email&rdquo;</span>
-              <span data-s5="chev2" className="md:hidden"><ChevronMark /></span>
-              <ChevronRight className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
+              <span data-s5="chev2" data-s5-mark className="md:hidden"><ChevronMark n={2} /></span>
+              <ChevronRight data-s5-off className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
             </Link>
             <a href="mailto:support@shotiqai.com?subject=Email%20verification" data-s5="helpRow3"
                data-testid="verify-help-3"
                className="flex items-center gap-[10px] py-[9px] text-[13px]">
-              <span data-s5="helpMark3" className="md:hidden"><HelpMark /></span>
-              <ShieldCheck className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <span data-s5="helpMark3" data-s5-mark className="md:hidden"><HelpMark /></span>
+              <ShieldCheck data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
               <span data-s5="help3" className="flex-1">Need help? Contact support</span>
-              <span data-s5="chev3" className="md:hidden"><ChevronMark /></span>
-              <ChevronRight className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
+              <span data-s5="chev3" data-s5-mark className="md:hidden"><ChevronMark n={3} /></span>
+              <ChevronRight data-s5-off className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
             </a>
           </div>
         </div>
 
         <div data-s5-contents className="mt-[14px] flex items-center gap-[10px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
-          <span data-s5="shield" className="md:hidden"><ShieldMark /></span>
-          <ShieldCheck className="hidden h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-confirmGreen)] md:inline" />
+          <span data-s5="shield" data-s5-mark className="md:hidden"><ShieldMark /></span>
+          <ShieldCheck data-s5-off className="hidden h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-confirmGreen)] md:inline" />
           <div data-s5-contents>
             <div data-s5="safe1" className="text-[13px] font-semibold">Your account is safe</div>
             <div data-s5="safe2" className="text-[11px] text-[var(--shotiq-color-graphite)]">

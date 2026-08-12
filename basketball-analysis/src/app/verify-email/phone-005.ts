@@ -161,7 +161,10 @@ export const RUNS: Record<string, Run> = {
      weight untouched and its scaleX trimmed by 183/192: 1.0470 -> 0.9979. That
      is rule 32 used the safe way round — the two axes were read together, the
      vertical agreed exactly, and only the horizontal moved. */
-  wordmark: { x: 46.462, top: 34.805, size: 21.72, weight: 759, scale: 0.9979, ls: 0.0123,
+  /* scale 0.9979 -> 1.0090: the first built capture came back 1.1% narrow at
+     an EXACT cap (height ratio 1.000, width ratio 0.989), which is rule 32's
+     signature for a pure horizontal error and nothing else. */
+  wordmark: { x: 46.462, top: 34.805, size: 21.72, weight: 759, scale: 1.0090, ls: 0.0123,
               colour: "var(--s5-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 1.2670 },
   /* VERIFY YOUR EMAIL — and unlike 004's headline this one is OBLIQUE.
      There is no italic Tungsten in the repository (the four cuts are medium,
@@ -172,70 +175,102 @@ export const RUNS: Record<string, Run> = {
      Cap 124.81 device px (228.686..353.492) and advance 528.43 (166.352..
      694.779). Tungsten Semibold's cap is 0.724 of its font-size on 004's solved
      values, so the seed size is 124.81 / 0.724 / 2.170483 = 79.4 CSS px. */
-  display: { x: 166.352, top: 228.686, size: 79.4, weight: 600, scale: 1.00, skew: -6.0,
+  /* First built capture: cap ratio 0.969 (3.1% short) and advance ratio 1.302
+     (30% over) — BOTH axes wrong and in opposite directions, so the size and
+     the scale are solved together rather than either alone (rule 32). Size
+     79.4 -> 81.94 lands the cap; at that size the advance ratio would be
+     1.302 x 1.032 = 1.344, so scaleX 1.00 -> 0.744. dy 30.0 -> 36.4 is the same
+     6-device-px lift re-expressed at the new size. */
+  display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.744, skew: -6.0,
              ls: 0.0, colour: "var(--s5-ink)", family: TUNGSTEN, bang: true,
-             dx: 1.2, dy: 30.0, tx: 0, ty: 0 },
+             dx: 1.2, dy: 36.4, tx: 0, ty: 0 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
-  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.96, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 7.9, width: 348.3, tx: 0, ty: 0 },
+  /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
+  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.908, ls: -0.004,
+           colour: "var(--s5-graphite)", dx: 0, dy: 9.9, width: 348.3, tx: 0, ty: 0 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
-  lede2: { cx: 428.430, top: 442.572, size: 16.4, weight: 600, scale: 0.96, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0, dy: 8.6, width: 319.9, tx: 0, ty: 0 },
+  /* Cap 1.067 over AND advance 1.168 over — both axes, so this one IS a size
+     error with a scale trim on top: 16.4 -> 15.37, then 0.96 -> 0.877. */
+  lede2: { cx: 428.430, top: 442.572, size: 15.37, weight: 600, scale: 0.877, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0, dy: 8.1, width: 319.9, tx: 0, ty: 0 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
      22.96 / 24.36 / 26.38 / 22.74 — ink-width/cap 0.40, where an unscaled Geist
      digit sits near 0.63, so the run is condensed by about a third. */
-  digit0: { cx: 102.840, top: 570.475, size: 37.6, weight: 500, scale: 0.66, ls: 0,
-            colour: "var(--s5-ink)", dx: 0, dy: 0, width: 105.45, tx: 0, ty: 0 },
-  digit1: { cx: 232.068, top: 570.461, size: 37.6, weight: 500, scale: 0.66, ls: 0,
-            colour: "var(--s5-ink)", dx: 0, dy: 0, width: 105.32, tx: 0, ty: 0 },
-  digit2: { cx: 360.964, top: 571.017, size: 37.6, weight: 500, scale: 0.66, ls: 0,
-            colour: "var(--s5-ink)", dx: 0, dy: 0, width: 105.22, tx: 0, ty: 0 },
-  digit3: { cx: 490.455, top: 571.048, size: 37.6, weight: 500, scale: 0.66, ls: 0,
-            colour: "var(--s5-ink)", dx: 0, dy: 0, width: 104.74, tx: 0, ty: 0 },
+  /* THE DIGITS ARE THE DISPLAY FACE, NOT THE BODY FACE, and the width said so
+     before any pixel was scored. Canonical's four digits are 22.96 / 24.36 /
+     26.38 / 22.74 device px of ink at a 59.1 px cap. Geist would need scaleX
+     0.50 to reach that — a face squeezed to half its natural width, which is
+     the shape rule 54 warns is a wrong-face symptom rather than a metric one.
+     Tungsten at the cap that fits (59.1 / 0.724 / 2.170483 = 37.6 CSS px) is
+     already that narrow with NO horizontal scale at all, which is what a
+     correctly identified face looks like.
+     The first capture measured Geist's cap at 0.637 of its font-size here
+     against Tungsten's 0.724, which is where 37.6 comes from. */
+  digit0: { cx: 102.840, top: 570.475, size: 37.6, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.45, tx: 0, ty: 0 },
+  digit1: { cx: 232.068, top: 570.461, size: 37.6, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.32, tx: 0, ty: 0 },
+  digit2: { cx: 360.964, top: 571.017, size: 37.6, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.22, tx: 0, ty: 0 },
+  digit3: { cx: 490.455, top: 571.048, size: 37.6, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 104.74, tx: 0, ty: 0 },
   /* Boxes five and six are EMPTY in canonical, so these two runs have no ink to
-     measure against. They are the box centres — 567.35 + 103.89/2 and 695.20 +
-     105.64/2 — carrying the same size and scale as the four that were measured,
-     because a player who keeps typing must not see the digits change shape
-     halfway along the row. Nothing here is fitted; it is stated. */
-  digit4: { cx: 619.295, top: 570.75, size: 37.6, weight: 500, scale: 0.66, ls: 0,
-            colour: "var(--s5-ink)", dx: 0, dy: 0, width: 103.89, tx: 0, ty: 0 },
-  digit5: { cx: 748.020, top: 570.75, size: 37.6, weight: 500, scale: 0.66, ls: 0,
-            colour: "var(--s5-ink)", dx: 0, dy: 0, width: 105.64, tx: 0, ty: 0 },
+     measure against. They are the box centres, carrying the same size and face
+     as the four that were measured, because a player who keeps typing must not
+     see the digits change shape halfway along the row. Stated, not fitted. */
+  digit4: { cx: 619.295, top: 570.75, size: 37.6, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 103.89, tx: 0, ty: 0 },
+  digit5: { cx: 748.020, top: 570.75, size: 37.6, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.64, tx: 0, ty: 0 },
   /* "Resend code in" (graphite) and "0:42" (orange, heavier) are two runs
      because they are two roles: the label reads G/R 0.9876 / B/R 0.9523 and the
      value is orange. One window over both would measure neither (rule 57). */
-  resendLab: { x: 287.865, top: 730.490, size: 15.9, weight: 400, scale: 0.96, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 0.6, dy: 8.2, tx: 0, ty: 0 },
-  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.96, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 0.6, dy: 8.2, tx: 0, ty: 0 },
+  /* Cap 0.963 short, advance 1.014 over: size 15.9 -> 16.5 with scaleX
+     0.96 -> 0.912 to hold the advance the size change would have widened. */
+  resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 400, scale: 0.912, ls: -0.004,
+               colour: "var(--s5-graphite)", dx: 0.6, dy: 10.2, tx: 0, ty: 0 },
+  /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
+  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.78, ls: -0.004,
+               colour: "var(--s5-orange)", dx: 6.6, dy: 10.2, tx: 0, ty: 0 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
+  /* `ox`/`oy` ON EVERY RUN THAT LIVES INSIDE A HIT TARGET. The hit targets are
+     `position:absolute`, which makes each of them a containing block, so an
+     absolutely-positioned run inside one resolves its `left`/`top` against the
+     TARGET's corner and not against the screen. First capture: "Resend email"
+     landed at the foot of the screen and all three help labels vanished off it
+     entirely. Canonical coordinates go in; the parent's origin is subtracted
+     out by `runCss`, exactly as `plateLab` and `diffLab` already did. */
   resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.96, ls: -0.004,
-                colour: "var(--s5-orange)", dx: 0, dy: 8.2, width: 174.9, tx: 0, ty: 0 },
+                colour: "var(--s5-orange)", dx: 0, dy: 8.2, width: 174.9, tx: 0, ty: 0,
+                ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
   plateLab: { x: 339.0, top: 946.0, size: 17.6, weight: 600, scale: 0.96, ls: -0.004,
               colour: "#FFFFFF", dx: 0.8, dy: 9.2, tx: 0, ty: 0,
               ox: PLATE.x, oy: PLATE.y },
   /* "Use a different email" inside the outlined button. */
-  diffLab: { x: 348.0, top: 1093.0, size: 15.6, weight: 500, scale: 0.96, ls: -0.004,
+  /* Cap 1.040 over, advance 1.193 over: size 15.6 -> 15.0, scaleX -> 0.837. */
+  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.837, ls: -0.004,
              colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: 0, ty: 0,
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
-  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.93, ls: 0.03,
-           colour: "var(--s5-graphite)", dx: 0.8, dy: 7.0, tx: 0, ty: 0 },
-  help1: { x: 169.384, top: 1320.903, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
+  /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
+  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.784, ls: 0.03,
+           colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: 0, ty: 0 },
+  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 8.3, tx: 0, ty: 0 },
-  help2: { x: 168.992, top: 1423.456, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
+  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 8.3, tx: 0, ty: 0 },
-  help3: { x: 170.419, top: 1531.877, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 8.3, tx: 0, ty: 0 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 600, scale: 0.96, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: 0 },
-  safe2: { x: 184.667, top: 1700.763, size: 15.2, weight: 400, scale: 0.96, ls: -0.004,
+  /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
+  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 400, scale: 0.761, ls: -0.004,
            colour: "var(--s5-graphite)", dx: 0.6, dy: 7.9, tx: 0, ty: 0 },
 }
 
@@ -279,10 +314,13 @@ function hitbox(name: string, x: number, y: number, w: number, h: number, r = 8)
     `height:${u(h)};border:0;border-radius:${u(r)};background:transparent;padding:0;margin:0;display:block}`
 }
 
-/** A positioned drawn mark. `w`/`h` are the SVG BOX, not the ink. */
-function markBox(name: string, x: number, y: number, w: number, h: number) {
-  return `.s5 [data-s5="${name}"]{position:absolute;left:${u(x)};top:${u(y)};width:${u(w)};` +
-    `height:${u(h)};padding:0;margin:0;display:block;border:0;background:transparent}`
+/** A positioned drawn mark. `w`/`h` are the SVG BOX, not the ink. `ox`/`oy` are
+ *  the origin of the positioned ancestor, for the marks that live inside a hit
+ *  target — same correction as `Run.ox`/`Run.oy`. */
+function markBox(name: string, x: number, y: number, w: number, h: number,
+                 ox = 0, oy = 0) {
+  return `.s5 [data-s5="${name}"]{position:absolute;left:${u(x - ox)};top:${u(y - oy)};` +
+    `width:${u(w)};height:${u(h)};padding:0;margin:0;display:block;border:0;background:transparent}`
 }
 
 /* Mark placement, in canonical device px. Every box below is the mark's own
@@ -299,18 +337,22 @@ function markBox(name: string, x: number, y: number, w: number, h: number) {
      help       ink  60..118 x 1512..1571
      chevrons   ink 777..790 x 1319..1343 / 1422..1446 / 1530..1555
      shield     ink  73..141 x 1635..1725 */
-const MARK_BOXES: Record<string, [number, number, number, number]> = {
-  gear: [750, 24, 56, 58],
-  back: [37, 128, 50, 50],
-  plateMark: [235, 933, 73, 58],
-  diffMark: [240, 1075, 78, 66],
-  helpMark1: [52, 1302, 72, 58],
-  helpMark2: [53, 1405, 77, 64],
-  helpMark3: [54, 1506, 70, 71],
-  chev1: [770, 1312, 28, 38],
-  chev2: [770, 1415, 28, 38],
-  chev3: [770, 1523, 28, 38],
-  shield: [66, 1628, 82, 104],
+export const MARK_BOXES: Record<string, [number, number, number, number, number, number]> = {
+  /* Every mark box below was re-solved from the first built capture's ink
+     bbox against canonical's, which is the only thing that pins a lucide
+     drawing's inset — the drawings do not all inset by the same fraction and
+     assuming they did left each mark wrong by a different amount. */
+  gear: [751, 27, 54, 51, 0, 0],
+  back: [36, 128, 51.5, 51.5, 0, 0],
+  plateMark: [235, 933, 73, 58, PLATE.x, PLATE.y],
+  diffMark: [240, 1075, 78, 66, DIFFBTN.x, DIFFBTN.y],
+  helpMark1: [47, 1312, 77, 51, 56, 1290],
+  helpMark2: [48, 1416, 89, 63, 56, 1392],
+  helpMark3: [50, 1517, 74, 79, 56, 1494],
+  chev1: [770, 1312, 28, 38, 56, 1290],
+  chev2: [770, 1415, 28, 38, 56, 1392],
+  chev3: [770, 1523, 28, 38, 56, 1494],
+  shield: [61, 1628, 96, 104, 0, 0],
 }
 
 export const PHONE_CSS = `@media (max-width: 767.98px){
@@ -340,8 +382,21 @@ ${hitbox("resendLinkBox", 330, 806, 192, 44, 4)}
 ${hitbox("helpRow1", 56, 1290, 740, 88, 4)}
 ${hitbox("helpRow2", 56, 1392, 740, 92, 4)}
 ${hitbox("helpRow3", 56, 1494, 740, 100, 4)}
-${Object.entries(MARK_BOXES).map(([k, [x, y, w, h]]) => markBox(k, x, y, w, h)).join("\n")}
-.s5 [data-s5] svg{width:100%;height:100%;display:block}
+${Object.entries(MARK_BOXES).map(([k, m]) => markBox(k, ...m)).join("\n")}
+/* THE SVG SIZING RULE IS SCOPED TO MARKS, and the first version was not.
+   '.s5 [data-s5] svg' matches ANY svg inside ANY hit target, and the desktop
+   lucide icons live inside those same targets carrying Tailwind's 'hidden'.
+   Specificity 0,2,1 against '.hidden''s 0,1,0, so the rule UNHID every desktop
+   icon on the phone: five approved-icon PNGs painted over the drawn marks in
+   the first capture. The desktop icons now carry 'data-s5-off', which is
+   'display:none!important' and cannot be lost to a specificity race, and the
+   sizing rule keys off 'data-s5-mark' — an attribute only the drawn marks
+   have. */
+/* NO BACKTICKS ABOVE: this comment is emitted from inside a template literal,
+   so a backtick around an identifier ends the string and the file stops
+   parsing — the same trap Marks004 records twice. */
+.s5 [data-s5-mark]{display:block;width:100%;height:100%}
+.s5 [data-s5-mark] svg{width:100%;height:100%;display:block}
 /* KEYBOARD FOCUS. The code inputs paint no text of their own, so the UA focus
    ring is the only thing that could show a keyboard user where they are — and
    'outline:none' above removed it. It is put back as the same orange box the
