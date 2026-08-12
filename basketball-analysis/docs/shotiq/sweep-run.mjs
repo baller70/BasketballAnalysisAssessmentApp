@@ -89,11 +89,25 @@ for (const [i, c] of candidates.entries()) {
   // at one size must be solved JOINTLY (ledger rule 14): fitting each line on
   // its own lets two different sizes both look locally plausible while the
   // block reads wrong, which is how 004's five micro-cap labels were solved.
+  // THE SHEET GOES AT THE END OF BODY, NOT IN HEAD, AND THE REASON IS A BUG
+  // THAT SILENTLY VOIDED WHOLE SWEEPS.
+  //
+  // Every declaration here is already `!important` (see `imp` above), and so is
+  // every declaration PHONE_CSS emits for a `bang: true` run. Equal specificity
+  // and equal importance means DOCUMENT ORDER decides — and PHONE_CSS is a
+  // `<style>` inside the body, which comes after head. So for any bang run the
+  // recipe won and the sweep lost, quietly: the shot came back looking like a
+  // measurement and was the unmodified page. 004's display is a bang run, and
+  // a face sweep run through this file reported `fontSize: 49.63px` — the
+  // shipped value — on all seven candidates. Appending to body puts the sheet
+  // last, and re-appending an existing element MOVES it, so it stays last even
+  // if the app re-renders its own style in between.
   await p.evaluate(({ decls }) => {
     let el = document.getElementById('__sweep')
-    if (!el) { el = document.createElement('style'); el.id = '__sweep'; document.head.appendChild(el) }
+    if (!el) { el = document.createElement('style'); el.id = '__sweep' }
     el.textContent = Object.entries(decls)
       .map(([r, d]) => `.s4 [data-s4="${r}"]{${d}}`).join('\n')
+    document.body.appendChild(el)
   }, { decls })
   await p.waitForTimeout(220)
 

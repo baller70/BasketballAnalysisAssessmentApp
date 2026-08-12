@@ -221,6 +221,14 @@ async function shoot(p, row) {
     steps: (row.steps || []).length,
     innerWidth: await p.evaluate(() => window.innerWidth),
     scrollWidth: await p.evaluate(() => document.documentElement.scrollWidth),
+    // The guard had a horizontal arm and no vertical one, and a whole screen
+    // got past it: 004 carried an ungated `min-height: 900` that made the phone
+    // page scroll 48pt, and every capture still looked right because `quiesce()`
+    // scrolls to the top before each shot. scrollY is therefore ALWAYS 0 here
+    // and is not the measurement — scrollHeight is, and quiesce does not touch
+    // it. Recorded for all 72 so the class is checked rather than the instance.
+    scrollHeight: await p.evaluate(() => document.documentElement.scrollHeight),
+    innerHeight: await p.evaluate(() => window.innerHeight),
   }
 }
 
@@ -267,10 +275,17 @@ for (const f of got) {
 }
 
 const wide = Object.entries(meta).filter(([, v]) => v.scrollWidth > 393 || v.innerWidth !== 393)
+// REPORTED, NOT THROWN, and deliberately so. `wide` is a hard invariant — a
+// phone screen wider than 393 is always a defect. Height is not: some routes
+// legitimately scroll. So this names the screens whose content exceeds the
+// viewport and leaves the judgement to whoever reads it, which is what makes it
+// safe to switch on for all 72 at once without breaking a single existing run.
+const tall = Object.entries(meta).filter(([, v]) => v.scrollHeight > v.innerHeight + 1)
 
 if (!ONLY.length) {
   fs.writeFileSync(S + '/IOS-CAPTURE-LATEST.json', JSON.stringify(
-    { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, failures, meta }, null, 1))
+    { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, tall, failures, meta },
+    null, 1))
 }
 
 console.log(`captured   ${got.length} / ${expected.length}`)
@@ -278,6 +293,8 @@ console.log(`distinct   ${seen.size} md5s`)
 console.log(`gaps       ${gaps.length}${gaps.length ? ' — ' + gaps.join(', ') : ''}`)
 console.log(`step fails ${failures.length}${failures.length ? '\n  ' + failures.join('\n  ') : ''}`)
 console.log(`wider>393  ${wide.length}${wide.length ? ' — ' + JSON.stringify(wide) : ''}`)
+console.log(`scrolls    ${tall.length}${tall.length
+  ? ' — ' + tall.map(([n, v]) => `${n} ${v.scrollHeight}>${v.innerHeight}`).join(', ') : ''}`)
 
 if (dupes.length) {
   throw new Error(`DUPLICATE CAPTURE:\n  ${dupes.join('\n  ')}\n— a redirect ate a screen`)

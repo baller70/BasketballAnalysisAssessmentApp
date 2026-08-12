@@ -34,6 +34,21 @@ once.
 A grader briefed against **these paths** can be dispatched at any time and will
 still find its inputs after a rollback, because a rollback restores git.
 
+## The first version of this directory did not work
+
+It was created, the README above was written, `git add` was run, and **the PNGs
+never went in**. `.gitignore:99` is a blanket `*.png`, so git accepted the
+README and the report table and silently dropped the only two files the
+directory exists to hold. A grader dispatched against these paths in the round
+that followed found them anyway — because they were sitting untracked on
+disk — which is exactly why nobody noticed. The next rollback would have taken
+them again and the failure would have looked identical to the one this
+directory was built to prevent.
+
+**They are `git add -f`'d now.** Anything added here in future needs the `-f`,
+and the check that it worked is `git ls-files docs/shotiq/grading/`, not the
+absence of an error from `git add`.
+
 ## Rules for using it
 
 * The render here is the one a specific grade refers to. **Replace it in the same

@@ -359,8 +359,16 @@ export const RUNS: Record<string, Run> = {
      new value would be invented precision.
      Rule 40 control at the recipe's own values reproduced the built capture's
      10.9493 exactly, which is what licenses reading the rest of the sweep. */
+  /* tx -0.30 — the run sat 0.60 device px right, found by a sub-pixel rigid
+     shift of the band's own window (order-3, +/-1.5 device px at 0.15 steps)
+     and then reproduced through the recipe's own transform, which is the only
+     thing that makes it a prescription rather than a bound (rule 47): the image
+     shifter predicted 3.6203 and the CSS delivered 3.6233. 4.3262 -> 3.6233.
+     Horizontal is where sub-pixel moves LIVE — Chromium composites x and
+     quantises y (rule 53), which is why this one transfers and the vertical
+     sibling on labConfirm below does not. */
   helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.93, ws: 0.4, ls: -0.004,
-              colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: 0, ty: 0 },
+              colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: -0.30, ty: 0 },
   /* "I agree to the Terms of Use and Privacy Policy." Band 20.078 -> 10.666,
      at size 14.46 -> 11.5 and scaleX 0.900 -> 0.95.
      SOLVED ON THE BAND MEAN, BECAUSE CAP HEIGHT IS NOT A USABLE ESTIMATOR HERE.
@@ -385,8 +393,13 @@ export const RUNS: Record<string, Run> = {
      fidelity number in any case.
      dx 0.5 and 1.5 score identically, as do dy 6.0 and 7.0 — both lattices
      quantise, so these digits are the rung, not a precision claim. */
+  /* ty +0.45 — 0.45 device px low, and this one DOES clear the vertical rung
+     where labConfirm's 0.30 does not. The rung was measured rather than
+     assumed: ty 0.32, 0.40, 0.52 and 0.60 all score 6.9464 to four decimals and
+     0.75 jumps to 10.2700, so 0.45 is the middle of a live rung and the trailing
+     digit is the rung, not a precision claim. 7.2649 -> 6.9464. */
   terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.92, ws: 1.1, ls: -0.004,
-           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0 },
+           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0.45 },
   /* "Create account" — the plate's label, and the display run's signature all
      over again (rule 32: read the two axes together before calling anything a
      size error). Vertical extent canonical/render 1.0004 by outer bbox and
@@ -413,8 +426,14 @@ export const RUNS: Record<string, Run> = {
      control at the shipped 21.0/8.52 reproduced 8.4842 exactly. */
   createLab: { x: 353.65, top: 1577.54, size: 20.0, weight: 480, scale: 0.7845, ls: -0.03,
                colour: "#FFFFFF", dx: 1.16, dy: 12.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
+  /* tx 1.2 -> 2.30. The word-spacing round moved this to 1.2 on a band mean;
+     a sub-pixel rigid shift of the orrow window says the label is still 1.5
+     device px left of canonical, and the CSS reproduces it: orrow 1.9943 ->
+     1.7513. The band is the ROW, not the label alone, so the rule holds either
+     way — the rules on both sides of "OR" are unmoved and the score improves,
+     which is what says the label was the thing out of place. */
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
-           colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 1.2, ty: 0 },
+           colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 2.30, ty: 0 },
   /* "Sign in" — the OPPOSITE diagnosis to createLab above, which is why the two
      are solved apart despite having been seeded with identical numbers. Here
      vertical extent came back 0.8913 (per-column) / 0.8905 (bbox) against an
