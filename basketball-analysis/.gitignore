@@ -43,3 +43,13 @@ ios/.build/
 next-env.d.ts
 
 /src/generated/prisma
+
+# Agent scratch. Grading and measurement agents write throwaway probe scripts
+# (sweep specs, shift searches, transform readbacks) into the repo so they run
+# against the project's own tooling and node_modules. It is working material,
+# not source: the findings belong in docs/SCREEN-LEDGER.md and the fixes in the
+# tree, and the scripts that produced them are regenerated every round.
+# Named by convention so a running agent's files are ignored, never deleted
+# out from under it, and never committed.
+.g*tmp/
+.agent-tmp/
