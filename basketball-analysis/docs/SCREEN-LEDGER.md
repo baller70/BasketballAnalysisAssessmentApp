@@ -2408,6 +2408,56 @@ markup 11/11 and csrf 3/3. The round's net is helpIcon1 22.0527 -> 17.6749 and
 back 3.9709 -> 3.5029 — the two whose evidence the INTERIOR refereed, not the
 four whose envelope did.
 
+### ROUND 26: display's residual is not reachable by scaleX or tracking
+
+Grade 13 read `display` as per-glyph misregistration and grade 12 as
+antialiasing. Both were measuring downstream of the same thing, and the ink runs
+say what it is.
+
+CANONICAL RESOLVES FIVE INK RUNS, NOT FIFTEEN GLYPHS — at 40px on this face the
+letters are already touching in BOTH plates, so a per-glyph solve of 004's kind
+has nothing to grip. What the five clusters show:
+
+    cluster widths   canon 152  35 145 116  44     render 154  36 147 121  43
+    inter-gaps       canon   1  18  13   4         render   2  15  11   3
+    total            532                           532
+
+The render draws WIDER LETTERS WITH TIGHTER GAPS and holds the same total, which
+is why the bbox and total advance "match exactly" while the interior does not.
+That is a scaleX-against-tracking imbalance, and it is directly sweepable — so it
+was swept, 13 candidates over scaleX 0.5745-0.5862 and letter-spacing
+0.003-0.014em, control reproducing 19.3019 on both runs.
+
+IT IS A KNIFE EDGE AND IT IS NOT SHIPPED:
+
+    s0.5803 / ls 0.005   21.7311      sum|dW| 9
+    s0.5803 / ls 0.006   18.1185      sum|dW| 8     <- the "win"
+    s0.5803 / ls 0.008   20.9117      sum|dW| 10
+    s0.5745 / ls 0.006   37.5140      sum|dW| 5
+    s0.5803 / ls 0.003   35.9220      sum|dW| 6
+    s0.5775 / ls 0.005   32.1827      sum|dW| 7
+    control              19.3019      sum|dW| 11
+
+One THOUSANDTH of an em costs three points on either side of the best value, and
+— decisively — THE CANDIDATES THAT BEST MATCH CANONICAL'S LETTER WIDTHS SCORE
+THE WORST BANDS. sum|dW| 5, 6 and 7 score 37.5, 35.9 and 32.2 while the control's
+11 scores 19.3. The band here is dominated by cumulative POSITION inside a
+left-anchored run, not by letter shape: any width change displaces everything
+downstream of it, and 18.1185 is where the accumulated displacement happens to
+re-align rather than where the letters get closer to canonical's.
+
+So the 1.18 on offer is a resonance, not a correction, and taking it would be
+rule 74b's paper-over with a bigger number than usual. Matching the widths costs
+position; matching the position keeps the widths wrong. That is the FACE — the
+same root cause already recorded as NEEDS KEVIN — surfacing on the one run big
+enough that its letter widths are individually measurable.
+
+`display` carries 19,291 n_over8, 18.6% of the screen. It is now measured,
+explained, and stated as unreachable without the face, rather than left as an
+open invitation to sweep. Three graders have now offered three different
+mechanisms for it; this is the first measurement that predicts what a change
+will do.
+
 ### GRADE 13 (B): the stroke width is wrong on BOTH axes, by construction
 
 Thirteenth grade, and the first to look at the `Icon` HELPER rather than at the
