@@ -28,7 +28,8 @@ import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
-import { words, LEDE1_DX, LEDE2_DX, ONEACCT_DX, TERMS_DX } from "./PerWord004"
+import { words, glyphs, glyphsWithSpaces, LEDE1_DX, LEDE2_DX, ONEACCT_DX, TERMS_DX,
+         DISPLAY_GX, LEDE1_GX } from "./PerWord004"
 
 /** Canonical 004 sets the helper under PASSWORD as "Use at least 8
  *  characters.", and the client gate is moved with it so the screen does not
@@ -180,7 +181,13 @@ export default function SignUpPage() {
 
         <section data-s4-contents className="w-[430px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pb-[40px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]"
                  data-testid="region-main">
-          <h1 data-s4="display" className="shotiq-display text-[46px] leading-[50px]">CREATE ACCOUNT</h1>
+          {/* Per-GLYPH, not per-word: this run's per-word floor is exactly
+              0.0000 and its per-glyph work is worth 4.3 of band, which is
+              what says the two are different defects. The space carries no
+              span, so the run's own word-spacing stays live. */}
+          <h1 data-s4="display" className="shotiq-display text-[46px] leading-[50px]">
+            {glyphsWithSpaces("CREATE ACCOUNT", DISPLAY_GX)}
+          </h1>
           {/* The phone lede is TWO runs, not one with a line-height: a line box
               quantises to two device rows, so a single element cannot land
               canonical's L1->L2 baseline delta. Placed independently each line
@@ -191,8 +198,22 @@ export default function SignUpPage() {
               {/* Per-word spans, measured. See PerWord004.tsx for why this is
                   markup rather than a transform on the run, and for what the
                   wrap actually costs. */}
+              {/* Two levels, and they ADD: the word spans carry LEDE1_DX and
+                  each glyph inside them carries LEDE1_GX relative to that. */}
               <span data-s4="lede1">
-                {words("Create your ShotIQ account to save analyses,", LEDE1_DX)}
+                {(() => { let g = 0
+                  return "Create your ShotIQ account to save analyses,".split(" ").map((w, i) => {
+                    const at = g; g += w.length
+                    return (
+                      <React.Fragment key={i}>
+                        {i > 0 ? " " : null}
+                        <span className="s4w" style={{ left: `${LEDE1_DX[i] ?? 0}px` }}>
+                          {glyphs(w, LEDE1_GX, at)}
+                        </span>
+                      </React.Fragment>
+                    )
+                  })
+                })()}
               </span>
               <span data-s4="lede2">{words("training, goals, and progress.", LEDE2_DX)}</span>
             </span>

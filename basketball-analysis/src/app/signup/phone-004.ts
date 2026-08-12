@@ -862,6 +862,13 @@ export const PHONE_CSS = `@media (max-width: 767.98px){
   overflow:hidden;background:var(--shotiq-color-paper);padding:0;margin:0}
 .s4 [data-s4-contents]{display:contents}
 .s4 [data-s4-off]{display:none!important}
+/* The per-word / per-glyph registration spans (PerWord004.tsx). 'left' is
+   inline on the element; 'position:relative' is HERE, inside the phone
+   query, so that above 768px the spans go static, 'left' is inert by spec
+   and the phone-measured offsets stop applying to the desktop tree. They
+   used to apply at every width, because oneacct and terms - unlike the
+   lede - have no unwrapped desktop alternative. */
+.s4 .s4w{position:relative}
 /* KEYBOARD FOCUS. The value and mask rules above set 'outline:none' to keep the
    filled form byte-identical to canonical, and put nothing back. Five of the
    six controls on this screen therefore had NO visible focus indicator at all:
