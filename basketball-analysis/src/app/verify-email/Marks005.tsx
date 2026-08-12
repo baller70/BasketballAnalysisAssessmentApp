@@ -223,11 +223,31 @@ export function MailClockMark() {
 
 /** lucide `circle-question-mark`. Measured 60..118 x 1512..1571. */
 export function HelpMark() {
+  /* THE DOT IS THE ROUND CAP OF A ZERO-LENGTH STROKE, so it inherits the icon's
+     3.0 device px stroke and canonical's is 5.0. Components in
+     WINDOWS.helpIcon3 at threshold 140:
+
+         canonical  circle 580   hook 134   dot 21 @ rows 50..54, cols 47..51
+         render     circle 550   hook 116   dot  7 @ rows 53..55, cols 48..50
+
+     A disc of 5 device px has area 19.6 and one of 3 px has 7.1, which is the
+     21 and the 7 exactly — so the dot is not mispainted, it is the wrong size
+     by construction, and it also sits 2 rows low. The column centre already
+     matches, so x is left alone (rule 34: only one axis is wrong).
+
+     `sw` is in canonical DEVICE px and the group divides by sqrt(sx*sy) to undo
+     its own scale, so an override has to be expressed the same way rather than
+     as a bare number — 5.0/sqrt(sx*sy) — and the 2 px lift is 2/sy in user
+     units, not 2. Getting either conversion wrong is silent: the dot would just
+     be some other size. */
+  const [, , bw, bh] = MARK_BOXES.helpMark3
+  const sx = bw / 24
+  const sy = bh / 24
   return (
     <Icon name="helpMark3" sw={3.0}>
       <circle cx="12" cy="12" r="10" />
       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <path d="M12 17h.01" />
+      <path d="M12 16.289h.01" strokeWidth={5.0 / Math.sqrt(sx * sy)} />
     </Icon>
   )
 }
@@ -257,8 +277,23 @@ export function ShieldMark() {
          strokeLinecap="round" strokeLinejoin="round" fill="none">
         <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
               stroke={INK} strokeWidth={SHIELD_SW} />
-        <path d="m8.6 12.4 2.7 2.8 4.4-5.1"
-              stroke={ORANGE} strokeWidth={SHIELD_SW} />
+        {/* THE TICK IS 2 DEVICE px TOO BIG IN BOTH AXES AND SITS 2 LOW, while
+            the shield OUTLINE lands exactly — so this is internal geometry and
+            not placement, and the outline must not move with it. Components in
+            WINDOWS.shield at threshold 140:
+
+                canonical  outline 844   tick 150 @ rows 42..65, cols 38..67
+                render     outline 797   tick 151 @ rows 44..69, cols 37..68
+
+            The tick's INK is already right (151 against 150); only its extent
+            is wrong — 26x32 device px against canonical's 24x30 — which is what
+            a slightly oversized path looks like when the stroke width is
+            correct. Scaled 24/26 and 30/32 about its own centre and lifted
+            2/sy user units, leaving the outline and SHIELD_SW untouched. */}
+        <g transform={`translate(11.95 13.6) scale(${30 / 32} ${24 / 26}) translate(-11.95 ${-13.6 - 2 / (SHIELD[3] / 24)})`}>
+          <path d="m8.6 12.4 2.7 2.8 4.4-5.1"
+                stroke={ORANGE} strokeWidth={SHIELD_SW} />
+        </g>
       </g>
     </svg>
   )
