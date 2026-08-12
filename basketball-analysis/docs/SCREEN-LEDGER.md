@@ -2302,6 +2302,38 @@ string rolling over at midnight.
     the gate claim was wrong. Start servers with `NODE_ENV=production` and treat
     a startup warning as a finding, not as noise.
 
+89. **A TRANSPARENT CONTROL STILL MOVES ANY INK IT POSITIONS.** Grade 10's
+    cheapest finding was that `resendLinkBox` was 20.3 pt tall where iOS asks
+    44, because `hitbox(..., 44)` is DEVICE px in a file whose unit is device
+    px. Growing it looked free — on the phone every mark is painted by the
+    overlay at absolute coordinates and these boxes are transparent, so the
+    reasoning was that no measured pixel could move. It moved:
+
+        whole screen 5.6566 -> 5.8340,  resendLink alone +3.3968,
+        every other band identical to four decimals
+
+    `hitbox` emits `display:block` at `.s5 [data-s5="..."]`, specificity
+    (0,2,0), which beats the button's own Tailwind `flex` at (0,1,0). So the
+    control is not a centred flex box: its label sits on the FIRST LINE BOX at
+    the top edge, and the box was re-centred on its old midline — which held the
+    midline and moved the top by 25.75 px, carrying the text.
+
+    `resendLink` is the only run on this screen positioned by its CONTAINER
+    rather than by a `RUNS` entry, which is exactly why it was the only band
+    that could move, and exactly the thing a whole-screen figure is for: the two
+    intended changes landed on their swept predictions to four decimals and the
+    total still went the wrong way. Before calling any change inert, ask which
+    ink is positioned by the thing being changed — and measure the whole screen,
+    not the bands you predicted.
+
+    THE PROCESS FAILURE BESIDE IT IS WORTH MORE THAN THE PIXEL. The fix was
+    committed with `tsc` FAILING, because the command chained the typecheck to
+    the commit with `;` instead of `&&`, so a non-zero exit printed and the
+    commit ran anyway. The standing ruling is "do not commit a tree that fails
+    tsc" and the guard against it was a shell operator. Amended, but the rule is
+    to make the gate structural: `&&`, never `;`, when the second command
+    depends on the first passing.
+
 ### GRADE 10 (B): what it found, including two things it caught me claiming
 
 Grade 10 re-captured from the live dist at the START and the END of its run and
