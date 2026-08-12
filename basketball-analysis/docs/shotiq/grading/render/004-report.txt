@@ -1,30 +1,30 @@
-whole screen   mean|d| 2.6764   max 255   n_over8 67812
+whole screen   mean|d| 2.6189   max 255   n_over8 62844
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
-lede1         10.2864    254      6139
+lede1          9.8392    254      5419
 display        8.0289    254      9083
-lede2          6.1787    234      3794
-labConfirm     5.7268    254      3286
-terms          5.1190    254      4873
+lede2          5.8551    234      3373
+labConfirm     5.6160    254      2826
+terms          4.9032    254      4389
 checkbox       4.6846     83       658
-oneacct        4.5576    235      4084
 eyePass        4.3232    211       655
-fieldEmail     4.1197    254      5090
+oneacct        4.2822    236      3587
+fieldEmail     4.0558    254      4654
 eyeConf        3.9912    211       595
-plate          3.9596    255     11210
+plate          3.9647    255     11022
 monogram       3.5537    166      1069
 wordmark       3.4427    254      2521
-labFirst       3.0170    252      1822
-labPass        2.8590    254      1939
-helpPass       2.8307    184      2236
-labLast        2.7409    254      1690
-signin         2.3688    254      2209
-labEmail       1.6032    252      1065
-fieldFirst     1.3884    254      1227
-orrow          1.1235    197       407
-fieldLast      0.9765    254       842
+labFirst       2.9366    248      1507
+labPass        2.7336    254      1679
+labLast        2.6429    254      1423
+helpPass       2.6354    177      1930
+signin         2.3452    254      2000
+labEmail       1.5553    245       921
+fieldFirst     1.3620    254      1103
+orrow          1.1064    197       373
+fieldLast      0.9480    254       739
 fieldConf      0.7951    103       646
 fieldPass      0.7887     98       663
 
@@ -33,5 +33,5 @@ part of the table; a label inside a solved box is diluted by the box's
 area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
-signinLab    20.9826    254      1733
-createLab    13.8227    255      3627
+signinLab    20.6951    254      1527
+createLab    13.2912    255      3496
