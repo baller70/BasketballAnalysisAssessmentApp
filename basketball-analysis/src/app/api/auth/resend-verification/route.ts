@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSessionUser } from "@/lib/auth/currentUser"
-import { issueToken } from "@/lib/auth/verification"
-import { getAppBaseUrl, sendEmail } from "@/lib/auth/mailer"
+import { RESEND_COOLDOWN_SECONDS } from "@/lib/auth/verification"
+import { sendVerificationEmail } from "@/lib/auth/verificationEmail"
 import { validateCsrf } from "@/lib/csrf"
 import { checkRateLimit } from "@/lib/rateLimit"
 
 /**
- * POST /api/auth/resend-verification — re-send the email-verification link for
- * the signed-in user. issueToken invalidates any previous token, so only the
- * newest link works. Returns whether the account is already verified so the
- * client can show the right state.
+ * POST /api/auth/resend-verification — re-send the verification email (link AND
+ * six-digit code) for a user. Issuing invalidates the previous link and the
+ * previous code, so only the newest of each works.
+ *
+ * IDENTIFYING THE USER. A session identifies it when there is one. Failing
+ * that, an `email` in the body does — because the player 005 is written for has
+ * just created an account on a phone and may not have a settled session, and a
+ * "Resend email" button that only works when signed in is a button that does
+ * not work at the one moment it is needed.
+ *
+ * NOT AN EXISTENCE ORACLE. In the anonymous case the response is the SAME
+ * whether or not the address belongs to an account, and it never echoes the
+ * address back. That is the same treatment /api/auth/forgot-password gives the
+ * same question. In the session case the address is the caller's own, so it is
+ * returned — they already know it.
+ *
+ * `cooldownSeconds` is the number the UI counts down from ("Resend code in
+ * 0:42" on canonical 005). It comes from the server so the countdown and the
+ * rate limit below cannot disagree.
  */
 export async function POST(request: NextRequest) {
   const csrfError = validateCsrf(request)
@@ -23,9 +38,33 @@ export async function POST(request: NextRequest) {
   })
   if (limited) return limited
 
+  const body = await request.json().catch(() => null)
+  const bodyEmail =
+    typeof body?.email === "string" ? body.email.trim().toLowerCase() : ""
+
   const session = await getSessionUser(request)
+
   if (!session) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    if (!bodyEmail) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+    const user = await prisma.user.findUnique({
+      where: { email: bodyEmail },
+      select: { id: true, email: true, emailVerified: true },
+    })
+    // Uniform response, whatever we found. The work is skipped, the answer is
+    // not distinguishable.
+    if (user && !user.emailVerified) {
+      try {
+        await sendVerificationEmail(user.id, user.email)
+      } catch (error) {
+        console.error("Failed to resend verification email:", error)
+      }
+    }
+    return NextResponse.json({
+      success: true,
+      cooldownSeconds: RESEND_COOLDOWN_SECONDS,
+    })
   }
 
   const user = await prisma.user.findUnique({
@@ -36,18 +75,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
   }
   if (user.emailVerified) {
-    return NextResponse.json({ success: true, alreadyVerified: true })
+    return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
   }
 
   try {
-    const { token } = await issueToken(user.id, "email_verify")
-    const verifyUrl = `${getAppBaseUrl()}/api/auth/verify-email?token=${token}`
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your SHOTIQ email",
-      text: `Confirm your email to finish setting up your account:\n\n${verifyUrl}\n\nThis link expires in 24 hours.`,
-      actionUrl: verifyUrl,
-    })
+    await sendVerificationEmail(user.id, user.email)
   } catch (error) {
     console.error("Failed to resend verification email:", error)
     return NextResponse.json(
@@ -56,7 +88,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({ success: true, alreadyVerified: false, email: user.email })
+  return NextResponse.json({
+    success: true,
+    alreadyVerified: false,
+    email: user.email,
+    cooldownSeconds: RESEND_COOLDOWN_SECONDS,
+  })
 }
 
 /** GET — report the signed-in user's verification status (for the /verify-email page). */
@@ -73,5 +110,6 @@ export async function GET(request: NextRequest) {
     success: true,
     email: user?.email ?? null,
     verified: !!user?.emailVerified,
+    cooldownSeconds: RESEND_COOLDOWN_SECONDS,
   })
 }
