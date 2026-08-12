@@ -2474,7 +2474,20 @@ right and an instance was wrong, which is still wrong.
 And `verify-back`'s effective hit region measured 42.0 x 42.0 against settings'
 45.0 x 44.0: `-inset-[9px]` was computed against the 26 px class rather than the
 23.3 pt box the browser lays out. `-inset-[11px]` gives 45.3, and rule 89 says
-build it rather than reason it.
+build it rather than reason it — so it was built, and BOTH halves were checked:
+
+    back      css 23.3x23.3   effective 42.0 -> **46.0 x 46.0**   PASS
+    settings  css 24.9x23.5   effective 45.0 x 44.0               PASS
+    resend    css 88.5x44.0   effective 80.0 x 46.0               PASS
+
+    capture   BYTE-IDENTICAL to round 24, md5 2444eff3c59d7f663c40c530c68fe602
+              whole screen 5.4704 / n_over8 103546 unchanged
+    gates     SCREEN=005 markup 11/11, csrf 3/3
+
+Every focusable control on the phone now meets 44 pt, and the byte comparison is
+the part that matters: rule 89 exists because a transparent-control resize that
+was reasoned inert moved a band by 3.4. Reasoning it inert a second time would
+have been the same mistake with a better excuse.
 
 ### ROUND 24: the shield outline, swept because it could not be reasoned
 
