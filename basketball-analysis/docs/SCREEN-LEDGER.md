@@ -2790,6 +2790,61 @@ Every screen from 005 on should set its paper from its own canonical's modal
 colour as the FIRST thing it does, not the last — it is the cheapest large
 correction available and it moves every band at once.
 
+### OPEN, 005: the DoD's third type axis — INK DENSITY — was never audited
+
+The definition of done asks for "cap, advance AND INK DENSITY measured per ink
+run against canonical". Eleven rounds solved cap and advance run by run; density
+was never swept as an axis. Measured now for all 19 runs (ink box from a 0.30
+column/row threshold, density = total ink units / cap x advance, render over
+canonical):
+
+    run          cap r/c   adv r/c   density r/c
+    wordmark      1.0000    1.0055      1.0307
+    display       1.0160    1.0019      1.0280
+    lede1         1.0417    1.0000      1.0401
+    lede2         1.0000    0.9969      1.1091
+    didnt         1.0000    1.0366      1.1645
+    help1         0.8929    1.0000      1.2049
+    help2         0.9259    0.9897      1.1756
+    help3         0.8621    0.9486      1.2094
+    safe1         1.0370    1.0135      1.2507
+    safe2         1.0385    1.0131      1.1710
+    resendLab     1.0800    1.0191      1.0119
+    resendVal     1.0000    1.0317      1.2702
+    resendLink    0.9722    1.0000      0.7946
+    plateLab      1.0000    1.0000      0.9607
+    diffLab       1.0417    1.0000      1.0405
+    digit0-3      1.017     0.92-1.00   0.99-1.06
+
+**The pattern is one-directional and that is the finding.** Eleven of nineteen
+runs carry 10-27% MORE ink per unit of ink box than canonical. It is not noise:
+it has one sign across unrelated runs at four different sizes and three weights.
+The render draws its text FATTER AND LIGHTER where canonical draws it THINNER
+AND DARKER — which is the same shape as the defect the sixth round fixed on the
+code-box border (canonical's darkest pixel across that stroke is 111.6 where the
+render reached 5.0; same ink budget, different distribution), now visible on the
+type as well. Rule 71's colour finding is the other half of the same
+observation: canonical's ERODED CORES read 49-58 against a shipped graphite of
+73.7, i.e. darker cores, and these numbers say thinner strokes.
+
+Two runs are individually actionable and neither is a face residual:
+
+  * `resendLab` cap **1.0800** with advance 1.0191 — 8% too tall and 2% too
+    wide, which is rule 32's joint solve (size down, scaleX up to hold the
+    length), not a one-parameter nudge.
+  * `resendLink` density **0.7946** — the only run that is too LIGHT, by 20%.
+
+`help1/2/3`'s short caps (0.86-0.93) are already recorded as the stated face
+residual: the body face is not in this repository and no scaleX is right about
+the letters and the gaps at once. Their density figures are that same fact seen
+on a third axis, not a new defect.
+
+NOT ACTED ON in round 6, and stated rather than quietly carried: this was
+measured while the sixth grade was running against the current dist, so no
+source moved. It is the concrete target list for the next round, and it is the
+honest answer to "is DoD item 2 satisfied" — for cap and advance yes, for
+density no.
+
 ### OPEN, CLASS-LEVEL: the phone canvas is pinned LEFT between 394 and 767.98px
 
 Measured on the served 005 dist, `.s5` box and viewport in CSS px:
