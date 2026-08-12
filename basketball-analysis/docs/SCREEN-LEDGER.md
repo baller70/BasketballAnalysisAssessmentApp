@@ -2005,6 +2005,53 @@ specific way and the matching probe must go red. Verified, all five —
 11/11 on the clean page, 5/5 mutations caught. Re-run the loop in the file's
 header after ANY change to the gate.
 
+### 005-verify-email: the canonical describes a feature the product does not have
+
+Screen 005 is the first screen where the gap is not fidelity. Canonical 005
+draws a **six-box numeric code entry** — digits 2, 8, 4, 7 typed, the fifth box
+focused with a caret, "Enter the code we sent to marcus@example.com", and a
+"Resend code in 0:42" countdown.
+
+The shipped web app does not do that, deliberately and in writing. From
+`src/app/verify-email/page.tsx`: "Web verification is link-based (the emailed
+link hits /api/auth/verify-email?token=… which redirects back here with
+?status=…), so instead of the iOS code boxes this page shows the signed-in
+user's verification state". Verified in the backend, not taken from the comment:
+
+  * `prisma/schema.prisma` has `emailVerified DateTime?` and a generic
+    `VerificationToken { token, type, expiresAt }` — no numeric-code field;
+  * `/api/auth/verify-email` reads `?token=` and calls
+    `consumeToken(token, "email_verify")`;
+  * a grep for `verificationCode|otp|OTP|6-digit` across `src/app/api`,
+    `src/lib` and the schema returns **nothing**.
+
+**So building canonical 005's UI as-drawn would ship six code boxes that no
+endpoint can verify — a control that portrays a feature which does not work.**
+That is precisely the thing Kevin's governing rule exists to forbid: *"A
+placeholder portrays a feature I want to be real, so that when the user goes to
+use it, it actually works."*
+
+**The mandate resolves the fork rather than leaving it open.** The screen is not
+"make the pixels match" and it is not "skip it". It is: make code verification
+REAL, then draw the canonical UI honestly on top of it. The existing
+infrastructure makes that tractable rather than speculative — `VerificationToken`
+is already a generic, single-use, TTL'd, per-user-invalidated table keyed by a
+`type` string, so a six-digit code is that table with a different generator and
+a new type. What is needed is an issue path, a verify endpoint, the code in the
+email, and the resend cooldown the canonical actually shows.
+
+Two smaller facts the screen also raises, both recorded now so they are not
+discovered late:
+
+  * **The route map declares 0 steps for 005**, and its canonical is a non-default
+    state (four digits typed, one box focused). Capturing it as-is shoots an
+    empty form against a filled canonical — the exact invalid capture
+    `capture-ios.mjs`'s own docstring warns about. Steps must be authored with
+    the screen.
+  * **The countdown is a live timer.** "0:42" is nondeterministic and will differ
+    every capture. It needs pinning for the harness the way canonical's other
+    dynamic values are, or the band containing it can never be stable.
+
 ### NEEDS KEVIN: the canonicals are AI-generated, watermarked images
 
 Found by the twelfth grade of 004 and verified here independently. **71 of the
