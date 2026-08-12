@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — sixty-six, each learned by getting something wrong
+## Method rules — sixty-eight, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1750,6 +1750,59 @@ string rolling over at midnight.
     band says nothing about the others until someone measures them — the same
     shape as rules 59, 61 and 64, which is now four separate times this project
     has generalised past its evidence.
+
+67. **The objective has no legibility term, so left alone it will walk toward
+    illegible type. A pixel metric is not a proxy for typography.** Pushed to
+    their true optima, three `lede1` tail glyphs take the band 10.2864 → 9.6241
+    — worth 0.0158 — and set "analyses," as **"analy s⊕,"**, the s collided into
+    the e. The band mean REWARDS that. It is not a bug in the estimator; a
+    per-pixel mean has no term for glyphs overlapping, and canonical's own ink
+    happens to sit where the collision puts it.
+
+    This is not hypothetical drift at the tail. At the SHIPPED values **16 of 49
+    adjacent glyph pairs already overlap where the face had none** — `display` 5
+    of 12 with a minimum gap of −1.147 CSS px, `lede1` 11 of 37 at −1.419 — and
+    with every offset zeroed the advance boxes tile exactly, all gaps 0, no
+    overlaps. So the mechanism trades typographic integrity for score by
+    construction, and the only thing stopping it is somebody looking.
+
+    Two consequences. **Render and look at any per-glyph result before shipping
+    it** — the check is a screenshot, and it takes a minute. And a residual
+    declined for legibility is a real residual: state it with its number, as
+    0.0158 is stated here, rather than quietly leaving it out of the ledger and
+    letting the next round rediscover it as an available buy.
+
+68. **Writing a rule is not following it. Rule 66 named this exact failure one
+    round before it happened again.** Rule 66 was written when
+    `display:inline-block` broke find-in-page, and its instruction is verbatim:
+    "enumerate what the browser does with text (find, select, copy, READ,
+    translate, reflow) and test the ones the change could plausibly touch." The
+    very next round shipped 51 per-glyph spans, tested find, select and copy —
+    and not read.
+
+    **Per-glyph spans destroy the accessibility tree.** Measured by CDP
+    `Accessibility.getFullAXTree`:
+
+        shipped            114 StaticText,  54 single-character, lede1 ABSENT
+        unwrapped control   58 StaticText,   3 single-character, lede1 present
+        with the fix        64 StaticText,   3 single-character, lede1 present
+
+    51 spurious single-character nodes, and "Create your ShotIQ account to save
+    analyses," did not exist as a text unit anywhere in the tree. The control
+    that isolates it was on the same page all along: the per-WORD runs come
+    through as whole words, so it is the per-GLYPH level specifically.
+
+    The fix costs **0 pixels** — bit-for-bit identical screenshot, whole screen
+    unchanged at 2.6764 — which is exactly why no band mean could have found it,
+    and why "the pixels did not move" is not evidence that nothing broke.
+
+    The generalisable part is not about text. It is that a rule written in
+    response to a failure does not protect against the next instance unless
+    something in the WORKFLOW forces the check. Two rounds, two mechanisms, two
+    regressions invisible to the score, both caught by a grader rather than by
+    the builder who had just written the rule. When a change touches markup on a
+    live surface, run the enumeration in rule 66 as a checklist, not from
+    memory.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

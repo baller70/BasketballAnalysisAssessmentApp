@@ -28,8 +28,8 @@ import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
-import { words, glyphs, glyphsWithSpaces, LEDE1_DX, LEDE2_DX, ONEACCT_DX, TERMS_DX,
-         DISPLAY_GX, LEDE1_GX } from "./PerWord004"
+import { words, glyphs, glyphsWithSpaces, srOnly, LEDE1_DX, LEDE2_DX, ONEACCT_DX,
+         TERMS_DX, DISPLAY_GX, LEDE1_GX } from "./PerWord004"
 
 /** Canonical 004 sets the helper under PASSWORD as "Use at least 8
  *  characters.", and the client gate is moved with it so the screen does not
@@ -185,7 +185,10 @@ export default function SignUpPage() {
               0.0000 and its per-glyph work is worth 4.3 of band, which is
               what says the two are different defects. The space carries no
               span, so the run's own word-spacing stays live. */}
-          <h1 data-s4="display" className="shotiq-display text-[46px] leading-[50px]">
+          {/* aria-label because the glyph spans below are aria-hidden: without
+              it the heading has no accessible name at all. Zero pixels. */}
+          <h1 data-s4="display" aria-label="CREATE ACCOUNT"
+              className="shotiq-display text-[46px] leading-[50px]">
             {glyphsWithSpaces("CREATE ACCOUNT", DISPLAY_GX)}
           </h1>
           {/* The phone lede is TWO runs, not one with a line-height: a line box
@@ -201,6 +204,7 @@ export default function SignUpPage() {
               {/* Two levels, and they ADD: the word spans carry LEDE1_DX and
                   each glyph inside them carries LEDE1_GX relative to that. */}
               <span data-s4="lede1">
+                {srOnly("Create your ShotIQ account to save analyses,")}
                 {(() => { let g = 0
                   return "Create your ShotIQ account to save analyses,".split(" ").map((w, i) => {
                     const at = g; g += w.length

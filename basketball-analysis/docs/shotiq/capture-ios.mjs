@@ -130,7 +130,22 @@ const NO_CARET = () => {
   else document.addEventListener('DOMContentLoaded', inject, { once: true })
 }
 
-const b = await chromium.launch({ args: ['--font-render-hinting=none'] })
+// `--disable-lcd-text` sits beside the hinting flag for exactly the same class
+// of reason: it makes the instrument render the way the device does.
+// Canonical's small-type bands are achromatic (chroma 0.19-1.18); without
+// this the render's carry 2.2-6.3, because Chromium applies LCD subpixel
+// antialiasing that iOS does not. Proof it is chroma and not weight, per
+// channel: R 2.4985 -> 2.3923 and B 2.7819 -> 2.7206 improve while G - this
+// project's own weight channel - gets slightly WORSE, 2.7488 -> 2.7693.
+//
+// THIS IS A RULER CHANGE, NOT A SCREEN IMPROVEMENT, and it is not
+// common-mode: 004 gains 0.0490 and 003 only 0.0207. Every figure measured
+// before this flag is on a different instrument from every figure after it,
+// so both canvases were re-measured together and the ledger records the
+// before/after pair rather than booking the difference to either screen.
+const b = await chromium.launch({
+  args: ['--font-render-hinting=none', '--disable-lcd-text'],
+})
 
 async function newPage(sessionSeed) {
   const ctx = await b.newContext(CONTEXT)
