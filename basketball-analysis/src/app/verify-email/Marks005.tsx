@@ -273,11 +273,17 @@ export function MailClockMark() {
           becomes 16.36..19.24 and the two segments take the reduction
           proportionally. `dx` is deliberately unchanged at 1.57.
 
-          THE 1 px COLUMN OFFSET IS NOT TAKEN. Both edges are +1, which reads as
-          a translation, but rule 90 says a 1 px extent delta is a hypothesis
-          rather than evidence — and this mark has already cost one revert for
-          exactly that. It stays measured and unmoved. */}
-      <path d="M18.74 16.36v1.96l1.57 0.92" />
+          THE 1 px COLUMN OFFSET IS NOW TAKEN, AND THE FIRST BUILD IS WHY.
+          Vertical alone landed the shape EXACTLY — 36 px at 10x7 on rows
+          43..52, identical to canonical on ink, height, width and rows — and
+          the band still went 13.3029 -> 13.3345. That is the rule-90 hypothesis
+          being refereed rather than guessed: with the shape oversized it
+          overlapped canonical's position more, so the 1 px offset was partly
+          hidden by the error above it, and correcting one exposed the other.
+          A 1 px extent delta measured on a shape that is otherwise exact is no
+          longer a hypothesis — there is nothing else left for it to be.
+          0.45 units is 1 device px at k = 2.2257. */}
+      <path d="M18.29 16.36v1.96l1.57 0.92" />
     </Icon>
   )
 }
