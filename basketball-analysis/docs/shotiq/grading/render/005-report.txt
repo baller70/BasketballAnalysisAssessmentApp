@@ -1,4 +1,4 @@
-whole screen   mean|d| 5.5551   max 255   n_over8 103991
+whole screen   mean|d| 5.5538   max 255   n_over8 103999
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -25,8 +25,8 @@ box3           5.1481    254      1794
 box2           4.8995    254      1602
 box0           4.5865    255      1786
 plate          3.9854    255     10845
-back           3.9709    219       261
 resendLink     3.5668    254      3402
+back           3.5029    234       269
 box4           3.2088    163      1884
 box5           2.4880     86      1146
 resendVal      2.2172    244       945
