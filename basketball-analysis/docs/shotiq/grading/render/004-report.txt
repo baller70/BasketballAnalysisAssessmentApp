@@ -1,27 +1,27 @@
-whole screen   mean|d| 2.9456   max 255   n_over8 71436
+whole screen   mean|d| 2.6764   max 255   n_over8 67812
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
-display       12.3272    255     11939
-lede1         11.4713    254      6283
+lede1         10.2864    254      6139
+display        8.0289    254      9083
 lede2          6.1787    234      3794
-labConfirm     5.7730    255      3348
-terms          5.1276    255      4860
+labConfirm     5.7268    254      3286
+terms          5.1190    254      4873
 checkbox       4.6846     83       658
 oneacct        4.5576    235      4084
 eyePass        4.3232    211       655
 fieldEmail     4.1197    254      5090
 eyeConf        3.9912    211       595
 plate          3.9596    255     11210
-monogram       3.7996    166      1245
-wordmark       3.5063    255      2748
-labFirst       3.0385    253      1874
-labPass        2.8825    255      1962
+monogram       3.5537    166      1069
+wordmark       3.4427    254      2521
+labFirst       3.0170    252      1822
+labPass        2.8590    254      1939
 helpPass       2.8307    184      2236
-labLast        2.7634    254      1725
-signin         2.3847    255      2250
-labEmail       1.6143    255      1086
+labLast        2.7409    254      1690
+signin         2.3688    254      2209
+labEmail       1.6032    252      1065
 fieldFirst     1.3884    254      1227
 orrow          1.1235    197       407
 fieldLast      0.9765    254       842
@@ -33,5 +33,5 @@ part of the table; a label inside a solved box is diluted by the box's
 area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
-signinLab    21.1574    255      1773
+signinLab    20.9826    254      1733
 createLab    13.8227    255      3627
