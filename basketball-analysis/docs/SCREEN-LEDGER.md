@@ -2078,11 +2078,33 @@ What survives and what does not:
 
   - the 20 desktop CANONICALS are in git at `docs/shotiq/canonical-desktop`
     (verified, 20 tracked files), so nothing irreplaceable was lost;
-  - the RENDER baseline was never in git and is gone. It is regenerable — a
-    production build plus 20 desktop captures — but it has to be regenerated
-    deliberately, and 8 of the 20 were recorded as not byte-stable run to run,
-    so the regeneration needs to capture that instability rather than assume a
-    clean baseline.
+  - the RENDER baseline was never in git and is gone.
+
+**AND MY OWN ESTIMATE OF WHAT IT WOULD TAKE WAS WRONG.** This section previously
+said it was "regenerable — a production build plus 20 desktop captures". Having
+actually looked: there is **no committed desktop capture harness** (no
+`capture-web.mjs` anywhere in the tree or in git history — only the canonicals
+were ever committed, in b480f3a) and **no desktop route map**. `ios-route-map.json`
+covers 001-072 only, and `screen-implementation-map.json` is iOS-native.
+Regenerating the baseline therefore means first RECONSTRUCTING which route
+serves each of 077-096, then writing the harness. That is a piece of work, not a
+chore, and 8 of the 20 were recorded as not byte-stable run to run so the
+reconstruction has to characterise that instability too.
+
+**Sequencing call, stated because it reverses what this section said.** It is no
+longer a blocker on screen 005. The guard it exists to provide has a better
+substitute that 004 already used twice: measure the desktop DIRECTLY for the
+specific change in hand — the registration spans were shown to compute
+`position: static` at 1440, and the shell's min-height was measured old-shell
+against new on three routes. Both are stronger evidence than a byte-compare
+against a stored PNG, and neither needs a baseline to exist. Reconstructing 20
+desktop routes from filenames in order to have a baseline would produce
+something nobody should trust.
+
+So: build it when a change actually needs a broad desktop sweep, and use direct
+measurement until then. What must NOT happen is the earlier state, where the
+cycle instructed a check against a directory that was not there and the check
+silently did not run.
 
 004 does not need it and has not been let off: /signup has no counterpart in
 the graded desktop set 077-096, and this round the desktop was measured
