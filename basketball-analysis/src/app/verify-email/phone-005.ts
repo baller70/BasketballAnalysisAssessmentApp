@@ -745,7 +745,24 @@ export const MARK_BOXES: Record<
      was a change with nothing to buy. Built with left-1 it went 32.0538 ->
      32.4834, which is the confirmation. */
   diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
-  helpMark1: [53.65, 1299.8, 67.0, 61.5, 56, 1290],
+  /* 2 DEVICE px TOO TALL AND 1 px LEFT, and the two are different defects.
+     Full ink extent at threshold 140, against canonical:
+
+         canonical  rows 11..55 (45)   cols 19..77 (59)
+         render     rows 11..57 (47)   cols 18..76 (59)
+         delta      top +0  bottom +2  left -1  right -1
+
+     WIDTH IS ALREADY EXACT at 59, and both column edges move the SAME way,
+     which is rule 34's translation signature — so x is a 1 px nudge, not a
+     scale. The rows disagree only at the bottom while the top is already
+     aligned, so the height is 2 px long: 61.5 -> 59.5, i.e. x0.9675.
+
+     Shrinking the box also shrinks the drawing's own inset inside its 24-unit
+     frame — the ink starts 9.2 px below the box top, and 9.2 x 0.0325 = 0.30 px
+     of that is lost — so `ty` puts it back. `tx`/`ty` are emitted as a
+     transform rather than folded into left/top precisely because a 1 px move
+     through layout rounds (rule 53). */
+  helpMark1: [53.65, 1299.8, 67.0, 59.5, 56, 1290, 1.0, 0.30],
   helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
   helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
   chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290, 1.0, 1.0],
