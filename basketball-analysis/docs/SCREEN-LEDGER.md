@@ -1950,6 +1950,127 @@ string rolling over at midnight.
     conversion does not. Apply, build, keep what survives, revert what does not
     — and never keep a change because its prediction was pretty.
 
+74. **A recorded baseline is a claim about the ARTEFACT it was read from.** The
+    markup gate's `lede2` control value was 2, read off a build, green for
+    rounds. On the production build the same gate, same commit, reads 1 and goes
+    red — React's production build merges adjacent text nodes its development
+    build keeps separate. Nothing was wrong with the gate or the page; the
+    baseline had been taken from a runtime that never ships.
+
+    This generalises past the gate: every "recorded state" in this repository
+    was captured from a dist built with `NODE_ENV=development`, because the
+    container exports it and `next build` honours it. That one also silently
+    broke static generation for 51 pages, so `npm run build` had been exiting 1
+    for every screen so far while a BUILD_ID was still written and rule 60's
+    gate still passed. Two lessons, and the second is the sharper one: state
+    which artefact a baseline came from, and check the thing you are gating on
+    is the thing that fails — an exit code masked by an `echo` in a subshell,
+    or a path test run from a cwd that persisted from an earlier `cd`, is a gate
+    that reports on nothing.
+
+    Why it happens is the same mechanism as rule 67: canonical's glyphs are
+    slightly wider and softer than the render's, so lightening the render's ink
+    reduces the error at every edge pixel it does not cover, and there are more
+    edge pixels than core pixels. The metric is measuring overlap, not colour.
+
+    So: **a colour role is set from the eroded core against canonical, and then
+    the band mean is used to CONFIRM it, never to choose it.** If the two
+    disagree, the core wins and the disagreement gets written down with its
+    number. A grader also tested and refuted its own first reading here — that
+    graphite should be darkened toward canonical's cores — because direct
+    simulation made every darker target worse too. Both directions are recorded
+    so neither is rediscovered as free money.
+
+- Never edit the four measurement-tuned type roles in `globals.css`.
+- Scope a colour disagreement to the screen; never change a global token — those
+  roles carry the 20 desktop screens graded B+.
+- Never delete a region or pad dead space to improve a score.
+- Never build into a dist dir while a server serves from it.
+- State physically unreachable residuals with their numbers rather than forcing
+  them and breaking another metric.
+- Do not commit a tree that fails `tsc` or a screen that breaks its size invariant.
+
+74b. **A metric win that moves an ALIGNED thing is always paper-over, and a
+    grader can hand you one.** Grader 4 listed 17 translations worth 0.5071 of
+    whole screen on 005, all real reductions in the objective, all reproducible.
+    Applying them wholesale would have been wrong. Rule 34 discriminates: a
+    translation moves both ink edges the SAME way, a size or face difference
+    moves them oppositely. Measured on the shipped render, most of that list is
+    the second kind —
+
+        help2      L +1 / R -4    five px NARROWER, not displaced (its single
+                                  largest item, 0.1855)
+        plateLab   0 / 0 / 0 / 0  ALIGNED EXACTLY, and still on the list
+        plateMark  0 / 0 / 0 / 0  ALIGNED EXACTLY, and still on the list
+
+    — so the shift centres the error while pushing the origin further off. Rules
+    67 and 71 already say the objective rewards the wrong direction on legibility
+    and on colour; this is the same trap on POSITION, and the new part is that it
+    arrived as a confident, measured, independently-produced recommendation.
+    Grader 3 had called help2 correctly and grader 4 contradicted it; the edges
+    settle it, not the grade.
+
+    Applied only the same-sign components: 6.3752 -> 6.3036. The rejected items
+    are recorded with their numbers rather than quietly dropped.
+
+    And the companion error, which was mine: rule 34 decides WHETHER to move,
+    the shift search decides HOW FAR. Taking the magnitude from the edge average
+    (1.5 device px) instead of the shift-search optimum (1.0) built a WORSE
+    screen — 6.5157, with `diffLab` at 41.2805 because the edge test also
+    pointed the wrong way on that run's horizontal. Two instruments, two
+    questions; using either for the other's question is a defect.
+
+75. **A REPAIR TO THE PIPELINE CAN DISABLE A SECURITY CONTROL IN A FILE NOBODY
+    EDITED.** `/api/auth/csrf` takes no arguments and reads nothing
+    request-scoped, so Next 14 classified it as static and PRERENDERED it:
+    `randomBytes` ran once on the build machine and the token plus its
+    `Set-Cookie` were frozen into `prerender-manifest.json`. Every caller in the
+    world got the same token, so the double-submit check compared a constant
+    against itself, and `validateCsrf` is cited as a control in three
+    consecutive rounds of 005's write-ups.
+
+    The route was dynamic BEFORE only because static generation was failing. So
+    the sequence is: the build was broken, the breakage was load-bearing,
+    repairing it froze the token. No source diff shows this — the source never
+    changed — and no source review could have found it.
+
+    Two rules follow. **Re-verify security controls against the ARTEFACT after
+    any change to how the artefact is produced**, not just after a change to the
+    code. And **a control worth citing is worth a gate**: `docs/shotiq/
+    csrf-gate.mjs` asserts four GETs return four tokens and that no `/api` route
+    appears in the prerender manifest. This is rule 74 one level deeper — rule
+    74 said a recorded baseline is a claim about the artefact it was read from;
+    this says a SECURITY PROPERTY is too.
+
+76. **A NULL FROM A SEGMENTER IS A CLAIM ABOUT THE SEGMENTER, and it can wear
+    another rule's clothes.** Round 5 refused to move `plateLab` and
+    `plateMark` because their ink edges read `0/0/0/0` — perfectly aligned, so
+    by rule 34 any shift would be paper-over. The reading was degenerate. Both
+    sit inside the ORANGE PLATE, and with ink measured as `255 - min(R,G,B)` the
+    orange saturates as full ink while the white label reads as paper, so the
+    ink bounding box IS the window by construction and the answer was 0 whatever
+    the truth. Re-measured with the polarity the content actually has,
+    `plateMark` is a same-sign vertical translation — exactly what rule 34
+    licenses — and it was refused on a null.
+
+    The general form: before believing an edge test, check that the SEGMENTER
+    can see the thing. A run on inverted ground needs inverted ink. And the
+    trap is sharper than the usual null, because the null arrived dressed as a
+    principled refusal under a rule that was otherwise being applied correctly.
+
+77. **A DEFECT MEASURED ONCE IS NOT A DEFECT FIXED.** Round 5's focus repair
+    was verified in a browser, passed, and was reported as fixed. Run six times
+    it left `document.activeElement` on BODY in three. `requestAnimationFrame`
+    can fire before React commits the render that removes `disabled`, so the fix
+    was a race that happened to win the trial it was measured on.
+
+    For anything whose correctness depends on ORDERING — focus, timing, a
+    concurrency guard, an event handler — one green run is not evidence. Repeat
+    it, and report the count: "6/6" is a measurement, "verified in a browser" is
+    an anecdote. The same applies to the concurrency defects in this round: the
+    read-back-after-upsert was found by running eight trials, and it only failed
+    three of them.
+
 78. **CHANGING THE CLIENT THAT WRITES A VALUE CHANGES THE VALUE.** Round 6
     replaced `prisma.verificationToken.upsert(...)` with `$queryRaw` to make
     issuance atomic. `expires_at` is `timestamp WITHOUT TIME ZONE`: Prisma's
@@ -2007,127 +2128,6 @@ string rolling over at midnight.
     Two graders have now handed over confidently-measured pixel lists that were
     partly wrong in ways only a build could show (see also rule 74b). Take the
     hypothesis, keep the measurement, and let the capture referee.
-
-75. **A REPAIR TO THE PIPELINE CAN DISABLE A SECURITY CONTROL IN A FILE NOBODY
-    EDITED.** `/api/auth/csrf` takes no arguments and reads nothing
-    request-scoped, so Next 14 classified it as static and PRERENDERED it:
-    `randomBytes` ran once on the build machine and the token plus its
-    `Set-Cookie` were frozen into `prerender-manifest.json`. Every caller in the
-    world got the same token, so the double-submit check compared a constant
-    against itself, and `validateCsrf` is cited as a control in three
-    consecutive rounds of 005's write-ups.
-
-    The route was dynamic BEFORE only because static generation was failing. So
-    the sequence is: the build was broken, the breakage was load-bearing,
-    repairing it froze the token. No source diff shows this — the source never
-    changed — and no source review could have found it.
-
-    Two rules follow. **Re-verify security controls against the ARTEFACT after
-    any change to how the artefact is produced**, not just after a change to the
-    code. And **a control worth citing is worth a gate**: `docs/shotiq/
-    csrf-gate.mjs` asserts four GETs return four tokens and that no `/api` route
-    appears in the prerender manifest. This is rule 74 one level deeper — rule
-    74 said a recorded baseline is a claim about the artefact it was read from;
-    this says a SECURITY PROPERTY is too.
-
-76. **A NULL FROM A SEGMENTER IS A CLAIM ABOUT THE SEGMENTER, and it can wear
-    another rule's clothes.** Round 5 refused to move `plateLab` and
-    `plateMark` because their ink edges read `0/0/0/0` — perfectly aligned, so
-    by rule 34 any shift would be paper-over. The reading was degenerate. Both
-    sit inside the ORANGE PLATE, and with ink measured as `255 - min(R,G,B)` the
-    orange saturates as full ink while the white label reads as paper, so the
-    ink bounding box IS the window by construction and the answer was 0 whatever
-    the truth. Re-measured with the polarity the content actually has,
-    `plateMark` is a same-sign vertical translation — exactly what rule 34
-    licenses — and it was refused on a null.
-
-    The general form: before believing an edge test, check that the SEGMENTER
-    can see the thing. A run on inverted ground needs inverted ink. And the
-    trap is sharper than the usual null, because the null arrived dressed as a
-    principled refusal under a rule that was otherwise being applied correctly.
-
-77. **A DEFECT MEASURED ONCE IS NOT A DEFECT FIXED.** Round 5's focus repair
-    was verified in a browser, passed, and was reported as fixed. Run six times
-    it left `document.activeElement` on BODY in three. `requestAnimationFrame`
-    can fire before React commits the render that removes `disabled`, so the fix
-    was a race that happened to win the trial it was measured on.
-
-    For anything whose correctness depends on ORDERING — focus, timing, a
-    concurrency guard, an event handler — one green run is not evidence. Repeat
-    it, and report the count: "6/6" is a measurement, "verified in a browser" is
-    an anecdote. The same applies to the concurrency defects in this round: the
-    read-back-after-upsert was found by running eight trials, and it only failed
-    three of them.
-
-74b. **A metric win that moves an ALIGNED thing is always paper-over, and a
-    grader can hand you one.** Grader 4 listed 17 translations worth 0.5071 of
-    whole screen on 005, all real reductions in the objective, all reproducible.
-    Applying them wholesale would have been wrong. Rule 34 discriminates: a
-    translation moves both ink edges the SAME way, a size or face difference
-    moves them oppositely. Measured on the shipped render, most of that list is
-    the second kind —
-
-        help2      L +1 / R -4    five px NARROWER, not displaced (its single
-                                  largest item, 0.1855)
-        plateLab   0 / 0 / 0 / 0  ALIGNED EXACTLY, and still on the list
-        plateMark  0 / 0 / 0 / 0  ALIGNED EXACTLY, and still on the list
-
-    — so the shift centres the error while pushing the origin further off. Rules
-    67 and 71 already say the objective rewards the wrong direction on legibility
-    and on colour; this is the same trap on POSITION, and the new part is that it
-    arrived as a confident, measured, independently-produced recommendation.
-    Grader 3 had called help2 correctly and grader 4 contradicted it; the edges
-    settle it, not the grade.
-
-    Applied only the same-sign components: 6.3752 -> 6.3036. The rejected items
-    are recorded with their numbers rather than quietly dropped.
-
-    And the companion error, which was mine: rule 34 decides WHETHER to move,
-    the shift search decides HOW FAR. Taking the magnitude from the edge average
-    (1.5 device px) instead of the shift-search optimum (1.0) built a WORSE
-    screen — 6.5157, with `diffLab` at 41.2805 because the edge test also
-    pointed the wrong way on that run's horizontal. Two instruments, two
-    questions; using either for the other's question is a defect.
-
-74. **A recorded baseline is a claim about the ARTEFACT it was read from.** The
-    markup gate's `lede2` control value was 2, read off a build, green for
-    rounds. On the production build the same gate, same commit, reads 1 and goes
-    red — React's production build merges adjacent text nodes its development
-    build keeps separate. Nothing was wrong with the gate or the page; the
-    baseline had been taken from a runtime that never ships.
-
-    This generalises past the gate: every "recorded state" in this repository
-    was captured from a dist built with `NODE_ENV=development`, because the
-    container exports it and `next build` honours it. That one also silently
-    broke static generation for 51 pages, so `npm run build` had been exiting 1
-    for every screen so far while a BUILD_ID was still written and rule 60's
-    gate still passed. Two lessons, and the second is the sharper one: state
-    which artefact a baseline came from, and check the thing you are gating on
-    is the thing that fails — an exit code masked by an `echo` in a subshell,
-    or a path test run from a cwd that persisted from an earlier `cd`, is a gate
-    that reports on nothing.
-
-    Why it happens is the same mechanism as rule 67: canonical's glyphs are
-    slightly wider and softer than the render's, so lightening the render's ink
-    reduces the error at every edge pixel it does not cover, and there are more
-    edge pixels than core pixels. The metric is measuring overlap, not colour.
-
-    So: **a colour role is set from the eroded core against canonical, and then
-    the band mean is used to CONFIRM it, never to choose it.** If the two
-    disagree, the core wins and the disagreement gets written down with its
-    number. A grader also tested and refuted its own first reading here — that
-    graphite should be darkened toward canonical's cores — because direct
-    simulation made every darker target worse too. Both directions are recorded
-    so neither is rediscovered as free money.
-
-- Never edit the four measurement-tuned type roles in `globals.css`.
-- Scope a colour disagreement to the screen; never change a global token — those
-  roles carry the 20 desktop screens graded B+.
-- Never delete a region or pad dead space to improve a score.
-- Never build into a dist dir while a server serves from it.
-- State physically unreachable residuals with their numbers rather than forcing
-  them and breaking another metric.
-- Do not commit a tree that fails `tsc` or a screen that breaks its size invariant.
 
 ### DONE: one line in the shell was scrolling 42 of the 72 phone screens
 
