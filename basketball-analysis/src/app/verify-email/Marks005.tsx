@@ -290,9 +290,26 @@ export function ShieldMark() {
             a slightly oversized path looks like when the stroke width is
             correct. Scaled 24/26 and 30/32 about its own centre and lifted
             2/sy user units, leaving the outline and SHIELD_SW untouched. */}
-        <g transform={`translate(11.95 13.6) scale(${30 / 32} ${24 / 26}) translate(-11.95 ${-13.6 - 2 / (SHIELD[3] / 24)})`}>
-          <path d="m8.6 12.4 2.7 2.8 4.4-5.1"
-                stroke={ORANGE} strokeWidth={SHIELD_SW} />
+        {/* FIRST FORM GOT THE SIZE AND MISSED THE LIFT, and lost ink doing it.
+            Built, the tick went from 151 px at rows 44..69 cols 37..68 to 134 px
+            at rows 44..67 cols 38..67: the columns landed on canonical exactly,
+            the height became canonical's 24 rows — and the TOP never moved, so
+            the whole gain came from pulling the bottom up rather than from
+            lifting the shape. Folding the offset into the inner translate put it
+            inside the scale, where it was cancelled by scaling about a centre
+            below the tick's own (13.6 against its true 12.65).
+
+            So the lift is now an OUTER translate, applied after the scale and in
+            the shield group's units where 2 device px is 2/sy. And the stroke is
+            divided back out exactly as `Icon` does for its marks: scaling a path
+            scales its stroke, which is why the ink fell 151 -> 134 against
+            canonical's 150 while the extent was becoming correct. */}
+        <g transform={`translate(0 ${-2 / (SHIELD[3] / 24)})`}>
+          <g transform={`translate(11.95 12.65) scale(${30 / 32} ${24 / 26}) translate(-11.95 -12.65)`}>
+            <path d="m8.6 12.4 2.7 2.8 4.4-5.1"
+                  stroke={ORANGE}
+                  strokeWidth={SHIELD_SW / Math.sqrt((30 / 32) * (24 / 26))} />
+          </g>
         </g>
       </g>
     </svg>
