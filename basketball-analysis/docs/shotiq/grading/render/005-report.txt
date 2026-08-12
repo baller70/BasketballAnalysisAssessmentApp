@@ -1,13 +1,13 @@
-whole screen   mean|d| 5.5538   max 255   n_over8 103999
+whole screen   mean|d| 5.5016   max 255   n_over8 103702
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
 help2         21.1660    255      6051
 display       19.3019    255     19291
-helpIcon2     18.0968    255      1344
-helpIcon1     17.6749    255      1108
-shield        13.7904    255      1462
+helpIcon1     13.6684    255      1018
+shield        13.5296    255      1457
+helpIcon2     13.3029    255      1226
 safe2         13.0115    230      4361
 help3         12.8522    255      4380
 resendLab     10.7329    223      2737
@@ -19,7 +19,7 @@ help1          7.7874    255      3933
 wordmark       7.7849    255      2713
 helpIcon3      7.5455    255      1028
 box1           5.9984    255      1967
-diffBtn        5.8389    255      9996
+diffBtn        5.6752    255      9912
 lede1          5.5554    208      3470
 box3           5.1481    254      1794
 box2           4.8995    254      1602
@@ -44,7 +44,7 @@ part of the table; a label inside a solved box is diluted by the box's
 area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
-diffMark     26.4442    255      1689
+diffMark     23.7550    255      1605
 diffLab      20.1557    255      3142
 plateLab     16.0099    255      4965
 digit1       15.8763    255       814
