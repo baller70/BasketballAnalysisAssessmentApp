@@ -59,3 +59,10 @@ next-env.d.ts
 # run, and leaving it untracked trips the repo's uncommitted-changes check
 # mid-grade — when deleting it would break the grader still using it.
 .grade/
+
+# Same convention, prefix form: a dispatched grader writes probe scripts beside
+# the harness it is measuring (docs/shotiq/_grader-*.mjs) rather than into a
+# directory. Ignored for the same reason .grade/ is — they are an agent working
+# file, they are recreated per run, and deleting them mid-grade breaks the agent
+# still using them.
+_grader-*
