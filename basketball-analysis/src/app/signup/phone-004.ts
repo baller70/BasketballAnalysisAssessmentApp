@@ -94,7 +94,17 @@ const COLOURS = `
      Screen-scoped like every role here; at 1440px the token still resolves
      #fff, so the 20 desktop screens cannot move. */
   --shotiq-color-paper:#FEFEFE;
-  --shotiq-color-ink:#000000;
+  /* CANONICAL'S INK IS NOT PURE BLACK EITHER, and this is rule 63 repeated on
+     the role next door. That rule measured the PAPER and stopped there; the
+     ink kept #000000 because the check on record for it was a G/R and B/R
+     RATIO (1.0010 and 1.0013, in the table above) - and a ratio is blind to
+     absolute level by construction, so the level was never in evidence at
+     all. The same blind spot, one role over.
+     The deficit is systematic on EVERY ink band - canonical core 3.2-6.6
+     against the render's 0.0-1.1 - which is rule 63's own signature for a
+     canvas-wide property rather than a per-band defect.
+     Bracketed: #020202 2.9342, #030303 2.9324, #040404 2.9334. */
+  --shotiq-color-ink:#030303;
   /* Both rule colours were too DARK as well as too heavy, and the pair had
      to move together — width moves the covered area of a flat stroke, value
      moves its level, and fitting either alone leaves the other absorbing the

@@ -31,13 +31,33 @@
  * nobody had measured, which is the same error as calling a residual
  * unreachable without naming the levers (rules 59, 61).
  *
- * MECHANISM — this is the one the grade measured, and it is not interchangeable
- * with a plausible equivalent:
+ * MECHANISM. THE FIRST VERSION OF THIS SHIPPED A FUNCTIONAL REGRESSION, and the
+ * comment that stood here confidently explained why the broken mechanism was the
+ * only possible one. Both are kept, because the wrong reasoning is the lesson.
  *
- *   - `transform: translateX()` on `display: inline-block`. NOT
- *     `position:relative` + `left`: Chromium snaps a layout property to whole
- *     device pixels and every sub-pixel value collapses into one render
- *     (rule 53). A transform is composited and continuous.
+ * What shipped: `transform: translateX()` on `display: inline-block`, justified
+ * here as the only option because "Chromium snaps a layout property to whole
+ * device pixels" (rule 53). **`display: inline-block` breaks find-in-page.**
+ * Blink's FindBuffer cannot match a phrase that spans inline-block boundaries,
+ * so in these four runs "agree" was findable and "I agree" was not, while the
+ * same phrase in unwrapped copy at the same depth matched normally. A
+ * ZERO-transform inline-block already breaks it, so it is the display mode and
+ * not the offsets. No band could ever see this: the pixels are BETTER for it.
+ * The round that shipped it verified link rects, client-rect counts and
+ * checkbox events — three things that do not break — and called that verified.
+ *
+ * What ships now: `position: relative; left:` on `display: inline`.
+ *
+ *   - **`left` does NOT snap on an inline box.** Rule 53's snapping evidence was
+ *     entirely VERTICAL (its two "identical: snapped" rows differ only in
+ *     `top`), and it was generalised to both axes. Horizontally Chromium keeps
+ *     LayoutUnit precision: this reproduces the inline-block geometry to ~0.02
+ *     CSS px, leaves lede2/oneacct/terms bit-for-bit unchanged, costs 0.0018 of
+ *     whole screen, and restores find-in-page on every run. See rule 66.
+ *   - `transform` is not an option on an inline box at all: it computes and has
+ *     no effect (measured, x unmoved 8 -> 8), which is why the obvious
+ *     substitution of keeping the transform and changing only the display mode
+ *     silently does nothing.
  *   - The SPACES STAY OUTSIDE the spans, as their own text nodes. That is what
  *     keeps the parent's `word-spacing` applying between words — round 8's
  *     `ws` pairs are still live and would be destroyed by absorbing the spaces
@@ -58,15 +78,19 @@ import React from "react"
  *  left between them as bare text. `from` is the index into `dx` of the FIRST
  *  word of this fragment, so a run interrupted by a <Link> can carry one
  *  continuous offset array across its several text nodes. Missing entries fall
- *  back to 0 — the terms run's trailing "." is index 10 against a 10-entry
- *  array, and it was measured unmoved. */
+ *  back to 0.
+ *  (An earlier version of this comment said the terms run's trailing "." is
+ *  "index 10 against a 10-entry array". It is not: the "." is a bare literal in
+ *  the JSX after </Link> and never reaches this function at all. The effect is
+ *  the same — it is unmoved — but the comment described code that does not
+ *  exist, which is worse than no comment.) */
 export function words(text: string, dx: readonly number[], from = 0) {
   let i = from
   return text.split(/(\s+)/).filter(Boolean).map((tok, k) => {
     if (/^\s+$/.test(tok)) return <React.Fragment key={k}>{tok}</React.Fragment>
     const d = dx[i++] ?? 0
     return (
-      <span key={k} style={{ display: "inline-block", transform: `translateX(${d}px)` }}>
+      <span key={k} style={{ display: "inline", position: "relative", left: `${d}px` }}>
         {tok}
       </span>
     )

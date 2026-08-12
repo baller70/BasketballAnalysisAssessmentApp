@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — sixty-five, each learned by getting something wrong
+## Method rules — sixty-six, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1716,6 +1716,40 @@ string rolling over at midnight.
     separates the two. `display` is the control that proves this is not a
     universal escape hatch — per-word free translation buys it exactly 0.0000,
     because both its words are already at their own optimum.
+
+66. **Rule 53 was measured on ONE axis and stated for both — and the overreach
+    shipped a functional regression. Verify the things that break, not the
+    things you know don't.** Rule 53 says sub-pixel placement needs a composited
+    property because Chromium snaps layout properties to whole device pixels.
+    Its evidence is real and it is entirely VERTICAL: the two rows it prints as
+    "identical: snapped" differ only in `top`. Horizontally Chromium keeps
+    LayoutUnit precision, and `left` on a relatively-positioned INLINE box does
+    not snap at all — it reproduces the `translateX` geometry to ~0.02 CSS px,
+    leaves three of the four runs bit-for-bit unchanged, and costs 0.0018.
+
+    That mattered because the mechanism rule 53 forced instead —
+    `display:inline-block` — **breaks find-in-page**. Blink's FindBuffer cannot
+    match a phrase across inline-block boundaries, so on the four wrapped runs
+    "agree" was findable and "I agree" was not, while the same phrase in
+    unwrapped copy at the same depth matched normally. A ZERO-transform
+    inline-block already breaks it, so it is the display mode and not the
+    offsets. `transform` on an inline box is not a workaround: it computes and
+    has no effect (x unmoved, 8 → 8).
+
+    **No band mean can ever see this. The pixels are BETTER for it.** And the
+    round that shipped it did verify: link client-rects, run client-rect counts,
+    checkbox change events on a link tap. Every one of those was a property that
+    inline-block does not damage. Verification that only checks what you already
+    believe is intact is not verification — before shipping a markup change to a
+    live form, enumerate what the browser does with text (find, select, copy,
+    read, translate, reflow) and test the ones the change could plausibly
+    touch.
+
+    Two corrections that travel with this: rule 53 stands VERTICALLY and is
+    hereby scoped to that axis; and a rule derived on one axis, one lever or one
+    band says nothing about the others until someone measures them — the same
+    shape as rules 59, 61 and 64, which is now four separate times this project
+    has generalised past its evidence.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
