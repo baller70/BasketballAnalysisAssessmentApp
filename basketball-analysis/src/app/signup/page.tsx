@@ -160,7 +160,13 @@ export default function SignUpPage() {
             <div data-s4-contents className="grid grid-cols-2 gap-[14px]">
               <div data-s4-contents>
                 <label htmlFor="firstName" data-s4="labFirst" className={label}>FIRST NAME</label>
+                {/* The other three inputs on this form declare autoComplete and
+                    these two did not, so the browser offered to fill an email
+                    and two passwords and left the player to type their own name.
+                    No pixel changes; the fifth grade found it by reading the
+                    markup rather than the render. */}
                 <input id="firstName" data-testid="signup-first-name"
+                       autoComplete="given-name"
                        data-s4="valFirst"
                        className={`${field} mt-[8px]`} placeholder="Jordan"
                        value={formData.firstName}
@@ -169,6 +175,7 @@ export default function SignUpPage() {
               <div data-s4-contents>
                 <label htmlFor="lastName" data-s4="labLast" className={label}>LAST NAME</label>
                 <input id="lastName" data-testid="signup-last-name"
+                       autoComplete="family-name"
                        data-s4="valLast"
                        className={`${field} mt-[8px]`} placeholder="Ellis"
                        value={formData.lastName}

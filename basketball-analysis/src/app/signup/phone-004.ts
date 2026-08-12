@@ -268,8 +268,22 @@ export const RUNS: Record<string, Run> = {
      the recipe's `top` values were originally read off each line's whole-ink
      top, and line 2's tallest ink is an ascender where line 1's is a capital.
      Band mean |d| 21.19 -> 12.77. */
+  /* tx -0.536 — line 1 sat ~1.1 device px right, and it took five grades to see
+     because THE BAND HID IT. The report's `lede` window spans both lines, and
+     the two lines want corrections of OPPOSITE SIGN (line 1 wants -0.536 CSS
+     px, line 2 is already on its optimum), so the aggregate averaged a 2.1496
+     defect on line 1 down to a 0.4413 compromise. Line 1 is the hottest region
+     on the whole screen at rows 285-299; line 2 never enters the top 25. See
+     rule 57 — the window has been split so this cannot recur.
+     lede1 15.7273 -> 14.1329, reported `lede` 11.8523 -> 11.0172.
+     VERTICAL IS ALREADY OPTIMAL and was checked rather than assumed: ty across
+     +/-0.345 returns 14.1329 identically, +0.4608 gives 14.3525 and -0.4608
+     gives 17.4070. An image-space bound asked for -0.50 device px and did NOT
+     transfer (rule 47). Nor is the line's +1.25% advance excess reachable:
+     per-line scaleX is worse at every value tried (0.942 -> 14.71, 0.938 ->
+     15.45, 0.934 -> 18.40, 0.930 -> 19.91 against 14.13). */
   lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.946, ws: 0.9, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: 0, ty: 0 },
+           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: -0.536, ty: 0 },
   lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.946, ws: 0.9, ls: -0.0044,
            colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
   /* "One account across web and iOS." Band 12.912 -> 6.329, at size 14.464 ->
@@ -399,7 +413,7 @@ export const RUNS: Record<string, Run> = {
      0.75 jumps to 10.2700, so 0.45 is the middle of a live rung and the trailing
      digit is the rung, not a precision claim. 7.2649 -> 6.9464. */
   terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.92, ws: 1.1, ls: -0.004,
-           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0.45 },
+           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: -0.05, ty: 0.45 },
   /* "Create account" — the plate's label, and the display run's signature all
      over again (rule 32: read the two axes together before calling anything a
      size error). Vertical extent canonical/render 1.0004 by outer bbox and
@@ -424,8 +438,20 @@ export const RUNS: Record<string, Run> = {
      lift any finer: 3.5, 4.0, 4.5 and 5.0 all score 4.8291 to four decimals,
      so 4.0 is the middle of the rung and not invented precision. Rule 40
      control at the shipped 21.0/8.52 reproduced 8.4842 exactly. */
+  /* tx 0.20 / ty 0.18 — and the note above about the lattice not resolving the
+     lift was TRUE of the lever it was measured on and FALSE of the pixels. The
+     lift had only ever been swept through `dy`, which is a layout property, and
+     rule 53's corollary says exactly this: any residual concluded from a layout
+     sweep is suspect until it is re-tested with a composited one. Through
+     `transform` the label moves sub-pixel and the plate band goes 4.7206 ->
+     4.0960.
+     The `plate` band hid the size of it the same way `lede` hid line 1: the
+     band mixes an already-solved box with this label, so a whole-band bound
+     came back 0.0073 while the label's own sub-window bounded at 0.0273 and
+     delivered 0.0352 (rule 57). */
   createLab: { x: 353.65, top: 1577.54, size: 20.0, weight: 480, scale: 0.7845, ls: -0.03,
-               colour: "#FFFFFF", dx: 1.16, dy: 12.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
+               colour: "#FFFFFF", dx: 1.16, dy: 12.52, tx: 0.20, ty: 0.18,
+               ox: PLATE.x, oy: PLATE.y },
   /* tx 1.2 -> 2.30. The word-spacing round moved this to 1.2 on a band mean;
      a sub-pixel rigid shift of the orrow window says the label is still 1.5
      device px left of canonical, and the CSS reproduces it: orrow 1.9943 ->
@@ -462,8 +488,14 @@ export const RUNS: Record<string, Run> = {
 
      ls -0.03 -> -0.07 with a 1.50 device px left nudge: 5.1897 -> 3.7430.
      dx is the middle of its rung (2.16, 2.66, 3.16 all score 3.7430). */
+  /* tx -0.25 — 0.5 device px right of canonical, and `dx` could not express it:
+     the note above records 2.16 / 2.66 / 3.16 all scoring 3.7430, which is the
+     layout lattice quantising, not the label being in the right place. Through
+     the composited transform the half-pixel is real. signin 3.1961 -> 3.0637.
+     Same box-plus-text dilution as createLab: the `signin` band carries the
+     box, so the label's own contribution is diluted in the aggregate. */
   signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.895, ws: 0.8, ls: -0.07,
-               colour: "var(--shotiq-color-ink)", dx: 2.66, dy: 8.52, tx: 0, ty: 0,
+               colour: "var(--shotiq-color-ink)", dx: 2.66, dy: 8.52, tx: -0.25, ty: 0,
                ox: BOX_X, oy: SIGNIN.y },
 }
 

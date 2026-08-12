@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — fifty-six, each learned by getting something wrong
+## Method rules — fifty-eight, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1462,6 +1462,54 @@ string rolling over at midnight.
     diagnostic that names the screens and leaves the judgement to its reader can
     be switched on for all 72 at once without breaking a single existing run,
     where a throw would have to be argued screen by screen before it could ship.
+
+57. **A band that spans two independently positioned things measures neither.
+    Averaging is not measurement.** Screen 004's report had ONE `lede` window
+    (268-352) over TWO separately placed runs. Their optimal horizontal
+    corrections have OPPOSITE SIGNS — line 1 wanted -0.536 CSS px, line 2 was
+    already on its optimum — so the aggregate averaged a 2.1496 defect on line 1
+    down to a 0.4413 compromise and read as solved. Five consecutive independent
+    grades looked at that number and moved on, while line 1 was the hottest
+    region on the entire screen (rows 285-299) and line 2 never entered the top
+    25. Split, line 1 gave up 0.0380 of whole screen to a single `tx`.
+
+    The same shape cost a second finding on the same screen. `plate` mixes an
+    already-solved BOX with `createLab`, and `signin` mixes a box with
+    `signinLab`. A solved box is a large area of near-zero difference; averaging
+    a small hot label into it divides the label's error by the box's area. The
+    band bounded createLab at 0.0073; the label's own sub-window bounded it at
+    0.0273 and it delivered **0.0352**.
+
+    Two distinct failure modes, and both are the same arithmetic:
+
+        OPPOSITE SIGNS   two runs pull the mean in opposite directions and
+                         cancel — the band looks solved and neither run is
+        DILUTION         a hot small region divided by a cold large one — the
+                         band looks nearly solved and the small region is not
+
+    So: **one window per independently positionable thing.** Where a band must
+    stay whole for continuity with recorded numbers, add a diagnostic
+    SUB-window rather than redefining the band — `report004.SUBWINDOWS` is
+    reported separately and deliberately not merged, because folding overlapping
+    rows into the main table would silently change the meaning of every band
+    figure five rounds of this ledger have quoted.
+
+    Related to rule 45 (an estimator must not span two things) and to rule 50
+    (a window that clips its own run), but distinct from both: here the window
+    clips nothing and spans exactly what it claims to. It is the AGGREGATION
+    that destroys the signal, not the extent.
+
+58. **A bookkeeping write must never be able to destroy the measurement it is
+    bookkeeping.** A full 72-screen capture ran for eight minutes, captured
+    every screen successfully, and then died on
+    `undefined/IOS-CAPTURE-LATEST.json` because `S` was not exported — throwing
+    away all 72 results without printing one of them. The PNGs were on disk and
+    every number was gone.
+
+    The write sat BEFORE the console summary and was unguarded. Now the findings
+    print first, the persist runs second, it falls back to `OUT` when `S` is
+    unset, and its failure is caught and reported rather than thrown. Print
+    first, persist second, treat the persist as best effort.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

@@ -282,12 +282,6 @@ const wide = Object.entries(meta).filter(([, v]) => v.scrollWidth > 393 || v.inn
 // safe to switch on for all 72 at once without breaking a single existing run.
 const tall = Object.entries(meta).filter(([, v]) => v.scrollHeight > v.innerHeight + 1)
 
-if (!ONLY.length) {
-  fs.writeFileSync(S + '/IOS-CAPTURE-LATEST.json', JSON.stringify(
-    { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, tall, failures, meta },
-    null, 1))
-}
-
 console.log(`captured   ${got.length} / ${expected.length}`)
 console.log(`distinct   ${seen.size} md5s`)
 console.log(`gaps       ${gaps.length}${gaps.length ? ' — ' + gaps.join(', ') : ''}`)
@@ -295,6 +289,28 @@ console.log(`step fails ${failures.length}${failures.length ? '\n  ' + failures.
 console.log(`wider>393  ${wide.length}${wide.length ? ' — ' + JSON.stringify(wide) : ''}`)
 console.log(`scrolls    ${tall.length}${tall.length
   ? ' — ' + tall.map(([n, v]) => `${n} ${v.scrollHeight}>${v.innerHeight}`).join(', ') : ''}`)
+
+// THE SUMMARY IS WRITTEN AFTER THE FINDINGS ARE PRINTED, AND ITS FAILURE IS NOT
+// FATAL. It used to run before them, unguarded, so a full 72-screen run — eight
+// minutes of captures, every one of them successful — died on
+// `undefined/IOS-CAPTURE-LATEST.json` because `S` was not exported, and threw
+// away all 72 measurements without printing one of them. The captures were on
+// disk and the numbers were gone.
+//
+// A bookkeeping write must never be able to destroy the measurement it is
+// bookkeeping. Print first, persist second, and treat the persist as best
+// effort.
+if (!ONLY.length) {
+  const summary = S ? `${S}/IOS-CAPTURE-LATEST.json` : `${OUT}/IOS-CAPTURE-LATEST.json`
+  try {
+    fs.writeFileSync(summary, JSON.stringify(
+      { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, tall, failures, meta },
+      null, 1))
+    console.log(`summary    ${summary}`)
+  } catch (e) {
+    console.log(`summary    NOT WRITTEN (${e.message}) — the numbers above still stand`)
+  }
+}
 
 if (dupes.length) {
   throw new Error(`DUPLICATE CAPTURE:\n  ${dupes.join('\n  ')}\n— a redirect ate a screen`)
