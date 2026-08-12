@@ -2280,6 +2280,23 @@ every prior measurement stands. But nothing shipped from that tree would have
 deployed, and the ledger's "production build" wording was wrong for every
 screen so far.
 
+**FIXED IN THE REPOSITORY, not just diagnosed.** `next build` sets
+`NODE_ENV=production` only when it is UNSET — `next/dist/bin/next` reads
+`process.env.NODE_ENV || defaultEnv` — so an inherited `development` wins
+silently, and any CI runner, container or shell that exports it produces the
+same broken build. The build script now sets it explicitly:
+
+    "build": "prisma generate && NODE_ENV=production next build"
+
+matching the POSIX inline-env convention five existing scripts already use.
+Verified with the hostile environment still in place — the container still
+exports `NODE_ENV=development` — a plain `npm run build` now exits **0 with
+zero prerender errors**, where the identical command exited **1 with 51**
+before the change. And the artefact it produces is the measured one: captured
+and scored **6.3752 / n_over8 112821**, identical to the hand-built dist, so
+"what the build script emits" and "what these numbers describe" are now the
+same thing rather than two things that happened to agree.
+
 **And the blast radius on 004 was checked rather than assumed.** 004 is marked
 DONE at A on a figure measured from a dev-runtime dist, so the finding put that
 grade in question. Re-captured from the production dist: **2.6520 / n_over8
