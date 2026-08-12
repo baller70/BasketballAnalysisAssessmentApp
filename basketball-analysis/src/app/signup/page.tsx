@@ -218,8 +218,15 @@ export default function SignUpPage() {
                      className={`${field} pr-[44px]`} placeholder="Repeat your password"
                      value={formData.confirmPassword}
                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
+              {/* The eye button below is named for ITS OWN field. Both eye
+                  buttons said "Show password", so an ARIA snapshot of this page
+                  read `button "Show password"` twice and a screen-reader user
+                  met two identically-named controls with no way to tell which
+                  one reveals PASSWORD and which reveals CONFIRM PASSWORD. 003
+                  has a single password field and could not have surfaced this —
+                  it is 004's own defect. */}
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                      aria-label={showConfirm ? "Hide password" : "Show password"}
+                      aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
                       data-s4="eyeConfirm"
                       className="absolute right-[13px] top-1/2 -translate-y-1/2 text-[var(--shotiq-color-graphite)]">
                 <span className="hidden md:inline">

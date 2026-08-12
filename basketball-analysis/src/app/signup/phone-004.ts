@@ -174,7 +174,10 @@ export const RUNS: Record<string, Run> = {
      measured move had. The two other solves in the same round used the same
      property in the sweep as in the recipe (scaleX, font-size) and landed
      8.4842 -> 8.4842 and 5.1898 -> 5.1897. See method rule 47. */
-  wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0456, ls: 0.0123,
+  /* scale 1.0456 -> 1.0470, an advance trim on a plateau of 1.0468-1.0472.
+     4.1879 -> 4.0584. Small, and it is here because the sixth grade swept it
+     rather than inheriting the earlier round's conclusion. */
+  wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0470, ls: 0.0123,
               colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 1.2670 },
   /* CREATE ACCOUNT. The size was right and the WIDTH was not, which is the one
      pairing rule 32 says to read together before calling anything a size error:
@@ -240,10 +243,42 @@ export const RUNS: Record<string, Run> = {
      route re-rasterises the glyph and moves the hinting; the scaleY route
      stretches what is already correct. Rule 40 control at the shipped values
      reproduced 14.3046 exactly in both sweeps. */
+  /* tx -0.3209 / ws 3.85 -> 4.2952 — AND THIS BAND WAS WRITTEN UP AS FULLY
+     UNREACHABLE FOR TWO ROUNDS. It was not. Rule 57 had been applied to every
+     other band on the screen and never to this one, and split by WORD the two
+     halves want optima of OPPOSITE SIGN — the lede signature exactly:
+
+         CREATE   26.1342 -> 24.4445 at dx -1.05 device px
+         ACCOUNT  15.2209 -> 15.0664 at dx +0.15
+
+     Which is precisely why every earlier attempt failed and looked like proof
+     of unreachability. Moving the whole run is the wrong shape of correction:
+     tx alone at -1.05 scores 16.2278 against a 13.7110 control, WORSE, and
+     word-spacing alone is worse in both directions. Only the COMPENSATED PAIR
+     separates them — tx carries both words left, ws puts ACCOUNT back.
+
+         display band    13.7110 -> 12.7612
+         CREATE          26.1342 -> 23.6146
+         ACCOUNT         15.2209 -> 14.6676
+         whole screen     3.8438 ->  3.7923
+
+     The rung, not invented precision: tx -0.70/-0.72 device px are flat and the
+     ACCOUNT compensation is flat across +0.25/+0.30. `ty` and `sy` were BOTH
+     re-swept at the new horizontal position rather than assumed to carry over,
+     and both still win — ty -0.5760/-0.4608/-0.3455 all return 12.7612 and
+     -0.2303 jumps to 14.5108; sy 1.008 gives 12.9925 and 1.020 gives 14.0849.
+     Ink stays inside the window at cols 69-664, rows 161-239.
+
+     The face is still wrong (rule 54 stands, and no CSS dents the letterforms).
+     What was wrong was the COROLLARY this ledger drew from it — that everything
+     left on this band was per-glyph warp with no lever. 0.0515 of it was a
+     two-word registration error expressible in two fields that already existed.
+     A residual that survives four rounds of one KIND of sweep has been shown
+     unreachable by that kind of sweep and by nothing else. */
   display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, sy: 1.014,
              ls: 0.0547,
-             ws: 3.85, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: -0.3455 },
+             ws: 4.2952, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             bang: true, dx: 0.8073, dy: 19.8522, tx: -0.3209, ty: -0.3455 },
   /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
      size, so fitting each on its own would let two different sizes both look
      locally plausible while the block reads wrong.
@@ -580,7 +615,20 @@ function maskCss(name: string, box: [number, number], size: number, ls: number,
    `ty` is raw CSS px (it is not passed through `u`), so a device-px target is
    divided by 2.170483; `padL` IS passed through `u`, so it stays in device px. */
 export const VALUES = {
-  first: { size: 15.0, weight: 340, scale: 0.90, padL: 24.00, ty: 1.4974, ls: 0 },
+  /* first.ty 1.4974 -> 1.2094 — found only once the five field bands were split
+     into their own value windows (rule 57's dilution form). The values read
+     17-20 in their own windows where the bands read 1.76-4.81: the box is large
+     and solved, the text is small and hot, and the average is neither. Rung
+     centre; [1.0366, 1.3822] all return 17.7743.
+         fieldFirst band  2.1975  -> 2.1003
+         valFirst window 19.6125 -> 17.7743
+     The other four do NOT yield, and the null is real rather than an instrument
+     claim: horizontally the control wins at every offset in +/-2.0 device px on
+     all three values while the score moves continuously, so the lever is live
+     (rule 30/53). The +1.15/+1.69 device px ink-left readings did not transfer,
+     and valEmail's -0.50 vertical bound made it WORSE, 19.3605 -> 19.6044.
+     Rule 47, a seventh time. */
+  first: { size: 15.0, weight: 340, scale: 0.90, padL: 24.00, ty: 1.2094, ls: 0 },
   last: { size: 15.0, weight: 340, scale: 0.90, padL: 24.25, ty: 1.1518, ls: 0 },
   email: { size: 15.0, weight: 340, scale: 0.90, padL: 26.00, ty: 2.0733, ls: 0 },
 }

@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — fifty-eight, each learned by getting something wrong
+## Method rules — sixty, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1511,6 +1511,74 @@ string rolling over at midnight.
     unset, and its failure is caught and reported rather than thrown. Print
     first, persist second, treat the persist as best effort.
 
+59. **When a new rule arrives, apply it to the band you already closed. A
+    residual that survives four rounds of one KIND of sweep has been shown
+    unreachable by that kind of sweep and by nothing else.** Rule 57 was written
+    on 004 and applied on 004 to `lede`, to `plate`, to `signin` and to the five
+    field bands. It was NOT applied to `display`, because `display` had been
+    written up as unreachable and the file had stopped asking questions about
+    it. Split by word, the two halves want optima of OPPOSITE SIGN:
+
+        CREATE   26.1342 -> 24.4445 at dx -1.05 device px
+        ACCOUNT  15.2209 -> 15.0664 at dx +0.15
+
+    the same signature rule 57 was written from. **0.0515 of whole screen, in
+    two fields that already existed**, on the band this ledger had twice called
+    closed and on which the entire calibration argument rested.
+
+    And the reason four rounds of sweeps found nothing is worth more than the
+    number: every one of them moved the run AS A WHOLE. `tx` alone at the
+    measured -1.05 scores 16.2278 against a 13.7110 control — WORSE — and
+    word-spacing alone is worse in both directions. Only the COMPENSATED PAIR
+    separates the words: `tx` carrying both left, `ws` putting the second back.
+    A defect whose correction is a compensated pair of levers is INVISIBLE to
+    every sweep of either lever alone, and will look exactly like proof that
+    neither lever works.
+
+    **What was actually wrong in this ledger.** Rule 54's face finding is
+    correct and survived a third independent attack. The COROLLARY drawn from
+    it — "the whole remaining gap is placement error downstream of glyph metrics
+    that no CSS lever on this screen can express" — was false, and it was
+    written by me. A true diagnosis licenses a claim about ITS OWN mechanism and
+    nothing more; it does not license a claim about everything else left in the
+    band. This is the second time on this screen that an unreachability claim
+    has been overturned by the first untried thing (see rule 53's corollary, and
+    the word-spacing round). The pattern is not bad luck. It is that "I could
+    not find a lever" keeps getting written down as "there is no lever".
+
+    Before writing unreachable again: name the sweeps that were run, name the
+    KIND each one was, and say which kinds were not tried. A compensated pair is
+    a kind. A per-region split is a kind.
+
+60. **A command completing is not a command succeeding, and `;` will promote a
+    failed build into a dist that looks real.** The round-7 build ran as
+
+        npx tsc --noEmit | head -5; echo "TSC done"; next build > log 2>&1;
+        echo "BUILD $?"; mv .next .next-004n && echo MOVED
+
+    in the background. `tsc` FAILED — an invalid JSX comment placed between two
+    attributes of an opening tag — and the pipeline printed "TSC done" anyway,
+    because `echo` reports on itself. The build then failed too, and `mv` ran
+    regardless because it is separated by `;` and not `&&`. The result was a
+    `.next-004n` directory containing `cache/`, `server/` and a
+    `routes-manifest.json` — everything except a `BUILD_ID` — sitting under a
+    name that reads like a finished dist.
+
+    Nothing caught it. Not `tsc`, whose output went to a background task file
+    nobody opened; not the `$?` echo, which reported the failure into that same
+    unread file; not the `mv`. It was caught only when `next start` refused the
+    directory, one step before a capture would have been taken from it.
+
+    Two habits, both cheap:
+
+      - **Gate the move on the artefact, not on the command:**
+        `[ -f .next/BUILD_ID ] && mv .next .next-00X || echo "did not complete"`.
+        A dist is finished when it has a BUILD_ID, not when a command returned.
+      - **Read the output of a backgrounded check, or do not call it a check.**
+        A completion notification says the process ended. It says nothing about
+        what it found. The standing ruling is "do not commit a tree that fails
+        `tsc`" — that ruling is only worth anything if somebody looks at `tsc`.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
@@ -1567,6 +1635,24 @@ first full run paid for itself 42 times over. It was also deliberately REPORTED
 rather than THROWN, and that is why it could be switched on for all 72 at once —
 a throw would have had to be argued screen by screen before it could ship, and
 these 42 would still be scrolling.
+
+### OPEN, CLASS-LEVEL: every phone screen scrolls horizontally below 393pt
+
+Found by the sixth grader on 004 and explicitly NOT a 004 defect, so it is
+recorded here rather than counted against that screen. At any viewport narrower
+than 393pt the page scrolls sideways — 375 gives `scrollWidth` 393, 360 gives
+393 — because the phone recipe pins `.s4{width:393px}` inside a
+`max-width:767.98px` query. A fixed width inside a max-width query is not
+responsive; it is a 393pt canvas that happens to be delivered below 768.
+
+/signin does the same and worse: at 360pt its submit button is genuinely
+clipped, where 004's is not. So this is the same shape as the min-height bug —
+a recipe-level decision inherited by every screen — and it wants fixing once at
+the recipe, not 72 times.
+
+Deliberately not fixed while 004 is the screen in progress. iPhone SE and the
+mini sizes are 375pt, so this is reachable by real hardware and not only by a
+narrow browser.
 
 ### 004's desktop guard, discharged by blast radius rather than by pixels
 
