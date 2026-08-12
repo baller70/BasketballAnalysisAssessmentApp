@@ -672,7 +672,7 @@ function maskCss(name: string, box: [number, number], size: number, ls: number,
     `transform:translate(${tx.toFixed(4)}px,${ty.toFixed(4)}px);` +
     `font-family:${GEIST};font-weight:400;font-size:${size}px;letter-spacing:${ls}em;` +
     `line-height:${u(h)};padding-left:${u(padL)};` +
-    `color:var(--s4-graphite);background:transparent;border:0;outline:none;padding-top:0;` +
+    `color:var(--s4-mask-ink);background:transparent;border:0;outline:none;padding-top:0;` +
     `padding-bottom:0;padding-right:0;margin:0}`
 }
 
@@ -890,6 +890,14 @@ ${valueCss("valLast", FIELDS.last, VALUES.last.size, VALUES.last.weight, VALUES.
 ${valueCss("valEmail", FIELDS.email, VALUES.email.size, VALUES.email.weight, VALUES.email.scale, VALUES.email.padL, VALUES.email.ty, VALUES.email.ls)}
 ${maskCss("valPass", FIELDS.pass, MASKS.pass.size, MASKS.pass.ls, MASKS.pass.padL, MASKS.pass.ty, MASKS.pass.tx)}
 ${maskCss("valConfirm", FIELDS.confirm, MASKS.confirm.size, MASKS.confirm.ls, MASKS.confirm.padL, MASKS.confirm.ty, MASKS.confirm.tx)}
+/* Mask ink is the colour of the BULLETS. When the player reveals the field
+   the same element paints real characters, and those belong with the other
+   field values rather than with the mask. Canonical only ever draws the
+   masked state, so this costs nothing measurable either way - scoped and
+   unscoped both return 3.0759 / 72095 to the pixel - and it is here because
+   it is right, not because it scores. */
+.s4 [data-s4="valPass"][type="text"],.s4 [data-s4="valConfirm"][type="text"]{
+  color:var(--s4-value-ink)}
 .s4 [data-s4="valFirst"]::placeholder,.s4 [data-s4="valLast"]::placeholder,
 .s4 [data-s4="valEmail"]::placeholder,.s4 [data-s4="valPass"]::placeholder,
 .s4 [data-s4="valConfirm"]::placeholder{color:var(--shotiq-color-muted);letter-spacing:0em}

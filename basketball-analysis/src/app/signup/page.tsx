@@ -28,6 +28,7 @@ import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
+import { words, LEDE1_DX, LEDE2_DX, ONEACCT_DX, TERMS_DX } from "./PerWord004"
 
 /** Canonical 004 sets the helper under PASSWORD as "Use at least 8
  *  characters.", and the client gate is moved with it so the screen does not
@@ -187,8 +188,13 @@ export default function SignUpPage() {
               below is untouched. */}
           <p data-s4-contents className="mt-[10px] text-[15px] leading-[21px] text-[var(--shotiq-color-graphite)]">
             <span className="md:hidden">
-              <span data-s4="lede1">Create your ShotIQ account to save analyses,</span>
-              <span data-s4="lede2">training, goals, and progress.</span>
+              {/* Per-word spans, measured. See PerWord004.tsx for why this is
+                  markup rather than a transform on the run, and for what the
+                  wrap actually costs. */}
+              <span data-s4="lede1">
+                {words("Create your ShotIQ account to save analyses,", LEDE1_DX)}
+              </span>
+              <span data-s4="lede2">{words("training, goals, and progress.", LEDE2_DX)}</span>
             </span>
             <span className="hidden md:inline">
               Create your ShotIQ account to save analyses, training, goals, and progress.
@@ -200,7 +206,7 @@ export default function SignUpPage() {
                 three E arms. The desktop chip is kept and hidden on the phone. */}
             <span data-s4-off className="grid h-[30px] w-[30px] place-items-center rounded-[6px] border border-dashed border-[var(--shotiq-color-ink)] text-[11px] font-bold">JE</span>
             <span data-s4="monogram" className="md:hidden"><Monogram /></span>
-            <span data-s4="oneacct">One account across web and iOS.</span>
+            <span data-s4="oneacct">{words("One account across web and iOS.", ONEACCT_DX)}</span>
           </p>
 
           <form data-s4-contents onSubmit={handleSubmit} className="mt-[24px]" noValidate>
@@ -307,10 +313,20 @@ export default function SignUpPage() {
                      aria-describedby={invalid === "agree" ? "signup-error" : undefined}
                      data-s4="checkbox"
                      className="mt-[2px] h-[15px] w-[15px] rounded-[3px] border border-[var(--shotiq-color-rule)] accent-[var(--shotiq-color-confirmGreen)]" />
+              {/* The offset array runs CONTINUOUSLY across the link boundaries:
+                  words 0-3 here, 4-6 inside /terms, 7 here, 8-9 inside
+                  /privacy, and the trailing "." is an eleventh token with no
+                  entry, measured unmoved. The <Link> elements are untouched —
+                  only their label text is wrapped — which is why both still
+                  measure one client rect at their original width. */}
               <span data-s4="terms">
-                I agree to the{" "}
-                <Link href="/terms" className="text-[var(--shotiq-color-shotiqOrange)]">Terms of Use</Link> and{" "}
-                <Link href="/privacy" className="text-[var(--shotiq-color-shotiqOrange)]">Privacy Policy</Link>.
+                {words("I agree to the", TERMS_DX, 0)}{" "}
+                <Link href="/terms" className="text-[var(--shotiq-color-shotiqOrange)]">
+                  {words("Terms of Use", TERMS_DX, 4)}
+                </Link>{" "}{words("and", TERMS_DX, 7)}{" "}
+                <Link href="/privacy" className="text-[var(--shotiq-color-shotiqOrange)]">
+                  {words("Privacy Policy", TERMS_DX, 8)}
+                </Link>.
               </span>
             </label>
 

@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — sixty-four, each learned by getting something wrong
+## Method rules — sixty-five, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1684,6 +1684,38 @@ string rolling over at midnight.
     sweep and nothing more — and an elegant impossibility argument ("a size
     error cannot do that") is exactly the form that hides the missing axis,
     because it feels like a proof rather than a measurement.
+
+65. **A refusal is a claim about a quantity. Measure it, or you have not
+    decided anything.** This ledger twice declined per-word spans on 004's Geist
+    runs — "markup surgery on a form the player actually uses, to buy about 0.3"
+    — and recorded the residual as unreachable on that basis. The COST side was
+    never measured, only asserted. The ninth grade measured both sides:
+
+        wrap overhead, zero-transform spans   lede2 +0.0005   terms   +0.0009
+                                              oneacct +0.0023 lede1   +0.0028
+        the two terms links, before -> after  rects 1 -> 1, widths 63.39 ->
+                                              63.39 and 65.79 -> 65.81,
+                                              hitsSelf true -> true
+        the four runs, dx only                0.1302 of whole screen
+
+    Three thousandths and a link that still hits itself at the same width,
+    against a buy of 0.130. The refusal was not a judgement, it was an unmeasured
+    number standing where a measurement should have been — the same error as
+    calling a residual unreachable without naming the levers (rules 59, 61),
+    wearing different clothes.
+
+    So: when the reason for not doing something is a cost, the cost is a
+    measurement. "Too invasive", "too risky", "not worth it" are all
+    quantities on this project, and all of them are cheap to measure — a
+    zero-effect version of the change isolates the overhead exactly.
+
+    Related, and the reason the spans work at all: a WRONG FACE gets each
+    glyph's ADVANCE wrong, and wrong advances ACCUMULATE into positional drift
+    along a run. Rule 54 correctly says the letterforms are unreachable; it does
+    NOT say the drift is, and per-word placement is exactly the lever that
+    separates the two. `display` is the control that proves this is not a
+    universal escape hatch — per-word free translation buys it exactly 0.0000,
+    because both its words are already at their own optimum.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
