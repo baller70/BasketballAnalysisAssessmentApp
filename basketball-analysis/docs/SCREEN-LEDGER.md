@@ -1926,7 +1926,7 @@ rather than THROWN, and that is why it could be switched on for all 72 at once �
 a throw would have had to be argued screen by screen before it could ship, and
 these 42 would still be scrolling.
 
-### OPEN: the markup gate's own holes, to fix BEFORE screen 005
+### DONE: the markup gate's own holes, found by audit and closed
 
 `docs/shotiq/markup-gate.mjs` was written as rule 70's answer to three
 consecutive invisible regressions. The thirteenth grade audited it by building a
@@ -1977,11 +1977,33 @@ And one stale number: the gate's header says the per-word mechanism "buys
 0.1302". Re-measured in-page at this commit it is **0.1480**. The 0.2437 it
 claims for the headline verifies exactly.
 
-**The pattern to notice**: only `find` carries explicit negative controls. The
+**The pattern to notice**: only `find` carried explicit negative controls. The
 gate's own header cites rule 69 — "a pass from an instrument with no case that
 should fail is a claim about the instrument" — and then four of its six probes
-exempt themselves from it. Writing the rule into the file did not make the file
-follow it, which is rule 68 one level up.
+exempted themselves from it. Writing the rule into the file did not make the
+file follow it, which is rule 68 one level up.
+
+**ALL OF IT IS FIXED, AND THE FIX IS DEMONSTRATED RATHER THAN ASSERTED.** G1
+takes `.trim()`; `select` now iterates ONE shared `RUNS` list so a run cannot be
+covered by one probe and invisible to another; a new `read (controls named)`
+probe fails if any form control is unnamed OR named from its placeholder; the
+`translate` verdict now checks BOTH recorded numbers, live and control, and a
+vanished run is drift rather than a `continue`; `reflow` sweeps WIDTH as well as
+DPR at 393/375/360/320 and records the class-level scroll as expected state, so
+it fails on any change to it.
+
+**And the gate now ships with its own should-fail cases**, which is the only
+form of this that survives the next round: `MUTATE=<name>` breaks the page in a
+specific way and the matching probe must go red. Verified, all five —
+
+    ariaLabel    -> read (heading named)
+    labels       -> read (controls named)
+    selectLede2  -> select
+    selectH1     -> select
+    deleteRun    -> find (wrapped runs), select, translate
+
+11/11 on the clean page, 5/5 mutations caught. Re-run the loop in the file's
+header after ANY change to the gate.
 
 ### NEEDS KEVIN: the canonicals are AI-generated, watermarked images
 
