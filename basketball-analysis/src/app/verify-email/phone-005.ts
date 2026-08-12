@@ -395,7 +395,17 @@ ${Object.entries(MARK_BOXES).map(([k, m]) => markBox(k, ...m)).join("\n")}
 /* NO BACKTICKS ABOVE: this comment is emitted from inside a template literal,
    so a backtick around an identifier ends the string and the file stops
    parsing — the same trap Marks004 records twice. */
-.s5 [data-s5-mark]{display:block;width:100%;height:100%}
+.s5 [data-s5-mark]{display:block}
+/* A MARK THAT IS ITSELF THE POSITIONED BOX MUST NOT BE STRETCHED. The first
+   version gave every data-s5-mark width:100%;height:100%, and for the marks
+   that ALSO carry a data-s5 box that rule wins the cascade at equal
+   specificity — so each one became the full width of its containing block,
+   the SVG's default xMidYMid preserveAspectRatio centred the drawing in it,
+   and five marks landed in the middle of the screen at the right size, which
+   reads exactly like a placement bug rather than a sizing one.
+   The 100% belongs only to the INNER span of a mark whose positioned box is
+   its parent link (gear, back), which is what :not([data-s5]) selects. */
+.s5 [data-s5-mark]:not([data-s5]){width:100%;height:100%}
 .s5 [data-s5-mark] svg{width:100%;height:100%;display:block}
 /* KEYBOARD FOCUS. The code inputs paint no text of their own, so the UA focus
    ring is the only thing that could show a keyboard user where they are — and
