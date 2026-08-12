@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — sixty-nine, each learned by getting something wrong
+## Method rules — seventy, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1836,6 +1836,39 @@ string rolling over at midnight.
     reports a boolean needs a case that should fail and does. Cheap, and it is
     the difference between a check and a decoration.
 
+70. **Three consecutive rounds, three mechanisms, three regressions the score
+    could not see. The enumeration has to be a GATE, not a memory.**
+
+        round 10   display:inline-block          broke FIND
+        round 11   51 per-glyph spans            broke READ (accessibility tree)
+        round 12   sr-only duplicate             broke COPY (sentence copied 2x)
+
+    Rule 66 wrote the enumeration — find, select, copy, read, translate, reflow.
+    Rule 68 recorded that writing it was not following it. Then round 12 fixed
+    READ and broke COPY, which is rule 68 happening again to the person who had
+    just written rule 68. A rule that has failed to prevent its own restatement
+    twice is not a rule anybody is using; it is a note.
+
+    So it becomes a procedure. **Before any markup change ships on a live
+    surface, run all six and record the result — including the ones you are
+    confident about, because confidence is what selected the wrong three checks
+    each time.** Each is one probe and each needs a negative control (rule 69):
+
+        find       window.find() with a phrase that IS and one that IS NOT there
+        select     Selection.toString() over the run
+        copy       the clipboard, not the selection — they differ
+        read       CDP Accessibility.getFullAXTree, node counts against an
+                   unwrapped control on the same page
+        translate  count text nodes; a per-glyph split is 44 nodes, not 11
+        reflow     the size invariant, at DPR 2 AND 3
+
+    The deeper point is about which defects a metric can hold. Every one of
+    these three was INVISIBLE to the band means, and two of them made the pixels
+    BETTER. A screen optimised against a per-pixel objective will drift toward
+    whatever that objective cannot see — that is not a failure of care, it is
+    what optimisation does — so the checks that catch it cannot themselves be
+    chosen by the person doing the optimising, in the moment, from memory.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
@@ -1892,6 +1925,66 @@ first full run paid for itself 42 times over. It was also deliberately REPORTED
 rather than THROWN, and that is why it could be switched on for all 72 at once —
 a throw would have had to be argued screen by screen before it could ship, and
 these 42 would still be scrolling.
+
+### NEEDS KEVIN: the canonicals are AI-generated, watermarked images
+
+Found by the twelfth grade of 004 and verified here independently. **71 of the
+72 canonical PNGs carry a signed C2PA provenance manifest** (the exception is
+`040-analysis-error.png`):
+
+    softwareAgent        gpt-image 2.0
+    digitalSourceType    trainedAlgorithmicMedia
+    generator            OpenAI Media Service API
+    action               c2pa.watermarked.unbound
+    certificate chain    Trufo Inc.
+
+This is not a footnote. Four things follow, and three of them change what this
+project should do next.
+
+**1. There is very likely no display cut to supply.** Method rule 54 concluded
+that 004's headline is set in a typeface this repository does not contain, and
+recorded "NEEDS KEVIN: supplying canonical's display cut collapses this band".
+That finding stands on its own measurements — the render fits Tungsten Semibold
+at 0.34% rms and canonical at 3.98% — but the ASK is probably unsatisfiable.
+There is no source font behind a generated image; the letterforms were drawn by
+a model, not set in a face. **Kevin should not go looking for a font file.** The
+right question is whether the headline should match the canonical at all, or
+whether the canonical is a reference for layout and tone rather than for
+letterforms.
+
+**2. Part of the residual is a watermark and is permanently unreachable.** On
+true background — 73.54% of the canvas, at least 6px from any ink in either
+image — canonical reads 254.06 / 253.94 / 254.01 at sd 0.61 where the render is
+exactly flat 254, and 254 is the per-channel and global optimum. That is
+**0.3635 mean |d| on the background, 0.2673 of the whole-screen 2.6189, 10.21%
+of everything left**. The residual is spatially correlated (row lag-1
+autocorrelation 0.677, lag-2 0.446, lag-3 0.284; column lag-1 0.457), which is
+an embedded pattern rather than dither or noise. A watermark designed to survive
+re-encoding is designed to be unremovable, so no flat colour will ever match it.
+This re-attributes rule 63's "canonical came out of a design tool" and part of
+rule 51's bimodality.
+
+**3. The precision has outrun the target's authority.** Every sub-pixel offset
+this campaign has solved is fitted to a generative model's rendering of a
+screen. Where a real design tool's output is authoritative about intent — a
+designer chose 14px — a model's output is a plausible image, and its glyph
+placement carries no intent at all. Two things keep this from invalidating the
+work: canonical's repeated display glyphs are as self-consistent as the render's
+(0.0268 against 0.0248, on an instrument with 16-17x same-vs-different
+discrimination), so the large type is stable rather than hallucinated; and
+layout, colour and geometry are reproducible targets whatever drew them. But
+sub-pixel per-glyph fitting at SMALL sizes is fitting a model's noise, which is
+exactly where it also welded letters (rule 67).
+
+**4. A decision for Kevin, not to be taken here.** How close is close enough,
+given the target is generated? The campaign's own numbers now say 004 is 0.4173
+better than the screen that holds an A, with 10% of the remainder being a
+watermark. That is a good place to ask whether the remaining rounds are worth
+their cost.
+
+Clean negatives, recorded so nobody re-runs them: neither canonical nor render
+carries a `gAMA`, `iCCP` or `sRGB` chunk, and bit depth, colour type and
+interlace match, so decode and colour management are NOT confounded.
 
 ### OPEN, PROCESS: the desktop regression baseline does not exist
 

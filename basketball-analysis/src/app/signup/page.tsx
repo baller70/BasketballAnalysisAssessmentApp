@@ -28,8 +28,8 @@ import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
-import { words, glyphs, glyphsWithSpaces, srOnly, LEDE1_DX, LEDE2_DX, ONEACCT_DX,
-         TERMS_DX, DISPLAY_GX, LEDE1_GX } from "./PerWord004"
+import { words, glyphsWithSpaces, srOnly, srSpace, LEDE1_DX, LEDE2_DX, ONEACCT_DX,
+         TERMS_DX, DISPLAY_GX } from "./PerWord004"
 
 /** Canonical 004 sets the helper under PASSWORD as "Use at least 8
  *  characters.", and the client gate is moved with it so the screen does not
@@ -203,21 +203,13 @@ export default function SignUpPage() {
                   wrap actually costs. */}
               {/* Two levels, and they ADD: the word spans carry LEDE1_DX and
                   each glyph inside them carries LEDE1_GX relative to that. */}
+              {/* Per-WORD only. The per-glyph layer was removed — it welded
+                  letters at this size; see PerWord004.LEDE1_GX. The trailing
+                  srSpace is the separator the phone's two-run lede otherwise
+                  loses when the sentence is copied. */}
               <span data-s4="lede1">
-                {srOnly("Create your ShotIQ account to save analyses,")}
-                {(() => { let g = 0
-                  return "Create your ShotIQ account to save analyses,".split(" ").map((w, i) => {
-                    const at = g; g += w.length
-                    return (
-                      <React.Fragment key={i}>
-                        {i > 0 ? " " : null}
-                        <span className="s4w" style={{ left: `${LEDE1_DX[i] ?? 0}px` }}>
-                          {glyphs(w, LEDE1_GX, at)}
-                        </span>
-                      </React.Fragment>
-                    )
-                  })
-                })()}
+                {words("Create your ShotIQ account to save analyses,", LEDE1_DX)}
+                {srSpace()}
               </span>
               <span data-s4="lede2">{words("training, goals, and progress.", LEDE2_DX)}</span>
             </span>

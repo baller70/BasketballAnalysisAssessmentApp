@@ -167,7 +167,33 @@ export function srOnly(text: string) {
       position: "absolute", width: 1, height: 1, margin: -1, padding: 0,
       overflow: "hidden", clip: "rect(0 0 0 0)", clipPath: "inset(50%)",
       whiteSpace: "nowrap", border: 0,
+      // NOT SELECTABLE, and that was the round-12 bug. Without this the sr-only
+      // copy is picked up by Selection alongside the visible glyph spans, so
+      // selecting the lede paragraph on the phone copied the sentence TWICE:
+      // "...save analyses,Create your ShotIQ account to save analyses,training,
+      // goals, and progress." Desktop was unaffected, which is why a desktop
+      // spot-check would have missed it. Removing it from the selection leaves
+      // the accessibility tree untouched (59 StaticText / 3 single-char / lede
+      // once) and the screenshot bit-for-bit identical.
+      userSelect: "none", WebkitUserSelect: "none",
     }}>{text}</span>
+  )
+}
+
+/** A clipped, SELECTABLE space. The lede is two independently positioned runs,
+ *  so the phone copies "analyses,training" with nothing between them where the
+ *  desktop copy reads "analyses, training". This puts a real space in the
+ *  selection without putting a pixel on the screen: clipped like `srOnly`, but
+ *  deliberately WITHOUT `user-select: none`, because being in the selection is
+ *  the entire point of it. Predates the sr-only work — it is a consequence of
+ *  splitting the lede into two runs at all. */
+export function srSpace() {
+  return (
+    <span style={{
+      position: "absolute", width: 1, height: 1, margin: -1, padding: 0,
+      overflow: "hidden", clip: "rect(0 0 0 0)", clipPath: "inset(50%)",
+      whiteSpace: "pre", border: 0,
+    }}>{" "}</span>
   )
 }
 
@@ -235,12 +261,26 @@ export const DISPLAY_GX = [
  *  shipped values 16 of 49 adjacent pairs already overlap where the face had
  *  none (display 5 of 12, min gap -1.147 CSS px; lede1 11 of 37, min -1.419).
  *  See rule 67. */
-export const LEDE1_GX = [
-  0.0, 0.0, 0.25, 0.0, -0.25, 0.0,
-  -0.25, -0.25, 0.0, 0.25,
-  -0.5, -0.25, -0.25, 0.0, -0.25, 0.5,
-  0.25, 0.0, -0.25, -0.25, 0.0, -0.25, -0.25,
-  -0.25, -0.25,
-  0.0, -0.5, -0.75, -0.75,
-  0.0, 1.0, -0.5, 0.0, 0.5, 1.0, -0.25, -1.0, -1.0,
-] as const
+/** ZEROED, DELIBERATELY, AND IT COSTS 0.0459 OF WHOLE SCREEN.
+ *
+ *  Rule 67 said a per-pixel objective has no legibility term and would walk
+ *  toward glyph collisions. It had already arrived: the shipped offsets WELDED
+ *  LETTERS. Canonical resolves 15 separate ink runs in "save analyses,"; the
+ *  render resolved 12, with merged runs 24-26 px wide where canonical's letters
+ *  are 11-14, and an inter-word space of 16 px against canonical's 10. Eleven of
+ *  37 adjacent pairs overlapped, minimum -1.419 CSS px, and the overlap is
+ *  DPR-INDEPENDENT — identical at DPR 2 and DPR 3 — so it shipped to every real
+ *  device, not just to the 2.170483 capture scale.
+ *
+ *  Zeroed: lede1 band 9.8392 -> 11.7642, whole screen 2.6189 -> 2.6648, and the
+ *  run resolves 15 ink runs with 0 welded — exactly canonical's separation.
+ *  The screen is still 0.3714 below the bar it calibrates against, so
+ *  typographic integrity was never actually in tension with the number. That is
+ *  worth stating plainly, because the metric said otherwise for two rounds.
+ *
+ *  DISPLAY_GX IS KEPT, and the distinction is measured rather than aesthetic:
+ *  the headline resolves 13 clean glyph runs in canonical, shipped and zeroed
+ *  alike, with 0 welded. At 46px a quarter-pixel is a small fraction of letter
+ *  width; at 13.2px it is not. Per-glyph registration is legitimate on large
+ *  type and destructive on small. */
+export const LEDE1_GX = [] as const
