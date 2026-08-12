@@ -2384,7 +2384,19 @@ WHAT ELSE IT FOUND THAT WAS NEW:
   * **DoD 8: this route serves ZERO sidebars where the invariant is one.**
     /signin 1, /signup 1, /dashboard 1, /verify-email 0. Grade 10 had called
     zero "correct for an auth page"; the sibling measurement settles it, since
-    /signin and /signup are auth pages too. FIXED this round.
+    /signin and /signup are auth pages too. FIXED AND VERIFIED ON BOTH AXES:
+
+        1440x900   verify-email 1 sidebar (visible), 1 region-main, scrollW 1440
+                   signin 1 / signup 1 / dashboard 1 — now identical
+        393pt      0 visible sidebars, scrollW 393 — invariant intact
+        capture    BYTE-IDENTICAL to round 18, md5 f2b0500039809aab3f2c84143a10d451,
+                   whole screen 5.5735 / n_over8 104084 unchanged
+
+    The byte comparison is the point: `UnifiedSidebar` is `hidden ... md:flex`
+    and both new wrappers carry `data-s5-contents` (`display:contents`), so the
+    elements leave the phone's box tree entirely. That was PREDICTED and then
+    CHECKED rather than assumed — the last change reasoned to be inert on the
+    phone was the hit-target resize in rule 89, and it moved a band by 3.4.
   * **D6 REFUTES A MITIGATION I WROTE.** The forgot-password oracle returns at
     concurrency 60: median deltas +54.55 / +57.49 / +79.95 ms, z up to 13.74,
     with absent-vs-absent controls flat at |z| <= 0.71. The route's comment
