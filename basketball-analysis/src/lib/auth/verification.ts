@@ -220,30 +220,78 @@ async function claimToken(
   // instant and writes the naive column in UTC, and `now() AT TIME ZONE 'UTC'`
   // compares against the same clock, so neither the write nor the freshness
   // test depends on the session any more.
+  // `created_at` IS BOUND AND REFRESHED HERE TOO, and leaving it out was rule 78
+  // committed a second time, in this function, on the adjacent column.
+  //
+  // The previous version bound `expires_at` explicitly and let `created_at` fall
+  // to the column default. That default is `CURRENT_TIMESTAMP` — a `timestamptz`
+  // — assigned into a NAIVE column, so it casts through the session's TimeZone
+  // exactly as the parameter used to. Measured on the live database with the
+  // fixed `expires_at` beside it as an internal control:
+  //
+  //                        expires_at drift   created_at drift
+  //     Etc/UTC                  0 min              0 min
+  //     Europe/Berlin            0 min           +120 min
+  //     America/New_York         0 min           -240 min
+  //
+  // and `issueToken`'s grace window reads `created_at`, so under Berlin a reset
+  // token looks 2 h in the future, is always "fresh", and NEVER rotates — a
+  // leaked link with no revocation for its whole hour. Under New_York grace
+  // never applies and rotation is unconditional, which is the denial of account
+  // recovery the grace window was added to close.
+  //
+  // AND IT IS REFRESHED ON THE CONFLICT PATH. `ON CONFLICT DO UPDATE` did not
+  // touch `created_at`, and nothing deletes expired rows, so the column was
+  // frozen at the user's FIRST EVER request and every later token was born with
+  // a stale birth date. Measured: with the row aged 16 minutes, a victim's
+  // brand-new link was killed by an attacker 5/5, against 3/3 surviving inside
+  // the window. The grace window protected the first 15 minutes of the ROW's
+  // life, not of the token's — so after one old request, which is every account
+  // eventually, the protection was gone. `SET created_at = ...` on the conflict
+  // path makes the window mean what its name says.
+  const nowUtc = new Date()
   const rows = reusable
     ? await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
-        INSERT INTO verification_tokens (id, user_id, token, type, expires_at)
-        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt}::timestamptz AT TIME ZONE 'UTC')
+        INSERT INTO verification_tokens (id, user_id, token, type, expires_at, created_at)
+        VALUES (${id}, ${userId}, ${token}, ${type},
+                ${expiresAt}::timestamptz AT TIME ZONE 'UTC',
+                ${nowUtc}::timestamptz AT TIME ZONE 'UTC')
         ON CONFLICT (user_id, type) DO UPDATE
-          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
+          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at,
+              created_at = EXCLUDED.created_at
           WHERE verification_tokens.expires_at <= (now() AT TIME ZONE 'UTC')
         RETURNING token, expires_at`
     : await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
-        INSERT INTO verification_tokens (id, user_id, token, type, expires_at)
-        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt}::timestamptz AT TIME ZONE 'UTC')
+        INSERT INTO verification_tokens (id, user_id, token, type, expires_at, created_at)
+        VALUES (${id}, ${userId}, ${token}, ${type},
+                ${expiresAt}::timestamptz AT TIME ZONE 'UTC',
+                ${nowUtc}::timestamptz AT TIME ZONE 'UTC')
         ON CONFLICT (user_id, type) DO UPDATE
-          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
+          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at,
+              created_at = EXCLUDED.created_at
         RETURNING token, expires_at`
 
-  if (rows.length === 1) {
-    return { token: rows[0].token, expiresAt: rows[0].expires_at }
-  }
-
-  // No row came back: a LIVE row blocked the update, so read the winner.
+  // ALWAYS RETURN THE ROW, not our own write — including on the rotation path.
+  //
+  // The reusable branch was already safe: a live row blocks the update, no row
+  // comes back, and the follow-up SELECT reads the winner. The rotation branch
+  // (`password_reset`) has no WHERE, so under a race BOTH statements succeed
+  // and each `RETURNING`s the row IT wrote while only the last one survives —
+  // the caller that lost mails a link that is no longer stored. That is the
+  // same "mailed a dead credential" shape `claimToken` exists to prevent,
+  // living on the one branch the guard does not cover.
+  //
+  // Reading the row back after an ATOMIC write is not the defect round 6 had:
+  // that one was upsert-then-read where the WRITE itself was not atomic, so the
+  // read could not repair it. Here the write is one statement and the read only
+  // asks which single statement won.
   const held = await prisma.verificationToken.findUnique({
     where: { uniq_verification_token_user_type: { userId, type } },
   })
   if (held) return { token: held.token, expiresAt: held.expiresAt }
+  if (rows.length === 1) {
+    return { token: rows[0].token, expiresAt: rows[0].expires_at }
+  }
   return { token, expiresAt }
 }
 

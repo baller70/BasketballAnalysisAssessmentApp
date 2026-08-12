@@ -34,19 +34,33 @@ export async function POST(request: NextRequest) {
   })
   if (limited) return limited
 
-  // AND A DAILY CEILING, for the reason /api/auth/resend-verification has one:
-  // a per-minute limit is not a limit on VOLUME. 5/min sustained is 7,200 mails
-  // a day into one inbox, aimed by anyone who knows the address — larger than
-  // the 4,320 the resend route's own ceiling exists to prevent, and this route
-  // had no ceiling at all, so the claim that mail to an inbox is bounded was
-  // only true of one of the two routes that send it.
-  const { response: dayLimited } = checkRateLimit(request, {
-    bucket: "auth-forgot-password-daily",
-    limit: 10,
-    windowMs: 24 * 60 * 60_000,
-    subject: email || "anon",
-  })
-  if (dayLimited) return dayLimited
+  // THERE IS DELIBERATELY NO DAILY CEILING HERE, and one was tried and removed.
+  //
+  // The reasoning that justifies the ceiling on /api/auth/resend-verification
+  // does NOT transfer, and adding one by analogy shipped a worse defect than
+  // the volume it was aimed at. Resend's ceiling is survivable because issuance
+  // is idempotent: hitting it withholds another COPY of a code the player
+  // already has in their inbox, so the player can still verify. A password
+  // reset has no such copy — the link IS the only way in — so a per-account
+  // ceiling on this route is a switch for turning off somebody's account
+  // recovery. Measured, unauthenticated, keyed on the address the attacker
+  // types and charged before the account was even looked up:
+  //
+  //     attacker requests 1-10 across two windows   200 (generic)
+  //     the VICTIM's own reset request              429
+  //     the victim again                            429
+  //
+  // Ten requests a day, sustainable forever, and the victim never receives a
+  // link at all. That is strictly worse than the rotation weapon the grace
+  // window closes, where the victim at least gets a token.
+  //
+  // So the volume risk is carried by the 5/min limit above and STATED rather
+  // than closed: an attacker who knows an address can still cause up to 7,200
+  // reset mails a day to it. That is a real cost — to the recipient and to our
+  // sending reputation — and it is the lesser of the two. Closing it properly
+  // needs something that bounds mail without bounding recovery: a suppression
+  // list the RECIPIENT controls, or a per-account cap that still delivers when
+  // no link has been successfully used, neither of which is a rate limiter.
 
   // Generic response used for every outcome (no account enumeration).
   const genericResponse = (devResetUrl?: string) =>
