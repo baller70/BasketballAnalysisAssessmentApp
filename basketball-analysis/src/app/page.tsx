@@ -156,6 +156,15 @@ const SPLASH_HOLD_MS = 1600
 
 /** Canonical's ink roles for this screen — see the colour table above. */
 const SPLASH_INK = {
+  /* CANONICAL'S PAPER IS 254, NOT WHITE, and this screen was marked DONE
+     without anyone measuring the ground its ink sits on. Found on 004 (method
+     rule 63), where the same one unit over the whole canvas was worth 0.5744 of
+     whole-screen mean |d| - more than six times an entire eleven-defect round.
+     Measured across the full canonical set: 56 of the 72 read 254 and 16 read
+     253; NONE is 255. It is a property of the design source, not of one screen.
+     Scoped here rather than in globals.css, per the standing ruling - the global
+     token carries the 20 desktop screens graded B+ and is not touched. */
+  '--shotiq-color-paper': '#FEFEFE',
   '--shotiq-color-ink': '#000000',
   '--shotiq-color-graphite': '#6F6F6F',
   '--shotiq-color-shotiqOrange': '#FC4904',

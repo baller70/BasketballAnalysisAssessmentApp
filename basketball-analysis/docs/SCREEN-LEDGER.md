@@ -2114,12 +2114,24 @@ Note the 253 group: sixteen screens want a DIFFERENT value, so this is a
 per-screen measurement and not a constant to paste. Measure the modal colour of
 the screen's own canonical.
 
-**001 and 002 are marked DONE and carry this defect**, exactly as 003 did before
-it was fixed. They should get the same one-line screen-scoped correction and be
-re-measured, and their ledger figures restated — the precedent is 003, on the
-principle that a screen at A should not sit on a known defect. Deliberately NOT
-done while 004 is the screen in progress; it is the first thing to do when 004
-lands, before starting 005.
+**001 and 002 carried this defect too, and it is now CLOSED.** Both were marked
+DONE before anyone measured the ground their ink sits on, exactly as 003 was.
+Measured before and after on a production build with the shipping harness:
+
+    001-splash    2.4939 -> 2.0590   (-0.4349)   n_over8 41818 -> 40384
+    002-welcome   6.5244 -> 6.0249   (-0.4995)   n_over8 148750 -> 145724
+
+and the render's modal colour goes 255 -> 254 on both, matching each canonical.
+
+Neither screen has a separate recipe file — their phone CSS is inline — but both
+already carried a screen-scoped token object (`SPLASH_INK`, `SCREEN_INK`), so
+`--shotiq-color-paper` went there. The global token in `globals.css` is
+untouched, per the standing ruling that it carries the 20 desktop screens.
+
+That leaves 001, 002, 003 and 004 all measured against a correctly-read ground.
+Every screen from 005 on should set its paper from its own canonical's modal
+colour as the FIRST thing it does, not the last — it is the cheapest large
+correction available and it moves every band at once.
 
 ### OPEN, CLASS-LEVEL: every phone screen scrolls horizontally below 393pt
 
