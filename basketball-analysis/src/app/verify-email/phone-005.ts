@@ -92,13 +92,19 @@ const COLOURS = `
   --s5-orange:#FD4201;
   --s5-box-rule:#050505;
   --s5-divider:#DDDDDD;
-  /* THE HEADER RULE IS NOT THE SAME TONE AS THE FOUR HELP-LIST DIVIDERS, and
-     assuming it was cost 8 units of ink over the full 853px bleed. Canonical
-     carries 65.2 units across the header rule against 71.5 mean across the
-     four dividers (80.8 / 67.1 / 74.4 / 63.8 individually — they do not share
-     one value either, and the render's flat 72.0 sits at their mean, which is
-     why they are left alone). 254 - 65.2/2.17 = 223.9. */
-  --s5-header-rule:#E0E0E0;
+  /* THE HEADER RULE KEEPS ITS OWN TOKEN AND ITS OWN VALUE IS THE DIVIDERS',
+     which is a measured null rather than an oversight. Canonical carries 65.2
+     units of ink across the header rule against 71.5 mean across the four
+     help-list dividers, so a lighter tone looked indicated: 254 - 65.2/2.17 =
+     223.9, i.e. #E0E0E0. Built and measured, it is WORSE — hdrRule 2.4985 ->
+     2.6096 with n_over8 1226 -> 2338 — so the ink deficit is not a level error
+     and the token stays at the dividers' value. The token itself is kept
+     because the rule IS a separate role (it is the only full-bleed rule on the
+     screen) and a future correction belongs on it, not on the dividers.
+     The four dividers do not share one value in canonical either
+     (80.8 / 67.1 / 74.4 / 63.8) and the render's flat 72.0 sits at their mean,
+     which is why they are left alone. */
+  --s5-header-rule:#DDDDDD;
 `
 
 export type Run = {
@@ -199,10 +205,33 @@ export const RUNS: Record<string, Run> = {
      against 004's 0.545, i.e. this canvas draws a compressed cut the repository
      does not contain (rule 54's situation, with no alternative to try — all
      four bundled Tungsten cuts share one width axis). The affine is what is
-     shippable and it is stated as such. */
+     shippable and it is stated as such.
+
+     RULE 20 DISCHARGED PROPERLY — all four bundled cuts fitted to canonical's
+     cap and advance and MEASURED in the shipping rasteriser, not argued about,
+     with a rule-40 control reproducing the built capture's 26.6613 / 22721 /
+     8.1420 exactly:
+       tungsten_bold      26.6155      tungsten_medium   33.9990
+       tungsten_semibold  26.6613      tungsten_black    45.5810
+     Bold wins by 0.0458 of band — 0.0036 of whole screen — which is not a
+     reason to change the face, so the shipped semibold stands and the residual
+     is the FACE, in the rule 13 sense: the alternatives are measured and the
+     correct cut is not in this repository. `-webkit-text-stroke-width` is a
+     dead lever here in one direction and a losing one in the other: -0.10
+     returns the control's number to four decimals (Chromium clamps a negative
+     stroke to zero — a null that is a claim about the LEVER, rule 53) and
+     +0.10 / +0.20 score 26.6704 / 26.9860.
+
+     tx 1.3821 -> 1.11 WITH ws 0 -> 0.8, a COMPENSATED PAIR found on a 2-D grid
+     rather than by sweeping either knob alone (rules 59, 61). The three words
+     sat -1 / -4 / -2 device px left of canonical — a gap that opens along the
+     run, which no single translation can close and which a per-word optimum
+     scatter would have called noise. 26.6613 -> 24.5721, and 0.1654 of whole
+     screen. Flat across tx 0.93-1.11 x ws 0.8-1.0 (24.57-24.87), so the
+     trailing digits are the rung, not a precision claim. */
   display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.586, skew: -6.0,
              ls: 0.0, colour: "var(--s5-ink)", family: TUNGSTEN, bang: true,
-             dx: 1.2, dy: 36.4, tx: 1.3821, ty: 0 },
+             ws: 0.8, dx: 1.2, dy: 36.4, tx: 1.11, ty: 0 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
   /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.908, ls: -0.004,
@@ -214,6 +243,9 @@ export const RUNS: Record<string, Run> = {
      error with a scale trim on top: 16.4 -> 15.37, then 0.96 -> 0.877. */
   /* Round 2: cap 0.967 short, advance 0.997 — size up 3.4% and scaleX down to
      hold the advance the size change would widen. */
+  /* Weight 600 -> 555 on an ink-mass reading of 1.0920, and unlike safe1's it
+     was measured at a geometry that was already right: lede2 16.6947 ->
+     11.7684 in the built capture. Kept. */
   lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: 0 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
@@ -250,6 +282,7 @@ export const RUNS: Record<string, Run> = {
      value is orange. One window over both would measure neither (rule 57). */
   /* Cap 0.963 short, advance 1.014 over: size 15.9 -> 16.5 with scaleX
      0.96 -> 0.912 to hold the advance the size change would have widened. */
+  /* 400 -> 370 on an ink-mass reading of 1.0839: 15.2728 -> 14.1711. Kept. */
   resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 370, scale: 0.870, ls: -0.004,
                colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 0 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
@@ -287,7 +320,10 @@ export const RUNS: Record<string, Run> = {
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
   /* Round 2: cap 1.000, advance 1.000 — solved. 1 device px right, via tx. */
-  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 655, scale: 0.784, ls: 0.03,
+  /* 12.2615 -> 8.6672 on the same 2-D grid: weight stays at the honest 700 and
+     scaleX 0.784 -> 0.81. Bracketed — 0.84 gives 12.9879 and 0.87 gives
+     16.1385, and at 0.81 the weights 750 and 800 give 10.1115 and 11.4236. */
+  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.81, ls: 0.03,
            colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: -0.4607, ty: 0 },
   /* THE THREE HELP LABELS ARE ONE ROLE AND ARE SOLVED JOINTLY (rule 14).
      Canonical sets them at one cap — the first glyph of each measures 22 / 22 /
@@ -304,7 +340,13 @@ export const RUNS: Record<string, Run> = {
      Boxed cuts at 0.675-0.691 against canonical's 0.5515 (rule 44 — read the
      fonts, do not argue from pixels), so NEITHER bundled face is canonical's
      and no scaleX can be right about the letters and the gaps at once. */
-  /* Round 3 makes the tension above explicit rather than picking a side: at
+  /* WEIGHT WAS SWEPT HERE TOO AND FOUND NOTHING WORTH TAKING: 350 / 385 / 400 /
+     420 / 440 at the shipped scale sum 62.77 / 60.82 / 60.16 / 60.61 / 60.12
+     over the three bands, a 0.008 spread of whole screen between the best and
+     the shipped 400 — and help1 and help2 want OPPOSITE directions (help1 is
+     best at 400, help2 at 440), which says the residual is per-run horizontal
+     registration rather than weight. 400 is the honest value and it stays.
+     Round 3 makes the tension above explicit rather than picking a side: at
      size 13.0 the three runs land their LENGTH exactly (0.998 / 0.992 / 0.949)
      and their cap comes back 7-10% short (0.929 / 0.897 / 0.897). Raising the
      size to land the cap lengthens the run; lowering scaleX to hold the length
@@ -321,24 +363,38 @@ export const RUNS: Record<string, Run> = {
      help1 and help2 against a 0.9954 control on the wordmark, so the run is
      genuinely 3.5% heavy rather than reading heavy off canonical's bimodal
      small type (rule 51's control test, on this screen's own solved band). */
-  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 385, scale: 0.866, ls: -0.004,
+  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
-  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 385, scale: 0.866, ls: -0.004,
+  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
-  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 385, scale: 0.866, ls: -0.004,
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
      images) while the run ran 1.182 long — horizontal only, and the size is
      left alone precisely because the two axes were read together. */
-  /* Round 3's 18.0 / 0.785 took this 19.6971 -> 22.8280. Reverted. Weight
-     600 -> 545: ink mass R/C 1.1265, the heaviest run on the screen against a
-     0.9954 control. */
-  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 545, scale: 0.812, ls: -0.004,
+  /* Round 3's 18.0 / 0.785 took this 19.6971 -> 22.8280. Reverted.
+     THEN THE INK-MASS READING WAS WRONG ABOUT THE WEIGHT, IN THE OTHER
+     DIRECTION. R/C came back 1.1265 — the heaviest run on the screen against a
+     0.9954 control on the wordmark — and 600 -> 545 duly made it worse still,
+     23.9317. The reason is rule 49: that mass was measured on the round-3
+     build where this run was 3.4% OVERSIZED, so the extra ink was the size
+     error and the weight solve was reading it. An ink parameter absorbs a
+     geometric error, and a weight is only meaningful once the geometry is.
+     Swept at the corrected size as a 2-D grid (weight x scaleX, rule 61) with
+     a rule-40 control reproducing the built capture exactly:
+       w600 sx0.812  19.6971 (control)   w680 sx0.812  11.1230  <- argmin
+       w640 sx0.812  13.8046             w720 sx0.812  13.4610
+       w600 sx0.84   18.3687             w680 sx0.84   23.0896
+     Bracketed on both axes. Canonical's heading is a BOLD, not a semibold. */
+  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 680, scale: 0.812, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: 0 },
   /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
   /* Round 2: cap 1.000, advance 1.000 — solved; 1 device px right, via tx. */
-  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 378, scale: 0.761, ls: -0.004,
+  /* Same grid, same shape of finding: 400 -> 430 at the shipped scale,
+     17.7767 -> 15.1605, bracketed (460 gives 16.2958, 500 gives 17.3839, and
+     every scaleX 0.79+ is worse). */
+  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 430, scale: 0.761, ls: -0.004,
            colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: -0.4607, ty: 0 },
 }
 
