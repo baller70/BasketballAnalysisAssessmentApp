@@ -1,158 +1,426 @@
 "use client"
 
 /**
- * /verify-email — canonical web counterpart of iOS 005-verify-email.
+ * /verify-email — canonical iOS 005-verify-email.
  *
- * Web verification is link-based (the emailed link hits
- * /api/auth/verify-email?token=… which redirects back here with ?status=…),
- * so instead of the iOS code boxes this page shows the signed-in user's
- * verification state, the result of a clicked link, resend with a cooldown,
- * and the same "didn't get the email?" help list.
+ * The route draws TWO screens. Above 768px it is the desktop verify-email
+ * adaptation (no canonical was supplied for it; the canonical desktop set is
+ * 077-096 and this route is not in it), and below 768px it is canonical iOS
+ * 005-verify-email, whose geometry and type live in `phone-005.ts` and whose
+ * drawn marks live in `Marks005.tsx`. The phone rendering is an
+ * absolutely-positioned layer inside `@media (max-width: 767.98px)` — the same
+ * treatment /signin uses for 003 and /signup for 004. Above that breakpoint not
+ * one declaration in `PHONE_CSS` matches.
+ *
+ * ONE SET OF CONTROLS. A second, phone-only form would put two
+ * `[data-testid=verify-code-0]` in the DOM and the e2e specs resolve by test
+ * id, so they would fail Playwright's strict mode. The controls are shared;
+ * only their geometry is re-authored.
+ *
+ * ---------------------------------------------------------------------------
+ * THE SCREEN DESCRIBES A FEATURE THAT NOW EXISTS
+ *
+ * Canonical 005 draws a six-box numeric code entry. Until this build the
+ * product had no such code: `VerificationToken` held an opaque link token,
+ * `/api/auth/verify-email` read `?token=`, and a grep for `verificationCode`
+ * across the API and the schema returned nothing. Six boxes drawn on top of
+ * that would have been six controls no endpoint could answer — precisely the
+ * thing the governing rule forbids ("a placeholder portrays a feature I want to
+ * be real, so that when the user goes to use it, it actually works").
+ *
+ * So the feature was built first. `issueEmailCode` puts a six-digit,
+ * single-use, 10-minute code in the same table, `sendVerificationEmail` mails
+ * it beside the link, and `POST /api/auth/verify-email-code` consumes it and
+ * stamps `User.emailVerified`. Both credentials work; neither replaced the
+ * other.
+ *
+ * WHOSE ADDRESS IS SHOWN, and why there are three sources. In order:
+ *   1. the signed-in user's own address, from `GET /api/auth/resend-verification`;
+ *   2. `sessionStorage['shotiq-pending-email']`, written by /signup the moment
+ *      an account is created, so the code screen knows the address even before
+ *      the session has settled on a phone;
+ *   3. `?email=`, which is how the link in the verification email itself opens
+ *      this screen.
+ * It is display-only in every case, and the code is checked against the account
+ * the server resolves, never against the string in the URL.
  */
 
-import React, { Suspense, useEffect, useState } from "react"
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { Loader2, ArrowLeft, MailCheck, MailWarning, ShieldCheck, CheckCircle2, ChevronRight } from "@/components/shotiq/ApprovedLucide"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Loader2, ArrowLeft, MailCheck, ShieldCheck, CheckCircle2, ChevronRight, Settings } from "@/components/shotiq/ApprovedLucide"
 import { csrfFetch } from "@/lib/api/csrfFetch"
+import { PHONE_CSS } from "./phone-005"
+import {
+  Marks005, GearMark, BackMark, EnvelopeMark, EnvelopePencilMark,
+  MailCheckMark, MailClockMark, HelpMark, ChevronMark, ShieldMark,
+} from "./Marks005"
+
+const CODE_LENGTH = 6
+/** Fallback only. The live value is served by the API so the countdown and the
+ *  resend rate limit cannot disagree. */
+const DEFAULT_COOLDOWN = 60
+
+/**
+ * Where "Open email app" goes. A button labelled "Open email app" that does
+ * nothing is exactly the placeholder this screen exists to avoid, and on the
+ * web there is no generic "open the mail app" verb — so it resolves the
+ * player's own provider from the address they gave us and falls back to the
+ * `mailto:` handler their OS has registered, which is the closest thing the
+ * platform offers.
+ */
+function inboxUrl(email: string | null): string {
+  const domain = (email || "").split("@")[1]?.toLowerCase() || ""
+  const known: Record<string, string> = {
+    "gmail.com": "https://mail.google.com/mail/u/0/#search/shotiq",
+    "googlemail.com": "https://mail.google.com/mail/u/0/#search/shotiq",
+    "outlook.com": "https://outlook.live.com/mail/0/inbox",
+    "hotmail.com": "https://outlook.live.com/mail/0/inbox",
+    "live.com": "https://outlook.live.com/mail/0/inbox",
+    "msn.com": "https://outlook.live.com/mail/0/inbox",
+    "yahoo.com": "https://mail.yahoo.com/",
+    "ymail.com": "https://mail.yahoo.com/",
+    "icloud.com": "https://www.icloud.com/mail",
+    "me.com": "https://www.icloud.com/mail",
+    "mac.com": "https://www.icloud.com/mail",
+    "proton.me": "https://mail.proton.me/u/0/inbox",
+    "protonmail.com": "https://mail.proton.me/u/0/inbox",
+    "aol.com": "https://mail.aol.com/",
+    "gmx.com": "https://www.gmx.com/",
+    "zoho.com": "https://mail.zoho.com/",
+  }
+  return known[domain] || "mailto:"
+}
 
 function VerifyEmailBody() {
   const params = useSearchParams()
+  const router = useRouter()
   // "success" | "invalid" | "error" arrives from the emailed-link redirect.
   const linkStatus = params.get("status")
 
   const [email, setEmail] = useState<string | null>(null)
-  const [verified, setVerified] = useState<boolean | null>(null)
-  const [signedOut, setSignedOut] = useState(false)
+  const [verified, setVerified] = useState(false)
+  const [code, setCode] = useState<string[]>(() => Array(CODE_LENGTH).fill(""))
+  const [focus, setFocus] = useState(-1)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState("")
   const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle")
   const [cooldown, setCooldown] = useState(0)
+  /** True while the harness pin is in force: the countdown shows a fixed value
+   *  and does not tick. See PHONE_CSS's COUNTDOWN note. */
+  const [pinned, setPinned] = useState(false)
+  const inputs = useRef<Array<HTMLInputElement | null>>([])
 
+  // --- who is this, and how long until they can resend --------------------
   useEffect(() => {
+    let pin: string | null = null
+    let pending: string | null = null
+    let sentAt: number | null = null
+    try {
+      pin = sessionStorage.getItem("shotiq-verify-cooldown")
+      pending = sessionStorage.getItem("shotiq-pending-email")
+      const raw = sessionStorage.getItem("shotiq-verify-sent-at")
+      sentAt = raw ? Number(raw) : null
+    } catch { /* opaque origin */ }
+
+    const queryEmail = params.get("email")
+    if (pending) setEmail(pending)
+    else if (queryEmail) setEmail(queryEmail)
+
+    if (pin && /^\d+$/.test(pin)) {
+      // THE HARNESS PIN. Canonical 005 is captured mid-countdown at 0:42, and a
+      // live timer is a nondeterministic pixel — every capture would land on a
+      // different second and the band containing it could never be stable. The
+      // pin fixes the value AND stops the tick, the same deterministic entry
+      // 001 uses via `shotiq-splash-hold`. A real player never has this key.
+      setPinned(true)
+      setCooldown(Number(pin))
+    } else if (sentAt && Number.isFinite(sentAt)) {
+      const left = DEFAULT_COOLDOWN - Math.floor((Date.now() - sentAt) / 1000)
+      if (left > 0) setCooldown(left)
+    }
+
     fetch("/api/auth/resend-verification", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((d) => { setEmail(d.email ?? null); setVerified(!!d.verified) })
-      .catch(() => setSignedOut(true))
-  }, [linkStatus])
+      .then((d) => {
+        if (d.email) setEmail(d.email)
+        if (d.verified) setVerified(true)
+      })
+      .catch(() => { /* signed out — the address comes from the two sources above */ })
+  }, [params])
 
   useEffect(() => {
-    if (cooldown <= 0) return
+    if (pinned || cooldown <= 0) return
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
     return () => clearTimeout(t)
-  }, [cooldown])
+  }, [cooldown, pinned])
 
+  const isVerified = verified || linkStatus === "success"
+  const filled = useMemo(() => code.findIndex((c) => c === ""), [code])
+  const filledCount = filled === -1 ? CODE_LENGTH : filled
+
+  // --- submitting the code ------------------------------------------------
+  const submit = useCallback(async (digits: string) => {
+    if (digits.length !== CODE_LENGTH) return
+    setBusy(true)
+    setError("")
+    try {
+      const res = await csrfFetch("/api/auth/verify-email-code", {
+        method: "POST",
+        body: JSON.stringify({ code: digits, email }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.success) {
+        setError(data?.error || "That code is incorrect or has expired.")
+        setCode(Array(CODE_LENGTH).fill(""))
+        inputs.current[0]?.focus()
+      } else {
+        setVerified(true)
+      }
+    } catch {
+      setError("Could not verify right now. Try again shortly.")
+    }
+    setBusy(false)
+  }, [email])
+
+  const setDigit = (i: number, raw: string) => {
+    const digits = raw.replace(/\D/g, "")
+    if (!digits) {
+      // A cleared box is a real edit, not a no-op: it must clear.
+      setCode((c) => { const n = [...c]; n[i] = ""; return n })
+      return
+    }
+    setCode((c) => {
+      const n = [...c]
+      // Pasting the whole code into any box fills the row from there.
+      for (let k = 0; k < digits.length && i + k < CODE_LENGTH; k += 1) n[i + k] = digits[k]
+      const next = Math.min(i + digits.length, CODE_LENGTH - 1)
+      inputs.current[next]?.focus()
+      const joined = n.join("")
+      if (joined.length === CODE_LENGTH && !n.includes("")) void submit(joined)
+      return n
+    })
+  }
+
+  const onKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !code[i] && i > 0) {
+      e.preventDefault()
+      setCode((c) => { const n = [...c]; n[i - 1] = ""; return n })
+      inputs.current[i - 1]?.focus()
+    } else if (e.key === "ArrowLeft" && i > 0) {
+      e.preventDefault(); inputs.current[i - 1]?.focus()
+    } else if (e.key === "ArrowRight" && i < CODE_LENGTH - 1) {
+      e.preventDefault(); inputs.current[i + 1]?.focus()
+    }
+  }
+
+  // --- resend -------------------------------------------------------------
   const resendEmail = async () => {
+    if (cooldown > 0 || resend === "sending") return
     setResend("sending")
     try {
-      const res = await csrfFetch("/api/auth/resend-verification", { method: "POST" })
+      const res = await csrfFetch("/api/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify(email ? { email } : {}),
+      })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.success) throw new Error(data?.error || "send failed")
       if (data.alreadyVerified) { setVerified(true); setResend("idle"); return }
       setResend("sent")
-      setCooldown(60)
+      setCooldown(Number(data.cooldownSeconds) || DEFAULT_COOLDOWN)
+      try { sessionStorage.setItem("shotiq-verify-sent-at", String(Date.now())) } catch { /* opaque */ }
     } catch {
       setResend("error")
     }
-    setTimeout(() => setResend((s) => (s === "sending" ? s : "idle")), 4000)
   }
 
-  const isVerified = verified === true || linkStatus === "success"
-  const linkFailed = linkStatus === "invalid" || linkStatus === "error"
+  const clock = `${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}`
+  const shown = email || "your email"
+
+  if (isVerified) {
+    return (
+      <div className="mx-auto w-full max-w-[440px] px-6 py-12 text-center">
+        <CheckCircle2 className="mx-auto h-12 w-12 text-[var(--shotiq-color-confirmGreen)]" />
+        <p className="mt-4 text-[15px] font-semibold">Your email is verified.</p>
+        <p className="mt-1 text-[13px] text-[var(--shotiq-color-graphite)]">
+          {email ? <>You&apos;re all set, <span className="font-medium">{email}</span>.</> : "You're all set."}
+        </p>
+        <Link href="/dashboard" data-testid="verify-continue"
+              className="mx-auto mt-6 flex h-[44px] w-full max-w-[280px] items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+          Continue to dashboard
+        </Link>
+      </div>
+    )
+  }
 
   return (
-    <div className="w-full max-w-[440px]">
-      <span className="shotiq-wordmark block text-center text-[25px] leading-none">
-        SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
-      </span>
-      <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">VERIFY YOUR EMAIL</h1>
+    <>
+      <Marks005 focus={focus} filled={filledCount} />
 
-      <div className="mt-[24px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[24px]">
-        {isVerified ? (
-          <div className="space-y-4 text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-[var(--shotiq-color-confirmGreen)]" />
-            <p className="text-[15px] font-semibold">Your email is verified.</p>
-            <p className="text-[13px] text-[var(--shotiq-color-graphite)]">
-              {email ? <>You&apos;re all set, <span className="font-medium">{email}</span>.</> : "You're all set."}
-            </p>
-            <Link href="/dashboard" data-testid="verify-continue"
-                  className="mx-auto flex h-[44px] w-full max-w-[280px] items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
-              Continue to dashboard
-            </Link>
-          </div>
-        ) : (
-          <>
-            {linkFailed && (
-              <p role="alert" className="mb-[14px] flex items-start gap-[8px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] p-[10px] text-[13px] text-[var(--shotiq-color-reviewRed)]">
-                <MailWarning className="mt-[1px] h-[16px] w-[16px] shrink-0" />
-                That verification link is invalid or has expired. Send yourself a fresh one below.
-              </p>
-            )}
-            <p className="text-center text-[14px] leading-[20px] text-[var(--shotiq-color-graphite)]">
-              {signedOut ? (
-                <>Sign in, then open this page to send yourself a verification link.</>
-              ) : email ? (
-                <>We sent a verification link to <span className="font-semibold text-[var(--shotiq-color-ink)]">{email}</span>. Open it to confirm your account.</>
-              ) : (
-                <>We sent a verification link to your email. Open it to confirm your account.</>
-              )}
-            </p>
+      {/* ------------------------------------------------------------ header */}
+      <header data-s5-contents
+              className="flex h-[46px] shrink-0 items-center justify-between px-[18px] md:h-[57px] md:px-[24px]"
+              data-testid="region-topbar">
+        <span data-s5="wordmark"
+              className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
+          SHOT<span data-s5-iq className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
+        </span>
+        <Link href="/settings" aria-label="Settings" data-s5="gear" data-testid="verify-settings">
+          <span className="hidden md:inline"><Settings className="h-[20px] w-[20px]" /></span>
+          <span className="block h-full w-full md:hidden"><GearMark /></span>
+        </Link>
+      </header>
 
-            {signedOut ? (
-              <Link href="/signin" data-testid="verify-signin"
-                    className="mt-[16px] flex h-[44px] w-full items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
-                Go to sign in
-              </Link>
-            ) : (
-              <button type="button" onClick={resendEmail} data-testid="verify-resend"
-                      disabled={resend === "sending" || cooldown > 0}
-                      className="mt-[16px] flex h-[44px] w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white disabled:opacity-60">
-                {resend === "sending" && <Loader2 className="h-[15px] w-[15px] animate-spin" />}
-                {cooldown > 0 ? `Resend available in 0:${String(cooldown).padStart(2, "0")}`
-                  : resend === "sending" ? "Sending…" : resend === "sent" ? "Email sent ✓" : "Resend email"}
-              </button>
-            )}
-            {resend === "error" && (
-              <p role="alert" className="mt-[8px] text-center text-[13px] text-[var(--shotiq-color-reviewRed)]">
-                Could not send the email. Try again shortly.
-              </p>
-            )}
+      <div data-s5-contents className="mx-auto w-full max-w-[440px] px-[18px] md:px-0">
+        <button type="button" onClick={() => router.back()} aria-label="Go back"
+                data-s5="back" data-testid="verify-back"
+                className="mt-[10px] flex h-[26px] w-[26px] items-center md:mt-[16px]">
+          <span className="hidden md:inline"><ArrowLeft className="h-[20px] w-[20px]" /></span>
+          <span className="block h-full w-full md:hidden"><BackMark /></span>
+        </button>
 
-            <div className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
-              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">DIDN&apos;T GET THE EMAIL?</div>
-              <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-                {[
-                  [<MailCheck key="i" className="h-[16px] w-[16px]" />, "Check your spam or promotions folder"],
-                  [<MailWarning key="i" className="h-[16px] w-[16px]" />, "Wait a few minutes and tap “Resend email”"],
-                ].map(([icon, text], i) => (
-                  <div key={i} className="flex items-center gap-[10px] py-[9px] text-[13px]">
-                    <span className="text-[var(--shotiq-color-graphite)]">{icon}</span>
-                    <span className="flex-1">{text}</span>
-                    <ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-muted)]" />
-                  </div>
-                ))}
-                <Link href="/guide" className="flex items-center gap-[10px] py-[9px] text-[13px]">
-                  <span className="text-[var(--shotiq-color-graphite)]"><ShieldCheck className="h-[16px] w-[16px]" /></span>
-                  <span className="flex-1">Need help? See the guide</span>
-                  <ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-muted)]" />
-                </Link>
-              </div>
-            </div>
+        <h1 data-s5="display" className="shotiq-display mt-[18px] text-center text-[40px] leading-[44px]">
+          VERIFY YOUR EMAIL
+        </h1>
 
-            <div className="mt-[14px] flex items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-warmCanvas)] p-[10px]">
-              <ShieldCheck className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" />
-              <div>
-                <div className="text-[13px] font-semibold">Your account is safe</div>
-                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">We&apos;ll never share your email or data.</div>
-              </div>
-            </div>
-          </>
+        {/* Two runs, not one wrapped paragraph: canonical sets the sentence in
+            graphite and the address in ink semibold, and they are independently
+            positioned (rule 57 — one window per independently placed thing). */}
+        <p data-s5-contents className="mt-[10px] text-center text-[15px] leading-[21px]">
+          <span data-s5="lede1" className="text-[var(--shotiq-color-graphite)]">Enter the code we sent to</span>{" "}
+          <span data-s5="lede2" className="font-semibold" data-testid="verify-address">{shown}.</span>
+        </p>
+
+        {/* ------------------------------------------------------ code entry */}
+        {/* The visible digits are drawn by six positioned runs and the inputs
+            are transparent hit targets over them. An input cannot carry the
+            run's scaleX AND its own centring without dragging the caret and the
+            selection geometry along with it, and canonical's digits are
+            condensed to 0.66 of their natural width. */}
+        <div data-s5-contents role="group" aria-labelledby="verify-code-label"
+             className="mt-[20px] flex justify-center gap-[8px]">
+          <span id="verify-code-label" className="sr-only">
+            Six-digit verification code sent to {shown}
+          </span>
+          {Array.from({ length: CODE_LENGTH }).map((_, i) => (
+            <React.Fragment key={i}>
+              <span data-s5={`digit${i}`} aria-hidden="true" className="md:hidden">{code[i]}</span>
+              <input
+                ref={(el) => { inputs.current[i] = el }}
+                data-s5={`code${i}`}
+                data-testid={`verify-code-${i}`}
+                aria-label={`Digit ${i + 1} of ${CODE_LENGTH}`}
+                inputMode="numeric"
+                autoComplete={i === 0 ? "one-time-code" : "off"}
+                maxLength={CODE_LENGTH}
+                value={code[i]}
+                disabled={busy}
+                onFocus={() => setFocus(i)}
+                onBlur={() => setFocus((f) => (f === i ? -1 : f))}
+                onChange={(e) => setDigit(i, e.target.value)}
+                onKeyDown={(e) => onKeyDown(i, e)}
+                className="h-[54px] w-[44px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white text-center text-[22px] font-medium text-[var(--shotiq-color-ink)] outline-none focus:border-[var(--shotiq-color-shotiqOrange)]"
+              />
+            </React.Fragment>
+          ))}
+        </div>
+
+        {error && (
+          <p role="alert" data-s5="error" data-testid="verify-error"
+             className="mt-[10px] text-center text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
         )}
-      </div>
 
-      <Link href="/dashboard"
-            className="mt-[18px] flex items-center justify-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-shotiqOrange)]">
-        <ArrowLeft className="h-4 w-4" /> Back to the app
-      </Link>
-    </div>
+        {/* --------------------------------------------------------- resend */}
+        {/* The countdown is the disabled-state explanation for the control
+            directly below it: while it runs, "Resend email" is genuinely
+            disabled, and the server's own 3-per-minute limit backs the same
+            rule. Canonical draws the link orange throughout, which is the
+            design's choice and not a claim that the control is live. */}
+        <p data-s5-contents className="mt-[16px] text-center text-[15px]">
+          <span data-s5="resendLab" className="text-[var(--shotiq-color-graphite)]">
+            {cooldown > 0 ? "Resend code in " : "You can resend the code now"}
+          </span>
+          {cooldown > 0 && (
+            <span data-s5="resendVal" data-testid="verify-cooldown"
+                  className="font-bold text-[var(--shotiq-color-shotiqOrange)]">{clock}</span>
+          )}
+        </p>
+
+        <div data-s5-contents className="mt-[10px] flex justify-center">
+          <button type="button" onClick={resendEmail} data-testid="verify-resend"
+                  data-s5="resendLinkBox" disabled={cooldown > 0 || resend === "sending"}
+                  className="flex items-center gap-2 text-[15px] font-medium text-[var(--shotiq-color-shotiqOrange)] underline underline-offset-4 disabled:opacity-70 md:disabled:opacity-50">
+            {resend === "sending" && <Loader2 className="h-[15px] w-[15px] animate-spin" />}
+            <span data-s5="resendLink">
+              {resend === "sent" ? "Email sent" : resend === "error" ? "Try again" : "Resend email"}
+            </span>
+          </button>
+        </div>
+
+        {/* -------------------------------------------------------- actions */}
+        <a href={inboxUrl(email)} data-s5="plate" data-testid="verify-open-mail"
+           className="mt-[18px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-semibold text-white">
+          <span data-s5="plateMark" className="md:hidden"><EnvelopeMark /></span>
+          <MailCheck className="hidden h-[18px] w-[18px] md:inline" />
+          <span data-s5="plateLab">Open email app</span>
+        </a>
+
+        <Link href="/signup" data-s5="diffBtn" data-testid="verify-different-email"
+              className="mt-[12px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-ink)] bg-white text-[15px]">
+          <span data-s5="diffMark" className="md:hidden"><EnvelopePencilMark /></span>
+          <span data-s5="diffLab">Use a different email</span>
+        </Link>
+
+        {/* ----------------------------------------------------- help list */}
+        <div data-s5-contents className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+          <div data-s5="didnt"
+               className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
+            DIDN&apos;T GET THE EMAIL?
+          </div>
+          <div data-s5-contents className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
+            {/* Each row is a real destination, because a chevron promises one.
+                Spam and delivery-delay guidance lives in the guide's own
+                anchors; support is the address on the marketing site. */}
+            <Link href="/guide#email-spam" data-s5="helpRow1" data-testid="verify-help-1"
+                  className="flex items-center gap-[10px] py-[9px] text-[13px]">
+              <span data-s5="helpMark1" className="md:hidden"><MailCheckMark /></span>
+              <MailCheck className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <span data-s5="help1" className="flex-1">Check your spam or promotions folder</span>
+              <span data-s5="chev1" className="md:hidden"><ChevronMark /></span>
+              <ChevronRight className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
+            </Link>
+            <Link href="/guide#email-delay" data-s5="helpRow2" data-testid="verify-help-2"
+                  className="flex items-center gap-[10px] py-[9px] text-[13px]">
+              <span data-s5="helpMark2" className="md:hidden"><MailClockMark /></span>
+              <MailCheck className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <span data-s5="help2" className="flex-1">Wait a few minutes and tap &ldquo;Resend email&rdquo;</span>
+              <span data-s5="chev2" className="md:hidden"><ChevronMark /></span>
+              <ChevronRight className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
+            </Link>
+            <a href="mailto:support@shotiqai.com?subject=Email%20verification" data-s5="helpRow3"
+               data-testid="verify-help-3"
+               className="flex items-center gap-[10px] py-[9px] text-[13px]">
+              <span data-s5="helpMark3" className="md:hidden"><HelpMark /></span>
+              <ShieldCheck className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <span data-s5="help3" className="flex-1">Need help? Contact support</span>
+              <span data-s5="chev3" className="md:hidden"><ChevronMark /></span>
+              <ChevronRight className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
+            </a>
+          </div>
+        </div>
+
+        <div data-s5-contents className="mt-[14px] flex items-center gap-[10px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+          <span data-s5="shield" className="md:hidden"><ShieldMark /></span>
+          <ShieldCheck className="hidden h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-confirmGreen)] md:inline" />
+          <div data-s5-contents>
+            <div data-s5="safe1" className="text-[13px] font-semibold">Your account is safe</div>
+            <div data-s5="safe2" className="text-[11px] text-[var(--shotiq-color-graphite)]">
+              We&apos;ll never share your email or data.
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -160,8 +428,9 @@ export default function VerifyEmailPage() {
   return (
     <div
       data-testid="screen-desktop-web-verify-email"
-      className="shotiq-canonical flex min-h-screen items-center justify-center bg-[var(--shotiq-color-paper)] px-6 py-12 text-[var(--shotiq-color-ink)]"
+      className="s5 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px] md:py-12"
     >
+      <style dangerouslySetInnerHTML={{ __html: PHONE_CSS }} />
       <Suspense>
         <VerifyEmailBody />
       </Suspense>

@@ -28,7 +28,7 @@ import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
-import { words, glyphsWithSpaces, srOnly, srSpace, LEDE1_DX, LEDE2_DX, ONEACCT_DX,
+import { words, glyphsWithSpaces, srSpace, LEDE1_DX, LEDE2_DX, ONEACCT_DX,
          TERMS_DX, DISPLAY_GX } from "./PerWord004"
 
 /** Canonical 004 sets the helper under PASSWORD as "Use at least 8
@@ -116,6 +116,16 @@ export default function SignUpPage() {
         formData.lastName || undefined
       )
       if (result.success) {
+        // The signup API has just mailed a six-digit verification code (and the
+        // link beside it). /verify-email needs to know WHICH address it went to
+        // and WHEN, so it can name the address and run the resend cooldown down
+        // from the real send — the session may not have settled on a phone by
+        // the time that screen mounts. Written here, at the one moment the
+        // answer is certainly known; read by src/app/verify-email/page.tsx.
+        try {
+          sessionStorage.setItem("shotiq-pending-email", formData.email)
+          sessionStorage.setItem("shotiq-verify-sent-at", String(Date.now()))
+        } catch { /* opaque origin — /verify-email falls back to the session */ }
         // signUp already awaited the API response, so the httpOnly session
         // cookie is set by the time we get here — navigate immediately, no race.
         window.location.assign("/onboarding")

@@ -41,6 +41,12 @@ export async function sendVerificationEmail(
   ])
 
   const verifyUrl = `${getAppBaseUrl()}/api/auth/verify-email?token=${token}`
+  // The screen that ASKS for the code has to be reachable from the mail that
+  // carries it, or the code is a credential with nowhere to be typed. The
+  // address rides in the query only so the screen can name it back; the code is
+  // always checked against the account the server resolves, never against this
+  // string.
+  const codeUrl = `${getAppBaseUrl()}/verify-email?email=${encodeURIComponent(email)}`
   const opening = opts.welcome
     ? "Welcome to SHOTIQ! Confirm your email to finish setting up your account."
     : "Confirm your email to finish setting up your account."
@@ -51,8 +57,9 @@ export async function sendVerificationEmail(
     text:
       `${opening}\n\n` +
       `Your verification code is ${readable(code)}\n` +
-      `Enter it on the Verify your email screen. The code expires in 10 minutes.\n\n` +
-      `Or open this link instead — it works for 24 hours:\n\n${verifyUrl}`,
+      `Enter it here — the code expires in 10 minutes:\n\n${codeUrl}\n\n` +
+      `Or open this link instead and we will confirm it for you. It works for ` +
+      `24 hours:\n\n${verifyUrl}`,
     actionUrl: verifyUrl,
   })
 
