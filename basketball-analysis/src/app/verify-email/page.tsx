@@ -409,13 +409,22 @@ function VerifyEmailBody() {
             KEVIN), so this strands nobody while that stays true — and if
             Kevin later makes verification a gate, this is the one place that
             has to change with it. */}
+        {/* -inset-[11px], NOT 9. Grade 13 walked `elementFromPoint` outward
+            from the control's centre in 0.5 pt steps, accepting only the
+            control or its own subtree, and measured the EFFECTIVE hit region:
+            back 42.0 x 42.0 against settings' 45.0 x 44.0. 9 px of inset on the
+            23.3 pt box the browser actually lays out gives 41.3, not 44 — the
+            arithmetic had been done against the 26 px class instead. 11 px
+            gives 45.3. Rule 89 says this must be BUILT and re-captured rather
+            than reasoned, because the last transparent-control resize that was
+            "provably inert" moved a band by 3.4. */}
         <button type="button" aria-label="Go back" data-testid="verify-back"
                 onClick={() => {
                   if (nextFromSignup) router.replace(nextHref)
                   else router.push("/signup")
                 }}
                 data-s5="back"
-                className="relative mt-[10px] flex h-[26px] w-[26px] items-center before:absolute before:-inset-[9px] before:content-[''] md:mt-[16px]">
+                className="relative mt-[10px] flex h-[26px] w-[26px] items-center before:absolute before:-inset-[11px] before:content-[''] md:mt-[16px]">
           <span data-s5-off className="hidden md:inline"><ArrowLeft className="h-[20px] w-[20px]" /></span>
           <span data-s5-mark className="md:hidden"><BackMark /></span>
         </button>
@@ -605,6 +614,16 @@ function VerifyEmailBody() {
                   `Pencil` ("Edit coaching note") match nothing and both fall
                   through to the same default. The collision is in the library,
                   not in this file.
+
+                  ONE ROW OF THAT ENUMERATION WAS WRONG and grade 13 measured it:
+                  this comment used to name verify-help-2 AND verify-help-3 as
+                  both falling through to the default. Read off the served DOM,
+                  help-3 resolves to `shotiq-approved-v2-ui-privacy-info.png` —
+                  its concept is "Help guide", which the library DOES match. The
+                  collision is four files across seven roles, not three, and it
+                  is `verify-help-2` that shares the default with
+                  `verify-different-email`. A comment that gets the shape right
+                  and an instance wrong is still wrong.
 
                   Glyphs.tsx's own header says a shape must not be reused for a
                   second concept — "pick another kind, or add one" — and there is

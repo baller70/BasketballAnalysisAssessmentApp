@@ -2408,6 +2408,74 @@ markup 11/11 and csrf 3/3. The round's net is helpIcon1 22.0527 -> 17.6749 and
 back 3.9709 -> 3.5029 — the two whose evidence the INTERIOR refereed, not the
 four whose envelope did.
 
+### GRADE 13 (B): the stroke width is wrong on BOTH axes, by construction
+
+Thirteenth grade, and the first to look at the `Icon` HELPER rather than at the
+marks it draws. It emits
+
+    <g transform="translate(bx by) scale(sx sy)" stroke-width={sw / sqrt(sx*sy)}>
+
+and the geometric mean makes the AVERAGE stroke right while leaving BOTH AXES
+WRONG whenever sx != sy: a vertical stroke rasterises at sw*sqrt(sx/sy) and a
+horizontal one at sw*sqrt(sy/sx). Read off the served DOM, sx/sy is 1.1261
+(helpMark1), 1.1212 (diffMark), 1.0926 (plateMark), 1.0728 (helpMark2), 1.0588
+(gear), 0.9807 (helpMark3), 0.9259 (shield) — only `back` is square.
+
+Measured as the median ink integral across the stroke, on straight rectangular
+envelope edges only:
+
+    helpMark1  vertical 3.181  horizontal 2.752   V/H 1.156   (canonical 0.977)
+    diffMark   vertical 3.169  horizontal 2.752   V/H 1.151   (canonical 0.980)
+
+Predicted from the DOM: 1.126 and 1.121. Two marks, prediction from the
+mechanism, measurement from the pixels, canonical's own two axes agreeing to 2%.
+
+IT IS ONE CAUSE UNDER SEVEN SEPARATELY-LISTED BANDS. Total ink R/C per mark:
+helpIcon1 0.887, back 0.891, gear 0.907, diffMark 0.910, helpIcon3 0.912,
+helpIcon2 0.937, shield 0.954 — while the three CHEVRONS, whose boxes are nearly
+square, run HEAVY at 1.046/1.098/1.053. The sign flips with the box aspect, not
+with the icon. That is also the 0.89 ink ratio grade 9 raised on helpIcon1/3 and
+that four rounds treated as separate icon defects.
+
+AND THE OBVIOUS FIX IS A WASH, WHICH IT VERIFIED RATHER THAN ASSUMED. Injecting
+`vector-effect:non-scaling-stroke` into the served build made the strokes
+isotropic to 0.008 px — helpMark1 2.996/3.004 — and moved the whole screen
+5.4704 -> 5.4751. The MARK_BOXES were fitted around the defect and now absorb
+it: helpIcon1 13.668->13.986 and diffMark 23.755->23.955 got worse while gear
+8.857->8.758 and helpIcon2 13.216->13.153 got better. Canonical's straight-edge
+integral is 3.12-3.49 (median 3.19), not 3.0, so the target is isotropic AND
+wider, and sweeping the multiplier with the boxes held made it worse again
+(1.05 -> 5.5033, 1.10 -> 5.5228). So closing it is a JOINT (box, sw) re-solve —
+the same absorption the box-rule token was already caught doing — and the
+grader correctly declined to prescribe the one-liner.
+
+**IT ALSO CAUGHT A BRIEF I WROTE CONTRADICTING THIS LEDGER.** I told it
+`display`'s difference map was "a one-pixel outline, i.e. antialiasing on a
+large ink area", which came from grade 12's summary. This ledger already carried
+grade 11's correct reading — per-window best shifts of -1/+2/-2/-3/-2/-2/+3/+2.
+Grade 13 measured it properly at 0.25 px resolution: two slices 90 px apart want
+OPPOSITE 2-3 px translations (x385-430 wants -2.25 for a 30.1% drop, x610-655
+wants +2.00 for 64.3%), against a `wordmark` control whose whole band moves 1.4%.
+Antialiasing is not removable by translation; 64% is not antialiasing. The same
+signature is on `plateLab` (-1.75, 50.2% down), `lede1` (-1.00, 48.7%) and
+`safe1` (+2.25, 62.6%), none of which were connected to it before.
+
+The lesson is mine: a hand-written brief is a SUMMARY of the ledger and drifts
+from it. When briefing a grader, quote the ledger's measurement, not a
+paraphrase of a previous grade's summary of it — I handed a grader a claim this
+file already contradicted, and only its independence caught it.
+
+Also corrected, again mine: the desktop-icon comment in `page.tsx` enumerated
+`verify-help-2` and `verify-help-3` as both falling through to the default.
+Measured, help-3 resolves to `ui-privacy-info.png` — its concept "Help guide"
+DOES match the library. Four files across seven roles, not three. The shape was
+right and an instance was wrong, which is still wrong.
+
+And `verify-back`'s effective hit region measured 42.0 x 42.0 against settings'
+45.0 x 44.0: `-inset-[9px]` was computed against the 26 px class rather than the
+23.3 pt box the browser lays out. `-inset-[11px]` gives 45.3, and rule 89 says
+build it rather than reason it.
+
 ### ROUND 24: the shield outline, swept because it could not be reasoned
 
 The last concrete item grade 12 left open, and it left it open ON PURPOSE — it
