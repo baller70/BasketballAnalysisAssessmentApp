@@ -234,8 +234,13 @@ export const RUNS: Record<string, Run> = {
              ws: 0.8, dx: 1.2, dy: 36.4, tx: 1.11, ty: 0 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
   /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
+  /* ty +2 / -2 device px, and the OPPOSITE SIGNS are the finding: the two
+     lines are not both misplaced, the gap between them is ~4 device px too
+     large. A shared lever cannot express that and neither line alone reveals
+     it — it is rule 57's opposite-sign signature, on a pair of runs rather
+     than inside one band. lede1 9.5965 -> 5.5554, lede2 11.7684 -> 8.0204. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.908, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8429, ty: 0 },
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8429, ty: 0.9215 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -247,7 +252,7 @@ export const RUNS: Record<string, Run> = {
      was measured at a geometry that was already right: lede2 16.6947 ->
      11.7684 in the built capture. Kept. */
   lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: 0 },
+           colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: -0.9215 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
      22.96 / 24.36 / 26.38 / 22.74 — ink-width/cap 0.40, where an unscaled Geist
      digit sits near 0.63, so the run is condensed by about a third. */
@@ -262,13 +267,13 @@ export const RUNS: Record<string, Run> = {
      The first capture measured Geist's cap at 0.637 of its font-size here
      against Tungsten's 0.724, which is where 37.6 comes from. */
   digit0: { cx: 102.840, top: 570.475, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.45, tx: 0, ty: 0 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.45, tx: 0, ty: -0.4607 },
   digit1: { cx: 232.068, top: 570.461, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.32, tx: 0, ty: 0 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.32, tx: 0, ty: -0.4607 },
   digit2: { cx: 360.964, top: 571.017, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.22, tx: 0, ty: 0 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.22, tx: 0, ty: -0.4607 },
   digit3: { cx: 490.455, top: 571.048, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 104.74, tx: 0, ty: 0 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 104.74, tx: 0, ty: -0.4607 },
   /* Boxes five and six are EMPTY in canonical, so these two runs have no ink to
      measure against. They are the box centres, carrying the same size and face
      as the four that were measured, because a player who keeps typing must not
@@ -369,12 +374,22 @@ export const RUNS: Record<string, Run> = {
      help1 and help2 against a 0.9954 control on the wordmark, so the run is
      genuinely 3.5% heavy rather than reading heavy off canonical's bimodal
      small type (rule 51's control test, on this screen's own solved band). */
+  /* THE VERTICAL WAS NEVER SWEPT ON THESE THREE, and it was the largest thing
+     left on the screen. Every round moved size, scaleX and weight; this file's
+     own note called the residual "per-run HORIZONTAL registration", and that
+     sentence is what stopped anyone trying the other axis — rule 59's exact
+     shape, a true diagnosis licensing a claim beyond its own mechanism.
+     The three labels share a sign against their icons and chevrons (which want
+     0 and -1), which is rule 15's one-container-offset signature on the label
+     element rather than on the row.
+     help1 20.3319 -> 7.7874, help2 24.1773 -> 21.1660, help3 15.6514 -> 12.8522.
+     Values are CSS px inside the transform: +4, +2 and +2 device px. */
   help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.8429 },
   help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
   help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
      images) while the run ran 1.182 long — horizontal only, and the size is

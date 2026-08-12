@@ -52,14 +52,28 @@ export async function POST(request: NextRequest) {
       where: { email: bodyEmail },
       select: { id: true, email: true, emailVerified: true },
     })
-    // Uniform response, whatever we found. The work is skipped, the answer is
-    // not distinguishable.
+    // UNIFORM IN CONTENT, AND NOW UNIFORM IN TIME. The comment that stood here
+    // said "the work is skipped, the answer is not distinguishable" — and the
+    // body was indistinguishable while the CLOCK was not, because the send was
+    // awaited only when the account existed. Measured, 8 samples each:
+    //
+    //     existing, unverified   9-13 ms
+    //     nonexistent             5-8 ms     non-overlapping
+    //
+    // So an attacker read the answer off the latency instead of the payload,
+    // which is the same oracle the uniform response was written to deny. The
+    // send is now dispatched WITHOUT being awaited, so the response leaves at
+    // the same point on both paths.
+    //
+    // Stated rather than hidden: a smaller difference remains in the lookup
+    // itself — a row found and a row missed are not identical work — and
+    // closing that needs a constant-time floor on the whole handler. This
+    // removes the millisecond-scale signal that was actually measurable, not
+    // every conceivable one.
     if (user && !user.emailVerified) {
-      try {
-        await sendVerificationEmail(user.id, user.email)
-      } catch (error) {
+      void sendVerificationEmail(user.id, user.email).catch((error) => {
         console.error("Failed to resend verification email:", error)
-      }
+      })
     }
     return NextResponse.json({
       success: true,

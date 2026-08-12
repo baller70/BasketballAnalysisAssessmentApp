@@ -71,11 +71,40 @@ export async function POST(request: NextRequest) {
 
   if (!user) return fail()
 
-  // Already verified is a SUCCESS, not an error: the player did the thing the
-  // screen asked for and the account is in the state they wanted. Returning a
-  // failure here would send someone who clicked the link and then typed the
-  // code back round the loop for no reason.
+  // ALREADY-VERIFIED IS A SUCCESS **ONLY FOR A CALLER WHO IS SIGNED IN**, and
+  // the first version of this was an account-existence oracle for exactly the
+  // majority of accounts it was written to protect.
+  //
+  // The comment at the top of this file promises that "unknown address, no code
+  // outstanding, wrong code and expired code all return the same 400", so that
+  // the route cannot be used to test a list of addresses. This block returned
+  // 200 BEFORE the code was checked, for a caller identified only by
+  // `body.email`, and echoed the address back:
+  //
+  //     unverified account, wrong code   -> 400
+  //     NONEXISTENT address, wrong code  -> 400
+  //     verified account, code 000000    -> 200 {"alreadyVerified":true,"email":…}
+  //
+  // 400 meant "unknown or unverified" and 200 meant "a registered, verified
+  // ShotIQ account" — which in steady state is most of them — to anyone with a
+  // list of addresses and no code at all.
+  //
+  // The reason the end-to-end check missed it is worth keeping: wrong-code was
+  // tested only against an UNVERIFIED account, and already-verified only on the
+  // SUCCESS path. Both passed. The defect is the product of the two, which is
+  // rule 64 — a sweep over one axis licenses a claim about that axis only.
+  //
+  // Signed in, the short circuit is safe: the session already proves who the
+  // caller is, so it tells them nothing they did not know, and it keeps the
+  // stated UX for the player who clicked the link and then typed the code.
+  // Anonymous, the caller must produce a valid code before this route will
+  // confirm anything at all — including that the account exists.
   if (user.emailVerified) {
+    if (session) {
+      return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
+    }
+    const proof = await consumeEmailCode(user.id, code)
+    if (!proof) return fail()
     return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
   }
 

@@ -45,19 +45,66 @@ export interface RateLimitResult {
 }
 
 /**
- * Best-effort client IP extraction from common proxy headers.
+ * Client IP for rate-limiting purposes.
+ *
+ * THE FIRST VERSION TOOK `x-forwarded-for[0]`, WHICH THE CLIENT SETS, so every
+ * limit built on it was advisory. Measured on the served build:
+ *
+ *     14 requests, one fixed XFF     400 x10 then 429 429 429 429   limit works
+ *     14 requests, ROTATING XFF      400 x14                        never fires
+ *
+ * That is not a theoretical weakness. This function guards the six-digit email
+ * verification code, whose own route does arithmetic on the limit to argue a
+ * code is unguessable; unbounded, a single-use code in a 10^6 space is
+ * brute-forcible at throughput. It also guards resend, where rotating the
+ * header produced 12 unauthenticated verification emails to one address — a
+ * mail bomb, and worse a targeted DENIAL OF VERIFICATION, because issuing a new
+ * code deletes the previous one, so the code in the victim's inbox is always
+ * stale. And it guards signin, signup, forgot-password and reset-password.
+ *
+ * `x-forwarded-for` is a list APPENDED to by each proxy, so the entries a
+ * client can forge are on the LEFT and the ones a trusted proxy wrote are on
+ * the RIGHT. Reading [0] reads the attacker's entry. The only safe read is at a
+ * known depth from the right, and the depth is deployment knowledge — so it is
+ * configuration, and the default is to trust nothing.
+ *
+ *   SHOTIQ_TRUSTED_PROXY_HOPS=0  (default) ignore forwarded headers entirely
+ *   SHOTIQ_TRUSTED_PROXY_HOPS=1  one proxy in front (the usual single CDN/LB)
+ *   SHOTIQ_TRUSTED_PROXY_HOPS=2  two, and so on
+ *
+ * With 0 and no socket address available the caller is bucketed as 'unknown'.
+ * That is deliberately the SAFE direction for a credential guard: everyone
+ * shares one bucket, so a brute force is still throttled. It is the wrong
+ * direction for availability — one noisy client can exhaust the shared budget —
+ * which is exactly why a real deployment should set the hop count rather than
+ * leave it at the default.
  */
+const TRUSTED_PROXY_HOPS = Math.max(
+  0,
+  Number.parseInt(process.env.SHOTIQ_TRUSTED_PROXY_HOPS ?? '0', 10) || 0
+)
+
 export function getClientIp(request: NextRequest): string {
-  const xff = request.headers.get('x-forwarded-for')
-  if (xff) {
-    const first = xff.split(',')[0]?.trim()
-    if (first) return first
+  // The socket peer, when the runtime exposes it. Unforgeable, so it wins.
+  const direct = (request as NextRequest & { ip?: string }).ip
+  if (direct) return direct
+
+  if (TRUSTED_PROXY_HOPS > 0) {
+    const xff = request.headers.get('x-forwarded-for')
+    if (xff) {
+      const hops = xff.split(',').map((h) => h.trim()).filter(Boolean)
+      // Count from the RIGHT: hop 1 is the entry the nearest trusted proxy
+      // wrote, which is the address it saw. Anything further left is client
+      // supplied. If the list is shorter than the configured depth the request
+      // did not come through the expected chain — do not guess.
+      const ip = hops[hops.length - TRUSTED_PROXY_HOPS]
+      if (ip) return ip
+    }
+    const real = request.headers.get('x-real-ip') || request.headers.get('cf-connecting-ip')
+    if (real) return real
   }
-  return (
-    request.headers.get('x-real-ip') ||
-    request.headers.get('cf-connecting-ip') ||
-    'unknown'
-  )
+
+  return 'unknown'
 }
 
 /**

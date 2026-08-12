@@ -114,12 +114,21 @@ const PROFILES = {
     singleCharMax: 6,
     accepted: {
       lede1: { live: 1, control: 1 },
-      // TWO live nodes and ONE in the control, and that is the recorded state
-      // rather than drift: the run is `{address}.` so React emits the address
-      // and the full stop as separate text nodes, and the control's
-      // `normalize()` merges them. 004's `terms` has the same shape for the
-      // same reason. Recorded so a CHANGE fails, which is the whole contract.
-      lede2: { live: 2, control: 1 },
+      // Two live nodes AND two in the control. The `live: 2` was measured; the
+      // `control: 1` beside it was REASONED — the comment here used to predict
+      // that "the control's normalize() merges them" — and the gate's own
+      // output said otherwise, so 005 shipped with its gate permanently RED
+      // (10/11) while the ledger recorded 11/11. `normalize()` merges adjacent
+      // text nodes, and these two are separated by the unwrapped span the
+      // control leaves in place.
+      //
+      // This file's line-394 comment names the trap exactly — "a hardcoded
+      // snapshot wearing a control's clothes" — and 004's own `terms: { live:
+      // 11, control: 5 }` was the counter-example sitting three screens above.
+      // A recorded value must be READ OFF THE GATE, never predicted; and a
+      // permanently-red gate is worse than none, because it teaches the next
+      // round to scroll past a failure.
+      lede2: { live: 2, control: 2 },
       help1: { live: 1, control: 1 },
       help2: { live: 1, control: 1 },
       help3: { live: 1, control: 1 },
