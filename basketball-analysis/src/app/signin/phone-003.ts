@@ -161,6 +161,19 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  * 490 and makes the whole CDF worse (.1145 against .1035).
  */
 const COLOURS = `
+  /* Canonical's paper is NOT white — 254, not 255 — and this screen was graded
+     A without anyone measuring the ground its ink sits on. Found on 004, where
+     the same one unit over the whole 853x1844 canvas is worth 0.5744 of whole
+     screen; here it takes 003 from 3.6443 to 3.0569.
+     That number matters beyond this screen: 3.6443 is the A BAR the whole
+     campaign calibrates against, and it was set 0.57 too high. What the ledger
+     called a "canonical export floor" of 0.9281/0.9398 is in substance this
+     offset, and it is not a floor — it is reachable, on both canvases, from one
+     screen-scoped line. It is common-mode, so it does not explain the 004-003
+     gap; it means the bar itself was wrong.
+     Screen-scoped like every role here; at 1440px the token still resolves
+     #fff, so the 20 desktop screens cannot move. */
+  --shotiq-color-paper:#FEFEFE;
   --shotiq-color-ink:#000000;
   --s3-rule:#D2D4D9;
   --s3-field-rule:#D5D5D9;

@@ -77,6 +77,23 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  *   or            #838489    the OR label
  */
 const COLOURS = `
+  /* CANONICAL'S PAPER IS NOT WHITE, and eight rounds measured every ink role
+     on this screen without ever measuring the ground they sit on. Canonical
+     reads 254.05 / 253.94 / 254.01 (sd 0.64); the render was exactly 255
+     everywhere. One unit, over the whole 853x1844 canvas, is worth 0.5744 of
+     whole-screen mean |d| - more than six times the entire eleven-defect
+     round that preceded it.
+     Bracketed, so it is an optimum and not a direction: 255 -> 3.6956,
+     254 -> 3.1212, 253 -> 3.6339, and all three single-channel neighbours of
+     254 are worse (3.2757 / 3.2972 / 3.2935). Confirmed in the SHIPPING form
+     - patched into the real PHONE_CSS style element with no !important - at
+     the identical 3.1212 / 73416.
+     The precedent was already in this file: --s4-value-ink records that
+     canonical's ink is near-black rather than black. Its paper is near-white
+     rather than white, and for the same reason.
+     Screen-scoped like every role here; at 1440px the token still resolves
+     #fff, so the 20 desktop screens cannot move. */
+  --shotiq-color-paper:#FEFEFE;
   --shotiq-color-ink:#000000;
   /* Both rule colours were too DARK as well as too heavy, and the pair had
      to move together — width moves the covered area of a flat stroke, value
@@ -628,10 +645,11 @@ function valueCss(name: string, box: [number, number], size: number, weight: num
    finding, transferred). Canonical draws NINE bullets, x 95.34..311.51, on a
    pitch of 25.52 with an 11.6 diameter. */
 function maskCss(name: string, box: [number, number], size: number, ls: number,
-                 padL: number, ty: number) {
+                 padL: number, ty: number, tx = 0) {
   const [y, h] = box
   return `.s4 [data-s4="${name}"]{position:absolute;left:${u(BOX_X)};top:${u(y)};` +
-    `height:${u(h)};width:${u(BOX_W)};transform:translateY(${ty.toFixed(4)}px);` +
+    `height:${u(h)};width:${u(BOX_W)};` +
+    `transform:translate(${tx.toFixed(4)}px,${ty.toFixed(4)}px);` +
     `font-family:${GEIST};font-weight:400;font-size:${size}px;letter-spacing:${ls}em;` +
     `line-height:${u(h)};padding-left:${u(padL)};` +
     `color:var(--s4-graphite);background:transparent;border:0;outline:none;padding-top:0;` +
@@ -676,8 +694,14 @@ export const VALUES = {
    size and the residual fixes ls. padL then absorbs the first bullet's centre,
    because the left side bearing scales with the size change. */
 export const MASKS = {
-  pass: { size: 27.9004, ls: 0.12588, padL: 24.1962, ty: 0 },
-  confirm: { size: 27.9004, ls: 0.12588, padL: 24.1962, ty: 0 },
+  /* ls 0.12588 -> 0.129 with tx -0.15, a compensated pair (rule 61) on the
+     two bullet runs. The value runs cannot carry a `ws` pair at all - they
+     are single tokens, so word-spacing is structurally inert on them - which
+     is why (tx, ls) is the only meaningful grid here and why the earlier
+     (tx, ws) sweeps found nothing to find.
+     valPass 4.6222 -> 4.1818, valConfirm 4.8513 -> 4.4123. */
+  pass: { size: 27.9004, ls: 0.129, padL: 24.1962, tx: -0.15, ty: 0 },
+  confirm: { size: 27.9004, ls: 0.129, padL: 24.1962, tx: -0.15, ty: 0 },
 }
 
 /* Mark placement, in canonical device px.
@@ -844,8 +868,8 @@ ${hitbox("signinBox", SIGNIN.y, SIGNIN.h)}
 ${valueCss("valFirst", FIELDS.first, VALUES.first.size, VALUES.first.weight, VALUES.first.scale, VALUES.first.padL, VALUES.first.ty, VALUES.first.ls)}
 ${valueCss("valLast", FIELDS.last, VALUES.last.size, VALUES.last.weight, VALUES.last.scale, VALUES.last.padL, VALUES.last.ty, VALUES.last.ls)}
 ${valueCss("valEmail", FIELDS.email, VALUES.email.size, VALUES.email.weight, VALUES.email.scale, VALUES.email.padL, VALUES.email.ty, VALUES.email.ls)}
-${maskCss("valPass", FIELDS.pass, MASKS.pass.size, MASKS.pass.ls, MASKS.pass.padL, MASKS.pass.ty)}
-${maskCss("valConfirm", FIELDS.confirm, MASKS.confirm.size, MASKS.confirm.ls, MASKS.confirm.padL, MASKS.confirm.ty)}
+${maskCss("valPass", FIELDS.pass, MASKS.pass.size, MASKS.pass.ls, MASKS.pass.padL, MASKS.pass.ty, MASKS.pass.tx)}
+${maskCss("valConfirm", FIELDS.confirm, MASKS.confirm.size, MASKS.confirm.ls, MASKS.confirm.padL, MASKS.confirm.ty, MASKS.confirm.tx)}
 .s4 [data-s4="valFirst"]::placeholder,.s4 [data-s4="valLast"]::placeholder,
 .s4 [data-s4="valEmail"]::placeholder,.s4 [data-s4="valPass"]::placeholder,
 .s4 [data-s4="valConfirm"]::placeholder{color:var(--shotiq-color-muted);letter-spacing:0em}

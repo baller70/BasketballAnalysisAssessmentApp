@@ -51,6 +51,7 @@ export default function SignUpPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
 
   // --- preserved account-creation behaviour --------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,10 +59,18 @@ export default function SignUpPage() {
     setError("")
     setInvalid("")
 
+    // ONE BRANCH, TWO CAUSES — and the first version of this flagged `email`
+    // for both. With a valid address typed and the password left empty, the
+    // screen-reader user was told the email was wrong when it was correct, and
+    // keyboard focus landed on a valid field. WCAG 3.3.1. The other four rules
+    // were fine precisely because each one has a single cause; the hole was
+    // exactly where two share a branch.
     if (!formData.email || !formData.password) {
       setError("Email and password are required")
-      setInvalid("email")
-      emailRef.current?.focus()
+      const culprit = !formData.email ? "email" : "password"
+      setInvalid(culprit)
+      if (culprit === "email") emailRef.current?.focus()
+      else passwordRef.current?.focus()
       return
     }
     // The form is noValidate, so `type="email"` never fires and the ONLY email
@@ -219,7 +228,7 @@ export default function SignUpPage() {
 
             <label htmlFor="password" data-s4="labPass" className={`${label} mt-[18px] block`}>PASSWORD</label>
             <div data-s4-contents className="relative mt-[8px]">
-              <input id="password" type={showPassword ? "text" : "password"}
+              <input id="password" ref={passwordRef} type={showPassword ? "text" : "password"}
                      autoComplete="new-password" data-testid="signup-password"
                      required
                      aria-invalid={invalid === "password" || undefined}

@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — sixty-two, each learned by getting something wrong
+## Method rules — sixty-four, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1622,6 +1622,68 @@ string rolling over at midnight.
     one and returns a null that reads exactly like "this lever does nothing".
     CSS was safe there only because one of the two paints. Count your matches
     before believing a null (rule 30, in a new disguise).
+
+63. **Measure the GROUND, not only the ink. And what this ledger called an
+    "export floor" was not a floor.** Eight rounds solved every ink role on 004
+    — ink, graphite, orange, red, green, two rule tones, a value ink, an eye, an
+    OR label — and never measured the paper. Canonical's paper is
+    **254.05 / 253.94 / 254.01** (sd 0.64). The render was exactly 255
+    everywhere. One unit, over the whole 853×1844 canvas:
+
+        255 -> 3.6956    254 -> 3.1212    253 -> 3.6339
+
+    a bracketed optimum worth **0.5744**, with all three single-channel
+    neighbours of 254 worse (3.2757 / 3.2972 / 3.2935). That is 15.5% of the
+    screen's entire remaining error, and more than six times the eleven-defect
+    round that preceded it. The precedent was already in the file:
+    `--s4-value-ink` records that canonical's ink is near-black rather than
+    black. Its paper is near-white rather than white, for the same reason —
+    canonical came out of a design tool, not a rasteriser.
+
+    **The larger consequence is the A bar.** This ledger recorded a "canonical
+    export floor" of 0.9281 on 004 and 0.9398 on 003 and treated it as
+    irreducible — the thing you cannot get below, so fair to ignore. It is in
+    substance this paper offset, and it is REACHABLE, on both canvases, from one
+    screen-scoped line: 004 3.6956 → 3.1212 and 003 3.6443 → 3.0569. It is
+    common-mode, so it does not explain the gap between the two screens
+    (removing it from both widens 0.0513 to 0.0643). What it means is that
+    **3.6443 — the number every screen in this campaign is calibrated against —
+    was set 0.57 too high**, because 003 was graded A with the same unmeasured
+    defect. Fixed here on 003 as well; a screen at A should not sit on a known
+    0.5874.
+
+    General form: a residual that appears on EVERY band of a screen is a
+    property of the canvas, not of any band, and no per-band sweep will ever
+    find it. Before calling a whole-screen remainder irreducible, difference the
+    two backgrounds.
+
+64. **A sweep over one parameter licenses a claim about that parameter only.**
+    Round 8 concluded that 004's eye pupil was "a DIFFERENT DRAWING, not a
+    misplaced one", and the argument was genuinely clever: r=0 — no pupil at all
+    — scores better than any positive radius, and a size error cannot do that.
+    The premise was true. The conclusion did not follow, because the sweep
+    varied the RADIUS AT A FIXED CENTRE and position was never in it. With the
+    centre free:
+
+        r=0                  eyePass 4.6179   eyeConf 4.1552
+        cx -1.4, r 3.6               4.4184           4.1903
+        cx -2.2, r 2.6               4.3232           3.9912
+
+    A positive radius at a shifted centre beats having no pupil at all. It was
+    misplaced.
+
+    The same round re-cut the monogram arc from a malformed path to a full
+    semicircle, and over-corrected: canonical has NO ink at x 83-90 above row
+    465, where a semicircle lays a full-width butt cap across rows 462-464.
+    Canonical's arm tapers from row 465 — the arc stops short of 180°, at ~160°.
+    Both mistakes are kept in the file, because the second was made while fixing
+    the first.
+
+    This is rule 59's shape one level down. Rule 59 says a residual survives one
+    KIND of sweep and nothing more. This says a residual survives one AXIS of a
+    sweep and nothing more — and an elegant impossibility argument ("a size
+    error cannot do that") is exactly the form that hides the missing axis,
+    because it feels like a proof rather than a measurement.
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
