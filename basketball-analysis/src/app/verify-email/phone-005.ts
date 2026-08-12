@@ -369,7 +369,7 @@ export const RUNS: Record<string, Run> = {
   /* "Use a different email" inside the outlined button. */
   /* Cap 1.040 over, advance 1.193 over: size 15.6 -> 15.0, scaleX -> 0.837. */
   diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.837, ls: -0.004,
-             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: 0, ty: 0,
+             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: 0, ty: -0.4607,
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
@@ -452,14 +452,14 @@ export const RUNS: Record<string, Run> = {
        w600 sx0.84   18.3687             w680 sx0.84   23.0896
      Bracketed on both axes. Canonical's heading is a BOLD, not a semibold. */
   safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 680, scale: 0.812, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: 0 },
+           colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: -0.4607 },
   /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
   /* Round 2: cap 1.000, advance 1.000 — solved; 1 device px right, via tx. */
   /* Same grid, same shape of finding: 400 -> 430 at the shipped scale,
      17.7767 -> 15.1605, bracketed (460 gives 16.2958, 500 gives 17.3839, and
      every scaleX 0.79+ is worse). */
   safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 430, scale: 0.761, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: -0.4607, ty: 0 },
+           colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: -0.4607, ty: 0.4607 },
 }
 
 function runCss(name: string, r: Run) {
@@ -506,9 +506,20 @@ function hitbox(name: string, x: number, y: number, w: number, h: number, r = 8)
  *  the origin of the positioned ancestor, for the marks that live inside a hit
  *  target — same correction as `Run.ox`/`Run.oy`. */
 function markBox(name: string, x: number, y: number, w: number, h: number,
-                 ox = 0, oy = 0) {
+                 ox = 0, oy = 0, tx = 0, ty = 0) {
+  // `tx`/`ty` are a SUB-PIXEL NUDGE IN CANONICAL DEVICE PX, and they are emitted
+  // as a transform rather than folded into left/top on purpose. `left`/`top` are
+  // layout properties and the browser rounds a box to whole device pixels when
+  // it lays it out — that is rule 53 — so a fractional nudge there lands on 0, 1
+  // or 2 px depending on where the box already sits. A transform is composited
+  // after layout and is not rounded, so the nudge is exactly the nudge.
+  //
+  // This is the mechanism behind the reverts recorded on MARK_BOXES below: the
+  // same intended 1 px moves that failed through left/top land to four decimals
+  // through here.
+  const shift = tx || ty ? `transform:translate(${u(tx)},${u(ty)});` : ""
   return `.s5 [data-s5="${name}"]{position:absolute;left:${u(x - ox)};top:${u(y - oy)};` +
-    `width:${u(w)};height:${u(h)};padding:0;margin:0;display:block;border:0;background:transparent}`
+    `${shift}width:${u(w)};height:${u(h)};padding:0;margin:0;display:block;border:0;background:transparent}`
 }
 
 /* Mark placement, in canonical device px. Every box below is the mark's own
@@ -525,7 +536,10 @@ function markBox(name: string, x: number, y: number, w: number, h: number,
      help       ink  60..118 x 1512..1571
      chevrons   ink 777..790 x 1319..1343 / 1422..1446 / 1530..1555
      shield     ink  73..141 x 1635..1725 */
-export const MARK_BOXES: Record<string, [number, number, number, number, number, number]> = {
+export const MARK_BOXES: Record<
+  string,
+  [number, number, number, number, number, number, number?, number?]
+> = {
   /* Every mark box below was re-solved from the first built capture's ink
      bbox against canonical's, which is the only thing that pins a lucide
      drawing's inset — the drawings do not all inset by the same fraction and
@@ -564,15 +578,15 @@ export const MARK_BOXES: Record<string, [number, number, number, number, number,
      pretty. Residual left on the table by the three reverts: 0.0104 of whole
      screen, stated rather than forced (rule 13). */
   gear: [751, 28.96, 54, 51.0, 0, 0],
-  back: [35.54, 127.54, 51.5, 51.5, 0, 0],
+  back: [35.54, 127.54, 51.5, 51.5, 0, 0, 1.0, -1.0],
   plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y],
   diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
   helpMark1: [53.65, 1299.8, 67.0, 61.5, 56, 1290],
   helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
   helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
-  chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290],
+  chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290, 1.0, 1.0],
   chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392],
-  chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494],
+  chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494, 1.0, 0],
   shield: [58.8, 1628, 97.4, 105.2, 0, 0],
 }
 

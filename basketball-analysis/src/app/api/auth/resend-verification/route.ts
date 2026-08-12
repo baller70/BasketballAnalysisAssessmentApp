@@ -8,8 +8,10 @@ import { checkRateLimit } from "@/lib/rateLimit"
 
 /**
  * POST /api/auth/resend-verification — re-send the verification email (link AND
- * six-digit code) for a user. Issuing invalidates the previous link and the
- * previous code, so only the newest of each works.
+ * six-digit code) for a user. Resend RE-SENDS: inside their 10-minute and
+ * 24-hour lifetimes the same code and the same link go out again, rather than
+ * new ones replacing them. Rotating here was an unauthenticated way to
+ * invalidate the credential in someone else's inbox — see `issueEmailCode`.
  *
  * IDENTIFYING THE USER. A session identifies it when there is one. Failing
  * that, an `email` in the body does — because the player 005 is written for has
@@ -48,13 +50,37 @@ export async function POST(request: NextRequest) {
   // The limiter sits below the body parse so there is a subject to key on. The
   // cooldown this route reports is per account too, so the limit and the
   // countdown still cannot disagree.
+  const subject = session ? `u:${session.userId}` : bodyEmail || "anon"
+
   const { response: limited } = checkRateLimit(request, {
     bucket: "resend-verification",
     limit: 3,
     windowMs: 60_000,
-    subject: session ? `u:${session.userId}` : bodyEmail || "anon",
+    subject,
   })
   if (limited) return limited
+
+  // AND A DAILY CEILING, because a per-minute limit is not a limit on VOLUME.
+  // Reusing the code (see `issueEmailCode`) removed the ability to invalidate a
+  // player's credential by spamming this route, but not the ability to spam it:
+  // 3 a minute sustained is 4,320 identical emails a day into one inbox, which
+  // is a mail bomb aimed by anyone who knows the address, and it is our sending
+  // reputation that pays for it.
+  //
+  // 10 a day is far above any real use — a player resends once or twice while
+  // waiting — and far below a useful weapon.
+  //
+  // Best-effort, and stated as such: the store is per-process and in memory, so
+  // a restart forgives the count and a multi-instance deployment gives each
+  // instance its own. A durable cap belongs with the durable store the top of
+  // `rateLimit.ts` already says this should become.
+  const { response: dayLimited } = checkRateLimit(request, {
+    bucket: "resend-verification-daily",
+    limit: 10,
+    windowMs: 24 * 60 * 60_000,
+    subject,
+  })
+  if (dayLimited) return dayLimited
 
   if (!session) {
     if (!bodyEmail) {

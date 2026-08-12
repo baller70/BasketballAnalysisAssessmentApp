@@ -1,4 +1,4 @@
-whole screen   mean|d| 6.3752   max 255   n_over8 112821
+whole screen   mean|d| 6.3036   max 255   n_over8 112351
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -8,15 +8,14 @@ helpIcon1     22.0527    255      1201
 help2         21.1660    255      6051
 display       19.9365    255     19538
 shield        15.4563    255      1551
-safe2         15.1605    240      4667
 resendLab     14.1711    238      3069
+safe2         13.8757    240      4468
 help3         12.8522    255      4380
-safe1         11.1230    255      3919
-diffBtn        9.4570    255     11246
+safe1         10.4978    255      3839
+diffBtn        9.2547    255     11185
 gear           8.8566    255       891
 box1           8.8349    255      2166
 didnt          8.6672    232      3773
-back           8.1680    254       332
 lede2          8.0204    255      3698
 helpIcon3      7.8249    255      1031
 help1          7.7874    255      3933
@@ -28,9 +27,8 @@ lede1          5.5554    208      3470
 plate          5.1017    255     11882
 box5           4.9558    181      1345
 box4           4.4881    234      1991
-chev1          3.6159    221       139
+back           3.9709    219       261
 resendLink     3.2710    254      3391
-chev3          2.8144    177       139
 chev2          2.6948    162       132
 hdrRule        2.4985     26      1226
 rule2          2.4622     23      1512
@@ -38,6 +36,8 @@ resendVal      2.3889    254       951
 rule1          2.3321     20      2150
 rule3          2.3080     23      1479
 rule4          1.8991     22      1479
+chev1          1.5005     84       111
+chev3          1.3690    107       108
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's
@@ -45,7 +45,7 @@ area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
 diffMark     32.0538    255      1765
-diffLab      25.1781    255      3261
+diffLab      23.4138    255      3200
 plateLab     16.0099    255      4965
 digit1       15.8763    255       814
 plateMark    15.3721    255      1814

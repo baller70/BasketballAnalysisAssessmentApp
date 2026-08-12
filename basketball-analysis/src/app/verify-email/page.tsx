@@ -109,6 +109,17 @@ function VerifyEmailBody() {
   /** True while the harness pin is in force: the countdown shows a fixed value
    *  and does not tick. See PHONE_CSS's COUNTDOWN note. */
   const [pinned, setPinned] = useState(false)
+  /**
+   * Where "Continue" goes once the address is verified. A brand-new account
+   * still owes onboarding; anyone else belongs on the dashboard.
+   *
+   * SAME-ORIGIN PATHS ONLY. This is read out of sessionStorage, so it is not
+   * attacker-controlled the way a query parameter would be — but it is written
+   * by one screen and consumed by another, and a value that becomes an href
+   * gets validated at the point of use regardless. A leading '//' or any scheme
+   * would make this an off-site redirect, so only a single-slash path passes.
+   */
+  const [nextHref, setNextHref] = useState("/dashboard")
   const inputs = useRef<Array<HTMLInputElement | null>>([])
 
   // --- who is this, and how long until they can resend --------------------
@@ -119,6 +130,8 @@ function VerifyEmailBody() {
     try {
       pin = sessionStorage.getItem("shotiq-verify-cooldown")
       pending = sessionStorage.getItem("shotiq-pending-email")
+      const nx = sessionStorage.getItem("shotiq-verify-next")
+      if (nx && /^\/(?!\/)/.test(nx)) setNextHref(nx)
       const raw = sessionStorage.getItem("shotiq-verify-sent-at")
       sentAt = raw ? Number(raw) : null
     } catch { /* opaque origin */ }
@@ -173,10 +186,24 @@ function VerifyEmailBody() {
       if (!res.ok || !data?.success) {
         setError(data?.error || "That code is incorrect or has expired.")
         setCode(Array(CODE_LENGTH).fill(""))
-        inputs.current[0]?.focus()
-      } else {
-        setVerified(true)
+        // RE-ENABLE FIRST, THEN FOCUS, AND FOCUS AFTER THE RE-RENDER.
+        //
+        // This used to call `.focus()` here and `setBusy(false)` afterwards. At
+        // that moment the committed DOM still had `disabled={busy}` on every
+        // box, and focusing a disabled input is a silent no-op — so after a
+        // wrong code the boxes cleared and `document.activeElement` was BODY,
+        // measured. A keyboard or screen-reader user was thrown out of the form
+        // and had to Tab back in from the top of the page after every typo,
+        // which is precisely the user this retry behaviour exists for.
+        //
+        // React batches the state updates, so ordering the two calls is not
+        // enough on its own: the focus has to happen after the render that
+        // removes `disabled`, hence the frame callback.
+        setBusy(false)
+        requestAnimationFrame(() => inputs.current[0]?.focus())
+        return
       }
+      setVerified(true)
     } catch {
       setError("Could not verify right now. Try again shortly.")
     }
@@ -200,6 +227,35 @@ function VerifyEmailBody() {
       if (joined.length === CODE_LENGTH && !n.includes("")) void submit(joined)
       return n
     })
+  }
+
+  /**
+   * PASTE IS HANDLED BEFORE `maxLength` CAN TRUNCATE IT.
+   *
+   * `setDigit` already strips non-digits, but it never saw them. Each box
+   * carries `maxLength={6}`, and the browser applies that to the INSERTED TEXT
+   * before `onChange` fires — so the seven characters of "827 670" arrived as
+   * "827 67" and the player silently got five digits:
+   *
+   *     insertText("482913")   -> fills, auto-submits          works
+   *     insertText("482 913")  -> ["4","8","2","9","1",""]     one digit short
+   *
+   * The grouped form is the one the product itself mails (`readable()` in
+   * verificationEmail.ts prints "827 670" so it is legible in a mail client), so
+   * the single format a player is most likely to copy was the one format that
+   * could not be pasted. Reading the clipboard here bypasses `maxLength`
+   * entirely, and hyphens, non-breaking spaces and a trailing newline all fall
+   * out of the same strip.
+   */
+  const onPaste = (i: number, e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text")
+    if (!pasted) return
+    const digits = pasted.replace(/\D/g, "")
+    if (!digits) return
+    e.preventDefault()
+    // A full-length paste always fills from the first box, wherever it landed —
+    // a player who taps the third box and pastes the whole code means the code.
+    setDigit(digits.length >= CODE_LENGTH ? 0 : i, digits)
   }
 
   const onKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -245,9 +301,9 @@ function VerifyEmailBody() {
         <p className="mt-1 text-[13px] text-[var(--shotiq-color-graphite)]">
           {email ? <>You&apos;re all set, <span className="font-medium">{email}</span>.</> : "You're all set."}
         </p>
-        <Link href="/dashboard" data-testid="verify-continue"
+        <Link href={nextHref} data-testid="verify-continue"
               className="mx-auto mt-6 flex h-[44px] w-full max-w-[280px] items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
-          Continue to dashboard
+          {nextHref === "/onboarding" ? "Continue" : "Continue to dashboard"}
         </Link>
       </div>
     )
@@ -319,6 +375,7 @@ function VerifyEmailBody() {
                 onBlur={() => setFocus((f) => (f === i ? -1 : f))}
                 onChange={(e) => setDigit(i, e.target.value)}
                 onKeyDown={(e) => onKeyDown(i, e)}
+                onPaste={(e) => onPaste(i, e)}
                 className="h-[54px] w-[44px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white text-center text-[22px] font-medium text-[var(--shotiq-color-ink)] outline-none focus:border-[var(--shotiq-color-shotiqOrange)]"
               />
             </React.Fragment>

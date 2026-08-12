@@ -39,40 +39,68 @@ export async function POST(request: NextRequest) {
   const bodyEmail =
     typeof body?.email === "string" ? body.email.trim().toLowerCase() : ""
 
-  const fail = () =>
+  /**
+   * The one answer this route gives to every failure — wrong code, unknown
+   * address, no code outstanding, expired code. Distinguishing them would make
+   * this an account-existence oracle.
+   */
+  const reject = () =>
     NextResponse.json(
       { success: false, error: "That code is incorrect or has expired." },
       { status: 400 }
     )
 
-  if (code.length !== EMAIL_CODE_LENGTH) return fail()
+  // A submission that is not six digits cannot be a guess at a six-digit code,
+  // so it is refused without spending anything.
+  if (code.length !== EMAIL_CODE_LENGTH) return reject()
 
   const session = await getSessionUser(request)
 
-  // 10 attempts a minute PER ACCOUNT. A million-wide space at that rate is ~95
-  // years to a 50% chance on one live 10-minute code, and the code is
-  // single-use — that arithmetic is unchanged by the key, because 10/min
-  // against one account is 10/min either way.
+  // THE LIMIT COUNTS WRONG GUESSES, AND A CORRECT CODE IS NEVER REFUSED.
   //
-  // What the key changes is who else is affected. Keyed on the client alone it
-  // was keyed on nothing: `request.ip` is undefined under `next start` and the
-  // default trusted-proxy depth is 0, so every caller in the world hashed to
-  // 'unknown' and shared one 10/min budget. Measured: an attacker submitting 10
-  // junk codes at addresses that do not exist made a real player's VALID code
-  // return 429 with `email_verified` still NULL; after the window that same code
-  // returned 200. Ten requests a minute, unauthenticated, from anywhere, denied
-  // this screen's only action to every user of the product.
+  // This is the third shape this limiter has had, and the first two both denied
+  // the screen's only action to a real player:
   //
-  // The limiter also moved BELOW the body parse so the subject exists to key on.
-  // A caller who names no account cannot succeed here anyway, so it gets its own
-  // bucket rather than sharing one with the callers who can.
-  const { response: limited } = checkRateLimit(request, {
+  //   keyed on the client   every caller resolved to 'unknown', so ten junk
+  //                         submissions from anywhere locked out EVERYONE
+  //   keyed on the account  ten junk submissions NAMING a victim locked out
+  //                         that victim, measured: their correct code returned
+  //                         429 with email_verified still NULL, then 200 after
+  //                         the window
+  //
+  // Narrowing the key made the attack precise instead of removing it, because
+  // the account is the thing being attacked. The lever that actually closes it
+  // is not the key but WHAT IS COUNTED: an attacker can only spend a budget by
+  // guessing WRONG, so the budget is spent on failures only and a correct code
+  // is honoured whatever the counter says.
+  //
+  // The brute-force arithmetic is unchanged, which is the point — a wrong guess
+  // still costs a slot, so sustained guessing is still capped at 10/min against
+  // one account, ~95 years to a 50% chance on one live 10-minute single-use code
+  // in a million-wide space. The only request this no longer blocks is one that
+  // already knows the answer, and an attacker who knows the answer has not been
+  // slowed down by a rate limit.
+  //
+  // Cost, stated: an attacker can still force one indexed lookup per request.
+  // That is ordinary endpoint load, not a lockout, and it is the price of being
+  // able to tell a right code from a wrong one before deciding to charge for it.
+  const failureLimit = {
     bucket: "verify-email-code",
     limit: 10,
     windowMs: 60_000,
     subject: session ? `u:${session.userId}` : bodyEmail || "anon",
-  })
-  if (limited) return limited
+  } as const
+
+  /**
+   * Refuse this attempt AND spend one of the account's ten slots. Once they are
+   * gone this returns 429 instead of 400 — but only ever on a path that has
+   * already established the submission is wrong, so a correct code cannot reach
+   * it and cannot be locked out.
+   */
+  const fail = () => {
+    const { response: limited } = checkRateLimit(request, failureLimit)
+    return limited ?? reject()
+  }
 
   const user = session
     ? await prisma.user.findUnique({

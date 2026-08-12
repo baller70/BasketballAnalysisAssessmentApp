@@ -125,10 +125,33 @@ export default function SignUpPage() {
         try {
           sessionStorage.setItem("shotiq-pending-email", formData.email)
           sessionStorage.setItem("shotiq-verify-sent-at", String(Date.now()))
+          // Where /verify-email sends the player once they are done. A new
+          // account still owes onboarding, which is where this screen used to
+          // go directly.
+          sessionStorage.setItem("shotiq-verify-next", "/onboarding")
         } catch { /* opaque origin — /verify-email falls back to the session */ }
+        // AND THE HANDOFF ABOVE NOW HAS SOMEWHERE TO LAND.
+        //
+        // This wrote both of those keys "read by src/app/verify-email/page.tsx"
+        // and then navigated to /onboarding, which reads neither. The result was
+        // that /verify-email had NO in-app entry point at all: grepped across
+        // every .ts/.tsx, the only references outside the route's own files are
+        // middleware's allowlist, the API redirects and the mailer. A real
+        // signup landed on /onboarding fully signed in, and the only ways to the
+        // screen were the emailed link or typing the URL.
+        //
+        // The canonical iOS order is 004-create-account then 005-verify-email,
+        // and the two sessionStorage keys above were written for exactly this
+        // handoff, so this restores the designed flow rather than inventing one.
+        // It also makes the countdown real on the one path a player actually
+        // takes: `shotiq-verify-sent-at` is written a line above, so the screen
+        // opens mid-cooldown the way canonical draws it, instead of opening with
+        // "You can resend the code now" and inviting the one action that used to
+        // rotate the code being read.
+        //
         // signUp already awaited the API response, so the httpOnly session
         // cookie is set by the time we get here — navigate immediately, no race.
-        window.location.assign("/onboarding")
+        window.location.assign("/verify-email")
       } else {
         setError(result.error || "Sign up failed")
         setIsSubmitting(false)

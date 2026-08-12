@@ -167,7 +167,11 @@ export function ChevronMark({ n }: { n: 1 | 2 | 3 }) {
 /** lucide `shield-check` with an ORANGE tick on an ink shield — canonical draws
  *  the two strokes in different roles. Measured 73..141 x 1635..1725. */
 export function ShieldMark() {
-  const SHIELD = MARK_BOXES.shield.slice(0, 4)
+  // Destructured rather than sliced: MARK_BOXES entries carry two OPTIONAL
+  // trailing nudge values, so `.slice(0, 4)` widens to (number | undefined)[]
+  // and loses the guarantee that the first four are present.
+  const [sx0, sy0, sw0, sh0] = MARK_BOXES.shield
+  const SHIELD: [number, number, number, number] = [sx0, sy0, sw0, sh0]
   const SHIELD_SW = 3.2 / Math.sqrt((SHIELD[2] / 24) * (SHIELD[3] / 24))
   return (
     <svg viewBox={SHIELD.join(" ")} width="100%" height="100%" fill="none" aria-hidden="true">

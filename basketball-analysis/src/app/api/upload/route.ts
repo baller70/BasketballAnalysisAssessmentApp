@@ -13,12 +13,14 @@ import {
 import { checkRateLimit } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
-  // 20 a minute, ONE BUCKET FOR EVERYONE — `subject: null` is deliberate. This
-  // guards shared storage cost, and the only identifier the route has is a
-  // `userId` read out of the form body with nothing authenticating it; keying on
-  // that would let an attacker rotate it and bypass the limit altogether, which
-  // is worse than sharing one bucket. Cost, as above: one client can exhaust
-  // uploads for everyone until real client identity is configured.
+  // 20 a minute, ONE BUCKET FOR EVERYONE, and a KNOWN HOLE — see the long note
+  // in /api/llm. This route has no session check and no CSRF, and the only
+  // identifier in the request is a `userId` read out of the form body with
+  // nothing authenticating it, so keying on it would let an attacker rotate it
+  // and bypass the limit altogether. Measured consequence of the single bucket:
+  // one anonymous client at 20 requests a minute denies uploads to everyone.
+  // The fix is authentication, which is a product decision recorded in
+  // docs/SCREEN-LEDGER.md, not a different key.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'upload',
     limit: 20,
