@@ -2844,7 +2844,29 @@ in the fixed 393px canvas, so:
 It is reachable by scrolling horizontally — so this is a usability defect, not a
 functional block, and that distinction is worth keeping straight: the control
 can be typed into, it just cannot be SEEN without scrolling on a 320-360pt
-phone. The gate's reflow probe prints `375 SCROLLS 360 SCROLLS 320 SCROLLS —
+phone.
+
+**AND IT IS SEVEN CONTROLS, NOT ONE.** Asking the question the gate never asks —
+enumerate every focusable element whose box leaves the viewport, rather than
+asking whether the DOCUMENT scrolls — gives:
+
+    width  document scrolls   controls clipped
+    393    no                 none
+    375    YES                NONE
+    360    yes                verify-settings +10.9px, verify-code-5 +9.0,
+                              verify-open-mail +6.6, verify-different-email +6.6,
+                              verify-help-1/2/3 +6.7 each
+    320    yes                the same seven, +46 to +51px
+
+Two corrections to what was recorded from the fourth grade. The sixth code box
+is not the only casualty — the settings gear, the primary plate button, the
+"use a different email" button and all three help rows are clipped with it. And
+**375 is clean**: the document scrolls there, but no control is off-screen, so
+the width at which this starts to cost a player anything is 360, not 375.
+
+That second point is the reason the probe has to enumerate rather than count:
+the gate's three SCROLLS lines treat 375 and 320 as the same finding, and they
+are not the same finding. The gate's reflow probe prints `375 SCROLLS 360 SCROLLS 320 SCROLLS —
 matches the recorded class-level state`, which is rule 74's shape: a baseline
 that encodes a known defect as the expected value, and therefore never asks the
 follow-up question. The probe should assert WHICH elements leave the viewport,
