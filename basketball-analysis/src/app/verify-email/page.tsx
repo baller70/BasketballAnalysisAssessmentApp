@@ -48,7 +48,7 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Loader2, ArrowLeft, MailCheck, ShieldCheck, CheckCircle2, ChevronRight, Settings } from "@/components/shotiq/ApprovedLucide"
+import { Loader2, ArrowLeft, MailCheck, ShieldCheck, CheckCircle2, ChevronRight, Settings, Clock, HelpCircle, Pencil } from "@/components/shotiq/ApprovedLucide"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 import { PHONE_CSS } from "./phone-005"
 import {
@@ -486,10 +486,35 @@ function VerifyEmailBody() {
           )}
         </p>
 
+        {/* NO OPACITY ON THE PHONE, and the band metric could not see why.
+            Canonical captures this screen mid-cooldown, and it paints "Resend
+            email" as the DEEPEST orange on the screen — its stroke cores reach
+            green 11. The render reached only 121, because `disabled:opacity-70`
+            fires whenever the countdown is running, which is exactly the state
+            canonical is in. Proved without reference to canonical's own
+            compression: every other orange run in the render bottoms out at
+            green 66 (resendVal 0:42, the box-4 border, the wordmark IQ, the
+            caret) and this one alone stops at 121, which is
+            round(0.7*66 + 0.3*254) = 122 to within a unit — the dim itself,
+            measured.
+
+            `resendLink` scores 3.3067 in the band table despite being visibly
+            the wrong colour, because ~1,700 ink px are diluted across a 56x853
+            window; it is the one hot run with no diagnostic sub-window, which
+            is rule 57's case and the reason a band figure is not a colour
+            check.
+
+            The control stays `disabled` — it is still unfocusable, still
+            unclickable, and still announced as disabled — so only the paint
+            changes, and the countdown beside it is what tells a sighted player
+            to wait. The desktop dim is LEFT ALONE: desktop has no canonical for
+            this screen, so there is nothing there to disagree with, and the
+            standing ruling is to scope a colour disagreement to the screen that
+            measured it rather than widen it. */}
         <div data-s5-contents className="mt-[10px] flex justify-center">
           <button type="button" onClick={resendEmail} data-testid="verify-resend"
                   data-s5="resendLinkBox" disabled={cooldown > 0 || resend === "sending"}
-                  className="flex items-center gap-2 text-[15px] font-medium text-[var(--shotiq-color-shotiqOrange)] underline underline-offset-4 disabled:opacity-70 md:disabled:opacity-50">
+                  className="flex items-center gap-2 text-[15px] font-medium text-[var(--shotiq-color-shotiqOrange)] underline underline-offset-4 md:disabled:opacity-50">
             {resend === "sending" && <Loader2 className="h-[15px] w-[15px] animate-spin" />}
             <span data-s5="resendLink">
               {resend === "sent" ? "Email sent" : resend === "error" ? "Try again" : "Resend email"}
@@ -507,7 +532,12 @@ function VerifyEmailBody() {
 
         <Link href="/signup" data-s5="diffBtn" data-testid="verify-different-email"
               className="mt-[12px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-ink)] bg-white text-[15px]">
+          {/* The desktop sibling was MISSING, so above 768px this control had
+              no icon at all while the phone and canonical both carry an
+              envelope-and-pencil. Every other icon pair on this screen has
+              both halves; this one had only the `md:hidden` half. */}
           <span data-s5="diffMark" data-s5-mark className="md:hidden"><EnvelopePencilMark /></span>
+          <Pencil data-s5-off className="hidden h-[18px] w-[18px] md:inline" />
           <span data-s5="diffLab">Use a different email</span>
         </Link>
 
@@ -515,12 +545,31 @@ function VerifyEmailBody() {
         <div data-s5-contents className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
           <div data-s5="didnt"
                className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
-            DIDN&apos;T GET THE EMAIL?
+            {/* U+2019, not U+0027. Canonical sets a typographic apostrophe and
+                the straight quote is NARROWER: column-run profiles put the
+                glyph at 3px against canonical's 4px, and because every later
+                glyph is pushed by the deficit the run drifts to +8/+10px by the
+                "?", widening the band from 274 to 283. `help2` on the next row
+                already used &ldquo;/&rdquo; correctly, so this was one row
+                disagreeing with its neighbour. */}
+            DIDN&rsquo;T GET THE EMAIL?
           </div>
           <div data-s5-contents className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
             {/* Each row is a real destination, because a chevron promises one.
-                Spam and delivery-delay guidance lives in the guide's own
-                anchors; support is the address on the marketing site. */}
+                THIS COMMENT USED TO BE FALSE, which is worse than the defect it
+                was describing: it said spam and delivery-delay guidance "lives
+                in the guide's own anchors", and nothing of the kind existed.
+                Measured on the served page — /guide returned 200, its ids were
+                exactly guide-capture, guide-dos-donts, guide-form, guide-ready
+                and guide-start, and `spam`, `inbox`, `verif`, `promotion` and
+                `email` each appeared ZERO times in its extracted text. Both
+                rows landed a player at the top of a shot-capture guide.
+
+                The rows were NOT repointed to something that exists, because
+                the topic they name is the one a player standing on this screen
+                needs. The destinations were built instead: `#email-spam` and
+                `#email-delay` are now two real blocks in /guide's own idiom,
+                and the guide's jump nav lists the section. */}
             <Link href="/guide#email-spam" data-s5="helpRow1" data-testid="verify-help-1"
                   className="flex items-center gap-[10px] py-[9px] text-[13px]">
               <span data-s5="helpMark1" data-s5-mark className="md:hidden"><MailCheckMark /></span>
@@ -531,8 +580,15 @@ function VerifyEmailBody() {
             </Link>
             <Link href="/guide#email-delay" data-s5="helpRow2" data-testid="verify-help-2"
                   className="flex items-center gap-[10px] py-[9px] text-[13px]">
+              {/* Clock, not a second MailCheck. All three desktop icons here
+                  used to resolve to only two distinct assets — rows 1 and 2
+                  were the same mail-check, and row 3 was the ShieldCheck that
+                  also draws directly below it — so three semantically distinct
+                  rows rendered as two repeated pictures. The phone marks were
+                  already distinct (MailCheckMark / MailClockMark / HelpMark);
+                  the desktop halves now mirror them. */}
               <span data-s5="helpMark2" data-s5-mark className="md:hidden"><MailClockMark /></span>
-              <MailCheck data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <Clock data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
               <span data-s5="help2" className="flex-1">Wait a few minutes and tap &ldquo;Resend email&rdquo;</span>
               <span data-s5="chev2" data-s5-mark className="md:hidden"><ChevronMark n={2} /></span>
               <ChevronRight data-s5-off className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
@@ -541,7 +597,7 @@ function VerifyEmailBody() {
                data-testid="verify-help-3"
                className="flex items-center gap-[10px] py-[9px] text-[13px]">
               <span data-s5="helpMark3" data-s5-mark className="md:hidden"><HelpMark /></span>
-              <ShieldCheck data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
+              <HelpCircle data-s5-off className="hidden h-[16px] w-[16px] text-[var(--shotiq-color-graphite)] md:inline" />
               <span data-s5="help3" className="flex-1">Need help? Contact support</span>
               <span data-s5="chev3" data-s5-mark className="md:hidden"><ChevronMark n={3} /></span>
               <ChevronRight data-s5-off className="hidden h-[13px] w-[13px] text-[var(--shotiq-color-muted)] md:inline" />
@@ -555,7 +611,7 @@ function VerifyEmailBody() {
           <div data-s5-contents>
             <div data-s5="safe1" className="text-[13px] font-semibold">Your account is safe</div>
             <div data-s5="safe2" className="text-[11px] text-[var(--shotiq-color-graphite)]">
-              We&apos;ll never share your email or data.
+              We&rsquo;ll never share your email or data. {/* U+2019, see DIDN&rsquo;T above */}
             </div>
           </div>
         </div>
