@@ -2302,6 +2302,75 @@ string rolling over at midnight.
     the gate claim was wrong. Start servers with `NODE_ENV=production` and treat
     a startup warning as a finding, not as noise.
 
+### GRADE 10 (B): what it found, including two things it caught me claiming
+
+Grade 10 re-captured from the live dist at the START and the END of its run and
+got byte-identical images to the committed render, reproducing 5.6566 / 104645,
+so its numbers and mine are the same numbers. Grades now stand at B, B, B+, B,
+B, B, B, B — eight, and the last four all name the same two areas.
+
+WHAT IT CORRECTED IN MY WORK, both of which matter more than the pixels:
+
+  * MY ROUND-14 DESKTOP-ICON FIX DID NOT WORK, and the comment I wrote said it
+    did. Measured off the served DOM at 1440x900, seven icons resolve to FOUR
+    files and one file carries three meanings — "Open email app", "Check your
+    spam folder" and "Your account is safe" are one picture. Changing the lucide
+    name imported cannot fix it: `ApprovedLucide` maps a name to a CONCEPT
+    STRING and `approvedAssetForConcept` keyword-matches that onto a small
+    raster library, so `MailCheck` ("Success complete") and `ShieldCheck`
+    ("Privacy success") both hit the `success` branch, while `Clock`
+    ("Stopwatch time") and `Pencil` ("Edit coaching note") match nothing and
+    share the default. This is the SAME defect class I wrote up as grade 9's D1
+    — a comment asserting a state that measurement denies — committed by me one
+    round after naming it. NEEDS KEVIN: closing it means adding approved assets,
+    and `Glyphs.tsx` explicitly forbids reusing a shape for a second concept.
+
+  * A `git add -A` swept the grader's own scratch into commit `3e0e686` — 13
+    throwaway probe scripts committed as project source, which the grader
+    noticed and reported. Untracked in `4f2d1a1`; `.grade/` now joins the
+    `.g*tmp/` convention .gitignore already had for exactly this.
+
+WHAT IT MEASURED THAT IS NEW AND ACTIONABLE:
+
+  * `EnvelopePencilMark` OVERPRINTS. Connected components (8-connectivity) in
+    (1075..1142, 240..320): canonical **2** at every threshold (629/260 at 140,
+    702/303 at 180, 829/329 at 210), render **1** (902, 959, 1001). The pencil's
+    ferrule band is missing and its tip runs into the envelope. `diffMark` is the
+    worst diagnostic sub-window on the screen at 32.0538.
+  * `MailClockMark`'s clock is 20% oversized, by least-squares circle fit to ~55
+    outer-arc points: canonical centre (109.76, 1448.57) outer r **12.98**,
+    render (106.99, 1446.63) outer r **15.58**. Envelope 3 px wide too. This is
+    the concrete version of what I recorded as "identify the shape" below — the
+    topology differs because the oversized ring MERGES with the envelope
+    (canonical 3 components, render 2), not because it is a different icon.
+    An integer shift search returns (0,0) gain 0.000, so no translation exists.
+  * The shield's orange tick is +2 px in both axes and sits low (top +2,
+    bottom +4) while the shield OUTLINE lands exactly — internal geometry.
+  * A LONG ADDRESS IS HARD-CLIPPED with no ellipsis, on the path the product's
+    own mail creates: `lede2` runs to column 852 of 853 and is cut mid-word by
+    `.s5{overflow:hidden}`. `verificationEmail.ts` builds that URL, so a player
+    with a long address sees their address sliced off.
+  * Tap targets under 44 pt: back 23.7x23.7, settings 24.9x23.5, resend
+    88.5x20.3 — the last because `hitbox(..., 44)` is DEVICE px, 20.3 pt.
+    FIXED this round; they move no canonical pixel.
+  * `resendLab` is placed by a left anchor `x` tuned to the mid-countdown
+    string, so in the live zero-cooldown state its longer label sits 28.2 px
+    right of centre.
+
+A TRAP IT FLAGGED AND DID NOT FALL INTO, which is worth more than a fix: the
+biggest single shift-search gain on the screen is `help2` at (0,-3) worth
+**7.022**, and taking it would be paper-over — its ink edges move OPPOSITELY
+(L +1, R -4), which is a size error. Same on `plateLab` (L -2, R +2, gain
+3.092), `digit3` (gain 3.260) and `digit1` (gain 2.457). Four more instances of
+rule 74b, found by a grader rather than by me.
+
+It also raised a graphite-token defect from eroded cores (+16 to +21 across four
+runs, surviving thresholds 130-210) and then REFUTED it itself with a built
+sweep — `#3B3D47/#383A44/#34363F/#303239` giving 5.6757/5.6834/5.6961/5.7120,
+monotonically worse — after finding canonical undershoots 8 units one pixel
+inside a hard step and reads thin orange strokes 18 units dark. Second grader to
+raise and retract this; the token is right.
+
 ### OPEN, 005: helpIcon2 is probably not the icon canonical drew
 
 `helpIcon2` is the hottest band on 005 at **28.0615**, and grade 9 read it as
