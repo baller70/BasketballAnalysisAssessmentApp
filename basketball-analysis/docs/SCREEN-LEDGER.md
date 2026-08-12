@@ -2758,11 +2758,25 @@ the right. `margin:0 auto` is the whole fix, and it is inside the media query so
 the desktop tree cannot move.
 
 CLASS-LEVEL: `phone-003.ts` and `phone-004.ts` carry the identical construction,
-so 003, 004 and 005 all have it. Found on 005 by the fourth grader; not fixed in
-round 5 because the fix belongs to all three screens at once and 004 is DONE at
-A — changing it needs a re-capture of 003 and 004 to confirm the graded numbers
-are untouched (they should be exactly, since capture is at 393 where the margin
-resolves to 0 either way, and that PREDICTION is the thing to verify).
+so 003, 004 and 005 all have it. Found on 005 by the fourth grader.
+
+**THE PREDICTION WAS TESTED BEFORE THE CHANGE, AND IT HOLDS.** The reason not to
+fix this casually is that 003 and 004 are DONE at A, so the fix must be provably
+invisible at the capture width. Injected at runtime — `margin-left/right:auto`
+inside the same media query, applied to the live served build rather than to the
+source — the `.s3`/`.s4`/`.s5` box was read before and after on both platforms'
+widths:
+
+    screen   at 393 (capture width)        at 430 (a real phone)
+    003      [0,393] -> [0,393] IDENTICAL  [0,393] -> [18.5,393]  centres
+    004      [0,393] -> [0,393] IDENTICAL  [0,393] -> [18.5,393]  centres
+    005      [0,393] -> [0,393] IDENTICAL  [0,393] -> [18.5,393]  centres
+
+18.5 is exactly (430-393)/2. So the change is a no-op at the width every graded
+number was measured at, and does what it is meant to do everywhere else — the
+graded captures of 003, 004 and 005 cannot move. Still to do: apply it to the
+three recipes and CONFIRM by re-capture rather than by this injection, because a
+runtime injection and a built stylesheet are two different artefacts (rule 74).
 
 ### OPEN, CLASS-LEVEL: every phone screen scrolls horizontally below 393pt
 
