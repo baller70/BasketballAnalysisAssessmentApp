@@ -355,7 +355,23 @@ export const RUNS: Record<string, Run> = {
   /* Cap 0.963 short, advance 1.014 over: size 15.9 -> 16.5 with scaleX
      0.96 -> 0.912 to hold the advance the size change would have widened. */
   /* 400 -> 370 on an ink-mass reading of 1.0839: 15.2728 -> 14.1711. Kept. */
-  resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 370, scale: 0.870, ls: -0.004,
+  /* RULE 32 JOINT SOLVE, not a nudge. The ink-density audit put this run's cap
+     at 1.0800 and its advance at 1.0191 — 8% too tall AND 2% too wide, which no
+     single parameter expresses. Size 16.5 -> 15.28 lands the cap; at that size
+     the advance would fall to 1.0191/1.0800 = 0.9436, so scaleX 0.870 -> 0.922
+     puts it back. Both derived, then swept as a 3x3 grid with a rule-40 control
+     reproducing 12.6808 / 6.0878 exactly:
+
+       s15.28_x0.922  10.7329  cap 1.0000  adv 0.9952   <- argmin, both axes
+       s15.45_x0.922  11.6209  cap 1.0000  adv 1.0096
+       s15.10_x0.945  11.6824  cap 0.9600  adv 1.0096
+       s15.28_x0.900  14.0986  cap 1.0000  adv 0.9761
+       s15.28_x0.945  15.2244  cap 1.0000  adv 1.0239
+
+     Bracketed on size (15.10 and 15.45 both worse at the winning scale) and on
+     scale (0.900 and 0.945 both worse at the winning size), and the winner is
+     the only candidate that lands BOTH ratios inside half a percent. */
+  resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.922, ls: -0.004,
                colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 0.3455 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
@@ -623,7 +639,19 @@ export const MARK_BOXES: Record<
 
 export const PHONE_CSS = `@media (max-width: 767.98px){
 .s5{${COLOURS.replace(/\s+/g, "")}position:relative;width:393px;height:852px;min-height:852px;
-  overflow:hidden;background:var(--shotiq-color-paper);padding:0;margin:0}
+  overflow:hidden;background:var(--shotiq-color-paper);padding:0;
+  /* margin:0 -> 0 auto. CLASS-LEVEL: the fixed 393px canvas was pinned to the
+     LEFT edge on any phone wider than the design width, because this margin
+     defeated the wrapper's own mx-auto. Measured on the served build: at 414,
+     430, 480, 600 and 767 the box sat at 0..393 with EVERY pixel of slack on
+     the right — 37px of blank down the side of an iPhone 15 Pro Max.
+     De-risked before it was applied, because 003 and 004 are DONE at A and a
+     change to their recipe has to be provably invisible at the width their
+     numbers were measured at: injected into the live build, at 393 the box is
+     IDENTICAL on all three screens and at 430 all three centre to exactly
+     (430-393)/2 = 18.5. Confirmed by re-capture after the change, which is
+     the artefact the numbers actually come from (rule 74). */
+  margin:0 auto}
 .s5 [data-s5-contents]{display:contents}
 .s5 [data-s5-off]{display:none!important}
 .s5 [data-s5-iq]{color:var(--s5-orange)}

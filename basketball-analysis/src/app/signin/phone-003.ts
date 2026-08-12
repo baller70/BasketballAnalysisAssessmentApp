@@ -531,7 +531,19 @@ function hitbox(name: string, y: number, h: number) {
 
 export const PHONE_CSS = `@media (max-width: 767.98px){
 .s3{${COLOURS.replace(/\s+/g, "")}position:relative;width:393px;height:852px;min-height:852px;
-  overflow:hidden;background:var(--shotiq-color-paper);padding:0;margin:0}
+  overflow:hidden;background:var(--shotiq-color-paper);padding:0;
+  /* margin:0 -> 0 auto. CLASS-LEVEL: the fixed 393px canvas was pinned to the
+     LEFT edge on any phone wider than the design width, because this margin
+     defeated the wrapper's own mx-auto. Measured on the served build: at 414,
+     430, 480, 600 and 767 the box sat at 0..393 with EVERY pixel of slack on
+     the right — 37px of blank down the side of an iPhone 15 Pro Max.
+     De-risked before it was applied, because 003 and 004 are DONE at A and a
+     change to their recipe has to be provably invisible at the width their
+     numbers were measured at: injected into the live build, at 393 the box is
+     IDENTICAL on all three screens and at 430 all three centre to exactly
+     (430-393)/2 = 18.5. Confirmed by re-capture after the change, which is
+     the artefact the numbers actually come from (rule 74). */
+  margin:0 auto}
 .s3 [data-s3-contents]{display:contents}
 .s3 [data-s3-off]{display:none!important}
 .s3 [data-s3-iq]{color:var(--s3-orange-text)}
