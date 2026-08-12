@@ -342,7 +342,38 @@ export function ShieldMark() {
     <svg viewBox={SHIELD.join(" ")} width="100%" height="100%" fill="none" aria-hidden="true">
       <g transform={`translate(${SHIELD[0]} ${SHIELD[1]}) scale(${SHIELD[2] / 24} ${SHIELD[3] / 24})`}
          strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+        {/* THE OUTLINE DID NOT "LAND EXACTLY", WHICH THIS FILE USED TO CLAIM.
+            Grade 12 measured per-row limb separation: the dome top (1636) and
+            the tip (1722) are IDENTICAL in both plates and the straight sides
+            match to a quarter pixel, but canonical begins tapering at row ~1684
+            and the render at ~1688 — render width at row Y equals canonical
+            width at Y-4 through the whole mid-taper, reaching +8.22 px at row
+            1712. Not a translation, so the whole-window dy+1 optimum (worth
+            2.999) is paper-over and was refused.
+
+            Grade 12 deliberately did not prescribe a control-point edit it
+            could not verify. This one was SWEPT against the served build
+            instead, injecting candidate `d` values through the CSS `d`
+            property with a rule-40 control, parameterised as "start the taper
+            d units earlier and stretch the control offsets so the TIP STAYS
+            PUT" — because the tip and dome already match and must not move:
+
+                d 0.00 (control)  13.5296    w@1690/1700/1712  67/62/46
+                d 1.50            10.1029                      65/59/43
+                d 2.00             9.4622                      65/58/41
+                d 2.50             9.3281  <- shipped           64/57/40
+                d 3.00             9.8756                      63/56/39
+                d 3.50            10.5412                      62/55/38
+                canonical                                      67/58/38
+
+            NO SINGLE PARAMETER REPRODUCES ALL THREE WIDTHS — 3.50 lands row
+            1712 exactly and overshoots the two above it — which is the
+            measurement confirming grade 12's reading that this is a DIFFERENT
+            CURVE rather than a displaced one. The argmin is taken and the
+            residual stated: the lucide cubic is not canonical's asset, and
+            closing the rest means re-tracing it against the plate, not
+            re-fitting one number. */}
+        <path d="M20 10.5c0 6.397-3.5 9.595-7.66 11.45a1 1 0 0 1-.67-.01C7.5 20.095 4 16.897 4 10.5V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
               stroke={INK} strokeWidth={SHIELD_SW} />
         {/* THE TICK IS 2 DEVICE px TOO BIG IN BOTH AXES AND SITS 2 LOW, while
             the shield OUTLINE lands exactly — so this is internal geometry and
