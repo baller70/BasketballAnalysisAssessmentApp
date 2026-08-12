@@ -258,7 +258,26 @@ export function MailClockMark() {
           The hands move with the dial: their pivot is the centre, so the same
           delta applies and the 3-unit/1.4-unit arms scale by 4.33/5.5. */}
       <circle cx="18.74" cy="18.37" r="4.33" />
-      <path d="M18.74 16.07v2.36l1.57 1.1" />
+      {/* THE HANDS ARE 2 ROWS TOO TALL AND THEIR WIDTH IS ALREADY EXACT.
+          Components at threshold 140, measured after the envelope narrowing so
+          the two changes are not confounded:
+
+              canonical  hands 36 px  10x7  rows 43..52  cols 68..74
+              render     hands 41 px  12x7  rows 42..53  cols 69..75
+
+          One row over at each end, so vertical only — shrinking the shape
+          uniformly would break a width that is right, which is what round 20
+          did to four boxes at once. The hands span 16.07..19.53 = 3.46 units
+          (v-arm 2.36 plus the horizontal arm's dy 1.1); the target is
+          3.46 x 10/12 = 2.88 held on the same midpoint 17.80, so the span
+          becomes 16.36..19.24 and the two segments take the reduction
+          proportionally. `dx` is deliberately unchanged at 1.57.
+
+          THE 1 px COLUMN OFFSET IS NOT TAKEN. Both edges are +1, which reads as
+          a translation, but rule 90 says a 1 px extent delta is a hypothesis
+          rather than evidence — and this mark has already cost one revert for
+          exactly that. It stays measured and unmoved. */}
+      <path d="M18.74 16.36v1.96l1.57 0.92" />
     </Icon>
   )
 }
