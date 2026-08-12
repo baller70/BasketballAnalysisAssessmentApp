@@ -1,37 +1,37 @@
-whole screen   mean|d| 3.6956   max 255   n_over8 76152
+whole screen   mean|d| 3.1058   max 255   n_over8 73328
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
-lede1         13.8831    255      6700
-display       12.7612    255     12748
-lede2          7.2253    248      3995
-terms          6.8756    255      5266
-labConfirm     6.3993    255      3403
-oneacct        6.3291    255      4362
-checkbox       5.2033     84       734
-eyePass        5.0992    211       716
-eyeConf        5.0148    211       645
-monogram       4.9232    255      1393
-fieldEmail     4.7174    255      5237
-plate          4.0960    255     11259
-wordmark       4.0584    255      2882
-labFirst       3.6701    253      1975
-labPass        3.5308    255      2057
-helpPass       3.4332    184      2301
-labLast        3.3847    255      1782
-signin         3.0047    255      2344
-labEmail       2.2922    255      1148
-fieldFirst     2.0065    255      1274
-fieldConf      1.8667    166      1323
-fieldPass      1.7712    169      1298
-orrow          1.7028    198       416
-fieldLast      1.6517    255       872
+lede1         13.3703    254      6514
+display       12.3272    255     11939
+lede2          6.6738    247      3863
+terms          6.3632    255      5071
+labConfirm     5.7730    255      3348
+oneacct        5.7698    254      4232
+checkbox       4.6846     83       658
+eyePass        4.3232    211       655
+fieldEmail     4.1197    254      5090
+eyeConf        3.9912    211       595
+plate          3.9596    255     11210
+monogram       3.7996    166      1245
+wordmark       3.5063    255      2748
+labFirst       3.0385    253      1874
+labPass        2.8825    255      1962
+helpPass       2.8307    184      2236
+labLast        2.7634    254      1725
+signin         2.3847    255      2250
+labEmail       1.6143    255      1086
+fieldFirst     1.3884    254      1227
+fieldConf      1.1362    103      1277
+orrow          1.1235    197       407
+fieldPass      1.1196    106      1265
+fieldLast      0.9765    254       842
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's
 area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
-signinLab    21.6707    255      1821
+signinLab    21.1574    255      1773
 createLab    13.8227    255      3627
