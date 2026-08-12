@@ -1520,6 +1520,54 @@ string rolling over at midnight.
   them and breaking another metric.
 - Do not commit a tree that fails `tsc` or a screen that breaks its size invariant.
 
+### DONE: one line in the shell was scrolling 42 of the 72 phone screens
+
+Rule 56 gave `capture-ios.mjs` a vertical arm on the argument that 004 was clean
+and the other 71 had never been checked. Run across all 72 against a production
+build, it came back:
+
+    captured   72 / 72        wider>393  0        step fails 0
+    scrolls    42 — every one of them scrollHeight 900 against innerHeight 852
+
+Forty-two screens, one value, and it is the same value and the same defect
+`/signin` and `/signup` were each fixed for on their own page. The cause is one
+line neither of those fixes went back to: `ShotIQShell.tsx` carried
+`style={{ minHeight: 900 }}`, ungated, on the shell both pages were copied from.
+900 is the DESKTOP canonical height. As an inline style it applied at every
+width, including the 393x852 phone, where it pushed the document 48pt past the
+viewport and left a blank band below the fold.
+
+**Fixed as a `md:min-h-[900px]` className**, exactly as those two pages were, and
+as a className rather than an inline style for precisely the reason the bug
+existed: an inline style beats the media query and cannot be scoped.
+
+Verified, not argued, in both directions:
+
+  - **Phone.** Rebuilt, served, re-swept all 72 with the same harness:
+    **`scrolls 0`**, `wider>393 0`, 72/72 captured, no step failures.
+  - **Desktop.** The standing ruling says the 20 B+ screens must not regress,
+    and "md is 768px and desktop is 1440 so it still applies" is an argument.
+    Measured instead, old shell against new at 1440x900 on three routes that
+    actually render it — `/analyze`, `/profile`, `/settings` — computed
+    `min-height` **900px**, element height **900**, document `scrollHeight`
+    **900**, IDENTICAL on all three. The only difference is that the `style`
+    attribute is now empty where it read `min-height:900px`.
+
+Two things worth keeping from this:
+
+**The instance is not the class.** 003 and 004 were each diagnosed correctly,
+fixed correctly, and verified correctly, and both fixes stopped at the page they
+were found on. The shared component that produced the bug went untouched through
+both, and 42 screens kept it. When a defect is found in a page that was copied
+from something, fix the something.
+
+**The guard is worth more than the screen it was written for.** Rule 56 was a
+two-line diagnostic added because a guard with one axis checks one axis. Its
+first full run paid for itself 42 times over. It was also deliberately REPORTED
+rather than THROWN, and that is why it could be switched on for all 72 at once —
+a throw would have had to be argued screen by screen before it could ship, and
+these 42 would still be scrolling.
+
 ### 004's desktop guard, discharged by blast radius rather than by pixels
 
 The cycle requires confirming the desktop set did not regress. For 004 that was
