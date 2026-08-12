@@ -2500,6 +2500,36 @@ NOT raised, and `/api/auth/verify-email-code` shows no oracle even at
 concurrency 60 (|z| <= 0.10), so its work-equalisation genuinely holds where
 forgot-password's floor does not.
 
+### OPEN, 005: helpIcon2's clock hands, solved but not yet built
+
+Measured on the committed render, components at threshold 140 — the estimator
+rule 90 says to prefer, since these are interior features and not an envelope:
+
+                canonical                     render
+    envelope    625 px  41x56  rows 11..51    615 px  42x58  rows 11..52
+    ring        231 px  26x26  rows 36..61    230 px  25x27  rows 37..61
+    hands        36 px  10x7   rows 43..52     41 px  12x7   rows 42..53
+
+The RING is essentially exact — 230 against 231 px — which is round 17's fix
+holding under a second measurement. The HANDS are 2 rows too tall, symmetrically
+(one row over at each end), and their WIDTH IS ALREADY EXACT at 7. So this is a
+vertical-only correction and shrinking the shape uniformly would break an axis
+that is right, which is the same mistake round 20 made on four boxes at once.
+
+Solved in viewBox units at k = 2.2257 device px per unit. The hands span
+16.07..19.53 = 3.46 units (v-arm 2.36 plus the horizontal arm's dy 1.1); the
+target is 3.46 x 10/12 = 2.88, held on the same midpoint 17.80, so the span
+becomes 16.36..19.24 and the two segments take the reduction proportionally.
+The columns are 1 device px right (69..75 against 68..74), which is 0.45 units:
+
+    M18.74 16.07 v2.36 l1.57 1.1   ->   M18.29 16.36 v1.96 l1.57 0.92
+
+with `dx` deliberately unchanged at 1.57. NOT BUILT — it was solved while an
+independent grade was running against the current dist, and moving the artefact
+under a grader is what rule 86 exists to prevent. Worth roughly the hands' own
+share of a 1344 px band, so it is small; it is recorded solved so the next round
+spends a build on it rather than a measurement.
+
 ### OPEN, 005: the long-address clip cannot be fixed with an ellipsis
 
 Grade 10 found that a long address is hard-clipped with no ellipsis on the path
