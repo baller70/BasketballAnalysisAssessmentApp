@@ -103,8 +103,7 @@ export default function SignUpPage() {
   return (
     <div
       data-testid="screen-desktop-web-create-account"
-      className="s4 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
-      style={{ minHeight: 900 }}
+      className="s4 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px]"
     >
       <style dangerouslySetInnerHTML={{ __html: PHONE_CSS }} />
       <Marks004 agreed={agreed} />

@@ -268,9 +268,9 @@ export const RUNS: Record<string, Run> = {
      the recipe's `top` values were originally read off each line's whole-ink
      top, and line 2's tallest ink is an ascender where line 1's is a capital.
      Band mean |d| 21.19 -> 12.77. */
-  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
+  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.946, ws: 0.9, ls: -0.0044,
            colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: 0, ty: 0 },
-  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
+  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.946, ws: 0.9, ls: -0.0044,
            colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
   /* "One account across web and iOS." Band 12.912 -> 6.329, at size 14.464 ->
      12.95 and scaleX 0.9027 -> 0.955.
@@ -341,15 +341,15 @@ export const RUNS: Record<string, Run> = {
                                     result from one parameterisation is a claim
                                     about the parameterisation (rule 52's
                                     corollary), not a refutation of the defect. */
-  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0 },
-  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.61, ls: 0.0500,
+  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.615, ws: 0.6, ls: 0.0500,
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
+  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.605, ws: 0.6, ls: 0.0500,
              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   labEmail: { x: 69.39, top: 931.45, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0 },
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
   labPass: { x: 69.40, top: 1111.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0 },
-  labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
+             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
+  labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.61, ws: 2.4, ls: 0.0500,
                 colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
   /* "Use at least 8 characters." Band 10.949 -> 4.571, size 12.55 -> 10.35 and
      scaleX 0.900 -> 0.945. A clean size error and it said so plainly: advance
@@ -359,7 +359,7 @@ export const RUNS: Record<string, Run> = {
      new value would be invented precision.
      Rule 40 control at the recipe's own values reproduced the built capture's
      10.9493 exactly, which is what licenses reading the rest of the sweep. */
-  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.945, ls: -0.004,
+  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.93, ws: 0.4, ls: -0.004,
               colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: 0, ty: 0 },
   /* "I agree to the Terms of Use and Privacy Policy." Band 20.078 -> 10.666,
      at size 14.46 -> 11.5 and scaleX 0.900 -> 0.95.
@@ -385,7 +385,7 @@ export const RUNS: Record<string, Run> = {
      fidelity number in any case.
      dx 0.5 and 1.5 score identically, as do dy 6.0 and 7.0 — both lattices
      quantise, so these digits are the rung, not a precision claim. */
-  terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.95, ls: -0.004,
+  terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.92, ws: 1.1, ls: -0.004,
            colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0 },
   /* "Create account" — the plate's label, and the display run's signature all
      over again (rule 32: read the two axes together before calling anything a
@@ -414,7 +414,7 @@ export const RUNS: Record<string, Run> = {
   createLab: { x: 353.65, top: 1577.54, size: 20.0, weight: 480, scale: 0.7845, ls: -0.03,
                colour: "#FFFFFF", dx: 1.16, dy: 12.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
-           colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 0, ty: 0 },
+           colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 1.2, ty: 0 },
   /* "Sign in" — the OPPOSITE diagnosis to createLab above, which is why the two
      are solved apart despite having been seeded with identical numbers. Here
      vertical extent came back 0.8913 (per-column) / 0.8905 (bbox) against an
@@ -443,7 +443,7 @@ export const RUNS: Record<string, Run> = {
 
      ls -0.03 -> -0.07 with a 1.50 device px left nudge: 5.1897 -> 3.7430.
      dx is the middle of its rung (2.16, 2.66, 3.16 all score 3.7430). */
-  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.9092, ls: -0.07,
+  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.895, ws: 0.8, ls: -0.07,
                colour: "var(--shotiq-color-ink)", dx: 2.66, dy: 8.52, tx: 0, ty: 0,
                ox: BOX_X, oy: SIGNIN.y },
 }
@@ -644,6 +644,7 @@ const MARKS = `
    NOTE: this comment is inside a template literal - no backticks, no
    dollar-brace. Writing 'left' in backticks here ended the literal and broke
    the build, which is the exact trap the eye-mark comment below warns about. */
+.s4 [data-s4="terms"] a{letter-spacing:-0.02em}
 .s4 [data-s4="eyePass"]{position:absolute;left:${u(713.1)};top:${u(1180.8)};width:${u(43.6)};height:${u(40)};
   padding:0;margin:0;transform:translate(-0.1382px,0.2764px);display:block}
 .s4 [data-s4="eyeConfirm"]{position:absolute;left:${u(713.1)};top:${u(1384.1)};width:${u(43.6)};height:${u(40)};
