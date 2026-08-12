@@ -573,6 +573,22 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
   padding-bottom:0;padding-right:0;margin:0}
 .s3 [data-s3="valuePass"]::placeholder,.s3 [data-s3="valueEmail"]::placeholder{
   color:var(--shotiq-color-muted);letter-spacing:0em}
+/* KEYBOARD FOCUS, and 003 carried this defect too. The two value rules above
+   set 'outline:none' to hold the canonical render and put nothing back, so
+   neither field had any visible focus indicator: tabbed to, ':focus-visible'
+   matched and the page was byte-identical to the unfocused one. WCAG 2.4.7.
+   Found by the seventh grade of 004 — which flagged it as class-level rather
+   than 004's own — and fixed here in the same change, because 003 is graded A
+   and a screen at A should not be sitting on a known failure.
+   ':focus-visible' only, so the pointer path, the canonical captures and every
+   band mean are untouched: canonical is the filled, blurred form and the
+   harness blurs before shooting. Inset shadow rather than outline for the same
+   reason as 004 — the visible border is an SVG rect beneath the input. */
+.s3 [data-s3="valueEmail"]:focus-visible,
+.s3 [data-s3="valuePass"]:focus-visible{
+  outline:none;box-shadow:inset 0 0 0 ${u(3.4)} var(--shotiq-color-ink);border-radius:${u(11.5)}}
+.s3 [data-s3="eye"]:focus-visible{
+  outline:${u(3.4)} solid var(--shotiq-color-ink);outline-offset:${u(1.5)};border-radius:${u(4)}}
 .s3 [data-s3="eye"]{position:absolute;left:${u(729)};top:${u(857)};width:${u(52)};height:${u(41)};
   padding:0;margin:0;transform:none;display:block;color:var(--shotiq-color-ink)}
 .s3 [data-s3="checkbox"]{position:absolute;left:${u(52.60)};top:${u(1015.35)};width:${u(28.4)};

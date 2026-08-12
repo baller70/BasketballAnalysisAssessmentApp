@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — sixty, each learned by getting something wrong
+## Method rules — sixty-two, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1578,6 +1578,50 @@ string rolling over at midnight.
         A completion notification says the process ended. It says nothing about
         what it found. The standing ruling is "do not commit a tree that fails
         `tsc`" — that ruling is only worth anything if somebody looks at `tsc`.
+
+61. **Per-word scatter is not evidence about the compensated pair. Only the 2-D
+    grid decides.** Rule 59 said to test for compensated pairs. The very next
+    round tested them the cheap way — per-word optima, look for a monotone ramp
+    — found none, and wrote "scatter, not a gap" for six runs. Five of the six
+    were wrong. A 25-point (tx, ws) grid with a rule-40 control found interior
+    minima on `lede1`, `lede2`, `helpPass`, `labFirst` and `labLast`, worth
+    0.0339 together.
+
+    The reading was not careless, and that is the point. lede1's per-word optima
+    genuinely scatter — +0.69, 0.00, −1.02, −2.68, −0.03, +0.77, +5.00 device px
+    by coverage centroid — and a shared ramp fits them badly. **The band mean is
+    not the sum of the per-word optima.** A ramp that fits every word poorly can
+    still buy 0.2498 on the band, because the band is scored on pixels and the
+    per-word optima are scored on centroids, and a centroid is not what the
+    estimator sees. `oneacct` and `terms` ARE real 2-D nulls, and only the grid
+    could say which was which.
+
+    Rule 59 said a compensated pair is a KIND of sweep that must be tried. This
+    adds: it must be tried AS a 2-D grid in the shipping rasteriser. A cheap
+    proxy for the grid is a claim about the proxy.
+
+62. **A CSS geometry property is not interchangeable with the SVG attribute it
+    shadows. Drive marks through the attribute.** A sweep moved the OR rules'
+    `height`/`y` through CSS and reported `orrow` 1.7513 → 1.5892. Through the
+    attribute — with `height.baseVal` read back as exactly 1.5, so the injection
+    demonstrably landed — the same geometry delivers only 1.7380 and pushes
+    n_over8 UP by 599. The CSS number was not a measurement of anything that
+    ships, and it was dropped.
+
+    Verified head to head as equivalent, i.e. safe to drive either way: `d`,
+    `rx`, `r`, `stroke-width`, `stroke`, `fill`. The ones that differ are the
+    geometry properties on a rect inside a scaled viewBox.
+
+    This is rule 47 one level deeper than rule 53 reached. Rule 53 says a
+    sub-pixel move needs a composited property; this says a mark's geometry
+    needs the property the renderer actually resolves against the viewBox.
+
+    **And a second trap in the same file:** `[data-s4="eyePass"] circle` matches
+    TWO circles — the desktop lucide `Eye` (r=3) sits in a `display:none` span
+    beside the real pupil. A `querySelector`-based injection hits the invisible
+    one and returns a null that reads exactly like "this lever does nothing".
+    CSS was safe there only because one of the two paints. Count your matches
+    before believing a null (rule 30, in a new disguise).
 
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those

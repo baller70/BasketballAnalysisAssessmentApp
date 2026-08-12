@@ -78,8 +78,16 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  */
 const COLOURS = `
   --shotiq-color-ink:#000000;
-  --s4-field-rule:#DBDCE0;
-  --s4-hair:#D1D2D6;
+  /* Both rule colours were too DARK as well as too heavy, and the pair had
+     to move together — width moves the covered area of a flat stroke, value
+     moves its level, and fitting either alone leaves the other absorbing the
+     error. With Marks004's strokeWidth 1.74 -> 1.66 the five field bands sum
+     12.3829 -> 11.0135 and n_over8 falls by 2081; with 1.70 -> 1.60 the
+     sign-in border goes 3.0637 -> 3.0047.
+     Scoped to this screen, per the standing ruling — these are 004's own
+     tokens, not the global roles that carry the 20 desktop screens. */
+  --s4-field-rule:#DEDFE3;
+  --s4-hair:#D5D6DA;
   --s4-green:#0D9144;
   --s4-orange:#FD3701;
   --s4-red:#D92D20;
@@ -317,10 +325,22 @@ export const RUNS: Record<string, Run> = {
      transfer (rule 47). Nor is the line's +1.25% advance excess reachable:
      per-line scaleX is worse at every value tried (0.942 -> 14.71, 0.938 ->
      15.45, 0.934 -> 18.40, 0.930 -> 19.91 against 14.13). */
-  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.946, ws: 0.9, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: -0.536, ty: 0 },
-  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.946, ws: 0.9, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
+  /* tx -0.536 -> -0.7308 with ws 0.9 -> 1.1192, a compensated pair on top of
+     the plain translation above. 14.1329 -> 13.8831.
+     AND THE PER-WORD READING SAID THERE WAS NOTHING HERE. Line 1's per-word
+     optima genuinely scatter (+0.69, 0.00, -1.02, -2.68, -0.03, +0.77, +5.00
+     device px by coverage centroid) and fit a shared ramp badly, which was
+     read as "scatter, not a gap" and closed the question. The band mean is
+     NOT the sum of per-word optima: a ramp that fits them poorly still buys
+     0.2498. Only the 2-D in-page grid decides. See rule 61. */
+  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.946, ws: 1.1192, ls: -0.0044,
+           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: -0.7308, ty: 0 },
+  /* tx 0 -> -0.0731 with ws 0.9 -> 0.9974. 7.5898 -> 7.2253. Line 2 was on
+     its own optimum for a plain translation and was NOT for the pair — the
+     two facts are about different levers and the first never implied the
+     second. */
+  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.946, ws: 0.9974, ls: -0.0044,
+           colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: -0.0731, ty: 0 },
   /* "One account across web and iOS." Band 12.912 -> 6.329, at size 14.464 ->
      12.95 and scaleX 0.9027 -> 0.955.
      SOLVED ON ITS OWN, AND THAT MATTERED. It started from the same numbers the
@@ -390,16 +410,25 @@ export const RUNS: Record<string, Run> = {
                                     result from one parameterisation is a claim
                                     about the parameterisation (rule 52's
                                     corollary), not a refutation of the defect. */
-  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.615, ws: 0.6, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
-  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.605, ws: 0.6, ls: 0.0500,
-             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+  /* tx 0.7431 -> 1.0053 with ws 0.6 -> 0.1131 — a compensated pair, found on
+     a 25-point (tx, ws) grid rather than by sweeping either knob alone.
+     3.9349 -> 3.6701. */
+  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.615, ws: 0.1131, ls: 0.0500,
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 1.0053, ty: 0.4607 },
+  /* tx 0 -> 0.0762 with ws 0.6 -> 0.4096. 3.4984 -> 3.3847. */
+  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.605, ws: 0.4096, ls: 0.0500,
+             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.0762, ty: 0 },
   labEmail: { x: 69.39, top: 931.45, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
               colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
   labPass: { x: 69.40, top: 1111.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
+  /* tx 0 -> 0.1511. THIS BAND IS RECORDED ABOVE AS ANSWERING TO NEITHER KNOB,
+     on a vertical rung argument that was correct about `ty` and silently
+     generalised to the run. It answers to `tx` alone: 6.6196 -> 6.3993. The
+     ty finding stands — any positive ty still costs 0.0501 — and it never
+     licensed a claim about the horizontal. */
   labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.61, ws: 2.4, ls: 0.0500,
-                colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+                colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.1511, ty: 0 },
   /* "Use at least 8 characters." Band 10.949 -> 4.571, size 12.55 -> 10.35 and
      scaleX 0.900 -> 0.945. A clean size error and it said so plainly: advance
      ratio 0.86882 against vertical ratio 0.86378, both ~13.5% over and within
@@ -416,8 +445,10 @@ export const RUNS: Record<string, Run> = {
      Horizontal is where sub-pixel moves LIVE — Chromium composites x and
      quantises y (rule 53), which is why this one transfers and the vertical
      sibling on labConfirm below does not. */
-  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.93, ws: 0.4, ls: -0.004,
-              colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: -0.30, ty: 0 },
+  /* tx -0.30 -> -0.5477 with ws 0.4 -> 0.4991. 3.6233 -> 3.4332. The single
+     translation above was a real find and it was not the whole find. */
+  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.93, ws: 0.4991, ls: -0.004,
+              colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: -0.5477, ty: 0 },
   /* "I agree to the Terms of Use and Privacy Policy." Band 20.078 -> 10.666,
      at size 14.46 -> 11.5 and scaleX 0.900 -> 0.95.
      SOLVED ON THE BAND MEAN, BECAUSE CAP HEIGHT IS NOT A USABLE ESTIMATOR HERE.
@@ -777,6 +808,28 @@ export const PHONE_CSS = `@media (max-width: 767.98px){
   overflow:hidden;background:var(--shotiq-color-paper);padding:0;margin:0}
 .s4 [data-s4-contents]{display:contents}
 .s4 [data-s4-off]{display:none!important}
+/* KEYBOARD FOCUS. The value and mask rules above set 'outline:none' to keep the
+   filled form byte-identical to canonical, and put nothing back. Five of the
+   six controls on this screen therefore had NO visible focus indicator at all:
+   arriving at each field with a real Tab, ':focus-visible' matched true and the
+   full-page screenshot was BYTE-IDENTICAL to the unfocused page. That is a
+   WCAG 2.4.7 failure, and it is one the recipe introduced — the checkbox, which
+   never had 'outline:none', still shows the UA ring correctly.
+   Restored on ':focus-visible' only, so it is invisible to a pointer user, to
+   the canonical captures and to every band mean: canonical is the FILLED,
+   BLURRED form (rule 17) and the harness blurs before shooting, so no focused
+   control is ever in frame. Drawn INSIDE the field with an inset shadow rather
+   than an outline, because the field border is an SVG rect underneath and an
+   outline would ring the transparent input box instead of the visible border. */
+.s4 [data-s4="valFirst"]:focus-visible,
+.s4 [data-s4="valLast"]:focus-visible,
+.s4 [data-s4="valEmail"]:focus-visible,
+.s4 [data-s4="valPass"]:focus-visible,
+.s4 [data-s4="valConfirm"]:focus-visible{
+  outline:none;box-shadow:inset 0 0 0 ${u(3.4)} var(--s4-orange);border-radius:${u(8.5)}}
+.s4 [data-s4="eyePass"]:focus-visible,
+.s4 [data-s4="eyeConfirm"]:focus-visible{
+  outline:${u(3.4)} solid var(--s4-orange);outline-offset:${u(1.5)};border-radius:${u(4)}}
 .s4 [data-s4-iq]{color:var(--s4-orange)}
 .s4 [data-s4="terms"] a{color:var(--s4-orange);text-decoration:none}
 ${Object.keys(RUNS).map((k) => runCss(k, RUNS[k])).join("\n")}

@@ -41,6 +41,11 @@ export default function SignUpPage() {
     email: "", password: "", confirmPassword: "", firstName: "", lastName: "",
   })
   const [error, setError] = useState("")
+  // Which control the current error belongs to. The error was announced
+  // (role="alert") but nothing linked it to the field at fault, and no field
+  // carried aria-invalid, so a screen-reader user heard the message and then
+  // had to guess which of five inputs it meant.
+  const [invalid, setInvalid] = useState<"email" | "password" | "confirm" | "agree" | "">("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -51,22 +56,38 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setInvalid("")
 
     if (!formData.email || !formData.password) {
       setError("Email and password are required")
+      setInvalid("email")
+      emailRef.current?.focus()
+      return
+    }
+    // The form is noValidate, so `type="email"` never fires and the ONLY email
+    // check was the server's. `not-an-email` therefore cost a POST to
+    // /api/auth/signup and a 400 before the player saw anything, where the
+    // other three rules are enforced without a request. Same shape as the
+    // others now, and the same 400 still backstops it.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError("Enter a valid email address")
+      setInvalid("email")
       emailRef.current?.focus()
       return
     }
     if (formData.password.length < MIN_PASSWORD) {
       setError(`Password must be at least ${MIN_PASSWORD} characters`)
+      setInvalid("password")
       return
     }
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setInvalid("confirm")
       return
     }
     if (!agreed) {
       setError("Please agree to the Terms of Use and Privacy Policy")
+      setInvalid("agree")
       return
     }
 
@@ -184,7 +205,13 @@ export default function SignUpPage() {
             </div>
 
             <label htmlFor="email" data-s4="labEmail" className={`${label} mt-[18px] block`}>EMAIL</label>
+            {/* aria-invalid + aria-describedby on the control the message is
+                actually about. Only ONE can be at fault at a time here, because
+                handleSubmit returns at the first failing rule. */}
             <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signup-email"
+                   required
+                   aria-invalid={invalid === "email" || undefined}
+                   aria-describedby={invalid === "email" ? "signup-error" : undefined}
                    data-s4="valEmail"
                    className={`${field} mt-[8px]`} placeholder="jordan.ellis@example.com"
                    value={formData.email}
@@ -194,6 +221,9 @@ export default function SignUpPage() {
             <div data-s4-contents className="relative mt-[8px]">
               <input id="password" type={showPassword ? "text" : "password"}
                      autoComplete="new-password" data-testid="signup-password"
+                     required
+                     aria-invalid={invalid === "password" || undefined}
+                     aria-describedby={invalid === "password" ? "signup-error" : undefined}
                      data-s4="valPass"
                      className={`${field} pr-[44px]`} placeholder="Create a password"
                      value={formData.password}
@@ -214,6 +244,9 @@ export default function SignUpPage() {
             <div data-s4-contents className="relative mt-[8px]">
               <input id="confirmPassword" type={showConfirm ? "text" : "password"}
                      autoComplete="new-password" data-testid="signup-confirm-password"
+                     required
+                     aria-invalid={invalid === "confirm" || undefined}
+                     aria-describedby={invalid === "confirm" ? "signup-error" : undefined}
                      data-s4="valConfirm"
                      className={`${field} pr-[44px]`} placeholder="Repeat your password"
                      value={formData.confirmPassword}
@@ -239,6 +272,8 @@ export default function SignUpPage() {
             <label data-s4-contents className="mt-[18px] flex items-start gap-[10px] text-[13px] leading-[18px]">
               <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
                      data-testid="signup-agree"
+                     aria-invalid={invalid === "agree" || undefined}
+                     aria-describedby={invalid === "agree" ? "signup-error" : undefined}
                      data-s4="checkbox"
                      className="mt-[2px] h-[15px] w-[15px] rounded-[3px] border border-[var(--shotiq-color-rule)] accent-[var(--shotiq-color-confirmGreen)]" />
               <span data-s4="terms">
@@ -249,7 +284,7 @@ export default function SignUpPage() {
             </label>
 
             {error && (
-              <p role="alert" data-testid="signup-error" data-s4="error"
+              <p role="alert" id="signup-error" data-testid="signup-error" data-s4="error"
                  className="mt-[12px] text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
             )}
 
