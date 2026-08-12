@@ -33,27 +33,109 @@
 import { chromium } from 'playwright'
 
 const PORT = process.env.PORT || 3212
-const ROUTE = process.env.ROUTE || '/signup'
+
+/**
+ * ONE GATE, ONE PROFILE PER SCREEN. The gate was written for 004 with its
+ * attribute prefix, its phrases and its recorded node counts inlined, and 005
+ * is the first screen after it — a second copy of this file would be a second
+ * place for the enumeration to rot, which is the failure rule 70 exists to stop.
+ *
+ * 004's profile is the DEFAULT and every number in it is unchanged, so its
+ * recorded output still means what it meant. Select another with `SCREEN=005`.
+ *
+ * The fields are the same six probes' inputs:
+ *   prefix    the data attribute the screen's runs carry
+ *   route     the page under test
+ *   phrases   text spanning at least one markup boundary the mechanism creates
+ *   runs      EVERY run carrying a mechanism, shared by select/translate/read
+ *   positive  text on the page with NO mechanism — if it fails, the probe is
+ *   negative  text not on the page at all — if it passes, the probe is blind
+ *   copyRun / copyPhrase   the run to copy and the phrase counted in it
+ *   headingSel / axPhrase  the h1 and the sentence read back out of the AX tree
+ *   accepted  text-node counts, live and unwrapped, both entering the verdict
+ *   expectScroll  widths where the pinned phone canvas legitimately overflows
+ */
+const PROFILES = {
+  '004': {
+    prefix: 's4',
+    route: '/signup',
+    phrases: [
+      'I agree to the',        // terms, per-word, crosses a <Link> boundary
+      'your ShotIQ',           // lede1, per-word
+      'goals, and progress',   // lede2, per-word
+      'web and iOS',           // oneacct, per-word
+      'CREATE ACCOUNT',        // display, per-glyph
+    ],
+    runs: ['lede1', 'lede2', 'oneacct', 'terms', 'display'],
+    positive: ['Use at least 8 characters', 'Repeat your password'],
+    negative: ['zebra quantum sandwich', 'flibbertigibbet'],
+    copyRun: 'lede1',
+    copyPhrase: 'save analyses,',
+    copyOpening: 'Create your ShotIQ account to save analyses,',
+    axPhrase: 'Create your ShotIQ account to save analyses,',
+    singleCharMax: 6,
+    accepted: {
+      lede1: { live: 7, control: 1 },
+      lede2: { live: 4, control: 1 },
+      oneacct: { live: 6, control: 1 },
+      terms: { live: 11, control: 5 },
+      display: { live: 13, control: 1 },
+    },
+    expectScroll: [375, 360, 320],
+  },
+  /**
+   * 005-verify-email. It carries NO per-word or per-glyph wrapping, so its
+   * translate counts are the unwrapped control by construction — and that is
+   * exactly why it still has to be gated: its markup risk is somewhere else.
+   * The six code inputs paint no text of their own (`color:transparent`,
+   * `-webkit-text-fill-color:transparent`, `caret-color:transparent`) and the
+   * visible digits are separate aria-hidden spans, which is a configuration
+   * that can silently leave the controls unnamed, the digits doubled in a copy,
+   * or the caret invisible with nothing in its place.
+   */
+  '005': {
+    prefix: 's5',
+    route: '/verify-email?email=marcus%40example.com',
+    phrases: [
+      'Enter the code we sent to',
+      'Check your spam or promotions folder',
+      'Need help? Contact support',
+      'VERIFY YOUR EMAIL',
+      'Your account is safe',
+    ],
+    runs: ['lede1', 'lede2', 'help1', 'help2', 'help3', 'display', 'safe1', 'safe2'],
+    positive: ['Use a different email', 'Open email app'],
+    negative: ['zebra quantum sandwich', 'flibbertigibbet'],
+    copyRun: 'safe2',
+    copyPhrase: 'never share your email',
+    copyOpening: 'We',
+    axPhrase: 'Enter the code we sent to',
+    singleCharMax: 6,
+    accepted: {
+      lede1: { live: 1, control: 1 },
+      lede2: { live: 1, control: 1 },
+      help1: { live: 1, control: 1 },
+      help2: { live: 1, control: 1 },
+      help3: { live: 1, control: 1 },
+      display: { live: 1, control: 1 },
+      safe1: { live: 1, control: 1 },
+      safe2: { live: 1, control: 1 },
+    },
+    expectScroll: [375, 360, 320],
+  },
+}
+
+const SCREEN = process.env.SCREEN || '004'
+const P = PROFILES[SCREEN]
+if (!P) throw new Error(`unknown SCREEN=${SCREEN}; have ${Object.keys(PROFILES).join(', ')}`)
+const PFX = P.prefix
+const ROUTE = process.env.ROUTE || P.route
 const URL_ = `http://127.0.0.1:${PORT}${ROUTE}`
-
-/** Runs whose text is wrapped by a registration mechanism, and a phrase from
- *  each that spans at least one wrap boundary — the case that breaks. */
-const PHRASES = [
-  'I agree to the',        // terms, per-word, crosses a <Link> boundary
-  'your ShotIQ',           // lede1, per-word
-  'goals, and progress',   // lede2, per-word
-  'web and iOS',           // oneacct, per-word
-  'CREATE ACCOUNT',        // display, per-glyph
-]
-/** Every run carrying a registration mechanism. ONE list, shared by select,
- *  translate and read, so a run cannot be covered by one probe and invisible to
- *  another — which is how `user-select:none` on lede2 passed a 10/10. */
-const RUNS = ['lede1', 'lede2', 'oneacct', 'terms', 'display']
-
-/** Unwrapped text on the same page: if these fail, the PROBE is broken. */
-const POSITIVE = ['Use at least 8 characters', 'Repeat your password']
-/** Not on the page at all: if these pass, the probe cannot discriminate. */
-const NEGATIVE = ['zebra quantum sandwich', 'flibbertigibbet']
+const PHRASES = P.phrases
+const RUNS = P.runs
+const POSITIVE = P.positive
+const NEGATIVE = P.negative
+console.log(`SCREEN ${SCREEN}  ${URL_}`)
 
 const results = []
 const rec = (probe, ok, detail) => {
@@ -102,12 +184,20 @@ if (MUTATE) {
       st.textContent = `${sel}{${decl}}`
       document.body.appendChild(st)
     }
-    if (m === 'ariaLabel') document.querySelector('h1[data-s4="display"]')?.removeAttribute('aria-label')
-    if (m === 'labels') document.querySelectorAll('label[for]').forEach((l) => l.removeAttribute('for'))
-    if (m === 'selectLede2') css('[data-s4="lede2"]', 'user-select:none;-webkit-user-select:none')
-    if (m === 'selectH1') css('[data-s4="display"]', 'user-select:none;-webkit-user-select:none')
-    if (m === 'deleteRun') document.querySelector('[data-s4="lede2"]')?.remove()
-  }, MUTATE)
+    const { m: mm, pfx, run } = m
+    if (mm === 'ariaLabel') {
+      document.querySelector(`h1[data-${pfx}="display"]`)?.removeAttribute('aria-label')
+      document.querySelector('h1')?.removeAttribute('aria-label')
+    }
+    if (mm === 'labels') {
+      document.querySelectorAll('label[for]').forEach((l) => l.removeAttribute('for'))
+      document.querySelectorAll('input[aria-label]').forEach((i) => i.removeAttribute('aria-label'))
+      document.querySelectorAll('input[aria-labelledby]').forEach((i) => i.removeAttribute('aria-labelledby'))
+    }
+    if (mm === 'selectLede2') css(`[data-${pfx}="${run}"]`, 'user-select:none;-webkit-user-select:none')
+    if (mm === 'selectH1') css(`[data-${pfx}="display"]`, 'user-select:none;-webkit-user-select:none')
+    if (mm === 'deleteRun') document.querySelector(`[data-${pfx}="${run}"]`)?.remove()
+  }, { m: MUTATE, pfx: PFX, run: P.copyRun === 'lede2' ? 'lede2' : (RUNS.includes('lede2') ? 'lede2' : RUNS[0]) })
   await p.waitForTimeout(400)
   console.log(`MUTATION ACTIVE: ${MUTATE} — the matching probe must FAIL\n`)
 }
@@ -153,7 +243,7 @@ const selectRun = (sel) => p.evaluate((s) => {
   const bad = []
   // ALL FIVE declared runs. It used to list three, so `user-select:none` on
   // lede2 or on the headline emptied the selection and the gate passed.
-  for (const s of RUNS.map((n) => `[data-s4="${n}"]`)) {
+  for (const s of RUNS.map((n) => `[data-${PFX}="${n}"]`)) {
     const r = await selectRun(s)
     if (!r) { bad.push(`${s} missing`); continue }
     if (r.sel !== r.text) bad.push(`${s}: selection ${JSON.stringify(r.sel)} != innerText ${JSON.stringify(r.text)}`)
@@ -166,12 +256,12 @@ const selectRun = (sel) => p.evaluate((s) => {
 // what round 12 shipped: an sr-only duplicate is excluded from innerText but
 // was included in the copy, so the lede came out twice.
 {
-  await selectRun('[data-s4="lede1"]')
+  await selectRun(`[data-${PFX}="${P.copyRun}"]`)
   await p.keyboard.press('Control+C')
   await p.waitForTimeout(300)
   const clip = (await p.evaluate(() => navigator.clipboard.readText().catch(() => ''))).replace(/\s+/g, ' ').trim()
-  const once = 'Create your ShotIQ account to save analyses,'
-  const n = clip.split('save analyses,').length - 1
+  const once = P.copyOpening
+  const n = clip.split(P.copyPhrase).length - 1
   rec('copy (no duplication)', n <= 1, `phrase appears ${n}x in the clipboard: ${JSON.stringify(clip.slice(0, 90))}`)
   rec('copy (fidelity)', clip.includes(once.slice(0, 30)), 'clipboard carries the run text')
 }
@@ -188,14 +278,14 @@ const selectRun = (sel) => p.evaluate((s) => {
     return { total: st.length, single: st.filter((v) => v.trim().length === 1).length, names: st }
   }
   const live = await count()
-  rec('read (no glyph shrapnel)', live.single <= 6,
+  rec('read (no glyph shrapnel)', live.single <= P.singleCharMax,
       `${live.single} single-character StaticText nodes (the round-11 defect was 54)`)
   // The bar is that the run's TEXT survives in order, not that it is one node.
   // Per-WORD spans give one node per word and two graders accepted that; it is
   // the per-GLYPH shrapnel above that broke reading. Checking for a single
   // contiguous node would fail a configuration that is known good.
   const joined = live.names.join(' ').replace(/\s+/g, ' ')
-  const wanted = 'Create your ShotIQ account to save analyses,'
+  const wanted = P.axPhrase
   const inOrder = wanted.split(' ').every((w, i, a) =>
     joined.indexOf(w) >= 0 && (i === 0 || joined.indexOf(w) > joined.indexOf(a[i - 1])))
   rec('read (run text intact)', inOrder,
@@ -245,21 +335,21 @@ const selectRun = (sel) => p.evaluate((s) => {
       return c
     }
     const out = {}
-    for (const n of runs) {
-      const el = document.querySelector(`[data-s4="${n}"]`)
+    for (const n of runs.names) {
+      const el = document.querySelector(`[data-${runs.pfx}="${n}"]`)
       // A VANISHED RUN IS DRIFT, not something to skip. `continue` meant a
       // deleted run printed a shorter table and passed; only `find` caught it,
       // and only because that run happened to have a phrase in the list.
       if (!el) { out[n] = { live: null, control: null, missing: true }; continue }
       const clone = el.cloneNode(true)
       // the control: unwrap every registration span, keep everything else
-      for (const sp of Array.from(clone.querySelectorAll('span.s4w')))
+      for (const sp of Array.from(clone.querySelectorAll(`span.${runs.pfx}w`)))
         sp.replaceWith(document.createTextNode(sp.textContent))
       clone.normalize()
       out[n] = { live: countNodes(el), control: countNodes(clone) }
     }
     return out
-  }, RUNS)
+  }, { names: RUNS, pfx: PFX })
   // THIS IS A REGRESSION GATE, NOT A QUALITY GATE, and the distinction matters.
   //
   // Every registration mechanism fragments text nodes — that is what it is. The
@@ -283,13 +373,7 @@ const selectRun = (sel) => p.evaluate((s) => {
   // computed `control`, printed it, and never put it in the boolean — a
   // hardcoded snapshot wearing a control's clothes. A mutation that moved
   // control 1 -> 2 fired nothing.
-  const ACCEPTED = {
-    lede1: { live: 7, control: 1 },
-    lede2: { live: 4, control: 1 },
-    oneacct: { live: 6, control: 1 },
-    terms: { live: 11, control: 5 },
-    display: { live: 13, control: 1 },
-  }
+  const ACCEPTED = P.accepted
   const bad = []
   for (const [k, want] of Object.entries(ACCEPTED)) {
     const got = t[k]
@@ -315,7 +399,7 @@ const selectRun = (sel) => p.evaluate((s) => {
 // rather than a responsive layout. Listing them makes the probe report the true
 // state and fail on any CHANGE to it, instead of being blind to it.
 {
-  const EXPECTED_SCROLL = new Set([375, 360, 320])
+  const EXPECTED_SCROLL = new Set(P.expectScroll)
   const bad = []
   const seen = []
   for (const dpr of [2, 3]) {
