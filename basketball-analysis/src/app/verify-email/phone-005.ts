@@ -309,7 +309,13 @@ export const RUNS: Record<string, Run> = {
      255) rather than on green — on green the plate itself reads as ink and the
      bbox comes back as the whole button. Round 3: cap+descender 0.895 short,
      advance 1.080 over -> size 17.6 -> 19.66 with scaleX 0.96 -> 0.796. */
-  plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 600, scale: 0.796, ls: -0.004,
+  /* Weight 600 -> 660: plateLab 22.7338 -> 16.0099, bracketed (700 gives
+     16.2714, 540 gives 29.9542, 500 gives 31.0099). Its SIBLING on the
+     outlined button below is already at its own optimum at 500 — 440 and 560
+     both score worse — so the two button labels are NOT one role and were not
+     solved as one (rule 14 says solve runs that share a role jointly; it does
+     not say assume two runs share one). */
+  plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 660, scale: 0.796, ls: -0.004,
               colour: "#FFFFFF", dx: 1.8, dy: 11.2, tx: 0, ty: 0,
               ox: PLATE.x, oy: PLATE.y },
   /* "Use a different email" inside the outlined button. */
