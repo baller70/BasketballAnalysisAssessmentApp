@@ -738,7 +738,7 @@ capture harness's own duplicate check flagged it, which is a better proof that
 Worst first: 094 (54.195), 084 (43.082), 082 (38.836), 086 (37.867),
 087 (35.904). Best: 096 (18.058), 081 (18.950), 095 (20.822).
 
-## Method rules — seventy, each learned by getting something wrong
+## Method rules — seventy-one, each learned by getting something wrong
 
 1. **Measure in the shipping rasteriser.** `capture-ios.mjs` launches with
    `--font-render-hinting=none`. A bare `chromium.launch()` hints stems to whole
@@ -1869,6 +1869,38 @@ string rolling over at midnight.
     what optimisation does — so the checks that catch it cannot themselves be
     chosen by the person doing the optimising, in the moment, from memory.
 
+71. **The objective rewards the wrong direction on COLOUR too, and the reward
+    is bigger than everything legitimate left.** Rule 67 recorded that a
+    per-pixel mean has no legibility term and will walk toward glyph collisions.
+    The same trap is live on the colour axis and nobody had written it down.
+
+    On 005, canonical's ERODED STROKE CORES for the graphite runs read luminance
+    49-58 — DARKER than the shipped `--s5-graphite` at 73.7. The instrument is
+    calibrated: the black runs read 1.0-3.0 canonical against 0.0 render, i.e.
+    matched, so the darker reading is real and not an artefact. Design truth
+    says darken. The objective says the opposite, monotonically:
+
+        lum  69 (shipped)  6.7842      lum 130  6.7076   <- argmin
+        lum  90            6.7364      lum 150  6.7190
+        lum 110            6.7135      lum 254  6.9636   (text erased)
+
+    A free **0.0766** sits at a mid-grey 2.4x LIGHTER than canonical's measured
+    core, and taking it washes out every secondary text run on the screen. For
+    scale, the entire remaining legitimate geometry on 005 is ~0.067.
+
+    Why it happens is the same mechanism as rule 67: canonical's glyphs are
+    slightly wider and softer than the render's, so lightening the render's ink
+    reduces the error at every edge pixel it does not cover, and there are more
+    edge pixels than core pixels. The metric is measuring overlap, not colour.
+
+    So: **a colour role is set from the eroded core against canonical, and then
+    the band mean is used to CONFIRM it, never to choose it.** If the two
+    disagree, the core wins and the disagreement gets written down with its
+    number. A grader also tested and refuted its own first reading here — that
+    graphite should be darkened toward canonical's cores — because direct
+    simulation made every darker target worse too. Both directions are recorded
+    so neither is rediscovered as free money.
+
 - Never edit the four measurement-tuned type roles in `globals.css`.
 - Scope a colour disagreement to the screen; never change a global token — those
   roles carry the 20 desktop screens graded B+.
@@ -2198,6 +2230,43 @@ discovered late:
   * **The countdown is a live timer.** "0:42" is nondeterministic and will differ
     every capture. It needs pinning for the harness the way canonical's other
     dynamic values are, or the band containing it can never be stable.
+
+### NEEDS KEVIN: signup discloses whether an address already has an account
+
+Found by the second grade of 005, and deliberately NOT changed here, because it
+is a product decision with UX weight and it touches a screen already marked DONE.
+
+`POST /api/auth/signup` answers `400 {"error":"User with this email already
+exists"}` against `201`, unauthenticated, at 5/min. That is an account-existence
+oracle, and it defeats the stated rationale of the one that was just closed on
+`verify-email-code` — whose docstring reads "Distinguishing them would turn this
+into an account-existence oracle for anyone with a list of addresses." The hole
+is one route over, and it is pre-existing rather than new.
+
+**Why it was not simply fixed.** The secure form is a uniform 201 plus a
+differentiated email ("someone tried to sign up with this address; you already
+have an account"). But `/signup` returns a SESSION on success, and screen 004 —
+DONE at A — navigates to `/onboarding` on a success response. A uniform 201 with
+no session would either send an existing user into onboarding they do not need,
+or require 004's flow to be re-authored and re-graded. That is a real change to
+a finished screen, and the tradeoff is a genuine one: most consumer products
+disclose here on purpose, because a person who mistypes their address otherwise
+gets silence.
+
+**The options, with what each costs:**
+
+  1. Leave it. Signup discloses; the other routes stay uniform. Cheapest, and
+     the current state — but then `verify-email-code`'s docstring overstates
+     what the app protects, and that comment should be softened so the record is
+     honest.
+  2. Uniform 201 + a differentiated email, and re-author 004's success path to
+     handle "no session returned". Secure, and it costs a re-grade of a DONE
+     screen.
+  3. Keep the message but rate-limit and CAPTCHA the route so enumeration is
+     expensive rather than impossible.
+
+Kevin's call. Recorded rather than taken, because reading (1) and reading (2)
+lead to materially different work on a screen that is already finished.
 
 ### NEEDS KEVIN: the canonicals are AI-generated, watermarked images
 

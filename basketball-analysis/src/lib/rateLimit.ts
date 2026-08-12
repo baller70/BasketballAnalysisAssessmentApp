@@ -149,10 +149,34 @@ export function rateLimit(
  */
 export function checkRateLimit(
   request: NextRequest,
-  options: RateLimitOptions
+  options: RateLimitOptions & { subject?: string }
 ): { result: RateLimitResult; response: Response | null } {
+  // `subject` NARROWS THE BUCKET, and on this deployment it is the only thing
+  // that makes an IP-keyed limiter usable at all.
+  //
+  // `request.ip` is undefined under Next 14.2.28 `next start`, and the default
+  // trusted-proxy depth is 0, so `getClientIp` returns 'unknown' for EVERY
+  // caller and the whole application shares one bucket. Measured on signin
+  // (10/min), with both controls:
+  //
+  //     victim from .2, correct password        -> 200
+  //     attacker sends 10 junk signins from .1  -> 401 x9, then 429
+  //     victim again, same correct password     -> 429
+  //
+  // One client at ten requests a minute locks every user out of the product.
+  // That is not a regression from the forwarded-header fix — the old code fell
+  // through to 'unknown' for any client that sends no XFF, which is every real
+  // browser — but the fix's own comment presented the shared bucket as a
+  // deployment hypothetical, and it is the live default.
+  //
+  // Passing a subject (the attempted email, say) keys the window per ACCOUNT as
+  // well as per client, so junk traffic against other addresses cannot consume
+  // a given player's budget. It does not fix the global bucket — only real
+  // client identity does, via SHOTIQ_TRUSTED_PROXY_HOPS or a runtime that
+  // exposes the socket — but it removes the trivial whole-app lockout.
   const ip = getClientIp(request)
-  const result = rateLimit(ip, options)
+  const key = options.subject ? `${ip}|${options.subject}` : ip
+  const result = rateLimit(key, options)
 
   if (!result.success) {
     const response = new Response(
