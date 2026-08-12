@@ -49,6 +49,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } fr
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, ArrowLeft, MailCheck, ShieldCheck, CheckCircle2, ChevronRight, Settings, Clock, HelpCircle, Pencil } from "@/components/shotiq/ApprovedLucide"
+import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 import { PHONE_CSS } from "./phone-005"
 import {
@@ -653,9 +654,32 @@ export default function VerifyEmailPage() {
       className="s5 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px] md:py-12"
     >
       <style dangerouslySetInnerHTML={{ __html: PHONE_CSS }} />
-      <Suspense>
-        <VerifyEmailBody />
-      </Suspense>
+      {/* THE DESKTOP INVARIANT IS ONE SIDEBAR AND THIS ROUTE HAD ZERO.
+          Measured on the served build at 1440x900,
+          `document.querySelectorAll('[data-testid=region-sidebar]').length`:
+
+              /signin 1    /signup 1    /dashboard 1    /verify-email 0
+
+          so this screen was the odd one out among its own siblings, and it had
+          no `region-main` either. Two graders disagreed about it — one read
+          zero as correct for an auth page — and the sibling measurement is what
+          settles it: /signin and /signup are auth pages too and both carry one.
+
+          IT CANNOT MOVE A CANONICAL PIXEL. `UnifiedSidebar`'s root is
+          `hidden ... md:flex`, so below 768px it renders nothing, and both
+          wrappers carry `data-s5-contents`, which the phone recipe sets to
+          `display:contents` — the elements vanish from the phone's box tree
+          entirely, leaving every absolutely-positioned run where it was. The
+          capture is checked byte-for-byte against the previous one rather than
+          assumed. */}
+      <div data-s5-contents className="flex flex-1">
+        <UnifiedSidebar />
+        <div data-s5-contents data-testid="region-main" className="flex min-w-0 flex-1 flex-col">
+          <Suspense>
+            <VerifyEmailBody />
+          </Suspense>
+        </div>
+      </div>
     </div>
   )
 }

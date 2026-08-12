@@ -2334,6 +2334,75 @@ string rolling over at midnight.
     to make the gate structural: `&&`, never `;`, when the second command
     depends on the first passing.
 
+### GRADE 11 (B-): a root cause under half the open list
+
+The ninth grade and the first BELOW B, and it earned that by finding one cause
+beneath several things that had been treated as separate defects. It graded
+.next-v33 (round 17), so its shield-tick and helpIcon3-dot numbers predate round
+18, which closed both — the dot exactly.
+
+**D1, AND IT IS THE HEADLINE: NO FACE IN THIS REPOSITORY HAS CANONICAL'S
+x-HEIGHT / ASCENDER RATIO.** Modal sub-pixel top-crossing over every ink column
+of each band, swept across three coverage levels to rule out the lossy-canonical
+artefact:
+
+    safe1  0.698 -> 0.747     lede1  0.705 -> 0.741     help3     0.683 -> 0.723
+    safe2  0.687 -> 0.738     lede2  0.710 -> 0.750     resendLab 0.698 -> 0.750
+    help1  0.684 -> 0.724     help2  0.694 -> 0.723     diffLab   0.692 -> 0.746
+    didnt (ALL-CAPS NEGATIVE CONTROL)  +0.4% / -0.6% / -2.2%
+
+Nine of nine mixed-case runs are 4-10% too tall in the x-height, the one run
+with no x-height is flat, and the sign holds across four weights and four sizes.
+`GeistVF.woff` declares sxHeight 530 / sCapHeight 710 = 0.7465; the other two
+bundled faces are worse (0.7857, 0.7714). Canonical's body face is none of them.
+
+That single fact re-characterises three items already in this ledger. safe1's
+"ink density 1.2153" is ALSO a size error — advance +1.50%, both edges moving
+outward on both axes, which is rule 34's size signature — and safe2 the same at
++1.06%. So the +13.08 and +5.76 of band those two cost when their weight is
+matched was never a weight tradeoff: it is this ratio, surfacing as mass. Weight
+sweeps could not have fixed them and correctly refused to.
+
+NEEDS KEVIN, and it belongs beside the icon-asset decision: a body face with
+x/asc 0.667-0.710 is a design-asset question, not something to synthesise in a
+screen's round.
+
+WHAT ELSE IT FOUND THAT WAS NEW:
+
+  * `resendLink` ink is 1.262 on the orange plane and 1.215 on the neutral one,
+    against a `resendVal` control of 1.024 — and its UNDERLINE is exact
+    (1.571/1.571 integrated cross-section), so it is the glyph run alone. The
+    source comment had named the dilution that hides it and never measured the
+    density.
+  * `display` is internally scattered even though its bbox and total advance
+    match canonical exactly (528 both): best local x-shift per 40px window runs
+    -1/+2/-2/-3/-2/-2/+3/+2 and the residual at each window's OWN best shift is
+    still 121-535, so no window is a translation. It carries n_over8 19,291 —
+    18.5% of the whole screen's 104,176 — with a correct outline.
+  * helpIcon1 and helpIcon2's envelope bodies are 2-3 px oversized with BOTH
+    edges moving outward, and the gear's inner circle is 2 rows short.
+  * **DoD 8: this route serves ZERO sidebars where the invariant is one.**
+    /signin 1, /signup 1, /dashboard 1, /verify-email 0. Grade 10 had called
+    zero "correct for an auth page"; the sibling measurement settles it, since
+    /signin and /signup are auth pages too. FIXED this round.
+  * **D6 REFUTES A MITIGATION I WROTE.** The forgot-password oracle returns at
+    concurrency 60: median deltas +54.55 / +57.49 / +79.95 ms, z up to 13.74,
+    with absent-vs-absent controls flat at |z| <= 0.71. The route's comment
+    predicted exactly this and offered the 5/min per-address limit as the bound
+    — and the grader's refutation is correct and obvious in hindsight: the limit
+    is PER ADDRESS, and an attacker classifying a list sends ONE request per
+    address, so it bounds nothing about the attack. Rule 79 said a floor cannot
+    hide a difference the attacker sizes; the "mitigation" beside it was not one.
+
+WHAT IT CONFIRMED CLEAN, which is worth as much: its own capture was
+BIT-IDENTICAL to the committed render (mean|d| 0.0000), component topology
+matched canonical on all sixteen bands tested with no merged strokes anywhere —
+so round 17's two structural fixes hold under an independent instrument — the
+orange and graphite tokens were both checked against canonical's own scatter and
+NOT raised, and `/api/auth/verify-email-code` shows no oracle even at
+concurrency 60 (|z| <= 0.10), so its work-equalisation genuinely holds where
+forgot-password's floor does not.
+
 ### OPEN, 005: the long-address clip cannot be fixed with an ellipsis
 
 Grade 10 found that a long address is hard-clipped with no ellipsis on the path
