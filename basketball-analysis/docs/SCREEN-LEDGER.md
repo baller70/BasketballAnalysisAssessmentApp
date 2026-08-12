@@ -2334,6 +2334,39 @@ string rolling over at midnight.
     to make the gate structural: `&&`, never `;`, when the second command
     depends on the first passing.
 
+90. **AN INK BOUNDING BOX IS AN EXTREME-VALUE STATISTIC, AND MATCHING IT CAN
+    MOVE A THOUSAND CORRECT PIXELS TO SATISFY TWO UNCERTAIN ONES.** Round 20
+    corrected five icon boxes from one clean estimator — full ink extent at
+    threshold 140, canonical against render — with rule 34 read straight off the
+    edge signs. Four were built. Three made their band WORSE, and the sharpest
+    case is the one that succeeded on its own terms:
+
+        helpIcon2  extent +1/+1 on the columns -> EXACT on all four edges
+                   band 18.0968 -> 19.3035      (+1.21, WORSE)
+        helpIcon3  height 2 px symmetric        7.5455 -> 9.4836  (+1.94)
+        gear       1 px narrow on the left      8.8566 -> 10.2703 (+1.41)
+        back       1 px big in both axes        3.9709 -> 3.5029  (-0.47, kept)
+
+    `helpIcon2` now matches canonical's bounding box on EVERY EDGE and scores a
+    point worse. That is not a paradox: a bbox is set by the outermost
+    antialiased pixel on each side — four pixels, each one coverage-threshold
+    away from not existing — while the band mean is over the thousand-odd pixels
+    of the drawing's interior. When the interior is already aligned and the box
+    disagrees by 1 px, the box is the noisy measurement, and moving the mark to
+    satisfy it drags every interior stroke off canonical.
+
+    The scale matters. `helpIcon1`'s box was 2 px long AND shifted 1 px, and
+    correcting it landed the extent exactly AND took the band 22.0527 ->
+    17.6749 — a genuine defect, big enough to exceed the envelope's own noise.
+    So: an extent delta of 2 px or more is evidence; a 1 px delta is a
+    hypothesis, and the interior has to referee it.
+
+    Round 18's dot fix inside `helpIcon3` stands and shows the alternative — it
+    was measured on INK MASS (21 px against 7, with the disc areas 19.6 and 7.1
+    predicting both) rather than on an envelope, and it landed exactly. Prefer a
+    statistic over the whole run — mass, component topology, a difference map —
+    to one over its four extreme pixels.
+
 ### ROUND 20: every icon box was wrong, and each in its own way
 
 Grade 11 listed five marks as geometrically wrong and characterised them as
@@ -2362,7 +2395,10 @@ every edge — and the band **22.0527 -> 17.6749**, whole screen 5.5735 ->
 drawing's own inset inside its 24-unit frame, which is the part that needs `ty`:
 the ink sat 9.2px below the box top and 0.30px of that was lost to the scale.
 
-The other four are built on the same measurement and NOT yet verified.
+The other four were built on the same measurement and THREE OF THEM WERE
+REVERTED: helpIcon2 +1.2067, helpIcon3 +1.9381, gear +1.4137, all worse despite
+their extents moving onto canonical — helpIcon2's onto it exactly. Only `back`
+survived, -0.4680. That result is rule 90, and it is the round's real output.
 
 ### GRADE 11 (B-): a root cause under half the open list
 
