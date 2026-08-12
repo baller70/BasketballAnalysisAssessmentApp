@@ -2408,6 +2408,58 @@ markup 11/11 and csrf 3/3. The round's net is helpIcon1 22.0527 -> 17.6749 and
 back 3.9709 -> 3.5029 — the two whose evidence the INTERIOR refereed, not the
 four whose envelope did.
 
+### 005 IS AT ITS FACE-LIMITED FLOOR, AND THAT IS A JUDGEMENT, MADE EXPLICITLY
+
+Twenty-seven measured rounds, eleven independent grades (B, B, B+, B, B, B, B,
+B, B-, B, B), whole screen **15.3484 -> 5.4704**, n_over8 103546, both gates
+green. It has not reached A, and this section states why in one place, because
+drifting into that conclusion silently would be worse than being wrong about it.
+
+EVERY REMAINING PATH HAS BEEN MEASURED AND CLOSED, not abandoned:
+
+  `display`  18.6% of the screen's n_over8. Canonical resolves FIVE ink runs at
+             40px, not fifteen glyphs, so per-glyph registration has nothing to
+             grip. Swept as scaleX against tracking: a knife edge where 0.001em
+             costs three points, and the candidates that best match canonical's
+             LETTER WIDTHS score the WORST bands. Position and width cannot both
+             be had. (round 26)
+  the marks  `Icon`'s `sw/sqrt(sx*sy)` is wrong on both axes by construction —
+             real, and recorded to fix when the marks are re-authored. But the
+             stroke term with boxes held is monotonically worse toward
+             canonical's own median, and the box term with stroke held is at its
+             argmin in both axes on the worst mark. The boxes are fitted AROUND
+             the defect. (round 27, grade 13)
+  safe1/2,   matching their ink density costs +13.08, +5.76 and +0.88 of band.
+  resendLink Same signature: an x-height set too large costs coverage that extra
+             weight buys back. (rounds 15, 21)
+  help3      advance 17px short, threshold-independent, face-limited.
+  seven      shift optima worth 7.022, 3.404, 3.260, 3.092, 2.999, 2.457 and a
+  traps      1px bbox — all refused with measurements, ink edges moving
+             oppositely. Taking them would buy ~22 points of band and make the
+             drawing worse.
+
+WHAT WOULD ACTUALLY MOVE IT, and both are Kevin's:
+
+  1. **A BODY FACE WITH CANONICAL'S x-HEIGHT/ASCENDER RATIO.** GeistVF declares
+     0.7465; canonical is 0.667-0.710, measured over ten mixed-case runs with an
+     all-caps control flat. No bundled face has it — the other two are 0.7857
+     and 0.7714. This one cause sits under `display`, safe1, safe2, resendLink,
+     help2 and help3, which between them are most of the residual.
+  2. **APPROVED ICON ASSETS** for the four desktop roles that currently share
+     files, since `Glyphs.tsx` forbids reusing a shape for a second concept and
+     there is no honest existing asset for "spam folder".
+
+Everything else on this screen is DONE to measurement: every band present and
+positioned, colour probed from eroded cores (three separate graphite retractions
+by three graders), geometry measured, the marks' topology matching canonical
+component-for-component, the real user path verified end to end against a live
+database by five graders, every focusable control at 44pt, and the security of
+the four routes it calls exercised at concurrency 60.
+
+THE HONEST SUMMARY FOR KEVIN: 005's pixel work is finished at 5.4704 and the
+last stretch to an A is blocked on a typeface, not on effort. 004 finished at
+2.6520 with the same method — the gap between them is almost exactly the face.
+
 ### ROUND 27: the joint (box, sw) re-solve has nothing to give, measured
 
 Grade 13's anisotropic-stroke finding is REAL and stands as a construction
