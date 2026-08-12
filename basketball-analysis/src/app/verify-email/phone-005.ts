@@ -737,8 +737,18 @@ export const MARK_BOXES: Record<
      survive one are reverted rather than kept because their prediction was
      pretty. Residual left on the table by the three reverts: 0.0104 of whole
      screen, stated rather than forced (rule 13). */
-  gear: [751, 28.96, 54, 51.0, 0, 0],
-  back: [35.54, 127.54, 51.5, 51.5, 0, 0, 1.0, -1.0],
+  /* 1 px NARROW ON THE LEFT ONLY. canon rows 17..61 (45) cols 26..68 (43);
+     render rows 17..61 (45) cols 27..68 (42) — the right edge and both rows are
+     exact, so this is width and nothing else: 54 -> 55.29 (x43/42) with `tx`
+     holding the RIGHT edge, since widening a left-anchored box would otherwise
+     push the correct edge out. */
+  gear: [751, 28.96, 55.29, 51.0, 0, 0, -1.29, 0],
+  /* 1 px TOO BIG IN BOTH AXES, ANCHORED AT THE BOTTOM RIGHT. canon rows 11..42
+     (32) cols 26..57 (32); render rows 10..42 (33) cols 25..57 (33) — the
+     bottom and right edges are exact and the top and left each overhang by 1,
+     so both dimensions come in by 1 px and the existing nudge absorbs the
+     inset, holding the two edges that are already right. */
+  back: [35.54, 127.54, 50.5, 50.5, 0, 0, 1.98, -0.02],
   plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y, 0, 1.0],
   /* diffMark carries NO nudge: its shift-search optimum is already dy0 dx0 and
      equals its base (32.0538), so the sixth grade's recommendation to move it
@@ -763,8 +773,18 @@ export const MARK_BOXES: Record<
      transform rather than folded into left/top precisely because a 1 px move
      through layout rounds (rule 53). */
   helpMark1: [53.65, 1299.8, 67.0, 59.5, 56, 1290, 1.0, 0.30],
-  helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
-  helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
+  /* BOTH COLUMN EDGES +1 AND THE ROWS EXACT — a translation, not a scale, so
+     nothing about the box's size may move. canon rows 11..61 (51) cols 19..82
+     (64); render rows 11..61 (51) cols 20..83 (64). `tx` rather than `left`,
+     because a 1 px move through layout rounds (rule 53). */
+  helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392, -1.0, 0],
+  /* 2 px TOO TALL, SYMMETRICALLY, AND THE COLUMNS ARE EXACT. canon rows 11..68
+     (58) cols 20..78 (59); render rows 10..69 (60) cols 20..78 (59) — the edges
+     move OPPOSITELY in y and not at all in x, so height alone is wrong:
+     67.5 -> 65.25 (x0.9667). The ink starts 12.4 px below the box top, so
+     shrinking costs 12.4 x 0.0333 = 0.41 px of that inset and `ty` returns it,
+     landing the top back on canonical's row 11 rather than 10. */
+  helpMark3: [56.4, 1507.6, 66.2, 65.25, 56, 1494, 0, 0.41],
   chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290, 1.0, 1.0],
   chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392, 1.0, 0],
   chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494, 1.0, 0],
