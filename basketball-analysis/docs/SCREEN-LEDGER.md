@@ -2260,6 +2260,37 @@ string rolling over at midnight.
     same family; this is its live-process form, and it is worse because the
     stale artefact answers with a success code.
 
+### The desktop regression guard, and the baseline that is no longer there
+
+The cycle's step 2 says to confirm the desktop set did not regress against
+`$SCRATCH/verify-desktop`. **That directory is empty** — another rollback took
+it, the same way it took the 004 grading inputs the `docs/shotiq/grading/`
+directory was built to survive. `$SCRATCH/canonical-desktop` (077-096) is still
+there, so the target survives; only the last-known-good baseline is gone.
+
+For round 13 the guard was established by CONSTRUCTION rather than by capture,
+and it is written down as that rather than as a measurement:
+
+  * the round touched six files — `phone-005.ts`, `Marks005.tsx`, the
+    `forgot-password` route, `verification.ts`, and the two grading artefacts.
+    No global stylesheet, no shared component.
+  * every `.s5` / `[data-s5` selector in the SERVED stylesheet (parsed out of
+    the built page and brace-walked, not read from the template literal, which
+    nests backticks and defeats naive extraction) sits inside
+    `@media (max-width: 767.98px)`. Occurrences outside: **0 of 19,186 chars of
+    inline CSS.**
+  * the phone and desktop renderings are ONE tree gated by Tailwind `md:`
+    utilities, not two trees. Every drawn mark is `md:hidden`, and so is the
+    overlay root in `Marks005.tsx` — which matters, because if the overlay were
+    ungated it would render on desktop with no styles at all rather than render
+    wrongly, and an unstyled in-flow SVG is a visible artefact, not a subtle one.
+
+Construction is weaker evidence than a capture and is not a substitute for one.
+It is sufficient here only because the changed surface is provably disjoint from
+desktop; the next round that touches anything shared needs a real baseline, and
+rebuilding `verify-desktop` from the 077-096 canonicals is a prerequisite for
+that rather than something to discover mid-round.
+
 ### DONE: one line in the shell was scrolling 42 of the 72 phone screens
 
 Rule 56 gave `capture-ios.mjs` a vertical arm on the argument that 004 was clean
