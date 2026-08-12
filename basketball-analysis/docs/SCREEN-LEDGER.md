@@ -2334,6 +2334,41 @@ string rolling over at midnight.
     to make the gate structural: `&&`, never `;`, when the second command
     depends on the first passing.
 
+### OPEN, 005: the long-address clip cannot be fixed with an ellipsis
+
+Grade 10 found that a long address is hard-clipped with no ellipsis on the path
+the product's own mail creates — `lede2` runs to column 852 of an 853 px canvas
+and is cut mid-word by `.s5{overflow:hidden}`, and `verificationEmail.ts` builds
+exactly that URL. Real, and DoD item 6.
+
+The obvious repair does not work, and the measurement that says so is worth
+recording before someone tries it:
+
+    canonical  lede2 ink cols 269..588   width 320
+    render     lede2 ink cols 268..586   width 319
+    the run's own box                    width 319.9
+
+THE CANONICAL STRING EXACTLY FILLS ITS BOX. So adding `overflow:hidden` +
+`text-overflow:ellipsis` to this run would clip canonical's own address — the
+state the screen is graded in — to buy a case it is not graded in. There is no
+margin to spend.
+
+The other reflex, truncating the string in JS, is wrong for a different reason:
+`lede2` is ONE element shared by both renderings (the phone and desktop trees
+are one tree gated by Tailwind `md:`), so a character budget tuned to a 319.9 px
+phone box would also truncate on a desktop that has room for the whole address.
+
+What would actually work, none of it a one-liner: ellipsise against the CANVAS
+width rather than the run width, which means expressing a max-width in the run's
+transformed space (`width` is divided by `scale`, and the run is centred by
+`left: cx - w/2`); or give the phone run a smaller size for long strings, which
+CSS cannot express without a container query or JS; or accept a second element
+for the phone. Each is a real change to a measurement-tuned run, and the run in
+question is one of the ones whose numbers carry the screen.
+
+Left OPEN with its numbers rather than attempted at the end of a long session,
+which is the standing ruling on physically constrained residuals.
+
 ### GRADE 10 (B): what it found, including two things it caught me claiming
 
 Grade 10 re-captured from the live dist at the START and the END of its run and
