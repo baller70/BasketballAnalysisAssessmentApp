@@ -2280,6 +2280,13 @@ every prior measurement stands. But nothing shipped from that tree would have
 deployed, and the ledger's "production build" wording was wrong for every
 screen so far.
 
+**And the blast radius on 004 was checked rather than assumed.** 004 is marked
+DONE at A on a figure measured from a dev-runtime dist, so the finding put that
+grade in question. Re-captured from the production dist: **2.6520 / n_over8
+63053**, identical to the recorded artefact in every digit. 004's A stands, and
+the runtime is now shown to be pixel-neutral on two independent screens rather
+than one.
+
 **SECURITY, round 4 — the same scope failure for the third consecutive round,
 so it was closed structurally rather than by hand.** Round 3 keyed `signin`
 per account and left the two routes that ARE screen 005 keyed on nothing:
