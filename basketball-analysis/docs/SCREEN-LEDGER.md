@@ -1808,6 +1808,37 @@ rather than THROWN, and that is why it could be switched on for all 72 at once �
 a throw would have had to be argued screen by screen before it could ship, and
 these 42 would still be scrolling.
 
+### OPEN, PROCESS: the desktop regression baseline does not exist
+
+The cycle every autonomous round runs says, at step 2, to "confirm the desktop
+set did not regress against `$SCRATCH/verify-desktop` (noise floor ~50px; 8 of
+20 are not byte-stable run to run)". **That directory is not on disk.** A
+container rollback took it, and because the check is phrased as a comparison
+against something that is simply absent, it has been quietly unperformed for
+many rounds rather than failing loudly.
+
+What survives and what does not:
+
+  - the 20 desktop CANONICALS are in git at `docs/shotiq/canonical-desktop`
+    (verified, 20 tracked files), so nothing irreplaceable was lost;
+  - the RENDER baseline was never in git and is gone. It is regenerable — a
+    production build plus 20 desktop captures — but it has to be regenerated
+    deliberately, and 8 of the 20 were recorded as not byte-stable run to run,
+    so the regeneration needs to capture that instability rather than assume a
+    clean baseline.
+
+004 does not need it and has not been let off: /signup has no counterpart in
+the graded desktop set 077-096, and this round the desktop was measured
+directly instead (the registration spans compute `position: static` at 1440, so
+the phone offsets are inert by spec, and the shell's min-height was measured
+identical old-shell against new on three routes). Both are stronger than a
+byte-compare would have been.
+
+But the next screen that touches a SHARED component has no baseline to check
+against, and that is exactly the shape of the bug the shell min-height fix
+turned out to be — one line, 42 screens. Regenerating this belongs with the
+001/002 paper work, before 005 starts.
+
 ### OPEN, CLASS-LEVEL: NOT ONE of the 72 canonicals has white paper
 
 Rule 63 was found on 004 and confirmed on 003. Measured across the whole
