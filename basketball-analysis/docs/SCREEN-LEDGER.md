@@ -1888,6 +1888,60 @@ string rolling over at midnight.
     core, and taking it washes out every secondary text run on the screen. For
     scale, the entire remaining legitimate geometry on 005 is ~0.067.
 
+72. **Two parameters in ONE transform are one parameter, and re-solving either
+    silently moves the other.** 005's display carried `skewX(-6deg)` measured
+    correctly off canonical and shipped upright anyway. CSS applies the factors
+    in `scaleX(s) skewX(k)` right-to-left, so the shear's horizontal component
+    comes out as `s x tan(k)`. The skew was set when `s` was 1.00 and was right
+    then; two later rounds moved `s` to 0.744 and then 0.586 to land the
+    ADVANCE, and each of those flattened the slant from 6.0 deg to 3.55 without
+    touching the skew value, naming it in any band, or failing any check.
+
+    The general shape: when a solve changes one factor of a composed transform,
+    every other factor's EFFECTIVE value has changed too. Re-derive them, do not
+    assume the number you wrote is the number that renders. The cheap guard is
+    the readback the sweep already prints — the computed `matrix()` states the
+    effective values directly, and `-0.0615911` against a canonical slope of
+    -0.10655 was visible the whole time.
+
+    And the reason six rounds of band means never found it: **a shear is not a
+    translation, and every alignment instrument here looks for translations.**
+    A shift search minimises over (dy,dx) and cannot express a slant, so it
+    reports the residual as unreachable. Rule 67 says render it and LOOK — one
+    stacked crop of canonical over render showed it immediately.
+
+73. **A sub-pixel nudge in a unit that gets converted and rounded is not
+    predictable, only verifiable.** Eight of 005's marks showed a clean 1-2
+    device px optimum under shift search. Applied, the built capture kept three
+    and refuted five — and three of the five did not merely fail to close but
+    FLIPPED SIGN, back's optimum going (+1,-1) to (-1,+1) on a 1-unit edit.
+
+    MARK_BOXES values are canonical device px, `u()` converts them to CSS px,
+    the box lands at a fractional position and the raster rounds, so the same
+    1-unit edit moved marks by 1, ~1.5 and 2 device px and two not at all. This
+    is the opposite of rule 47's situation: a sweep injects the very property
+    the recipe emits, so it predicts; a nudge that passes through a unit
+    conversion does not. Apply, build, keep what survives, revert what does not
+    — and never keep a change because its prediction was pretty.
+
+74. **A recorded baseline is a claim about the ARTEFACT it was read from.** The
+    markup gate's `lede2` control value was 2, read off a build, green for
+    rounds. On the production build the same gate, same commit, reads 1 and goes
+    red — React's production build merges adjacent text nodes its development
+    build keeps separate. Nothing was wrong with the gate or the page; the
+    baseline had been taken from a runtime that never ships.
+
+    This generalises past the gate: every "recorded state" in this repository
+    was captured from a dist built with `NODE_ENV=development`, because the
+    container exports it and `next build` honours it. That one also silently
+    broke static generation for 51 pages, so `npm run build` had been exiting 1
+    for every screen so far while a BUILD_ID was still written and rule 60's
+    gate still passed. Two lessons, and the second is the sharper one: state
+    which artefact a baseline came from, and check the thing you are gating on
+    is the thing that fails — an exit code masked by an `echo` in a subshell,
+    or a path test run from a cwd that persisted from an earlier `cd`, is a gate
+    that reports on nothing.
+
     Why it happens is the same mechanism as rule 67: canonical's glyphs are
     slightly wider and softer than the render's, so lightening the render's ink
     reduces the error at every edge pixel it does not cover, and there are more
@@ -2174,6 +2228,94 @@ geometry fitted to canonical's ink box, and canonical's corners are sharper and
 its flap shallower than lucide's; the boxes agree to 1.000/1.000 and the strokes
 to 0.0009 of whole screen, so what is left is the path data.
 
+**ROUND 4 — 7.4356 -> 6.7842 -> 6.3752, and the biggest single find was a
+COUPLED TRANSFORM.** The display run was UPRIGHT where canonical is oblique,
+and nothing in six rounds of band means had said so, because a shear is not a
+translation and no shift search looks for one. The recipe emits
+`transform:scaleX(s) skewX(k)`; CSS applies the RIGHT factor first, so the
+shear's horizontal component is multiplied by the scale and the matrix c term
+is `s x tan(k)`, not `tan(k)`. The `skew: -6.0` was measured off canonical
+correctly and was correct WHEN SET, at scale 1.00. Rounds 1 and 2 then moved
+scaleX 1.00 -> 0.744 -> 0.586 to land the advance, and each of those silently
+flattened the slant. Measured on the left stem of the E of EMAIL, a true
+vertical fitting a line to rms 0.29 device px in both images: canonical
++6.082 deg against the render's +3.554, and 0.586 x tan(6 deg) = 0.0616 against
+the readback matrix's -0.0615911, which is the mechanism and not a coincidence.
+skew -10.3 with tx 4.60, swept as a 2-D grid (skew about origin 0 0 translates
+as well as shears, so the pair is compensated by construction), bracketed on
+both axes, rule-40 control exact. **display 24.5721 -> 19.9365**, the built
+capture matching the sweep to four decimals, the built E-stem reading +6.086,
+and the advance ratio going 1.0076 -> 1.0019 with scale untouched.
+
+That retires two earlier readings. The per-word `-1 / -4 / -2 device px left`
+scatter recorded above was the missing slant seen edge-on — a shear displaces
+ink in proportion to its height, so it reads as a gap opening along the run —
+and per-word placement, measured properly on the shipped render, is worth
+0.0480 against this one value's 0.3670.
+
+**A MARK NUDGE IS NOT PREDICTABLE FROM A SHIFT SEARCH, and half of round 4's
+were reverted.** Eight marks showed a 1-2 device px optimum; all eight were
+applied; the BUILT capture kept three (gear 11.6112 -> 8.8566, diffMark inside
+diffBtn 9.8170 -> 9.4570, chev1 3.9595 -> 3.6159) and refuted five (back
+8.1680 -> 9.8710, helpMark1 22.0527 -> 23.1614, plateMark worse, chev2 and
+chev3 unchanged to four decimals). MARK_BOXES values are canonical device px,
+converted to CSS px and then rounded by layout, so the SAME 1-unit edit moved
+marks by 1, ~1.5 and 2 device px and two not at all — which is also why three
+optima did not merely fail to close but FLIPPED SIGN. The five are reverted to
+their prior values; 0.0104 of whole screen left on the table, stated not
+forced.
+
+**THE PRODUCTION BUILD HAD BEEN FAILING FOR EVERY ROUND OF EVERY SCREEN.**
+`npm run build` exited 1 with 51 pages failing to prerender, `/verify-email`
+and `/signup` among them. The cause is not in this repository: the container
+exports `NODE_ENV=development`, so `next build` selects the dev runtime and
+static generation dies with `useContext` of null. `NODE_ENV=production npm run
+build` exits 0 with zero prerender errors. The rule-60 gate did not catch it
+because Next writes BUILD_ID anyway, and my own gate was defeated a second way
+— an `echo` inside the subshell replaced the build's exit code, and later the
+`[ -f .next/BUILD_ID ]` test ran from a cwd that had persisted from an earlier
+`cd`. Verified the runtime changes NO pixels: a prod-runtime control capture of
+the unchanged tree measured **6.7842 / 115184**, identical to four decimals, so
+every prior measurement stands. But nothing shipped from that tree would have
+deployed, and the ledger's "production build" wording was wrong for every
+screen so far.
+
+**SECURITY, round 4 — the same scope failure for the third consecutive round,
+so it was closed structurally rather than by hand.** Round 3 keyed `signin`
+per account and left the two routes that ARE screen 005 keyed on nothing:
+`request.ip` is undefined under `next start` and the default proxy depth is 0,
+so every caller resolves to `'unknown'` and shares one bucket. An
+unauthenticated attacker anywhere denied both of this screen's actions to every
+user of the product at 13 requests a minute — measured, with the victim's own
+VALID code returning 429 and `email_verified` still NULL, then 200 after the
+window. `subject` is now REQUIRED in `checkRateLimit`: an optional parameter
+records an intention, a required one records a DECISION at every call site,
+checked by the compiler, and it enumerated all eight remaining sites. Five auth
+routes key per account; `llm`, `upload` and `vision-analyze` pass an explicit
+`null` with the reason, which is that they guard a shared COSTED resource and
+have no authenticated identity to key on — keying on caller-supplied data would
+let an attacker rotate it and bypass the limit entirely, which is worse than
+sharing. Also closed: `issueToken`/`issueEmailCode` were deleteMany-then-create
+so the "only the newest works" invariant this file's own header states held
+only when nothing raced (three concurrent resends left three live codes and the
+OLDEST verified) — now one atomic `upsert` against a new `(userId, type)`
+unique constraint with a tracked migration that collapses duplicates first, and
+there WERE duplicates in this database; `consumeToken` discarded its delete
+result so two concurrent submissions of one token both succeeded; verifying by
+code now spends the emailed link instead of leaving a live credential in an
+inbox for 24h; and `getAppBaseUrl` silently returned `localhost:3000` with no
+config, so emailed links were dead in production — now loud, and deliberately
+NOT derived from the Host header, which would trade a config error for
+host-header injection. Verified on the built dist with a negative control for
+each, **8/8**.
+
+**The markup gate's recorded value was itself read off the wrong runtime.**
+`lede2`'s control is build-mode dependent — React's production build merges the
+two adjacent text nodes the dev build keeps separate, and the control is the
+case that exposes it because it removes the wrapping span between them. Same
+gate, same commit: dev dist 2/2 and 11/11, production dist 2/1 and 10/11.
+Re-recorded from the artefact that ships, with all four mutations still red.
+
 **The markup gate now takes a screen profile, and 005 passes 11/11** with its
 own live self-tests. 004 is the default, unchanged, and re-verified at 11/11 with
 all five of its mutations still going red. The gate earned a finding on its first
@@ -2230,6 +2372,45 @@ discovered late:
   * **The countdown is a live timer.** "0:42" is nondeterministic and will differ
     every capture. It needs pinning for the harness the way canonical's other
     dynamic values are, or the band containing it can never be stable.
+
+### NEEDS KEVIN: `emailVerified` is written by three paths and read by none
+
+Screen 005 makes a real six-digit credential, and verifying with it really does
+stamp `users.email_verified`. Round 4's independent grade asked the question
+three rounds of end-to-end verification never did: **what reads that column?**
+
+Nothing does, outside the verify page's own status display. `src/middleware.ts`
+checks the session signature only. `/api/auth/signup` issues a full
+`accessToken` immediately, so an unverified account is already fully signed in.
+No route, page or query gates on it.
+
+So the feature is real in the sense that matters least — the write path works,
+end to end, against Postgres, with controls — and not real in the sense Kevin's
+mandate is about: *"a placeholder portrays a feature I want to be real, so that
+when the user goes to use it, it actually works."* A player who ignores the
+screen entirely loses nothing. Verification currently costs them a step and
+buys them no capability.
+
+This is recorded rather than fixed because every way of fixing it is a PRODUCT
+decision with a real cost, and picking one unilaterally would change what the
+app does to people who already have accounts:
+
+  * **Gate nothing (status quo).** Verification is advisory. Cheapest, and the
+    screen is then honest only if it is presented as optional, which canonical
+    005 does not — it has no skip.
+  * **Gate the app at the middleware.** An unverified session is redirected to
+    /verify-email. Strongest, and it locks out every EXISTING unverified
+    account the moment it ships. How many exist is a question about the
+    production database, which is not this container.
+  * **Gate only the costed or shared surfaces** (upload, analysis, anything
+    that emails or spends). Verification buys something concrete, nobody is
+    locked out of what they already had, but the boundary has to be drawn
+    route by route and each one is a judgement call.
+
+The measurement that would inform the choice — how many live accounts are
+unverified — needs the production database, so it is Kevin's to make either
+way. Recorded here so nobody asserts "the feature is real" a fourth time
+without it.
 
 ### NEEDS KEVIN: signup discloses whether an address already has an account
 
