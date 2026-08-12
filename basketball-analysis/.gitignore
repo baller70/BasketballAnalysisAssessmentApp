@@ -53,3 +53,9 @@ next-env.d.ts
 # out from under it, and never committed.
 .g*tmp/
 .agent-tmp/
+
+# Scratch written by dispatched grading agents while they measure a screen.
+# Not a deliverable: it is an agent's working directory, it is recreated per
+# run, and leaving it untracked trips the repo's uncommitted-changes check
+# mid-grade — when deleting it would break the grader still using it.
+.grade/
