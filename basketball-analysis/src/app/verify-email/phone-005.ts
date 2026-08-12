@@ -90,7 +90,7 @@ const COLOURS = `
   --s5-ink:#000000;
   --s5-graphite:#454751;
   --s5-orange:#FD4201;
-  --s5-box-rule:#050505;
+  --s5-box-rule:#6D6D6D;
   --s5-divider:#DDDDDD;
   /* THE HEADER RULE KEEPS ITS OWN TOKEN AND ITS OWN VALUE IS THE DIVIDERS',
      which is a measured null rather than an oversight. Canonical carries 65.2
@@ -151,7 +151,7 @@ const TUNGSTEN = "var(--font-shotiq-display)"
  * apart. They do NOT share a pitch in canonical and are reproduced as measured
  * rather than regularised, exactly as 004's five field heights were.
  */
-export const BOX_Y = 533.63
+export const BOX_Y = 534.13
 export const BOX_H = 131.39
 export const BOX_R = 12.0
 export const BOX_X = [50.45, 180.42, 309.18, 438.06, 567.35, 695.20]
@@ -332,13 +332,13 @@ export const RUNS: Record<string, Run> = {
      0.96 -> 0.912 to hold the advance the size change would have widened. */
   /* 400 -> 370 on an ink-mass reading of 1.0839: 15.2728 -> 14.1711. Kept. */
   resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 370, scale: 0.870, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 0 },
+               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 0.3455 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
      2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
      the round-3 reading was the instrument, not the run. */
   resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.845, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0 },
+               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.4607 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
@@ -579,13 +579,13 @@ export const MARK_BOXES: Record<
      screen, stated rather than forced (rule 13). */
   gear: [751, 28.96, 54, 51.0, 0, 0],
   back: [35.54, 127.54, 51.5, 51.5, 0, 0, 1.0, -1.0],
-  plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y],
+  plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y, 0, 1.0],
   diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
   helpMark1: [53.65, 1299.8, 67.0, 61.5, 56, 1290],
   helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
   helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
   chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290, 1.0, 1.0],
-  chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392],
+  chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392, 1.0, 0],
   chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494, 1.0, 0],
   shield: [58.8, 1628, 97.4, 105.2, 0, 0],
 }

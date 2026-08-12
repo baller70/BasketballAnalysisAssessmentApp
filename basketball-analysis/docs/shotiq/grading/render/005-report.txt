@@ -1,4 +1,4 @@
-whole screen   mean|d| 6.3036   max 255   n_over8 112351
+whole screen   mean|d| 6.1610   max 255   n_over8 112093
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -8,34 +8,34 @@ helpIcon1     22.0527    255      1201
 help2         21.1660    255      6051
 display       19.9365    255     19538
 shield        15.4563    255      1551
-resendLab     14.1711    238      3069
 safe2         13.8757    240      4468
 help3         12.8522    255      4380
+resendLab     12.6808    238      2965
 safe1         10.4978    255      3839
 diffBtn        9.2547    255     11185
 gear           8.8566    255       891
-box1           8.8349    255      2166
 didnt          8.6672    232      3773
 lede2          8.0204    255      3698
 helpIcon3      7.8249    255      1031
 help1          7.7874    255      3933
 wordmark       7.7849    255      2713
-box0           7.5426    255      1849
-box2           7.1114    254      2058
-box3           7.0463    254      1858
+box1           7.1280    255      2150
+box3           6.0285    254      1978
+box0           5.9085    255      1879
+box2           5.5777    254      2042
 lede1          5.5554    208      3470
-plate          5.1017    255     11882
-box5           4.9558    181      1345
-box4           4.4881    234      1991
+plate          4.9249    255     11770
 back           3.9709    219       261
+box5           3.7102    141      1300
+box4           3.3739    226      1889
 resendLink     3.2710    254      3391
-chev2          2.6948    162       132
 hdrRule        2.4985     26      1226
 rule2          2.4622     23      1512
-resendVal      2.3889    254       951
 rule1          2.3321     20      2150
 rule3          2.3080     23      1479
+resendVal      2.3010    254       953
 rule4          1.8991     22      1479
+chev2          1.5480    128       117
 chev1          1.5005     84       111
 chev3          1.3690    107       108
 
@@ -48,8 +48,8 @@ diffMark     32.0538    255      1765
 diffLab      23.4138    255      3200
 plateLab     16.0099    255      4965
 digit1       15.8763    255       814
-plateMark    15.3721    255      1814
 digit0       12.2876    255       631
+plateMark    12.0203    254      1702
 digit3       10.7600    254       530
 digit2        9.8760    254       586
 caret         2.1319    140       273

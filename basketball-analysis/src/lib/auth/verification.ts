@@ -94,43 +94,98 @@ export async function issueToken(
 ): Promise<{ token: string; expiresAt: Date }> {
   if (!userId) throw new Error("issueToken: userId is required")
 
-  // REUSED INSIDE ITS TTL, for the reason spelled out on `issueEmailCode`:
-  // rotating on every issue turns an unauthenticated "send me my link" endpoint
-  // into a way to invalidate the link already sitting in someone else's inbox.
-  // That applies to the emailed verification LINK exactly as it applies to the
-  // code, and to `password_reset` too — spamming forgot-password would
-  // otherwise keep a victim's reset link permanently stale. The TTL is not
-  // extended, so a token still dies at its original expiry.
-  const existing = await prisma.verificationToken.findUnique({
-    where: { uniq_verification_token_user_type: { userId, type } },
-  })
-  if (existing && existing.expiresAt.getTime() > Date.now()) {
-    return { token: existing.token, expiresAt: existing.expiresAt }
+  // REUSE IS RIGHT FOR A VERIFICATION CREDENTIAL AND WRONG FOR A RESET ONE, and
+  // the previous version of this applied one policy to both and called it
+  // obvious.
+  //
+  // The case FOR reuse (see `issueEmailCode`): rotating on every issue turns an
+  // unauthenticated "send me my link" endpoint into a way to invalidate the
+  // credential already sitting in someone else's inbox. The victim is READING
+  // something they already have, so rotation is a weapon aimed at them.
+  //
+  // The case AGAINST it for `password_reset`: there the victim is not reading an
+  // old mail, they are REQUESTING a new one and reading the newest. Rotation
+  // makes the freshest request win, and the freshest request is theirs. Reuse
+  // removes the universal remedy for a leaked reset link — "request a new one,
+  // which kills the old one" — and hands the same live token back for the rest
+  // of the hour with no user-reachable way to revoke it. Measured: two
+  // forgot-password calls returned byte-identical tokens with the same expiry.
+  //
+  // The two risks are not the same size. A stale verification code is an
+  // availability nuisance against an address; a live reset link that cannot be
+  // revoked is an account-takeover credential. So verification reuses and reset
+  // rotates, and forgot-password's flood risk is carried by its own rate limit
+  // instead.
+  const reusable = type !== "password_reset"
+  if (reusable) {
+    const existing = await prisma.verificationToken.findUnique({
+      where: { uniq_verification_token_user_type: { userId, type } },
+    })
+    if (existing && existing.expiresAt.getTime() > Date.now()) {
+      return { token: existing.token, expiresAt: existing.expiresAt }
+    }
   }
 
-  const token = generateToken()
+  return claimToken(userId, type, generateToken(), reusable)
+}
+
+/**
+ * Write the (user, type) row in ONE statement and return what the row actually
+ * holds. This is the primitive both issuers share.
+ *
+ * WHY IT IS RAW SQL. The previous version was `upsert` then `findUnique` —
+ * "read back rather than trust our own write". Two round trips are not atomic,
+ * and the interleave `A.upsert -> A.read -> B.upsert -> B.read` leaves A holding
+ * a token that is no longer stored. Measured with an SMTP sink reading the
+ * actual mail, 8 trials of two concurrent resends: **3 diverged**, e.g.
+ * stored 060409 while the two mails carried 060409 and 865084. A player who
+ * double-taps Resend gets two mails seconds apart and the first one's code is
+ * dead. The comment there claimed the opposite in as many words, which is why
+ * this now returns the row Postgres wrote rather than the row we hoped it wrote.
+ *
+ * `ON CONFLICT ... DO UPDATE ... WHERE expires_at <= now()` makes the whole
+ * decision inside the database: a live row is left alone and NO row comes back,
+ * an expired or absent one is replaced and the new row comes back. The empty
+ * result is therefore meaningful — it says "someone else's live token won" —
+ * and the follow-up SELECT reads that winner. Both racers converge on the same
+ * value because both lost the same way.
+ *
+ * `reusable: false` (password_reset) drops the WHERE, so the row is always
+ * replaced and the newest request always wins.
+ */
+async function claimToken(
+  userId: string,
+  type: VerificationTokenType,
+  token: string,
+  reusable: boolean
+): Promise<{ token: string; expiresAt: Date }> {
   const expiresAt = new Date(Date.now() + TTL_MS[type])
+  const id = randomBytes(12).toString("hex")
 
-  // ONE STATEMENT, NOT TWO. This was deleteMany-then-create, which makes the
-  // "one live token per user per type" invariant in this file's header true only
-  // when nothing races: measured, three concurrent issues left three live rows
-  // for one user and the oldest still verified. The upsert targets the
-  // (userId, type) unique constraint added to the schema for this, so the
-  // database — not the ordering of two round trips — enforces the invariant.
-  await prisma.verificationToken.upsert({
-    where: { uniq_verification_token_user_type: { userId, type } },
-    create: { userId, token, type, expiresAt },
-    update: { token, expiresAt },
-  })
+  const rows = reusable
+    ? await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
+        INSERT INTO verification_tokens (id, user_id, token, type, expires_at)
+        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt})
+        ON CONFLICT (user_id, type) DO UPDATE
+          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
+          WHERE verification_tokens.expires_at <= now()
+        RETURNING token, expires_at`
+    : await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
+        INSERT INTO verification_tokens (id, user_id, token, type, expires_at)
+        VALUES (${id}, ${userId}, ${token}, ${type}, ${expiresAt})
+        ON CONFLICT (user_id, type) DO UPDATE
+          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
+        RETURNING token, expires_at`
 
-  // Read back rather than trust our own write, so two racing issuers converge
-  // on the row's value instead of one mailing a token that was overwritten.
-  const stored = await prisma.verificationToken.findUnique({
-    where: { uniq_verification_token_user_type: { userId, type } },
-  })
-  if (stored && stored.expiresAt.getTime() > Date.now()) {
-    return { token: stored.token, expiresAt: stored.expiresAt }
+  if (rows.length === 1) {
+    return { token: rows[0].token, expiresAt: rows[0].expires_at }
   }
+
+  // No row came back: a LIVE row blocked the update, so read the winner.
+  const held = await prisma.verificationToken.findUnique({
+    where: { uniq_verification_token_user_type: { userId, type } },
+  })
+  if (held) return { token: held.token, expiresAt: held.expiresAt }
   return { token, expiresAt }
 }
 
@@ -214,21 +269,16 @@ export async function issueEmailCode(
   // randomInt is rejection-sampled and uniform over [0, 10). See the header.
   let code = ""
   for (let i = 0; i < EMAIL_CODE_LENGTH; i += 1) code += String(randomInt(0, 10))
-  const expiresAt = new Date(Date.now() + TTL_MS[type])
 
-  // Atomic against the (userId, type) constraint — three concurrent resends
-  // used to leave three live codes with the oldest still verifying.
-  await prisma.verificationToken.upsert({
-    where: { uniq_verification_token_user_type: { userId, type } },
-    create: { userId, token: codeTokenValue(userId, code), type, expiresAt },
-    update: { token: codeTokenValue(userId, code), expiresAt },
-  })
-
-  // READ BACK RATHER THAN TRUST OUR OWN WRITE. If two requests both found no
-  // live code, both upsert and the second overwrites the first — so the caller
-  // that wrote first would otherwise mail a code that is no longer stored. The
-  // row is the truth; return what it actually holds.
-  return (await readLiveCode(userId, type)) ?? { code, expiresAt }
+  // ONE statement, via the shared primitive — see `claimToken` for why the
+  // upsert-then-read this replaced mailed a dead code in 3 of 8 concurrent
+  // trials. The value returned is the one Postgres actually holds, so two
+  // racing resends mail the same code.
+  const claimed = await claimToken(userId, type, codeTokenValue(userId, code), true)
+  return {
+    code: claimed.token.slice(claimed.token.indexOf(":") + 1),
+    expiresAt: claimed.expiresAt,
+  }
 }
 
 /** The user's live (unexpired) code, or null. Shape-checked, not just present. */

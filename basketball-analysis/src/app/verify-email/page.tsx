@@ -113,14 +113,36 @@ function VerifyEmailBody() {
    * Where "Continue" goes once the address is verified. A brand-new account
    * still owes onboarding; anyone else belongs on the dashboard.
    *
-   * SAME-ORIGIN PATHS ONLY. This is read out of sessionStorage, so it is not
-   * attacker-controlled the way a query parameter would be — but it is written
-   * by one screen and consumed by another, and a value that becomes an href
-   * gets validated at the point of use regardless. A leading '//' or any scheme
-   * would make this an off-site redirect, so only a single-slash path passes.
+   * SAME-ORIGIN ONLY, resolved by the URL parser — see the read site below for
+   * why a regex was the wrong instrument for this question.
    */
   const [nextHref, setNextHref] = useState("/dashboard")
+  /** True when /signup handed us here, i.e. the visitor definitely has an
+   *  account and "back" must go forward into the app rather than to /signup. */
+  const [nextFromSignup, setNextFromSignup] = useState(false)
+  /** Set when a rejected code clears the boxes; consumed by the effect below. */
+  const [refocus, setRefocus] = useState(false)
+  /** The server said, for THIS session, that the address is not verified. */
+  const [serverUnverified, setServerUnverified] = useState(false)
   const inputs = useRef<Array<HTMLInputElement | null>>([])
+
+  // FOCUS AFTER THE COMMIT, NOT AFTER A FRAME.
+  //
+  // Two wrong versions preceded this one. The first called `.focus()` before
+  // `setBusy(false)`, so the inputs were still `disabled` in the committed DOM
+  // and focusing a disabled input is a silent no-op. The second moved it into
+  // `requestAnimationFrame`, which is closer but still a guess about timing:
+  // rAF can fire before React commits the render that removes `disabled`, and
+  // measured over 6 identical trials it left `document.activeElement` on BODY
+  // in 3 of them — a fix that worked often enough to look verified.
+  //
+  // An effect that depends on `busy` cannot run early: React commits the DOM,
+  // then runs the effect. By that point `disabled` is gone and the focus lands.
+  useEffect(() => {
+    if (!refocus || busy) return
+    inputs.current[0]?.focus()
+    setRefocus(false)
+  }, [refocus, busy])
 
   // --- who is this, and how long until they can resend --------------------
   useEffect(() => {
@@ -130,8 +152,23 @@ function VerifyEmailBody() {
     try {
       pin = sessionStorage.getItem("shotiq-verify-cooldown")
       pending = sessionStorage.getItem("shotiq-pending-email")
+      // SAME-ORIGIN, DECIDED BY THE URL PARSER RATHER THAN BY A REGEX. The
+      // guard here was /^\/(?!\/)/, which blocks "//evil" and "https://evil"
+      // and PASSES "/\evil.example" — a path the parser normalises to
+      // http://evil.example/ for special schemes, so the regex said same-origin
+      // about a value that resolves off-site. Reachability is narrow (one
+      // writer, same-origin sessionStorage), but the comment claimed the value
+      // "gets validated at the point of use" and the validation was wrong.
       const nx = sessionStorage.getItem("shotiq-verify-next")
-      if (nx && /^\/(?!\/)/.test(nx)) setNextHref(nx)
+      if (nx) {
+        try {
+          const u = new URL(nx, window.location.origin)
+          if (u.origin === window.location.origin) {
+            setNextHref(u.pathname + u.search)
+            setNextFromSignup(true)
+          }
+        } catch { /* unparseable — keep the default */ }
+      }
       const raw = sessionStorage.getItem("shotiq-verify-sent-at")
       sentAt = raw ? Number(raw) : null
     } catch { /* opaque origin */ }
@@ -158,6 +195,9 @@ function VerifyEmailBody() {
       .then((d) => {
         if (d.email) setEmail(d.email)
         if (d.verified) setVerified(true)
+        // The server's answer for a caller it can identify. Used to CONTRADICT
+        // a ?status=success that is not true for this session.
+        else setServerUnverified(true)
       })
       .catch(() => { /* signed out — the address comes from the two sources above */ })
   }, [params])
@@ -168,7 +208,23 @@ function VerifyEmailBody() {
     return () => clearTimeout(t)
   }, [cooldown, pinned])
 
-  const isVerified = verified || linkStatus === "success"
+  // THE QUERY STRING IS NOT EVIDENCE. This was `verified || linkStatus ===
+  // "success"`, so anyone opening /verify-email?status=success — including a
+  // signed-out visitor, or a player whose address is not verified at all — was
+  // told "Your email is verified. You're all set.", and the server's own
+  // `verified: false` from GET /api/auth/resend-verification could not win
+  // against the OR.
+  //
+  // `?status=success` is still honoured, because the emailed-link route
+  // redirects here with it and that IS a real success the page must reflect —
+  // including for a player who opened the link in a mail-app browser with no
+  // session, where nothing else can tell us. But it is now only a CLAIM, and
+  // the server is allowed to contradict it: if the API can identify the caller
+  // and says the address is NOT verified, the claim loses. That closes the case
+  // that actually misleads someone — a signed-in, unverified player landing on
+  // a crafted URL and being told they are done — while leaving the real link
+  // path working for a caller nobody can identify.
+  const isVerified = verified || (linkStatus === "success" && !serverUnverified)
   const filled = useMemo(() => code.findIndex((c) => c === ""), [code])
   const filledCount = filled === -1 ? CODE_LENGTH : filled
 
@@ -200,7 +256,7 @@ function VerifyEmailBody() {
         // enough on its own: the focus has to happen after the render that
         // removes `disabled`, hence the frame callback.
         setBusy(false)
-        requestAnimationFrame(() => inputs.current[0]?.focus())
+        setRefocus(true)
         return
       }
       setVerified(true)
@@ -328,8 +384,35 @@ function VerifyEmailBody() {
       </header>
 
       <div data-s5-contents className="mx-auto w-full max-w-[440px] px-[18px] md:px-0">
-        <button type="button" onClick={() => router.back()} aria-label="Go back"
-                data-s5="back" data-testid="verify-back"
+        {/* THE BACK ARROW IS THE ONLY EXIT CANONICAL DRAWS, so it has to be a
+            real one. Two measured defects met here.
+
+            `router.back()` walked the browser's history, and on the arrival
+            path the emailed link creates there IS no history — a fresh tab has
+            `history.length 2` and going back lands on about:blank, i.e. the
+            control navigated out of the app entirely.
+
+            And once /signup started routing here, "back" to /signup became a
+            dead end: the account already exists, so that screen can only refuse
+            the address it was just given. Every new account was walled behind
+            an email on a deployment where mail is undeliverable, with no way
+            into the product — the round that gave this screen an entry point
+            took away the product's.
+
+            So it goes FORWARD for someone who has an account (the signup
+            handoff wrote where), and back to /signup only for a visitor who
+            arrived without one. No control is added and none is moved:
+            canonical 005 draws no skip, and this is the arrow it already
+            draws. `emailVerified` gates nothing today (recorded as NEEDS
+            KEVIN), so this strands nobody while that stays true — and if
+            Kevin later makes verification a gate, this is the one place that
+            has to change with it. */}
+        <button type="button" aria-label="Go back" data-testid="verify-back"
+                onClick={() => {
+                  if (nextFromSignup) router.replace(nextHref)
+                  else router.push("/signup")
+                }}
+                data-s5="back"
                 className="mt-[10px] flex h-[26px] w-[26px] items-center md:mt-[16px]">
           <span data-s5-off className="hidden md:inline"><ArrowLeft className="h-[20px] w-[20px]" /></span>
           <span data-s5-mark className="md:hidden"><BackMark /></span>

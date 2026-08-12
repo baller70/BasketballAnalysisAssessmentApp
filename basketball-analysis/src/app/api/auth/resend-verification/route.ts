@@ -52,6 +52,45 @@ export async function POST(request: NextRequest) {
   // countdown still cannot disagree.
   const subject = session ? `u:${session.userId}` : bodyEmail || "anon"
 
+  /**
+   * ONE DAILY BUDGET PER ACCOUNT, spent only when mail is actually sent.
+   *
+   * A per-minute limit is not a limit on VOLUME: 3/min sustained is 4,320
+   * identical emails a day into one inbox, aimed by anyone who knows the
+   * address. So there is a ceiling. But the first version keyed it on the same
+   * `subject` as the per-minute limit, which resolves to the ADDRESS when the
+   * caller is anonymous and to `u:<id>` when they are signed in — two budgets
+   * for one account. Measured, that was worth two things, both wrong: the real
+   * ceiling on mail to one inbox was 20/day rather than 10, and eleven
+   * unauthenticated requests locked an ANONYMOUS player out of resend for 24
+   * hours — exactly the player this route's own comment says it exists for.
+   *
+   * Keyed on the resolved account's address, both callers share one budget, and
+   * it is charged where the cost is: next to the send, after the account is
+   * known, so a request naming an address that does not exist cannot spend
+   * anyone's.
+   *
+   * WHAT HITTING IT COSTS A PLAYER, stated rather than glossed: not
+   * verification. Issuance is idempotent now, so the code already in their
+   * inbox stays valid for its TTL and still verifies — the ceiling withholds
+   * another COPY of a credential they already hold. The residual case is a
+   * player whose mail never arrived and who needs a fresh send on a day an
+   * attacker has spent the budget; that is real, and it is why the number is 10
+   * and not 3.
+   *
+   * Best-effort: the store is per-process and in memory, so a restart forgives
+   * the count and each instance of a multi-instance deployment keeps its own. A
+   * durable cap belongs with the durable store `rateLimit.ts` already says this
+   * should become.
+   */
+  const dailyCeiling = (accountEmail: string) =>
+    !!checkRateLimit(request, {
+      bucket: "resend-verification-daily",
+      limit: 10,
+      windowMs: 24 * 60 * 60_000,
+      subject: `acct:${accountEmail}`,
+    }).response
+
   const { response: limited } = checkRateLimit(request, {
     bucket: "resend-verification",
     limit: 3,
@@ -60,27 +99,8 @@ export async function POST(request: NextRequest) {
   })
   if (limited) return limited
 
-  // AND A DAILY CEILING, because a per-minute limit is not a limit on VOLUME.
-  // Reusing the code (see `issueEmailCode`) removed the ability to invalidate a
-  // player's credential by spamming this route, but not the ability to spam it:
-  // 3 a minute sustained is 4,320 identical emails a day into one inbox, which
-  // is a mail bomb aimed by anyone who knows the address, and it is our sending
-  // reputation that pays for it.
-  //
-  // 10 a day is far above any real use — a player resends once or twice while
-  // waiting — and far below a useful weapon.
-  //
-  // Best-effort, and stated as such: the store is per-process and in memory, so
-  // a restart forgives the count and a multi-instance deployment gives each
-  // instance its own. A durable cap belongs with the durable store the top of
-  // `rateLimit.ts` already says this should become.
-  const { response: dayLimited } = checkRateLimit(request, {
-    bucket: "resend-verification-daily",
-    limit: 10,
-    windowMs: 24 * 60 * 60_000,
-    subject,
-  })
-  if (dayLimited) return dayLimited
+  // The DAILY ceiling lives further down, keyed on the RESOLVED ACCOUNT rather
+  // than on whatever the caller typed — see `dailyCeiling` below.
 
   if (!session) {
     if (!bodyEmail) {
@@ -109,6 +129,11 @@ export async function POST(request: NextRequest) {
     // removes the millisecond-scale signal that was actually measurable, not
     // every conceivable one.
     if (user && !user.emailVerified) {
+      if (dailyCeiling(user.email)) {
+        // Uniform with the success shape: refusing differently here would say
+        // "this address exists and has been mailed a lot today".
+        return NextResponse.json({ success: true, cooldownSeconds: RESEND_COOLDOWN_SECONDS })
+      }
       void sendVerificationEmail(user.id, user.email).catch((error) => {
         console.error("Failed to resend verification email:", error)
       })
@@ -128,6 +153,13 @@ export async function POST(request: NextRequest) {
   }
   if (user.emailVerified) {
     return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
+  }
+
+  if (dailyCeiling(user.email)) {
+    return NextResponse.json({
+      success: false,
+      error: "That address has been sent too many emails today. Try again tomorrow.",
+    }, { status: 429 })
   }
 
   try {

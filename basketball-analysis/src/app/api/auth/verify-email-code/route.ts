@@ -54,6 +54,33 @@ export async function POST(request: NextRequest) {
   // so it is refused without spending anything.
   if (code.length !== EMAIL_CODE_LENGTH) return reject()
 
+  /**
+   * A CONSTANT-TIME FLOOR ON EVERY FAILURE, because the uniform BODY was never
+   * the whole promise. This file's header says unknown address, no code
+   * outstanding, wrong code and expired code "all return the same 400 …
+   * Distinguishing them would turn this into an account-existence oracle". The
+   * payload was identical and the CLOCK was not — measured, 8 samples each:
+   *
+   *     existing account   5.10-7.29 ms      absent   4.33-4.82 ms
+   *
+   * non-overlapping, because only an existing account reaches the token lookup.
+   * That is the same oracle /api/auth/forgot-password measured and closed one
+   * round earlier, still open here, and it survived INTO the 429 as well, so
+   * the rate limit did not even bound it.
+   *
+   * Every failing path now finishes no earlier than `FLOOR_MS` after the
+   * handler started, which puts both classes above the slowest of them. Stated
+   * plainly: this removes the millisecond-scale signal that is actually
+   * measurable at this sample size, not every conceivable one — a floor cannot
+   * hide a difference larger than itself.
+   */
+  const FLOOR_MS = 25
+  const startedAt = Date.now()
+  const floor = async () => {
+    const left = FLOOR_MS - (Date.now() - startedAt)
+    if (left > 0) await new Promise((r) => setTimeout(r, left))
+  }
+
   const session = await getSessionUser(request)
 
   // THE LIMIT COUNTS WRONG GUESSES, AND A CORRECT CODE IS NEVER REFUSED.
@@ -97,8 +124,9 @@ export async function POST(request: NextRequest) {
    * already established the submission is wrong, so a correct code cannot reach
    * it and cannot be locked out.
    */
-  const fail = () => {
+  const fail = async () => {
     const { response: limited } = checkRateLimit(request, failureLimit)
+    await floor()
     return limited ?? reject()
   }
 
@@ -114,7 +142,7 @@ export async function POST(request: NextRequest) {
         })
       : null
 
-  if (!user) return fail()
+  if (!user) return await fail()
 
   // ALREADY-VERIFIED IS A SUCCESS **ONLY FOR A CALLER WHO IS SIGNED IN**, and
   // the first version of this was an account-existence oracle for exactly the
@@ -149,12 +177,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
     }
     const proof = await consumeEmailCode(user.id, code)
-    if (!proof) return fail()
+    if (!proof) return await fail()
     return NextResponse.json({ success: true, alreadyVerified: true, email: user.email })
   }
 
   const userId = await consumeEmailCode(user.id, code)
-  if (!userId) return fail()
+  if (!userId) return await fail()
 
   try {
     await prisma.user.update({
