@@ -2408,6 +2408,44 @@ markup 11/11 and csrf 3/3. The round's net is helpIcon1 22.0527 -> 17.6749 and
 back 3.9709 -> 3.5029 — the two whose evidence the INTERIOR refereed, not the
 four whose envelope did.
 
+### ROUND 27: the joint (box, sw) re-solve has nothing to give, measured
+
+Grade 13's anisotropic-stroke finding is REAL and stands as a construction
+defect: `Icon` emits `sw / sqrt(sx*sy)`, so both axes are wrong whenever the box
+is not square, and the sign tracks the box aspect across all eleven marks. What
+was left open was whether re-solving `(box, sw)` jointly could recover anything,
+since the one-line isotropy fix is a wash.
+
+BOTH COORDINATES ARE INDEPENDENTLY AT THEIR ARGMIN. Grade 13 measured the stroke
+term with the boxes held: isotropic at 3.0 costs +0.005 of whole screen, 3.15
+costs +0.033, 3.30 costs +0.052 — monotonically worse as it approaches
+canonical's own 3.19 median. This round measured the box term with the stroke
+held, on `diffMark`, the worst-affected mark at 23.7550:
+
+    control / kx 1.00   23.7550   +0.0000   <- argmin
+    kx 0.99             23.8264   +0.0715
+    ky 0.99             24.4495   +0.6946
+    ky 1.01             25.3844   +1.6295
+    kx 1.01             25.6741   +1.9192
+    ky 0.97             28.4295   +4.6745
+    kx 0.97             29.5460   +5.7910
+    kx 1.03             29.7068   +5.9518
+    ky 1.03             31.3125   +7.5576
+
+Every perturbation is worse, monotonically, in both axes. The box is not
+mis-fitted — it is fitted, and what it is fitted AROUND is the stroke defect.
+That is the whole finding: the construction is wrong and the output is
+compensated, so correcting the construction alone makes it worse, and correcting
+both lands back near where it already is.
+
+**THE ANISOTROPY IS THEREFORE RECORDED AS A CONSTRUCTION DEFECT, NOT A PIXEL
+DEBT.** It should be fixed when the marks are next re-authored — `Icon` should
+take per-axis stroke widths, or the boxes should be square — because a helper
+that is wrong by construction will be wrong again on the next screen that uses
+it, and it silently pushed nine of eleven marks' ink 4-11% light while the
+near-square chevrons ran 5-10% heavy. But it is not worth re-fitting eighteen
+parameters to move a number that both gradients say is already at a minimum.
+
 ### ROUND 26: display's residual is not reachable by scaleX or tracking
 
 Grade 13 read `display` as per-glyph misregistration and grade 12 as
