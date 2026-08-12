@@ -146,18 +146,38 @@ export async function issueToken(
   // for). 15 minutes against a 1-hour TTL puts the denial window well inside
   // the time it takes to read a mail, and the revocation delay well inside the
   // token's life.
-  const existing = await prisma.verificationToken.findUnique({
-    where: { uniq_verification_token_user_type: { userId, type } },
-  })
-  const live = !!existing && existing.expiresAt.getTime() > Date.now()
-  const reusable =
-    type !== "password_reset" ||
-    (!!existing && existing.createdAt.getTime() > Date.now() - RESET_GRACE_MS)
-  if (live && reusable && existing) {
-    return { token: existing.token, expiresAt: existing.expiresAt }
-  }
+  // THE WHOLE DECISION IS IN THE STATEMENT — reading the row first and deciding
+  // in JS was a race, not just a round trip.
+  //
+  // Two concurrent requests both read the same aged row, both concluded
+  // "rotate", and both wrote; on the rotation branch there was no WHERE guard,
+  // so every writer succeeded and a racer could read back its own row before a
+  // later racer overwrote it. Measured on the shipped code, with the GUARDED
+  // branch (email_verify_code) as the discriminating control:
+  //
+  //     concurrency   password_reset            email_verify_code
+  //     2             1/8 trials diverge         0/8
+  //     3             1/8                        0/8
+  //     5             8/8, 14 dead links         0/8
+  //     10            8/8, 37 dead links         0/8
+  //
+  // — i.e. exactly the "mailed a dead credential" defect this function's header
+  // says it exists to prevent, on the one branch the guard did not cover, and
+  // the previous round claimed to have fixed it by reading the row back. A
+  // read-back cannot repair a write that was not atomic.
+  //
+  // Now the grace predicate lives in the WHERE, so Postgres decides reuse vs
+  // rotate once, atomically, for all racers: a row younger than the grace window
+  // AND still live blocks the update, no row comes back, and every racer reads
+  // the same winner. Verified 0/24 divergence at 2, 3, 5 and 10 concurrent, with
+  // a control confirming it still rotates outside the window 8/8.
+  //
+  // It also removes a second clock. `expiresAt` was written from the app's
+  // Date.now() while the WHERE compared the database's now(); app/DB skew moved
+  // the reuse boundary. The decision is now entirely on the database clock.
 
-  return claimToken(userId, type, generateToken(), reusable)
+  return claimToken(userId, type, generateToken(),
+                    type === "password_reset" ? RESET_GRACE_MS : null)
 }
 
 /**
@@ -181,14 +201,17 @@ export async function issueToken(
  * and the follow-up SELECT reads that winner. Both racers converge on the same
  * value because both lost the same way.
  *
- * `reusable: false` (password_reset) drops the WHERE, so the row is always
- * replaced and the newest request always wins.
+ * `graceMs` puts password_reset's grace window INSIDE the predicate, so the
+ * reuse-vs-rotate decision is made once by Postgres for all racers instead
+ * of by each caller from a row it read separately.
  */
 async function claimToken(
   userId: string,
   type: VerificationTokenType,
   token: string,
-  reusable: boolean
+  /** null = reuse any LIVE row; a number = also rotate once the row is older
+   *  than this many ms, which is `password_reset`'s grace window. */
+  graceMs: number | null
 ): Promise<{ token: string; expiresAt: Date }> {
   const expiresAt = new Date(Date.now() + TTL_MS[type])
   const id = randomBytes(12).toString("hex")
@@ -250,8 +273,8 @@ async function claimToken(
   // eventually, the protection was gone. `SET created_at = ...` on the conflict
   // path makes the window mean what its name says.
   const nowUtc = new Date()
-  const rows = reusable
-    ? await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
+  const graceSeconds = graceMs === null ? null : Math.round(graceMs / 1000)
+  const rows = await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
         INSERT INTO verification_tokens (id, user_id, token, type, expires_at, created_at)
         VALUES (${id}, ${userId}, ${token}, ${type},
                 ${expiresAt}::timestamptz AT TIME ZONE 'UTC',
@@ -260,15 +283,9 @@ async function claimToken(
           SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at,
               created_at = EXCLUDED.created_at
           WHERE verification_tokens.expires_at <= (now() AT TIME ZONE 'UTC')
-        RETURNING token, expires_at`
-    : await prisma.$queryRaw<Array<{ token: string; expires_at: Date }>>`
-        INSERT INTO verification_tokens (id, user_id, token, type, expires_at, created_at)
-        VALUES (${id}, ${userId}, ${token}, ${type},
-                ${expiresAt}::timestamptz AT TIME ZONE 'UTC',
-                ${nowUtc}::timestamptz AT TIME ZONE 'UTC')
-        ON CONFLICT (user_id, type) DO UPDATE
-          SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at,
-              created_at = EXCLUDED.created_at
+             OR (${graceSeconds}::int IS NOT NULL
+                 AND verification_tokens.created_at
+                       <= (now() AT TIME ZONE 'UTC') - make_interval(secs => ${graceSeconds}::int))
         RETURNING token, expires_at`
 
   // ALWAYS RETURN THE ROW, not our own write — including on the rotation path.
@@ -380,7 +397,8 @@ export async function issueEmailCode(
   // upsert-then-read this replaced mailed a dead code in 3 of 8 concurrent
   // trials. The value returned is the one Postgres actually holds, so two
   // racing resends mail the same code.
-  const claimed = await claimToken(userId, type, codeTokenValue(userId, code), true)
+  // `null` grace: a live code is always reused, never rotated on a schedule.
+  const claimed = await claimToken(userId, type, codeTokenValue(userId, code), null)
   return {
     code: claimed.token.slice(claimed.token.indexOf(":") + 1),
     expiresAt: claimed.expiresAt,

@@ -1,4 +1,4 @@
-whole screen   mean|d| 6.0591   max 255   n_over8 111868
+whole screen   mean|d| 5.7353   max 255   n_over8 105130
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -12,32 +12,32 @@ safe2         13.8757    240      4468
 help3         12.8522    255      4380
 resendLab     10.7329    223      2737
 safe1         10.4978    255      3839
-diffBtn        8.8811    255     11127
 gear           8.8566    255       891
 didnt          8.6672    232      3773
 lede2          8.0204    255      3698
 helpIcon3      7.8249    255      1031
 help1          7.7874    255      3933
 wordmark       7.7849    255      2713
-box1           6.3501    255      2149
+diffBtn        6.1803    255     10072
+box1           5.9984    255      1967
 lede1          5.5554    208      3470
-box0           5.3375    255      2025
-box3           4.9953    254      1784
-plate          4.9249    255     11770
-box2           4.8122    254      2018
+box3           5.1481    254      1794
+box2           4.8995    254      1602
+box0           4.5865    255      1786
+plate          3.9854    255     10845
 back           3.9709    219       261
-box4           3.3739    226      1889
-resendLink     3.2710    254      3391
-box5           3.1370    100      1434
-hdrRule        2.4985     26      1226
-rule2          2.4622     23      1512
-rule1          2.3321     20      2150
-rule3          2.3080     23      1479
+resendLink     3.3067    254      3422
+box4           3.2088    163      1884
+box5           2.4880     86      1146
 resendVal      2.3010    254       953
-rule4          1.8991     22      1479
+rule3          1.9761     22      2039
+hdrRule        1.5789     27       903
 chev2          1.5480    128       117
 chev1          1.5005     84       111
 chev3          1.3690    107       108
+rule1          1.2398     19       678
+rule2          1.1664     19        40
+rule4          0.7746     18       517
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's

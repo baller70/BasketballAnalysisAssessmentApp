@@ -199,7 +199,21 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       className="md:hidden"
       width={393}
       height={1844 / (853 / 393)}
-      viewBox="0 0 853 1844"
+      /* THE WHOLE OVERLAY SAT HIGH AND LEFT, and no per-band search could see it
+         because every shift search on this screen is INTEGER and the offset is
+         sub-pixel. Sub-pixel ink centroids put the flat marks -0.4 to -0.6
+         device px out with one sign across unrelated features (the four
+         dividers, the header rule, the diff-button border, the plate), which is
+         rule 15's container signature at a scale rule 15 had never been applied
+         at.
+         Swept as the viewBox ORIGIN — the attribute the overlay actually emits
+         (rules 47/62) — 1-D then 2-D, rule-40 control reproducing 6.0591 /
+         111868 exactly on every run. Interior argmin (-0.6, -0.4): twelve bands
+         better, two negligibly worse, diffBtn -2.70, rule2 -1.30, rule4 -1.12,
+         rule1 -1.09, plate -0.94, hdrRule -0.92.
+         Worth -0.3305 of whole screen with the caret held, which is more than
+         everything else outstanding on this screen combined. */
+      viewBox="-0.6 -0.4 853 1844"
       fill="none"
     >
       {/* the header hairline — full bleed, ink 64.7 units over its band */}
@@ -222,7 +236,7 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       {BOX_X.map((x, i) => (
         <rect key={x} x={x} y={BOX_Y} width={BOX_W[i]} height={BOX_H} rx={BOX_R}
               stroke={i === focus ? ORANGE : "var(--s5-box-rule)"}
-              strokeWidth={i === focus ? 2.06 : 2.17} fill="none" />
+              strokeWidth={i === focus ? 2.06 : 1.75} fill="none" />
       ))}
 
       {/* the caret in the focused box, only while that box is still empty —

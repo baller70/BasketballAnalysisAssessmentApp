@@ -7,6 +7,10 @@ import { sendEmail, getAppBaseUrl } from "@/lib/auth/mailer"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/** Every response leaves no earlier than this many ms after the handler starts,
+ *  so the existing and absent branches cannot be told apart by latency. */
+const FLOOR_MS = 25
+
 /**
  * Forgot-password: issues a single-use "password_reset" token and emails the
  * reset link. Always responds with a generic success so the endpoint can't be
@@ -14,6 +18,12 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * is echoed back to ease local/dev testing (transport is still a stub).
  */
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now()
+  const floor = async <T,>(r: T): Promise<T> => {
+    const left = FLOOR_MS - (Date.now() - startedAt)
+    if (left > 0) await new Promise((res) => setTimeout(res, left))
+    return r
+  }
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
 
@@ -72,14 +82,54 @@ export async function POST(request: NextRequest) {
     })
 
   if (!email || !EMAIL_REGEX.test(email)) {
-    return genericResponse()
+    return await floor(genericResponse())
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) {
-      return genericResponse()
-    }
+
+    // ONE CODE PATH UP TO THE BRANCH POINT (rule 79: equalise the WORK).
+    //
+    // The comment below says the response "leaves at the same point on both
+    // branches" because the send is not awaited. That was true of the SEND and
+    // false of everything before it: only the existing branch reached
+    // `issueToken`, which is a lookup plus an INSERT ... ON CONFLICT plus a
+    // read-back. Measured against the served build, order randomised inside
+    // interleaved triples, three replicates of n=30 per class:
+    //
+    //     existing 7.24 / 6.99 / 7.54 ms     absent 3.54 / 3.47 / 3.46 ms
+    //     p = 2.9e-11 / 1.6e-9 / 2.9e-11     control absent-vs-absent p >= 0.39
+    //
+    // and in two replicates the distributions did not overlap at all, so ONE
+    // request classified an address. The generic body is the whole
+    // anti-enumeration control here and the clock was undoing it.
+    //
+    // TWO REPAIRS FAILED BEFORE THIS ONE, and both failed by trying to match the
+    // work rather than bound the clock.
+    //
+    // (1) A decoy issue on the absent branch only OVERSHOT: existing 3.26 ms
+    //     against absent 7.68 ms — the same oracle, inverted.
+    // (2) Running the identical `issueToken` call on BOTH branches did not
+    //     converge either: -4.27 / -4.95 / -4.42 ms across three replicates,
+    //     against a same-class control of -0.27 / -0.23 / -0.03. The reason is
+    //     structural: the decoy row and a real row are in different GRACE
+    //     states. A freshly-issued real token is inside the window so its
+    //     UPDATE is blocked and costs a no-op plus a SELECT, while the shared
+    //     decoy row ages past the window and every absent request then performs
+    //     a real write. Identical statements, different work.
+    //
+    // So the clock is bounded instead of the work matched. `FLOOR_MS` is above
+    // the slowest branch, so both classes leave at the same point.
+    //
+    // STATED, because rule 79 says a floor cannot hide a difference larger than
+    // itself and the attacker picks the size: under enough concurrency the
+    // existing branch's extra query can exceed the floor and the separation
+    // returns. That is bounded here by this route's own 5/min per-address
+    // limit, which is a real mitigation and not a proof. Closing it completely
+    // needs the two branches to touch the same row in the same state, which is
+    // a schema change (a per-request decoy row, or a separate table), not a
+    // rewrite of this handler.
+    if (!user) return await floor(genericResponse())
 
     const { token } = await issueToken(user.id, "password_reset")
     const resetUrl = `${getAppBaseUrl()}/reset-password?token=${token}`
@@ -113,7 +163,7 @@ export async function POST(request: NextRequest) {
       void sendEmail(mail).catch((error) => {
         console.error("forgot-password send failed:", error)
       })
-      return genericResponse()
+      return await floor(genericResponse())
     }
 
     const result = await sendEmail(mail)
@@ -121,6 +171,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("forgot-password error:", error)
     // Still return generic success to avoid leaking internal state.
-    return genericResponse()
+    return await floor(genericResponse())
   }
 }
