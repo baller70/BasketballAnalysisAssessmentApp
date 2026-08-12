@@ -181,20 +181,29 @@ export const RUNS: Record<string, Run> = {
      79.4 -> 81.94 lands the cap; at that size the advance ratio would be
      1.302 x 1.032 = 1.344, so scaleX 1.00 -> 0.744. dy 30.0 -> 36.4 is the same
      6-device-px lift re-expressed at the new size. */
-  display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.744, skew: -6.0,
+  /* Round 2: cap ratio EXACT (1.000) with the advance still 1.270 over, so
+     scaleX alone again, 0.744 -> 0.586. Canonical's headline is far more
+     condensed than 004's at the same face: per glyph it spends 0.245 of its cap
+     against 004's 0.545, i.e. this canvas draws a compressed cut the repository
+     does not contain (rule 54's situation, with no alternative to try — all
+     four bundled Tungsten cuts share one width axis). The affine is what is
+     shippable and it is stated as such. */
+  display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.586, skew: -6.0,
              ls: 0.0, colour: "var(--s5-ink)", family: TUNGSTEN, bang: true,
              dx: 1.2, dy: 36.4, tx: 0, ty: 0 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
   /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.908, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 9.9, width: 348.3, tx: 0, ty: 0 },
+           colour: "var(--s5-graphite)", dx: 0, dy: 9.9, width: 348.3, tx: -1.3822, ty: 0 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
   /* Cap 1.067 over AND advance 1.168 over — both axes, so this one IS a size
      error with a scale trim on top: 16.4 -> 15.37, then 0.96 -> 0.877. */
-  lede2: { cx: 428.430, top: 442.572, size: 15.37, weight: 600, scale: 0.877, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0, dy: 8.1, width: 319.9, tx: 0, ty: 0 },
+  /* Round 2: cap 0.967 short, advance 0.997 — size up 3.4% and scaleX down to
+     hold the advance the size change would widen. */
+  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 600, scale: 0.851, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0, dy: 8.1, width: 319.9, tx: -1.3822, ty: 0 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
      22.96 / 24.36 / 26.38 / 22.74 — ink-width/cap 0.40, where an unscaled Geist
      digit sits near 0.63, so the run is condensed by about a third. */
@@ -208,32 +217,32 @@ export const RUNS: Record<string, Run> = {
      correctly identified face looks like.
      The first capture measured Geist's cap at 0.637 of its font-size here
      against Tungsten's 0.724, which is where 37.6 comes from. */
-  digit0: { cx: 102.840, top: 570.475, size: 37.6, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.45, tx: 0, ty: 0 },
-  digit1: { cx: 232.068, top: 570.461, size: 37.6, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.32, tx: 0, ty: 0 },
-  digit2: { cx: 360.964, top: 571.017, size: 37.6, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.22, tx: 0, ty: 0 },
-  digit3: { cx: 490.455, top: 571.048, size: 37.6, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 104.74, tx: 0, ty: 0 },
+  digit0: { cx: 102.840, top: 570.475, size: 39.3, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 17.0, width: 105.45, tx: 0, ty: 0 },
+  digit1: { cx: 232.068, top: 570.461, size: 39.3, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 17.0, width: 105.32, tx: 0, ty: 0 },
+  digit2: { cx: 360.964, top: 571.017, size: 39.3, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 17.0, width: 105.22, tx: 0, ty: 0 },
+  digit3: { cx: 490.455, top: 571.048, size: 39.3, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 17.0, width: 104.74, tx: 0, ty: 0 },
   /* Boxes five and six are EMPTY in canonical, so these two runs have no ink to
      measure against. They are the box centres, carrying the same size and face
      as the four that were measured, because a player who keeps typing must not
      see the digits change shape halfway along the row. Stated, not fitted. */
-  digit4: { cx: 619.295, top: 570.75, size: 37.6, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 103.89, tx: 0, ty: 0 },
-  digit5: { cx: 748.020, top: 570.75, size: 37.6, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 12.0, width: 105.64, tx: 0, ty: 0 },
+  digit4: { cx: 619.295, top: 570.75, size: 39.3, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 17.0, width: 103.89, tx: 0, ty: 0 },
+  digit5: { cx: 748.020, top: 570.75, size: 39.3, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 17.0, width: 105.64, tx: 0, ty: 0 },
   /* "Resend code in" (graphite) and "0:42" (orange, heavier) are two runs
      because they are two roles: the label reads G/R 0.9876 / B/R 0.9523 and the
      value is orange. One window over both would measure neither (rule 57). */
   /* Cap 0.963 short, advance 1.014 over: size 15.9 -> 16.5 with scaleX
      0.96 -> 0.912 to hold the advance the size change would have widened. */
-  resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 400, scale: 0.912, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 0.6, dy: 10.2, tx: 0, ty: 0 },
+  resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 400, scale: 0.899, ls: -0.004,
+               colour: "var(--s5-graphite)", dx: 2.6, dy: 9.2, tx: 0, ty: 0 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
-  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.78, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 6.6, dy: 10.2, tx: 0, ty: 0 },
+  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.845, ls: -0.004,
+               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
@@ -244,8 +253,8 @@ export const RUNS: Record<string, Run> = {
      landed at the foot of the screen and all three help labels vanished off it
      entirely. Canonical coordinates go in; the parent's origin is subtracted
      out by `runCss`, exactly as `plateLab` and `diffLab` already did. */
-  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.96, ls: -0.004,
-                colour: "var(--s5-orange)", dx: 0, dy: 8.2, width: 174.9, tx: 0, ty: 0,
+  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.825, ls: -0.004,
+                colour: "var(--s5-orange)", dx: 0, dy: 11.2, width: 174.9, tx: 0, ty: 0,
                 ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
   plateLab: { x: 339.0, top: 946.0, size: 17.6, weight: 600, scale: 0.96, ls: -0.004,
@@ -258,20 +267,40 @@ export const RUNS: Record<string, Run> = {
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
+  /* Round 2: cap 1.000, advance 1.000 — solved. 1 device px right, via tx. */
   didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.784, ls: 0.03,
-           colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: 0, ty: 0 },
-  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 8.3, tx: 0, ty: 0 },
-  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 8.3, tx: 0, ty: 0 },
-  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 16.0, weight: 400, scale: 0.96, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 8.3, tx: 0, ty: 0 },
+           colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: -0.4607, ty: 0 },
+  /* THE THREE HELP LABELS ARE ONE ROLE AND ARE SOLVED JOINTLY (rule 14).
+     Canonical sets them at one cap — the first glyph of each measures 22 / 22 /
+     23 device px — so fitting each separately would let three different sizes
+     each look locally plausible while the column read wrong.
+     Round 2, from the built capture: the render's cap is 26.6 device px against
+     canonical's 21.6 (both at coverage 0.06, so both carry the same halo) and
+     the run is 585 device px against 428.9. Size 16.0 -> 13.0 lands the cap and
+     scaleX 0.96 -> 0.866 lands what the size change leaves.
+     A RESIDUAL IS STATED RATHER THAN CHASED: at that solve canonical's own
+     glyphs are ~25% WIDER relative to their cap than Geist's while its run is
+     the same length, i.e. canonical's body face has wide letters on tight
+     sidebearings. fontTools puts Geist at 0.705 advance/char/cap and all three
+     Boxed cuts at 0.675-0.691 against canonical's 0.5515 (rule 44 — read the
+     fonts, do not argue from pixels), so NEITHER bundled face is canonical's
+     and no scaleX can be right about the letters and the gaps at once. */
+  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
-  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 600, scale: 0.96, ls: -0.004,
+  /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
+     images) while the run ran 1.182 long — horizontal only, and the size is
+     left alone precisely because the two axes were read together. */
+  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 600, scale: 0.812, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: 0 },
   /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
+  /* Round 2: cap 1.000, advance 1.000 — solved; 1 device px right, via tx. */
   safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 400, scale: 0.761, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0.6, dy: 7.9, tx: 0, ty: 0 },
+           colour: "var(--s5-graphite)", dx: 0.6, dy: 7.9, tx: -0.4607, ty: 0 },
 }
 
 function runCss(name: string, r: Run) {
