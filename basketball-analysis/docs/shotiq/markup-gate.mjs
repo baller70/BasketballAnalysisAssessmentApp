@@ -82,6 +82,7 @@ const PROFILES = {
       display: { live: 13, control: 1 },
     },
     expectScroll: [375, 360, 320],
+    mutations: ['ariaLabel', 'labels', 'selectLede2', 'selectH1', 'deleteRun'],
   },
   /**
    * 005-verify-email. It carries NO per-word or per-glyph wrapping, so its
@@ -113,7 +114,12 @@ const PROFILES = {
     singleCharMax: 6,
     accepted: {
       lede1: { live: 1, control: 1 },
-      lede2: { live: 1, control: 1 },
+      // TWO live nodes and ONE in the control, and that is the recorded state
+      // rather than drift: the run is `{address}.` so React emits the address
+      // and the full stop as separate text nodes, and the control's
+      // `normalize()` merges them. 004's `terms` has the same shape for the
+      // same reason. Recorded so a CHANGE fails, which is the whole contract.
+      lede2: { live: 2, control: 1 },
       help1: { live: 1, control: 1 },
       help2: { live: 1, control: 1 },
       help3: { live: 1, control: 1 },
@@ -122,6 +128,15 @@ const PROFILES = {
       safe2: { live: 1, control: 1 },
     },
     expectScroll: [375, 360, 320],
+    /* `ariaLabel` IS DELIBERATELY ABSENT, and saying so is the point. It models
+       a heading whose ONLY name source is an aria-label, because 004's h1 is
+       built from aria-hidden per-glyph spans. 005's h1 carries its own text, so
+       stripping the attribute changes nothing and the mutation cannot go red —
+       which, left in the list, reads exactly like a gate that failed to catch a
+       regression. An inapplicable mutation now exits non-zero and says why,
+       rather than being recorded as a silent miss (rule 69: a probe that cannot
+       fail is not evidence). */
+    mutations: ['labels', 'selectLede2', 'selectH1', 'deleteRun'],
   },
 }
 
@@ -174,8 +189,14 @@ await p.waitForTimeout(1800)
 //   done
 const MUTATE = process.env.MUTATE || ''
 if (MUTATE === 'all') {
-  console.log('mutations: ariaLabel labels selectLede2 selectH1 deleteRun')
+  console.log(`mutations for ${SCREEN}: ${P.mutations.join(' ')}`)
   process.exit(0)
+}
+if (MUTATE && !P.mutations.includes(MUTATE)) {
+  console.log(`MUTATION ${MUTATE} IS NOT APPLICABLE TO ${SCREEN} — it models a defect this screen cannot have.`)
+  console.log(`applicable: ${P.mutations.join(' ')}`)
+  await b.close()
+  process.exit(2)
 }
 if (MUTATE) {
   await p.evaluate((m) => {
