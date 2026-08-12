@@ -92,6 +92,13 @@ const COLOURS = `
   --s5-orange:#FD4201;
   --s5-box-rule:#050505;
   --s5-divider:#DDDDDD;
+  /* THE HEADER RULE IS NOT THE SAME TONE AS THE FOUR HELP-LIST DIVIDERS, and
+     assuming it was cost 8 units of ink over the full 853px bleed. Canonical
+     carries 65.2 units across the header rule against 71.5 mean across the
+     four dividers (80.8 / 67.1 / 74.4 / 63.8 individually — they do not share
+     one value either, and the render's flat 72.0 sits at their mean, which is
+     why they are left alone). 254 - 65.2/2.17 = 223.9. */
+  --s5-header-rule:#E0E0E0;
 `
 
 export type Run = {
@@ -150,9 +157,14 @@ export const DIVIDER_X = 56.5
 export const DIVIDER_W = 739.0
 export const HEADER_RULE = 100.34
 /** The caret drawn inside the focused box. x 617.404..619.667, y 563.859..636.113. */
-export const CARET = { x: 617.404, y: 563.859, w: 2.263, h: 72.254 }
+/* The caret's WIDTH is solved from ink mass, not from its 50% crossings: it is
+   two pixels wide and unsharp-masked, so the crossings are overshoot (rule 8).
+   Canonical carries 581.8 units of green ink across it against the render's
+   427.0 at w 2.263, so 2.263 x 581.8/427.0 = 3.08. */
+export const CARET = { x: 617.404, y: 563.859, w: 3.08, h: 72.254 }
 /** "Resend email" is underlined: centroid y 845.1, x 335.4..515.8, ink 401 units. */
-export const LINK_RULE = { x: 335.4, y: 844.3, w: 180.4, h: 1.75 }
+/* Same estimator: canonical 399.0 units against the render's 330.0 at h 1.75. */
+export const LINK_RULE = { x: 335.4, y: 844.3, w: 180.4, h: 2.12 }
 
 export const RUNS: Record<string, Run> = {
   /* SHOTIQ. Canonical 004's wordmark and this one share a cap to the pixel —
@@ -190,7 +202,7 @@ export const RUNS: Record<string, Run> = {
      shippable and it is stated as such. */
   display: { x: 166.352, top: 228.686, size: 81.94, weight: 600, scale: 0.586, skew: -6.0,
              ls: 0.0, colour: "var(--s5-ink)", family: TUNGSTEN, bang: true,
-             dx: 1.2, dy: 36.4, tx: 0.9214, ty: 0 },
+             dx: 1.2, dy: 36.4, tx: 1.3821, ty: 0 },
   /* "Enter the code we sent to" — cap 23.35 device px, advance 348.30. */
   /* Cap ratio 1.000 exactly, advance 1.057 over — horizontal only. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.908, ls: -0.004,
@@ -202,7 +214,7 @@ export const RUNS: Record<string, Run> = {
      error with a scale trim on top: 16.4 -> 15.37, then 0.96 -> 0.877. */
   /* Round 2: cap 0.967 short, advance 0.997 — size up 3.4% and scaleX down to
      hold the advance the size change would widen. */
-  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 600, scale: 0.851, ls: -0.004,
+  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: 0 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
      22.96 / 24.36 / 26.38 / 22.74 — ink-width/cap 0.40, where an unscaled Geist
@@ -238,11 +250,14 @@ export const RUNS: Record<string, Run> = {
      value is orange. One window over both would measure neither (rule 57). */
   /* Cap 0.963 short, advance 1.014 over: size 15.9 -> 16.5 with scaleX
      0.96 -> 0.912 to hold the advance the size change would have widened. */
-  resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 400, scale: 0.870, ls: -0.004,
+  resendLab: { x: 287.865, top: 730.490, size: 16.5, weight: 370, scale: 0.870, ls: -0.004,
                colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 0 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
-  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.785, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 4.6, dy: 9.2, tx: 0, ty: 0 },
+  /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
+     2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
+     the round-3 reading was the instrument, not the run. */
+  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 700, scale: 0.845, ls: -0.004,
+               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
@@ -262,7 +277,7 @@ export const RUNS: Record<string, Run> = {
      bbox comes back as the whole button. Round 3: cap+descender 0.895 short,
      advance 1.080 over -> size 17.6 -> 19.66 with scaleX 0.96 -> 0.796. */
   plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 600, scale: 0.796, ls: -0.004,
-              colour: "#FFFFFF", dx: 0.8, dy: 9.2, tx: 0, ty: 0,
+              colour: "#FFFFFF", dx: 1.8, dy: 11.2, tx: 0, ty: 0,
               ox: PLATE.x, oy: PLATE.y },
   /* "Use a different email" inside the outlined button. */
   /* Cap 1.040 over, advance 1.193 over: size 15.6 -> 15.0, scaleX -> 0.837. */
@@ -272,7 +287,7 @@ export const RUNS: Record<string, Run> = {
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
   /* Round 2: cap 1.000, advance 1.000 — solved. 1 device px right, via tx. */
-  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 700, scale: 0.784, ls: 0.03,
+  didnt: { x: 59.317, top: 1251.083, size: 13.3, weight: 655, scale: 0.784, ls: 0.03,
            colour: "var(--s5-graphite)", dx: 0.8, dy: 5.0, tx: -0.4607, ty: 0 },
   /* THE THREE HELP LABELS ARE ONE ROLE AND ARE SOLVED JOINTLY (rule 14).
      Canonical sets them at one cap — the first glyph of each measures 22 / 22 /
@@ -296,22 +311,34 @@ export const RUNS: Record<string, Run> = {
      narrows the glyphs further. Both are the same face gap measured from two
      directions. 13.9 / 0.809 lands the cap AND holds the length; what it
      spends is glyph width, which is the axis no lever on this screen can
-     reach. */
-  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.9, weight: 400, scale: 0.809, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 9.0, tx: 0, ty: 0 },
-  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.9, weight: 400, scale: 0.809, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 9.0, tx: 0, ty: 0 },
-  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.9, weight: 400, scale: 0.809, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 9.0, tx: 0, ty: 0 },
+     reach.
+     MEASURED AND REVERTED. 13.9 / 0.809 took help1 20.3319 -> 22.2852, help2
+     24.1773 -> 25.6114 and help3 15.6514 -> 16.6454 — every one of the three
+     worse. So the LENGTH is the axis this band is scored on and the cap
+     shortfall is the cheaper of the two errors; 13.0 / 0.866 stands, and the
+     round-3 reasoning is kept because it was a real prediction that the band
+     mean refuted. Weight 400 -> 385: ink mass R/C is 1.0349 and 1.0363 on
+     help1 and help2 against a 0.9954 control on the wordmark, so the run is
+     genuinely 3.5% heavy rather than reading heavy off canonical's bimodal
+     small type (rule 51's control test, on this screen's own solved band). */
+  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 385, scale: 0.866, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 385, scale: 0.866, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 385, scale: 0.866, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
      images) while the run ran 1.182 long — horizontal only, and the size is
      left alone precisely because the two axes were read together. */
-  safe1: { x: 181.876, top: 1651.738, size: 18.0, weight: 600, scale: 0.785, ls: -0.004,
+  /* Round 3's 18.0 / 0.785 took this 19.6971 -> 22.8280. Reverted. Weight
+     600 -> 545: ink mass R/C 1.1265, the heaviest run on the screen against a
+     0.9954 control. */
+  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 545, scale: 0.812, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: 0 },
   /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
   /* Round 2: cap 1.000, advance 1.000 — solved; 1 device px right, via tx. */
-  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 400, scale: 0.761, ls: -0.004,
+  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 378, scale: 0.761, ls: -0.004,
            colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: -0.4607, ty: 0 },
 }
 
@@ -383,17 +410,17 @@ export const MARK_BOXES: Record<string, [number, number, number, number, number,
      bbox against canonical's, which is the only thing that pins a lucide
      drawing's inset — the drawings do not all inset by the same fraction and
      assuming they did left each mark wrong by a different amount. */
-  gear: [751, 27.96, 54, 52.1, 0, 0],
-  back: [35, 127, 51.5, 51.5, 0, 0],
-  plateMark: [237.2, 928.9, 69.6, 65.1, PLATE.x, PLATE.y],
-  diffMark: [241.1, 1071.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
-  helpMark1: [53.65, 1300.8, 67.0, 61.5, 56, 1290],
-  helpMark2: [58.24, 1403.15, 67.3, 61.8, 56, 1392],
-  helpMark3: [56.4, 1507.6, 66.2, 69.7, 56, 1494],
-  chev1: [761.4, 1311.0, 43.6, 43.2, 56, 1290],
+  gear: [751, 26.96, 54, 51.0, 0, 0],
+  back: [35.54, 127.54, 51.5, 51.5, 0, 0],
+  plateMark: [237.2, 929.9, 69.6, 63.7, PLATE.x, PLATE.y],
+  diffMark: [242.1, 1070.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
+  helpMark1: [53.65, 1299.8, 67.0, 61.5, 56, 1290],
+  helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
+  helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
+  chev1: [761.4, 1310.0, 43.6, 43.2, 56, 1290],
   chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392],
   chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494],
-  shield: [58.8, 1628, 97.4, 104, 0, 0],
+  shield: [58.8, 1628, 97.4, 105.2, 0, 0],
 }
 
 export const PHONE_CSS = `@media (max-width: 767.98px){
@@ -448,13 +475,16 @@ ${Object.entries(MARK_BOXES).map(([k, m]) => markBox(k, ...m)).join("\n")}
    its parent link (gear, back), which is what :not([data-s5]) selects. */
 .s5 [data-s5-mark]:not([data-s5]){width:100%;height:100%}
 .s5 [data-s5-mark] svg{width:100%;height:100%;display:block}
-/* KEYBOARD FOCUS. The code inputs paint no text of their own, so the UA focus
-   ring is the only thing that could show a keyboard user where they are — and
-   'outline:none' above removed it. It is put back as the same orange box the
-   canonical focused state already draws, so the visible affordance and the
-   canonical render are the same thing rather than two states in tension. */
-.s5 [data-s5^="code"]:focus-visible{outline:${u(3.4)} solid var(--s5-orange);
-  outline-offset:${u(2)};border-radius:${u(BOX_R)}}
+/* KEYBOARD FOCUS ON THE CODE BOXES IS THE DRAWN ORANGE BORDER, AND ADDING A
+   RING ON TOP OF IT WAS A MEASURABLE DEFECT. The overlay already paints the
+   focused box in orange at twice the unfocused weight, driven by the live focus
+   index, so it is a real affordance for keyboard and pointer alike. The first
+   version ALSO put a ':focus-visible' outline on the input, and the two painted
+   together: canonical carries 387.8 units of green ink across that border and
+   the render carried 767.0 — the ring, not the border, and exactly the doubling
+   that a band mean reports as "too heavy" while the cause is a second element.
+   The outline is gone; the border stays.
+   The other five controls keep a ring, because nothing else marks them. */
 .s5 [data-s5="plate"]:focus-visible,.s5 [data-s5="diffBtn"]:focus-visible,
 .s5 [data-s5="resendLinkBox"]:focus-visible,.s5 [data-s5="helpRow1"]:focus-visible,
 .s5 [data-s5="helpRow2"]:focus-visible,.s5 [data-s5="helpRow3"]:focus-visible{

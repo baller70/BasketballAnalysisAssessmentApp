@@ -199,16 +199,19 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       fill="none"
     >
       {/* the header hairline — full bleed, ink 64.7 units over its band */}
-      <rect x={0} y={HEADER_RULE - 1.085} width={853} height={2.17} fill="var(--s5-divider)" />
+      <rect x={0} y={HEADER_RULE - 1.085} width={853} height={2.17} fill="var(--s5-header-rule)" />
 
-      {/* the six code boxes. The focused one carries canonical's orange border,
-          measured at 1.89 device px against the others' 1.0 — a real focus
-          affordance rather than a state drawn for the screenshot, and it moves
-          with the player's own focus. */}
+      {/* The six code boxes. The focused one carries canonical's orange border —
+          2.06 device px against the others' 1.02, solved from ink mass rather
+          than from 50%-crossings, because at two pixels wide the crossings are
+          unsharp-mask overshoot (rule 8): canonical carries 387.8 units of
+          green ink across it and orange's own green is 66, so 387.8/188 = 2.06.
+          It is a REAL focus affordance driven by the player's own focus index,
+          not a state drawn for the screenshot. */}
       {BOX_X.map((x, i) => (
         <rect key={x} x={x} y={BOX_Y} width={BOX_W[i]} height={BOX_H} rx={BOX_R}
               stroke={i === focus ? ORANGE : "var(--s5-box-rule)"}
-              strokeWidth={i === focus ? 1.89 : 1.02} fill="none" />
+              strokeWidth={i === focus ? 2.06 : 1.02} fill="none" />
       ))}
 
       {/* the caret in the focused box, only while that box is still empty —
@@ -223,7 +226,7 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
 
       {/* the Use a different email border */}
       <rect x={DIFFBTN.x + 1.02} y={DIFFBTN.y + 1.02} width={DIFFBTN.w - 2.04}
-            height={DIFFBTN.h - 2.04} rx={DIFFBTN.r} stroke={INK} strokeWidth={2.04} fill="none" />
+            height={DIFFBTN.h - 2.04} rx={DIFFBTN.r} stroke={INK} strokeWidth={2.10} fill="none" />
 
       {/* the four help-list dividers */}
       {DIVIDERS.map((y) => (
