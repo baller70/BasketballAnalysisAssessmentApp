@@ -4287,6 +4287,59 @@ The method note worth keeping: this was found by running the sweep a rule
 DEMANDED rather than by a grader finding a third instance. Two rounds in a row
 had shipped the next instance of a class named one commit earlier.
 
+### THE REFLOW RESIDUAL, DIAGNOSED AT LAST — and it is neither face- nor asset-blocked
+
+DoD item 6 has been violated below 375pt since round 13, recorded as "seven
+focusable controls leave the viewport at 360 and 320" and never diagnosed. It is
+the only open item on 005 that needs no decision from anyone. Measured this
+round, read-only, against the serving dist:
+
+    width  dpr   scrollW  clientW  canvas      clipped focusables
+     393  2.17     393      393    l0 w393     none
+     375  2.00     393      375    l0 w393     none
+     360  3.00     393      360    l0 w393     SEVEN
+     320  2.00     393      320    l0 w393     SEVEN
+
+    verify-settings         l 346.0  r 370.9   (w 24.9)
+    verify-code-5           l 320.1  r 369.1   (w 49.0)   <- the sixth code box
+    verify-open-mail        l  24.8  r 366.6   (w 341.8)
+    verify-different-email  l  24.8  r 366.6   (w 341.8)
+    verify-help-1/2/3       l  25.8  r 366.7   (w 340.9)
+
+**THE CAUSE IS ONE DECLARATION.** `.s5` is `width: 393px` with `overflow: hidden`
+inside a `<main>` that is `width: 100%` and `overflow: visible`. The canvas is the
+design width by construction — that IS the iOS invariant — so below 393 it
+overflows its parent and the document scrolls horizontally: `scrollWidth` is 393
+at every viewport, and the seven controls whose right edges exceed the viewport
+are simply off-screen until the player scrolls sideways. At 375 nothing clips
+because the widest control ends at 370.9.
+
+The one that matters for use, not for the metric, is **`verify-code-5`**: on a
+360pt phone the sixth code box cannot be seen or tapped without a horizontal
+scroll the screen gives no affordance for.
+
+**THE OBVIOUS FIX IS INVALID CSS, AND I CHECKED RATHER THAN ASSUMING.** Scaling
+the canvas below 393 preserves the design exactly and cannot touch the 393
+capture if it is gated at `max-width: 392.98px`. Both naive spellings were
+injected at runtime at 360 and both did nothing — computed `zoom` stayed `1` and
+`transform` stayed `none` even with `!important`:
+
+    .s5{zoom:calc(100vw / 393)}                     -> length, not a number
+    .s5{transform:scale(calc(100vw / 393))}         -> length, not a number
+
+`scale()` and `zoom` take a NUMBER; `100vw / 393` is a length over a scalar, which
+is a length, so the declaration is dropped at parse time. Recorded because
+"injected the fix and nothing happened" would have read as the approach failing
+when it was the spelling.
+
+What is actually available: stepped `@media` breakpoints with literal scale
+factors (360/393 = 0.9160, 320/393 = 0.8142), or a CSS variable set once from a
+resize observer. Both are pure layout below 393 and provably cannot reach the
+capture. **NOT BUILT** — a grade was measuring the render when this was
+diagnosed, and a layout change mid-grade would confound its attributions. It is
+the first thing to build after 005's next round closes, and it needs its own
+control: the 393 capture must come back byte-identical.
+
 ### NEEDS KEVIN: THE FOUR ASSET AND TYPE DECISIONS THAT NOW BLOCK 005 FROM AN A
 
 These are the only things standing between 005 and the grade, and **none of them
