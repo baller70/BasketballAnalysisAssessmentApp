@@ -554,11 +554,16 @@ export function MailClockMark() {
           helpMark3's circle is the control: same construction, 2% anisotropy
           instead of 7.3%, and it measures +1.09%/-0.33% — the same defect at one
           seventh the size, correctly left alone.
-          VALUE NOT CLAIMED: order 1 unit of a 7.407 band. The grade rated it
-          LOW-MEDIUM because an image warp is not a faithful model here (it scales
-          the stroke with the radius) and an analytic annulus does not reproduce
-          the shipped raster in this window. Taken because the geometry is right
-          and the arithmetic error is real, not because a number was predicted. */}
+          VALUE NOT CLAIMED, AND THE BUILD AGREES: helpIcon2 went 7.4074 ->
+          7.4148, i.e. 0.0074 WORSE on the band. Kept anyway, with the cost
+          stated, on the same footing as round 14's resendLink colour — DoD item 4
+          is geometry measured, not a band mean, and the arithmetic error above is
+          real whatever the metric does with it.
+          The direction is confirmed by a second, cruder estimator: 33-ray aspect
+          0.9655 -> 1.0189, moving toward canonical's >1. That estimator disagrees
+          with the grade's on canonical's ABSOLUTE aspect (1.211 against 1.016)
+          because its rays catch envelope ink, so it confirms the SIGN and not the
+          magnitude, and it is recorded that way rather than as agreement. */}
       <ellipse cx="18.74" cy="18.37" rx="4.112" ry="4.500" />
       {/* THE HANDS ARE 2 ROWS TOO TALL AND THEIR WIDTH IS ALREADY EXACT.
           Components at threshold 140, measured after the envelope narrowing so
