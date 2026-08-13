@@ -1586,7 +1586,17 @@ ${Object.entries(MARK_BOXES).map(([k, m]) => markBox(k, ...m)).join("\n")}
 
    GATED AT 392.98 SO IT CANNOT REACH THE CAPTURE, which is shot at exactly 393.
    The control is byte identity: the 393 render must come back at md5
-   661b4275bbbb7d7eb5bff7328cbb550f. */
+   the CURRENT ARTEFACT block in the ledger — NOT a literal pasted here. This
+   sentence used to name md5 661b4275bbbb7d7eb5bff7328cbb550f, which was the
+   round-32 render and went stale four rounds later; grade 23 caught it, and it
+   would have fired falsely for whoever ran that control next. A control that
+   names a moving value has to name where the value LIVES.
+   "node docs/shotiq/artefact-check.mjs" is that check.
+   (Backticks here for the FIFTH time, with the guard four hundred lines above
+   still true and still visible. The guard is not what saves this — tsc as its
+   own step is, and it has caught every one. Rule 98 says a recurring trap is a
+   missing guard; the honest amendment is that a guard reduces the rate and the
+   CHECK is what makes the cost a minute instead of a round.) */
 @media (max-width: 392.98px){
 .s5{zoom:calc(100vw / 393px)}
 }`

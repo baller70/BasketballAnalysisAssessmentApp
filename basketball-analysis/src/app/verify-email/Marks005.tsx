@@ -214,9 +214,41 @@ export function BackMark() {
    underneath the box.
 
    Left at lucide's own 5.727 until the box is measured and decided. */
+/* THE STROKE IS 15-25% THIN, AND THE REFUTATION THAT CLOSED IT WAS TAKEN ON
+    THE AXIS WHERE THE DEFECT IS SMALLEST. Blue plane (rule 3 — orange B~1,
+    white B=255), 50%-crossing, canonical against render:
+
+        left wall   3.510 +/-0.261  vs 3.185     +0.325
+        right wall  3.711 +/-0.176  vs 3.134     +0.577
+        bottom edge 3.930 +/-0.038  vs 3.000     +0.930
+
+    Raw coverage across the bottom edge agrees and shares nothing with the
+    crossing: canonical 0.16+0.90+1.00+0.99+0.79+0.02 = 3.86 rows of white
+    against the render's 0.50+1.00+1.00+0.50 = 3.00. And the emitter predicts
+    the rendered value exactly — sw/sqrt(sx.sy) at sx 2.900, sy 2.654 gives
+    v 3.136, h 2.870 — so this is the recipe drawing what it asked for, at the
+    wrong width.
+
+    WHY THE RECORDED REFUSAL WAS WRONG, in two parts. (a) It was measured on
+    the WALLS, where a linear-light alpha reads canonical 2.839/3.042 against
+    render 2.737/2.995 — the ~+0.1 agreement this file records. The defect is
+    on the HORIZONTAL edges, which the geometric mean makes the thinnest thing
+    in the mark: rule 57 in the other axis. (b) The compositing premise itself
+    is refuted by canonical's own plate. If canonical were composited in
+    linear light, an sRGB-normalised 50% crossing would sit at true area 0.214
+    and every orange/white edge would be 0.57 px off; canonical's plate
+    measures 741.812 wide against the render's 741.760 on the identical plane
+    and estimator — 0.052 px, a TEN-FOLD margin against that prediction — and
+    the edge ramps match pixel for pixel. The two plates composite alike, and
+    the 0.77x ink-mass reading was right all along.
+
+    Bracketed at 0.075 px: 3.675 -> 4.5283, 3.750 -> 4.5255, 3.825 -> 4.6270.
+    PIVOT: the stroke's own centreline. `strokeWidth` on the <g> is symmetric
+    about the path, so no coordinate moves and MARK_BOXES, PLATE, tx/ty and
+    the path data are all untouched (rule 53 does not arise). */
 export function EnvelopeMark() {
   return (
-    <Icon name="plateMark" sw={3.0} colour="#FFFFFF">
+    <Icon name="plateMark" sw={3.75} colour="#FFFFFF">
       {/* THE FLAP JUNCTION IS INHERITED FROM LUCIDE AND CANONICAL DOES NOT DRAW
           IT THERE. This is one defect across all FOUR envelope marks on the
           screen, and it is the largest remaining thing on 005.
