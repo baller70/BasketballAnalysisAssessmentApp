@@ -1,4 +1,4 @@
-whole screen   mean|d| 4.3613   max 255   n_over8 92453
+whole screen   mean|d| 4.3328   max 255   n_over8 92030
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -16,28 +16,28 @@ helpIcon2      7.4074    255      1077
 helpIcon1      6.8633    254       887
 safe2          6.6762    229      3498
 help3          6.6128    255      3520
-resendLab      6.5762    214      2480
 lede2          6.5651    255      3452
+resendLab      6.4055    214      2494
 lede1          5.1769    208      3400
-diffBtn        4.4780    255      9342
+diffBtn        4.4026    255      9296
 box1           3.6245    244      1677
 back           3.5029    234       269
 box2           3.4711    254      1377
 box3           3.4268    249      1578
 box0           2.9026    255      1231
 plate          2.7670    255     10286
-resendLink     2.7422    254      3128
+resendLink     2.6799    254      3045
 resendVal      2.2172    244       945
-box4           2.0546    140      1877
+box4           1.6984    140      1797
 chev2          1.5480    128       117
 chev1          1.5005     84       111
 box5           1.4478     46       763
 chev3          1.3690    107       108
-rule3          0.9089     10       172
-rule1          0.8536      6         0
-rule4          0.6528     10        56
-hdrRule        0.6514     24         2
-rule2          0.5189      6         0
+rule1          0.5674      4         0
+hdrRule        0.4404     25         2
+rule3          0.4385      7         0
+rule2          0.3751      4         0
+rule4          0.3042      4         0
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's
@@ -52,4 +52,4 @@ digit0        9.4609    255       614
 digit2        8.7136    254       561
 digit3        8.2768    249       504
 plateMark     7.2395    194      1602
-caret         2.1319    140       273
+caret         1.4548    140       217
