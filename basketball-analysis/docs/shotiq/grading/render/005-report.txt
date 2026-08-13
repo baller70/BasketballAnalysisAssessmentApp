@@ -1,23 +1,23 @@
-whole screen   mean|d| 4.2079   max 255   n_over8 91263
+whole screen   mean|d| 4.1645   max 255   n_over8 90968
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
 display       19.3019    255     19291
 shield         9.3237    254      1305
-help2          9.1930    255      4659
 safe1          8.7981    255      3580
 gear           8.5389    255       893
+help2          8.1496    255      4503
 didnt          7.8059    228      3544
 wordmark       7.7849    255      2713
 helpIcon3      7.2985    255      1004
-help1          7.1172    255      3863
+help1          6.8700    255      3803
 helpIcon2      6.8681    255      1021
 safe2          6.6762    229      3498
 lede2          6.5651    255      3452
 resendLab      6.4055    214      2494
 helpIcon1      6.2339    254       855
-help3          5.7610    255      3415
+help3          5.3430    255      3336
 lede1          5.1769    208      3400
 diffBtn        3.8481    255      9132
 box1           3.6245    244      1677
