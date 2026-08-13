@@ -124,8 +124,55 @@ export function BackMark() {
 export function EnvelopeMark() {
   return (
     <Icon name="plateMark" sw={3.0} colour="#FFFFFF">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
+      {/* THE FLAP JUNCTION IS INHERITED FROM LUCIDE AND CANONICAL DOES NOT DRAW
+          IT THERE. This is one defect across all FOUR envelope marks on the
+          screen, and it is the largest remaining thing on 005.
+
+          Junction depth below the envelope's top edge, measured as the
+          mass-weighted per-row centroid of each flap arm (9-12 rows provably
+          clear of both walls, fit rms 0.01-0.11 px) extrapolated to the wall
+          centreline, read against that mark's OWN top edge — so it is a
+          difference inside one mark and immune to the per-mark frame offsets:
+
+              mark        canonical  render    delta   depth/height C -> R
+              plateMark      3.575     7.907   +4.332   0.0858 -> 0.1864
+              helpMark1      2.673     7.299   +4.626   0.0688 -> 0.1843
+              helpMark2      2.793     7.217   +4.424   0.0747 -> 0.1875
+              diffMark       2.439     7.707   +5.268   0.0636 -> 0.2028
+
+          Four marks, four boxes, four scales, ONE number: +4.3 to +5.3 px at
+          sd 0.51. And the render column lands on lucide's own constant, 3/16 =
+          0.1875, to 0.003 on three of the four. Canonical's envelope puts that
+          junction at ~7% of the height; lucide puts it at 18.75%. The APEX is
+          already right (-0.60, -0.14, -0.19 px), which is exactly why every
+          shift search on these marks returned nothing for eleven rounds: a V
+          that is wrong at one end and right at the other has no translation.
+
+          THIS IS WHY ROUND 31'S FLAP FIX WENT BACKWARDS. Grade 17's arm-centroid
+          diagnosis was right and it was attached to the wrong parameter — it
+          held the junction at 7 and pushed the APEX down, trading a 4.3 px error
+          at the end that was wrong for a 1.6 px error at the end that was
+          already landed. It measured +1.96. The conclusion drawn from that, that
+          the box is the PREREQUISITE, is also wrong: composed on plateMark, the
+          box alone is worth -2.02, the flap alone -2.71, and both -4.78. They
+          are separable and super-additive, not ordered.
+
+          Every edit here is a PATH COORDINATE in the mark's own user space,
+          inside the fixed `translate(bx,by) scale(bw/24,bh/24)`. No MARK_BOX, no
+          tx/ty, no sw, no left/top — so nothing passes through layout rounding
+          (rule 53), sx/sy are unchanged, the stroke widths are unchanged, and
+          this is outside the class rule 90 has refused three times (those were
+          all MARK_BOXES edits driven by extreme-value extents; this is an
+          interior 50%-crossing over 15+ columns). */}
+      {/* The body is also 0.72 device px too tall and 1.26 too wide — both edges
+          of each pair moving in OPPOSITE directions, so rule 34 says size and
+          not translation (top -0.675 / bottom +0.046; left -0.383 / right
+          +0.882). The width confirms grade 17's 1.21 to 0.05 px and the
+          mechanism predicts it exactly: 20 x 69.6/24 = 58.000 against a measured
+          57.991. Corrected in the PATH, symmetric about the measured ink
+          centre. */}
+      <rect x="2.132" y="4.254" width="19.564" height="15.729" rx="2" />
+      <path d="m21.696 5.601-8.7775 7.4a2 2 0 0 1-2.009 0L2.132 5.601" />
     </Icon>
   )
 }
@@ -201,8 +248,59 @@ export function EnvelopePencilMark() {
           IT IS: re-centring it on the new mid-line was measured WORSE (24.18
           against 22.66), so only the right endpoint moves.
           Build-verified: diffMark 26.4442 -> 22.6597. */}
-      <path d="M18.96 11.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.3a2 2 0 0 0 2 2h7.3" />
-      <path d="m18.96 6.6-8.6 5.5a2 2 0 0 1-2 0L2 6.6" />
+      {/* AND THE APEX RE-CENTRING IS NOW TAKEN, because the refusal above was a
+          verdict on that prescription AT THAT TIME (rule 92a). When the right
+          endpoint moved 22 -> 18.96 the `l-8.6 5.5` run was left alone, so the V
+          is asymmetric: right arm run 8.6 units, left arm 6.36. Canonical's apex
+          sits +0.084 px from the wall centre — centred — against the render's
+          -4.133, and 2.202 px too deep. Arm slopes canonical +1.328/-1.299
+          (symmetric) against render +1.286/-1.733 (not). The earlier build test
+          that measured re-centring WORSE (24.18 against 22.66) was run while the
+          junction was still 5.3 px too low, which is a larger error in the same
+          pixels — rule 91's masking. It is NOT available on its own; it pays
+          only jointly with the junction fix below. */}
+      {/* THE FLAP JUNCTION IS INHERITED FROM LUCIDE AND CANONICAL DOES NOT DRAW
+          IT THERE. This is one defect across all FOUR envelope marks on the
+          screen, and it is the largest remaining thing on 005.
+
+          Junction depth below the envelope's top edge, measured as the
+          mass-weighted per-row centroid of each flap arm (9-12 rows provably
+          clear of both walls, fit rms 0.01-0.11 px) extrapolated to the wall
+          centreline, read against that mark's OWN top edge — so it is a
+          difference inside one mark and immune to the per-mark frame offsets:
+
+              mark        canonical  render    delta   depth/height C -> R
+              plateMark      3.575     7.907   +4.332   0.0858 -> 0.1864
+              helpMark1      2.673     7.299   +4.626   0.0688 -> 0.1843
+              helpMark2      2.793     7.217   +4.424   0.0747 -> 0.1875
+              diffMark       2.439     7.707   +5.268   0.0636 -> 0.2028
+
+          Four marks, four boxes, four scales, ONE number: +4.3 to +5.3 px at
+          sd 0.51. And the render column lands on lucide's own constant, 3/16 =
+          0.1875, to 0.003 on three of the four. Canonical's envelope puts that
+          junction at ~7% of the height; lucide puts it at 18.75%. The APEX is
+          already right (-0.60, -0.14, -0.19 px), which is exactly why every
+          shift search on these marks returned nothing for eleven rounds: a V
+          that is wrong at one end and right at the other has no translation.
+
+          THIS IS WHY ROUND 31'S FLAP FIX WENT BACKWARDS. Grade 17's arm-centroid
+          diagnosis was right and it was attached to the wrong parameter — it
+          held the junction at 7 and pushed the APEX down, trading a 4.3 px error
+          at the end that was wrong for a 1.6 px error at the end that was
+          already landed. It measured +1.96. The conclusion drawn from that, that
+          the box is the PREREQUISITE, is also wrong: composed on plateMark, the
+          box alone is worth -2.02, the flap alone -2.71, and both -4.78. They
+          are separable and super-additive, not ordered.
+
+          Every edit here is a PATH COORDINATE in the mark's own user space,
+          inside the fixed `translate(bx,by) scale(bw/24,bh/24)`. No MARK_BOX, no
+          tx/ty, no sw, no left/top — so nothing passes through layout rounding
+          (rule 53), sx/sy are unchanged, the stroke widths are unchanged, and
+          this is outside the class rule 90 has refused three times (those were
+          all MARK_BOXES edits driven by extreme-value extents; this is an
+          interior 50%-crossing over 15+ columns). */}
+      <path d="M18.96 11.5V5.928a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.422a2 2 0 0 0 2 2h7.3" />
+      <path d="m18.96 4.783-7.48 6.384a2 2 0 0 1-2 0L2 4.783" />
       <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
     </Icon>
   )
@@ -236,8 +334,57 @@ export function MailCheckMark() {
           geometry is in fixed user units inside a fixed transform, so it passes
           through no layout rounding. Build-verified: helpIcon1 17.6749 ->
           13.6684. */}
-      <path d="M21.0 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8" />
-      <path d="m21 7-8.47 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      {/* AND THE FIX ABOVE OVERSHOT, IN THE DIRECTION ITS OWN NOTE SAYS IT WAS
+          FIXING. It measured +1.84 px and spent a whole viewBox unit, which at
+          bw/24 = 2.7917 is -2.79 px — an overshoot of 0.95 BY THE NOTE'S OWN
+          ARITHMETIC, never re-measured against the artefact it produced (rule
+          92's fourth clause, on the same page that states it). The walls now
+          read canonical 54.033 against render 53.024, i.e. 1.009 px NARROW, at
+          sd 0.002 over eight rows. helpMark2 (+0.012) and diffMark (-0.050) are
+          solved and are the controls that say this is helpMark1's own error.
+          Restored symmetrically about the ink centre, which is out by 0.069. */}
+      {/* THE FLAP JUNCTION IS INHERITED FROM LUCIDE AND CANONICAL DOES NOT DRAW
+          IT THERE. This is one defect across all FOUR envelope marks on the
+          screen, and it is the largest remaining thing on 005.
+
+          Junction depth below the envelope's top edge, measured as the
+          mass-weighted per-row centroid of each flap arm (9-12 rows provably
+          clear of both walls, fit rms 0.01-0.11 px) extrapolated to the wall
+          centreline, read against that mark's OWN top edge — so it is a
+          difference inside one mark and immune to the per-mark frame offsets:
+
+              mark        canonical  render    delta   depth/height C -> R
+              plateMark      3.575     7.907   +4.332   0.0858 -> 0.1864
+              helpMark1      2.673     7.299   +4.626   0.0688 -> 0.1843
+              helpMark2      2.793     7.217   +4.424   0.0747 -> 0.1875
+              diffMark       2.439     7.707   +5.268   0.0636 -> 0.2028
+
+          Four marks, four boxes, four scales, ONE number: +4.3 to +5.3 px at
+          sd 0.51. And the render column lands on lucide's own constant, 3/16 =
+          0.1875, to 0.003 on three of the four. Canonical's envelope puts that
+          junction at ~7% of the height; lucide puts it at 18.75%. The APEX is
+          already right (-0.60, -0.14, -0.19 px), which is exactly why every
+          shift search on these marks returned nothing for eleven rounds: a V
+          that is wrong at one end and right at the other has no translation.
+
+          THIS IS WHY ROUND 31'S FLAP FIX WENT BACKWARDS. Grade 17's arm-centroid
+          diagnosis was right and it was attached to the wrong parameter — it
+          held the junction at 7 and pushed the APEX down, trading a 4.3 px error
+          at the end that was wrong for a 1.6 px error at the end that was
+          already landed. It measured +1.96. The conclusion drawn from that, that
+          the box is the PREREQUISITE, is also wrong: composed on plateMark, the
+          box alone is worth -2.02, the flap alone -2.71, and both -4.78. They
+          are separable and super-additive, not ordered.
+
+          Every edit here is a PATH COORDINATE in the mark's own user space,
+          inside the fixed `translate(bx,by) scale(bw/24,bh/24)`. No MARK_BOX, no
+          tx/ty, no sw, no left/top — so nothing passes through layout rounding
+          (rule 53), sx/sy are unchanged, the stroke widths are unchanged, and
+          this is outside the class rule 90 has refused three times (those were
+          all MARK_BOXES edits driven by extreme-value extents; this is an
+          interior 50%-crossing over 15+ columns). */}
+      <path d="M21.2053 13V6.184a2 2 0 0 0-2-2H3.8439a2 2 0 0 0-2 2v11.678c0 1.1.9 2 2 2h8" />
+      <path d="m21.2053 5.262-8.6507 7.46a1.94 1.94 0 0 1-2.06 0L1.8439 5.262" />
       <path d="m16 19 2 2 4-4" />
     </Icon>
   )
@@ -251,8 +398,50 @@ export function MailClockMark() {
           apart, bw 66.3, so 20 x 66.3/24 = 55.25 against canonical's 52.29 —
           measured 55.14, left wall +0.14, right wall +2.38. Size, not shift.
           Build-verified: helpIcon2 18.0968 -> 13.3029. */}
-      <path d="M19.93 11V6a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9" />
-      <path d="m19.93 6.6-8.465 5.5a2 2 0 0 1-2 0L1 6.6" />
+      {/* THE FLAP JUNCTION IS INHERITED FROM LUCIDE AND CANONICAL DOES NOT DRAW
+          IT THERE. This is one defect across all FOUR envelope marks on the
+          screen, and it is the largest remaining thing on 005.
+
+          Junction depth below the envelope's top edge, measured as the
+          mass-weighted per-row centroid of each flap arm (9-12 rows provably
+          clear of both walls, fit rms 0.01-0.11 px) extrapolated to the wall
+          centreline, read against that mark's OWN top edge — so it is a
+          difference inside one mark and immune to the per-mark frame offsets:
+
+              mark        canonical  render    delta   depth/height C -> R
+              plateMark      3.575     7.907   +4.332   0.0858 -> 0.1864
+              helpMark1      2.673     7.299   +4.626   0.0688 -> 0.1843
+              helpMark2      2.793     7.217   +4.424   0.0747 -> 0.1875
+              diffMark       2.439     7.707   +5.268   0.0636 -> 0.2028
+
+          Four marks, four boxes, four scales, ONE number: +4.3 to +5.3 px at
+          sd 0.51. And the render column lands on lucide's own constant, 3/16 =
+          0.1875, to 0.003 on three of the four. Canonical's envelope puts that
+          junction at ~7% of the height; lucide puts it at 18.75%. The APEX is
+          already right (-0.60, -0.14, -0.19 px), which is exactly why every
+          shift search on these marks returned nothing for eleven rounds: a V
+          that is wrong at one end and right at the other has no translation.
+
+          THIS IS WHY ROUND 31'S FLAP FIX WENT BACKWARDS. Grade 17's arm-centroid
+          diagnosis was right and it was attached to the wrong parameter — it
+          held the junction at 7 and pushed the APEX down, trading a 4.3 px error
+          at the end that was wrong for a 1.6 px error at the end that was
+          already landed. It measured +1.96. The conclusion drawn from that, that
+          the box is the PREREQUISITE, is also wrong: composed on plateMark, the
+          box alone is worth -2.02, the flap alone -2.71, and both -4.78. They
+          are separable and super-additive, not ordered.
+
+          Every edit here is a PATH COORDINATE in the mark's own user space,
+          inside the fixed `translate(bx,by) scale(bw/24,bh/24)`. No MARK_BOX, no
+          tx/ty, no sw, no left/top — so nothing passes through layout rounding
+          (rule 53), sx/sy are unchanged, the stroke widths are unchanged, and
+          this is outside the class rule 90 has refused three times (those were
+          all MARK_BOXES edits driven by extreme-value extents; this is an
+          interior 50%-crossing over 15+ columns). */}
+      {/* The body is also 1.13 device px too tall (top -0.216, bottom +0.914) —
+          opposite signs, so size. The WIDTH is solved and untouched: +0.012. */}
+      <path d="M19.93 11V6.084a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10.561a2 2 0 0 0 2 2h9" />
+      <path d="m19.93 5.169-8.465 6.879a2 2 0 0 1-2 0L1 5.169" />
       {/* THE RING IS 20% TOO BIG, WHICH IS WHY IT MERGES WITH THE ENVELOPE.
           `helpIcon2` is the worst band on the screen (28.0615) and an integer
           shift search returns (0,0) with gain 0.000, so there is no translation
