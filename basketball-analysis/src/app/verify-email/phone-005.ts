@@ -624,8 +624,24 @@ export const RUNS: Record<string, Run> = {
      geometry gain scales with the error. Below about 2% the cost wins. Two of the
      six were flagged MEDIUM by the grade (diffLab, lede2) and BOTH beat their
      predictions, so the discriminator was never confidence; it was magnitude. */
-  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9215 },
+  /* ROUND 41 / D2. Cap 2.46% tall AND the baseline a full device px low. Round
+     33 measured this cap at 1.89%, below rule 97's ~2.4% break-even, and its
+     build was correctly refused; the residual was real and merely unreachable at
+     that magnitude. Paired crossings say size rather than translation (rule 103):
+     d_xh -0.268 against d_bl +0.987, edges moving OPPOSITELY. Ink extent
+     canonical (403, 426) against the render's (403, 427).
+     PIVOT: the element's top-left; `translate` follows both scales so ty is
+     multiplied by sy. 0.742 is the CENTRE of a plateau whose edges measured
+     0.506 and 0.978 -- 0.994 device px, rule 100 confirmed independently.
+     THE PRESCRIBED 3.0% OVERSHOOTS THE MEASURED 2.46% AND THAT IS STATED, NOT
+     HIDDEN: the cap ratio is pinned at 0.993 across the whole raster row
+     0.970-0.976, and the next row up (0.9815) displaces the run bodily.
+     AND THE TEMPTING CLAIM WAS CHECKED AND IS FALSE. At sy 0.9815 the cap ratio
+     is 1.0004 -- geometrically EXACT -- and the band is still worse by 0.42 at
+     every ty from -0.5 to +2.0. So round 33's refusal was NOT an
+     uncompensated-ty artefact, and rule 97 keeps its calibration point. */
+  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004, sy: 0.970,
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.742 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -638,8 +654,21 @@ export const RUNS: Record<string, Run> = {
      11.7684 in the built capture. Kept. */
   /* MEDIUM CONFIDENCE, stated: this run has no capital, so the anchor is a choice
      — ascender +6.1%, x-height +14%, descender -23%. The ascender is used. */
-  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, sy: 0.9424, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: -0.0649 },
+  /* ROUND 41 / D1. AND THE ASCENDER FIGURE IN THE LINE ABOVE IS HALF THE ERROR.
+     Built with this run's `sy` REMOVED, the ascender ratio is 1.1294 and the
+     x-height 1.1564. Round 33 recorded ascender 1.0611 and x-height 1.1402 --
+     the x-height is right and the ascender was read at half its true value.
+     0.9424 is exactly 1/1.0611, and 1.1294 * 0.9424 = 1.0644, which closes on
+     the 1.0604 measured on the shipped artefact. The error has stood for eight
+     rounds inside a correction that looked complete.
+     Estimator: the modal ascender-line crossing paired with the modal baseline
+     -- the same landmark the note above names as the CHOICE, measured as a
+     paired crossing rather than an extent, so rule 90 does not bite and rule
+     103's translation/size ambiguity resolves: d_xh -0.152 against d_bl +1.076.
+     PIVOT: element top-left, ty multiplied by sy. 0.5375 is the plateau centre
+     (edges 0.281 and 0.794, 0.990 device px). */
+  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, sy: 0.8888, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: 0.5375 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
      22.96 / 24.36 / 26.38 / 22.74 — ink-width/cap 0.40, where an unscaled Geist
      digit sits near 0.63, so the run is condensed by about a third. */
@@ -987,7 +1016,17 @@ export const RUNS: Record<string, Run> = {
      Cap-landing at 1/1.0339, not the objective's 0.935, for the same reason this
      file declines every argmin that overshoots a cap. Magnitude 3.3%, above the
      ~2% break-even rule 97 drew at lede1's 1.89%. */
-  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, sy: 0.9672, ls: -0.004,
+  /* ROUND 41 / D3, AND IT IS THE ONE THIS ROUND HOLDS LOOSELY. The cap reads
+     1.0069 -- 0.68% tall, well BELOW rule 97's ~2.4% cutoff -- and yet the
+     change measurably re-rasterises (-0.0019 whole, n_over8 -26, band 2.6799 ->
+     2.6163) and lands the cap at 0.9958 with the extents held exactly at
+     (811, 835). Grade 26 graded its own finding LOW and said it would not be
+     surprised to see it fail on a different Chromium build; that is recorded
+     here rather than smoothed away, because a sub-cutoff change that pays is
+     evidence ABOUT the cutoff and the honest reading is that this one landed,
+     not that the cutoff moved. If a future Chromium takes this band the wrong
+     way, revert to 0.9672 and record it -- do not diagnose it. */
+  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, sy: 0.9606, ls: -0.004,
                 colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.9074, ty: 0.1491,
                 ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
