@@ -487,8 +487,62 @@ export const RUNS: Record<string, Run> = {
      element left, and the two runs it got wrong are exactly the two centred runs
      in its list. `tx` here is restored to the same DEVICE shift the old value
      encoded: -1.8429 x 0.908/0.9101. */
-  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9215 },
+  /* THE VERTICAL SCALE OF EVERY BODY RUN WAS NEVER SOLVED, and `Run.sy` — declared
+     in this file as "scaleY — cap height WITHOUT touching the advance", emitted by
+     `runCss`, and shipped on 004 as `display.sy: 1.014` — is used by NOT ONE run
+     on this screen. The recipe solves `size` against a cap and `scale` against an
+     advance and then never re-measures the cap. On the shipped artefact:
+
+       run        cap R/C (0.35/0.50/0.65)   x-height   ascender   dBaseline
+       safe2       1.1265  1.1361  1.1447     1.1575     1.1014      +0.918
+       plateLab    1.0591  1.0620  1.0649     1.1205     1.0555      +1.505
+       safe1       1.0371  1.0382  1.0383     1.0967     1.0358      +0.526
+       diffLab     1.0240  1.0235  1.0244     1.0523     0.9910      +0.262
+       lede1       1.0210  1.0189  1.0160     1.0568     0.9961      +0.879
+       lede2       (no capital)               1.1402     1.0611      +0.853
+       CONTROLS didnt 0.9971/1.0038/1.0077   resendLink 0.9962/0.9967/0.9972
+
+     The caps are read at 0.35/0.50/0.65 of each SEGMENT'S OWN peak coverage, not
+     at an absolute level — the graphite runs never reach 0.5 absolute, which is
+     why an absolute threshold silently mis-read them for thirty rounds.
+
+     TWO OF THESE ARE RECORDED ABOVE AS SOLVED. safe2's note says "Round 2: cap
+     1.000, advance 1.000 — solved" and safe1's says "the cap matched EXACTLY on
+     the first glyph (27 device px in both images)" — an INTEGER read of 26.262
+     against 27.265. That is rule 25's warning about integer estimators, sitting
+     in the file as a solved claim.
+
+     AND ROUND 31 NAMED THE WRONG PARAMETER, which is rule 94 on my own text.
+     It measured safe2's vertical at 10% and wrote "a size error would give equal
+     ratios ... the vertical excess is the blocked body face and no scaleX touches
+     it." True only of a size change WITHOUT a compensating scale — and this file
+     compensates size with scale on eight runs. The diagnosis was right; the
+     parameter was `sy`, not the face.
+
+     THE ANSWER IS COHERENT, which is the check that it is not a fit: once each
+     cap lands, `scale x cap_ratio` is 0.8365 / 0.8362 / 0.8397 for safe2 /
+     plateLab / safe1 — three independently solved runs converging on ONE scaleX,
+     which is what a uniform face-width difference looks like.
+
+     PIVOT (rule 93), because this one is easy to get wrong: `runCss` emits
+     `scaleX(scale) scaleY(sy) translate(tx,ty)` with `transform-origin: 0 0`, so
+     `sy` pivots on the ELEMENT'S TOP-LEFT — not the baseline, not the cap-top —
+     and `translate` comes after the scales, so `ty` is multiplied by `sy`. The
+     compensation is dty = [(D + dy)/sy - D]/S with D the render baseline minus
+     (top - dy) in canonical device px. A full 1 px error in where the element top
+     lays out moves the baseline by 0.11 device px, so this survives rule 53.
+     The invariant form, if a number is ever disputed: scale the run vertically
+     until its leading capital matches canonical's, then put its baseline on
+     canonical's measured baseline.
+
+     THE OBJECTIVE'S ARGMIN IS DECLINED AND ITS COST IS STATED. The metric wants
+     more shrink than the cap does on every run (safe2 0.850 against 0.880) because
+     the x-height carries most of the ink and Geist's x-height/cap is not
+     canonical's. Taking 0.850 buys 0.19 more band and leaves the cap 5.4% short in
+     the OTHER direction — the same paper-over this file already declined on
+     `display` (81.10/+0.80 kept over 80.63/+1.65). Cap-landing, not argmin. */
+  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, sy: 0.9815, ls: -0.004,
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9490 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -499,8 +553,10 @@ export const RUNS: Record<string, Run> = {
   /* Weight 600 -> 555 on an ink-mass reading of 1.0920, and unlike safe1's it
      was measured at a geometry that was already right: lede2 16.6947 ->
      11.7684 in the built capture. Kept. */
-  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: -0.9215 },
+  /* MEDIUM CONFIDENCE, stated: this run has no capital, so the anchor is a choice
+     — ascender +6.1%, x-height +14%, descender -23%. The ascender is used. */
+  lede2: { cx: 428.430, top: 442.572, size: 15.89, weight: 555, scale: 0.851, sy: 0.9424, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0, dy: 9.1, width: 319.9, tx: -1.3822, ty: -0.0649 },
   /* The four typed digits. Cap 59.1 device px (570.5..629.6) and ink widths
      22.96 / 24.36 / 26.38 / 22.74 — ink-width/cap 0.40, where an unscaled Geist
      digit sits near 0.63, so the run is condensed by about a third. */
@@ -723,8 +779,21 @@ export const RUNS: Record<string, Run> = {
      (outer 1.0087, tiles 1.0145, metric 1.0175). Centred run: pivot is `cx`. */
   /* Same correction as lede1: centred run, pivot is `cx`, tx restored to the same
      device shift (-1.3822 x 0.825/0.8394). */
+  /* AND THE RUN SITS 1.0 DEVICE PX RIGHT WHILE ITS UNDERLINE DOES NOT. Two
+     estimators that share nothing agree to 0.02 px: local sub-pixel tile
+     registration gives dx +0.977 with k 1.00010 over 18 tiles at rms 0.62, and the
+     objective on a TEXT-ONLY window (rows 804..840, excluding the rule at 844..846)
+     puts the argmin at exactly -1.0, bracketed. k = 1 says translation, not width
+     (rule 34), so round 31's scale solve is landed and must not move. On an
+     underline-only window the argmin is dx 0.0, bracketed both sides — the two
+     have to be separated, and they are separate elements.
+     CAUSE: `text-align:center` centres the ADVANCE box on `cx` while `cx` is
+     canonical's INK centre, and "Resend email" has unequal outer sidebearings.
+     That is the same decomposition this file already carries for the digits and
+     never applied here. 1.0 device px = 1.0/(0.8394 x 2.170483) = 0.5489 CSS px on
+     `tx`, which is inside the transform, so the cx-pivot trap does not arise. */
   resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, ls: -0.004,
-                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.3585, ty: 0,
+                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.9074, ty: 0,
                 ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
   /* White on orange, so it is measured on the BLUE plane (orange B ~2, white
@@ -760,8 +829,8 @@ export const RUNS: Record<string, Run> = {
      is exactly why rule 34 forbids reading a shift off the extents. Joint grid
      bracketed on both axes, 16.0099 -> 11.0201. `tx` is about the element left,
      hence 1.4246 CSS px for 2.4348 device px. */
-  plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 660, scale: 0.7874, ls: -0.004,
-              colour: "#FFFFFF", dx: 1.8, dy: 11.2, tx: 1.4246, ty: 0,
+  plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 660, scale: 0.7874, sy: 0.9416, ls: -0.004,
+              colour: "#FFFFFF", dx: 1.8, dy: 11.2, tx: 1.4246, ty: 0.7024,
               ox: PLATE.x, oy: PLATE.y },
   /* "Use a different email" inside the outlined button. */
   /* Cap 1.040 over, advance 1.193 over: size 15.6 -> 15.0, scaleX -> 0.837. */
@@ -774,11 +843,13 @@ export const RUNS: Record<string, Run> = {
      crossings 0.99470, local tiles 1.00514 (rms 0.703), objective argmin 1.0051
      at dx -0.45, bracketed. 20.1557 -> 18.4513; on the warped plate the slope
      goes +0.00514 -> -0.00004. */
-  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.8413, ls: -0.004,
+  /* MEDIUM CONFIDENCE, stated: the two landmarks disagree here — cap +2.4% but
+     ascender -0.9% — so the cap is used and the ascender will carry a residual. */
+  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.8413, sy: 0.9770, ls: -0.004,
              /* tx +0.5504 = RIGHT 1 device px. The direction was established by
                 BUILDING both: left-1 took this band 23.4138 -> 35.8642 and left
                 the residual asking for right-2, so the sign is not arguable. */
-             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: -0.0720, ty: -0.4607,
+             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: -0.0720, ty: -0.0704,
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
@@ -943,8 +1014,8 @@ export const RUNS: Record<string, Run> = {
      MEDIUM CONFIDENCE and stated as such: the three estimators spread here
      (outer extents 1.0121, tiles 1.0070, metric 0.9960) and the tile rms is the
      worst on the screen at 0.987. */
-  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 680, scale: 0.8088, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0.4337, ty: -0.4607 },
+  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 680, scale: 0.8088, sy: 0.9632, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0.4337, ty: 0.1215 },
   /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
   /* Round 2: cap 1.000, advance 1.000 — solved; 1 device px right, via tx. */
   /* Same grid, same shape of finding: 400 -> 430 at the shipped scale,
@@ -964,8 +1035,8 @@ export const RUNS: Record<string, Run> = {
      The vertical excess is the blocked body face and no scaleX touches it.
      `weight` 430 was chosen at the OLD scale and should be re-checked at the new
      one (rule 92's fourth clause) — re-checked, not pre-emptively moved. */
-  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 430, scale: 0.7521, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: 1.0894, ty: 0.4607 },
+  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 430, scale: 0.7521, sy: 0.8802, ls: -0.004,
+           colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: 1.0894, ty: 1.7888 },
 }
 
 function runCss(name: string, r: Run) {

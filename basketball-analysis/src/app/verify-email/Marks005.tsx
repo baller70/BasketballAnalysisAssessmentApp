@@ -84,7 +84,28 @@ export function GearMark() {
   return (
     <Icon name="gear" sw={2.5}>
       <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
-      <circle cx="12" cy="12" r="3" />
+      {/* A `circle` INSIDE A NON-UNIFORM SCALE DRAWS AN ELLIPSE, and `Icon`'s own
+          arithmetic predicts the render exactly: r 3 + sw/2 = 3.5717 user units,
+          times sy = 51/24 = 2.125 gives 15.18 rows and times sx = 54/24 = 2.25
+          gives 16.07 columns. The dial, isolated as a connected component at 0.55
+          coverage (an interior statistic, not four extreme pixels), reads
+          canonical 118 px at 17 rows x 16 cols against the render's 106 at 15 x 16
+          — 13% short in one axis and exact in the other. Compensating gives
+          ry = 3 x 17/15 rounded to the bracketed argmin: 21x22 window 25.873 ->
+          21.736, bracketed (1.10: 22.05, 1.1333: 21.74, 1.16: 21.99).
+
+          IT IS WORTH 0.0012 OF WHOLE SCREEN AND THE POINT IS THE CLASSIFICATION.
+          The ring is 14.4% of this window's difference; the COG is 86%, and no
+          (ky,dy) reaches it — canonical's lobe band spans rows 37..68 against the
+          render's 40..67 while the outer envelope matches to 0.045 px in height
+          and 0.30 in width, so the lobes reach further at the same envelope. The
+          objective's gear argmin (ky 1.070, dy -0.7, +1.747) buys them only by
+          pushing the envelope 1.5 px OUTSIDE canonical's, and reaching them
+          through `Icon` needs a +7% MARK_BOXES height edit — the class rule 90 has
+          refused three times. `gear` is an ASSET difference like `shield`, and it
+          moves to the NEEDS KEVIN list rather than staying on the open-geometry
+          list where round 20's reverted width correction left it. */}
+      <ellipse cx="12" cy="12" rx="3" ry="3.43" />
     </Icon>
   )
 }
