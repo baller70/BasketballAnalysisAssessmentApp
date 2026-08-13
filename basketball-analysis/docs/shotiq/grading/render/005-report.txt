@@ -1,29 +1,29 @@
-whole screen   mean|d| 4.2260   max 255   n_over8 91510
+whole screen   mean|d| 4.2180   max 255   n_over8 91397
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
 display       19.3019    255     19291
-shield         9.3281    254      1304
+shield         9.3237    254      1305
 help2          9.1930    255      4659
 safe1          8.7981    255      3580
-gear           8.6972    255       887
+gear           8.5389    255       893
 didnt          7.8059    228      3544
 wordmark       7.7849    255      2713
-helpIcon3      7.5455    255      1028
-helpIcon2      7.4148    255      1061
+helpIcon3      7.2985    255      1004
 help1          7.1172    255      3863
-helpIcon1      6.8633    254       887
+helpIcon2      6.8681    255      1021
 safe2          6.6762    229      3498
 lede2          6.5651    255      3452
 resendLab      6.4055    214      2494
+helpIcon1      6.2339    254       855
 help3          5.7610    255      3415
 lede1          5.1769    208      3400
-diffBtn        3.8463    255      9128
+diffBtn        3.8481    255      9132
 box1           3.6245    244      1677
-back           3.5029    234       269
 box2           3.4711    254      1377
 box3           3.4268    249      1578
+back           3.2205    236       241
 box0           2.9026    255      1231
 plate          2.7670    255     10286
 resendLink     2.6799    254      3045
@@ -48,7 +48,7 @@ diffLab      12.6948    254      2801
 digit1       10.4700    244       716
 plateLab      9.5243    255      4506
 digit0        9.4609    255       614
-diffMark      9.0047    255      1208
+diffMark      9.0344    255      1212
 digit2        8.7136    254       561
 digit3        8.2768    249       504
 plateMark     7.2395    194      1602
