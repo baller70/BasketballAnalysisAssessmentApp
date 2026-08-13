@@ -1584,10 +1584,54 @@ export const MARK_BOXES: Record<
      7.5455 to 9.4836. Reverted (rule 90). The round-18 dot fix inside this same
      mark stands — that one was measured on INK MASS, 21 px against 7, not on an
      envelope. */
-  helpMark3: [56.4, 1507.6, 66.2, 67.5, 56, 1494],
-  chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290, 1.0, 1.0],
-  chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392, 1.0, 0],
-  chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494, 1.0, 0],
+  /* ROUND 42 / D1. The box is 1.1% too tall, and the refusal that closed this
+     axis measured THREE TIMES the true figure on the wrong statistic. Round 20
+     refused a 2.25 px SYMMETRIC change made with no `ty`; `Icon` scales the
+     drawing by bh/24 about `translate(bx, by)` -- i.e. about the box TOP -- so a
+     0.75 px excess appears as +0.69 at the bottom and +0.05 at the top, which is
+     exactly the measured asymmetry. Right direction, wrong magnitude, no
+     compensating nudge, and the axis was then recorded closed for twenty-one
+     rounds.
+     Paired crossings, shipped raster: top +0.034/-0.088/-0.108 against bottom
+     +0.652/+0.588/+0.666 -- one edge landed and one off, which rule 103 reads as
+     size plus position. Horizontal straddles zero (-0.111/+0.200/+0.308) so the
+     WIDTH is not implicated and bw must not move.
+     DERIVED, NOT SEARCHED: the crossing estimator gives bh 66.716 / ty +0.100
+     and a half-profile SSD gives 66.573 / +0.340; both land on the objective's
+     ridge, and (66.75, 0.20) is the cell where all three estimators sit at zero
+     simultaneously. THE OBJECTIVE CANNOT SET THIS ON ITS OWN -- its valley is a
+     DIAGONAL RIDGE from (66.2, 0.45) to (66.85, 0.10), flat at -0.005 along its
+     whole length, so the whole-screen metric cannot separate the height from the
+     nudge. The size is set by the estimator and only confirmed by the metric.
+     HONEST COST, stated: the inner glyph is a SECOND and separate error -- the
+     dot reads -0.420 on the shipped raster, already high, while the outer bottom
+     is +0.65 low, and `bh` reaches only one of the two. This takes the dot to
+     -0.770. The alternative that holds the glyph exactly (bh 64.92 / ty 1.774)
+     was built and is +0.0113 whole with n_over8 +73. The trade is forced and the
+     build prefers landing the outline by 1.08 of band. Ink mass 0.9932 -> 1.0122
+     because bh also re-weights the stroke through sw/sqrt(sx*sy). */
+  helpMark3: [56.4, 1507.6, 66.2, 66.75, 56, 1494, 0, 0.20],
+  /* ROUND 42 / D2. ONE DEFECT MEASURED ON THREE INDEPENDENT RASTERS. All three
+     chevrons share the box 43.6 x 43.2, and nine of nine readings agree in sign
+     on each axis: horizontal stretch +0.62/+0.50/+0.18, +0.69/+0.68/+0.19,
+     +0.58/+0.61/+0.17; vertical -0.89/-0.87/-0.47, -0.63/-0.55/-0.45,
+     -0.74/-0.68/-0.46. Too wide and too short.
+     The chevron's ink is only 13 x 24 px inside a 43.6 x 43.2 box, so an EXTENT
+     statistic here is two antialiased pixels a side -- rule 90's textbook case --
+     while a crossing over the whole stroke is not.
+     PIVOT: bw scales about the box LEFT and bh about its TOP, so tx and ty are
+     the counter-moves; both are post-layout transforms and unrounded (rule 53).
+     PREDICTED BEFORE BUILT: bh = 43.2 + 0.68/0.556 = 44.4 with ty -0.76, and the
+     4x4 grid's argmin came back (44.4, -0.70) with 44.1, 44.7, -0.85 and -0.55
+     all worse. (bw, tx) was then re-gridded AT THE NEW HEIGHT -- rule 104's
+     lesson, one emitter over -- and its argmin (41.6, 1.8) is where all three
+     horizontal stretches collapse.
+     HONEST COST: the box change re-weights the stroke ~3.7% through
+     sqrt(sx/sy). Ink mass 1.0086/1.0476/1.0116 -> 1.0296/1.0345/1.0187 -- toward
+     canonical on chev2, about 2% away on chev1 and chev3. */
+  chev1: [762.4, 1309.0, 41.6, 44.4, 56, 1290, 1.8, 0.30],
+  chev2: [761.4, 1414.0, 41.6, 44.4, 56, 1392, 1.8, -0.70],
+  chev3: [761.4, 1522.0, 41.6, 44.4, 56, 1494, 1.8, -0.70],
   /* ROUND 40 / D1. THE WIDEST SINGLE INK-EDGE ERROR ON THE SCREEN. Column
      crossings at three coverage fractions had the LEFT edge landed
      (-0.010/-0.055/-0.100) and the RIGHT edge -0.532/-0.784/-0.787 -- one edge
