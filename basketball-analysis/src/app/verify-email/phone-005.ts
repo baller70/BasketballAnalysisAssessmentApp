@@ -394,22 +394,71 @@ export const RUNS: Record<string, Run> = {
      correctly identified face looks like.
      The first capture measured Geist's cap at 0.637 of its font-size here
      against Tungsten's 0.724, which is where 37.6 comes from. */
-  digit0: { cx: 102.840, top: 570.475, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.45, tx: 0, ty: -0.4607 },
-  digit1: { cx: 232.068, top: 570.461, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.32, tx: 0, ty: -0.4607 },
-  digit2: { cx: 360.964, top: 571.017, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.22, tx: 0, ty: -0.4607 },
-  digit3: { cx: 490.455, top: 571.048, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 104.74, tx: 0, ty: -0.4607 },
+  /* SIZE 39.3 -> 38.615 AND ty -0.4607 -> -0.92, ON ALL SIX, AND THE TWO
+     CORRECTIONS ONLY WORK TOGETHER. Grade 14 was dispatched to test a claim
+     that this screen was at a face-limited floor with every path closed. It
+     refuted that here, and the instrument was rule 44 — read the font.
+
+     THE DIGITS ARE NOT SET IN THE BODY FACE. They are Tungsten, which IS in
+     this repository, so their size has a zero-parameter answer: divide
+     canonical's ink height by the glyph's own outline height and every digit
+     must return the same em.
+
+         "2"  59.119 / 0.706 = 83.74 device px      "4"  58.560 / 0.700 = 83.66
+         "8"  59.609 / 0.712 = 83.72                "7"  58.504 / 0.700 = 83.58
+
+     Four glyphs, four DIFFERENT outline heights, one em to 0.2% — 83.7 device
+     px is 38.58 CSS px against the 39.3 shipped, +1.86%. The same check on
+     `display`, the same family, returns 0.42% over, so the digits are the
+     outlier and not the face. Nothing here was ever face-limited.
+
+     AND THE SIZE ERROR WAS MASKING THE SHIFT, which is why three earlier grades
+     read this as a translation and were right to refuse it. Built on the served
+     build, control reproducing 5.4704 / 103546 exactly:
+
+         control    39.3   ty -0.46   whole 5.4704   digits 48.800  box0-3 20.633
+         size only  38.615 ty -0.46         5.4688          ...
+         SHIFT ONLY 39.3   ty -0.92         5.4764   <- WORSE THAN CONTROL
+         both       38.615 ty -0.92         5.4559   digits 43.226  box0-3 19.491
+
+     The 1px lift alone is a regression; it only pays once the size is right.
+     That is round 23's masking rule again, and it is the reason `digit1` (gain
+     2.457) and `digit3` (3.260) sat on the refused list for five rounds — they
+     are not translations while the size is wrong.
+
+     It lands the geometry rather than the metric. Cap ratios
+     1.0175/1.0175/1.0215/1.0225 -> 0.9994/1.0007/1.0044/1.0054; bottom edges
+     +0.91/+0.92/+0.92/+0.95 -> -0.09/-0.09/-0.08/-0.05. The metric argmin is
+     38.30 at 5.4523, and it is DECLINED because it overshoots the cap to 0.994
+     — the same call this recipe already makes on `display`.
+
+     COST STATED: digit3 goes 10.760 -> 11.253. Canonical's "7" carries 22.744
+     device px of ink where Tungsten's outline at the fitted em gives 20.52,
+     10.9% wider, while "2"/"8"/"4" bracket 1.0 (1.013/0.962/0.977). That single
+     glyph is a real face residual no size can reach, and the shipped oversize
+     had been partly paying for it.
+
+     ALL SIX MOVE TOGETHER. Boxes five and six were carrying `ty: 0` against the
+     measured four's -0.4607 — a 1.27 device px step inside one row, invisible
+     to canonical because those boxes are empty, and contrary to the reason
+     written directly below for giving them the same size. The comment was right
+     and the numbers under it disagreed with it. */
+  digit0: { cx: 102.840, top: 570.475, size: 38.615, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.45, tx: 0, ty: -0.92 },
+  digit1: { cx: 232.068, top: 570.461, size: 38.615, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.32, tx: 0, ty: -0.92 },
+  digit2: { cx: 360.964, top: 571.017, size: 38.615, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.22, tx: 0, ty: -0.92 },
+  digit3: { cx: 490.455, top: 571.048, size: 38.615, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 104.74, tx: 0, ty: -0.92 },
   /* Boxes five and six are EMPTY in canonical, so these two runs have no ink to
      measure against. They are the box centres, carrying the same size and face
      as the four that were measured, because a player who keeps typing must not
      see the digits change shape halfway along the row. Stated, not fitted. */
-  digit4: { cx: 619.295, top: 570.75, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 103.89, tx: 0, ty: 0 },
-  digit5: { cx: 748.020, top: 570.75, size: 39.3, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.64, tx: 0, ty: 0 },
+  digit4: { cx: 619.295, top: 570.75, size: 38.615, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 103.89, tx: 0, ty: -0.92 },
+  digit5: { cx: 748.020, top: 570.75, size: 38.615, weight: 400, scale: 1.0, ls: 0,
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.64, tx: 0, ty: -0.92 },
   /* "Resend code in" (graphite) and "0:42" (orange, heavier) are two runs
      because they are two roles: the label reads G/R 0.9876 / B/R 0.9523 and the
      value is orange. One window over both would measure neither (rule 57). */
