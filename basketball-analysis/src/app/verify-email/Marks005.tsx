@@ -70,12 +70,34 @@ const ORANGE = "var(--s5-orange)"
    `strokeWidth={sw}` — this SVG's viewport is exactly bw x bh device px against a
    viewBox of bw x bh units, so one unit is one device px on both axes.
 
-   HELD FOR ITS OWN ROUND, on purpose. It changes the SHARED helper and therefore
-   all nine marks at once, several of which are measurement-tuned; `sw = 3.0` was
-   itself fitted against an anisotropic stroke and would need re-sweeping after
-   (rule 92's fourth clause); and the grade that raised it said plainly that it
-   had not injected `vector-effect` and proved it took, which is rule 99. Building
-   it beside three other findings would make a regression unattributable. */
+   THE PREMISE IS NOW VERIFIED, which was the thing blocking it (rule 99). The
+   grade had not injected `vector-effect` and proved it took, so both halves were
+   checked directly:
+
+     * INJECTION: `vector-effect:non-scaling-stroke !important` on the mark paths
+       reads back as `non-scaling-stroke` in `getComputedStyle` on helpMark1,
+       diffMark and helpMark3. It takes.
+     * ARITHMETIC: the grade's claim is that one viewBox unit is one device px.
+       Read off this component rather than assumed — the `<svg>` is
+       `viewBox="bx by bw bh"` at `width="100%" height="100%"`, and `markBox()`
+       sizes the positioned span to bw x bh CANONICAL DEVICE px. So the mapping is
+       1 unit = 1 device px and `strokeWidth={sw}` under non-scaling-stroke lands
+       `sw` device px on BOTH axes. Confirmed.
+
+   (A first probe appeared to show a second, conflicting structure — a mark with
+   `viewBox="0 0 24 24"`. That was the DESKTOP lucide icon: `[data-s5="back"]` is a
+   hit target holding both the phone mark and its `data-s5-off` sibling, and the
+   selector took the first `<svg>`. Rule 99 in its other direction — the read has
+   to be unambiguous too, not just the write.)
+
+   STILL HELD, and now for one reason rather than three: **every `sw` on this
+   screen was fitted against the anisotropic stroke**, so the change must ship
+   WITH a re-sweep of all of them or it trades a known error for an unknown one
+   (rule 92's fourth clause). `ShieldMark` compounds it — it carries its own
+   `SHIELD_SW` and its tick divides by a SECOND sqrt to undo a path scale, and
+   both compensations become wrong under non-scaling-stroke. That is a
+   nine-mark joint solve, not a one-line edit, and it belongs in a round where a
+   per-mark regression can be attributed. */
 function Icon({
   name, sw = 3.0, colour = INK, children,
 }: {
