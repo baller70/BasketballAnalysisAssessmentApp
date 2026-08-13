@@ -65,4 +65,12 @@ next-env.d.ts
 # directory. Ignored for the same reason .grade/ is — they are an agent working
 # file, they are recreated per run, and deleting them mid-grade breaks the agent
 # still using them.
-_grader-*
+#
+# THE PATTERN WAS `_grader-*` AND IT MISSED BY ONE CHARACTER. A grader wrote
+# `docs/shotiq/_grader_tools.py` — underscore, not hyphen — which the hyphen
+# form does not match, so the repo's uncommitted-changes check fired mid-grade
+# on a file that must neither be committed (it is agent scratch) nor deleted
+# (the agent was still running). A convention enforced by an exact-prefix glob
+# only holds while every agent happens to punctuate the same way, and none of
+# them were told to. `_grader*` covers both spellings and any future one.
+_grader*
