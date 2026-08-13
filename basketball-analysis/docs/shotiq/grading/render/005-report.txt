@@ -1,25 +1,25 @@
-whole screen   mean|d| 4.1645   max 255   n_over8 90968
+whole screen   mean|d| 4.1483   max 255   n_over8 90833
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
 display       19.3019    255     19291
-shield         9.3237    254      1305
 safe1          8.7981    255      3580
 gear           8.5389    255       893
+shield         8.5019    254      1277
 help2          8.1496    255      4503
 didnt          7.8059    228      3544
 wordmark       7.7849    255      2713
 helpIcon3      7.2985    255      1004
 help1          6.8700    255      3803
-helpIcon2      6.8681    255      1021
 safe2          6.6762    229      3498
 lede2          6.5651    255      3452
-resendLab      6.4055    214      2494
+helpIcon2      6.3798    255       986
 helpIcon1      6.2339    254       855
+resendLab      6.1780    214      2459
 help3          5.3430    255      3336
 lede1          5.1769    208      3400
-diffBtn        3.8481    255      9132
+diffBtn        3.8069    255      9099
 box1           3.6245    244      1677
 box2           3.4711    254      1377
 box3           3.4268    249      1578
@@ -27,7 +27,7 @@ back           3.2205    236       241
 box0           2.9026    255      1231
 resendLink     2.6799    254      3045
 plate          2.6238    255     10152
-resendVal      2.2172    244       945
+resendVal      2.0483    244       941
 box4           1.6984    140      1797
 chev2          1.5480    128       117
 chev1          1.5005     84       111
@@ -48,8 +48,8 @@ diffLab      12.6948    254      2801
 digit1       10.4700    244       716
 plateLab      9.5243    255      4506
 digit0        9.4609    255       614
-diffMark      9.0344    255      1212
 digit2        8.7136    254       561
+diffMark      8.3575    255      1179
 digit3        8.2768    249       504
 plateMark     4.5255    194      1468
 caret         1.4548    140       217
