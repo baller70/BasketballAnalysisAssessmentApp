@@ -1342,4 +1342,44 @@ ${Object.entries(MARK_BOXES).map(([k, m]) => markBox(k, ...m)).join("\n")}
   white-space:normal;text-align:center;font-family:${GEIST};font-size:12px;line-height:16px;
   color:var(--shotiq-color-reviewRed);margin:0}
 .s5 [data-s5="overlay"]{position:absolute;left:0;top:0;pointer-events:none}
+}
+/* BELOW THE DESIGN WIDTH THE CANVAS OVERFLOWED AND SEVEN CONTROLS LEFT THE
+   VIEWPORT. DoD item 6 has been violated below 375pt since round 13, recorded as
+   a bare count and never diagnosed. ".s5" is a fixed 393px with "overflow:hidden"
+   inside a "<main>" at 100%, so below 393 it overflows its parent and the
+   DOCUMENT scrolls sideways — scrollWidth stayed 393 at every viewport:
+
+       width  dpr   scrollW  clientW   clipped focusables
+        393  2.17     393      393     none
+        375  2.00     393      375     none        (widest control ends at 370.9)
+        360  3.00     393      360     SEVEN
+        320  2.00     393      320     SEVEN
+
+       verify-settings  l 346.0 r 370.9   verify-code-5 l 320.1 r 369.1
+       verify-open-mail, verify-different-email, verify-help-1/2/3  r 366.6-366.7
+
+   The one that matters for USE rather than for the metric is "verify-code-5": on
+   a 360pt phone the sixth code box could not be seen or tapped without a
+   horizontal scroll the screen gives no affordance for, so a player on a 360pt
+   phone could not finish entering their code.
+
+   THE CANVAS IS SCALED, NOT REFLOWED. 393 is the design width and an invariant;
+   reflowing below it would abandon the canonical layout to fix a viewport
+   problem. "zoom" is used rather than "transform:scale" because zoom affects
+   LAYOUT — hit-testing and every descendant's box scale with it — where a
+   transform would leave a 393px layout box behind the scaled picture.
+
+   "calc(100vw / 393px)" is a length divided by a length, i.e. a NUMBER, which is
+   what "zoom" requires. Two shorter spellings were tried first and BOTH ARE
+   INVALID: "calc(100vw / 393)" is a length over a scalar, which is a length, so
+   the declaration is dropped at parse time — injected live at 360 with
+   "!important", computed "zoom" stayed "1" and computed "transform" stayed
+   "none". Recorded because "the fix did nothing" would have read as the approach
+   failing when it was the spelling.
+
+   GATED AT 392.98 SO IT CANNOT REACH THE CAPTURE, which is shot at exactly 393.
+   The control is byte identity: the 393 render must come back at md5
+   661b4275bbbb7d7eb5bff7328cbb550f. */
+@media (max-width: 392.98px){
+.s5{zoom:calc(100vw / 393px)}
 }`

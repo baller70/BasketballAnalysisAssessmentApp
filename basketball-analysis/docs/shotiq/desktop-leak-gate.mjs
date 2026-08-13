@@ -24,6 +24,16 @@
  *   2. THE MEDIA QUERY ITSELF. Exactly one `@media (max-width: 767.98px)` block,
  *      at the width the invariant names. A second block, or a drifted breakpoint,
  *      would satisfy probe 1 while breaking the guarantee it stands for.
+ *
+ *      NOTE ON "INSIDE THE PHONE QUERY", because probe 1 was too literal once and
+ *      failed on a correct change. Round 34 added `@media (max-width: 392.98px)`
+ *      to scale the canvas below the design width, and probe 1 called its `.s5`
+ *      rule a leak. It is not: a query whose max-width is NARROWER than the phone
+ *      breakpoint can never apply where the phone query does not, so it is
+ *      phone-scoped by construction. The test is now `max-width <= 767.98px`, not
+ *      string equality. A query with a `min-width`, or with no `max-width` at
+ *      all, or with a wider one, still counts as a leak — those are the shapes
+ *      that can actually reach desktop.
  *   3. PAINTED GEOMETRY AT 900. Every `[data-s5-mark]` and the overlay root must
  *      compute to `display:none` at desktop width. Probe 1 proves the RULES are
  *      scoped; this proves nothing paints anyway through a path that does not
@@ -86,17 +96,30 @@ function blocks(css) {
 }
 
 const PHONE_SEL = /\.s5\b|\[data-s5/
+const MAX_PHONE_PX = Number((BREAKPOINT.match(/([\d.]+)px/) || [])[1])
+
+/** A comment before a rule is not part of its selector; strip it before either
+ *  matching or printing, or the failure message quotes prose (which it did). */
+const clean = (prelude) => prelude.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim()
+
+/** True when this @media can only ever apply at or below the phone breakpoint —
+ *  a max-width no wider than it, and no min-width re-opening it upward. */
+function isPhoneScoped(prelude) {
+  if (/\(\s*min-width/i.test(prelude)) return false
+  const maxes = [...prelude.matchAll(/max-width:\s*([\d.]+)px/gi)].map((m) => Number(m[1]))
+  return maxes.length > 0 && maxes.every((v) => v <= MAX_PHONE_PX)
+}
 
 /** Every phone selector in `css`, tagged with whether it is inside the query. */
 function phoneRules(css, insideQuery = false) {
   const out = []
   for (const b of blocks(css)) {
-    const isMedia = b.prelude.startsWith('@media')
-    const isPhoneQuery = isMedia && b.prelude.includes(BREAKPOINT)
-    if (isMedia || b.prelude.startsWith('@supports')) {
-      out.push(...phoneRules(b.body, insideQuery || isPhoneQuery))
-    } else if (PHONE_SEL.test(b.prelude)) {
-      out.push({ selector: b.prelude.replace(/\s+/g, ' ').slice(0, 90), insideQuery })
+    const prelude = clean(b.prelude)
+    const isMedia = prelude.startsWith('@media')
+    if (isMedia || prelude.startsWith('@supports')) {
+      out.push(...phoneRules(b.body, insideQuery || (isMedia && isPhoneScoped(prelude))))
+    } else if (PHONE_SEL.test(prelude)) {
+      out.push({ selector: prelude.slice(0, 90), insideQuery })
     }
   }
   return out
@@ -120,7 +143,7 @@ try {
     `${rules.length} phone rules, ${leaked.length} outside, over ${css.length} chars of inline CSS` +
     (leaked.length ? `\n      LEAKED: ${leaked.slice(0, 6).map((r) => r.selector).join(' | ')}` : ''))
 
-  const queries = blocks(css).filter((b) => b.prelude.startsWith('@media') && b.prelude.includes(BREAKPOINT))
+  const queries = blocks(css).filter((b) => clean(b.prelude).startsWith('@media') && clean(b.prelude).includes(BREAKPOINT))
   const otherWidths = Array.from(new Set(
     (css.match(/@media\s*\([^)]*max-width:\s*[\d.]+px[^)]*\)/g) || [])
       .filter((q) => !q.includes(BREAKPOINT))
@@ -165,6 +188,8 @@ try {
   const selftest = await page.evaluate(() => {
     const out = {}
     const st = document.createElement('style')
+    // deliberately UNSCOPED — no media query at all, which is the shape that can
+    // actually reach desktop. A narrower max-width would be a false positive.
     st.textContent = '.s5 [data-s5="__selftest"]{color:red}'
     document.head.appendChild(st)
     out.css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent || '').join('\n')

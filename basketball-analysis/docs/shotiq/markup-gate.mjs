@@ -181,16 +181,17 @@ const PROFILES = {
       safe1: { live: 1, control: 1 },
       safe2: { live: 1, control: 1 },
     },
-    expectScroll: [375, 360, 320],
-    /* Read off the probe (rule 74). 375 is CLEAN — the document scrolls but no
-       control leaves the viewport — and 360/320 clip the same seven. */
-    expectClipped: {
-      375: [],
-      360: ['verify-code-5', 'verify-different-email', 'verify-help-1',
-            'verify-help-2', 'verify-help-3', 'verify-open-mail', 'verify-settings'],
-      320: ['verify-code-5', 'verify-different-email', 'verify-help-1',
-            'verify-help-2', 'verify-help-3', 'verify-open-mail', 'verify-settings'],
-    },
+    /* CLOSED IN ROUND 34, and this list is now empty on purpose. It used to read
+       375 clean / 360 and 320 clipping the same seven, which was the true state
+       and was recorded so a regression would fail — but a tracked defect is not a
+       fixed one, and this one cost a player on a 360pt phone the sixth code box.
+       The canvas is now scaled below the design width (`zoom: calc(100vw/393px)`
+       gated at max-width 392.98px), so nothing clips and nothing scrolls
+       sideways at any width, while 393 is untouched and its capture is
+       byte-identical. Both lists stay in the file: empty they still fail on any
+       control that starts leaving the viewport again. */
+    expectScroll: [],
+    expectClipped: { 375: [], 360: [], 320: [] },
     /* `ariaLabel` IS DELIBERATELY ABSENT, and saying so is the point. It models
        a heading whose ONLY name source is an aria-label, because 004's h1 is
        built from aria-hidden per-glyph spans. 005's h1 carries its own text, so
