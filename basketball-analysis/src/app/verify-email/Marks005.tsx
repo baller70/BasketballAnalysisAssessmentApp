@@ -427,8 +427,9 @@ export function EnvelopePencilMark() {
       <path d="M18.96 11.5V5.928a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.422a2 2 0 0 0 2 2h7.3" />
       <path d="m18.96 4.783-7.48 6.384a2 2 0 0 1-2 0L2 4.783" />
       {/* THE PENCIL IS STRETCHED 11% IN X BY THE BOX'S OWN ANISOTROPY. This mark
-          box is 76.8 x 68.5, so `Icon` applies scale(3.2000, 2.8542) — 12.1%
-          anisotropic. Round 32 re-cut the ENVELOPE's path to compensate x; the
+          box is 76.8 x 68.8425 (round 40 moved `bh`; this line said 68.5 and
+          2.8542 / 12.1% until round 44's audit caught it), so `Icon` applies
+          scale(3.2000, 2.8684) — 11.56% anisotropic. Round 32 re-cut the ENVELOPE's path to compensate x; the
           pencil, whose defining feature is a 45-degree axis, never was.
           Coverage-weighted second moments over an 8-connected component (236/250
           px — an interior statistic, not four extreme pixels):
@@ -584,8 +585,13 @@ export function MailClockMark() {
           this is outside the class rule 90 has refused three times (those were
           all MARK_BOXES edits driven by extreme-value extents; this is an
           interior 50%-crossing over 15+ columns). */}
-      {/* The body is also 1.13 device px too tall (top -0.216, bottom +0.914) —
-          opposite signs, so size. The WIDTH is solved and untouched: +0.012. */}
+      {/* STALE UNTIL ROUND 44: this said "the body is also 1.13 device px too
+          tall (top -0.216, bottom +0.914)". That was a PRE-CORRECTION reading.
+          Re-taken on the current composite, all four edges of this body are
+          landed to 0.04 px at every level from 89 to 178. Nothing to do here.
+          The reason to fix the text and not only the pixels is the whole of
+          rounds 41-43: three constants were wrong because a stale number
+          upstream of them was believed. */}
       <path d="M19.93 11V6.084a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10.561a2 2 0 0 0 2 2h9" />
       <path d="m19.93 5.169-8.465 6.879a2 2 0 0 1-2 0L1 5.169" />
       {/* THE RING IS 20% TOO BIG, WHICH IS WHY IT MERGES WITH THE ENVELOPE.
@@ -666,7 +672,31 @@ export function MailClockMark() {
           correct figure is 17.5 + 1.94/2.575 = 18.253.
           `ry` MUST NOT MOVE: ry 4.60 scores -0.0018 and lands T_out while
           driving B_out from +0.303 to +0.56. cy fixes both edges at once. */}
-      <ellipse cx="18.74" cy="18.263" rx="4.246" ry="4.500" />
+      {/* ROUND 44 / F1, AND RULE 107 RAN IN THE DIRECTION NOBODY HAD USED IT.
+          Round 43 REFUSED `ry` for a correct reason -- on that raster the two
+          vertical edges read +0.247 and +0.303, BOTH POSITIVE, which is a
+          translation, and ry would have landed T_out while driving B_out to
+          +0.56. Correcting `cy` removed the translation, and what is left on the
+          composite is a SIZE: T_out +0.063 against B_out -0.173, opposite signs.
+          Rule 107 has only ever KILLED an edit before -- a landmark contaminated
+          by a sibling defect that made a fix look justified. Here it LICENSES
+          one that a previous round was right to refuse. The rule is symmetric
+          and this is the other half of it.
+          All four outer edges point inward (L +0.034, R -0.138), so the ring is
+          uniformly ~0.1 px small; only the VERTICAL clears the 0.248 device-px
+          supersampling ladder, which is why only `ry` moves.
+          PIVOT: cy is HELD -- an <ellipse> grows symmetrically about its centre,
+          so each vertical edge moves out by dry*sy. 4.500 + 0.118/2.575 = 4.546,
+          derived rather than searched.
+          `ry 4.580` IS THE OBJECTIVE'S ARGMIN AND IS REFUSED: it is 74% more
+          than the measurement asks and drives T_out from +0.063 to -0.095, past
+          canonical and larger than it started, for 0.0004 more. The measurement
+          wins.
+          HONEST LIMIT: 0.118 px is at this screen's resolution, and half the
+          predicted response was eaten by the ladder -- T_out did not move at
+          all -- so the estimator-to-lever conversion here is good to about 50%.
+          Stated rather than hidden. */}
+      <ellipse cx="18.74" cy="18.263" rx="4.246" ry="4.546" />
       {/* THE HANDS ARE 2 ROWS TOO TALL AND THEIR WIDTH IS ALREADY EXACT.
           Components at threshold 140, measured after the envelope narrowing so
           the two changes are not confounded:
