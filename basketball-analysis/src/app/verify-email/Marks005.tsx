@@ -104,11 +104,12 @@ const ORANGE = "var(--s5-orange)"
    you looking in the wrong place. This has broken the build here three times.
    Put the comment ABOVE the element. Rule 98. */
 function Icon({
-  name, sw = 3.0, colour = INK, children,
+  name, sw = 3.0, colour = INK, iso = false, children,
 }: {
   name: keyof typeof MARK_BOXES | string      // key into MARK_BOXES
   sw?: number                                  // stroke width in canonical device px
   colour?: string
+  iso?: boolean                                // see the ISO MODE note below
   children: React.ReactNode
 }) {
   // ONE SOURCE FOR THE BOX. The CSS in phone-005.ts sizes the positioned span
@@ -142,8 +143,41 @@ function Icon({
           on `back` — whose box is EXACTLY isotropic at 50.5 x 50.5, so
           non-scaling-stroke was never going to change a pixel of it — that
           re-solve is the entire fix. */}
-      <g transform={`translate(${bx} ${by}) scale(${sx} ${sy})`}
-         stroke={colour} strokeWidth={sw / Math.sqrt(sx * sy)}
+      {/* ROUND 45: ISO MODE, and it closes the anisotropy the note above leaves
+          open in the exact terms that note names ("per-axis path outlines, or
+          making the mark boxes isotropic").
+          THE DEFECT, measured on four walls with inner AND outer crossings so a
+          translation is separable from a width (rule 103): helpMark1's
+          centrelines are LANDED -- three of four inside 0.02 px -- and the only
+          error on all four walls is the WIDTH, with OPPOSITE SIGNS on the two
+          axes (top -0.212, bottom -0.262, left +0.131, right +0.134). No `sw`,
+          no box and no nudge can reach that, because all three move both axes
+          together, and `sw` 3.15 already sits at the geometric mean. That is why
+          twenty-two rounds of sweeps left it.
+          The render's per-axis width ratio tracks the BOX ASPECT to 0.06% across
+          seven marks, while canonical's own vertical/horizontal ratio sits at
+          0.94-1.02. The control is in the raster, not in an argument: the two
+          isotropic boxes on this screen -- `back` 50.5x50.5 and `helpIcon3`
+          66.2x66.75 -- land BOTH axes to 0.8%.
+          THE FIX IS ALGEBRAICALLY GEOMETRY-PRESERVING. Scale uniformly by sy and
+          pre-scale every path x by c = sx/sy: x_final = bx + sy*(x*c) = bx +
+          sx*x, so no ink moves and only the stroke changes. strokeWidth = sw/sy
+          then draws `sw` in BOTH axes. Every arc in the iso path has x-rotation
+          0, so scaling x takes (rx, ry, 0) to (rx*c, ry, 0) exactly.
+          IT IS OPT-IN PER MARK, NOT GLOBAL, and that is a measurement rather
+          than caution (rule 108): the sign of the gain is ordered by CANONICAL's
+          own v/h ratio, so it pays on the horizontal-heavy marks (helpMark1
+          0.952, plateMark 0.936, gear 0.958) and LOSES on the neutral ones
+          (diffMark 0.997 -> +0.0004/n8 +23; helpMark2 1.023 -> +0.0015/n8 +63).
+          Of the three that gain, only helpMark1 passes rule 71.
+          Round 22's `non-scaling-stroke` refutation above stands on its own
+          terms and this is a different lever: nss asked the UA to opt out of the
+          CTM, which this Chromium resolves against a system that still carries
+          sx; this changes the CTM itself. */}
+      <g transform={iso
+            ? `translate(${bx} ${by}) scale(${sy} ${sy})`
+            : `translate(${bx} ${by}) scale(${sx} ${sy})`}
+         stroke={colour} strokeWidth={iso ? sw / sy : sw / Math.sqrt(sx * sy)}
          strokeLinecap="round" strokeLinejoin="round" fill="none">
         {children}
       </g>
@@ -456,7 +490,24 @@ export function EnvelopePencilMark() {
 /** lucide `mail-check`. Measured 58..117 x 1308..1354. */
 export function MailCheckMark() {
   return (
-    <Icon name="helpMark1" sw={3.15}>
+    /* ROUND 45. `iso` plus sw 3.15 -> 3.19, and every path x below is
+       pre-scaled by c = sx/sy = 67.0/59.5 = 1.1260504201680672 so the drawing
+       does not move -- see the ISO MODE note in `Icon`.
+       WHERE 3.19 COMES FROM, derived rather than searched: under `iso` all four
+       walls draw at `sw`, so the total width error against canonical's
+       {3.073, 3.088, 3.215, 3.266} is FLAT at 0.320 for any sw in
+       [3.088, 3.215] and rises outside it. Inside that band the 0.248 device-px
+       supersampling ladder collapses the choice to two reachable states, and
+       only the upper one puts the top bar on the correct side of canonical.
+       3.19 is the lowest sw that clears the rung.
+       HONEST LIMIT, and it is a real back-out condition rather than a caveat:
+       the entire BAND gain is that one rung. Below it the same edit still
+       improves the measurement (wall error 0.741 -> 0.610) and LOSES 0.18 of
+       band. If a future Chromium moves the ladder, re-measure the top bar
+       before trusting this number, and back the edit out rather than re-tuning
+       it. sw 3.32 is the objective's argmin and is REFUSED: it is outside the
+       licensed band and takes wall error 0.275 -> 0.558. */
+    <Icon name="helpMark1" sw={3.19} iso>
       {/* THE ENVELOPE IS TOO WIDE ON THE RIGHT, AND THE BOUNDING BOX HID IT.
           `helpMark1`'s note says the width "is already exact at 59" — true of
           the mark's BOUNDING BOX, whose right edge is set by the CHECK, and
@@ -530,9 +581,9 @@ export function MailCheckMark() {
           this is outside the class rule 90 has refused three times (those were
           all MARK_BOXES edits driven by extreme-value extents; this is an
           interior 50%-crossing over 15+ columns). */}
-      <path d="M21.2053 13V6.184a2 2 0 0 0-2-2H3.8439a2 2 0 0 0-2 2v11.678c0 1.1.9 2 2 2h8" />
-      <path d="m21.2053 5.262-8.6507 7.46a1.94 1.94 0 0 1-2.06 0L1.8439 5.262" />
-      <path d="m16 19 2 2 4-4" />
+      <path d="M23.878237 13V6.184a2.252101 2 0 0 0-2.252101-2H4.328425a2.252101 2 0 0 0-2.252101 2v11.678c0 1.1 1.013445 2 2.252101 2h9.008403" />
+      <path d="m23.878237 5.262-9.741124 7.46a2.184538 1.94 0 0 1-2.319664 0L2.076324 5.262" />
+      <path d="m18.016807 19 2.252101 2 4.504202-4" />
     </Icon>
   )
 }
