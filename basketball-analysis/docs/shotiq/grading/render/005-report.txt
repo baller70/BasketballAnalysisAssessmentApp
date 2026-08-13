@@ -1,4 +1,4 @@
-whole screen   mean|d| 5.4559   max 255   n_over8 103483
+whole screen   mean|d| 5.3674   max 255   n_over8 101973
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -20,20 +20,20 @@ wordmark       7.7849    255      2713
 helpIcon3      7.5455    255      1028
 diffBtn        5.6752    255      9912
 lede1          5.5554    208      3470
-box3           5.2494    254      1806
-box1           5.1343    254      1913
-box2           4.6557    254      1577
-box0           4.4514    255      1790
+box3           4.0387    254      1616
 plate          3.9854    255     10845
+box1           3.8768    254      1721
 resendLink     3.5668    254      3402
 back           3.5029    234       269
-box4           3.2088    163      1884
-box5           2.4880     86      1146
+box2           3.4711    254      1377
+box0           3.2988    255      1252
 resendVal      2.2172    244       945
+box4           2.0546    140      1877
 rule3          1.9761     22      2039
 hdrRule        1.5789     27       903
 chev2          1.5480    128       117
 chev1          1.5005     84       111
+box5           1.4478     46       763
 chev3          1.3690    107       108
 rule1          1.2398     19       678
 rule2          1.1664     19        40
