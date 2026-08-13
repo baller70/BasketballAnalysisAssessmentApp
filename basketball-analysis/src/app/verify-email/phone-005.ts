@@ -118,7 +118,7 @@ const COLOURS = `
      direction. It is taken as a colour correction the definition of done
      requires, with its cost recorded, not as a buy. */
   --s5-box-rule:#767676;
-  --s5-divider:#DDDDDD;
+  --s5-divider:#D4D4D4;
   /* THE HEADER RULE KEEPS ITS OWN TOKEN AND ITS OWN VALUE IS THE DIVIDERS',
      which is a measured null rather than an oversight. Canonical carries 65.2
      units of ink across the header rule against 71.5 mean across the four
@@ -131,7 +131,26 @@ const COLOURS = `
      The four dividers do not share one value in canonical either
      (80.8 / 67.1 / 74.4 / 63.8) and the render's flat 72.0 sits at their mean,
      which is why they are left alone. */
-  --s5-header-rule:#DDDDDD;
+  /* THE PAIR IS THE SOLVE, AND EITHER KNOB ALONE MISLEADS — rule 91's second
+     consequence, which this token is the reason for. The five flat marks are
+     drawn at 2.17 device px; canonical's 50%-crossing height over the flat
+     middle (columns 200..700) is 1.645 / 1.679 / 1.783 / 1.312 / 1.911, mean
+     1.67. The 2.17 was never measured — it is asserted as "a known 2.17 px
+     stroke" and then used to DERIVE this tone, while the identical estimator
+     rejected 2.17 for the box border ("1.73-1.86 rather than 2.17", shipped at
+     1.75). Because these are solid rects an analytic box-filter model IS the
+     rasteriser here: at the shipped values it reproduces the render to mean
+     |d| 0.049 / 0.067 / 0.067 / 0.067 / 0.019, max 1.0. Joint (h, tone) argmin
+     against canonical over all five is h 1.60, tone 212, bracketed on both axes
+     (h 1.40..1.80 -> .0464 .0440 .0424 .0440 .0484; tone 208..216 -> .0459
+     .0433 .0424 .0431 .0453). The decomposition is the point:
+         tone alone at h 2.17   +0.0135  WORSE
+         h alone at #DDDDDD     -0.0109
+         the pair               -0.0217
+     which is exactly why the measured null recorded below — "#E0E0E0 built and
+     measured, it is WORSE" — proved nothing about the role. It was a
+     single-parameter result read as a verdict on the run. */
+  --s5-header-rule:#D4D4D4;
 `
 
 export type Run = {
@@ -249,7 +268,31 @@ export const PLATE = { x: 53.85, y: 904.78, w: 741.81, h: 111.55, r: 11 }
    x stays where it was measured. */
 export const DIFFBTN = { x: 53.77, y: 1048.14, w: 741.95, h: 111.23, r: 11 }
 export const DIVIDERS = [1208.20, 1380.49, 1486.29, 1599.45]
-export const DIVIDER_X = 56.5
+/* THE CONSTANTS IN THIS FILE ARE IN TWO DIFFERENT FRAMES, HALF A PIXEL APART,
+   and the overlay's blanket `viewBox="-0.6 -0.4"` is ONE correction for all of
+   them. Canonical minus the recorded constant, in the CSS/SVG frame where pixel
+   i occupies [i, i+1): PLATE +0.461/+0.472, DIFFBTN +0.494/+0.593, CARET +0.544,
+   LINK_RULE +0.282/+0.575 — all in the pixel-INDEX frame and all needing the
+   +0.5. But DIVIDER_X +0.09 and the re-measured BOX_X +0.11 are already in the
+   CSS frame and need nothing. The -0.6 is right for the first group and half a
+   pixel too far for the second. `CARET.x` is already explicitly counter-moved
+   for exactly this reason; the dividers are the second element that was already
+   right and never got counter-moved.
+
+   Measured over 27 vertical overlay edges (stroke centroids for strokes, 50%
+   crossings for fills), render minus canonical: code boxes +0.176/+0.138, plate
+   +0.099/+0.045, diffBtn +0.112/+0.015, link +0.318/-0.042, caret -0.133 — nine
+   features inside |0.32| — against the eight divider ends at +0.459 +0.457
+   +0.528 +0.473 +0.494 +0.404 +0.539 +0.353, mean +0.463 sd 0.060. Roughly 5
+   sigma out, the same shape as round 29's box top against nine clustered
+   features, on the other axis.
+
+   IT IS WORTH ESSENTIALLY NOTHING AND IS TAKEN ANYWAY: a 0.46 px horizontal
+   shift of a 739 px bar touches its two end columns, ~0.004 per band. It is
+   here because it is free and correct and because it is the EVIDENCE for the
+   two-frame cause, not for the metric. Canonical measures 56.59; -0.6 lands it.
+   DIVIDER_W stays 739.0, which canonical measures at 739.03. */
+export const DIVIDER_X = 55.99
 export const DIVIDER_W = 739.0
 export const HEADER_RULE = 100.34
 /** The caret drawn inside the focused box. x 617.404..619.667, y 563.859..636.113. */
@@ -272,8 +315,16 @@ export const HEADER_RULE = 100.34
    restores both. */
 export const CARET = { x: 617.404 - 0.6, y: 563.859 - 0.4, w: 3.08, h: 72.254 }
 /** "Resend email" is underlined: centroid y 845.1, x 335.4..515.8, ink 401 units. */
-/* Same estimator: canonical 399.0 units against the render's 330.0 at h 1.75. */
-export const LINK_RULE = { x: 335.4, y: 844.3, w: 180.4, h: 2.12 }
+/* THE ESTIMATOR WAS RUN ONCE AND NEVER RE-RUN AGAINST WHAT IT PRODUCED. It read
+   "canonical 399.0 units against the render's 330.0 at h 1.75", which gave 2.12.
+   Re-applied to the shipped artefact over columns 350..500 in the blue plane
+   (rule 3 — orange on blue), canonical carries 488.17 units against the render's
+   526.00 at h 2.12, so the same arithmetic now returns 2.12 x 488.17/526.00 =
+   1.968. The old inputs are kept in this sentence rather than deleted, because
+   the defect is the un-re-run estimator and not the number.
+   Centre: canonical 845.566, render 845.838. y is set so the drawn centre,
+   including the +0.4 viewBox origin, lands on 845.565. */
+export const LINK_RULE = { x: 335.4, y: 844.18, w: 180.4, h: 1.97 }
 
 export const RUNS: Record<string, Run> = {
   /* SHOTIQ. Canonical 004's wordmark and this one share a cap to the pixel —
@@ -494,22 +545,48 @@ export const RUNS: Record<string, Run> = {
      to canonical because those boxes are empty, and contrary to the reason
      written directly below for giving them the same size. The comment was right
      and the numbers under it disagreed with it. */
+  /* EVERY COORDINATE IN `RUNS` IS RECORDED IN THE PIXEL-INDEX FRAME, and the
+     digits are the only place that is not already absorbed. Measured against
+     canonical's ink centres with pixel i AT INDEX i, `cx` reads +0.008 / -0.005
+     / -0.005 / +0.003 (sd 0.006 across four different glyphs) and `top` reads
+     +0.003 / 0 / 0 / 0; `x` for didnt / safe1 / help1 reads 0.000 / +0.004 /
+     0.000. CSS and SVG put pixel i at [i, i+1), so the same numbers are +0.5 low
+     in the frame they are consumed in. Every other run's dx/dy/tx were fitted
+     against a BUILT capture and have already swallowed it — these six were
+     fitted against the digits' own outlines instead (round 28) and never did.
+
+     THE RENDER IS NOT MISDRAWING. Tungsten Medium rasterised with FreeType at
+     the shipped em (38.615 x 2.170483 = 83.795 device px), unhinted, with the
+     glyph origin fitted to the render's own windows, reproduces the render to
+     mean |d| 0.476 / 0.562 / 0.306 / 0.169 against band errors of 8.7 to 11.7,
+     on ONE baseline for all four — and the fitted origins land within 0.20 px of
+     what this file's own CSS arithmetic computes. The target is 0.5 px off, not
+     the rasteriser (rule 44, aimed at the raster rather than the metrics).
+
+     A SECOND, SEPARABLE ERROR RIDES WITH IT. `runCss` emits `text-align:center`,
+     which centres the ADVANCE box on `cx`; `cx` is canonical's INK centre. From
+     hmtx plus the outlines, ink-centre minus advance-centre is 0.000 em for '2'
+     and '8', +0.005 for '4' and -0.004 for '7' — +0.419 and -0.335 device px at
+     this em. So the needed shifts decompose as 0.503 (frame) minus that offset,
+     which is what these `tx` values are; the residual scatter (-0.23..+0.11) is
+     Skia's sub-pixel quantum and is deliberately NOT fitted.
+     0.2318 CSS px = 0.503 device px; `scale` is 1.0 so `scaleX x tx` = tx. */
   digit0: { cx: 102.840, top: 570.475, size: 38.615, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.45, tx: 0, ty: -0.92 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.45, tx: 0.2318, ty: -0.92 },
   digit1: { cx: 232.068, top: 570.461, size: 38.615, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.32, tx: 0, ty: -0.92 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.32, tx: 0.2318, ty: -0.92 },
   digit2: { cx: 360.964, top: 571.017, size: 38.615, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.22, tx: 0, ty: -0.92 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.22, tx: 0.0387, ty: -0.92 },
   digit3: { cx: 490.455, top: 571.048, size: 38.615, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 104.74, tx: 0, ty: -0.92 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 104.74, tx: 0.3861, ty: -0.92 },
   /* Boxes five and six are EMPTY in canonical, so these two runs have no ink to
      measure against. They are the box centres, carrying the same size and face
      as the four that were measured, because a player who keeps typing must not
      see the digits change shape halfway along the row. Stated, not fitted. */
   digit4: { cx: 619.295, top: 570.75, size: 38.615, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 103.89, tx: 0, ty: -0.92 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 103.89, tx: 0.2318, ty: -0.92 },
   digit5: { cx: 748.020, top: 570.75, size: 38.615, weight: 400, scale: 1.0, ls: 0,
-            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.64, tx: 0, ty: -0.92 },
+            colour: "var(--s5-ink)", family: TUNGSTEN, dx: 0, dy: 15.0, width: 105.64, tx: 0.2318, ty: -0.92 },
   /* "Resend code in" (graphite) and "0:42" (orange, heavier) are two runs
      because they are two roles: the label reads G/R 0.9876 / B/R 0.9523 and the
      value is orange. One window over both would measure neither (rule 57). */
@@ -532,8 +609,35 @@ export const RUNS: Record<string, Run> = {
      Bracketed on size (15.10 and 15.45 both worse at the winning scale) and on
      scale (0.900 and 0.945 both worse at the winning size), and the winner is
      the only candidate that lands BOTH ratios inside half a percent. */
+  /* THE RUN SITS 1.27 DEVICE PX HIGH, AND THE `cap 1.0000` RECORDED ABOVE DOES
+     NOT REPRODUCE. The advance does — 0.9963 at the 50% crossing, 0.9941 at
+     coverage 0.06 — but no cap estimator returns 1.0000 on the shipped artefact:
+     'R' 23.690 -> 22.935 = 0.968, ascender 'd' 24.4 -> 23.2 = 0.951, whole-run
+     vertical extent 0.947 / 0.945. A recorded measurement the artefact refutes
+     is the same defect class as the stale BOX_Y round 29 found.
+
+     The position error is separable from it and is the part that pays. Modal
+     per-column bottom crossing (rule 24, every column): canonical 754.586 with
+     73 of 147 columns in the mode, render 753.315 with 69 of 153 — delta
+     -1.271, and every one of the twelve glyphs of "Resendcodein" reads -1.25 to
+     -1.43, sd 0.06, so it is not one glyph. The three landmarks put the sign
+     beyond doubt: ascender top -0.13, x-height top -1.93, baseline -1.40, i.e.
+     both extremes the same way, which rule 34 licenses as a translation.
+
+     CAUSE: the run is positioned by its CAP-TOP (`top: u(top - dy)`) and
+     GeistVF's x-height/ascender is 0.768 against canonical's 0.710. Landing the
+     cap-top therefore lands the ink MASS high. The datum should be the baseline,
+     which is where the ink is. This is the blocked body-face difference showing
+     up as a POSITION error rather than a shape error, which is why every pass
+     before this one classified it as blocked and moved on.
+
+     dy sweep, control at 0 reproducing 10.7329 exactly:
+       +1.00 7.535   +1.25 7.082   +1.50 6.873   +1.75 7.033   +2.00 7.412
+     Bracketed both sides. +1.50 device px = +0.6911 CSS px on `ty`, which is
+     inside the transform and so neither scaled by `scaleX` nor rounded by
+     layout (rule 53). */
   resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.922, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 0.3455 },
+               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 1.0366 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
      2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
@@ -711,11 +815,44 @@ export const RUNS: Record<string, Run> = {
      element rather than on the row.
      help1 20.3319 -> 7.7874, help2 24.1773 -> 21.1660, help3 15.6514 -> 12.8522.
      Values are CSS px inside the transform: +4, +2 and +2 device px. */
+  /* THE THREE ROWS DO NOT SHARE ONE `scale`, AND THE NUMBER THAT SAYS SO WAS
+     WRITTEN DOWN ABOVE AND CALLED "EXACTLY". The note above records the three
+     length ratios as "0.998 / 0.992 / 0.949" and then classes the gap as the
+     face. It is not the face: help1 is at 0.999 and its own metric argmin is
+     k = 1.0000 to four decimals, while help2 and help3 want 1.0100 and 1.0550 —
+     the SAME numbers their 50%-crossing extents predict (1/0.99009 = 1.01001,
+     1/0.94816 = 1.05468) and the same numbers a segmentation-free cumulative-ink
+     quantile regression predicts (0.98854, 0.93829). Three independent
+     estimators, two of them pure geometry, agreeing with the objective.
+
+     It is HORIZONTAL ONLY, by rule 32/34: a joint (kx,ky) grid puts help2 at
+     kx 1.0100 ky 1.0000 — the same value as the kx-only solve — and a pure
+     kx=ky size change is worse at every k for both rows (help2 10.99 against
+     10.75, help3 8.91 against 7.18). The baselines are already exact, +0.069
+     and -0.223 on the modal per-column bottom crossing.
+
+     WHY IT SURVIVED FIFTEEN GRADES: rule 14 was read as "one role, one VALUE".
+     It says solve runs that share a role JOINTLY, and this file already draws
+     that distinction for the two button labels — "it does not say assume two
+     runs share one" — while eight other body runs on this screen each carry
+     their own scale (lede1 0.908, lede2 0.851, resendLab 0.922, safe1 0.812,
+     safe2 0.761, didnt 0.81, plateLab 0.796, diffLab 0.837). Compounding it,
+     rule 74b correctly REFUSED grader 4's translation of help2 as "five px
+     NARROWER, not displaced" — and that correct refusal closed the file on the
+     axis without anyone fixing the width.
+
+     THE COST IS STATED, NOT HIDDEN: the three rows now carry 0.866 / 0.8747 /
+     0.9136, a 5.5% letter-width difference between the first row and the third
+     that a designer can see. Canonical is the target and the compensation is
+     per-STRING because the glyph mixes differ, which is the same reason the
+     eight runs above differ — but this is a judgement about matching a
+     canonical set in a face that is not canonical's, and it is on the record
+     for Kevin alongside the two face decisions. */
   help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.8429 },
-  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
+  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8747, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
-  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.9136, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both

@@ -452,7 +452,11 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       fill="none"
     >
       {/* the header hairline — full bleed, ink 64.7 units over its band */}
-      <rect x={0} y={HEADER_RULE - 1.085} width={853} height={2.17} fill="var(--s5-header-rule)" />
+      {/* h 2.17 -> 1.60 about the SAME centre (1.085 -> 0.80), because canonical's
+          50%-crossing height over the flat middle is 1.67 and the 2.17 was never
+          measured. See the --s5-header-rule note in phone-005.ts: the height and
+          the tone only pay JOINTLY, and the tone alone is worse. */}
+      <rect x={0} y={HEADER_RULE - 0.80} width={853} height={1.60} fill="var(--s5-header-rule)" />
 
       {/* The six code boxes. The UNFOCUSED border is 2.17 device px, the same
           physical stroke as the header rule and the help-list dividers —
@@ -490,7 +494,7 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
 
       {/* the four help-list dividers */}
       {DIVIDERS.map((y) => (
-        <rect key={y} x={DIVIDER_X} y={y - 1.085} width={DIVIDER_W} height={2.17}
+        <rect key={y} x={DIVIDER_X} y={y - 0.80} width={DIVIDER_W} height={1.60}
               fill="var(--s5-divider)" />
       ))}
 
