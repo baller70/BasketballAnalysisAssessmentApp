@@ -643,7 +643,30 @@ export function MailClockMark() {
           with the grade's on canonical's ABSOLUTE aspect (1.211 against 1.016)
           because its rays catch envelope ink, so it confirms the SIGN and not the
           magnitude, and it is recorded that way rather than as agreement. */}
-      <ellipse cx="18.74" cy="18.37" rx="4.112" ry="4.500" />
+      {/* ROUND 43 / D2 + D3. TWO DIFFERENT DEFECTS ON ONE ELEMENT, and the
+          paired edges are what separate them (rule 103).
+          D2, HORIZONTAL: fixed-0.5-LEVEL crossings -- not a fraction of the
+          local peak, because an unsharp mask is antisymmetric on a step so a
+          fixed level is preserved and a fraction-of-peak level is not. Right
+          wall -0.337, lower-left arc +0.194: the two edges point INWARD AT EACH
+          OTHER, which is a size error, and it is why `cx` sits at argmin in both
+          directions (18.62 +0.0004, 18.86 +0.0009). Radius -0.2655 px, centre
+          -0.07. Round 33 re-solved this ellipse after showing the k = 2.2257
+          derivation wrong and OVER-SHRANK rx; the file already flags that round
+          as "helpIcon2 went 7.4074 -> 7.4148, i.e. 0.0074 WORSE. Kept anyway."
+          PIVOT: cx is HELD -- an <ellipse> grows symmetrically about its centre,
+          so each wall moves out by drx*sx. 4.246 is set by the BUILT landmark
+          rather than by extrapolation (the realised wall response is under
+          nominal because of the 0.248 px supersampling ladder): it is the cell
+          where the two outer edges agree, -0.205 against -0.147, where the
+          extrapolated 4.208 still leaves 0.105 px.
+          D3, VERTICAL: T_out +0.247 and B_out +0.303 move the SAME way, so it is
+          a TRANSLATION, and the outer height is already right at +0.056.
+          cy = 17.5 + 1.94/k = 18.37 used the same wrong k; with sy = 2.575 the
+          correct figure is 17.5 + 1.94/2.575 = 18.253.
+          `ry` MUST NOT MOVE: ry 4.60 scores -0.0018 and lands T_out while
+          driving B_out from +0.303 to +0.56. cy fixes both edges at once. */}
+      <ellipse cx="18.74" cy="18.263" rx="4.246" ry="4.500" />
       {/* THE HANDS ARE 2 ROWS TOO TALL AND THEIR WIDTH IS ALREADY EXACT.
           Components at threshold 140, measured after the envelope narrowing so
           the two changes are not confounded:
@@ -669,7 +692,27 @@ export function MailClockMark() {
           A 1 px extent delta measured on a shape that is otherwise exact is no
           longer a hypothesis — there is nothing else left for it to be.
           0.45 units is 1 device px at k = 2.2257. */}
-      <path d="M18.29 16.36v1.96l1.57 0.92" />
+      {/* ROUND 43 / D1. THE HANDS SIT 0.87 DEVICE PX LEFT, because a constant
+          was converted with a scale THIS FILE PROVES WRONG FORTY LINES ABOVE IT.
+          Round 23's note reads "0.45 units is 1 device px at k = 2.2257"; the
+          comment above reads "k is neither sx (2.7625) nor sy (2.5750), and
+          every number derived from it inherits the error". One device px
+          horizontally is 1/sx = 0.3620 units, so the intended 1 px landed as
+          1.243 px -- and the 1 px it was correcting was itself an EXTENT reading
+          (cols 69..75 against 68..74, rule 90) of a true 0.37 px offset. Wrong
+          input, wrong conversion, self-consistent downstream, twenty rounds.
+          Measured by a 50% crossing (-0.870) and by a sub-pixel SSD registration
+          of the whole column profile (-0.875), which share no parameter. The ink
+          CENTROID reads -0.629 and is the outlier -- exactly the statistic rule
+          103 names -- so it is recorded as disagreeing rather than averaged in.
+          PIVOT: none. `v` and `l` are RELATIVE, so moving `M` translates the
+          whole sub-path and nothing is rescaled. +0.31 units = +0.8564 device px
+          at sx = 66.3/24 = 2.7625.
+          THE HANDS' ROW IS NOW LANDED AT +0.043 AND MUST BE LEFT ALONE: moving
+          it to 16.51 scores -0.0004 and drives it to +0.398. That was only
+          visible on the COMPOSITE -- on the isolated edit the row still read
+          -0.386 and the change looked justified. */}
+      <path d="M18.6 16.36v1.96l1.57 0.92" />
     </Icon>
   )
 }
@@ -709,7 +752,29 @@ export function HelpMark() {
  *  two siblings at +103.0 and +211.0 rows). */
 export function ChevronMark({ n }: { n: 1 | 2 | 3 }) {
   return (
-    <Icon name={`chev${n}`} sw={2.6} colour="var(--s5-graphite)">
+    /* ROUND 43 / D4, held loosely: a 2.7% correction worth 0.0003 of whole
+       screen, right on rule 97's magnitude cutoff. The VALUE is measured; the
+       size of the prize is not.
+       The estimator matters more than the number. A 50%-of-LOCAL-PEAK crossing
+       said canonical's arm is 19% thinner than the render's, and that is wrong:
+       canonical's core OVERSHOOTS to coverage 1.194 (unsharp mask) and its
+       flanks are sharpened, so a fraction-of-peak level sits too high and reads
+       a thin stroke narrow -- three levels of it give 19% / 13% / 6%, a spread
+       wider than the quantity. The estimator used instead is the row-cut
+       integral / sqrt(1+m^2): an unsharp mask is linear and zero-sum so it
+       conserves that integral, and resampling conserves it too, making it
+       unbiased ACROSS the two rasters. Validated against geometry (Icon predicts
+       the render's 45-degree arm at 2.5972; it reads 2.5896) and for linearity
+       (slope 1.00 over twelve builds). Excess +0.0688 +/- 0.0226 sem over six
+       arms, 3 sigma, corroborated by window ink mass 1.029 which puts the target
+       at 2.527 against the estimator's 2.531.
+       Round 37 re-fitted every other sw to canonical's measured width and left
+       these at 2.6 on a MASS reading taken at the pre-round-42 box.
+       2.40 IS THE ARGMIN OF THE WHOLE AXIS AND IS REFUSED: -0.0013 / n8 -29,
+       four times this gain, but it is a 9% thinning against a 2.7% measured
+       excess and it drives chev1's upper arm -- landed at -0.0007 -- to
+       -0.2750. */
+    <Icon name={`chev${n}`} sw={2.53} colour="var(--s5-graphite)">
       <path d="m9 18 6-6-6-6" />
     </Icon>
   )
