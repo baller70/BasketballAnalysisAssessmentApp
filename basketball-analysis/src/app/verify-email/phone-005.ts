@@ -1197,16 +1197,72 @@ export const RUNS: Record<string, Run> = {
      eight runs above differ — but this is a judgement about matching a
      canonical set in a face that is not canonical's, and it is on the record
      for Kevin alongside the two face decisions. */
+  /* ROUND 39 / D3. The three help rows were the ONLY body runs left out of round
+     33's `sy` solve, and the reason is on this file's own record: round 3's SIZE
+     experiment (13.9 / 0.809) was measured and reverted, and the sentence that
+     closed it -- "the LENGTH is the axis this band is scored on and the cap
+     shortfall is the cheaper of the two errors" -- retired the whole vertical
+     axis on the strength of a refusal that only ever covered a change to `size`.
+     `sy` reaches the cap WITHOUT touching the advance, so the closure never
+     applied to it. Rule 92(a) sitting on rule 92(c).
+     Cap ratio (0.35/0.50/0.65 of the segment's own peak, matched columns) was
+     0.9801 / 0.9754 / 0.9757 with the BASELINE ALREADY LANDED -- the signature of
+     an `sy` at this emitter's pivot, not of a displacement.
+     PIVOT: `sy` scales about the element's TOP-LEFT, and the baseline sits ~28
+     device px below it, so sy 1.02 pushes the baseline DOWN 0.56 px; `translate`
+     applies after both scales, so ty's device value is ty * sy * S and the new
+     value is -0.75 device px against the old, putting the baseline back.
+     Rule 100 was SWEPT, not assumed: the raster is constant over a 0.9 px
+     plateau and 1.4680 is its CENTRE, so this survives a +/-0.45 px arithmetic
+     error either way. Verified on a built capture: cap ratio -> 0.9990 / 1.0019 /
+     1.0083 while the baseline stays at 1343.21 / 1342.90 / 1342.63, unmoved.
+     COST STATED: help1 now stands 2% taller than help2 and help3, whose own
+     shortfalls (3.7%, 7.2%) are LARGER and whose `sy` corrections were built and
+     are worse at every point -- see the note on help2 below. One row landed
+     instead of none, and the column reads 21.2 / 20.2 / 20.0 against canonical's
+     21.3 / 20.9 / 21.6. */
   help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.8602, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.2946, tx: 0, ty: 1.8429 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.2946, tx: 0, sy: 1.02, ty: 1.4680 },
+  /* ROUND 39 / D1. 0.35 device px LEFT, and it is a PURE TRANSLATION. Two
+     estimators that share nothing: per-glyph sub-pixel registration (n=34) mean
+     +0.463, slope -0.068 px/100px => k = 1.0007; local 40-px tile registration
+     (n=13) intercept +0.483, slope -0.0008 => k = 1.00001. The same estimators
+     return help1 +0.071, lede1 -0.035 and diffLab +0.041 -- ZERO where the run is
+     already right, which is the calibration rule 92's fourth clause asks for.
+     THE ENVELOPE DISAGREES AND THE ENVELOPE IS THE NOISY READ (rule 90):
+     canonical's ink runs further on BOTH sides, which is its unsharp ramp, and a
+     5x5 (scale, tx) grid brackets the shipped 0.8561 on BOTH axes -- 0.8580
+     +0.0144, 0.8594 +0.0729, 0.8610 +0.1428, 0.8640 +0.2241 at the same tx. The
+     width is landed; only the registration was not.
+     Rule 74b refused a help2 translation eleven rounds ago as "five px NARROWER,
+     not displaced". That was true THEN; round 30's scale and round 36's ws closed
+     the width, and rule 91 is the masking this exposes.
+     PIVOT: help2 is x-positioned, and `tx` sits INSIDE the transform after
+     scaleX, so the device shift is tx * scale * S = 0.1884 * 0.8561 * 2.170483 =
+     +0.3501 device px. `left` is untouched, so the element-left pivot never
+     enters. Bracketed on built captures: +0.30 -0.0220, +0.35 -0.0263, +0.40
+     -0.0248, +0.50 -0.0236, +1.00 +0.0215, -0.50 +0.0900.
+     ITS `sy` IS A REAL RESIDUAL WITH NO PAYING LEVER, recorded so the next round
+     does not rediscover it as free money: the cap is 3.7% short (help3's 7.2%),
+     past rule 97's cutoff, and a 2-D (sy, ty) grid with each run's own tx argmin
+     HELD is worse at every point -- help2 sy 1.02 +0.0095, 1.04 +0.0301, 1.06
+     +0.0387; help3 sy 1.04 +0.0147, 1.08 +0.0114, 1.12 +0.0259. */
   help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8561, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.6889, tx: 0, ty: 0.9215 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.6889, tx: 0.1884, ty: 0.9215 },
   /* 0.9136 came from round 30's 1/0.94816 = 1.05468, and the ARTEFACT that
      number produced reads 0.4% short of it — rule 92's fourth clause applied to a
      constant round 30 itself created, one round later. Local registration
      1.00398, objective 1.0040. */
+  /* ROUND 39 / D2. The same class as help2 at a third the size: per-glyph
+     registration (n=23) mean +0.391, slope -0.093 px/100px => k = 1.0009, i.e.
+     the width round 31 solved is still landed and only the registration is off.
+     PIVOT as help2 -- x-positioned, tx inside the transform after scaleX, so
+     +0.0769 CSS px = +0.15 device px. Bracketed: +0.05 -0.0070, +0.10 -0.0111,
+     +0.15 -0.0114, +0.20 -0.0061, +0.30 -0.0055, +0.50 +0.0020. THE OBJECTIVE IS
+     FLAT ACROSS 0.10-0.15, so the trailing digit is the rung and not a precision
+     claim; the sign and the class are what is being asserted. */
   help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.8990, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.9686, tx: -0.4930, ty: 0.9215 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.9686, tx: -0.4161, ty: 0.9215 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
      images) while the run ran 1.182 long — horizontal only, and the size is
