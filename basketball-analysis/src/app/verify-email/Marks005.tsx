@@ -98,6 +98,11 @@ const ORANGE = "var(--s5-orange)"
    both compensations become wrong under non-scaling-stroke. That is a
    nine-mark joint solve, not a one-line edit, and it belongs in a round where a
    per-mark regression can be attributed. */
+/* A JSX COMMENT CANNOT SIT BETWEEN ATTRIBUTES. `{/* ... *\/}` is a CHILD, so it
+   is legal between elements and illegal inside a tag — TypeScript reports it as
+   TS1005 "'...' expected", which reads like a spread-operator problem and sends
+   you looking in the wrong place. This has broken the build here three times.
+   Put the comment ABOVE the element. Rule 98. */
 function Icon({
   name, sw = 3.0, colour = INK, children,
 }: {
@@ -117,6 +122,26 @@ function Icon({
   return (
     <svg viewBox={`${bx} ${by} ${bw} ${bh}`} width="100%" height="100%" fill="none"
          aria-hidden="true">
+      {/* NON-SCALING-STROKE WAS BUILT AND REFUTED BY ITS OWN FIRST CONTROL, and
+          that control existed because grade 22 wrote it: "the first assertion of
+          the build is a re-measure of one vertical wall — helpMark1 at col 60
+          must read 3.15 +/- 0.05, not 6.8 — before any band is read." It read
+          8.879, and diffMark's read 9.914 against a prescribed 3.04.
+          The realised factor is sx, not 1: 8.879/3.15 = 2.819 against sx 2.7917,
+          and 9.914/3.04 = 3.261 against sx 3.2000. So this Chromium resolves
+          non-scaling-stroke against a coordinate system that still carries the
+          horizontal scale — the grade guessed the screen CTM (which would have
+          given 2.1705) and its CLASS was right while its constant was not.
+          Reverted to the geometric mean. THE ANISOTROPY IS THEREFORE STILL OPEN:
+          horizontal strokes stay ~11% thinner than verticals on every
+          anisotropic mark, and closing it needs a lever that is not this one —
+          the honest candidates are per-axis path outlines, or making the mark
+          boxes isotropic, which rule 90 has refused three times.
+          WHAT SURVIVED is the other half of grade 22's finding: every `sw` below
+          is now canonical's own measured width rather than one shared 3.0, and
+          on `back` — whose box is EXACTLY isotropic at 50.5 x 50.5, so
+          non-scaling-stroke was never going to change a pixel of it — that
+          re-solve is the entire fix. */}
       <g transform={`translate(${bx} ${by}) scale(${sx} ${sy})`}
          stroke={colour} strokeWidth={sw / Math.sqrt(sx * sy)}
          strokeLinecap="round" strokeLinejoin="round" fill="none">
@@ -129,7 +154,7 @@ function Icon({
 /** lucide `settings`. Ink 2..22 in both axes; measured 756..799 x 30..75. */
 export function GearMark() {
   return (
-    <Icon name="gear" sw={2.5}>
+    <Icon name="gear" sw={2.65}>
       <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
       {/* A `circle` INSIDE A NON-UNIFORM SCALE DRAWS AN ELLIPSE, and `Icon`'s own
           arithmetic predicts the render exactly: r 3 + sw/2 = 3.5717 user units,
@@ -160,7 +185,7 @@ export function GearMark() {
 /** lucide `arrow-left`. Ink 4..20; measured 45..78 x 136..169. */
 export function BackMark() {
   return (
-    <Icon name="back" sw={3.0}>
+    <Icon name="back" sw={3.35}>
       <path d="m12 19-7-7 7-7" />
       <path d="M19 12H5" />
     </Icon>
@@ -248,7 +273,7 @@ export function EnvelopeMark() {
 /** An envelope with a pencil — "use a different email". Measured 246..311 x 1081..1135. */
 export function EnvelopePencilMark() {
   return (
-    <Icon name="diffMark" sw={3.0}>
+    <Icon name="diffMark" sw={3.04}>
       {/* THE ENVELOPE'S BOTTOM EDGE RUNS INTO THE PENCIL, so the two draw as ONE
           object. Connected components (8-connectivity) in (1070..1145, 232..322):
 
@@ -398,7 +423,7 @@ export function EnvelopePencilMark() {
 /** lucide `mail-check`. Measured 58..117 x 1308..1354. */
 export function MailCheckMark() {
   return (
-    <Icon name="helpMark1" sw={3.0}>
+    <Icon name="helpMark1" sw={3.15}>
       {/* THE ENVELOPE IS TOO WIDE ON THE RIGHT, AND THE BOUNDING BOX HID IT.
           `helpMark1`'s note says the width "is already exact at 59" — true of
           the mark's BOUNDING BOX, whose right edge is set by the CHECK, and
@@ -482,7 +507,7 @@ export function MailCheckMark() {
 /** An envelope with a clock — "wait a few minutes". Measured 59..123 x 1411..1462. */
 export function MailClockMark() {
   return (
-    <Icon name="helpMark2" sw={3.0}>
+    <Icon name="helpMark2" sw={3.12}>
       {/* Same defect as MailCheckMark and the same arithmetic: walls 20 units
           apart, bw 66.3, so 20 x 66.3/24 = 55.25 against canonical's 52.29 —
           measured 55.14, left wall +0.14, right wall +2.38. Size, not shift.
@@ -640,10 +665,10 @@ export function HelpMark() {
   const sx = bw / 24
   const sy = bh / 24
   return (
-    <Icon name="helpMark3" sw={3.0}>
+    <Icon name="helpMark3" sw={3.28}>
       <circle cx="12" cy="12" r="10" />
       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-      <path d="M12 16.289h.01" strokeWidth={5.0 / Math.sqrt(sx * sy)} />
+      <path d="M12 16.289h.01" strokeWidth={5.25 / Math.sqrt(sx * sy)} />
     </Icon>
   )
 }
@@ -666,7 +691,11 @@ export function ShieldMark() {
   // and loses the guarantee that the first four are present.
   const [sx0, sy0, sw0, sh0] = MARK_BOXES.shield
   const SHIELD: [number, number, number, number] = [sx0, sy0, sw0, sh0]
-  const SHIELD_SW = 3.2 / Math.sqrt((SHIELD[2] / 24) * (SHIELD[3] / 24))
+  /* 3.2 -> 3.20 is a coincidence of rounding, not a no-op: the old value was an
+     assumption and this is canonical's MEASURED outline width (grade 22's joint
+     solve, 50%-crossings over n=12-47 lines). The /sqrt compensation stays,
+     because non-scaling-stroke was refuted — see the note above `Icon`. */
+  const SHIELD_SW = 3.20 / Math.sqrt((SHIELD[2] / 24) * (SHIELD[3] / 24))
   return (
     <svg viewBox={SHIELD.join(" ")} width="100%" height="100%" fill="none" aria-hidden="true">
       <g transform={`translate(${SHIELD[0]} ${SHIELD[1]}) scale(${SHIELD[2] / 24} ${SHIELD[3] / 24})`}
@@ -740,9 +769,13 @@ export function ShieldMark() {
             aligned. Build-verified: shield 13.7904 -> 13.5296. */}
         <g transform={`translate(0 ${-3 / (SHIELD[3] / 24)})`}>
           <g transform={`translate(11.95 12.65) scale(${30 / 32} ${24 / 26}) translate(-11.95 -12.65)`}>
+            {/* Both compensations are back — non-scaling-stroke was refuted. 3.35
+                is canonical's MEASURED perpendicular tick width, replacing an
+                inherited assumption. */}
             <path d="m8.6 12.4 2.7 2.8 4.4-5.1"
                   stroke={ORANGE}
-                  strokeWidth={SHIELD_SW / Math.sqrt((30 / 32) * (24 / 26))} />
+                  strokeWidth={3.35 / Math.sqrt((SHIELD[2] / 24) * (SHIELD[3] / 24))
+                                     / Math.sqrt((30 / 32) * (24 / 26))} />
           </g>
         </g>
       </g>
