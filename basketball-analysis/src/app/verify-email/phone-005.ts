@@ -844,8 +844,30 @@ export const RUNS: Record<string, Run> = {
      and is recorded here; the lever does not reach it. resendLab's +0.48 crossed
      a boundary — 1673 changed pixels, 6.5762 -> 6.4055 — which is why one of the
      three paid and two could not. See rule 100. */
+  /* ROUND 40 / D2. THE CAP SHORTFALL THIS FILE MEASURED, WROTE DOWN AND NEVER
+     ACTED ON. The note above records it verbatim -- "no cap estimator returns
+     1.0000 on the shipped artefact: 'R' 0.968, ascender 'd' 0.951, whole-run
+     vertical extent 0.947 / 0.945" -- and then closed the whole vertical axis
+     inside a sentence about the FACE. Round 30 correctly separated this run's
+     POSITION error and fixed it with dy +1.50; the cap HEIGHT is the other half
+     of the same face difference and stayed under the same closure. `sy` reaches
+     the cap without touching the advance, which is exactly the shape round 39
+     found on help1 one round earlier and the third time this file has closed an
+     axis on the strength of a refusal that only ever covered `size`.
+     PIVOT: sy pivots on the element's TOP-LEFT and `translate` lands after both
+     scales, so ty's device value is ty * sy * S. Arm = baseline 754.586 minus
+     element top (top - dy = 720.29) = 34.30 device px, so sy 1.02 pushes the
+     baseline down 0.686 px and ty is solved to put it back.
+     RULE 34 CONTROL, and it is what makes this an `sy` rather than a nudge: a
+     pure translation at sy = 1 cannot buy it -- ty +/-0.5 and +/-1.0 device px
+     give +0.0025, +0.0025, 0.0000 (same raster) and +0.0486.
+     RULE 100 SWEPT, NOT ASSUMED: the raster is constant for a residual offset of
+     -0.30 .. +0.60 device px and this sits at the plateau CENTRE (+0.15).
+     Verified on a built capture BEFORE any band was read: cap-top +1.267 ->
+     +0.685 while the modal baseline held to 0.08 px, and the whole-run
+     horizontal registration read +0.275 before and +0.275 after. */
   resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.9309, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: -0.3551, ty: 1.2578 },
+               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: -0.3551, sy: 1.02, ty: 0.99103 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
      2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
@@ -875,8 +897,20 @@ export const RUNS: Record<string, Run> = {
      evidence about the CUTOFF rather than about the diagnosis, and that is what
      it is — the cap error is real and is left as a stated residual, because the
      only lever that reaches it costs more than it buys. */
+  /* ROUND 40 / D5. This run's `tx` was literally 0 and no grade had swept it.
+     Rounds 2-4 solved the size, scale and weight against its EXTENTS and never
+     converted the residual into a registration. Measured with one sub-pixel
+     offset fitted by SSD over the run's entire normalised column-ink profile --
+     no segmentation, so there is nothing to get wrong, which is the form round
+     39 kept when its per-glyph estimator disagreed with grade 24's: +0.400.
+     PIVOT: x-positioned run, tx INSIDE the transform after scaleX, so the device
+     shift is tx * scale * S = 0.190834 * 0.845 * 2.170483 = +0.3500.
+     RULE 100 SWEPT: the raster is constant across +0.30 .. +0.45 device px, so
+     this is the plateau centre. Refuting measurement taken before the band:
+     +0.400 -> +0.150, which is ON the +/-0.15 tolerance rather than inside it,
+     and is recorded that way rather than rounded into a pass. */
   resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 600, scale: 0.845, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.4607 },
+               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0.190834, ty: 0.4607 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
@@ -1455,7 +1489,19 @@ export const MARK_BOXES: Record<
      signature with a 1.4% width residual left over. Objective on a 0.125 grid,
      bracketed: -0.875 gives 21.4185 from 23.7550. `dy` stays 0 — the top and
      bottom edge centroids are +0.21/-0.16, already landed. */
-  diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y, -0.875, 0],
+  /* ROUND 40 / D3. The box was ~1% SHORT vertically, top-edge dominant. Row
+     crossings render-minus-canonical went top +0.742/+0.312/+0.186 against
+     bottom -0.301/-0.397/-0.251 -- the edges move OPPOSITELY, which is rule 34's
+     size signature, and the sub-pixel translation sweep confirms tx and ty were
+     already at argmin. Round 38 solved this mark's x off wall centroids and
+     stopped; grade 24's mark sweep was position-and-stroke only.
+     PIVOT: the drawing scales about the box TOP (translate(bx,by) scale(bw/24,
+     bh/24) inside a viewBox whose origin is bx,by), so half the growth is given
+     back through ty. Refuting measurement taken before the band: the top
+     crossing must fall inside +/-0.20 and the extent ratio must rise toward 1 --
+     built at +0.106 / +0.092 / +0.008 and 0.9936 / 0.9888 / 0.9940, bottom
+     held. */
+  diffMark: [242.1, 1072.7, 76.8, 68.8425, DIFFBTN.x, DIFFBTN.y, -0.875, -0.1713],
   /* 2 DEVICE px TOO TALL AND 1 px LEFT, and the two are different defects.
      Full ink extent at threshold 140, against canonical:
 
@@ -1480,7 +1526,20 @@ export const MARK_BOXES: Record<
      extreme-value statistic set by one antialiased pixel per side, and this
      mark's interior was already aligned, so the shift moved a thousand correct
      pixels to satisfy two uncertain ones. */
-  helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392],
+  /* ROUND 40 / D4. ~0.2 device px right. Grade 24 tried this at +/-1 device px
+     and reverted it -- "the extent became EXACT on all four edges and helpIcon2
+     went 18.0968 -> 19.3035" -- and that refusal was CORRECT AT 1 px: the true
+     offset is a fifth of a pixel, which is rule 90's point restated.
+     PIVOT: markBox tx is canonical device px emitted as a transform after
+     layout, so the nudge is exactly the nudge (rule 53).
+     HONEST COST, and the reason grade 25 graded its own finding MEDIUM: the mark
+     also carries a ~1% width deficit, so this trades the right edge (-0.20 ->
+     -0.36) for the left (+0.451 -> +0.052). The worst single edge improves and
+     n_over8 falls 35, but a (w x tx) grid is DEGENERATE in this window --
+     w66.9/tx-0.375 scores the same -0.0022 -- so the two levers are not
+     separated by it. Prescribed on the lever the objective and the left edge
+     agree on, with the width alternative explicitly not excluded. */
+  helpMark2: [58.24, 1403.15, 66.3, 61.8, 56, 1392, -0.1875, 0],
   /* 2 px OF SYMMETRIC HEIGHT ON THE BOX, AND CORRECTING IT COST 1.94.
      67.5 -> 65.25 took the extent from rows -1/+1 to +0/-1 and helpIcon3 from
      7.5455 to 9.4836. Reverted (rule 90). The round-18 dot fix inside this same
@@ -1490,7 +1549,29 @@ export const MARK_BOXES: Record<
   chev1: [762.4, 1309.0, 43.6, 43.2, 56, 1290, 1.0, 1.0],
   chev2: [761.4, 1414.0, 43.6, 43.2, 56, 1392, 1.0, 0],
   chev3: [761.4, 1522.0, 43.6, 43.2, 56, 1494, 1.0, 0],
-  shield: [58.8, 1628, 97.4, 105.2, 0, 0],
+  /* ROUND 40 / D1. THE WIDEST SINGLE INK-EDGE ERROR ON THE SCREEN. Column
+     crossings at three coverage fractions had the LEFT edge landed
+     (-0.010/-0.055/-0.100) and the RIGHT edge -0.532/-0.784/-0.787 -- one edge
+     right, one edge short, which decomposes into a width deficit plus a
+     midpoint shift rather than into a displacement. Two estimators sharing no
+     code with those agree on the midpoint (ink first moment +0.31/+0.21, whole
+     column-profile SSD +0.445).
+     Read from CROSSINGS, never the envelope: rule 90 has refused this mark's
+     envelope twice, and a crossing is an interpolated 50% level rather than an
+     extreme-value pixel.
+     PIVOT: the drawing scales about the box LEFT, so the growth is spent
+     rightward and tx is the counter-move that re-lands the left edge. Predicted
+     from geometry BEFORE the sweep -- w = 97.4 * 69.630/69.109 = 98.135, tx =
+     -0.101 -- and the objective's joint (w, tx) argmin over a 5x5 grid contains
+     the prediction. SHIELD_SW divides by sqrt((w/24)(h/24)), so widening the box
+     leaves the outline weight at 3.20 device px (3.20 -> 3.189, 0.36%).
+     THIS IS NOT THE ASSET RESIDUAL. Grades 18 and 19 proved the shield's CURVE
+     is wrong and that no y-affine reaches it; this is its WIDTH, a different
+     axis, and the refuting measurement separates them: if it were a translation
+     papering over the curve, the left edge would go to +0.25 and fail. Built
+     before any band was read: right -0.79 -> -0.058/-0.119/-0.180, left
+     -0.004/-0.040/-0.075. Both pass. */
+  shield: [58.8, 1628, 98.1, 105.2, 0, 0, -0.1, 0],
 }
 
 /* NO BACKTICKS BELOW THIS LINE. Everything to the closing backtick is one
