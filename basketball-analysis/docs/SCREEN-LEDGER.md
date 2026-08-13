@@ -2532,6 +2532,32 @@ string rolling over at midnight.
     to disk incrementally rather than holding them in context, so a restart costs
     the remainder of a run and not all of it.
 
+    **FOURTH ROLLBACK, AND THE FIRST TIME THIS RULE WAS EXECUTABLE END TO END.**
+    HEAD came back at `f9ece84`, twenty-seven commits behind; `artefact-check.mjs`
+    was gone from the tree, grade 24's scratch was gone from the scratchpad, and
+    the surviving dist was `.next-v50`, which PREDATED the restored HEAD rather
+    than post-dating it. `git fetch` plus `git merge --ff-only origin/<branch>`
+    restored `55750ea` — the remote was ahead of local, which is the whole reason
+    step 1 comes before anything derived. `.next-v50` was then deleted UNMEASURED,
+    because a dist older than the tree cannot pass step 3 and the rule says
+    rebuild rather than diagnose.
+
+    Step 3 then ran with the datum in place for the first time, and it is worth
+    recording that it passed on the EXACT half rather than the weak one: the
+    rebuilt `.next-v62` re-captured to md5 `c9d4b1f2b0af74dce883607675f534e7`,
+    **byte-identical** to the committed render, and re-measured 4.2079 / 91263.
+    Gates 11/11, 3/3, 7/7 on a fresh port. A build of the same tree twelve hours
+    and one rollback later is bit-reproducible, which is a stronger property than
+    this file had ever confirmed and is what makes the whole cycle's arithmetic
+    attributable at all. Total cost of the recovery: one build.
+
+    ONE THING THE RULE DOES NOT YET SAY, and it cost real work here: the
+    scratchpad is not merely "usually" durable — it rolled back to the SAME
+    earlier point as git, losing every brief after G19. Anything a restart must
+    not destroy has to be in a commit. A brief is cheap to rewrite and a grader's
+    partial findings are not, which sharpens the corollary above rather than
+    replacing it.
+
 97. **A GEOMETRIC CORRECTION HAS A FIXED RE-RASTERISATION COST, SO BELOW SOME
     MAGNITUDE IT LOSES — AND THE MAGNITUDE, NOT THE CONFIDENCE, IS THE
     DISCRIMINATOR.** Round 33 built six `scaleY` solves from one estimator and one
