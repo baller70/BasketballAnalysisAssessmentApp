@@ -2551,6 +2551,28 @@ string rolling over at midnight.
     this file had ever confirmed and is what makes the whole cycle's arithmetic
     attributable at all. Total cost of the recovery: one build.
 
+    **FIFTH ROLLBACK, AND IT LANDED ON A BLOCKED SCREEN — WHICH IS THE CASE THE
+    RULE HAD NOT CONSIDERED.** HEAD came back at `f9ece84` again, forty commits
+    behind, with the ledger reading IN PROGRESS instead of BLOCKED,
+    `artefact-check.mjs` missing, the task list reverted, and `.next-v50` on disk
+    once more — a dist that predates even the rolled-back HEAD. Recovered by
+    `git fetch` + `git merge --ff-only origin/<branch>`; `.next-v50` deleted
+    UNMEASURED, for the same reason as last time.
+
+    The temptation here was to skip steps 2-4. Nothing was in flight, no round
+    was pending, and the screen is finished as far as it can go — so why rebuild?
+    **Because the blocked state's entire claim is that 4.1139 is what THIS TREE
+    produces and that it is the floor.** A claim handed to Kevin as the reason to
+    stop work is exactly the claim that must be reproducible, and after a
+    rollback it is an artefact of a process that no longer exists. Rebuilt
+    `.next-v72`: capture md5 **645acc286b3699e15cc0a9a7df194476, byte-identical**
+    to the committed render; artefact-check passes; gates 11/11, 3/3, 7/7.
+
+    So the rule gains a clause: **a screen being finished or blocked is not a
+    reason to skip the re-verification — it is a reason to do it**, because a
+    blocked screen's numbers are the ones that will be read by someone deciding
+    what to do next, and nobody will re-derive them.
+
     ONE THING THE RULE DOES NOT YET SAY, and it cost real work here: the
     scratchpad is not merely "usually" durable — it rolled back to the SAME
     earlier point as git, losing every brief after G19. Anything a restart must
