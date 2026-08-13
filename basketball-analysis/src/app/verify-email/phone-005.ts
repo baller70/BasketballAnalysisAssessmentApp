@@ -178,11 +178,62 @@ const TUNGSTEN = "var(--font-shotiq-display)"
  * apart. They do NOT share a pitch in canonical and are reproduced as measured
  * rather than regularised, exactly as 004's five field heights were.
  */
-export const BOX_Y = 534.13
+/* THE BOXES SAT 0.35 device px LOW AND 0.6% NARROW, AND THE OLD `BOX_Y`
+   CONTRADICTED THIS FILE'S OWN RECORDED MEASUREMENT. Ten lines above, and again
+   in Marks005.tsx's header, canonical is recorded as `y 533.63..665.02`. The
+   constant read 534.13 — +0.50 from the number written beside it — and nothing
+   in 974 lines of commentary mentioned the difference.
+
+   Grade 15 isolated it by measuring every overlay feature's 50%-crossing
+   separately instead of trusting the container solve. Render minus canonical,
+   sub-pixel, 81 scan lines per vertical edge:
+
+       hdrRule -0.026   plate -0.175/+0.065   diffBtn -0.189/-0.008
+       rule1 -0.012  rule2 -0.182  rule3 +0.153  rule4 -0.052  linkRule +0.006
+       CODE-BOX TOP  +0.567          code-box bottom  +0.137
+
+   Nine features at mean -0.048, sd 0.115; the box top is 5.3 sd out and the
+   only member outside +/-0.2. That is what localises the error to BOX_Y rather
+   than to the overlay origin. Widths were 0.455-0.893 px short across the six,
+   i.e. a uniform 0.64%, predicted as k = 1.0064 from the edge pairs BEFORE any
+   sweep.
+
+   Built against the served build with a rule-40 control reproducing 5.4559 /
+   103483 exactly:
+
+       control                       5.4559   n_over8 103483   box0-5 25.1876
+       translate -0.35 alone         5.4103                    box0-5 21.5768
+       translate + scaleX 1.006      5.3676
+       literal geometry (shipped)    5.3674   n_over8 101974   box0-5 18.1823
+
+   Bracketed on both axes and each at its OWN argmin with the other held —
+   dy -0.25/-0.30/-0.35/-0.40/-0.45 gives 22.52/21.577/21.577/21.79/23.24, and
+   scaleX 1.000/1.003/1.006/1.009 gives 5.4103/5.3765/5.3676/5.3839 — so this is
+   not a compensated pair. Height, stroke width and tone were all re-swept at
+   the corrected offset and all are worse, which is what says the remaining
+   solves still stand.
+
+   It lands the geometry rather than the metric: box top +0.567 -> -0.016,
+   bottom +0.137 -> -0.119, widths -0.455..-0.893 -> -0.169..+0.213, lefts
+   +0.199..+0.706 -> -0.032..+0.314. Caret, digits, plate, diffBtn and the four
+   rules are all unmoved.
+
+   WHY IT HID FOR TWENTY-EIGHT ROUNDS, and three of the four reasons are written
+   in this file: every shift search here is INTEGER and the offset is sub-pixel;
+   the one sub-pixel search that ran moved the WHOLE overlay, so it optimised
+   the boxes against nine features that were already right; the border is ~5% of
+   a 152x130 window, so half a pixel of edge dilutes to about one unit of band.
+   The fourth is the masking rule again, one layer below where grade 14 found
+   it — until round 28 the digits inside four of these six windows were 0.9-1.3
+   px out, a larger error in the same pixels.
+
+   `hitbox()` consumes both constants, so the transparent hit targets move onto
+   the drawn boxes with them. */
+export const BOX_Y = 533.78
 export const BOX_H = 131.39
 export const BOX_R = 12.0
-export const BOX_X = [50.45, 180.42, 309.18, 438.06, 567.35, 695.20]
-export const BOX_W = [105.45, 105.32, 105.22, 104.74, 103.89, 105.64]
+export const BOX_X = [50.134, 180.104, 308.864, 437.746, 567.038, 694.883]
+export const BOX_W = [106.083, 105.952, 105.851, 105.368, 104.513, 106.274]
 export const PLATE = { x: 53.85, y: 904.78, w: 741.81, h: 111.55, r: 11 }
 /* MOVING THIS MOVES NOTHING — the container offset cancels, measured.
    `diffLab` reads L+1 R+1 and `diffMark` L+2 R+1 T+1 B+1, same-sign on every
