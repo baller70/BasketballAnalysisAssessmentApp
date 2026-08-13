@@ -3576,6 +3576,43 @@ desktop; the next round that touches anything shared needs a real baseline, and
 rebuilding `verify-desktop` from the 077-096 canonicals is a prerequisite for
 that rather than something to discover mid-round.
 
+**AND THE CONSTRUCTION ARGUMENT WAS RUN ONCE, BY HAND, IN ROUND 13.** "0 of
+19,186 chars" is a measurement, and rounds 14 through 31 each changed
+`phone-005.ts` without anyone repeating it — rule 92's fourth clause applied to
+the guard that licenses every round's desktop claim, which is about the worst
+place to leave an un-re-run estimator. It is a gate now:
+`docs/shotiq/desktop-leak-gate.mjs`, four probes plus three live self-tests, run
+alongside markup-gate and csrf-gate.
+
+    PASS  css scope                   56 phone rules, 0 outside, 21977 chars
+    PASS  exactly one @media (max-width: 767.98px) block
+    PASS  no drawn mark or overlay paints at 900   11 marks, 0 visible
+    PASS  every data-s5-off desktop sibling visible at 900   11, 0 hidden
+    PASS  SELF-TEST probe 1 catches an unscoped phone rule
+    PASS  SELF-TEST probe 3 catches a mark forced visible
+    PASS  SELF-TEST probe 4 catches a hidden desktop sibling
+    7/7
+
+Probes 1 and 2 are the guard this section has been claiming; probes 3 and 4 are
+the two ways that claim could be true and still not mean what it says — nothing
+paints through a path that needs no rules, and the desktop SIBLING of each phone
+mark is actually there (round 14 found `diffBtn` with only the `md:hidden` half,
+which no phone-side probe can see).
+
+**THE GATE'S FIRST RUN FAILED, AND THE DEFECT WAS THE GATE.** Probe 3 originally
+asserted that every `[data-s5]` element is hidden at 900 and reported FAIL with
+28 visible. Those 28 are correct: `data-s5-mark` tags a DRAWN phone-only mark,
+while a bare `data-s5` tags a text run or a hit target — `wordmark`, `display`,
+`code0`-`code5`, `gear`, `back` — which is real content and real interaction that
+MUST paint on desktop. Corrected to assert only on marks and the overlay, and to
+REPORT the content count rather than assert it. Worth writing down because a gate
+that fails on correct behaviour trains you to ignore it, which is strictly worse
+than not having the gate at all.
+
+None of this replaces `verify-desktop`. It bounds the failure mode this screen
+can actually produce, repeatably, and it will keep bounding it after the next
+rollback because it is in git.
+
 ### DONE: one line in the shell was scrolling 42 of the 72 phone screens
 
 Rule 56 gave `capture-ios.mjs` a vertical arm on the argument that 004 was clean
