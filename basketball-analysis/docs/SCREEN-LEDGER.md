@@ -2511,9 +2511,12 @@ string rolling over at midnight.
            before looking at anything derived from it.
         2. Restart the server on a FRESH port from the surviving dist.
         3. RE-CAPTURE and RE-MEASURE, and require the md5 and the whole-screen
-           figure to match what the ledger records. If they do not, the dist is
-           not the tree's and must be rebuilt — do not diagnose the difference,
-           rebuild.
+           figure to match **the CURRENT ARTEFACT block** (in the 005 section,
+           beside the convergence table). If they do not, the dist is not the
+           tree's and must be rebuilt — do not diagnose the difference, rebuild.
+           That block exists because this step named a datum the file did not
+           hold for its first several firings: the figure was recorded and the
+           md5 was not, so the exact half of the test was unavailable.
         4. Re-run the gates, because a gate result is also an artefact of a
            process that is gone.
         5. Only then re-dispatch whatever the restart killed.
@@ -4962,6 +4965,28 @@ capture. **BUILT IN ROUND 34**, immediately after round 33 closed — a layout c
 grade is measuring would confound its attributions, so it waited for the gap
 rather than for permission. Its control was the 393 capture coming back
 byte-identical, and it did.
+
+### CURRENT ARTEFACT — the datum rule 96 asks for and this file did not have
+
+Rule 96 says that after a container restart you must re-capture and **"require the
+md5 and the whole-screen figure to match what the ledger records"**. The figure is
+in the 005 row. **The md5 was recorded nowhere** — so the procedure was
+unexecutable in exactly the half that makes it exact, and the weaker half (the
+mean, which two different builds could in principle share) was all a recovery had
+to go on. I wrote the rule and did not provide the datum it depends on, which is
+the same measured-and-left-open shape this file keeps catching.
+
+    committed render   docs/shotiq/grading/render/005-verify-email.png
+                       md5 eddfb7f99ad030334f8bf32dbde85c7a
+    canonical          docs/shotiq/grading/canonical/005-verify-email.png
+                       md5 8f7a83a985707eb29923d44d067d0d0c
+    reproduces         whole screen   mean|d| 4.2180   max 255   n_over8 91397
+    at commit          28545cf
+
+**UPDATE THIS BLOCK IN THE SAME COMMIT THAT REPLACES THE RENDER**, alongside the
+round entry — the grading README already requires the render and the entry to
+move together, and this is the third thing that has to move with them. A stale
+md5 here is worse than none, because rule 96 would then reject a good dist.
 
 ### IS THIS CONVERGING? NO — AND THE DATA SAYS THE OPPOSITE OF WHAT I ASSUMED
 
