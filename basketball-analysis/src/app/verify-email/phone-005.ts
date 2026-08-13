@@ -78,6 +78,10 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  *   divider     #DDDDDD    the four help-list rules: ink 63.8-79.6 units over a
  *                          2.17 device px band
  */
+/* NO BACKTICKS BELOW THIS LINE EITHER. COLOURS is a template literal exactly like
+   PHONE_CSS further down, and the same trap has now fired FOUR times — the guard
+   was placed at ONE literal when it belongs at every one. Use "double quotes"
+   around identifiers in these comments. Rule 98. */
 const COLOURS = `
   /* CANONICAL'S PAPER IS NOT WHITE. Screens 001-004 each gained 0.4-0.6 of
      whole-screen mean |d| from this one token and on 004 it was found only at
@@ -118,7 +122,10 @@ const COLOURS = `
      direction. It is taken as a colour correction the definition of done
      requires, with its cost recorded, not as a buy. */
   --s5-box-rule:#767676;
-  --s5-divider:#D4D4D4;
+  /* "--s5-divider" and "--s5-header-rule" are GONE: round 35 gave each rule its
+     own fill in DIVIDER_SPEC / HEADER_RULE_SPEC, and one shared token is the
+     thing that round disproved. The note below is kept for the measured null it
+     records, which is still true of the tone it was about. */
   /* THE HEADER RULE KEEPS ITS OWN TOKEN AND ITS OWN VALUE IS THE DIVIDERS',
      which is a measured null rather than an oversight. Canonical carries 65.2
      units of ink across the header rule against 71.5 mean across the four
@@ -150,7 +157,7 @@ const COLOURS = `
      which is exactly why the measured null recorded below — "#E0E0E0 built and
      measured, it is WORSE" — proved nothing about the role. It was a
      single-parameter result read as a verdict on the run. */
-  --s5-header-rule:#D4D4D4;
+
 `
 
 export type Run = {
@@ -276,7 +283,10 @@ export const DIFFBTN = { x: 53.77, y: 1048.14, w: 741.95, h: 111.23, r: 11 }
    measured 1380.609 before the frame correction is even applied. Objective
    bracketed at dy +0.30. The other three and HEADER_RULE are at their argmin
    with gain 0.0000 and are left alone. */
-export const DIVIDERS = [1208.20, 1380.685, 1486.29, 1599.45]
+/* The constant that carried those numbers is GONE — `DIVIDER_SPEC` below now
+   holds each rule's own y, and an exported array that nothing consumes is the
+   defect this file keeps finding in its own comments. The 1380.685 above lives on
+   in DIVIDER_SPEC[1]. */
 /* THE CONSTANTS IN THIS FILE ARE IN TWO DIFFERENT FRAMES, HALF A PIXEL APART,
    and the overlay's blanket `viewBox="-0.6 -0.4"` is ONE correction for all of
    them. Canonical minus the recorded constant, in the CSS/SVG frame where pixel
@@ -303,7 +313,7 @@ export const DIVIDERS = [1208.20, 1380.685, 1486.29, 1599.45]
    DIVIDER_W stays 739.0, which canonical measures at 739.03. */
 export const DIVIDER_X = 55.99
 export const DIVIDER_W = 739.0
-export const HEADER_RULE = 100.34
+/* `HEADER_RULE` is gone with it — `HEADER_RULE_SPEC` carries the y. */
 
 /* THE FIVE FLAT RULES ARE FIVE DIFFERENT RULES, AND THIS FILE MEASURED THAT AND
    DECLINED TO ACT ON IT. Two notes above record the evidence: the header-rule
