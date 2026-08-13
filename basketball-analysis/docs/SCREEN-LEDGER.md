@@ -3890,6 +3890,71 @@ The method note worth keeping: this was found by running the sweep a rule
 DEMANDED rather than by a grader finding a third instance. Two rounds in a row
 had shipped the next instance of a class named one commit earlier.
 
+### NEEDS KEVIN: THE THREE TYPE DECISIONS THAT NOW BLOCK 005 FROM AN A
+
+These are the only things standing between 005 and the grade, and **none of them
+can be settled by measurement** — that is precisely why they are here. Thirty
+rounds and seventeen grades have driven the screen 15.3484 -> 4.8462; every one
+of these three has a number beside it and no decision, and rule 91 is explicit
+that measured-and-left-open is not measured-and-closed.
+
+**1. THE BODY FACE IS NOT IN THIS REPOSITORY.** Canonical's mixed-case body runs
+have a stem/counter ratio of **0.667-0.710**. GeistVF, the face the app ships,
+measures **0.7465** at every weight. Nothing bundled here is closer. The runs
+that inherit it are safe1, safe2, help1/2/3, lede1, lede2, didnt and resendLab —
+between them a large share of what is left. Round 30 showed the diagnosis is real
+AND that it had been over-used (see rule 92c): `resendLab` sat 1.27 px high
+*because* of this face, via a cap-top positioning datum, and that consequence was
+fully correctable and worth 3.2. So the face blocks the SHAPE of these runs and
+nothing else.
+
+  * Option A: ship as-is and accept the shape residual, which is roughly 6-8 of
+    whole screen spread across nine runs. Costs nothing, closes nothing.
+  * Option B: identify canonical's actual face and license it. Closes the largest
+    remaining category outright.
+  * Option C: decide the canonicals are a target for LAYOUT and not for FACE, and
+    formally scope face fidelity out of the DoD. Legitimate, and it changes what
+    "A" means for every screen, not just this one.
+
+**2. THE WORDMARK IS SET IN NO FACE THIS REPOSITORY CONTAINS.** Found by grade 15,
+on an axis the body-face finding had been scoped out of (the wordmark is
+all-caps). Canonical's S/H ink-width ratio is **0.850**; GeistVF gives
+**1.002-1.009** at every weight, Boxed **1.000**, Tungsten **0.966**. The render
+measures 1.0007 — Geist exactly — which calibrates the estimator against a known
+answer. Its cap also measures 2.56% short, and grade 15 DECLINED to prescribe the
+size because the face is the larger error and correcting size first would mask
+it. That refusal was correct and it leaves the wordmark's 7.7849 open. Same three
+options as (1), and the wordmark is the one run where a single licensed file
+would close the whole band.
+
+**3. MATCHING CANONICAL GIVES THE THREE HELP ROWS THREE DIFFERENT LETTER WIDTHS.**
+Round 30's largest finding, and the only one of the three that is a taste
+judgement rather than a licensing question. The three rows now carry `scale`
+**0.866 / 0.8747 / 0.9136** — a 5.5% letter-width difference between the first
+row and the third, which a designer can see. It is worth **0.4967 of whole
+screen**, eight times what grades 14 and 15 found combined, and three independent
+estimators agree on the numbers.
+
+  Why it is not simply right: the compensation is per-STRING, because the glyph
+  mixes differ and our face's advances are not canonical's. Canonical almost
+  certainly sets all three rows identically in ITS face; we are reproducing its
+  PIXELS in a different face, and per-string scaling is the only way to do that.
+  Eight other body runs on this screen already carry eight different scales for
+  the same reason, so this is the established method here — but those are eight
+  runs that do not sit in a visible vertical stack, and these three do.
+
+  * Option A (shipped): match canonical's pixels; accept three letter widths in a
+    visible stack.
+  * Option B: revert help2/help3 to 0.866, give back 0.4967, and record the
+    advance error as a stated face residual.
+  * Option C: solve (1), after which all three rows should want the same scale
+    and the question dissolves.
+
+**These three interact, and that is the argument for taking them together.**
+Option B on (3) is only sensible if (1) is going to be solved; Option C on (1)
+would retire (2) and (3) at once. Whichever way they go, the answer changes what
+work is left on 005 and on every screen after it.
+
 ### NEEDS KEVIN: three paid API routes have no authentication at all
 
 `/api/llm`, `/api/upload` and `/api/vision-analyze` have no session check, no
