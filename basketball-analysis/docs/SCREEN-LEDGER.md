@@ -5994,6 +5994,65 @@ round entry — the grading README already requires the render and the entry to
 move together, and this is the third thing that has to move with them. A stale
 md5 here is worse than none, because rule 96 would then reject a good dist.
 
+### CONVERGENCE, RE-READ AFTER ROUND 44: IT IS CONVERGING NOW, AND THE SECTION BELOW WAS RIGHT WHEN IT WAS WRITTEN
+
+The analysis below concluded "NO, and the findings are getting BIGGER" — six
+times bigger over steps 9-14 than over steps 2-8. That was correct for its data.
+Six rounds later the picture has inverted, and the honest thing is to record the
+inversion beside it rather than rewrite it:
+
+    round   figure    gain      grade   what it was
+      38    4.2079   -0.0101     B+     plateMark, one size change
+      39    4.1645   -0.0434     A−     sy on help1, tx on help2/help3
+      40    4.1483   -0.0162     B+     shield width, resendLab sy, three more
+      41    4.1305   -0.0178     B+     lede1/lede2 sy, resendLink
+      42    4.1236   -0.0069     B+     helpIcon3 bh, three chevron boxes
+      43    4.1185   -0.0051     B+     clock hands, dial rx/cy, chevron sw
+      44    4.1176   -0.0009     A−     dial ry — ONE edit
+
+    rounds 39-41  mean gain 0.0258
+    rounds 42-44  mean gain 0.0043      SIX TIMES SMALLER
+
+**And the count of findings per grade fell with it: 3, 5, 3, 2, 4, 1.** Round 44
+moved a single number and 43 of 44 bands were byte-identical.
+
+**WHAT IS DIFFERENT THIS TIME, AND WHY IT IS NOT THE OLD FALSE FLOOR.** The three
+earlier floor claims were all refuted by the same discovery — that the METHOD was
+exhausted, not the defect list. That cannot be said now, because the method has
+been rebuilt four times *within* this run of rounds and the gains fell anyway:
+
+  * the instrument went from a resample to a byte-exact whole-canvas rebuild
+    (grade 24), then to one validated against a recorded CHANGE in its own edit
+    family (grades 27-29, rule 105);
+  * three separate emitter couplings were found and every sweep over them redone
+    (rules 104, and its extension to `Icon`);
+  * the estimator class was replaced twice — paired crossings over centroids
+    (rule 103), fixed levels over fraction-of-peak (rule 106);
+  * ~1,700 candidates were built across grades 24-28, and grade 29 re-took every
+    landmark on all eleven marks.
+
+Each of those upgrades *found* something the round before could not see. The
+difference is that what they now find is worth thousandths.
+
+**AND THE REFUSAL PILE IS NOW BIGGER THAN THE ACCEPTANCE PILE, ROUND AFTER
+ROUND.** Grade 27 refused 0.0135 and prescribed 0.0069. Grade 28 declined a
+greedy composite worth 0.0018 more than it shipped. Grade 29 refused **0.0213**
+and prescribed **0.0010** — twenty to one. Three graders in a row have found
+their own largest-scoring candidate to be a paper-over. That is what running out
+of *reachable* error looks like from the inside: the objective still has gains in
+it, and every one of them now moves a landmark that is already correct.
+
+**THE REMAINING ERROR IS NOT REACHABLE BY THIS RECIPE.** `display` alone is
+19.3019 of a 4.1176 whole-screen mean and is face-limited down to the mechanism;
+the four digits need a different Tungsten cut; `shield` and `gear` need asset
+re-traces, each now refused three times with the fractional-error-by-azimuth and
+fixed-row-width measurements that name why; six body runs have a cap SHORT while
+their x-height is TALL, which no `scaleY` can reconcile. Those are the five NEEDS
+KEVIN decisions, and they are measurements rather than opinions.
+
+This section stays open. If a grade finds a defect worth more than 0.01 again,
+this paragraph is the one that was wrong.
+
 ### IS THIS CONVERGING? NO — AND THE DATA SAYS THE OPPOSITE OF WHAT I ASSUMED
 
 The recurring question behind every "should we keep grading" decision is whether
