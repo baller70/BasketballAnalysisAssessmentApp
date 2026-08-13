@@ -1234,6 +1234,10 @@ export const MARK_BOXES: Record<
   shield: [58.8, 1628, 97.4, 105.2, 0, 0],
 }
 
+/* NO BACKTICKS BELOW THIS LINE. Everything to the closing backtick is one
+   template literal, so a backtick inside a CSS comment ends the string and the
+   file stops parsing. That has happened three times — TS1005 twice, TS1443 once.
+   Use "double quotes" around identifiers in these comments. Rule 98. */
 export const PHONE_CSS = `@media (max-width: 767.98px){
 .s5{${COLOURS.replace(/\s+/g, "")}position:relative;width:393px;height:852px;min-height:852px;
   overflow:hidden;background:var(--shotiq-color-paper);padding:0;
