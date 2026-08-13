@@ -615,7 +615,7 @@ export const RUNS: Record<string, Run> = {
      six were flagged MEDIUM by the grade (diffLab, lede2) and BOTH beat their
      predictions, so the discriminator was never confidence; it was magnitude. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.7372 },
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9215 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -812,7 +812,28 @@ export const RUNS: Record<string, Run> = {
      +0.460 px RIGHT for +0.0055, and the matched-glyph centroid says
      -0.016 +/- 0.865 — no shift at all. Two estimators, opposite verdicts, so it
      is not taken. didnt's cap is 0.9971/1.0038/1.0077; it has survived every
-     grade because it is right. */
+     grade because it is right.
+     AND TWO OF THE THREE ARE PHYSICALLY UNREACHABLE. Built exactly as
+     prescribed, help1 (-0.38 device px) and lede1 (-0.40) produced ZERO changed
+     pixels — byte-identical rasters — while the served CSS carried the new
+     translate. THE VERTICAL TEXT POSITION IS QUANTISED TO 1.0 DEVICE PX. Swept
+     live with the injection read back (rule 99), help1's raster takes exactly
+     three distinct values across +/-1.2 device px:
+
+         dDev  -1.2 .. -0.4   raster A
+         dDev  -0.3 .. +0.6   raster B   <- shipped
+         dDev  +0.7 .. +1.2   raster C
+
+     One plateau ~0.9 px wide with the shipped position inside it. So the
+     objective's own argmin for these runs (-0.320 for help1, -0.340 for lede1) is
+     UNREACHABLE: every ty in that interval renders the shipped pixels exactly.
+     The nearest reachable move is a full pixel, 2-3x the measured error, which
+     would overshoot.
+
+     Both are therefore REVERTED to their shipped values. The measurement stands
+     and is recorded here; the lever does not reach it. resendLab's +0.48 crossed
+     a boundary — 1673 changed pixels, 6.5762 -> 6.4055 — which is why one of the
+     three paid and two could not. See rule 100. */
   resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.9309, ls: -0.004,
                colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: -0.3551, ty: 1.2578 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
@@ -834,14 +855,18 @@ export const RUNS: Record<string, Run> = {
      density inside 2%. 640 is a hair better again on the band (0.0133) and
      7% heavy, so it is not taken: DoD item 2 asks the density to match, and
      nothing here is being traded away to get it. */
-  /* Same class as resendLink and never measured on this axis: cap 1.0224 /
-     1.0234 / 1.0254, with the objective agreeing in sign (ky 0.980, +0.0038).
-     Magnitude 2.3% — just above rule 97's ~2% break-even and inside the zone
-     where it says to expect a cutoff, so if this one is refuted that is evidence
-     about the CUTOFF and not about the diagnosis. Cap-landing at 1/1.0234, with
-     ty carrying the pivot compensation. */
-  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 600, scale: 0.845, sy: 0.9771, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.5107 },
+  /* AND THE CUTOFF IS CONFIRMED WHERE THE GRADE SAID TO LOOK FOR IT. Cap
+     1.0224 / 1.0234 / 1.0254 with the objective agreeing in sign (ky 0.980,
+     +0.0038) — a real 2.3% error. Built as sy 0.9771 it measured 2.2172 ->
+     2.4232, WORSE by 0.206, with n_over8 945 -> 966. Reverted.
+     That is rule 97 tested at the boundary and holding: lede1 failed at 1.89%,
+     this fails at 2.3%, and the five that paid in round 33 were 2.4% to 14%. The
+     grade prescribed it with the prediction that a refutation here would be
+     evidence about the CUTOFF rather than about the diagnosis, and that is what
+     it is — the cap error is real and is left as a stated residual, because the
+     only lever that reaches it costs more than it buys. */
+  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 600, scale: 0.845, ls: -0.004,
+               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.4607 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
@@ -1108,7 +1133,7 @@ export const RUNS: Record<string, Run> = {
      canonical set in a face that is not canonical's, and it is on the record
      for Kevin alongside the two face decisions. */
   help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.6678 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.8429 },
   help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8747, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
   /* 0.9136 came from round 30's 1/0.94816 = 1.05468, and the ARTEFACT that
