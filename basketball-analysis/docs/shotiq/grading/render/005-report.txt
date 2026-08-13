@@ -1,4 +1,4 @@
-whole screen   mean|d| 4.8462   max 255   n_over8 96787
+whole screen   mean|d| 4.6244   max 255   n_over8 94153
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -6,26 +6,26 @@ band          mean|d|    max   n_over8
 display       19.3019    255     19291
 helpIcon1     13.6684    255      1018
 helpIcon2     13.2155    255      1223
-safe2         13.0115    230      4361
-safe1         10.4978    255      3839
 help2         10.3449    255      4820
+safe1          9.7149    255      3737
 shield         9.3281    254      1304
 gear           8.8566    255       891
+safe2          8.8160    229      3839
 lede2          8.0204    255      3698
 didnt          7.8059    228      3544
 help1          7.7874    255      3933
 wordmark       7.7849    255      2713
 helpIcon3      7.5455    255      1028
-resendLab      7.5347    216      2492
-help3          7.0950    255      3569
-diffBtn        5.6752    255      9912
-lede1          5.5554    208      3470
-plate          3.9854    255     10845
+help3          6.6128    255      3520
+resendLab      6.5762    214      2480
+diffBtn        5.2931    255      9710
+lede1          5.1769    208      3400
 box1           3.6245    244      1677
 back           3.5029    234       269
 box2           3.4711    254      1377
 box3           3.4268    249      1578
-resendLink     3.3726    254      3231
+resendLink     3.3690    254      3209
+plate          3.2232    255     10512
 box0           2.9026    255      1231
 resendVal      2.2172    244       945
 box4           2.0546    140      1877
@@ -33,21 +33,21 @@ chev2          1.5480    128       117
 chev1          1.5005     84       111
 box5           1.4478     46       763
 chev3          1.3690    107       108
-rule2          1.3388     15      1322
 rule3          0.9089     10       172
 rule1          0.8536      6         0
 rule4          0.6528     10        56
 hdrRule        0.6514     24         2
+rule2          0.5189      6         0
 
 diagnostic sub-windows — these OVERLAP the bands above and are not
 part of the table; a label inside a solved box is diluted by the box's
 area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
-diffMark     23.7550    255      1605
-diffLab      20.1557    255      3142
-plateLab     16.0099    255      4965
+diffMark     21.2329    255      1523
+diffLab      18.1628    255      3022
 plateMark    12.0203    254      1702
+plateLab     10.8933    255      4632
 digit1       10.4700    244       716
 digit0        9.4609    255       614
 digit2        8.7136    254       561
