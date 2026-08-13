@@ -4776,6 +4776,39 @@ grade is measuring would confound its attributions, so it waited for the gap
 rather than for permission. Its control was the 393 capture coming back
 byte-identical, and it did.
 
+### 005 AGAINST THE DEFINITION OF DONE, ITEM BY ITEM, AFTER 35 ROUNDS AND 20 GRADES
+
+The DoD is ten items and this file is 470KB. Anyone asking "is 005 done?" should
+be able to answer it without reading the whole thing, so here is each item with
+the evidence and the verdict. **Seven hold. Three do not, and two of those three
+are Kevin's.**
+
+| # | item | verdict | evidence |
+|---|---|---|---|
+| 1 | every band present, in order, at position | **HOLDS** | 35 windows plus 9 diagnostic sub-windows measured every round; grade 20 showed the 570,114 px OUTSIDE all windows carry mean\|d\| 0.347 and **n_over8 = 0**, so no band is missing and nothing hides between them |
+| 2 | cap, advance, ink density per ink run | **HOLDS, with four stated residuals** | advances re-solved per run (rounds 30-31); caps re-solved via `sy` (round 33) and re-measured clean at 1.0001 / 0.9929 / 1.0016 / 0.9938; densities rounds 15-16. The four that remain — help1/2/3 and resendLab at 0.977 / 0.962 / 0.928 / 0.981 — want the OPPOSITE sign from the objective and are the body face (item 5's cousin), stated three times and re-confirmed on a clean artefact |
+| 3 | colour from eroded stroke cores | **HOLDS** | every role probed from cores, never band medians; grade 20 re-derived paper, ink, orange and graphite independently and found the paper token already at its L1 optimum (canonical median 254 in all three channels) |
+| 4 | geometry measured | **HOLDS** | boxes, rules, plate, button, caret, every mark box and every icon path measured; the five hairlines fitted per element in round 35 (divider n_over8 228 -> 0) |
+| 5 | imagery: right asset, crop, drawn size | **FAILS — Kevin's** | `shield` 9.328 and `gear` 8.697 are the WRONG DRAWINGS, proved rather than assumed: no y-affine over 81 rows beats identity on the shield without a displacement its ink extents forbid, and the gear's outer envelope matches to 0.045 px while canonical's cog lobes span rows 37..68 against the render's 40..67. Both need an asset re-trace |
+| 6 | no overflow, truncation, overprinting, one-word-per-line | **FAILS — mine, one item** | reflow CLOSED in round 34 (clip 0 and no horizontal scroll at 393/375/360/320 on both DPRs, 393 capture byte-identical). The LONG-ADDRESS CLIP is still open and diagnosed: overflow is entirely right, 265.91 px of canvas sit unused to the left, and widening `lede2`'s box moves the canonical string 5.19 px because its shipped position is an overflow position |
+| 7 | reachable by a real user path AND by the harness | **HOLDS** | /signup lands here (round 5); the guide anchors were BUILT rather than repointed (round 14); the harness step is deterministic and capture step-fails are 0 every round |
+| 8 | invariants: iOS 393pt, desktop 900x1440 one sidebar | **HOLDS** | re-probed every round; desktop-leak gate 7/7 with three live self-tests since round 34 |
+| 9 | an independent grader scores it A or A+ | **FAILS** | twenty grades: **B, B, B+, B, B, B, B, B, B-, B, B, (one letter never recorded), B+, B-, B-, B-, B-, B-**. The last seven each found a real defect, and five of those seven were sitting inside a sentence in the source claiming the thing was solved |
+| 10 | committed, pushed, recorded with measurements | **HOLDS** | every round; render and report replaced in the same commit as the ledger entry quoting them, and the render re-verified byte-identical after each of three container restarts |
+
+**WHAT THAT ADDS UP TO.** Item 9 is the gate, and it will not turn on its own:
+the whole-screen figure has gone 15.3484 -> 4.3328, and the four largest windows
+left are `display` 19.302 (body face), `diffLab` 16.591, `diffMark` 10.803 and
+`digit1` 10.470, with `shield` and `gear` behind them. Items 5 and 9 are both
+waiting on the same four decisions, and item 6's residual is a two-parameter
+change to a measurement-tuned run that is queued rather than blocked.
+
+**The honest summary is that 005 is measurement-complete and decision-blocked.**
+Twenty independent graders have now looked at it and the recent ones are finding
+defects at a rate that has not fallen — which is an argument for continuing to
+grade, not for declaring a floor, and this file has had a floor claim refuted
+three times already.
+
 ### NEEDS KEVIN: THE FOUR ASSET AND TYPE DECISIONS THAT NOW BLOCK 005 FROM AN A
 
 These are the only things standing between 005 and the grade, and **none of them
