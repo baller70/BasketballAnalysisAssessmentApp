@@ -54,6 +54,15 @@ absence of an error from `git add`.
 * The render here is the one a specific grade refers to. **Replace it in the same
   commit as the ledger entry that quotes its numbers**, so a grade and the pixels
   it was given never drift apart.
+* **And with the ledger's CURRENT ARTEFACT block**, which is now the third thing
+  that moves with them. Rule 96 tells a post-restart recovery to require the
+  render's md5 and its whole-screen figure to match what the ledger records — and
+  for its first several firings the ledger recorded only the figure, so the exact
+  half of that test did not exist. `node docs/shotiq/artefact-check.mjs` compares
+  render md5, canonical md5 and the reported figure against that block and exits
+  non-zero on any disagreement; `--update` rewrites it. Run the update in the same
+  commit as the render, and the check any time a dist is in doubt. A STALE md5
+  there is worse than none, because rule 96 would then reject a good dist.
 * It is NOT a substitute for re-capturing. Re-measure from a fresh build when the
   source changes; this directory records what was graded, not what is current.
 * Keep it to the screens actually in play. The full canonical set is ~92 PNGs and
