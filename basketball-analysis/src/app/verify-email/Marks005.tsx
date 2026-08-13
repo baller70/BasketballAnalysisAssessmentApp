@@ -32,7 +32,8 @@
  */
 import React from "react"
 import { MARK_BOXES, BOX_X, BOX_W, BOX_Y, BOX_H, BOX_R, PLATE, DIFFBTN,
-         DIVIDERS, DIVIDER_X, DIVIDER_W, HEADER_RULE, CARET, LINK_RULE } from "./phone-005"
+         DIVIDER_X, DIVIDER_W, CARET, LINK_RULE,
+         HEADER_RULE_SPEC, DIVIDER_SPEC } from "./phone-005"
 
 const INK = "var(--s5-ink)"
 const ORANGE = "var(--s5-orange)"
@@ -687,7 +688,8 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
           50%-crossing height over the flat middle is 1.67 and the 2.17 was never
           measured. See the --s5-header-rule note in phone-005.ts: the height and
           the tone only pay JOINTLY, and the tone alone is worse. */}
-      <rect x={0} y={HEADER_RULE - 0.80} width={853} height={1.60} fill="var(--s5-header-rule)" />
+      <rect x={0} y={HEADER_RULE_SPEC.y - 0.80} width={853}
+            height={HEADER_RULE_SPEC.h} fill={HEADER_RULE_SPEC.fill} />
 
       {/* The six code boxes. The UNFOCUSED border is 2.17 device px, the same
           physical stroke as the header rule and the help-list dividers —
@@ -703,10 +705,18 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
           green ink across it and orange's own green is 66, so 387.8/188 = 2.06.
           It is a REAL focus affordance driven by the player's own focus index,
           not a state drawn for the screenshot. */}
+      {/* THE FOCUSED STROKE WAS 2.06 FROM THE INK-MASS ESTIMATOR THAT HAS NO
+          FIXED POINT — see the CARET note in phone-005.ts, where the same
+          estimator is shown to inflate with its own window. Fitted analytically
+          it is 1.83, bracketed 1.73/1.78/1.83/1.88/1.93 -> 3.6922/3.2049/2.9986/
+          3.1550/3.6587; box4 2.0546 -> 1.7990 with n_over8 1877 -> 1668. The
+          UNFOCUSED 1.75 was read from ERODED CORES rather than from ink mass and
+          is unchanged, which is the control that localises this to the estimator.
+          (A JSX comment cannot sit between attributes — TS1005, twice now.) */}
       {BOX_X.map((x, i) => (
         <rect key={x} x={x} y={BOX_Y} width={BOX_W[i]} height={BOX_H} rx={BOX_R}
               stroke={i === focus ? ORANGE : "var(--s5-box-rule)"}
-              strokeWidth={i === focus ? 2.06 : 1.75} fill="none" />
+              strokeWidth={i === focus ? 1.83 : 1.75} fill="none" />
       ))}
 
       {/* the caret in the focused box, only while that box is still empty —
@@ -720,13 +730,34 @@ export function Marks005({ focus, filled }: { focus: number; filled: number }) {
       <rect x={PLATE.x} y={PLATE.y} width={PLATE.w} height={PLATE.h} rx={PLATE.r} fill={ORANGE} />
 
       {/* the Use a different email border */}
-      <rect x={DIFFBTN.x + 1.02} y={DIFFBTN.y + 1.02} width={DIFFBTN.w - 2.04}
-            height={DIFFBTN.h - 2.04} rx={DIFFBTN.r} stroke={INK} strokeWidth={2.10} fill="none" />
+      {/* THE BORDER IS THIN ON ITS HORIZONTAL EDGES AND FAT ON ITS VERTICAL ONES
+          FROM ONE strokeWidth, and the cause is the rasteriser rather than the
+          stroke. Skia takes rounded rects through the supersampling blitter — 4
+          sub-scanlines in y, analytic in x — so a horizontal edge is floored onto
+          a 0.25 device-px lattice while a vertical edge gets exact coverage. Ten
+          rows on three unrelated features fit that model to <= 1 unit of 255
+          while an analytic model is wrong by up to 0.11 coverage, and the CONTROL
+          is the plain rects (hdrRule, the dividers, the caret), which are
+          analytic-exact in both axes.
+          So 2.10 draws 2.102/2.106 vertically and 2.000/2.004 horizontally. The
+          vertical edges alone are sharply bracketed and want 2.00
+          (2.00/2.05/2.10/2.15 -> 4.791/4.922/5.610/6.737). Shipped at 2.05 with
+          y +0.05 rather than at the four-edge argmin (sw 2.010, y +0.06, 0.006
+          better) because that argmin sits in a 0.02-px phase window and this
+          holds the same sub-scanline count over 0.10 px.
+          THE BAND CANNOT BE CLOSED and this is stated rather than chased: rows
+          1046 and 1051 read 244.4 and 236.5 against flat 254 paper, seven rows
+          clear of the border, and 1150-1155 mirror them — canonical's unsharp
+          under-ring, ~1400 pixels over-8 AGAINST BLANK PAPER that no SVG can
+          draw. n_over8 moves 9342 -> 9312 because that is what the count is made
+          of. */}
+      <rect x={DIFFBTN.x + 1.02} y={DIFFBTN.y + 1.07} width={DIFFBTN.w - 2.04}
+            height={DIFFBTN.h - 2.14} rx={DIFFBTN.r} stroke={INK} strokeWidth={2.05} fill="none" />
 
       {/* the four help-list dividers */}
-      {DIVIDERS.map((y) => (
-        <rect key={y} x={DIVIDER_X} y={y - 0.80} width={DIVIDER_W} height={1.60}
-              fill="var(--s5-divider)" />
+      {DIVIDER_SPEC.map(({ y, h, fill }) => (
+        <rect key={y} x={DIVIDER_X} y={y - 0.80} width={DIVIDER_W} height={h}
+              fill={fill} />
       ))}
 
       {/* the Resend email underline */}

@@ -304,6 +304,50 @@ export const DIVIDERS = [1208.20, 1380.685, 1486.29, 1599.45]
 export const DIVIDER_X = 55.99
 export const DIVIDER_W = 739.0
 export const HEADER_RULE = 100.34
+
+/* THE FIVE FLAT RULES ARE FIVE DIFFERENT RULES, AND THIS FILE MEASURED THAT AND
+   DECLINED TO ACT ON IT. Two notes above record the evidence: the header-rule
+   note lists canonical's five 50%-crossing heights as "1.645 / 1.679 / 1.783 /
+   1.312 / 1.911, mean 1.67" — a 46% spread — and then solves ONE joint (h, tone)
+   argmin over all five; the divider note lists canonical's four inks as
+   "80.8 / 67.1 / 74.4 / 63.8" and says "the render's flat 72.0 sits at their
+   mean, which is why they are left alone".
+
+   SITTING AT THE MEAN IS AN L2 ARGUMENT AND THE METRIC IS L1. For mean |d| the
+   per-element fit strictly dominates the shared one, so that sentence is rule
+   92(a) — a refusal read as a closure — sitting on top of rule 92(b), a shared
+   role assumed to share a value.
+
+   AND ONE PART IS NOT A TRADE AT ALL. Canonical's rule3 core reads 204.6 over
+   730 columns and rule1's 211.1. A #D4D4D4 fill is 212 at FULL coverage, so no
+   height whatever reaches rule3. The tone has to be per-rule; that is algebra,
+   not optimisation.
+
+   Fitted per rule by exact analytic model against canonical over the rule's own
+   band (cols 60..790, or 0..853 for the full-bleed header). The model is
+   legitimate here because these are PLAIN rects — see the note on the quarter-
+   pixel lattice below, which is what makes the rounded rects different — and it
+   reproduces the shipped render to <= 1 unit of 255 on every ink row.
+
+       rule       shipped            fitted                band        n_over8
+       hdrRule    1.60 / #D4D4D4     +0.08  1.55  #D6D6D6  0.6514 -> 0.4148
+       rule1      1.60 / #D4D4D4     -0.10  1.80  #D4D4D4  0.8536 -> 0.5826
+       rule2      1.60 / #D4D4D4     +0.14  1.40  #D0D0D0  0.5189 -> 0.3885
+       rule3      1.60 / #D4D4D4     +0.00  1.45  #CCCCCC  0.9089 -> 0.4568  172->0
+       rule4      1.60 / #D4D4D4     +0.14  1.50  #D4D4D4  0.6528 -> 0.3246   56->0
+
+   Each bracketed on both axes at the other's argmin. Rule 97 does not apply:
+   these are solid rects, so the raster is re-PLACED and not re-rasterised, and
+   there is no hinting or stem cost — the figures are predictions, not upper
+   bounds. */
+export type FlatRule = { y: number; h: number; fill: string }
+export const HEADER_RULE_SPEC: FlatRule = { y: 100.42, h: 1.55, fill: "#D6D6D6" }
+export const DIVIDER_SPEC: FlatRule[] = [
+  { y: 1208.10,  h: 1.80, fill: "#D4D4D4" },
+  { y: 1380.825, h: 1.40, fill: "#D0D0D0" },
+  { y: 1486.29,  h: 1.45, fill: "#CCCCCC" },
+  { y: 1599.59,  h: 1.50, fill: "#D4D4D4" },
+]
 /** The caret drawn inside the focused box. x 617.404..619.667, y 563.859..636.113. */
 /* The caret's WIDTH is solved from ink mass, not from its 50% crossings: it is
    two pixels wide and unsharp-masked, so the crossings are overshoot (rule 8).
@@ -322,7 +366,23 @@ export const HEADER_RULE = 100.34
    is a SUBTRACTION. Built with the grade's sign the caret band went 2.1319 ->
    10.6078 and box4, whose window contains it, 3.3739 -> 4.2743. Subtracting
    restores both. */
-export const CARET = { x: 617.404 - 0.6, y: 563.859 - 0.4, w: 3.08, h: 72.254 }
+/* THE INK-MASS ESTIMATOR HAS NO FIXED POINT, BECAUSE ITS ANSWER IS A FUNCTION OF
+   ITS WINDOW — and it has now shipped three constants too large: this caret's w,
+   LINK_RULE.h below, and the focused box stroke in Marks005. Canonical's ink
+   across the underline is 483.9 units over rows 843..847 and 511.4 over rows
+   838..852; the extra 27.5 are the unsharp DARK halo, which the estimator counts
+   as ink and which a render on flat paper does not have. Against the render's
+   500 that gives h 1.907 on the tight window and 2.015 on the wide one — and the
+   render's mass is proportional to h and nothing else, so widening the window can
+   only inflate the answer, iteration after iteration. A direct analytic fit lands
+   1.910, i.e. the shipped 1.97 is TOO BIG and the estimator was pointing the
+   wrong way rather than merely failing to converge.
+   Caret re-fitted the same way: w 2.92 at x +0.170, bracketed both axes
+   (2.85/2.90/2.92/2.95/3.00 -> 1.6949/1.4969/1.4486/1.4889/1.6806).
+   Its y +0.44 / h 72.35 is also at an argmin, buys 0.00024, and moves an element
+   three separate builds have shown is where canonical puts it. Stated, not
+   taken. */
+export const CARET = { x: 617.574 - 0.6, y: 563.859 - 0.4, w: 2.92, h: 72.254 }
 /** "Resend email" is underlined: centroid y 845.1, x 335.4..515.8, ink 401 units. */
 /* THE ESTIMATOR WAS RUN ONCE AND NEVER RE-RUN AGAINST WHAT IT PRODUCED. It read
    "canonical 399.0 units against the render's 330.0 at h 1.75", which gave 2.12.
@@ -333,7 +393,7 @@ export const CARET = { x: 617.404 - 0.6, y: 563.859 - 0.4, w: 3.08, h: 72.254 }
    the defect is the un-re-run estimator and not the number.
    Centre: canonical 845.566, render 845.838. y is set so the drawn centre,
    including the +0.4 viewBox origin, lands on 845.565. */
-export const LINK_RULE = { x: 335.4, y: 844.18, w: 180.4, h: 1.97 }
+export const LINK_RULE = { x: 335.4, y: 844.18, w: 180.4, h: 1.910 }
 
 export const RUNS: Record<string, Run> = {
   /* SHOTIQ. Canonical 004's wordmark and this one share a cap to the pixel —
@@ -555,7 +615,7 @@ export const RUNS: Record<string, Run> = {
      six were flagged MEDIUM by the grade (diffLab, lede2) and BOTH beat their
      predictions, so the discriminator was never confidence; it was magnitude. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9215 },
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.7372 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -729,8 +789,32 @@ export const RUNS: Record<string, Run> = {
      0.97% WIDTH is the same run's other axis and was left inside that same
      "blocked by the face" sentence — rule 92(c), one layer on from where round 30
      found it. Local registration 1.00374, objective 1.0097. */
+  /* THREE VERTICAL TRANSLATIONS, each confirmed by two estimators that share
+     nothing — matched-glyph ink centroids (render minus canonical) against the
+     image-space objective's argmin:
+
+         resendLab  -0.464 sd 0.181 over 12 glyphs   argmin +0.500
+         help1      +0.436 sd 0.344 over 31 glyphs   argmin -0.320
+         lede1      +0.464 sd 0.215 over 20 glyphs   argmin -0.340
+
+     The CONTROL is the runs round 33 already solved — safe1 -0.110/-0.020,
+     diffLab +0.016/0.000, plateLab +0.059/0.000, safe2 +0.071/+0.240 — all near
+     zero on both instruments, which is what says these three are not an artefact
+     of the fitting. Pure translations through `transform`, so rule 97's
+     re-rasterisation cost does not apply and this file's record is that tx/ty
+     predictions land to four decimals.
+
+     CAVEAT STATED: all three still carry an unsolved cap error in the direction
+     the objective cannot take (see the help-row note), so part of each is a size
+     error read edge-on. resendLab is the cleanest; help1 the least.
+
+     REFUSED AND RECORDED so it is not re-found: the same objective wants `didnt`
+     +0.460 px RIGHT for +0.0055, and the matched-glyph centroid says
+     -0.016 +/- 0.865 — no shift at all. Two estimators, opposite verdicts, so it
+     is not taken. didnt's cap is 0.9971/1.0038/1.0077; it has survived every
+     grade because it is right. */
   resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.9309, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: -0.3551, ty: 1.0366 },
+               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: -0.3551, ty: 1.2578 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
      2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
@@ -750,8 +834,14 @@ export const RUNS: Record<string, Run> = {
      density inside 2%. 640 is a hair better again on the band (0.0133) and
      7% heavy, so it is not taken: DoD item 2 asks the density to match, and
      nothing here is being traded away to get it. */
-  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 600, scale: 0.845, ls: -0.004,
-               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.4607 },
+  /* Same class as resendLink and never measured on this axis: cap 1.0224 /
+     1.0234 / 1.0254, with the objective agreeing in sign (ky 0.980, +0.0038).
+     Magnitude 2.3% — just above rule 97's ~2% break-even and inside the zone
+     where it says to expect a cutoff, so if this one is refuted that is evidence
+     about the CUTOFF and not about the diagnosis. Cap-landing at 1/1.0234, with
+     ty carrying the pivot compensation. */
+  resendVal: { x: 508.9, top: 730.490, size: 15.9, weight: 600, scale: 0.845, sy: 0.9771, ls: -0.004,
+               colour: "var(--s5-orange)", dx: 0.6, dy: 9.2, tx: 0, ty: 0.5107 },
   /* "Resend email", orange, underlined — the rule is drawn in Marks005 rather
      than as text-decoration, because Chromium clamps an underline to a whole
      CSS pixel and canonical's is 1.75 device px (rule 11). */
@@ -805,8 +895,31 @@ export const RUNS: Record<string, Run> = {
      That is the same decomposition this file already carries for the digits and
      never applied here. 1.0 device px = 1.0/(0.8394 x 2.170483) = 0.5489 CSS px on
      `tx`, which is inside the transform, so the cx-pivot trap does not arise. */
-  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, ls: -0.004,
-                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.9074, ty: 0,
+  /* AND ROUND 33 RECORDED THIS RUN AS A SOLVED CONTROL, WHICH THE ARTEFACT
+     REFUTES. On the file's own cap estimator — leading segment at 0.35/0.50/0.65
+     of that segment's own peak coverage — it reads 1.0316 / 1.0339 / 1.0354
+     against the 0.9962 / 0.9967 / 0.9972 recorded here. Plane-independent (green
+     1.0381/1.0421/1.0465, luminance 1.0371/1.0409/1.0452), and the 'R''s tops
+     agree at +0.23 while its bottoms are +1.03: cap-top anchored, growing
+     downward, which is the sy signature at this emitter's pivot.
+
+     THE ESTIMATOR IS NOT DRIFTING — it reproduces this file's other recorded
+     numbers digit for digit (didnt 0.9971/1.0038/1.0077, lede1 1.0210/1.0189/
+     1.0160) and the four runs round 33 DID fix now read 1.0001 / 0.9929 /
+     1.0016 / 0.9938, all inside half a percent.
+
+     THE CONTROL WAS MEASURED OVER A WINDOW CONTAINING THE UNDERLINE (rows
+     844..846). Scaling that window vertically also scales a separately
+     positioned element, which pins any ky estimate to 1: on the full window the
+     objective's argmin is ky 1.000 with gain 0.0004, and on a text-only window
+     rows 800..842 it is ky 0.935 with gain 0.0059. The control was not measuring
+     the run. Rule 57 in the vertical.
+
+     Cap-landing at 1/1.0339, not the objective's 0.935, for the same reason this
+     file declines every argmin that overshoots a cap. Magnitude 3.3%, above the
+     ~2% break-even rule 97 drew at lede1's 1.89%. */
+  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, sy: 0.9672, ls: -0.004,
+                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.9074, ty: 0.1491,
                 ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
   /* White on orange, so it is measured on the BLUE plane (orange B ~2, white
@@ -995,7 +1108,7 @@ export const RUNS: Record<string, Run> = {
      canonical set in a face that is not canonical's, and it is on the record
      for Kevin alongside the two face decisions. */
   help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.8429 },
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.6678 },
   help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8747, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
   /* 0.9136 came from round 30's 1/0.94816 = 1.05468, and the ARTEFACT that
