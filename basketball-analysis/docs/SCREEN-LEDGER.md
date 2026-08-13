@@ -2572,6 +2572,26 @@ string rolling over at midnight.
     FILE it recurs in, not only in a ledger of rules — the person about to make it
     is looking at the code, not at rule 98.
 
+99. **A LIVE-INJECTION EXPERIMENT MUST PROVE THE INJECTION TOOK BEFORE IT MAY
+    REPORT "NO EFFECT".** Three times this session a candidate CSS fix was
+    injected into the running page, appeared to change nothing, and the honest
+    conclusion looked like "the approach does not work". Twice the declaration was
+    INVALID and dropped at parse time (`calc(100vw / 393)` is a length where
+    `zoom` and `scale()` need a number); once the rule was VALID and lost on
+    document order, because `page.tsx` renders its `<style>` inside the component
+    tree — i.e. in the body, after anything `addStyleTag` puts in the head.
+
+    Three different causes, one indistinguishable symptom, and every one of them
+    would have been recorded as a refuted approach. So the probe must read back
+    the thing it set — `getComputedStyle` for the property, or a geometry that
+    could only have changed if it applied — and inject with `!important` so
+    document order cannot silently decide the result. A null result from an
+    experiment that never ran is worse than no experiment: it closes a door with
+    the authority of a measurement.
+
+    The same shape applies beyond CSS: whenever a test writes into a live system,
+    the FIRST assertion is that the write landed, and only then what it did.
+
 ### ROUND 20: every icon box was wrong, and each in its own way
 
 Grade 11 listed five marks as geometrically wrong and characterised them as
@@ -3807,6 +3827,58 @@ question is one of the ones whose numbers carry the screen.
 
 Left OPEN with its numbers rather than attempted at the end of a long session,
 which is the standing ruling on physically constrained residuals.
+
+**RE-MEASURED AFTER ROUND 34, AND THE SHAPE OF IT IS SHARPER THAN THE ABOVE.**
+Rule 92's fourth clause: the analysis above was written once and never re-run
+against the artefact. Measured on the serving dist, ink extents in canonical
+device px, at 393pt:
+
+    address                                   ink extent      canvas 0..853
+    marcus@example.com                     265.91..596.16     fits
+    marcus.thompson@basketball...com       265.91..1014.12    CLIPPED right
+    a.very.long...example.co.uk            265.91..1408.10    CLIPPED right
+
+**THE OVERFLOW IS ENTIRELY TO THE RIGHT, AND THE LEFT EDGE DOES NOT MOVE.** All
+three strings start at exactly 265.91 — so this is not a centred run overflowing
+symmetrically, it is a run anchored at its box's left content edge. `text-align:
+center` centres a line that FITS; a `nowrap` line that does not fit overflows one
+way. That means there are 265.91 device px of unused canvas to the LEFT of a run
+that is being cut off on the right, which no reading of "the string exactly fills
+its box" would predict.
+
+WHICH MAKES A FOURTH OPTION AVAILABLE, and it was measured rather than reasoned:
+widen the run's BOX about the same centre (`left: cx - w/2`, `width: w/scale`, so
+the visual centre is invariant) and let `text-align: center` do the work.
+
+    box w      canonical            45-char address        72-char address
+    319.9 *   265.91..596.16       265.91..1014.12 CLIP   265.91..1408.10 CLIP
+    560       260.72..590.97       145.85.. 894.07 CLIP   145.85..1288.04 CLIP
+    700       260.71..590.96        75.86.. 824.07 ok      75.86..1218.04 CLIP
+    820       260.72..590.97        51.74.. 799.95 ok      15.86..1158.05 CLIP
+
+**IT IS NOT FREE, AND THE COST IS EXACTLY WHY.** The canonical string moves
+**5.19 device px left** the moment the box has room — because at the shipped width
+it OVERFLOWS its box by about 10 px, so its shipped position is an overflow
+position, not a centred one. Widening re-centres it. The section above says "the
+canonical string exactly fills its box"; it in fact over-fills it, and that is the
+stronger statement: **the run's current position depends on the box being too
+small.** A byte-identity control would fail on the canonical capture, which is why
+this is a two-parameter change — widen the box AND re-solve the position so
+canonical lands back on 265.91..596.16 — to a run whose numbers carry the screen.
+
+And widening BOUNDS the defect rather than removing it: at w=700 a 45-character
+address fits and a 72-character one still clips. Bounding is worth having and it
+should be described as bounding.
+
+NOT BUILT: a grade was measuring the render. Recorded with the numbers and the
+path so the next round spends a build rather than a measurement — and note that
+the first two attempts to test this injected CSS that lost on DOCUMENT ORDER,
+because `page.tsx` renders its `<style>` inside the component tree (the body) and
+`addStyleTag` inserts into the head. Everything above is measured with
+`!important`. That is a third instance of the pattern the desktop-leak gate and
+the reflow candidates already hit: **a live-injection experiment that appears to
+show "no effect" has to prove the injection took, before it can say anything about
+the change.** See rule 99.
 
 ### GRADE 10 (B): what it found, including two things it caught me claiming
 
