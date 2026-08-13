@@ -2849,6 +2849,17 @@ string rolling over at midnight.
     FILE it recurs in, not only in a ledger of rules — the person about to make it
     is looking at the code, not at rule 98.
 
+    **UPDATED ROUND 46: SIX OCCURRENCES.** Numbers four and five landed after the
+    guard existed, and number six landed with the guard visible four lines above
+    the edit, written by someone who had just read it. So the honest count of
+    what each half buys is now clear and it is not flattering to the guard:
+    **the guard has never once prevented an occurrence; `tsc` as its own step has
+    caught all six**, every time in about a minute. Keep the guard — it costs
+    nothing and it tells the next reader why the file is written in double quotes
+    — but do not believe it is the control. **The control is running the type
+    checker before the build, on every edit, without exception.** A guard is
+    documentation; a check is a check.
+
 99. **A LIVE-INJECTION EXPERIMENT MUST PROVE THE INJECTION TOOK BEFORE IT MAY
     REPORT "NO EFFECT".** Three times this session a candidate CSS fix was
     injected into the running page, appeared to change nothing, and the honest

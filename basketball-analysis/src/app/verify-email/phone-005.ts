@@ -64,9 +64,20 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  *                          and B/R 0.9516-0.9566 — 004's graphite is G/R 0.9908,
  *                          B/R 0.9453, i.e. the same role, so the token
  *                          transferred rather than being re-invented
- *   orange      #FD4201    the plate interior by distance-shell plateau at
+ *   orange      #FD4301    the plate interior by distance-shell plateau at
  *                          d in [10,20): (253.23, 67.04, 1.14), confirmed by two
  *                          raw interior samples at 65.7 and 66.5 green.
+ *                          ROUND 46: THIS LINE SAID 67.04 AND THE TOKEN SAID 66
+ *                          FOR FORTY-FIVE ROUNDS. The two raw point samples
+ *                          dragged the rounding down; the plateau figure was
+ *                          right. An L1 argmin over canonical's 5x5-ERODED plate
+ *                          interior — 69,021 px, no edge, no ramp, no unsharp
+ *                          ring — puts green at 67 (median 67; mode 67 at 21,920
+ *                          px against 66 at 21,763), and L1 is the estimator
+ *                          BECAUSE THE METRIC IS L1 (rule 92a). Same audit on
+ *                          paper over 1,150,843 px returns 254/254/254 at gain
+ *                          0.0000, which is the control saying the instrument is
+ *                          not just finding a unit everywhere.
  *                          NOT 004's #FD3701 — that plate reads green 57.9 on
  *                          the same export chain, so the two screens genuinely
  *                          differ and copying 004's token would have been a
@@ -93,7 +104,18 @@ const COLOURS = `
   --shotiq-color-paper:#FEFEFE;
   --s5-ink:#000000;
   --s5-graphite:#454751;
-  --s5-orange:#FD4201;
+  /* ROUND 46. One character, and it is worth more than rounds 44 and 45
+     combined: -0.0023 whole and n_over8 -53, BOTH halves of the figure. Nine
+     bands move and every one is a "--s5-orange" consumer; 35 of 44 unmoved.
+     Bracketed on all three axes at +/-1 unit, and no neighbour scores as well:
+     G 68 +0.0047, R 252 +0.0092, R 254 +0.0026, B 2 +0.0034.
+     A SPLIT TOKEN WAS REFUSED: giving the focused border and caret their own
+     #FD3E01 buys +0.0001 and -19 more, on a border ratio read over 799 px
+     against the plateau's 69,021. Rule 92(b) needs more than that to justify
+     two roles where the file has one.
+     WHY FORTY-FIVE ROUNDS MISSED IT: rule 71 closed the LUMINANCE axis and was
+     read ever after as closing COLOUR. It does not. See the docstring above. */
+  --s5-orange:#FD4301;
   /* THE TONE COULD NEVER BE RIGHT AT THE OLD WIDTH, which is why it kept moving.
      Canonical's code-box border carries 272.3 ink units across the stroke
      (median over 250 crossings). At the 1.02 device px the render drew, even
