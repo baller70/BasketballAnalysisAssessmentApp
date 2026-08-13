@@ -996,11 +996,66 @@ export const RUNS: Record<string, Run> = {
      goes +0.00514 -> -0.00004. */
   /* MEDIUM CONFIDENCE, stated: the two landmarks disagree here — cap +2.4% but
      ascender -0.9% — so the cap is used and the ascender will carry a residual. */
-  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.8413, sy: 0.9770, ls: -0.004,
+  /* THE LETTERS ARE ~2% WIDE AND THE WORD SPACES ~1.3-1.9 DEVICE PX NARROW, AND
+     THE TWO CANCEL IN THE TOTAL ADVANCE — which is why thirty-five rounds of
+     solving `scaleX` against a run's EXTENT never saw it. A face difference split
+     between glyph advances and the space advance is invisible to an estimator
+     that only reads where the run starts and ends.
+
+     `word-spacing` is declared in `Run`, emitted by `runCss`, and used on exactly
+     ONE run on this screen — `display`, where round 4 found it for precisely this
+     reason ("a gap that opens along the run, which no single translation can
+     close"). It was never tried on a body run. Rule 92(b) again, on a lever this
+     file already owns.
+
+     THREE ESTIMATORS THAT SHARE NOTHING. Per-glyph ink widths (50% crossings,
+     render/canonical) put the GLYPHS wide — diffLab 1.0198, help2 1.0338, help3
+     1.0316, help1 1.0134 — so the lever is `scale` and not `letter-spacing`. A
+     matched-glyph centroid regression d = a + b(x-x0) + delta*g, where g counts
+     word gaps to the left, separates the two:
+
+         run      n    b (letters)   delta (per gap)   rms    rms translate-only
+         diffLab  18    +2.235%        -1.738 px       0.402       0.801
+         help2    36    +2.177%        -1.280          0.611       0.895
+         help3    23    +2.031%        -1.890          0.578       0.772
+         help1    31    +0.671%        -0.550          0.448       0.509
+
+     And an image-space 2-D grid over (per-gap widening, letter scale) brackets on
+     BOTH axes at the regression's own values, which is the check that the two are
+     not one instrument. The raw residual shows the signature directly: inside
+     "different" it ramps -1.35 -> +0.47 across one word and drops 1.2-1.4 px at
+     every one of the three word boundaries. Independently, 33 of 34 ink-edge word
+     gaps across ten runs are narrower in the render.
+
+     PIVOT (rule 93), and there are three different ones in play here. `scaleX`
+     pivots on the ELEMENT LEFT, which sits `dx` left of the ink-left, so a 2.2%
+     change moves the ink-left by <= 0.018 device px and `left` needs no
+     compensation. `word-spacing` is a LAYOUT property applied BEFORE the
+     transform, so its device effect is ws x scale x S. And `tx` is inside the
+     transform AFTER `scaleX`, so its DEVICE value is held by
+     tx_new = tx x scale_old / scale_new.
+
+     RULE 97: sorted by magnitude 2.235 / 2.177 / 2.031 / 0.671, so if the batch
+     splits it splits at help1, which is smaller by a factor of three and below
+     the 2.4% boundary the last two rounds measured. Noted before building rather
+     than after. The ws half is a LAYOUT change and not a re-rasterisation at a new
+     size, so that cost model may not transfer to it intact.
+
+     CONTROLS: `lede2` and `resendVal` contain no spaces and take no edit, so they
+     must come back byte-identical; both levers are horizontal, so every modal
+     baseline and every cap ratio must hold.
+
+     STATED AND NOT PRESCRIBED, from the same measurement: plateLab +1.01%/-0.95,
+     lede1 +0.61%/-0.37, safe1 +0.59%/-0.21 and safe2 +0.58%/-0.29 — the
+     objective's argmin for the last two is EXACTLY (0,0), so they are null.
+     resendLab's two estimators disagree on b. And `didnt` regresses at +4.12%/
+     -1.70 while the objective wants the OPPOSITE sign, so it is refused, as this
+     file has refused every other didnt prescription. */
+  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.8229, sy: 0.9770, ls: -0.004,
              /* tx +0.5504 = RIGHT 1 device px. The direction was established by
                 BUILDING both: left-1 took this band 23.4138 -> 35.8642 and left
                 the residual asking for right-2, so the sign is not arguable. */
-             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: -0.0720, ty: -0.0704,
+             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, ws: 0.9731, tx: -0.0736, ty: -0.0704,
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
@@ -1132,16 +1187,16 @@ export const RUNS: Record<string, Run> = {
      eight runs above differ — but this is a judgement about matching a
      canonical set in a face that is not canonical's, and it is on the record
      for Kevin alongside the two face decisions. */
-  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.866, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.8429 },
-  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8747, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
+  help1: { ox: 56, oy: 1290, x: 169.384, top: 1320.903, size: 13.0, weight: 400, scale: 0.8602, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.2946, tx: 0, ty: 1.8429 },
+  help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8561, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.6889, tx: 0, ty: 0.9215 },
   /* 0.9136 came from round 30's 1/0.94816 = 1.05468, and the ARTEFACT that
      number produced reads 0.4% short of it — rule 92's fourth clause applied to a
      constant round 30 itself created, one round later. Local registration
      1.00398, objective 1.0040. */
-  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.9173, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: -0.4832, ty: 0.9215 },
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.8990, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, ws: 0.9686, tx: -0.4930, ty: 0.9215 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
      images) while the run ran 1.182 long — horizontal only, and the size is

@@ -52,6 +52,30 @@ const ORANGE = "var(--s5-orange)"
  * icons and the shield read 3.03 and 3.16 device px of ink across a stroke, the
  * gear 2.49.
  */
+/* MEASURED AND DELIBERATELY NOT BUILT IN ROUND 36: every anisotropic mark draws
+   its HORIZONTAL strokes about 11% thinner than its verticals, because
+   `strokeWidth={sw / sqrt(sx*sy)}` is a geometric mean and under scale(sx,sy) a
+   vertical renders at sw*sqrt(sx/sy) and a horizontal at sw*sqrt(sy/sx). One
+   scalar cannot express two axes. Measured on unclipped coverage profiles, where
+   the within-image h/v ratio is self-normalising so any halo or tone bias
+   cancels:
+
+       mark        box            canonical h/v   render h/v   R/C    predicted
+       helpMark3   66.2x67.5  2%     0.997          1.020      1.023    1.020
+       helpMark1   67.0x59.5 12.6%   1.041          0.873      0.839    0.888
+       diffMark    76.8x68.5 12.1%   1.026          0.911      0.888    0.892
+
+   helpMark3, whose box is near-isotropic, is the control: there canonical and
+   render agree. The fix is `vectorEffect="non-scaling-stroke"` with
+   `strokeWidth={sw}` — this SVG's viewport is exactly bw x bh device px against a
+   viewBox of bw x bh units, so one unit is one device px on both axes.
+
+   HELD FOR ITS OWN ROUND, on purpose. It changes the SHARED helper and therefore
+   all nine marks at once, several of which are measurement-tuned; `sw = 3.0` was
+   itself fitted against an anisotropic stroke and would need re-sweeping after
+   (rule 92's fourth clause); and the grade that raised it said plainly that it
+   had not injected `vector-effect` and proved it took, which is rule 99. Building
+   it beside three other findings would make a regression unattributable. */
 function Icon({
   name, sw = 3.0, colour = INK, children,
 }: {
@@ -323,7 +347,28 @@ export function EnvelopePencilMark() {
           interior 50%-crossing over 15+ columns). */}
       <path d="M18.96 11.5V5.928a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9.422a2 2 0 0 0 2 2h7.3" />
       <path d="m18.96 4.783-7.48 6.384a2 2 0 0 1-2 0L2 4.783" />
-      <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
+      {/* THE PENCIL IS STRETCHED 11% IN X BY THE BOX'S OWN ANISOTROPY. This mark
+          box is 76.8 x 68.5, so `Icon` applies scale(3.2000, 2.8542) — 12.1%
+          anisotropic. Round 32 re-cut the ENVELOPE's path to compensate x; the
+          pencil, whose defining feature is a 45-degree axis, never was.
+          Coverage-weighted second moments over an 8-connected component (236/250
+          px — an interior statistic, not four extreme pixels):
+
+              canonical  mass 256.02  sd_y 8.010  sd_x 7.911
+              render     mass 237.45  sd_y 8.008  sd_x 8.976
+              k_y 0.9998 EXACT      k_x 1.1347      against a box ratio of 1.1212
+
+          Thresholded extents agree independently: canonical 28 rows x 28 cols —
+          square, i.e. 45 degrees — against the render's 28 x 31. The mechanism
+          predicts the defect to 1.2%.
+          PIVOT: user x 21.219 = device col 310, the ERASER END, which already
+          lands in both plates. The two leading translates are -0.25 device px in
+          x and -0.75 in y converted through sx and sy. All of it is path-space
+          inside the fixed transform, so no MARK_BOX, no tx/ty, no sw, and nothing
+          passes through layout rounding. */}
+      <g transform="translate(-0.0781 -0.2628) translate(21.219 0) scale(0.9 1) translate(-21.219 0)">
+        <path d="M18.4 13.6a1.6 1.6 0 0 1 2.3 2.3l-5 5a2 2 0 0 1-.85.5l-2.1.62a.4.4 0 0 1-.5-.5l.62-2.1a2 2 0 0 1 .5-.85z" />
+      </g>
     </Icon>
   )
 }
@@ -489,7 +534,32 @@ export function MailClockMark() {
 
           The hands move with the dial: their pivot is the centre, so the same
           delta applies and the 3-unit/1.4-unit arms scale by 4.33/5.5. */}
-      <circle cx="18.74" cy="18.37" r="4.33" />
+      {/* AND THE ARITHMETIC ABOVE IS WRONG, WHICH IS WHY THE RING IS AN ELLIPSE.
+          `k = 15.58/7 = 2.2257` assumes the drawn outer radius is r + sw/2 = 7
+          units — but `Icon` divides sw by sqrt(sx.sy) = 2.6675, so the outer
+          radius is 5.5 + 0.5623 = 6.0623 units. k is neither sx (2.7625) nor sy
+          (2.5750), and every number derived from it inherits the error.
+          A `circle` inside a non-uniform scale draws an ellipse — the same trap
+          GearMark documents and compensates for, never applied here. Radial 50%
+          crossings on 34 rays clear of the envelope, axis-aligned ellipse least
+          squares:
+
+              canonical  ry 13.078  rx 12.868   ry/rx 1.016   rms 0.043
+              render     ry 12.641  rx 13.470   ry/rx 0.938   rms 0.075
+              rx +4.68% WIDE, ry -3.34% SHORT, centre landed
+
+          The mechanism predicts the render to 0.05 px. PIVOT: cx/cy, HELD — the
+          centre measures dy +0.187 dx -0.327, inside rule 95's per-mark frame
+          residual, so it must not be chased.
+          helpMark3's circle is the control: same construction, 2% anisotropy
+          instead of 7.3%, and it measures +1.09%/-0.33% — the same defect at one
+          seventh the size, correctly left alone.
+          VALUE NOT CLAIMED: order 1 unit of a 7.407 band. The grade rated it
+          LOW-MEDIUM because an image warp is not a faithful model here (it scales
+          the stroke with the radius) and an analytic annulus does not reproduce
+          the shipped raster in this window. Taken because the geometry is right
+          and the arithmetic error is real, not because a number was predicted. */}
+      <ellipse cx="18.74" cy="18.37" rx="4.112" ry="4.500" />
       {/* THE HANDS ARE 2 ROWS TOO TALL AND THEIR WIDTH IS ALREADY EXACT.
           Components at threshold 140, measured after the envelope narrowing so
           the two changes are not confounded:
