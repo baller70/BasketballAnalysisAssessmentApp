@@ -2495,6 +2495,40 @@ string rolling over at midnight.
     `tx`/`ty` for cases where nothing else reaches. Round 32's entire prescription
     was written this way on purpose, and 38 of 44 bands moved by exactly zero.
 
+96. **AN ARTEFACT THAT OUTLIVES THE PROCESS THAT MADE IT IS UNVERIFIED UNTIL IT
+    REPRODUCES A RECORDED NUMBER.** The container has restarted three times in
+    this session. Each time, some things survive and some do not, and the two
+    look identical from the outside: git survives, the scratchpad usually
+    survives, running servers never do, and a `.next-*` directory MAY survive —
+    sitting there looking exactly like a dist built from the current tree whether
+    or not it is one. A rollback restores git to an earlier commit while leaving
+    a NEWER dist on disk; a mid-build kill leaves a dist that is complete enough
+    to serve and wrong. Nothing about the directory tells you which.
+
+    So the recovery sequence is not "restart the server and carry on". It is:
+
+        1. `git log -1` and `git status` — establish what the tree actually IS,
+           before looking at anything derived from it.
+        2. Restart the server on a FRESH port from the surviving dist.
+        3. RE-CAPTURE and RE-MEASURE, and require the md5 and the whole-screen
+           figure to match what the ledger records. If they do not, the dist is
+           not the tree's and must be rebuilt — do not diagnose the difference,
+           rebuild.
+        4. Re-run the gates, because a gate result is also an artefact of a
+           process that is gone.
+        5. Only then re-dispatch whatever the restart killed.
+
+    Step 3 is the one that would have been skipped. It costs about ninety seconds
+    and it is the only thing standing between a stale dist and a round of
+    measurements attributed to the wrong source — which is the single worst
+    failure available in this work, because every number after it would be
+    internally consistent and wrong.
+
+    The corollary for agents: a subagent killed mid-run leaves NOTHING unless it
+    was told to write as it went. Brief long-running graders to persist findings
+    to disk incrementally rather than holding them in context, so a restart costs
+    the remainder of a run and not all of it.
+
 ### ROUND 20: every icon box was wrong, and each in its own way
 
 Grade 11 listed five marks as geometrically wrong and characterised them as
