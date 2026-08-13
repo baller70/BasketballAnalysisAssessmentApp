@@ -2879,7 +2879,19 @@ string rolling over at midnight.
     FILE it recurs in, not only in a ledger of rules — the person about to make it
     is looking at the code, not at rule 98.
 
-    **UPDATED ROUND 46: SIX OCCURRENCES.** Numbers four and five landed after the
+    **UPDATED ROUND 46: SEVEN OCCURRENCES, AND THE SEVENTH WAS A NEW MECHANISM.**
+    Number seven was not in a template literal at all — it was a commit body
+    passed through `git commit -m` with backticks in it, which bash ran as
+    COMMAND SUBSTITUTION and which silently deleted four identifiers from the
+    message. It did not fail; it produced a plausible-looking commit with holes
+    in it, caught only by reading the message back.
+
+    So the hazard is the CHARACTER and the mechanism varies — template literal
+    (TS1005/TS1443), JSX attribute, and now shell. The general control does not
+    change: **run the checker, read the artefact back.** For commit bodies that
+    means a file or a quoted heredoc, never `-m`. Add it to the list below.
+
+    **SIX OCCURRENCES IN SOURCE.** Numbers four and five landed after the
     guard existed, and number six landed with the guard visible four lines above
     the edit, written by someone who had just read it. So the honest count of
     what each half buys is now clear and it is not flattering to the guard:
