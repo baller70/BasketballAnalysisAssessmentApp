@@ -1,4 +1,4 @@
-whole screen   mean|d| 4.1305   max 255   n_over8 90670
+whole screen   mean|d| 4.1236   max 255   n_over8 90604
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
@@ -10,11 +10,11 @@ shield         8.5019    254      1277
 help2          8.1496    255      4503
 didnt          7.8059    228      3544
 wordmark       7.7849    255      2713
-helpIcon3      7.2985    255      1004
 help1          6.8700    255      3803
 safe2          6.6762    229      3498
 helpIcon2      6.3798    255       986
 helpIcon1      6.2339    254       855
+helpIcon3      6.2137    255       970
 resendLab      6.1780    214      2459
 lede2          6.1525    255      3365
 help3          5.3430    255      3336
@@ -29,10 +29,10 @@ plate          2.6238    255     10152
 resendLink     2.6163    254      3019
 resendVal      2.0483    244       941
 box4           1.6984    140      1797
-chev2          1.5480    128       117
-chev1          1.5005     84       111
 box5           1.4478     46       763
-chev3          1.3690    107       108
+chev1          1.2905     54       101
+chev2          1.2610     77        99
+chev3          1.2071     89       104
 rule1          0.5674      4         0
 hdrRule        0.4404     25         2
 rule3          0.4385      7         0
