@@ -4861,7 +4861,56 @@ grade is measuring would confound its attributions, so it waited for the gap
 rather than for permission. Its control was the 393 capture coming back
 byte-identical, and it did.
 
-### 005 AGAINST THE DEFINITION OF DONE, ITEM BY ITEM, AFTER 35 ROUNDS AND 20 GRADES
+### IS THIS CONVERGING? NO — AND THE DATA SAYS THE OPPOSITE OF WHAT I ASSUMED
+
+The recurring question behind every "should we keep grading" decision is whether
+the findings are getting smaller. They are not. Taken from the recorded sequence
+in the 005 row (per RECORDED STEP, not per round — some steps bundle two rounds,
+so this is coarser than a round-by-round series and is stated as such):
+
+    step  figure    gain        step  figure    gain
+      1   5.5871   -9.7613        8   5.3674   -0.0885
+      2   5.5735   -0.0136        9   4.8462   -0.5212
+      3   5.5538   -0.0197       10   4.6244   -0.2218
+      4   5.5016   -0.0522       11   4.5067   -0.1177
+      5   5.5012   -0.0004       12   4.3613   -0.1454
+      6   5.4704   -0.0308       13   4.3328   -0.0285
+      7   5.4559   -0.0145       14   4.2260   -0.1068
+
+    steps 2-8   mean gain 0.0314     (the period of the three floor claims)
+    steps 9-14  mean gain 0.1902     SIX TIMES LARGER
+
+**THE SCREEN GOT CLOSER TO CANONICAL AND THE FINDINGS GOT BIGGER AT THE SAME
+TIME.** That is not what an approaching floor looks like, and it is the strongest
+available evidence that steps 2-8 were not measuring an exhausted DEFECT LIST —
+they were measuring an exhausted METHOD. Every one of those rounds was a sweep
+over a parameter that was already close, which is why they returned hundredths.
+
+What changed at step 9 was not the screen. It was the brief: grades from 16 on
+were pointed at the SOURCE rather than at the bands — told to read the file as a
+suspect and to look for defects inside sentences claiming the thing was solved.
+Grades 16 through 21 then found, in order: a 1% advance printed as `0.992` in a
+sentence saying "exactly"; a constant contradicting a measurement ten lines above
+it; a whole unused degree of freedom the file's own type declares; five hairlines
+sharing one height against four recorded different ones; a rasteriser quantum;
+and a two-percent letter stretch cancelled by a word-space deficit. **Not one of
+those was found by looking harder at a pixel. All six were found by reading what
+the file claimed and checking it.**
+
+Three floor claims have been refuted on this screen. This table is why: a floor
+claim is a statement about the defect list, and every time it was made the
+evidence for it was actually a statement about the search.
+
+TWO HONEST CAVEATS. The step-9 jump coincides with the brief change AND with the
+arrival of better instruments (local sub-pixel registration, raster models of the
+marks, per-glyph regressions), so the two are confounded and I cannot separate
+them from this data. And gains cannot stay at 0.19 forever against a remaining
+4.23, most of which is now face- and asset-limited. The claim here is narrow and
+it is enough: **there is no evidence of convergence, so "we have hit the floor"
+is not currently available as a reason to stop.** The reasons to stop are Kevin's
+four decisions, not diminishing returns.
+
+### 005 AGAINST THE DEFINITION OF DONE, ITEM BY ITEM, AFTER 36 ROUNDS AND 21 GRADES
 
 The DoD is ten items and this file is 470KB. Anyone asking "is 005 done?" should
 be able to answer it without reading the whole thing, so here is each item with
@@ -4878,13 +4927,13 @@ are Kevin's.**
 | 6 | no overflow, truncation, overprinting, one-word-per-line | **FAILS — mine, one item** | reflow CLOSED in round 34 (clip 0 and no horizontal scroll at 393/375/360/320 on both DPRs, 393 capture byte-identical). The LONG-ADDRESS CLIP is still open and diagnosed: overflow is entirely right, 265.91 px of canvas sit unused to the left, and widening `lede2`'s box moves the canonical string 5.19 px because its shipped position is an overflow position |
 | 7 | reachable by a real user path AND by the harness | **HOLDS** | /signup lands here (round 5); the guide anchors were BUILT rather than repointed (round 14); the harness step is deterministic and capture step-fails are 0 every round |
 | 8 | invariants: iOS 393pt, desktop 900x1440 one sidebar | **HOLDS** | re-probed every round; desktop-leak gate 7/7 with three live self-tests since round 34 |
-| 9 | an independent grader scores it A or A+ | **FAILS** | twenty grades: **B, B, B+, B, B, B, B, B, B-, B, B, (one letter never recorded), B+, B-, B-, B-, B-, B-**. The last seven each found a real defect, and five of those seven were sitting inside a sentence in the source claiming the thing was solved |
+| 9 | an independent grader scores it A or A+ | **FAILS** | twenty-one grades, none above B+. The last EIGHT each found a real defect, and six of those eight were sitting inside a sentence in the source claiming the thing was solved. See "IS THIS CONVERGING?" above — the per-step gains went UP sixfold over that stretch |
 | 10 | committed, pushed, recorded with measurements | **HOLDS** | every round; render and report replaced in the same commit as the ledger entry quoting them, and the render re-verified byte-identical after each of three container restarts |
 
 **WHAT THAT ADDS UP TO.** Item 9 is the gate, and it will not turn on its own:
-the whole-screen figure has gone 15.3484 -> 4.3328, and the four largest windows
-left are `display` 19.302 (body face), `diffLab` 16.591, `diffMark` 10.803 and
-`digit1` 10.470, with `shield` and `gear` behind them. Items 5 and 9 are both
+the whole-screen figure has gone 15.3484 -> 4.2260, and the four largest windows
+left are `display` 19.302 (body face), `diffLab` 12.695, `digit1` 10.470 and
+`digit0` 9.461, with `shield` and `gear` behind them. Items 5 and 9 are both
 waiting on the same four decisions, and item 6's residual is a two-parameter
 change to a measurement-tuned run that is queued rather than blocked.
 
