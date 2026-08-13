@@ -267,7 +267,16 @@ export const PLATE = { x: 53.85, y: 904.78, w: 741.81, h: 111.55, r: 11 }
    number" is about the cause, not about which coordinate happens to be shared.
    x stays where it was measured. */
 export const DIFFBTN = { x: 53.77, y: 1048.14, w: 741.95, h: 111.23, r: 11 }
-export const DIVIDERS = [1208.20, 1380.49, 1486.29, 1599.45]
+/* DIVIDERS[1] WAS 0.195 DEVICE PX OFF AND ROUND 29 WROTE THE NUMBER DOWN. Its
+   crossing list contains the line `rule2 -0.182`, recorded as EVIDENCE for
+   localising a different error and then never acted on — measured-and-left-open
+   again (rule 91). Stroke centroids over cols 200..700, canonical against render:
+   hdrRule -0.025, rule1 +0.011, rule2 -0.195, rule3 +0.100, rule4 -0.071 — rule2
+   is five times the others, and the constant 1380.49 disagrees with canonical's
+   measured 1380.609 before the frame correction is even applied. Objective
+   bracketed at dy +0.30. The other three and HEADER_RULE are at their argmin
+   with gain 0.0000 and are left alone. */
+export const DIVIDERS = [1208.20, 1380.685, 1486.29, 1599.45]
 /* THE CONSTANTS IN THIS FILE ARE IN TWO DIFFERENT FRAMES, HALF A PIXEL APART,
    and the overlay's blanket `viewBox="-0.6 -0.4"` is ONE correction for all of
    them. Canonical minus the recorded constant, in the CSS/SVG frame where pixel
@@ -469,8 +478,11 @@ export const RUNS: Record<string, Run> = {
      large. A shared lever cannot express that and neither line alone reveals
      it — it is rule 57's opposite-sign signature, on a pair of runs rather
      than inside one band. lede1 9.5965 -> 5.5554, lede2 11.7684 -> 8.0204. */
-  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.908, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8429, ty: 0.9215 },
+  /* Never swept horizontally at all — the pair was solved on the VERTICAL split
+     only. Local registration 1.00225, objective 1.0023. Centred run, so the
+     pivot is `cx` and `tx` moves with the scale. */
+  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.6556, ty: 0.9215 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -636,8 +648,14 @@ export const RUNS: Record<string, Run> = {
      Bracketed both sides. +1.50 device px = +0.6911 CSS px on `ty`, which is
      inside the transform and so neither scaled by `scaleX` nor rounded by
      layout (rule 53). */
-  resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.922, ls: -0.004,
-               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: 0, ty: 1.0366 },
+  /* AND ITS OTHER AXIS. Round 30 correctly separated the POSITION error the
+     blocked body face causes here (a cap-top datum against a face whose
+     x-height/ascender is not canonical's) and fixed it, +1.50 device px. The
+     0.97% WIDTH is the same run's other axis and was left inside that same
+     "blocked by the face" sentence — rule 92(c), one layer on from where round 30
+     found it. Local registration 1.00374, objective 1.0097. */
+  resendLab: { x: 287.865, top: 730.490, size: 15.28, weight: 370, scale: 0.9309, ls: -0.004,
+               colour: "var(--s5-graphite)", dx: 2.6, dy: 10.2, tx: -0.3551, ty: 1.0366 },
   /* The value is 23% wide at an exact cap — horizontal only, 0.96 -> 0.78. */
   /* Round 3 tried 0.785/dx 4.6 on a +1.077 width reading and the band went
      2.9743 -> 8.9320. Reverted: the round-2 pair is the measured optimum and
@@ -693,8 +711,12 @@ export const RUNS: Record<string, Run> = {
      Not forced, per the standing ruling: 0.8814 of band to satisfy DoD item 2
      on one run, while the cause is a design-asset decision recorded as NEEDS
      KEVIN. Stated with its numbers instead. */
-  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.825, ls: -0.004,
-                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.3822, ty: 0,
+  /* The NEEDS KEVIN note above is a correct verdict on this run's WEIGHT, and the
+     width was never measured at all — rule 92(c). Local registration 1.01453,
+     objective 1.0175. MEDIUM CONFIDENCE, stated: the three estimators spread
+     (outer 1.0087, tiles 1.0145, metric 1.0175). Centred run: pivot is `cx`. */
+  resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, ls: -0.004,
+                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.1627, ty: 0,
                 ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
   /* White on orange, so it is measured on the BLUE plane (orange B ~2, white
@@ -707,16 +729,48 @@ export const RUNS: Record<string, Run> = {
      both score worse — so the two button labels are NOT one role and were not
      solved as one (rule 14 says solve runs that share a role jointly; it does
      not say assume two runs share one). */
-  plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 660, scale: 0.796, ls: -0.004,
-              colour: "#FFFFFF", dx: 1.8, dy: 11.2, tx: 0, ty: 0,
+  /* THE WIDTH TIE BREAKS, AND THE SHIFT WAS NEVER TIED. Grade 16 measured this
+     run's extents at 1.23% wide and its cumulative-ink quantile regression at
+     k = 1.0026, refused to prescribe on the conflict (correctly), and that
+     verdict on ONE quantity closed the file on the whole run — this was the only
+     body run on the screen that had never been nudged in either axis. Rule 92(a).
+
+     The tie is broken by measuring the estimator itself. The quantile regression
+     is mechanically sound: on a self-control it recovers 0.98479 / 0.99102 /
+     1.01100 for known warps of 0.985 / 0.991 / 1.011, to four decimals. But it is
+     weighted by per-glyph INK, and this render carries 1.2199x canonical's ink —
+     so applied to the render AT the metric optimum, on a raster both the geometry
+     and the objective call correct, it still reports k = 0.99311. That measured
+     bias is the whole disputed 0.9%. Three estimators that do not share the
+     weighting agree: matched per-glyph centroid regression 1.00988 / 1.00895 /
+     1.00973 at three thresholds, local tile registration 1.01087 over 20 tiles at
+     rms 0.61, objective argmin 1.01091.
+
+     The translation is separate and was hidden by the stretch: matched glyph
+     centroids -1.240 / -1.325 / -1.367, local registration +1.319, objective
+     +1.07 — while the run's own EDGES move oppositely (L -1.65, R +0.92), which
+     is exactly why rule 34 forbids reading a shift off the extents. Joint grid
+     bracketed on both axes, 16.0099 -> 11.0201. `tx` is about the element left,
+     hence 1.4246 CSS px for 2.4348 device px. */
+  plateLab: { x: 339.0, top: 946.0, size: 19.66, weight: 660, scale: 0.7874, ls: -0.004,
+              colour: "#FFFFFF", dx: 1.8, dy: 11.2, tx: 1.4246, ty: 0,
               ox: PLATE.x, oy: PLATE.y },
   /* "Use a different email" inside the outlined button. */
   /* Cap 1.040 over, advance 1.193 over: size 15.6 -> 15.0, scaleX -> 0.837. */
-  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.837, ls: -0.004,
+  /* 0.51% NARROW, and the tx points the wrong way. `scale: 0.837` comes from the
+     round-1 line directly above and was never re-measured in thirty rounds; the
+     tx below was then fitted by building left-1 against right-1 AT THE WRONG
+     WIDTH, and a run 0.5% narrow reads as needing a shift. That is rule 91's
+     masking in the horizontal — the build test the comment describes was real and
+     was refereeing a compensated pair. Three estimators inside 0.0003: outer
+     crossings 0.99470, local tiles 1.00514 (rms 0.703), objective argmin 1.0051
+     at dx -0.45, bracketed. 20.1557 -> 18.4513; on the warped plate the slope
+     goes +0.00514 -> -0.00004. */
+  diffLab: { x: 348.0, top: 1093.0, size: 15.0, weight: 500, scale: 0.8413, ls: -0.004,
              /* tx +0.5504 = RIGHT 1 device px. The direction was established by
                 BUILDING both: left-1 took this band 23.4138 -> 35.8642 and left
                 the residual asking for right-2, so the sign is not arguable. */
-             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: 0.5504, ty: -0.4607,
+             colour: "var(--s5-ink)", dx: 0.8, dy: 8.2, tx: -0.0720, ty: -0.4607,
              ox: DIFFBTN.x, oy: DIFFBTN.y },
   /* "DIDN'T GET THE EMAIL?" — micro-caps, cap 20.57 device px, advance 272.03. */
   /* Cap exact, advance 1.186 over — horizontal only, 0.93 -> 0.784. */
@@ -852,8 +906,12 @@ export const RUNS: Record<string, Run> = {
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 1.8429 },
   help2: { ox: 56, oy: 1392, x: 168.992, top: 1423.456, size: 13.0, weight: 400, scale: 0.8747, ls: -0.004,
            colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
-  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.9136, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: 0, ty: 0.9215 },
+  /* 0.9136 came from round 30's 1/0.94816 = 1.05468, and the ARTEFACT that
+     number produced reads 0.4% short of it — rule 92's fourth clause applied to a
+     constant round 30 itself created, one round later. Local registration
+     1.00398, objective 1.0040. */
+  help3: { ox: 56, oy: 1494, x: 170.419, top: 1531.877, size: 13.0, weight: 400, scale: 0.9173, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.6, dy: 6.8, tx: -0.4832, ty: 0.9215 },
   /* "Your account is safe" — cap 26.77 device px, no descender in the run. */
   /* Round 2: the cap matched EXACTLY on the first glyph (27 device px in both
      images) while the run ran 1.182 long — horizontal only, and the size is
@@ -872,15 +930,34 @@ export const RUNS: Record<string, Run> = {
        w640 sx0.812  13.8046             w720 sx0.812  13.4610
        w600 sx0.84   18.3687             w680 sx0.84   23.0896
      Bracketed on both axes. Canonical's heading is a BOLD, not a semibold. */
-  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 680, scale: 0.812, ls: -0.004,
-           colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0, ty: -0.4607 },
+  /* Same one-directional sweep as safe2 ("every scaleX 0.79+ is worse", from a
+     shipped 0.812). Local registration 0.99302, objective argmin 0.9960.
+     MEDIUM CONFIDENCE and stated as such: the three estimators spread here
+     (outer extents 1.0121, tiles 1.0070, metric 0.9960) and the tile rms is the
+     worst on the screen at 0.987. */
+  safe1: { x: 181.876, top: 1651.738, size: 17.4, weight: 680, scale: 0.8088, ls: -0.004,
+           colour: "var(--s5-ink)", dx: 0.8, dy: 9.0, tx: 0.4337, ty: -0.4607 },
   /* Cap 1.074 over, advance 1.354 over: size 15.2 -> 14.15, scaleX -> 0.761. */
   /* Round 2: cap 1.000, advance 1.000 — solved; 1 device px right, via tx. */
   /* Same grid, same shape of finding: 400 -> 430 at the shipped scale,
      17.7767 -> 15.1605, bracketed (460 gives 16.2958, 500 gives 17.3839, and
      every scaleX 0.79+ is worse). */
-  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 430, scale: 0.761, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: -0.4607, ty: 0.4607 },
+  /* THAT LAST CLAUSE IS THE DEFECT: the sweep only ever went UP. The argmin is
+     0.752, BELOW the shipped 0.761, in the direction it never entered — a sweep
+     over one parameter licenses a claim about that parameter, and a sweep over
+     one DIRECTION licenses even less. Local registration over 33 tiles (rms
+     0.529) gives a clean monotone ramp with no plateau, slope -0.01172; outer
+     50% crossings give 1.01004; the objective's joint argmin is k 0.9883 dx
+     +0.32, bracketed on both axes. 13.0115 -> 9.1405, the largest band gain
+     available on the screen. Verified on the warped plate: slope -0.01172 ->
+     -0.00022, intercept +0.319 -> -0.031.
+     IT IS NOT A SIZE ERROR (rule 34): the vertical is 10% out (height ratio
+     1.1020) against 1.2% horizontal, and a size error would give equal ratios.
+     The vertical excess is the blocked body face and no scaleX touches it.
+     `weight` 430 was chosen at the OLD scale and should be re-checked at the new
+     one (rule 92's fourth clause) — re-checked, not pre-emptively moved. */
+  safe2: { x: 184.667, top: 1700.763, size: 14.15, weight: 430, scale: 0.7521, ls: -0.004,
+           colour: "var(--s5-graphite)", dx: 0.6, dy: 6.9, tx: 1.0894, ty: 0.4607 },
 }
 
 function runCss(name: string, r: Run) {
@@ -1013,7 +1090,21 @@ export const MARK_BOXES: Record<
      equals its base (32.0538), so the sixth grade's recommendation to move it
      was a change with nothing to buy. Built with left-1 it went 32.0538 ->
      32.4834, which is the confirmation. */
-  diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y],
+  /* THE "NOTHING TO BUY" REFUSAL WAS MEASURED ON A SHAPE THAT NO LONGER EXISTS.
+     This file records "its shift-search optimum is already dy0 dx0 ... built with
+     left-1 it went 32.0538 -> 32.4834, which is the confirmation" — true of the
+     drawing before the `v9.3` and `h7.3` path edits took the band to 23.755.
+     Rule 91's first consequence: re-open the runs a large error was sitting
+     inside. It was also an INTEGER search against a sub-pixel optimum, and at the
+     integer point the same left-1 that once cost 0.43 now pays 2.27.
+     Envelope wall centroids, taken in rows provably clear of the flap diagonal
+     (left 1108..1119, right 1085..1091 — a window including the crossing INVERTS
+     the sign, which is a mistake I made first and the cross-check caught):
+     left +1.103, right +1.857, both the same sign, i.e. rule 34's translation
+     signature with a 1.4% width residual left over. Objective on a 0.125 grid,
+     bracketed: -0.875 gives 21.4185 from 23.7550. `dy` stays 0 — the top and
+     bottom edge centroids are +0.21/-0.16, already landed. */
+  diffMark: [242.1, 1072.7, 76.8, 68.5, DIFFBTN.x, DIFFBTN.y, -0.875, 0],
   /* 2 DEVICE px TOO TALL AND 1 px LEFT, and the two are different defects.
      Full ink extent at threshold 140, against canonical:
 
