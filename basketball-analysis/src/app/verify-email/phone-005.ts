@@ -1629,6 +1629,33 @@ export const MARK_BOXES: Record<
      HONEST COST: the box change re-weights the stroke ~3.7% through
      sqrt(sx/sy). Ink mass 1.0086/1.0476/1.0116 -> 1.0296/1.0345/1.0187 -- toward
      canonical on chev2, about 2% away on chev1 and chev3. */
+  /* ROUND 45, RULE 109: THE ASPECT OF THESE THREE BOXES IS MEASURED, ITS
+     CORRECTION IS EXACT, AND THE OBJECTIVE REFUSES IT. Recorded here so the next
+     round neither re-finds it as free money nor "corrects" it.
+     `Icon` makes a lucide `m9 18 6-6-6-6` arm's drawn slope IDENTICALLY bw/bh,
+     so the aspect is the parameter and not an approximation. Coverage-weighted
+     per-row centroid lines over six arms: render 0.9375 against the emitter's
+     own prediction 0.93694 (0.06%), canonical 0.8921 +/- 0.0083 -- ratio 1.0509.
+     A second statistic sharing no parameter, the arm centreline extrapolated to
+     the tip row and the vertex row: tip -0.261, vertex +0.283, opposite signs at
+     the two ends of one arm, so a SIZE error (rule 103) of 5.04% against the
+     slope's 5.09%, with the centre landed at +0.011.
+     THE CORRECTION IS bw 41.6 -> 39.60 WITH tx 1.8 -> 2.80 (the drawing scales
+     about bx, so the ink midpoint at user p=12 moves 12*(41.6-39.6)/24 = 1.000
+     px left and the nudge returns exactly that). Built, it lands EVERY landmark
+     it predicted: slope -> 0.8933 against a predicted 0.8925 and canonical
+     0.8956; tip -0.252 -> +0.031; vertex +0.251 -> +0.007; translation held; and
+     the arm width closes to 2.5139 against canonical's 2.5099 as a free
+     consequence -- one cause explaining both symptoms.
+     AND THE WHOLE SCREEN GOES +0.0003 (chev1 1.2326 -> 1.2952, chev2 1.2263 ->
+     1.2591, chev3 1.1838 -> 1.2354). The metric's own argmin here is bw 41.0,
+     which leaves the drawing most of the way wrong. mean|d| rewards ink OVERLAP,
+     and rotating a thin diagonal loses overlap on both arms while gaining
+     nothing a pixel grid can see. NOT SHIPPED, because rule 71 and the
+     whole-screen figure are this file's contract with itself.
+     Note also that these arms differ in ANGLE and not only in width, which is
+     why five rounds of `sw` sweeps on this mark kept finding gains that were the
+     0.248 px supersampling ladder. */
   chev1: [762.4, 1309.0, 41.6, 44.4, 56, 1290, 1.8, 0.30],
   chev2: [761.4, 1414.0, 41.6, 44.4, 56, 1392, 1.8, -0.70],
   chev3: [761.4, 1522.0, 41.6, 44.4, 56, 1494, 1.8, -0.70],
