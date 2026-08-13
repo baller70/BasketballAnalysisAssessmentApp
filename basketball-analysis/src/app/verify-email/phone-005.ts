@@ -541,8 +541,21 @@ export const RUNS: Record<string, Run> = {
      canonical's. Taking 0.850 buys 0.19 more band and leaves the cap 5.4% short in
      the OTHER direction — the same paper-over this file already declined on
      `display` (81.10/+0.80 kept over 80.63/+1.65). Cap-landing, not argmin. */
-  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, sy: 0.9815, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9490 },
+  /* lede1 IS THE ONE `sy` THAT WAS REFUTED, and it draws the threshold. Built
+     exactly as prescribed (sy 0.9815, ty 0.9490) it went 5.1769 -> 5.5955, worse
+     by 0.42 against a predicted 4.5903, and n_over8 3400 -> 3538 — worse on both
+     metrics while the other five improved on both. Reverted.
+
+     The pattern is the cap error, not the confidence rating. The five runs that
+     paid had caps 2.4% to 14% out; lede1's is 1.89%, the smallest of the six, and
+     it is the only one that lost. A real `scaleY` RE-RASTERISES the glyphs at a
+     new size — it does not resample the image the way the sweep did — so it
+     carries a hinting and stem-rendering cost that is roughly fixed while the
+     geometry gain scales with the error. Below about 2% the cost wins. Two of the
+     six were flagged MEDIUM by the grade (diffLab, lede2) and BOTH beat their
+     predictions, so the discriminator was never confidence; it was magnitude. */
+  lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9215 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
