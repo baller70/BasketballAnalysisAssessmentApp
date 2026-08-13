@@ -4524,6 +4524,42 @@ The method note worth keeping: this was found by running the sweep a rule
 DEMANDED rather than by a grader finding a third instance. Two rounds in a row
 had shipped the next instance of a class named one commit earlier.
 
+### THE SAME REFLOW DEFECT IS ON 003 AND 004, AND 003'S HAS NEVER BEEN RECORDED
+
+Measured after round 34, on the same serving dist, read-only. All three screens
+pin the canvas the same way — `.s3`, `.s4` and `.s5` each carry
+`width:393px; overflow:hidden` inside the phone media query — so the cause is
+identical and only 005 has been fixed:
+
+    screen      393        375              360               320
+    003 signin  clean   hScroll, 0 clip  hScroll, 5 CLIP   hScroll, 7 CLIP
+    004 signup  clean   hScroll, 0 clip  hScroll, 0 clip   hScroll, 9 CLIP
+    005 verify  clean   clean            clean             clean
+
+    003 @360: signin-email, signin-submit, a, button, +1
+    003 @320: signin-email, signin-password, "Show password", a, +3
+    004 @320: every field of the signup form, both reveals, the submit and a link
+
+**004's SET IS RECORDED IN `markup-gate.mjs` AND 003's IS NOT.** The gate carries
+`expectClipped` for 004 and for 005; 003 has never been enumerated, so five
+controls leaving the viewport on the sign-in screen at 360 — including the email
+field and the submit button — are not tracked by anything. 003 is marked DONE.
+
+THE FIX TRANSFERS EXACTLY and is one line per screen, now proven on 005:
+
+    @media (max-width: 392.98px){ .s3{zoom:calc(100vw / 393px)} }
+
+with the same control (the 393 capture must come back byte-identical) and the
+same stated trade (everything scales below the design width, tap targets
+included).
+
+**NOT BUILT, and that is the standing rule rather than a judgement about value.**
+One screen at a time: 005 is in progress, and touching 003 or 004 would be
+starting a second. `markup-gate.mjs` already says this in as many words about
+004 — "it is 004's defect to close; 004 is marked DONE, so it is raised in the
+ledger rather than fixed mid-round on another screen." Raised here for both, with
+003's set enumerated so that when it is picked up the measurement already exists.
+
 ### ROUND 34: THE REFLOW DEFECT IS CLOSED, AND THE CAPTURE IS BYTE-IDENTICAL
 
 Built on the diagnosis below. DoD item 6 held at every width for the first time
