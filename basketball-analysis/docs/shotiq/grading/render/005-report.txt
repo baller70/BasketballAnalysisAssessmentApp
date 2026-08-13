@@ -1,32 +1,32 @@
-whole screen   mean|d| 4.5067   max 255   n_over8 93525
+whole screen   mean|d| 4.3613   max 255   n_over8 92453
   estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
 
 band          mean|d|    max   n_over8
 --------------------------------------
 display       19.3019    255     19291
 help2         10.3449    255      4820
-safe1          9.7149    255      3737
 shield         9.3281    254      1304
-gear           8.8566    255       891
-safe2          8.8160    229      3839
-lede2          8.0204    255      3698
+safe1          8.7981    255      3580
+gear           8.6972    255       887
 didnt          7.8059    228      3544
 help1          7.7874    255      3933
 wordmark       7.7849    255      2713
 helpIcon3      7.5455    255      1028
 helpIcon2      7.4074    255      1077
 helpIcon1      6.8633    254       887
+safe2          6.6762    229      3498
 help3          6.6128    255      3520
 resendLab      6.5762    214      2480
+lede2          6.5651    255      3452
 lede1          5.1769    208      3400
-diffBtn        4.6583    255      9459
+diffBtn        4.4780    255      9342
 box1           3.6245    244      1677
 back           3.5029    234       269
 box2           3.4711    254      1377
 box3           3.4268    249      1578
-resendLink     3.3690    254      3209
-plate          2.9710    255     10412
 box0           2.9026    255      1231
+plate          2.7670    255     10286
+resendLink     2.7422    254      3128
 resendVal      2.2172    244       945
 box4           2.0546    140      1877
 chev2          1.5480    128       117
@@ -44,10 +44,10 @@ part of the table; a label inside a solved box is diluted by the box's
 area, so its own error is only visible here (rule 57).
 run          mean|d|    max   n_over8
 -------------------------------------
-diffLab      18.1628    255      3022
-plateLab     10.8933    255      4632
+diffLab      16.5906    255      2905
 diffMark     10.8033    255      1272
 digit1       10.4700    244       716
+plateLab      9.5243    255      4506
 digit0        9.4609    255       614
 digit2        8.7136    254       561
 digit3        8.2768    249       504
