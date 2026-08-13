@@ -479,10 +479,16 @@ export const RUNS: Record<string, Run> = {
      it — it is rule 57's opposite-sign signature, on a pair of runs rather
      than inside one band. lede1 9.5965 -> 5.5554, lede2 11.7684 -> 8.0204. */
   /* Never swept horizontally at all — the pair was solved on the VERTICAL split
-     only. Local registration 1.00225, objective 1.0023. Centred run, so the
-     pivot is `cx` and `tx` moves with the scale. */
+     only. Local registration 1.00225, objective 1.0023.
+     THE FIRST BUILD OF THIS WAS REFUTED AND THE REASON IS STRUCTURAL — see the
+     note on `runCss` below. For a CENTRED run the emitted box is `width: w/scale`
+     with `text-align:center`, so the ink CENTRE is invariant under `scale` and the
+     pivot is `cx`, not the element left. Grade 17's tx conversion assumed the
+     element left, and the two runs it got wrong are exactly the two centred runs
+     in its list. `tx` here is restored to the same DEVICE shift the old value
+     encoded: -1.8429 x 0.908/0.9101. */
   lede1: { cx: 429.352, top: 402.412, size: 15.2, weight: 400, scale: 0.9101, ls: -0.004,
-           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.6556, ty: 0.9215 },
+           colour: "var(--s5-graphite)", dx: 0, dy: 8.9, width: 348.3, tx: -1.8386, ty: 0.9215 },
   /* The address, semibold and ink rather than graphite (G/R 0.9999, B/R 0.9988
      against lede1's 0.9882 / 0.9536 — two different roles on two lines of one
      sentence, which is why they are two runs and not one wrapped paragraph). */
@@ -715,8 +721,10 @@ export const RUNS: Record<string, Run> = {
      width was never measured at all — rule 92(c). Local registration 1.01453,
      objective 1.0175. MEDIUM CONFIDENCE, stated: the three estimators spread
      (outer 1.0087, tiles 1.0145, metric 1.0175). Centred run: pivot is `cx`. */
+  /* Same correction as lede1: centred run, pivot is `cx`, tx restored to the same
+     device shift (-1.3822 x 0.825/0.8394). */
   resendLink: { cx: 425.940, top: 810.824, size: 15.9, weight: 500, scale: 0.8394, ls: -0.004,
-                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.1627, ty: 0,
+                colour: "var(--s5-orange)", dx: 0, dy: 9.2, width: 174.9, tx: -1.3585, ty: 0,
                 ox: 330, oy: 806 },
   /* "Open email app" on the plate — white on orange. */
   /* White on orange, so it is measured on the BLUE plane (orange B ~2, white

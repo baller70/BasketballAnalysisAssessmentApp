@@ -100,27 +100,32 @@ export function BackMark() {
 }
 
 /** lucide `mail`, white on the orange plate. Measured ink 241..301 x 939..984. */
-/* THE FLAP V IS ~2 DEVICE PX TOO SHALLOW, and it is the larger half of grade 17's
-   finding 7. Arm centroids per row against canonical: at row 950 the left arm is
-   -2.82 and the right +2.00, at 954 -2.67/+3.29, at 958 -0.80/+1.69, and by 962
-   the signs have flipped to +0.84/-0.22 — one parameter explains all of it, a V
-   whose arms splay wider at the top and converge on the same endpoints. The flap
-   region (rows 946..972, cols 246..294) carries mean|d| 19.49 against the
-   window's 12.02. Descent 5.727 -> 6.48 is 2.0 device px at sy = 63.7/24 = 2.654.
+/* THE FLAP DEEPENING WAS BUILT AND REFUTED — rule 80, and it is kept here as a
+   measured negative rather than deleted. Grade 17 measured the flap V as ~2
+   device px too shallow from per-row arm centroids (-2.82/+2.00 at row 950,
+   -2.67/+3.29 at 954, -0.80/+1.69 at 958, flipping to +0.84/-0.22 by 962) and
+   the flap region carrying mean|d| 19.49 against the window's 12.02. Descent
+   5.727 -> 6.48 is 2.0 device px at sy = 63.7/24 = 2.654. Built exactly as
+   prescribed, plateMark went 12.0203 -> 13.9764: WORSE BY 1.96, the largest
+   refutation on this screen since round 14.
 
-   THE BOX HALF OF THAT FINDING IS DELIBERATELY NOT BUILT HERE. The same
-   arithmetic says the walls draw at 20 x 69.6/24 = 58.00 against canonical's
-   56.754 and the height at 16 x 63.7/24 = 42.47 against 41.61 — and the
-   mechanism predicts this render to 0.03 px, exactly as it did for helpMark1
-   (55.83 predicted, 55.83 measured) and helpMark2, where it paid 4.0 and 4.8.
-   But rule 90 has refused three box corrections on this screen, and the grade
-   that raised this one recommended building the flap alone first and
-   re-measuring. That is what this is. */
+   The diagnosis is not thereby refuted — the arm centroids are what they are.
+   What is refuted is that the descent parameter alone reaches it, and the reason
+   is in the same finding's other half: the BOX is 1.21 px wide and 0.80 px tall
+   by the `Icon` arithmetic (walls at 20 x 69.6/24 = 58.00 against canonical's
+   56.754, height 16 x 63.7/24 = 42.47 against 41.61), so the arms are drawn on a
+   frame that is already too wide. Deepening a V inside an oversized frame moves
+   its arms further from canonical's, not closer. That makes the box the
+   PREREQUISITE, not the optional half — the opposite of the order the grade
+   recommended and I followed. Rule 91 again, one layer down: the flap was sitting
+   underneath the box.
+
+   Left at lucide's own 5.727 until the box is measured and decided. */
 export function EnvelopeMark() {
   return (
     <Icon name="plateMark" sw={3.0} colour="#FFFFFF">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-8.991 6.48a2 2 0 0 1-2.009 0L2 7" />
+      <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
     </Icon>
   )
 }
