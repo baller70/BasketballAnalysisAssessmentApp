@@ -3539,12 +3539,15 @@ struct AnalysisResultOverviewView: View { // 038
             VStack(spacing: 0) {
                 AnalysisTopBar()
                 GeometryReader { pageGeo in
+                    let screenWidth = min(pageGeo.size.width, UIScreen.main.bounds.width)
+                    let contentWidth = max(0, screenWidth - 40)
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
                             PlayerHeader(name: overviewChrome.playerName,
                                          subtitle: overviewChrome.subtitle,
                                          streak: overviewChrome.streak,
                                          points: overviewChrome.points)
+                            .frame(width: screenWidth, alignment: .topLeading)
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 24) {
                                     ForEach(AnalysisResultTab.allCases, id: \.self) { tab in
@@ -3561,10 +3564,10 @@ struct AnalysisResultOverviewView: View { // 038
                                 analysisTabContent(p, hasLoadedAnalysis: hasLoadedAnalysis)
                                 Spacer(minLength: 24)
                             }
+                            .frame(width: contentWidth, alignment: .leading)
                             .padding(.horizontal, 20)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(width: pageGeo.size.width, alignment: .leading)
+                        .frame(width: screenWidth, alignment: .leading)
                     }
                 }
             }
