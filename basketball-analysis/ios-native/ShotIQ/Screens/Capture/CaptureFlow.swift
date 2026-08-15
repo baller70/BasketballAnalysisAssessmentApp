@@ -715,26 +715,37 @@ struct AnalyzeHubView: View {       // 021
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
-                    HStack(alignment: .top, spacing: 10) {
-                        NavigationLink { LiveCameraSetupView() } label: {
-                            hubOption("dot.radiowaves.left.and.right", "Live camera", "Record a new shot in real time.")
+                    GeometryReader { proxy in
+                        let spacing: CGFloat = 10
+                        let cardWidth = (proxy.size.width - spacing * 2) / 3
+                        HStack(alignment: .top, spacing: spacing) {
+                            NavigationLink { LiveCameraSetupView() } label: {
+                                hubOption("dot.radiowaves.left.and.right", "Live camera", "Record a new shot in real time.")
+                                    .frame(width: cardWidth, height: 150)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening live camera", "Set up the phone before recording.")
+                            })
+                            NavigationLink { VideoUploadView() } label: {
+                                hubOption("film", "Upload video", "Analyze footage from your device.")
+                                    .frame(width: cardWidth, height: 150)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening video upload", "Choose a real shot video.")
+                            })
+                            NavigationLink { PhotoUploadSourceView() } label: {
+                                hubOption("photo", "Upload image", "Analyze a single frame or photo.")
+                                    .frame(width: cardWidth, height: 150)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening image upload", "Choose or capture a real shot photo.")
+                            })
                         }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening live camera", "Set up the phone before recording.")
-                        })
-                        NavigationLink { VideoUploadView() } label: {
-                            hubOption("film", "Upload video", "Analyze footage from your device.")
-                        }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening video upload", "Choose a real shot video.")
-                        })
-                        NavigationLink { PhotoUploadSourceView() } label: {
-                            hubOption("photo", "Upload image", "Analyze a single frame or photo.")
-                        }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening image upload", "Choose or capture a real shot photo.")
-                        })
                     }
+                    .frame(height: 150)
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     NavigationLink { CaptureGuideView() } label: {
@@ -831,6 +842,8 @@ struct AnalyzeHubView: View {       // 021
                         .padding(.horizontal, 20)
                     }
                     .padding(.top, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
 
                     HStack(alignment: .center, spacing: 14) {
                         ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "point.topleft.down.curvedto.point.bottomright.up"), size: 44)
@@ -927,8 +940,9 @@ struct AnalyzeHubView: View {       // 021
                 .lineLimit(2).minimumScaleFactor(0.8)
         }
         .padding(.vertical, 16).padding(.horizontal, 6)
-        .frame(maxWidth: .infinity, minHeight: 140, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .contentShape(Rectangle())
     }
 }
 
@@ -2626,11 +2640,6 @@ private struct PickedVideoThumbnailView: View {
                         .minimumScaleFactor(0.65)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "play.fill")
-                    .font(.system(size: compact ? 12 : 15, weight: .bold))
-                    .foregroundStyle(.black)
-                    .frame(width: compact ? 30 : 38, height: compact ? 30 : 38)
-                    .background(ShotIQColor.shotiqOrange, in: Circle())
             }
             .padding(12)
         }
@@ -2738,45 +2747,6 @@ struct VideoUploadView: View {      // 026
                     Text("Choose to upload images or a video of your shooting form for comprehensive biomechanical analysis.")
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
-
-                    SectionLabel(text: "SELECT MEDIA TYPE")
-                        .padding(.horizontal, 20).padding(.top, 22)
-
-                    Menu {
-                        Button {
-                            route = .imageUpload
-                            toast = .info("Opening image upload", "Upload 3-7 photos or choose one real shot image.")
-                        } label: {
-                            Label("Images - Upload 3-7 photos", systemImage: "photo.stack")
-                        }
-                        Button {
-                            toast = .info("Video selected", "Use Browse video or the upload area to choose a shooting clip.")
-                        } label: {
-                            Label("Video - Upload a 10-second video", systemImage: "video")
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: "video")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(ShotIQColor.shotiqOrange)
-                                .frame(width: 42, height: 42)
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.55)))
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Video").shotiqBody(17, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                Text("Upload a 10-second video").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(ShotIQColor.graphite)
-                        }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 8))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20).padding(.top, 8)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Video Requirements", systemImage: "exclamationmark.triangle")
@@ -3037,6 +3007,10 @@ struct VideoUploadView: View {      // 026
         pick = nil
         if let clip {
             selectedVideo = clip
+            app.rememberShootingMedia(url: clip.url,
+                                      kind: "video",
+                                      title: "Latest Uploaded Video",
+                                      durationText: clip.durationText)
             toast = .success("Video ready", "Tap Analyze My Shooting Form when you're ready.")
         } else {
             videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
@@ -5175,6 +5149,8 @@ struct CaptureReviewView: View {    // 035
                         .padding(.horizontal, 20)
                     }
                     .padding(.top, 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
 
                     HStack {
                         SectionLabel(text: selectedFilterLabel.uppercased())

@@ -284,7 +284,7 @@ struct SectionLabel: View {
             .kerning(ShotIQType.sectionTracking)
             .foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(0.62)
     }
 }
 
@@ -394,6 +394,8 @@ struct HeaderStat: View {
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
         }
     }
 }
@@ -468,20 +470,55 @@ struct PlayerHeader: View {
     var subtitle: String = "Right-handed • Advanced"
     var streak: String = "6"
     var points: String = "2,840"
+    var statLinksEnabled: Bool = true
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(name.uppercased()).shotiqDisplay(38)   // 38 x 0.86 = 32.7pt vs h1 32.3
-                Text(subtitle).shotiqBody(ShotIQType.body)
-                    .foregroundStyle(ShotIQColor.graphite)
+        GeometryReader { geo in
+            let availableWidth = max(0, geo.size.width - 40)
+            let statWidth = min(58, max(44, availableWidth * 0.15))
+            HStack(alignment: .center, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(name.uppercased())
+                        .shotiqDisplay(38)   // 38 x 0.86 = 32.7pt vs h1 32.3
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    Text(subtitle)
+                        .shotiqBody(ShotIQType.body)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
+
+                if statLinksEnabled {
+                    NavigationLink { WorkoutCalendarView() } label: {
+                        HeaderStat(icon: "film", value: streak, label: "DAY STREAK")
+                            .frame(width: statWidth)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("home-day-streak-link")
+                } else {
+                    HeaderStat(icon: "film", value: streak, label: "DAY STREAK")
+                        .frame(width: statWidth)
+                }
+                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                if statLinksEnabled {
+                    NavigationLink { PointsSystemView() } label: {
+                        HeaderStat(icon: "circle.hexagongrid", value: points, label: "POINTS")
+                            .frame(width: statWidth)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("home-points-link")
+                } else {
+                    HeaderStat(icon: "circle.hexagongrid", value: points, label: "POINTS")
+                        .frame(width: statWidth)
+                }
             }
-            Spacer(minLength: 8)
-            HeaderStat(icon: "film", value: streak, label: "DAY STREAK")
-            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
-            HeaderStat(icon: "circle.hexagongrid", value: points, label: "POINTS")
+            .frame(width: availableWidth, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.top, 14)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
+        .frame(height: 90)
     }
 }
 
@@ -841,30 +878,89 @@ struct ScoreBar: View {
 struct PhaseStrip: View {
     var active = "RELEASE"
     var body: some View {
-        HStack(alignment: .top) {
-            ForEach(ShotPhase.allCases, id: \.self) { phase in
-                let on = ShotPhase(label: active) == phase
-                VStack(spacing: 4) {
-                    PhaseGlyph(phase: phase, active: on, size: 44)
-                    // "FOLLOW-THROUGH" is the longest label in the app and the
-                    // rail gives it ~64pt. On the standard SF width at 0.5
-                    // tracking it needed ~92pt, so it bottomed out on the 0.7
-                    // scale floor and *still* ellipsized to "FOLLOW-THRO…" on
-                    // 019/031/034/043/049/052/055/066. The condensed width plus
-                    // the reduced tracking brings it inside the cell; canonical
-                    // shrinks that one cell the same way (55.7pt at a 6.45pt
-                    // cap while SETUP stays full size).
-                    Text(phase.title)
-                        .shotiqMicroCaps(weight: on ? .bold : .regular,
-                                         tracking: ShotIQType.microTracking - 0.05)
-                        .foregroundStyle(on ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                    if on {
-                        Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 3)
+        AdaptivePhaseRail(active: active)
+    }
+}
+
+struct AdaptivePhaseRail: View {
+    var active = "RELEASE"
+    var action: ((String) -> Void)? = nil
+
+    var body: some View {
+        GeometryReader { geo in
+            let cellWidth = max(48, geo.size.width / CGFloat(ShotPhase.allCases.count))
+            let thumbWidth = min(72, max(52, cellWidth - 10))
+            let thumbHeight = max(36, thumbWidth * 0.72)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(ShotPhase.allCases, id: \.self) { phase in
+                    let on = ShotPhase(label: active) == phase
+                    Button {
+                        action?(phase.title)
+                    } label: {
+                        VStack(spacing: 4) {
+                            PhasePhotoThumbnail(phase: phase,
+                                                active: on,
+                                                width: thumbWidth,
+                                                height: thumbHeight,
+                                                cornerRadius: 6)
+                            Text(phase.title)
+                                .shotiqBody(8, weight: on ? .bold : .semibold)
+                                .kerning(0.25)
+                                .foregroundStyle(on ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+                                .minimumScaleFactor(0.65)
+                                .frame(height: 24)
+                            Rectangle()
+                                .fill(on ? ShotIQColor.shotiqOrange : .clear)
+                                .frame(width: min(34, cellWidth - 12), height: 3)
+                        }
+                        .frame(width: cellWidth)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .disabled(action == nil)
+                    .accessibilityLabel("Jump to \(phase.title)")
                 }
-                .frame(maxWidth: .infinity)
             }
+            .frame(width: geo.size.width, alignment: .leading)
         }
+        .frame(height: 98)
+    }
+}
+
+struct PhasePhotoThumbnail: View {
+    var phase: ShotPhase
+    var active = false
+    var width: CGFloat = 62
+    var height: CGFloat = 46
+    var cornerRadius: CGFloat = 5
+
+    var body: some View {
+        CanonicalPhoto(Self.assetKey(for: phase),
+                       width: width,
+                       height: height,
+                       cornerRadius: cornerRadius,
+                       alignment: Self.alignment(for: phase))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(active ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
+                            lineWidth: active ? 2 : 1)
+            )
+    }
+
+    static func assetKey(for phase: ShotPhase) -> String {
+        switch phase {
+        case .setup: return "shotiq-phase-thumb-setup"
+        case .load: return "shotiq-phase-thumb-load"
+        case .rise: return "shotiq-phase-thumb-rise"
+        case .release: return "shotiq-phase-thumb-release"
+        case .follow: return "shotiq-phase-thumb-follow"
+        }
+    }
+
+    private static func alignment(for phase: ShotPhase) -> Alignment {
+        .center
     }
 }
 
@@ -920,7 +1016,13 @@ struct CanonicalScreen<Content: View>: View {
     var body: some View {
         ZStack(alignment: .top) {
             ShotIQColor.paper.ignoresSafeArea()
-            content
+            GeometryReader { proxy in
+                let screenWidth = min(proxy.size.width, UIScreen.main.bounds.width)
+                content
+                    .frame(width: screenWidth, alignment: .topLeading)
+                    .clipped()
+                    .frame(width: proxy.size.width, alignment: .topLeading)
+            }
             if UITestHooks.active {
                 Color.clear
                     .frame(width: 1, height: 1)
@@ -991,70 +1093,707 @@ struct CanonicalScreen<Content: View>: View {
     }
 }
 
-// MARK: - Bottom tab bar (canonical 5-tab layout)
+// MARK: - Bottom tab bar
 
 enum RootTab: String, CaseIterable {
-    // Canonical tab labels are single short words (018/054/066: Home,
-    // Capture, Train, Progress, Profile) so nothing ever wraps.
-    case home = "Home", analyze = "Capture", training = "Train", progress = "Progress", profile = "Profile"
-    /// Canonical draws five unrelated bespoke marks here — a framing reticle, a
-    /// node graph, a rail, a rising node arc, and the player's initials.
+    case home = "Home"
+    case analyze = "Capture"
+    case training = "My Drills"
+    case progress = "Progress"
+    case elite = "Elite"
+    case media = "My Media"
+    case goals = "Goals"
+    case profile = "Profile"
+
     var navMark: NavMark? {
         switch self {
-        case .home: .home; case .analyze: .capture; case .training: .train
-        case .progress: .progress; case .profile: nil
+        case .home: .home
+        case .analyze: .capture
+        case .training: .train
+        case .progress: .progress
+        case .elite, .media, .goals, .profile: nil
         }
     }
 }
 
 struct ShotIQTabBar: View {
     @Binding var tab: RootTab
-    @EnvironmentObject private var app: AppState
-    @State private var toast: ShotIQToast?
+    private var visibleTabs: [RootTab] {
+        RootTab.allCases.filter { $0 != .progress && $0 != .goals && $0 != .profile }
+    }
+
     var body: some View {
-        HStack {
-            ForEach(RootTab.allCases, id: \.self) { t in
-                Button {
-                    if tab == t {
-                        toast = .info("\(t.rawValue) is open", "You are already on this tab.")
-                    } else {
-                        tab = t
-                        toast = .success("Opened \(t.rawValue)", tabMessage(for: t))
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(visibleTabs, id: \.self) { t in
+                    ShotIQTabButton(tab: t, isActive: tab == t) {
+                        if tab != t { tab = t }
                     }
-                } label: {
-                    VStack(spacing: 5) {
-                        if let mark = t.navMark {
-                            NavGlyph(mark: mark, size: 21, active: tab == t)
-                        } else {
-                            InitialsMark(initials: shotiqInitials(app.user), size: 21, active: tab == t)
-                        }
-                        Text(t.rawValue)
-                            .shotiqBody(10, weight: tab == t ? .bold : .regular)
-                            .lineLimit(1)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .foregroundStyle(tab == t ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                 }
-                // Explicitly plain: the iOS 26 default button treatment washes
-                // buttons with the app tint — the salmon capsules on device.
-                .buttonStyle(.plain)
-                .accessibilityLabel(t.rawValue)
-                .accessibilityIdentifier("tab-\(t.rawValue.lowercased())")
             }
+            .padding(.horizontal, 8)
         }
         .padding(.top, 10).padding(.bottom, 22)
         .background(ShotIQColor.paper)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
-        .shotiqToast($toast)
+    }
+}
+
+private struct ShotIQTabButton: View {
+    let tab: RootTab
+    let isActive: Bool
+    let action: () -> Void
+    @EnvironmentObject private var app: AppState
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                tabGlyph
+                Text(tab.rawValue)
+                    .shotiqBody(10, weight: isActive ? .bold : .regular)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(width: 70)
+            .frame(minHeight: 44)
+            .foregroundStyle(isActive ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+        }
+        // Explicitly plain: the iOS 26 default button treatment washes
+        // buttons with the app tint — the salmon capsules on device.
+        .buttonStyle(.plain)
+        .accessibilityLabel(tab.rawValue)
+        .accessibilityIdentifier("tab-\(tab.rawValue.lowercased())")
     }
 
-    private func tabMessage(for tab: RootTab) -> String {
-        switch tab {
-        case .home: return "Dashboard, latest analysis, and next actions."
-        case .analyze: return "Capture, upload, or review shot media."
-        case .training: return "Drills, workouts, and shot tracking."
-        case .progress: return "Analytics, goals, and trends."
-        case .profile: return "Profile, media, settings, and sharing."
+    @ViewBuilder private var tabGlyph: some View {
+        if let mark = tab.navMark {
+            NavGlyph(mark: mark, size: 21, active: isActive)
+        } else {
+            switch tab {
+            case .elite:
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.2"),
+                                         size: 21,
+                                         label: nil)
+            case .media:
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "photo.stack"),
+                                         size: 21,
+                                         label: nil)
+            case .goals:
+                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "target"),
+                                         size: 21,
+                                         label: nil)
+            case .profile:
+                InitialsMark(initials: shotiqInitials(app.user), size: 21, active: isActive)
+            case .home, .analyze, .training, .progress:
+                EmptyView()
+            }
         }
+    }
+}
+
+struct ShotIQShareMetric: Identifiable {
+    let id = UUID()
+    var value: String
+    var label: String
+}
+
+struct ShotIQSharePayload: Identifiable {
+    let id = UUID()
+    var title: String = "SHARE SHOTIQ"
+    var subtitle: String = "Share this ShotIQ card with your network."
+    var eyebrow: String = "SHOTIQ ANALYSIS"
+    var headline: String = "ShotIQ"
+    var subheadline: String = "AI shooting analysis"
+    var primaryValue: String = "82"
+    var primaryLabel: String = "FORM SCORE"
+    var secondaryValue: String = "62.5%"
+    var secondaryLabel: String = "MAKE %"
+    var accentLabel: String = "GOOD"
+    var metrics: [ShotIQShareMetric] = []
+    var linkText: String = "shotiq.app"
+    var image: UIImage? = nil
+    var shareText: String
+
+    static func simple(title: String,
+                       headline: String,
+                       subheadline: String,
+                       primaryValue: String,
+                       primaryLabel: String,
+                       secondaryValue: String = "",
+                       secondaryLabel: String = "",
+                       accentLabel: String = "SHOTIQ",
+                       metrics: [ShotIQShareMetric] = [],
+                       image: UIImage? = nil,
+                       shareText: String) -> ShotIQSharePayload {
+        ShotIQSharePayload(title: title,
+                           subtitle: "Share this ShotIQ card with your network.",
+                           eyebrow: "SHOTIQ",
+                           headline: headline,
+                           subheadline: subheadline,
+                           primaryValue: primaryValue,
+                           primaryLabel: primaryLabel,
+                           secondaryValue: secondaryValue,
+                           secondaryLabel: secondaryLabel,
+                           accentLabel: accentLabel,
+                           metrics: metrics,
+                           image: image,
+                           shareText: shareText)
+    }
+}
+
+struct ShotIQShareButton<Label: View>: View {
+    var payload: ShotIQSharePayload
+    private let label: () -> Label
+    @State private var showShareDrawer = false
+
+    init(payload: ShotIQSharePayload, @ViewBuilder label: @escaping () -> Label) {
+        self.payload = payload
+        self.label = label
+    }
+
+    var body: some View {
+        Button {
+            showShareDrawer = true
+        } label: {
+            label()
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showShareDrawer) {
+            ShotIQShareDrawer(payload: payload)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .modifier(CanonicalTypeScale())
+        }
+    }
+}
+
+struct ShotIQShareDrawer: View {
+    let payload: ShotIQSharePayload
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+    @State private var saved = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(payload.title.uppercased())
+                                .shotiqDisplay(44)
+                                .foregroundStyle(ShotIQColor.ink)
+                            Text(payload.subtitle)
+                                .shotiqBody(14)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer(minLength: 12)
+                        Button { dismiss() } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundStyle(ShotIQColor.ink)
+                                .frame(width: 58, height: 58)
+                                .background(ShotIQColor.warmCanvas, in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Close share")
+                    }
+                    ShotIQSharePreviewCard(payload: payload)
+                        .shadow(color: .black.opacity(0.08), radius: 12, y: 5)
+                    VStack(spacing: 8) {
+                        shareRow(icon: "link", title: copied ? "Copied link" : "Copy link") {
+                            UIPasteboard.general.string = payload.shareText
+                            withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                                copied = true
+                            }
+                        }
+                        shareRow(icon: "message.fill", title: "Messages") { shareCard() }
+                        shareRow(icon: "envelope.fill", title: "Mail") { shareCard() }
+                        shareRow(icon: saved ? "checkmark.circle.fill" : "arrow.down.to.line", title: saved ? "Saved image" : "Save image") {
+                            saveCard()
+                        }
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 22)
+                .padding(.bottom, 18)
+            }
+            VStack(spacing: 12) {
+                Button { shareCard() } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("SHARE").shotiqDisplay(25)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(.plain)
+                Button { dismiss() } label: {
+                    Text("CANCEL").shotiqDisplay(18)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 12)
+            .padding(.bottom, 18)
+            .background(ShotIQColor.paper)
+        }
+        .background(ShotIQColor.paper)
+    }
+
+    private func shareRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .frame(width: 28)
+                Text(title).shotiqBody(15, weight: .medium)
+                    .foregroundStyle(ShotIQColor.ink)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            .frame(height: 52)
+            .padding(.horizontal, 14)
+            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        }
+        .buttonStyle(.plain)
+    }
+
+    @MainActor
+    private func shareCard() {
+        if let image = payload.image ?? ShotIQShareCardRenderer.render(payload: payload) {
+            ShotIQSharePresenter.share([image, payload.shareText])
+        } else {
+            ShotIQSharePresenter.share([payload.shareText])
+        }
+    }
+
+    @MainActor
+    private func saveCard() {
+        guard let image = payload.image ?? ShotIQShareCardRenderer.render(payload: payload) else { return }
+        Task {
+            do {
+                try await ShotIQPhotoSaver.savePNG(image, filename: "ShotIQ-share-card.png")
+                await MainActor.run { saved = true }
+            } catch {
+                await MainActor.run { saved = false }
+            }
+        }
+    }
+}
+
+struct ShotIQSharePreviewCard: View {
+    let payload: ShotIQSharePayload
+
+    private var visibleMetrics: [ShotIQShareMetric] {
+        let base = payload.metrics
+        if !payload.secondaryValue.isEmpty {
+            return [ShotIQShareMetric(value: payload.secondaryValue, label: payload.secondaryLabel)] + base
+        }
+        return base
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            shareBrandHeader
+            shareScoreBand
+            shareFeatureBlock
+            shareMetricTable
+            shareFooter
+        }
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.45), lineWidth: 1.4))
+    }
+
+    private var shareBrandHeader: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 0) {
+                Text("SHOT").shotiqCondensed(31, weight: .black)
+                    .foregroundStyle(ShotIQColor.ink)
+                Text("IQ").shotiqCondensed(31, weight: .black)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+            }
+            Text(payload.eyebrow.uppercased())
+                .shotiqBody(9, weight: .black)
+                .kerning(0.7)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+    }
+
+    private var shareScoreBand: some View {
+        HStack(spacing: 0) {
+            VStack(spacing: 2) {
+                Text(payload.primaryValue)
+                    .font(.custom("Tungsten-Medium", size: 58))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.64)
+                Text(payload.primaryLabel.uppercased())
+                    .shotiqBody(8.5, weight: .black)
+                    .kerning(0.5)
+                    .foregroundStyle(.white.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity)
+
+            Rectangle().fill(Color.white.opacity(0.35)).frame(width: 1, height: 58)
+
+            VStack(spacing: 3) {
+                Text(payload.accentLabel.uppercased())
+                    .shotiqBody(12, weight: .black)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                Text("SHOTIQ")
+                    .shotiqBody(8, weight: .black)
+                    .kerning(0.6)
+                    .foregroundStyle(.white.opacity(0.72))
+            }
+            .frame(maxWidth: .infinity)
+
+            Rectangle().fill(Color.white.opacity(0.35)).frame(width: 1, height: 58)
+
+            VStack(spacing: 2) {
+                Text(payload.secondaryValue.isEmpty ? "LIVE" : payload.secondaryValue)
+                    .font(.custom("Tungsten-Medium", size: 42))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.64)
+                Text((payload.secondaryLabel.isEmpty ? "ANALYSIS" : payload.secondaryLabel).uppercased())
+                    .shotiqBody(8.5, weight: .black)
+                    .kerning(0.5)
+                    .foregroundStyle(.white.opacity(0.82))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 10)
+        .background(ShotIQColor.ink)
+    }
+
+    private var shareFeatureBlock: some View {
+        HStack(alignment: .center, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(ShotIQColor.warmCanvas)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                if let image = payload.image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 86, height: 86)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-pose-shooter",
+                                             size: 58,
+                                             label: nil)
+                        .foregroundStyle(ShotIQColor.ink)
+                    Circle()
+                        .stroke(ShotIQColor.shotiqOrange, lineWidth: 2)
+                        .frame(width: 42, height: 42)
+                        .offset(x: 20, y: -18)
+                }
+            }
+            .frame(width: 86, height: 86)
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text(payload.headline.uppercased())
+                    .shotiqDisplay(31)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.62)
+                Text(payload.subheadline)
+                    .shotiqBody(12, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(2)
+                Text("SHAREABLE SHOTIQ CARD")
+                    .shotiqBody(9, weight: .black)
+                    .kerning(0.6)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+    }
+
+    private var shareMetricTable: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(visibleMetrics.prefix(6))) { metric in
+                shareMetricRow(metric)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func shareMetricRow(_ metric: ShotIQShareMetric) -> some View {
+        let parts = metric.value.components(separatedBy: " / ")
+        if parts.count == 2 {
+            HStack(alignment: .center) {
+                metricValue(parts[0], color: ShotIQColor.ink, alignment: .leading)
+                Text(metric.label.uppercased())
+                    .shotiqDisplay(18)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+                    .frame(maxWidth: .infinity)
+                metricValue(parts[1], color: ShotIQColor.shotiqOrange, alignment: .trailing)
+            }
+            .padding(.horizontal, 18)
+            .frame(height: 52)
+            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+        } else {
+            HStack(alignment: .center, spacing: 12) {
+                Text(metric.label.uppercased())
+                    .shotiqDisplay(18)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                metricValue(metric.value, color: ShotIQColor.shotiqOrange, alignment: .trailing)
+            }
+            .padding(.horizontal, 18)
+            .frame(height: 52)
+            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+        }
+    }
+
+    private func metricValue(_ text: String, color: Color, alignment: Alignment) -> some View {
+        Text(text)
+            .font(.custom("Tungsten-Medium", size: 35))
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.58)
+            .frame(maxWidth: .infinity, alignment: alignment)
+    }
+
+    private var shareFooter: some View {
+        HStack(spacing: 12) {
+            ShotIQQRMark()
+                .frame(width: 58, height: 58)
+                .padding(6)
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("FULL SHOTIQ BREAKDOWN")
+                    .shotiqBody(12, weight: .black)
+                    .foregroundStyle(ShotIQColor.ink)
+                Text("Scan or tap the link to view details")
+                    .shotiqBody(10, weight: .medium)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+                Text(payload.linkText)
+                    .shotiqBody(11, weight: .black)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+    }
+}
+
+private struct ShotIQQRMark: View {
+    private let cells: Set<Int> = [
+        0, 1, 2, 4, 6, 7, 8,
+        9, 11, 13, 15, 17,
+        18, 19, 20, 22, 24, 25, 26,
+        28, 30, 31, 33, 35,
+        36, 38, 40, 42, 44,
+        45, 46, 48, 50, 52, 53,
+        55, 57, 58, 60, 62,
+        63, 64, 65, 67, 69, 70, 71
+    ]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let gap: CGFloat = 2
+            let size = (min(proxy.size.width, proxy.size.height) - gap * 8) / 9
+            VStack(spacing: gap) {
+                ForEach(0..<9, id: \.self) { row in
+                    HStack(spacing: gap) {
+                        ForEach(0..<9, id: \.self) { col in
+                            let index = row * 9 + col
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(cells.contains(index) ? ShotIQColor.ink : Color.clear)
+                                .frame(width: size, height: size)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        }
+    }
+}
+
+struct ShotIQSelectionDrawer: View {
+    @Binding var selection: String
+    let title: String
+    let subtitle: String
+    let summary: String
+    let options: [String]
+    var clearTitle: String?
+    var clearValue: String?
+    var optionDetail: (String) -> String = { _ in "" }
+    var optionIcon: (String) -> String = { _ in "circle" }
+    var onSelect: (String) -> Void = { _ in }
+    var onClear: (() -> Void)?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Capsule()
+                .fill(ShotIQColor.graphite.opacity(0.35))
+                .frame(width: 44, height: 5)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 4)
+
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(title.uppercased())
+                        .shotiqDisplay(42)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
+                    Text(subtitle)
+                        .shotiqBody(13, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 14)
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 42, height: 42)
+                        .background(ShotIQColor.warmCanvas, in: Circle())
+                }
+                .accessibilityIdentifier("shotiq-drawer-close")
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .frame(width: 34)
+                Text(summary)
+                    .shotiqBody(18, weight: .bold)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.66)
+                Spacer()
+            }
+            .frame(height: 58)
+            .padding(.horizontal, 12)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(ShotIQColor.rule, lineWidth: 1.2))
+
+            VStack(spacing: 10) {
+                ForEach(options, id: \.self) { option in
+                    Button {
+                        selection = option
+                        onSelect(option)
+                        dismiss()
+                    } label: {
+                        selectionRow(option)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("shotiq-drawer-option-\(option.replacingOccurrences(of: " ", with: "-").lowercased())")
+                }
+            }
+
+            if let clearTitle {
+                Button {
+                    if let clearValue {
+                        selection = clearValue
+                    }
+                    onClear?()
+                    dismiss()
+                } label: {
+                    Text(clearTitle.uppercased())
+                        .shotiqBody(14, weight: .black)
+                        .kerning(0.4)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8)
+                            .stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("shotiq-drawer-clear")
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+        .padding(.bottom, 18)
+        .background(Color.white)
+    }
+
+    private func selectionRow(_ option: String) -> some View {
+        let selected = selection == option
+        let detail = optionDetail(option)
+        return HStack(spacing: 14) {
+            Image(systemName: optionIcon(option))
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                .frame(width: 34)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(option.uppercased())
+                    .shotiqDisplay(28)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                if !detail.isEmpty {
+                    Text(detail)
+                        .shotiqBody(13, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.graphite.opacity(0.5))
+        }
+        .frame(height: 72)
+        .padding(.horizontal, 12)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8)
+            .stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
+                    lineWidth: selected ? 1.8 : 1.1))
+    }
+}
+
+enum ShotIQShareCardRenderer {
+    @MainActor
+    static func render(payload: ShotIQSharePayload) -> UIImage? {
+        let renderer = ImageRenderer(content: ShotIQSharePreviewCard(payload: payload)
+            .frame(width: 640)
+            .modifier(CanonicalTypeScale()))
+        renderer.scale = 3
+        return renderer.uiImage
     }
 }

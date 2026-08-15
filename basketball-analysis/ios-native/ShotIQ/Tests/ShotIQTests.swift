@@ -95,8 +95,8 @@ final class AnalysisOverviewChromeTests: XCTestCase {
 
         XCTAssertEqual(chrome.playerName, "new player")
         XCTAssertEqual(chrome.subtitle, "ShotIQ athlete")
-        XCTAssertEqual(chrome.streak, "--")
-        XCTAssertEqual(chrome.points, "--")
+        XCTAssertEqual(chrome.streak, "0")
+        XCTAssertEqual(chrome.points, "0")
         XCTAssertEqual(chrome.eliteMatch.title, "ELITE MATCH PENDING")
         XCTAssertNotEqual(chrome.points, "2,840")
         XCTAssertNotEqual(chrome.eliteMatch.title, "KLAY THOMPSON")

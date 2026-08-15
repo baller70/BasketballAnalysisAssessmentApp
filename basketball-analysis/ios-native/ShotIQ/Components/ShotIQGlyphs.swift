@@ -298,9 +298,12 @@ struct PhaseGlyph: View {
     }
 
     var body: some View {
-        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: phase),
-                                 size: size,
-                                 label: phase.title)
+        PhasePhotoThumbnail(phase: phase,
+                            active: active,
+                            width: size * 1.18,
+                            height: size,
+                            cornerRadius: max(4, size * 0.12))
+            .accessibilityLabel(phase.title)
     }
 }
 

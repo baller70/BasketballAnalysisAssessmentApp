@@ -167,7 +167,7 @@ fileprivate struct PlayerCardExportView: View {
             }
             .padding(16)
         }
-        .frame(width: 380)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(ShotIQColor.paper)
     }
 }
@@ -341,7 +341,8 @@ fileprivate struct PlayerCardData {
     }
 }
 
-fileprivate struct EliteMatchMetricData {
+fileprivate struct EliteMatchMetricData: Identifiable {
+    var id: String { name }
     var icon: String
     var name: String
     var unit: String
@@ -439,13 +440,15 @@ fileprivate struct EliteMatchData {
     ]
 
     private static func rows(from presentation: AnalysisResultPresentation) -> [EliteMatchMetricData] {
-        [
+        let balance = presentation.scoreBreakdown.first { $0.metric.caseInsensitiveCompare("Balance") == .orderedSame }?.scoreText ?? "--"
+        let centerline = presentation.metrics.first { $0.label == "CENTERLINE" }?.value ?? "--"
+        return [
             EliteMatchMetricData(icon: "figure.basketball", name: "Release Height", unit: "saved analysis", you: presentation.releaseHeightText, elite: "7'8\"", diff: diffText(presentation.releaseHeightText), markerPct: marker(for: presentation.releaseHeightText)),
             EliteMatchMetricData(icon: "angle", name: "Release Offset", unit: "-5° to +5° target", you: presentation.releaseOffsetText, elite: "0°", diff: diffText(presentation.releaseOffsetText), markerPct: marker(for: presentation.releaseOffsetText)),
             EliteMatchMetricData(icon: "point.3.connected.trianglepath.dotted", name: "Elbow Angle", unit: "150°-180° target", you: presentation.elbowAngleText, elite: "165°", diff: diffText(presentation.elbowAngleText), markerPct: marker(for: presentation.elbowAngleText)),
             EliteMatchMetricData(icon: "point.bottomleft.forward.to.point.topright.scurvepath", name: "Wrist Angle", unit: "50°-100° target", you: presentation.wristAngleText, elite: "75°", diff: diffText(presentation.wristAngleText), markerPct: marker(for: presentation.wristAngleText)),
-            EliteMatchMetricData(icon: "viewfinder", name: "Phase", unit: "detected phase", you: presentation.phaseText.uppercased(), elite: "RELEASE", diff: presentation.phaseText == "Unavailable" ? "--" : "phase", markerPct: 0.5),
-            EliteMatchMetricData(icon: "number", name: "Sources", unit: "measured fields", you: presentation.sourceCoverageText, elite: "complete", diff: presentation.provenanceSummary, markerPct: 0.5),
+            EliteMatchMetricData(icon: "scale.3d", name: "Balance", unit: "base stability", you: balance, elite: "95%", diff: diffText(balance), markerPct: marker(for: balance)),
+            EliteMatchMetricData(icon: "scope", name: "Centerline", unit: "body alignment", you: centerline, elite: "0°", diff: diffText(centerline), markerPct: marker(for: centerline)),
         ]
     }
 
@@ -529,7 +532,6 @@ fileprivate struct EliteShooterDetailData {
                     EliteShooterMechanicData(label: "Elbow Angle", value: "89°"),
                     EliteShooterMechanicData(label: "Release Height", value: "7'1\""),
                     EliteShooterMechanicData(label: "Release Angle", value: "51°"),
-                    EliteShooterMechanicData(label: "Backspin", value: "3,200 RPM"),
                     EliteShooterMechanicData(label: "Balance", value: "88%"),
                 ],
                 strengths: ["Quick, repeatable release", "High shooting arc", "Consistent base and balance"],
@@ -553,7 +555,6 @@ fileprivate struct EliteShooterDetailData {
         let releaseAngle = Int(round(47 + ((shooter.careerThreePct ?? shooter.careerPct ?? 38) - 35) * 0.35))
         let elbow = min(178, max(150, 150 + Int(round(Double(score - 70) * 0.45))))
         let releaseHeight = shooter.height + 24
-        let backspin = 2_850 + max(0, score - 70) * 18
         let balance = min(99, 82 + max(0, score - 70) / 2)
 
         return EliteShooterDetailData(
@@ -570,7 +571,6 @@ fileprivate struct EliteShooterDetailData {
                 EliteShooterMechanicData(label: "Elbow Angle", value: "\(elbow)°"),
                 EliteShooterMechanicData(label: "Release Height", value: inchesText(releaseHeight)),
                 EliteShooterMechanicData(label: "Release Angle", value: "\(releaseAngle)°"),
-                EliteShooterMechanicData(label: "Backspin", value: "\(grouped(backspin)) RPM"),
                 EliteShooterMechanicData(label: "Balance", value: "\(balance)%"),
             ],
             strengths: strengths(shooter, score: score),
@@ -646,9 +646,26 @@ fileprivate struct EliteShooterDetailData {
     }
 
     private static func bioText(shooter: EliteShooterDTO) -> String {
+        let key = shooter.name.lowercased()
+        if key.contains("stephen curry") || key.contains("steph curry") {
+            return "Stephen Curry changed what defenses have to guard. His greatness comes from range, handle, footwork, and a release fast enough to punish even a small mistake. Study Curry for balance on movement shots and the confidence to shoot with the same form from well beyond the line."
+        }
+        if key.contains("klay thompson") {
+            return "Klay Thompson is one of the cleanest catch-and-shoot players ever. His shot is built on quiet feet, square shoulders, and almost no wasted motion from catch to release. Study Klay for repeatable mechanics, quick preparation, and how to stay ready without needing the ball in your hands."
+        }
+        if key.contains("ray allen") {
+            return "Ray Allen turned shooting into a daily standard. His footwork, conditioning, and perfect repeatability made him elite coming off screens, spotting up, and shooting under pressure. Study Allen for preparation, body control, and the discipline to make every rep look the same."
+        }
+        if key.contains("steve kerr") {
+            return "Steve Kerr was one of the most accurate three-point shooters in league history. His value came from knowing his role, getting his feet set early, and taking only the shots his mechanics were ready to finish. Study Kerr for shot selection, spacing, and simple form that holds up in big moments."
+        }
+        if key.contains("rick barry") {
+            return "Rick Barry was a brilliant scorer with touch that showed up from the field and at the free-throw line. His underhand free throw looked different, but the result was elite because the routine was repeatable and pressure-proof. Study Barry for touch, confidence, and the courage to trust a mechanic that works."
+        }
         let fg = shotiqPercentText(shooter.careerFieldGoalPct)
         let tp = shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)
-        return "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(tierLabel(shooter)) \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, shooting \(fg) from the field, \(tp) from three and \(shotiqPercentText(shooter.careerFreeThrowPct)) from the line."
+        let strength = strengths(shooter, score: wsiScore(shooter)).first?.lowercased() ?? "repeatable shooting mechanics"
+        return "\(shooter.name) is a \(tierLabel(shooter).lowercased()) \(shooter.era ?? "era") shooting reference for \(shooter.team). At \(shooter.height / 12)'\(shooter.height % 12)\" and \(shooter.weight) lb, the profile shows \(fg) from the field, \(tp) from three, and \(shotiqPercentText(shooter.careerFreeThrowPct)) at the line. Study this player for \(strength) and the way their mechanics repeat under game pressure."
     }
 
     private static func inchesText(_ inches: Int) -> String {
@@ -676,6 +693,22 @@ struct PlayerCardView: View {       // 048
                             level: level,
                             heightIn: heightIn,
                             wingspanIn: wingspanIn)
+    }
+    private var sharePayload: ShotIQSharePayload {
+        ShotIQSharePayload.simple(title: "SHARE CARD",
+                                  headline: card.name,
+                                  subheadline: card.subtitle,
+                                  primaryValue: card.scoreText,
+                                  primaryLabel: "FORM SCORE",
+                                  secondaryValue: card.accuracyText,
+                                  secondaryLabel: "MAKE %",
+                                  accentLabel: card.scoreVerdict,
+                                  metrics: [
+                                    ShotIQShareMetric(value: card.shotsText, label: "Shots"),
+                                    ShotIQShareMetric(value: card.makesText, label: "Makes"),
+                                    ShotIQShareMetric(value: card.primaryTarget, label: "Primary target")
+                                  ],
+                                  shareText: "My ShotIQ player card: \(card.scoreText) form score, \(card.accuracyText) make rate.")
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-player-card") {
@@ -867,7 +900,7 @@ struct PlayerCardView: View {       // 048
                                 toast = .info("Opening card customizer")
                             })
                             .accessibilityIdentifier("Customize card")
-                            Button { sharePlayerCard() } label: {
+                            ShotIQShareButton(payload: sharePayload) {
                                 VStack(spacing: 8) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-share",
                                                              size: 22,
@@ -879,7 +912,6 @@ struct PlayerCardView: View {       // 048
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                                 .foregroundStyle(ShotIQColor.ink)
                             }
-                            .buttonStyle(.plain)
                             downloadControl {
                                 VStack(spacing: 8) {
                                     Image(systemName: "arrow.down.to.line").font(.system(size: 20))
@@ -985,7 +1017,11 @@ struct PlayerCardView: View {       // 048
     }
     private func phaseScore(_ phase: String, _ score: String, _ tint: Color, _ active: Bool) -> some View {
         VStack(spacing: 4) {
-            PhaseGlyph(phase: phase, active: active, size: 28)
+            PhasePhotoThumbnail(phase: ShotPhase(label: phase),
+                                active: active,
+                                width: 46,
+                                height: 34,
+                                cornerRadius: 5)
             Text(phase).shotiqBody(8, weight: active ? .bold : .regular).kerning(0.4)
                 .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -1036,6 +1072,23 @@ struct CustomizePlayerCardView: View { // 049
     private var previewName: String {
         "\(firstName.trimmingCharacters(in: .whitespacesAndNewlines)) \(lastName.trimmingCharacters(in: .whitespacesAndNewlines))"
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    private var sharePayload: ShotIQSharePayload {
+        let name = previewName.isEmpty ? previewCard.name : previewName
+        return ShotIQSharePayload.simple(title: "SHARE CARD",
+                                         headline: name,
+                                         subheadline: previewCard.subtitle,
+                                         primaryValue: previewCard.scoreText,
+                                         primaryLabel: "FORM SCORE",
+                                         secondaryValue: previewCard.accuracyText,
+                                         secondaryLabel: "MAKE %",
+                                         accentLabel: previewCard.scoreVerdict,
+                                         metrics: [
+                                            ShotIQShareMetric(value: previewCard.shotsText, label: "Shots"),
+                                            ShotIQShareMetric(value: previewCard.makesText, label: "Makes"),
+                                            ShotIQShareMetric(value: "\(previewCard.heightText) / \(previewCard.wingspanText)", label: "Height / wingspan")
+                                         ],
+                                         shareText: "My ShotIQ player card: \(previewCard.scoreText) form score, \(previewCard.accuracyText) make rate.")
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-customize-player-card") {
@@ -1255,8 +1308,7 @@ struct CustomizePlayerCardView: View { // 049
                         .frame(maxHeight: 320)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
-                    ShareLink(item: savedImage,
-                              preview: SharePreview("ShotIQ Player Card", image: savedImage)) {
+                    ShotIQShareButton(payload: sharePayload) {
                         HStack(spacing: 10) {
                             Image(systemName: "square.and.arrow.up")
                             Text("Save or share image").shotiqBody(17, weight: .medium)
@@ -1265,9 +1317,6 @@ struct CustomizePlayerCardView: View { // 049
                         .background(bannerColor, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
                         .foregroundStyle(.white)
                     }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        toast = .info("Opening share sheet", "Your saved player card is ready.")
-                    })
                 }
                 Spacer(minLength: 8)
             }
@@ -1405,7 +1454,17 @@ final class EliteViewModel: ObservableObject {
         }
     }
 
-    private static let fallbackShooters: [EliteShooterDTO] = [
+    nonisolated static var fallbackShooter: EliteShooterDTO {
+        fallbackShooters.first ?? EliteShooterDTO(id: 30, name: "Stephen Curry", team: "Golden State Warriors",
+                                                  league: "NBA", era: "2009-Present", tier: "Legendary",
+                                                  position: "PG", height: 75, weight: 185,
+                                                  careerPct: 43.0, careerFreeThrowPct: 91.0,
+                                                  careerFieldGoalPct: 47.1, careerThreePct: 43.0,
+                                                  careerEfgPct: 58.2, careerTsPct: 62.6,
+                                                  approvedFormImages: nil)
+    }
+
+    nonisolated private static let fallbackShooters: [EliteShooterDTO] = [
         EliteShooterDTO(id: 30, name: "Stephen Curry", team: "Golden State Warriors",
                         league: "NBA", era: "2009-Present", tier: "Legendary",
                         position: "PG", height: 75, weight: 185,
@@ -1442,8 +1501,15 @@ struct EliteMatchView: View {       // 050
     @Environment(\.dismiss) private var dismiss
     @AppStorage("profileHand") private var hand = "right"
     @AppStorage("profileLevel") private var level = "advanced"
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileWeightLbs") private var weightLbs = 185
     @AppStorage(EliteComparisonSelection.shooterIDKey) private var selectedShooterID = 0
     @State private var showSettings = false
+    @State private var showShooterPicker = false
+    @State private var explainedMetric: EliteMatchMetricData?
+    @State private var selectedFramePhaseIndex = 3
+    @State private var showFrameCompare = false
     @State private var toast: ShotIQToast?
     @StateObject private var vm = EliteViewModel()
     var presentation: AnalysisResultPresentation? = nil
@@ -1460,21 +1526,35 @@ struct EliteMatchView: View {       // 050
                             hand: hand,
                             level: level)
     }
+    private var resolvedPresentation: AnalysisResultPresentation? {
+        presentation ?? app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+    private var eliteShooterForRows: EliteShooterDTO {
+        selectedShooter ?? EliteViewModel.fallbackShooter
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-elite-match") {
             VStack(spacing: 0) {
-                HStack {
+                HStack(alignment: .center) {
                     Wordmark(size: 30)
                     Spacer()
-                    HeaderStat(icon: "circle.hexagongrid", value: UITestHooks.demoData && presentation == nil && app.recentMedia.isEmpty ? "2,840" : "--", label: "POINTS")
-                    Button {
-                        toast = .info("Opening settings")
-                        showSettings = true
-                    } label: {
-                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"), size: 44).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                    HStack(alignment: .center, spacing: 14) {
+                        HeaderStat(icon: "circle.hexagongrid",
+                                   value: UITestHooks.demoData && presentation == nil && app.recentMedia.isEmpty ? "2,840" : "--",
+                                   label: "POINTS")
+                            .frame(width: 56, height: 52, alignment: .center)
+                        Button {
+                            toast = .info("Opening settings")
+                            showSettings = true
+                        } label: {
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "gearshape"),
+                                                     size: 44)
+                            .font(.system(size: 20))
+                            .foregroundStyle(ShotIQColor.ink)
+                            .frame(width: 56, height: 52, alignment: .center)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.leading, 14)
                 }
                 .padding(.horizontal, 20).frame(height: 60)
                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
@@ -1497,57 +1577,55 @@ struct EliteMatchView: View {       // 050
                         }
                         .padding(.top, 16)
                         ShotIQCard {
-                            HStack(alignment: .top, spacing: 10) {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(match.playerName.uppercased()).shotiqDisplay(22)
-                                    Text(match.playerSubtitle).shotiqBody(11)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                    StatBlock(value: match.formScore, label: "FORM SCORE", color: ShotIQColor.shotiqOrange, valueSize: ShotIQType.numeric)
-                                        .padding(.top, 6)
+                            VStack(spacing: 12) {
+                                HStack(alignment: .top, spacing: 10) {
+                                    matchPlayerPanel(name: match.playerName,
+                                                     subtitle: match.playerSubtitle,
+                                                     photoKey: "038-visual-001",
+                                                     accent: ShotIQColor.shotiqOrange)
+                                    VStack(spacing: 6) {
+                                        Text("ELITE MATCH").shotiqBody(12, weight: .bold).kerning(0.8)
+                                            .foregroundStyle(ShotIQColor.ink)
+                                        Text(match.similarity).font(.custom("Tungsten-Medium", size: 56))
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                            .accessibilityIdentifier("elite-match-similarity")
+                                        Text("OVERALL\nSIMILARITY").shotiqBody(10, weight: .medium).kerning(0.6)
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                            .multilineTextAlignment(.center)
+                                        HStack(spacing: 3) {
+                                            ForEach(0..<6, id: \.self) { i in
+                                                Rectangle().fill(i < matchedMechanicBars ? ShotIQColor.analysisBlue : ShotIQColor.rule)
+                                                    .frame(width: 16, height: 6)
+                                            }
+                                        }
+                                        Text("SHARED MECHANICS").shotiqBody(9, weight: .bold).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.ink).padding(.top, 2)
+                                        Text(match.sharedMechanics).font(.custom("Tungsten-Medium", size: 18))
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                            .accessibilityIdentifier("elite-match-shared-mechanics")
+                                        positionChips(for: eliteShooterForRows.position)
+                                            .padding(.top, 3)
+                                    }
+                                    .frame(width: 114)
+                                    matchPlayerPanel(name: match.eliteName,
+                                                     subtitle: match.eliteSubtitle,
+                                                     photoKey: "050-visual-002",
+                                                     accent: ShotIQColor.analysisBlue)
+                                }
+                                VStack(spacing: 0) {
+                                    alignedComparisonRow("FORM SCORE", match.formScore, match.eliteScore)
                                         .accessibilityElement(children: .combine)
                                         .accessibilityIdentifier("elite-match-score")
-                                    StatBlock(value: match.shots, label: "SHOTS", valueSize: ShotIQType.numeric)
-                                    StatBlock(value: match.makes, label: "MAKES", valueSize: ShotIQType.numeric)
-                                    StatBlock(value: match.accuracy, label: "SHOOTING %", valueSize: ShotIQType.numeric)
+                                    alignedComparisonRow("2PT %", userTwoPointText, eliteTwoPointText(eliteShooterForRows))
+                                    alignedComparisonRow("3PT %", userThreePointText, shotiqPercentText(eliteShooterForRows.careerThreePct ?? eliteShooterForRows.careerPct))
+                                    alignedComparisonRow("FREE THROW %", userFreeThrowText, shotiqPercentText(eliteShooterForRows.careerFreeThrowPct))
+                                    alignedComparisonRow("SHOOTING HAND", hand.capitalized, "Right")
+                                    alignedComparisonRow("POSITION", "SG", displayPosition(eliteShooterForRows.position))
+                                    alignedComparisonRow("HEIGHT", inchesText(heightIn), inchesText(eliteShooterForRows.height))
+                                    alignedComparisonRow("WEIGHT", "\(weightLbs) LB", "\(eliteShooterForRows.weight) LB")
+                                    alignedComparisonRow("WINGSPAN", inchesText(wingspanIn), inchesText(eliteWingspan(eliteShooterForRows)))
                                         .accessibilityElement(children: .combine)
                                         .accessibilityIdentifier("elite-match-accuracy")
-                                }
-                                Spacer(minLength: 4)
-                                VStack(spacing: 6) {
-                                    Text("ELITE MATCH").shotiqBody(12, weight: .bold).kerning(0.8)
-                                        .foregroundStyle(ShotIQColor.ink)
-                                    Text(match.similarity).font(.custom("Tungsten-Medium", size: 58))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                        .accessibilityIdentifier("elite-match-similarity")
-                                    Text("OVERALL\nSIMILARITY").shotiqBody(10, weight: .medium).kerning(0.6)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                        .multilineTextAlignment(.center)
-                                    HStack(spacing: 3) {
-                                        ForEach(0..<6, id: \.self) { i in
-                                            Rectangle().fill(i < matchedMechanicBars ? ShotIQColor.analysisBlue : ShotIQColor.rule)
-                                                .frame(width: 18, height: 6)
-                                        }
-                                    }
-                                    Text("SHARED MECHANICS").shotiqBody(9, weight: .bold).kerning(0.5)
-                                        .foregroundStyle(ShotIQColor.ink).padding(.top, 4)
-                                    Text(match.sharedMechanics).font(.custom("Tungsten-Medium", size: 18))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                        .accessibilityIdentifier("elite-match-shared-mechanics")
-                                }
-                                Spacer(minLength: 4)
-                                VStack(alignment: .trailing, spacing: 3) {
-                                    Text(match.eliteName.uppercased()).shotiqDisplay(22)
-                                        .multilineTextAlignment(.trailing)
-                                    Text(match.eliteSubtitle)
-                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                        .lineLimit(1).minimumScaleFactor(0.7)
-                                    Text(match.eliteScore).font(.custom("Tungsten-Medium", size: 28))
-                                        .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 6)
-                                    Text("FORM SCORE").shotiqBody(10, weight: .medium).kerning(0.5)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                    // Elite reference shooter frame from the canonical render.
-                                    CanonicalPhoto("050-visual-002", width: 88, height: 96, cornerRadius: 4)
-                                        .padding(.top, 6)
                                 }
                             }
                             .padding(14)
@@ -1558,8 +1636,8 @@ struct EliteMatchView: View {       // 050
                         }
                         HStack(spacing: 12) {
                             if let top = selectedShooter {
-                                NavigationLink { EliteShooterDetailView(shooter: top) } label: {
-                                    actionRow("doc.text", "View elite profile")
+                                NavigationLink { EliteShooterDetailView(shooter: top, rank: 1, catalog: vm.shooters) } label: {
+                                    actionRow("Profile")
                                 }
                                 .simultaneousGesture(TapGesture().onEnded {
                                     toast = .info("Opening \(top.name)'s elite profile")
@@ -1567,123 +1645,56 @@ struct EliteMatchView: View {       // 050
                             } else {
                                 // Shooters still loading — browsing the list is the next-best destination.
                                 NavigationLink { EliteShootersView() } label: {
-                                    actionRow("doc.text", "View elite profile")
+                                    actionRow("Profile")
                                 }
                                 .simultaneousGesture(TapGesture().onEnded {
                                     toast = .info("Opening elite shooter list")
                                 })
                             }
-                            NavigationLink { EliteShootersView() } label: {
-                                actionRow("person.2", "Choose another shooter")
+                            Button {
+                                showShooterPicker = true
+                                toast = .info("Choose elite shooter")
+                            } label: {
+                                actionRow("Change Shooter")
                             }
-                            .simultaneousGesture(TapGesture().onEnded {
-                                toast = .info("Opening elite shooter list")
-                            })
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 12)
                         HStack {
                             Text("MECHANICS COMPARISON").shotiqDisplay(20)
                             Spacer()
-                            HStack(spacing: 12) {
-                                legendDot(ShotIQColor.shotiqOrange, "You")
-                                legendDot(ShotIQColor.analysisBlue, "Elite")
-                            }
+                            Text("Tap a metric")
+                                .shotiqBody(11, weight: .semibold)
+                                .foregroundStyle(ShotIQColor.graphite)
                         }
                         .padding(.top, 22)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
                         ForEach(match.comparisonRows, id: \.name) { row in
-                            HStack(spacing: 10) {
-                                // Six mechanics compared side by side: six diagrams.
-                                ShotIQConceptGlyph(concept: row.name, fallback: row.icon, size: 30)
-                                    .foregroundStyle(ShotIQColor.ink).frame(width: 30)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(row.name).shotiqBody(14, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(1).minimumScaleFactor(0.7)
-                                    Text(row.unit).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                }
-                                .frame(width: 96, alignment: .leading)
-                                Text(row.you).font(.custom("Tungsten-Medium", size: 17))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    .frame(width: 38, alignment: .trailing)
-                                    .lineLimit(1).minimumScaleFactor(0.65)
-                                    .accessibilityIdentifier("elite-match-you-\(row.name)")
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        Rectangle().fill(ShotIQColor.rule).frame(height: 1)
-                                            .frame(maxHeight: .infinity)
-                                        Capsule().fill(ShotIQColor.shotiqOrange)
-                                            .frame(width: geo.size.width * 0.46, height: 4)
-                                            .offset(y: -5)
-                                        Capsule().fill(ShotIQColor.analysisBlue)
-                                            .frame(width: geo.size.width * 0.3, height: 4)
-                                            .offset(x: geo.size.width * 0.5, y: 5)
-                                        Rectangle().fill(ShotIQColor.ink).frame(width: 2, height: 18)
-                                            .offset(x: geo.size.width * row.markerPct)
-                                    }
-                                }
-                                .frame(height: 24)
-                                Text(row.elite).font(.custom("Tungsten-Medium", size: 17))
-                                    .foregroundStyle(ShotIQColor.analysisBlue)
-                                    .frame(width: 38, alignment: .leading)
-                                    .lineLimit(1).minimumScaleFactor(0.65)
-                                VStack(spacing: 0) {
-                                    Text(row.diff).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(1).minimumScaleFactor(0.55)
-                                    Text("DIFF").shotiqBody(8, weight: .medium).kerning(0.4)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                }
-                                .frame(width: 32)
-                                Image(systemName: "checkmark.circle.fill").font(.system(size: 15))
-                                    .foregroundStyle(ShotIQColor.confirmGreen)
-                            }
-                            .padding(.vertical, 10)
-                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            mechanicComparisonRow(row)
                         }
-                        HStack {
+                        HStack(alignment: .firstTextBaseline) {
                             Text("RELEASE FRAME MATCH").shotiqDisplay(20)
                             Spacer()
-                            Text("Average frame alignment").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                            Text("User vs elite shot rail").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             Text(match.releaseAlignment).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.ink)
                                 .accessibilityIdentifier("elite-match-release-alignment")
-                            Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
-                                .foregroundStyle(ShotIQColor.confirmGreen)
+                            Text(match.releaseAlignment == "--" ? "NEEDS DATA" : "ACTIVE")
+                                .shotiqBody(9, weight: .bold)
+                                .kerning(0.5)
+                                .foregroundStyle(match.releaseAlignment == "--" ? ShotIQColor.graphite : ShotIQColor.shotiqOrange)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 4)
+                                .background((match.releaseAlignment == "--" ? ShotIQColor.rule : ShotIQColor.shotiqOrange).opacity(0.16),
+                                            in: RoundedRectangle(cornerRadius: 4))
                         }
                         .padding(.top, 18)
-                        NavigationLink {
-                            if let comparePresentation = presentation
-                                ?? app.recentMedia.first.map({ AnalysisResultPresentation(result: $0.analysis) }) {
-                                PhotoComparisonView(presentation: comparePresentation,
-                                                    shooter: selectedShooter)
-                            } else if UITestHooks.demoData {
-                                PhotoComparisonView(presentation: .canonicalDemo,
-                                                    shooter: selectedShooter)
-                            } else {
-                                AnalyzeHubView()
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                ForEach(0..<7, id: \.self) { i in
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(ShotIQColor.rule)
-                                        .frame(height: 64)
-                                        .overlay(RoundedRectangle(cornerRadius: 4)
-                                            .stroke(i == 3 ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
-                                }
-                            }
-                        }
+                        releaseFrameComparison()
                         .accessibilityIdentifier("open-photo-comparison")
-                        .simultaneousGesture(TapGesture().onEnded {
-                            if presentation != nil || !app.recentMedia.isEmpty || UITestHooks.demoData {
-                                toast = .info("Opening release-frame comparison")
-                            } else {
-                                toast = .info("Analyze a shot first",
-                                              "Upload a photo or video before comparing your release frame.")
-                            }
-                        })
                         .padding(.top, 8)
                         ShotIQCard {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(alignment: .top, spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
                                     Text("PRIMARY COACHING TARGET ALIGNMENT")
                                         .shotiqBody(11, weight: .semibold).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1691,45 +1702,37 @@ struct EliteMatchView: View {       // 050
                                         .shotiqBody(17, weight: .semibold).foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                         .accessibilityIdentifier("elite-match-target")
-                                }
-                                Spacer()
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    HStack(spacing: 5) {
-                                        Text(match.targetState).font(.custom("Tungsten-Medium", size: 18))
-                                            .foregroundStyle(ShotIQColor.confirmGreen)
-                                        Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
-                                            .foregroundStyle(ShotIQColor.confirmGreen)
                                     }
-                                    Text(match.targetMatch).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                                        .accessibilityIdentifier("elite-match-target-match")
+                                    Spacer()
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text(match.targetState)
+                                            .shotiqBody(10, weight: .bold)
+                                            .kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 5)
+                                            .background(ShotIQColor.shotiqOrange.opacity(0.14),
+                                                        in: RoundedRectangle(cornerRadius: 4))
+                                        Text(match.targetMatch).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                            .accessibilityIdentifier("elite-match-target-match")
+                                    }
                                 }
+
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("MATCH PLAN")
+                                        .shotiqBody(11, weight: .bold)
+                                        .kerning(0.7)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    ForEach(Array(matchPlanSteps.enumerated()), id: \.element) { index, step in
+                                        matchPlanRow(index + 1, step)
+                                    }
+                                }
+                                .padding(12)
+                                .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                             }
                             .padding(14)
                         }
                         .padding(.top, 14)
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("SHOT RAIL").shotiqBody(11, weight: .bold).kerning(0.7)
-                                .foregroundStyle(ShotIQColor.ink).padding(.top, 8)
-                            VStack(spacing: 2) {
-                                PhaseStrip()
-                                HStack {
-                                    ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                                        Group {
-                                            if p == "RELEASE" {
-                                                Circle().fill(ShotIQColor.shotiqOrange).frame(width: 13, height: 13)
-                                            } else if p == "FOLLOW-THROUGH" {
-                                                Circle().fill(ShotIQColor.rule).frame(width: 13, height: 13)
-                                            } else {
-                                                Image(systemName: "checkmark.circle.fill").font(.system(size: 13))
-                                                    .foregroundStyle(ShotIQColor.analysisBlue)
-                                            }
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.top, 16)
                         Spacer(minLength: 24)
                     }
                     .padding(.horizontal, 20)
@@ -1738,15 +1741,384 @@ struct EliteMatchView: View {       // 050
         }
         .shotiqToast($toast)
         .task { await vm.load() }
+        .sheet(isPresented: $showShooterPicker) {
+            EliteMatchShooterPicker(shooters: vm.shooters,
+                                    selectedShooterID: selectedShooter?.id ?? selectedShooterID) { shooter in
+                selectedShooterID = shooter.id
+                toast = .success("Elite match updated", "Now comparing against \(shooter.name).")
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $explainedMetric) { metric in
+            EliteMetricExplanationSheet(metric: metric)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showFrameCompare) {
+            EliteFrameCompareSheet(presentation: resolvedPresentation,
+                                   phaseIndex: selectedFramePhaseIndex,
+                                   phases: releasePhaseLabels,
+                                   userFrameKeys: userFrameKeys,
+                                   eliteFrameKeys: eliteFrameKeys)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
     }
+    private func matchPlayerPanel(name: String,
+                                  subtitle: String,
+                                  photoKey: String,
+                                  accent: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(name.uppercased()).shotiqDisplay(18)
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+                .frame(height: 44, alignment: .topLeading)
+            Text(subtitle)
+                .shotiqBody(10)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            CanonicalPhoto(photoKey, width: 94, height: 82, cornerRadius: 6)
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(accent, lineWidth: 2))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func alignedComparisonRow(_ label: String, _ you: String, _ elite: String) -> some View {
+        HStack(spacing: 10) {
+            Text(you)
+                .font(.custom("Tungsten-Medium", size: 22))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .frame(width: 72, alignment: .leading)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(label)
+                .shotiqBody(10, weight: .bold)
+                .kerning(0.5)
+                .foregroundStyle(ShotIQColor.graphite)
+                .frame(maxWidth: .infinity)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(elite)
+                .font(.custom("Tungsten-Medium", size: 22))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .frame(width: 72, alignment: .trailing)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .frame(height: 36)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+    }
+
+    private var userTwoPointText: String {
+        match.accuracy == "--" ? "--" : match.accuracy
+    }
+
+    private var userThreePointText: String { "--" }
+
+    private var userFreeThrowText: String { "--" }
+
+    private func eliteTwoPointText(_ shooter: EliteShooterDTO) -> String {
+        shotiqPercentText(shooter.careerFieldGoalPct)
+    }
+
+    private func eliteWingspan(_ shooter: EliteShooterDTO) -> Int {
+        max(shooter.height + 2, shooter.height)
+    }
+
+    private func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private func mechanicComparisonRow(_ row: EliteMatchMetricData) -> some View {
+        Button {
+            explainedMetric = row
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Text(row.you)
+                    .font(.custom("Tungsten-Medium", size: 28))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .frame(width: 62, alignment: .leading)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
+                    .accessibilityIdentifier("elite-match-you-\(row.name)")
+
+                VStack(spacing: 6) {
+                    Text(row.name.uppercased())
+                        .shotiqBody(11, weight: .bold)
+                        .kerning(0.45)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.68)
+                    Text(row.unit)
+                        .shotiqBody(10)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                    comparisonMeter(row)
+                    Text(metricShortReason(row))
+                        .shotiqBody(9, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .frame(maxWidth: .infinity)
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(row.elite)
+                        .font(.custom("Tungsten-Medium", size: 28))
+                        .foregroundStyle(ShotIQColor.analysisBlue)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
+                    Text("ELITE")
+                        .shotiqBody(7, weight: .bold)
+                        .kerning(0.5)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                .frame(width: 70, alignment: .trailing)
+            }
+            .padding(.vertical, 12)
+            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func comparisonMeter(_ row: EliteMatchMetricData) -> some View {
+        GeometryReader { geo in
+            let center = geo.size.width * 0.5
+            ZStack(alignment: .leading) {
+                Rectangle().fill(ShotIQColor.rule).frame(height: 1)
+                    .position(x: geo.size.width / 2, y: 8)
+                Capsule().fill(ShotIQColor.shotiqOrange)
+                    .frame(width: max(18, geo.size.width * 0.24), height: 4)
+                    .position(x: center - geo.size.width * 0.14, y: 5)
+                Capsule().fill(ShotIQColor.analysisBlue)
+                    .frame(width: max(18, geo.size.width * 0.24), height: 4)
+                    .position(x: center + geo.size.width * 0.14, y: 11)
+                Rectangle().fill(ShotIQColor.ink)
+                    .frame(width: 2, height: 18)
+                    .position(x: geo.size.width * row.markerPct, y: 8)
+            }
+        }
+        .frame(height: 18)
+    }
+
+    private func comparisonStatusPill(_ row: EliteMatchMetricData) -> some View {
+        let hasData = row.you != "--" && row.elite != "--"
+        let text = hasData ? (row.diff == "measured" ? "GAP" : row.diff.uppercased()) : "DATA"
+        let tint = hasData ? ShotIQColor.shotiqOrange : ShotIQColor.graphite
+        return Text(text)
+            .shotiqBody(9, weight: .bold)
+            .kerning(0.45)
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.58)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 5)
+            .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 4))
+    }
+
+    private func releaseFrameComparison() -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Tap a phase to compare it closer")
+                    .shotiqBody(11, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.graphite)
+                Spacer()
+                Button {
+                    showFrameCompare = true
+                } label: {
+                    Text("OPEN VIEW")
+                        .shotiqBody(9, weight: .bold)
+                        .kerning(0.5)
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button {
+                showFrameCompare = true
+            } label: {
+                HStack(spacing: 8) {
+                    comparePreviewPane(title: "YOU",
+                                       tint: ShotIQColor.shotiqOrange,
+                                       phase: releasePhaseLabels[selectedFramePhaseIndex],
+                                       key: userFrameKeys[selectedFramePhaseIndex],
+                                       elite: false)
+                    VStack(spacing: 5) {
+                        Text(releasePhaseLabels[selectedFramePhaseIndex] == "FOLLOW-THROUGH" ? "FOLLOW" : releasePhaseLabels[selectedFramePhaseIndex])
+                            .shotiqBody(10, weight: .bold)
+                            .kerning(0.5)
+                            .foregroundStyle(ShotIQColor.ink)
+                        Image(systemName: "plus.magnifyingglass")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("ZOOM")
+                            .shotiqBody(7, weight: .bold)
+                            .kerning(0.4)
+                            .foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .frame(width: 42)
+                    comparePreviewPane(title: "ELITE",
+                                       tint: ShotIQColor.analysisBlue,
+                                       phase: releasePhaseLabels[selectedFramePhaseIndex],
+                                       key: eliteFrameKeys[selectedFramePhaseIndex],
+                                       elite: true)
+                }
+                .padding(8)
+                .background(ShotIQColor.warmCanvas.opacity(0.65), in: RoundedRectangle(cornerRadius: 7))
+            }
+            .buttonStyle(.plain)
+
+            phaseSelectorRail
+        }
+        .padding(10)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
+    private var phaseSelectorRail: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(releasePhaseLabels.enumerated()), id: \.offset) { index, phase in
+                Button {
+                    selectedFramePhaseIndex = index
+                    showFrameCompare = true
+                } label: {
+                    VStack(spacing: 4) {
+                        releaseFrameTile(key: userFrameKeys[index],
+                                         phase: phase,
+                                         index: index,
+                                         elite: false,
+                                         height: 48)
+                            .opacity(index == selectedFramePhaseIndex ? 1 : 0.74)
+                        Text(phase == "FOLLOW-THROUGH" ? "FOLLOW" : phase)
+                            .shotiqBody(7, weight: .bold)
+                            .kerning(0.25)
+                            .foregroundStyle(index == selectedFramePhaseIndex ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.52)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func comparePreviewPane(title: String,
+                                    tint: Color,
+                                    phase: String,
+                                    key: String,
+                                    elite: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .shotiqBody(8, weight: .bold)
+                .kerning(0.5)
+                .foregroundStyle(tint)
+            releaseFrameTile(key: key,
+                             phase: phase,
+                             index: selectedFramePhaseIndex,
+                             elite: elite,
+                             height: 118)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func frameRailRow(label: String, tint: Color, elite: Bool) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .shotiqBody(9, weight: .bold)
+                .kerning(0.5)
+                .foregroundStyle(tint)
+                .frame(width: 44, alignment: .leading)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+            ForEach(Array(releasePhaseLabels.enumerated()), id: \.offset) { index, phase in
+                VStack(spacing: 4) {
+                    releaseFrameTile(key: elite ? eliteFrameKeys[index] : userFrameKeys[index],
+                                     phase: phase,
+                                     index: index,
+                                     elite: elite,
+                                     height: 58)
+                    Text(phase == "FOLLOW-THROUGH" ? "FOLLOW" : phase)
+                        .shotiqBody(7, weight: .bold)
+                        .kerning(0.3)
+                        .foregroundStyle(index == 3 ? tint : ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var releasePhaseLabels: [String] {
+        ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    }
+
+    private var userFrameKeys: [String] {
+        ["047-visual-004", "047-visual-001", "047-visual-002", "051-visual-003", "047-visual-003"]
+    }
+
+    private var eliteFrameKeys: [String] {
+        ["050-visual-002", "047-visual-001", "047-visual-002", "038-visual-001", "047-visual-003"]
+    }
+
+    private func releaseFrameTile(key: String, phase: String, index: Int, elite: Bool, height: CGFloat) -> some View {
+        Group {
+            if !elite, let resolvedPresentation {
+                PhotoComparisonUserMediaSurface(presentation: resolvedPresentation,
+                                                height: height,
+                                                overlaySkeletons: true,
+                                                phase: phase,
+                                                showsPlaybackControl: false,
+                                                showsPoseStatusPill: false)
+            } else {
+                CanonicalPhoto(key, height: height, cornerRadius: 4)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .overlay(RoundedRectangle(cornerRadius: 4)
+            .stroke(index == 3 ? (elite ? ShotIQColor.analysisBlue : ShotIQColor.shotiqOrange) : ShotIQColor.rule.opacity(0.45),
+                    lineWidth: index == 3 ? 2 : 1))
+    }
+
+    private var matchPlanSteps: [String] {
+        let shooter = eliteShooterForRows.name
+        let target = match.target.lowercased()
+        return [
+            "Match \(shooter)'s release window with 10 slow form reps focused on \(target).",
+            "Run 3 sets of centerline holds: ball, elbow, wrist, and finish stay on one lane.",
+            "Compare the release frame after each set and save the cleanest rep to history."
+        ]
+    }
+
+    private func matchPlanRow(_ number: Int, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Text("\(number)")
+                .shotiqBody(10, weight: .bold)
+                .foregroundStyle(.white)
+                .frame(width: 18, height: 18)
+                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 4))
+            Text(text)
+                .shotiqBody(12)
+                .foregroundStyle(ShotIQColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var matchedMechanicBars: Int {
         let parts = match.sharedMechanics.split(separator: " ")
         return Int(parts.first ?? "0") ?? 0
     }
-    private func actionRow(_ icon: String, _ title: String) -> some View {
+    private func actionRow(_ title: String) -> some View {
         HStack {
-            Image(systemName: icon).font(.system(size: 15))
             Text(title).shotiqBody(14)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Spacer()
@@ -1756,11 +2128,457 @@ struct EliteMatchView: View {       // 050
         .padding(.horizontal, 12).frame(height: 50)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
-    private func legendDot(_ color: Color, _ label: String) -> some View {
-        HStack(spacing: 5) {
-            Circle().fill(color).frame(width: 9, height: 9)
-            Text(label).shotiqBody(12).foregroundStyle(ShotIQColor.ink)
+
+    private func positionChips(for position: String) -> some View {
+        let choices = [("PG", "POINT_GUARD"), ("SG", "SHOOTING_GUARD"), ("SF", "SMALL_FORWARD"), ("F", "FORWARD"), ("C", "CENTER")]
+        let normalized = position.uppercased()
+        return HStack(spacing: 2) {
+            ForEach(choices, id: \.0) { chip, key in
+                Text(chip)
+                    .shotiqBody(6, weight: .bold)
+                    .foregroundStyle(normalized.contains(key) || normalized == chip ? .white : ShotIQColor.graphite)
+                    .frame(width: 18, height: 13)
+                    .background((normalized.contains(key) || normalized == chip ? ShotIQColor.analysisBlue : ShotIQColor.rule.opacity(0.65)),
+                                in: RoundedRectangle(cornerRadius: 3))
+            }
         }
+    }
+
+    private func displayPosition(_ position: String) -> String {
+        switch position.uppercased() {
+        case "POINT_GUARD", "PG": return "Point Guard"
+        case "SHOOTING_GUARD", "SG": return "Shooting Guard"
+        case "SMALL_FORWARD", "SF": return "Small Forward"
+        case "POWER_FORWARD", "PF", "FORWARD", "F": return "Forward"
+        case "CENTER", "C": return "Center"
+        default: return position.replacingOccurrences(of: "_", with: " ").capitalized
+        }
+    }
+
+    private func metricShortReason(_ row: EliteMatchMetricData) -> String {
+        switch row.name {
+        case "Release Height": return "Higher window, harder to contest"
+        case "Release Offset": return "Keeps ball path on target"
+        case "Elbow Angle": return "Stacks power under the ball"
+        case "Wrist Angle": return "Controls touch and backspin"
+        case "Balance": return "Stable base repeats the same shot"
+        case "Centerline": return "Keeps finish aimed at the rim"
+        default: return "Tap for the coaching reason"
+        }
+    }
+}
+
+fileprivate struct EliteMetricExplanationSheet: View {
+    var metric: EliteMatchMetricData
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(metric.name.uppercased()).shotiqDisplay(34)
+                    Text(metric.unit).shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 38, height: 38)
+                        .background(ShotIQColor.rule.opacity(0.35), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 12) {
+                metricValueBlock("YOU", metric.you, ShotIQColor.shotiqOrange)
+                metricValueBlock("ELITE", metric.elite, ShotIQColor.analysisBlue)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("WHY IT MATTERS").shotiqBody(11, weight: .bold).kerning(0.7)
+                    .foregroundStyle(ShotIQColor.graphite)
+                Text(explanationText)
+                    .shotiqBody(15)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(coachingCue)
+                    .shotiqBody(15, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(12)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            Spacer()
+            Button { dismiss() } label: {
+                Text("DONE")
+                    .shotiqBody(16, weight: .bold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(20)
+        .background(ShotIQColor.paper)
+    }
+
+    private func metricValueBlock(_ label: String, _ value: String, _ tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).shotiqBody(10, weight: .bold).kerning(0.6).foregroundStyle(ShotIQColor.graphite)
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: 38))
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
+    private var explanationText: String {
+        switch metric.name {
+        case "Release Height":
+            return "Release height is the point where the ball leaves your hand. A higher, cleaner release gives the shot more room over defenders and creates a better entry angle."
+        case "Release Offset":
+            return "Release offset shows how far the ball path drifts left or right from your centerline. More drift means your hand has to correct the shot late, which creates misses and inconsistency."
+        case "Elbow Angle":
+            return "Elbow angle shows whether the forearm is stacked under the ball. When the elbow is too low or too open, power leaks sideways instead of going straight through the rim."
+        case "Wrist Angle":
+            return "Wrist angle controls the final touch. If the wrist finishes outside the target window, the ball can come off flat, pushed, or over-spun."
+        case "Balance":
+            return "Balance measures how stable your base is at release. A stable base lets the same shot repeat; drifting feet or shoulders changes the ball path."
+        case "Centerline":
+            return "Centerline shows whether the ball, elbow, wrist, and finish stay on the same lane to the rim. Big left or right movement makes the shot harder to repeat."
+        default:
+            return "This metric compares your saved analysis with the elite shooter so you can see what needs to move closer to the target window."
+        }
+    }
+
+    private var coachingCue: String {
+        switch metric.name {
+        case "Release Height":
+            return "Fix: finish tall, extend through the wrist, and hold the follow-through until the ball reaches the rim."
+        case "Release Offset":
+            return "Fix: start the ball on your shooting-side lane and freeze with elbow, wrist, and index finger pointed at the rim."
+        case "Elbow Angle":
+            return "Fix: lift the elbow under the ball before release, then shoot ten slow reps without letting it flare out."
+        case "Wrist Angle":
+            return "Fix: snap through the middle fingers and finish relaxed, not pushed."
+        case "Balance":
+            return "Fix: land where you jumped, keep shoulders quiet, and repeat the same base."
+        case "Centerline":
+            return "Fix: use centerline holds: ball, elbow, wrist, and finish stay stacked on one lane."
+        default:
+            return "Fix: compare the next saved rep and keep the metric moving toward the elite value."
+        }
+    }
+}
+
+fileprivate struct EliteFrameCompareSheet: View {
+    var presentation: AnalysisResultPresentation?
+    var phases: [String]
+    var userFrameKeys: [String]
+    var eliteFrameKeys: [String]
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedIndex: Int
+    @State private var overlayMode = false
+    @State private var zoom = 1.0
+
+    init(presentation: AnalysisResultPresentation?,
+         phaseIndex: Int,
+         phases: [String],
+         userFrameKeys: [String],
+         eliteFrameKeys: [String]) {
+        self.presentation = presentation
+        self.phases = phases
+        self.userFrameKeys = userFrameKeys
+        self.eliteFrameKeys = eliteFrameKeys
+        _selectedIndex = State(initialValue: min(max(phaseIndex, 0), max(phases.count - 1, 0)))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("COMPARE FRAMES").shotiqDisplay(34)
+                    Text("Line up your shot with the elite shooter phase by phase.")
+                        .shotiqBody(13)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 38, height: 38)
+                        .background(ShotIQColor.rule.opacity(0.35), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 6) {
+                ForEach(Array(phases.enumerated()), id: \.offset) { index, phase in
+                    Button {
+                        selectedIndex = index
+                    } label: {
+                        Text(shortPhase(phase))
+                            .shotiqBody(8, weight: .bold)
+                            .kerning(0.35)
+                            .foregroundStyle(index == selectedIndex ? .white : ShotIQColor.ink)
+                            .frame(maxWidth: .infinity, minHeight: 32)
+                            .background(index == selectedIndex ? ShotIQColor.shotiqOrange : ShotIQColor.warmCanvas,
+                                        in: RoundedRectangle(cornerRadius: 5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            HStack(spacing: 8) {
+                compareModeButton("SIDE BY SIDE", active: !overlayMode) { overlayMode = false }
+                compareModeButton("OVERLAY", active: overlayMode) { overlayMode = true }
+            }
+
+            compareStage
+                .frame(height: overlayMode ? 360 : 300)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("ZOOM").shotiqBody(9, weight: .bold).kerning(0.5).foregroundStyle(ShotIQColor.graphite)
+                    Slider(value: $zoom, in: 1.0...1.8, step: 0.1)
+                        .tint(ShotIQColor.shotiqOrange)
+                }
+                Text(phaseStory)
+                    .shotiqBody(14)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(12)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            Button { dismiss() } label: {
+                Text("DONE")
+                    .shotiqBody(16, weight: .bold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .background(ShotIQColor.paper)
+    }
+
+    @ViewBuilder private var compareStage: some View {
+        if overlayMode {
+            ZStack(alignment: .topLeading) {
+                frameSurface(elite: true)
+                    .opacity(0.72)
+                    .overlay(alignment: .topLeading) { mediaTag("ELITE", ShotIQColor.analysisBlue) }
+                frameSurface(elite: false)
+                    .opacity(0.72)
+                    .blendMode(.plusLighter)
+                    .overlay(alignment: .topLeading) { mediaTag("YOU", ShotIQColor.shotiqOrange).offset(y: 28) }
+                VStack {
+                    Spacer()
+                    HStack {
+                        Text("Orange = you")
+                            .shotiqBody(9, weight: .bold)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        Spacer()
+                        Text("Blue = elite")
+                            .shotiqBody(9, weight: .bold)
+                            .foregroundStyle(ShotIQColor.analysisBlue)
+                    }
+                    .padding(8)
+                    .background(.black.opacity(0.58), in: RoundedRectangle(cornerRadius: 5))
+                    .padding(8)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange, lineWidth: 1))
+        } else {
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
+                    mediaTag("YOU", ShotIQColor.shotiqOrange)
+                    frameSurface(elite: false)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    mediaTag("ELITE", ShotIQColor.analysisBlue)
+                    frameSurface(elite: true)
+                }
+            }
+        }
+    }
+
+    private func frameSurface(elite: Bool) -> some View {
+        Group {
+            if elite {
+                CanonicalPhoto(eliteFrameKeys[selectedIndex], height: overlayMode ? 360 : 266, cornerRadius: 8)
+            } else if let presentation {
+                PhotoComparisonUserMediaSurface(presentation: presentation,
+                                                height: overlayMode ? 360 : 266,
+                                                overlaySkeletons: true,
+                                                phase: phases[selectedIndex],
+                                                showsPlaybackControl: false,
+                                                showsPoseStatusPill: false)
+            } else {
+                CanonicalPhoto(userFrameKeys[selectedIndex], height: overlayMode ? 360 : 266, cornerRadius: 8)
+            }
+        }
+        .scaleEffect(CGFloat(zoom))
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8)
+            .stroke(elite ? ShotIQColor.analysisBlue : ShotIQColor.shotiqOrange, lineWidth: 2))
+        .clipped()
+    }
+
+    private func compareModeButton(_ title: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .shotiqBody(9, weight: .bold)
+                .kerning(0.45)
+                .foregroundStyle(active ? .white : ShotIQColor.ink)
+                .frame(maxWidth: .infinity, minHeight: 34)
+                .background(active ? ShotIQColor.ink : ShotIQColor.paper,
+                            in: RoundedRectangle(cornerRadius: 5))
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(active ? ShotIQColor.ink : ShotIQColor.rule))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func mediaTag(_ text: String, _ tint: Color) -> some View {
+        Text(text)
+            .shotiqBody(8, weight: .bold)
+            .kerning(0.5)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(tint, in: RoundedRectangle(cornerRadius: 4))
+            .padding(7)
+    }
+
+    private func shortPhase(_ phase: String) -> String {
+        phase == "FOLLOW-THROUGH" ? "FOLLOW" : phase
+    }
+
+    private var phaseStory: String {
+        switch phases[selectedIndex] {
+        case "SETUP":
+            return "Compare feet, hips, and ball pocket before the shot starts. A clean setup makes the rest of the motion easier to repeat."
+        case "LOAD":
+            return "Compare how the ball and knees load together. The elite frame should show balance, rhythm, and no extra drift before the rise."
+        case "RISE":
+            return "Compare how the body lifts into the shot. Look for the ball, elbow, and chest staying connected as power moves upward."
+        case "RELEASE":
+            return "Compare the exact release window. This is where elbow stack, release height, wrist finish, and centerline decide if the shot is clean."
+        default:
+            return "Compare the finish. The shooting hand should stay aimed at the rim and the body should land under control."
+        }
+    }
+}
+
+fileprivate struct EliteMatchShooterPicker: View {
+    var shooters: [EliteShooterDTO]
+    var selectedShooterID: Int
+    var onSelect: (EliteShooterDTO) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("CHOOSE SHOOTER").shotiqDisplay(34)
+                    Text("Update the elite match without leaving the comparison.")
+                        .shotiqBody(13)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 38, height: 38)
+                        .background(ShotIQColor.rule.opacity(0.35), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 12)
+
+            if shooters.isEmpty {
+                VStack(spacing: 10) {
+                    ProgressView().tint(ShotIQColor.shotiqOrange)
+                    Text("Loading elite shooters")
+                        .shotiqBody(14, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(shooters) { shooter in
+                            Button {
+                                onSelect(shooter)
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text("#\(rank(for: shooter))")
+                                        .font(.custom("Tungsten-Medium", size: 28))
+                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .frame(width: 42, alignment: .leading)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(shooter.name.uppercased())
+                                            .shotiqDisplay(21)
+                                            .foregroundStyle(ShotIQColor.ink)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.72)
+                                        Text("\(shooter.team) • \(shooter.position) • \(shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)) 3PT")
+                                            .shotiqBody(12)
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.7)
+                                    }
+                                    Spacer()
+                                    Text(EliteShooterDetailData.tierLabel(shooter).uppercased())
+                                        .shotiqBody(9, weight: .bold)
+                                        .kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 5)
+                                        .background(ShotIQColor.analysisBlue.opacity(0.12),
+                                                    in: RoundedRectangle(cornerRadius: 4))
+                                    if shooter.id == selectedShooterID {
+                                        Text("SELECTED")
+                                            .shotiqBody(9, weight: .bold)
+                                            .kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    }
+                                }
+                                .padding(14)
+                                .overlay(RoundedRectangle(cornerRadius: 8)
+                                    .stroke(shooter.id == selectedShooterID ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
+                                            lineWidth: shooter.id == selectedShooterID ? 2 : 1))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+        .background(ShotIQColor.paper)
+    }
+
+    private func rank(for shooter: EliteShooterDTO) -> Int {
+        (shooters.firstIndex { $0.id == shooter.id } ?? 0) + 1
     }
 }
 
@@ -1828,12 +2646,18 @@ fileprivate struct PhotoComparisonUserMediaSurface: View {
     var height: CGFloat
     var overlaySkeletons: Bool
     var phase: String
+    var showsPlaybackControl = true
+    var showsPoseStatusPill = true
 
     var body: some View {
         ZStack {
             Group {
                 if presentation.id == "canonical-demo" {
-                    CanonicalMediaSurface(key: "051-visual-003", height: height, alignment: .trailing)
+                    if showsPlaybackControl {
+                        CanonicalMediaSurface(key: "051-visual-003", height: height, alignment: .trailing)
+                    } else {
+                        CanonicalPhoto("051-visual-003", height: height, cornerRadius: 4, alignment: .trailing)
+                    }
                 } else if let url = presentation.videoURL {
                     VideoPoseResultSurface(url: url,
                                            presentation: presentation,
@@ -1842,7 +2666,9 @@ fileprivate struct PhotoComparisonUserMediaSurface: View {
                                            showJoints: true,
                                            showBall: false,
                                            showAngles: false,
-                                           phase: phase)
+                                           phase: phase,
+                                           showsPoseStatusPill: showsPoseStatusPill,
+                                           showsPlaybackControl: showsPlaybackControl)
                 } else if let url = presentation.mediaURL, url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
                     CapturedPoseImage(image: image,
                                       height: height,
@@ -1944,6 +2770,20 @@ struct PhotoComparisonView: View {  // 051
     private var comparison: PhotoComparisonData {
         PhotoComparisonData.make(presentation: currentPresentation)
     }
+    private var sharePayload: ShotIQSharePayload {
+        ShotIQSharePayload.simple(title: "SHARE COMPARISON",
+                                  headline: "\(playerName) VS \(eliteName)",
+                                  subheadline: "ShotIQ elite form comparison",
+                                  primaryValue: comparison.score,
+                                  primaryLabel: "YOUR SCORE",
+                                  secondaryValue: selectedShooter.map { "\(EliteShooterDetailData.wsiScore($0))" } ?? "94",
+                                  secondaryLabel: "ELITE WSI",
+                                  accentLabel: comparison.accuracy == "--" ? "COMPARE" : comparison.accuracy,
+                                  metrics: comparison.rows.prefix(4).map {
+                                    ShotIQShareMetric(value: "\($0.you) / \($0.elite)", label: $0.label)
+                                  },
+                                  shareText: comparison.shareText)
+    }
     private var playerName: String {
         (app.user?.displayName ?? "Jordan Ellis").uppercased()
     }
@@ -1982,12 +2822,9 @@ struct PhotoComparisonView: View {  // 051
                     Text("COMPARE SHOOTERS").shotiqDisplay(22)
                     Spacer()
                     if hasAnalysisResult {
-                        ShareLink(item: comparison.shareText) {
+                        ShotIQShareButton(payload: sharePayload) {
                             Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
                         }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening share sheet", "Your comparison summary is ready.")
-                        })
                     } else {
                         Button {
                             routeToAnalysisForComparison()
@@ -2247,36 +3084,16 @@ struct PhotoComparisonView: View {  // 051
     }
 
     private var phaseRail: some View {
-        HStack(alignment: .top) {
-            ForEach(Array(phases.enumerated()), id: \.offset) { index, phase in
-                let on = index == phaseIndex
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        phaseIndex = index
-                        if phase != "RELEASE" { synced = false }
-                    }
-                    toast = .success("\(phase.capitalized) selected",
-                                     hasAnalysisResult
-                                     ? "Your media and the elite reference moved to this phase."
-                                     : "Analyze a shot first to compare this phase.")
-                } label: {
-                    VStack(spacing: 4) {
-                        PhaseGlyph(phase: ShotPhase(label: phase), active: on, size: 44)
-                        Text(phase)
-                            .shotiqMicroCaps(weight: on ? .bold : .regular,
-                                             tracking: ShotIQType.microTracking - 0.05)
-                            .foregroundStyle(on ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.55)
-                        Rectangle()
-                            .fill(on ? ShotIQColor.shotiqOrange : .clear)
-                            .frame(width: 40, height: 3)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+        AdaptivePhaseRail(active: phases[phaseIndex]) { phase in
+            if let index = phases.firstIndex(of: phase) {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    phaseIndex = index
+                    if phase != "RELEASE" { synced = false }
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("photo-comparison-phase-\(phase.lowercased())")
+                toast = .success("\(phase.capitalized) selected",
+                                 hasAnalysisResult
+                                 ? "Your media and the elite reference moved to this phase."
+                                 : "Analyze a shot first to compare this phase.")
             }
         }
     }
@@ -2324,6 +3141,37 @@ struct PhotoComparisonView: View {  // 051
     }
 }
 
+private enum EliteShooterDrawer: Identifiable {
+    case level
+    case position
+    case shotType
+    case league
+    case sort
+    case filters
+
+    var id: String {
+        switch self {
+        case .level: return "level"
+        case .position: return "position"
+        case .shotType: return "shotType"
+        case .league: return "league"
+        case .sort: return "sort"
+        case .filters: return "filters"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .level: return "CHOOSE LEVEL"
+        case .position: return "CHOOSE POSITION"
+        case .shotType: return "CHOOSE SHOT TYPE"
+        case .league: return "CHOOSE LEAGUE"
+        case .sort: return "SORT SHOOTERS"
+        case .filters: return "FILTER SHOOTERS"
+        }
+    }
+}
+
 struct EliteShootersView: View {    // 052
     /// Canonical list-row crops, in the top-to-bottom order they appear on the
     /// 853x1844 render. The fifth row is cut off there, so it has no crop.
@@ -2337,9 +3185,13 @@ struct EliteShootersView: View {    // 052
     @State private var shotType = "All Shot Types"
     @State private var league = "More Filters"
     @State private var sortKey = "WSI"
-    @State private var showFilters = true
+    @State private var activeDrawer: EliteShooterDrawer?
     @State private var info: EliteInfoNote?
-    @State private var toast: ShotIQToast?
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileWeightLbs") private var weightLbs = 185
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var playerLevel = "advanced"
     @AppStorage(EliteComparisonSelection.shooterIDKey) private var selectedShooterID = 0
     private var levelOptions: [String] {
         ["All Levels"] + Array(Set(vm.shooters.compactMap { $0.tier })).sorted()
@@ -2357,9 +3209,10 @@ struct EliteShootersView: View {    // 052
         if position != "All Positions" { out = out.filter { $0.position == position } }
         if league != "More Filters" { out = out.filter { $0.league == league } }
         switch sortKey {
+        case "WSI": out.sort { EliteShooterDetailData.wsiScore($0) > EliteShooterDetailData.wsiScore($1) }
         case "FG%": out.sort { ($0.careerFieldGoalPct ?? 0) > ($1.careerFieldGoalPct ?? 0) }
         case "Name": out.sort { $0.name < $1.name }
-        default: break // WSI — canonical server order
+        default: break
         }
         return out
     }
@@ -2382,8 +3235,7 @@ struct EliteShootersView: View {    // 052
                             .padding(.horizontal, 14).frame(height: 50)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                             Button {
-                                withAnimation(.easeInOut(duration: 0.15)) { showFilters.toggle() }
-                                toast = .info(showFilters ? "Filters shown" : "Filters hidden")
+                                activeDrawer = .filters
                             } label: {
                                 HStack(spacing: 8) {
                                     ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-settings",
@@ -2391,45 +3243,28 @@ struct EliteShootersView: View {    // 052
                                                              label: nil)
                                     Text("Filter").shotiqBody(14)
                                 }
-                                .foregroundStyle(showFilters ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
+                                .foregroundStyle(filterSummary == "All filters" ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
                                 .padding(.horizontal, 14).frame(height: 50)
                                 .overlay(RoundedRectangle(cornerRadius: 8)
-                                    .stroke(showFilters ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
+                                    .stroke(filterSummary == "All filters" ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
                             }
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 14)
-                        if showFilters {
-                            // Horizontally scrollable, so content-sized chips can
-                            // never widen the screen. Sizing them to content is
-                            // what stops the truncation; putting them in a
-                            // scroller is what stops that fix turning into the
-                            // 020 failure, where making one child incompressible
-                            // pushed the overflow onto its neighbour and then
-                            // onto the whole screen. On a 393pt phone the four
-                            // chips fit and this never scrolls; on a narrower
-                            // one, or with longer labels, it scrolls instead of
-                            // clipping.
-                            ScrollView(.horizontal, showsIndicators: false) {
+                        ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                filterChip($level, options: levelOptions, defaultLabel: "All Levels")
-                                filterChip($position, options: positionOptions, defaultLabel: "All Positions")
-                                filterChip($shotType,
-                                           options: ["All Shot Types", "Catch & Shoot", "Pull-Up", "Off Dribble"],
-                                           defaultLabel: "All Shot Types")
-                                filterChip($league, options: leagueOptions, defaultLabel: "More Filters")
+                                filterChip(level, defaultLabel: "All Levels") { activeDrawer = .level }
+                                filterChip(position, defaultLabel: "All Positions") { activeDrawer = .position }
+                                filterChip(shotType, defaultLabel: "All Shot Types") { activeDrawer = .shotType }
+                                filterChip(league, defaultLabel: "More Filters") { activeDrawer = .league }
                             }
-                            }
-                            .padding(.top, 10)
                         }
+                        .padding(.top, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .clipped()
                         HStack {
-                            Menu {
-                                ForEach(["WSI", "FG%", "Name"], id: \.self) { k in
-                                    Button(k) {
-                                        sortKey = k
-                                        toast = .success("Sorted by \(k)")
-                                    }
-                                }
+                            Button {
+                                activeDrawer = .sort
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "arrow.up.arrow.down").font(.system(size: 14))
@@ -2439,11 +3274,11 @@ struct EliteShootersView: View {    // 052
                                         .foregroundStyle(ShotIQColor.ink)
                                 }
                             }
+                            .buttonStyle(.plain)
                             Spacer()
 	                            Button {
 	                                info = EliteInfoNote(title: "What is WSI?",
 	                                                     message: "The Weighted Shooting Index blends career shooting efficiency, mechanics quality and consistency into a single 0–100 score so shooters across eras and leagues can be ranked side by side.")
-                                    toast = .info("Showing WSI explanation")
 	                            } label: {
                                 HStack(spacing: 5) {
                                     Text("What is WSI?").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
@@ -2472,7 +3307,6 @@ struct EliteShootersView: View {    // 052
                                         position = "All Positions"
                                         shotType = "All Shot Types"
                                         league = "More Filters"
-                                        toast = .success("Filters reset", "Showing every elite shooter.")
                                     } label: {
                                         HStack(spacing: 8) {
                                             Image(systemName: "arrow.counterclockwise")
@@ -2490,12 +3324,11 @@ struct EliteShootersView: View {    // 052
                             .padding(.top, 14)
                         }
                         ForEach(Array(filtered.enumerated()), id: \.element.id) { i, s in
-                            NavigationLink { EliteShooterDetailView(shooter: s) } label: {
+                            NavigationLink { EliteShooterDetailView(shooter: s, rank: i + 1, catalog: vm.shooters) } label: {
                                 shooterCard(s, rank: i)
                             }
                             .simultaneousGesture(TapGesture().onEnded {
                                 selectedShooterID = s.id
-                                toast = .success("Selected \(s.name)", "This elite shooter will be used for comparison.")
                             })
                             .accessibilityIdentifier("elite-shooter-row-\(s.id)")
                             .padding(.top, 12)
@@ -2524,9 +3357,6 @@ struct EliteShootersView: View {    // 052
                                 .padding(.horizontal, 14).padding(.vertical, 11)
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
 	                            }
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    toast = .info("Opening shot analysis")
-                                })
 	                        }
                         .padding(12)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -2537,211 +3367,1175 @@ struct EliteShootersView: View {    // 052
                 }
             }
         }
-        .shotiqToast($toast)
         .task {
             await vm.load()
-            if let sourceNote = vm.sourceNote {
-                toast = .info("Elite library ready", sourceNote)
-            }
         }
         .eliteInfoAlert($info)
+        .sheet(item: $activeDrawer) { drawer in
+            drawerView(for: drawer)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.hidden)
+        }
     }
-    private func filterChip(_ selection: Binding<String>, options: [String], defaultLabel: String) -> some View {
-        Menu {
-            ForEach(options, id: \.self) { o in
-                Button(o) {
-                    selection.wrappedValue = o
-                    toast = .success(o == defaultLabel ? "Filter reset" : "Filtering \(o)")
-                }
-            }
-        } label: {
+    private var filterSummary: String {
+        let active = [level, position, shotType, league].filter {
+            !["All Levels", "All Positions", "All Shot Types", "More Filters"].contains($0)
+        }
+        return active.isEmpty ? "All filters" : "\(active.count) active"
+    }
+
+    @ViewBuilder private func drawerView(for drawer: EliteShooterDrawer) -> some View {
+        switch drawer {
+        case .level:
+            EliteSelectorDrawer(title: drawer.title,
+                                subtitle: "Match shooters by development level.",
+                                options: levelOptions,
+                                selection: $level,
+                                detailFor: optionDetail(for:))
+        case .position:
+            EliteSelectorDrawer(title: drawer.title,
+                                subtitle: "Narrow the ranking by position.",
+                                options: positionOptions,
+                                selection: $position,
+                                detailFor: optionDetail(for:))
+        case .shotType:
+            EliteSelectorDrawer(title: drawer.title,
+                                subtitle: "Choose the shot context you want to study.",
+                                options: ["All Shot Types", "Catch & Shoot", "Pull-Up", "Off Dribble"],
+                                selection: $shotType,
+                                detailFor: optionDetail(for:))
+        case .league:
+            EliteSelectorDrawer(title: drawer.title,
+                                subtitle: "Compare against a league or full catalog.",
+                                options: leagueOptions,
+                                selection: $league,
+                                detailFor: optionDetail(for:))
+        case .sort:
+            EliteSelectorDrawer(title: drawer.title,
+                                subtitle: "Rank the list by the metric that matters now.",
+                                options: ["WSI", "FG%", "Name"],
+                                selection: $sortKey,
+                                detailFor: optionDetail(for:))
+        case .filters:
+            EliteFiltersDrawer(level: $level,
+                               position: $position,
+                               shotType: $shotType,
+                               league: $league,
+                               levelOptions: levelOptions,
+                               positionOptions: positionOptions,
+                               leagueOptions: leagueOptions,
+                               visibleCount: filtered.count)
+        }
+    }
+
+    private func optionDetail(for option: String) -> String {
+        switch option {
+        case "WSI": return "Weighted Shooting Index ranking"
+        case "FG%": return "Career field goal percentage"
+        case "Name": return "Alphabetical shooter list"
+        case "All Levels", "All Positions", "All Shot Types", "More Filters":
+            return "Show the full shooter catalog"
+        case "Catch & Shoot", "Pull-Up", "Off Dribble":
+            return "Focus the phase and comparison context"
+        default:
+            return "\(countForOption(option)) shooter\(countForOption(option) == 1 ? "" : "s")"
+        }
+    }
+
+    private func countForOption(_ option: String) -> Int {
+        if levelOptions.contains(option), option != "All Levels" {
+            return vm.shooters.filter { $0.tier == option }.count
+        }
+        if positionOptions.contains(option), option != "All Positions" {
+            return vm.shooters.filter { $0.position == option }.count
+        }
+        if leagueOptions.contains(option), option != "More Filters" {
+            return vm.shooters.filter { $0.league == option }.count
+        }
+        return vm.shooters.count
+    }
+
+    private func filterChip(_ label: String, defaultLabel: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 6) {
-                Text(selection.wrappedValue).shotiqBody(12)
-                    .foregroundStyle(selection.wrappedValue == defaultLabel ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
+                Text(label).shotiqBody(12)
+                    .foregroundStyle(label == defaultLabel ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
                     .lineLimit(1).minimumScaleFactor(0.6)
                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(ShotIQColor.graphite)
             }
-            // CONTENT-SIZED, NOT AN EQUAL SHARE. These four chips used to take
-            // .frame(maxWidth: .infinity), i.e. a quarter of the row each —
-            // about 82pt on a 393pt screen, of which the chevron and padding
-            // leave ~67pt for the label. "All Shot Types" needs more than that,
-            // so every chip truncated: "All Le...", "All Po...", "All Sh...",
-            // "More...". minimumScaleFactor cannot rescue it because the text
-            // still does not fit at the floor, and SwiftUI then truncates.
-            //
-            // Canonical 052 sizes each chip to its own label — measured ~82 /
-            // 92 / 90 / 85pt, so they are deliberately UNEQUAL and total ~349pt
-            // inside the ~363pt available.
             .padding(.horizontal, 12).frame(height: 42)
             .overlay(RoundedRectangle(cornerRadius: 8)
-                .stroke(selection.wrappedValue == defaultLabel ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
+                .stroke(label == defaultLabel ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
         }
+        .buttonStyle(.plain)
     }
     private func shooterCard(_ s: EliteShooterDTO, rank: Int) -> some View {
-        ShotIQCard {
-            HStack(alignment: .top, spacing: 14) {
-                if rank < Self.cardPhotoKeys.count {
-                    // Canonical shooter frame for this row of the list.
-                    CanonicalPhoto(Self.cardPhotoKeys[rank], width: 104, height: 148, cornerRadius: 4)
-                } else {
-                    // Beyond the canonical rows no crop exists — neutral gray keeps the layout.
-                    RoundedRectangle(cornerRadius: 4).fill(ShotIQColor.rule)
-                        .frame(width: 104, height: 148)
-                        .overlay(Text(String(s.name.prefix(1)))
-                            .shotiqBody(28, weight: .bold).foregroundStyle(ShotIQColor.graphite))
-                }
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .top, spacing: 8) {
-                        // The stat block took 166pt of the 233pt row on its fixed
-                        // frames, leaving the name column ~59pt — which is why
-                        // "Right-handed • Guard" bottomed out on its scale floor
-                        // and still ellipsized to "Right-h…". The three captions
-                        // are on the condensed micro-caps role now (SIMILARITY
-                        // alone was ~9pt wider than its column), the frames are
-                        // sized to what they actually hold, and the meta lines
-                        // step down to the 10pt canonical draws them at.
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(s.name.uppercased()).shotiqDisplay(20)
-                            Text("Right-handed • \(s.position)").shotiqBody(10)
-                                .foregroundStyle(ShotIQColor.graphite)
-                                .lineLimit(1).minimumScaleFactor(0.7)
-                            Text(s.team).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                                .lineLimit(1).minimumScaleFactor(0.7)
-                            Text(s.league).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                                .lineLimit(1)
+        let detail = EliteShooterDetailData.make(shooter: s)
+        let rankNumber = rank + 1
+        let match = profileMatchScore(for: s)
+        let eliteWingspan = estimatedWingspan(for: s)
+        let releaseValue = detail.mechanics.indices.contains(2) ? detail.mechanics[2].value : "--"
+        let elbowValue = detail.mechanics.indices.contains(0) ? detail.mechanics[0].value : "--"
+        let balanceValue = detail.mechanics.indices.contains(3) ? detail.mechanics[3].value : "--"
+        return ShotIQCard {
+            ZStack(alignment: .topTrailing) {
+                Text("\(rankNumber)")
+                    .font(.custom("Tungsten-Medium", size: 138))
+                    .foregroundStyle(ShotIQColor.shotiqOrange.opacity(0.055))
+                    .padding(.trailing, 14)
+                    .padding(.top, 8)
+                    .allowsHitTesting(false)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top, spacing: 12) {
+                        Group {
+                            if rank < Self.cardPhotoKeys.count {
+                                CanonicalPhoto(Self.cardPhotoKeys[rank], width: 108, height: 136, cornerRadius: 6)
+                            } else {
+                                RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.rule)
+                                    .frame(width: 108, height: 136)
+                                    .overlay(Text(String(s.name.prefix(1)))
+                                        .shotiqBody(28, weight: .bold).foregroundStyle(ShotIQColor.graphite))
+                            }
                         }
-                        Spacer(minLength: 4)
-                        HStack(spacing: 0) {
-                            VStack(spacing: 3) {
-                                Text("FG%").shotiqMicroCaps()
+                        .clipped()
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(alignment: .top, spacing: 8) {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(s.name.uppercased()).shotiqDisplay(31)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.58)
+                                    Text("Right-handed - \(s.position)").shotiqBody(10, weight: .semibold)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.72)
+                                    Text(s.team).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.72)
+                                    Text(s.league).shotiqBody(10, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1)
+                                }
+                                Spacer(minLength: 4)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 16, weight: .semibold))
                                     .foregroundStyle(ShotIQColor.graphite)
-                                Text(shotiqPercentText(s.careerFieldGoalPct))
-                                    .font(.custom("Tungsten-Medium", size: 22)).foregroundStyle(ShotIQColor.ink)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                    .padding(.top, 4)
                             }
-                            .frame(width: 52)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            VStack(spacing: 3) {
-                                Text("WSI").shotiqMicroCaps()
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                Text("\(EliteShooterDetailData.wsiScore(s))")
-                                    .font(.custom("Tungsten-Medium", size: 22)).foregroundStyle(ShotIQColor.shotiqOrange)
-                                    .lineLimit(1)
+
+                            HStack(spacing: 0) {
+                                eliteStat("RANK", "\(rankNumber)", ShotIQColor.shotiqOrange)
+                                VRule(height: 42)
+                                eliteStat("WSI", "\(EliteShooterDetailData.wsiScore(s))", ShotIQColor.ink)
+                                VRule(height: 42)
+                                eliteStat("MATCH", "\(match)%", ShotIQColor.shotiqOrange, valueSize: 34)
                             }
-                            .frame(width: 40)
-                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            VStack(spacing: 3) {
-                                Text("SIMILARITY").shotiqMicroCaps()
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                Text("\(max(60, 91 - rank * 3))%")
-                                    .font(.custom("Tungsten-Medium", size: 22)).foregroundStyle(ShotIQColor.analysisBlue)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                            }
-                            .frame(width: 54)
                         }
                     }
-                    Spacer(minLength: 8)
-                    HStack(alignment: .bottom) {
-                        PhaseStrip()
-                            .scaleEffect(0.7, anchor: .bottomLeading)
-                            .frame(width: 210, height: 42, alignment: .bottomLeading)
-                            .clipped()
-                        Spacer()
-                        HStack(spacing: 4) {
-                            Text("View shooter").shotiqBody(13, weight: .semibold)
-                            Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+
+                    VStack(alignment: .leading, spacing: 7) {
+                        HStack {
+                            Text("PROFILE COMPARISON").shotiqMicroCaps()
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Spacer()
+                            Text("\(match)% FIT")
+                                .font(.custom("Tungsten-Medium", size: 30))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                .lineLimit(1)
                         }
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
+                            matrixCell("YOUR HEIGHT", inchesText(heightIn), "WS \(wingspanDeltaText(wingspanIn - heightIn))")
+                            matrixCell("ELITE HEIGHT", inchesText(s.height), "\(s.weight) LB")
+                            matrixCell("SIZE GAP", heightGapText(user: heightIn, elite: s.height), wingspanGapText(user: wingspanIn, elite: eliteWingspan))
+                            matrixCell("WEIGHT GAP", weightGapText(user: weightLbs, elite: s.weight), "ELITE \(s.weight) LB")
+                            matrixCell("ELBOW", elbowValue, "STACK ANGLE")
+                            matrixCell("RELEASE", releaseValue, "BALANCE \(balanceValue)")
+                        }
+                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("SHOT PHASE PROFILE").shotiqMicroCaps()
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Spacer()
+                            Text("RELEASE FRAME")
+                                .shotiqBody(8, weight: .black)
+                                .kerning(0.35)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        HStack(spacing: 5) {
+                            elitePhaseMini("SETUP", rank: rank, isActive: false)
+                            elitePhaseMini("LOAD", rank: rank, isActive: false)
+                            elitePhaseMini("RISE", rank: rank, isActive: false)
+                            elitePhaseMini("RELEASE", rank: rank, isActive: true)
+                            elitePhaseMini("FOLLOW", rank: rank, isActive: false)
+                        }
+                    }
+                }
+                .padding(12)
+            }
+        }
+        .overlay(RoundedRectangle(cornerRadius: 8)
+            .stroke(ShotIQColor.shotiqOrange.opacity(0.28), lineWidth: 1.2))
+    }
+
+    private func matrixCell(_ label: String, _ primary: String, _ secondary: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).shotiqMicroCaps()
+                .foregroundStyle(ShotIQColor.graphite)
+            Text(primary)
+                .font(.custom("Tungsten-Medium", size: 22))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+            Text(secondary.uppercased())
+                .shotiqBody(8, weight: .semibold)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(width: 1), alignment: .trailing)
+    }
+
+    private func profileMatchScore(for shooter: EliteShooterDTO) -> Int {
+        let eliteWing = estimatedWingspan(for: shooter)
+        let heightPenalty = min(abs(heightIn - shooter.height) * 4, 24)
+        let wingspanPenalty = min(abs(wingspanIn - eliteWing) * 3, 24)
+        let handBonus = hand.lowercased() == "right" ? 4 : 0
+        let tierBonus = playerLevel.localizedCaseInsensitiveContains("advanced") ? 3 : 0
+        return max(58, min(99, 94 - heightPenalty - wingspanPenalty + handBonus + tierBonus))
+    }
+
+    private func estimatedWingspan(for shooter: EliteShooterDTO) -> Int {
+        let bonus: Int
+        if shooter.position.localizedCaseInsensitiveContains("C") {
+            bonus = 4
+        } else if shooter.position.localizedCaseInsensitiveContains("F") {
+            bonus = 3
+        } else {
+            bonus = 2
+        }
+        return shooter.height + bonus
+    }
+
+    private func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private func wingspanDeltaText(_ delta: Int) -> String {
+        delta >= 0 ? "+\(delta)\"" : "\(delta)\""
+    }
+
+    private func heightGapText(user: Int, elite: Int) -> String {
+        let delta = elite - user
+        if delta == 0 { return "EVEN" }
+        return delta > 0 ? "+\(delta)\"" : "\(delta)\""
+    }
+
+    private func wingspanGapText(user: Int, elite: Int) -> String {
+        let delta = elite - user
+        if delta == 0 { return "WS EVEN" }
+        return delta > 0 ? "WS +\(delta)\"" : "WS \(delta)\""
+    }
+
+    private func weightGapText(user: Int, elite: Int) -> String {
+        let delta = elite - user
+        if delta == 0 { return "EVEN" }
+        return delta > 0 ? "+\(delta) LB" : "\(delta) LB"
+    }
+
+    private func eliteStat(_ label: String, _ value: String, _ color: Color, valueSize: CGFloat = 24) -> some View {
+        VStack(spacing: 3) {
+            Text(label).shotiqMicroCaps().foregroundStyle(ShotIQColor.graphite)
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: valueSize))
+                .foregroundStyle(color)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func eliteMechanicPill(_ label: String, _ value: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label).shotiqMicroCaps().foregroundStyle(ShotIQColor.graphite)
+            Text(value.uppercased())
+                .font(.custom("Tungsten-Medium", size: 18))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+        }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 5))
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(color.opacity(0.18)))
+    }
+
+    private func elitePhaseMini(_ label: String, rank: Int, isActive: Bool) -> some View {
+        VStack(spacing: 4) {
+            Group {
+                if rank < Self.cardPhotoKeys.count {
+                    CanonicalPhoto(Self.cardPhotoKeys[rank], width: 56, height: 34, cornerRadius: 4)
+                } else {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(ShotIQColor.warmCanvas)
+                        .frame(width: 56, height: 34)
+                }
+            }
+            .overlay(RoundedRectangle(cornerRadius: 4)
+                .stroke(isActive ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
+                        lineWidth: isActive ? 2 : 1))
+            Text(label)
+                .shotiqBody(7.5, weight: .black)
+                .kerning(0.25)
+                .foregroundStyle(isActive ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+            Rectangle()
+                .fill(isActive ? ShotIQColor.shotiqOrange : Color.clear)
+                .frame(height: 2)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func eliteTag(_ label: String, _ value: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label).shotiqMicroCaps().foregroundStyle(ShotIQColor.graphite)
+            Text(value.uppercased())
+                .shotiqBody(10, weight: .bold)
+                .foregroundStyle(color)
+                .lineLimit(1).minimumScaleFactor(0.62)
+        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, minHeight: 42, alignment: .leading)
+        .background(color.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(color.opacity(0.18)))
+    }
+
+}
+
+private struct EliteSelectorDrawer: View {
+    let title: String
+    let subtitle: String
+    let options: [String]
+    @Binding var selection: String
+    let detailFor: (String) -> String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ShotIQSelectionDrawer(selection: $selection,
+                              title: title,
+                              subtitle: subtitle,
+                              summary: "\(title.capitalized) - \(selection)",
+                              options: options,
+                              clearTitle: "Clear",
+                              clearValue: options.first,
+                              optionDetail: detailFor,
+                              optionIcon: icon(for:))
+    }
+
+    private func drawerRow(option: String,
+                           detail: String,
+                           selected: Bool,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(selected ? ShotIQColor.shotiqOrange.opacity(0.10) : ShotIQColor.warmCanvas)
+                    Image(systemName: icon(for: option))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                }
+                .frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.uppercased())
+                        .shotiqBody(13, weight: .black)
+                        .foregroundStyle(ShotIQColor.ink)
+                    Text(detail)
+                        .shotiqBody(10, weight: .medium)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                }
+                Spacer()
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            .padding(10)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
+                        lineWidth: selected ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func icon(for option: String) -> String {
+        switch option {
+        case "WSI": return "number"
+        case "FG%": return "percent"
+        case "Name": return "textformat"
+        case "All Levels": return "person.2"
+        case "All Positions": return "scope"
+        case "All Shot Types": return "basketball"
+        case "More Filters": return "slider.horizontal.3"
+        default: return "target"
+        }
+    }
+}
+
+private struct EliteFiltersDrawer: View {
+    @Binding var level: String
+    @Binding var position: String
+    @Binding var shotType: String
+    @Binding var league: String
+    let levelOptions: [String]
+    let positionOptions: [String]
+    let leagueOptions: [String]
+    let visibleCount: Int
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Capsule()
+                .fill(ShotIQColor.graphite.opacity(0.35))
+                .frame(width: 44, height: 5)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 4)
+
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("FILTER SHOOTERS")
+                        .shotiqDisplay(42)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.62)
+                    Text("\(visibleCount) ranked shooter\(visibleCount == 1 ? "" : "s") match these filters.")
+                        .shotiqBody(13, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 34, height: 34)
+                        .background(ShotIQColor.warmCanvas, in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .frame(width: 34)
+                Text("\(visibleCount) ranked shooter\(visibleCount == 1 ? "" : "s")")
+                    .shotiqBody(18, weight: .bold)
+                    .foregroundStyle(ShotIQColor.ink)
+                Spacer()
+            }
+            .frame(height: 58)
+            .padding(.horizontal, 12)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(ShotIQColor.rule, lineWidth: 1.2))
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    drawerGroup("LEVEL", options: levelOptions, selection: $level)
+                    drawerGroup("POSITION", options: positionOptions, selection: $position)
+                    drawerGroup("SHOT TYPE", options: ["All Shot Types", "Catch & Shoot", "Pull-Up", "Off Dribble"], selection: $shotType)
+                    drawerGroup("LEAGUE", options: leagueOptions, selection: $league)
+                }
+            }
+
+            Button {
+                dismiss()
+            } label: {
+                Text("APPLY")
+                    .shotiqBody(13, weight: .black)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: 0) {
+                Button {
+                    level = "All Levels"
+                    position = "All Positions"
+                    shotType = "All Shot Types"
+                    league = "More Filters"
+                } label: {
+                    Text("CLEAR")
+                        .shotiqBody(12, weight: .black)
                         .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 42)
+                }
+                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 28)
+                Button {
+                    dismiss()
+                } label: {
+                    Text("CANCEL")
+                        .shotiqBody(12, weight: .black)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 42)
+                }
+            }
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+        .padding(.bottom, 16)
+        .background(Color.white)
+    }
+
+    private func drawerGroup(_ title: String, options: [String], selection: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .shotiqMicroCaps()
+                .foregroundStyle(ShotIQColor.graphite)
+            VStack(spacing: 8) {
+                ForEach(options, id: \.self) { option in
+                    Button {
+                        selection.wrappedValue = option
+                    } label: {
+                        HStack {
+                            Text(option.uppercased())
+                                .shotiqBody(12, weight: .black)
+                                .foregroundStyle(ShotIQColor.ink)
+                            Spacer()
+                            Image(systemName: option == selection.wrappedValue ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 19, weight: .semibold))
+                                .foregroundStyle(option == selection.wrappedValue ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                        }
+                        .padding(.horizontal, 12)
+                        .frame(height: 44)
+                        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8)
+                            .stroke(option == selection.wrappedValue ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
+                                    lineWidth: option == selection.wrappedValue ? 1.5 : 1))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+}
+
+private struct EliteBioDrawer: View {
+    let shooter: EliteShooterDTO
+    let detail: EliteShooterDetailData
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    drawerHeader(title: "VIEW BIO",
+                                 subtitle: "\(shooter.name) • \(shooter.team)")
+
+                    HStack(alignment: .top, spacing: 14) {
+                        CanonicalPhoto("053-visual-001", width: 116, height: 136, cornerRadius: 8, alignment: .top)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("ELITE REFERENCE")
+                                .shotiqBody(9, weight: .black)
+                                .kerning(0.7)
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                            Text(shooter.name.uppercased())
+                                .shotiqDisplay(34)
+                                .foregroundStyle(ShotIQColor.ink)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.7)
+                            Text("\(shooter.position.replacingOccurrences(of: "_", with: " ")) • \(shooter.league)")
+                                .shotiqBody(12, weight: .semibold)
+                                .foregroundStyle(ShotIQColor.graphite)
+                                .lineLimit(2)
+                            VStack(alignment: .leading, spacing: 6) {
+                                bioTag(EliteShooterDetailData.tierLabel(shooter))
+                                bioTag(shooter.era ?? "ERA")
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(12)
+                    .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("WHY HE IS GREAT")
+                            .shotiqDisplay(22)
+                            .foregroundStyle(ShotIQColor.ink)
+                        Text(detail.bioText)
+                            .shotiqBody(14, weight: .medium)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.leading, 14)
+                    .padding(.vertical, 2)
+                    .overlay(Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 4), alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("SHOOTER DNA")
+                            .shotiqDisplay(22)
+                            .foregroundStyle(ShotIQColor.ink)
+                        ForEach(Array(detail.strengths.prefix(3).enumerated()), id: \.offset) { index, strength in
+                            bioStrengthRow(index + 1, strength)
+                        }
+                    }
+                    .padding(14)
+                    .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+
+                    HStack(spacing: 0) {
+                        bioStat(shotiqPercentText(shooter.careerFieldGoalPct), "FG%")
+                        VRule(height: 38)
+                        bioStat(shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct), "3PT%")
+                        VRule(height: 38)
+                        bioStat(shotiqPercentText(shooter.careerFreeThrowPct), "FT%")
+                    }
+                    .padding(.vertical, 12)
+                    .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+
+                    Spacer(minLength: 18)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 14)
+            }
+
+            Button {
+                dismiss()
+            } label: {
+                Text("DONE")
+                    .shotiqBody(13, weight: .black)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 16)
+            .background(ShotIQColor.paper)
+        }
+        .background(Color.white)
+    }
+
+    private func drawerHeader(title: String, subtitle: String) -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .shotiqCondensed(32, weight: .heavy)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
+                Text(subtitle)
+                    .shotiqBody(12)
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer()
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(ShotIQColor.ink)
+                    .frame(width: 34, height: 34)
+                    .background(ShotIQColor.warmCanvas, in: Circle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func bioTag(_ text: String) -> some View {
+        Text(text.uppercased())
+            .shotiqBody(9, weight: .black)
+            .foregroundStyle(ShotIQColor.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .padding(.horizontal, 9)
+            .frame(height: 26)
+            .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 5))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(ShotIQColor.rule))
+    }
+
+    private func bioStrengthRow(_ number: Int, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(number)")
+                .font(.custom("Tungsten-Medium", size: 24))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .frame(width: 22, alignment: .leading)
+            Text(text)
+                .shotiqBody(13, weight: .semibold)
+                .foregroundStyle(ShotIQColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func bioStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: 28))
+                .foregroundStyle(value == "—" ? ShotIQColor.graphite : ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Text(label)
+                .shotiqBody(9, weight: .black)
+                .kerning(0.5)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct EliteCompareDrawer: View {
+    let shooter: EliteShooterDTO
+    let detail: EliteShooterDetailData
+    let latestAnalysis: AnalysisResultPresentation?
+    let userHeight: Int
+    let userWingspan: Int
+    let userWeight: Int
+    let userHand: String
+    let userLevel: String
+    @Environment(\.dismiss) private var dismiss
+
+    private var eliteWingspan: Int {
+        shooter.height + (shooter.position.localizedCaseInsensitiveContains("C") ? 4 : 2)
+    }
+    private var eliteTwoPointPct: Double? {
+        estimatedTwoPointPct(shooter)
+    }
+    private var eliteEfficiency: Int {
+        let values = [
+            shooter.careerFieldGoalPct ?? shooter.careerPct,
+            shooter.careerThreePct ?? shooter.careerPct,
+            eliteTwoPointPct,
+            shooter.careerFreeThrowPct,
+        ].compactMap { $0 }
+        guard !values.isEmpty else { return 0 }
+        return Int(round(values.reduce(0, +) / Double(values.count)))
+    }
+    private var eliteElbow: String {
+        mechanicValue("Elbow Angle")
+    }
+    private var eliteReleaseHeight: String {
+        mechanicValue("Release Height")
+    }
+    private var eliteReleaseAngle: String {
+        mechanicValue("Release Angle")
+    }
+    private var eliteBalance: String {
+        mechanicValue("Balance")
+    }
+    private var latestBalance: String {
+        guard let item = latestAnalysis?.scoreBreakdown.first(where: { $0.metric == "Balance" }),
+              !item.isUnavailable else { return "--" }
+        return item.scoreText
+    }
+    private var latestCenterline: String {
+        latestAnalysis?.metrics.first(where: { $0.label == "CENTERLINE" })?.value ?? "--"
+    }
+    private var playerName: String {
+        latestAnalysis == nil ? "YOUR SHOT" : "LATEST SHOT"
+    }
+    private var playerSubline: String {
+        "\(userLevel.capitalized) • \(userHand.capitalized)"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                Text("COMPARE PLAYER")
+                    .shotiqCondensed(38, weight: .heavy)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.58)
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 17, weight: .black))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 40, height: 40)
+                        .background(ShotIQColor.warmCanvas, in: Circle())
+                        .overlay(Circle().stroke(ShotIQColor.rule))
+                }
+                .buttonStyle(.plain)
+            }
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("SHOTIQ COMPARISON")
+                        .shotiqCondensed(22, weight: .heavy)
+                        .foregroundStyle(ShotIQColor.graphite)
+
+                    HStack(spacing: 10) {
+                        comparePlayerCard(name: playerName,
+                                          subline: playerSubline,
+                                          badge: "ME",
+                                          accent: ShotIQColor.ink)
+                        comparePlayerCard(name: shooter.name,
+                                          subline: "\(shooter.team) • \(shooter.position)",
+                                          badge: "\(detail.scoreText)",
+                                          accent: ShotIQColor.shotiqOrange)
+                    }
+
+                    compareTable(title: "SHOOTING NUMBERS",
+                                 rows: [
+                                    ("--", "FIELD GOAL", shotiqPercentText(shooter.careerFieldGoalPct ?? shooter.careerPct)),
+                                    ("--", "3 POINT", shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)),
+                                    ("--", "2 POINT", shotiqPercentText(eliteTwoPointPct)),
+                                    ("--", "FREE THROW", shotiqPercentText(shooter.careerFreeThrowPct)),
+                                    (latestAnalysis?.scoreText ?? "--", "FORM SCORE", detail.scoreText),
+                                    ("--", "EFFICIENCY", "\(eliteEfficiency)"),
+                                 ])
+
+                    compareTable(title: "MECHANICS",
+                                 rows: [
+                                    (latestAnalysis?.elbowAngleText ?? "--", "ELBOW ANGLE", eliteElbow),
+                                    (latestAnalysis?.releaseHeightText ?? "--", "RELEASE HEIGHT", eliteReleaseHeight),
+                                    (latestAnalysis?.releaseOffsetText ?? "--", "RELEASE ANGLE", eliteReleaseAngle),
+                                    (latestBalance, "BALANCE", eliteBalance),
+                                    (latestCenterline, "CENTER LINE", "0°"),
+                                 ])
+
+                    compareTable(title: "BODY PROFILE",
+                                 rows: [
+                                    (inchesText(userHeight), "HEIGHT", inchesText(shooter.height)),
+                                    (inchesText(userWingspan), "WINGSPAN", inchesText(eliteWingspan)),
+                                    ("\(userWeight) LB", "WEIGHT", "\(shooter.weight) LB"),
+                                    (userHand.capitalized, "HAND", "Right"),
+                                 ])
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("CLEAR COMPARISON")
+                            .shotiqCondensed(26, weight: .heavy)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 54)
+                            .overlay(RoundedRectangle(cornerRadius: 8)
+                                .stroke(ShotIQColor.shotiqOrange.opacity(0.55), lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 18)
+        .padding(.bottom, 16)
+        .background(Color.white)
+    }
+
+    private func comparePlayerCard(name: String, subline: String, badge: String, accent: Color) -> some View {
+        VStack(spacing: 7) {
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 56, height: 56)
+                    .overlay(Circle().stroke(accent.opacity(0.35), lineWidth: 1.5))
+                Text(badge.uppercased())
+                    .shotiqBody(13, weight: .black)
+                    .foregroundStyle(accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                    .padding(.horizontal, 5)
+            }
+            Text(name.uppercased())
+                .shotiqCondensed(24, weight: .heavy)
+                .foregroundStyle(ShotIQColor.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.58)
+                .frame(minHeight: 52)
+            Text(subline.uppercased())
+                .shotiqBody(10, weight: .bold)
+                .kerning(0.4)
+                .foregroundStyle(ShotIQColor.graphite)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.6)
+            HStack(spacing: 5) {
+                Text(badge == "ME" ? "LATEST SHOT" : "VIEW REFERENCE")
+                    .shotiqBody(11, weight: .black)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .black))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 34)
+            .background(accent, in: RoundedRectangle(cornerRadius: 6))
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(accent.opacity(0.28), lineWidth: 1.2))
+    }
+
+    private func compareTable(title: String, rows: [(String, String, String)]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .shotiqCondensed(22, weight: .heavy)
+                .foregroundStyle(ShotIQColor.graphite)
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                    compareTableRow(left: row.0, label: row.1, right: row.2)
+                    if index < rows.count - 1 {
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1)
                     }
                 }
             }
-            .padding(12)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        }
+    }
+
+    private func compareTableRow(left: String, label: String, right: String) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text(left.uppercased())
+                .font(.custom("Tungsten-Medium", size: 38))
+                .foregroundStyle(ShotIQColor.ink)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+            Text(label.uppercased())
+                .shotiqCondensed(18, weight: .heavy)
+                .foregroundStyle(ShotIQColor.graphite)
+                .frame(width: 110, alignment: .center)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.55)
+            Text(right.uppercased())
+                .font(.custom("Tungsten-Medium", size: 38))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+        }
+        .frame(minHeight: 58)
+        .padding(.horizontal, 10)
+    }
+
+    private func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private func mechanicValue(_ label: String) -> String {
+        detail.mechanics.first(where: { $0.label == label })?.value ?? "--"
+    }
+
+    private func estimatedTwoPointPct(_ shooter: EliteShooterDTO) -> Double? {
+        guard let fg = shooter.careerFieldGoalPct ?? shooter.careerPct else { return nil }
+        let three = shooter.careerThreePct ?? shooter.careerPct ?? fg
+        let finishingLift = shooter.height >= 78 ? 2.2 : 1.2
+        return min(72.0, max(35.0, fg + max(0, fg - three) * 0.85 + finishingLift))
+    }
+}
+
+private enum EliteDetailDrawer: Identifiable {
+    case bio
+    case compare
+
+    var id: String {
+        switch self {
+        case .bio: return "bio"
+        case .compare: return "compare"
         }
     }
 }
 
 struct EliteShooterDetailView: View { // 053
     var shooter: EliteShooterDTO
+    var rank: Int? = nil
+    var catalog: [EliteShooterDTO] = []
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @AppStorage(EliteComparisonSelection.shooterIDKey) private var selectedShooterID = 0
-    @State private var tab = "OVERVIEW"
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileWeightLbs") private var weightLbs = 185
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var playerLevel = "advanced"
+    @State private var imageMode = "STORY"
     @State private var savedReference = false
     @State private var toast: ShotIQToast?
-    @State private var info: EliteInfoNote?
-    private let tabs = ["OVERVIEW", "MECHANICS", "STRENGTHS", "WEAKNESSES", "REFERENCE"]
+    @State private var activeDrawer: EliteDetailDrawer?
     private var detail: EliteShooterDetailData {
         EliteShooterDetailData.make(shooter: shooter)
     }
+    private var sharePayload: ShotIQSharePayload {
+        ShotIQSharePayload.simple(title: "SHARE PLAYER",
+                                  headline: shooter.name,
+                                  subheadline: "\(shooter.team) • \(shooter.position.replacingOccurrences(of: "_", with: " "))",
+                                  primaryValue: "#\(resolvedRank)",
+                                  primaryLabel: "RANK",
+                                  secondaryValue: detail.scoreText,
+                                  secondaryLabel: "WSI",
+                                  accentLabel: detail.scoreVerdict,
+                                  metrics: [
+                                    ShotIQShareMetric(value: "\(shooter.height / 12)'\(shooter.height % 12)\"", label: "Height"),
+                                    ShotIQShareMetric(value: "\(shooter.weight) lb", label: "Weight"),
+                                    ShotIQShareMetric(value: shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct), label: "3PT"),
+                                    ShotIQShareMetric(value: shotiqPercentText(shooter.careerFreeThrowPct), label: "FT")
+                                  ],
+                                  shareText: detail.shareText)
+    }
     private var referenceStoreID: String { "\(shooter.id)::\(shooter.name)" }
+    private var resolvedRank: Int {
+        rank ?? max(1, 100 - EliteShooterDetailData.wsiScore(shooter) + 1)
+    }
+    private var rankingCatalog: [EliteShooterDTO] {
+        var seen: Set<Int> = []
+        return (catalog + [shooter]).filter { seen.insert($0.id).inserted }
+    }
+    private var isStoryImage: Bool {
+        imageMode == "STORY"
+    }
+    private var imageHeight: CGFloat {
+        isStoryImage ? 420 : 178
+    }
+    private var storyImageWidth: CGFloat {
+        imageHeight * 9.0 / 16.0
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-elite-shooter-detail") {
             VStack(spacing: 0) {
                 EliteTopBar()
-                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .top, spacing: 0) {
-                            VStack(alignment: .leading, spacing: 0) {
-                                Button {
-                                    toast = .info("Returning to elite shooters")
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
-                                        Text("ELITE SHOOTERS").shotiqBody(12, weight: .semibold).kerning(0.8)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Button {
+                                toast = .info("Returning to elite shooters")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
+                                    Text("ELITE SHOOTERS").shotiqBody(13, weight: .semibold).kerning(0.8)
+                                }
+                                .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .buttonStyle(.plain)
+
+                            ZStack(alignment: .topTrailing) {
+                                Group {
+                                    if isStoryImage {
+                                        CanonicalPhoto("053-visual-001",
+                                                       width: storyImageWidth,
+                                                       height: imageHeight,
+                                                       cornerRadius: 8,
+                                                       alignment: .top)
+                                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
+                                            .frame(maxWidth: .infinity)
+                                    } else {
+                                        CanonicalPhoto("053-visual-001",
+                                                       height: imageHeight,
+                                                       cornerRadius: 8,
+                                                       alignment: .center)
+                                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
                                     }
-                                    .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Button {
+                                    imageMode = imageMode == "STORY" ? "LANDSCAPE" : "STORY"
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: imageMode == "STORY" ? "rectangle.portrait" : "rectangle")
+                                            .font(.system(size: 13, weight: .bold))
+                                        Text(imageMode).shotiqBody(11, weight: .black)
+                                    }
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .padding(.horizontal, 10)
+                                    .frame(height: 34)
+                                    .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.40)))
                                 }
                                 .buttonStyle(.plain)
-                                .padding(.top, 14)
-                                Text(shooter.name.uppercased()).shotiqDisplay(36).padding(.top, 12)
-                                    .accessibilityIdentifier("elite-detail-name")
-                                Text("Right-handed  •  \(shooter.position)").shotiqBody(14)
-                                    .foregroundStyle(ShotIQColor.graphite).padding(.top, 4)
-                                Text("\(shooter.team)  •  \(shooter.league)").shotiqBody(14)
-                                    .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
-                                    .accessibilityIdentifier("elite-detail-team")
-                                Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.vertical, 12)
-                                HStack(alignment: .top, spacing: 12) {
-                                    PhaseGlyph(active: true, size: 40)
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text("ELITE REFERENCE").shotiqDisplay(17)
-                                        Text("\(detail.tierLabel) \(shooter.era ?? "era") shooter.\n\(detail.strengths.first ?? "Reference shooting profile").")
-                                            .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
-                                    }
-                                }
+                                .padding(10)
                             }
-                            .padding(.leading, 20)
-                            Spacer(minLength: 10)
-                            // Canonical reference-shooter frame; pose overlay is baked in.
-                            CanonicalPhoto("053-visual-001", width: 170, height: 210, cornerRadius: 0)
-                        }
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 26) {
-                                ForEach(tabs, id: \.self) { t in
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                    Text(shooter.name.uppercased()).shotiqDisplay(42)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.72)
+                                        .accessibilityIdentifier("elite-detail-name")
+                                    Spacer()
                                     Button {
-                                        tab = t
-                                        withAnimation(.easeInOut(duration: 0.25)) {
-                                            proxy.scrollTo(anchorID(for: t), anchor: .top)
-                                        }
-                                        toast = .info("Showing \(t.capitalized)")
+                                        activeDrawer = .bio
                                     } label: {
-                                        VStack(spacing: 8) {
-                                            Text(t).shotiqBody(13, weight: tab == t ? .bold : .semibold).kerning(0.6)
-                                                .foregroundStyle(tab == t ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                                            Rectangle().fill(tab == t ? ShotIQColor.shotiqOrange : .clear).frame(height: 3)
+                                        HStack(spacing: 4) {
+                                            Text("View bio").shotiqBody(13, weight: .black)
+                                            Image(systemName: "chevron.right").font(.system(size: 10, weight: .black))
                                         }
-                                        .fixedSize()
+                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .padding(.horizontal, 10)
+                                        .frame(height: 32)
+                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.35)))
                                     }
                                     .buttonStyle(.plain)
                                 }
+                                Text("Right-handed  •  \(shooter.position)")
+                                    .shotiqBody(15, weight: .semibold)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("\(shooter.team)  •  \(shooter.league)")
+                                    .shotiqBody(15)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .accessibilityIdentifier("elite-detail-team")
                             }
-                            .padding(.horizontal, 20)
+
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
+                                profileInfoCell("HEIGHT", inchesText(shooter.height), "REFERENCE")
+                                profileInfoCell("WEIGHT", "\(shooter.weight) LB", "REFERENCE")
+                                rankedRateCell("FG%", shooter.careerFieldGoalPct ?? shooter.careerPct,
+                                               rank: rateRank(for: shooter, metric: { $0.careerFieldGoalPct ?? $0.careerPct }))
+                                rankedRateCell("3P%", shooter.careerThreePct ?? shooter.careerPct,
+                                               rank: rateRank(for: shooter, metric: { $0.careerThreePct ?? $0.careerPct }))
+                                rankedRateCell("2P%", estimatedTwoPointPct(shooter),
+                                               rank: rateRank(for: shooter, metric: { estimatedTwoPointPct($0) }))
+                                rankedRateCell("FT%", shooter.careerFreeThrowPct,
+                                               rank: rateRank(for: shooter, metric: { $0.careerFreeThrowPct }))
+                            }
+                            .padding(.vertical, 8)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("ELITE REFERENCE").shotiqDisplay(18)
+                                ForEach(detail.strengths, id: \.self) { strength in
+                                    Text(strength).shotiqBody(14, weight: .semibold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            .padding(.leading, 12)
+                            .padding(.vertical, 2)
+                            .overlay(Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 3), alignment: .leading)
                         }
+                        .padding(.horizontal, 20)
                         .padding(.top, 14)
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -2750,78 +4544,74 @@ struct EliteShooterDetailView: View { // 053
                                 }
                                 Spacer()
                                 Button {
-                                    info = EliteInfoNote(
-                                        title: shooter.name,
-                                        message: detail.bioText)
-                                    toast = .info("Opening bio", shooter.name)
+                                    activeDrawer = .compare
                                 } label: {
-                                    HStack(spacing: 3) {
-                                        Text("View bio").shotiqBody(14).foregroundStyle(ShotIQColor.shotiqOrange)
-                                        Image(systemName: "chevron.right").font(.system(size: 11))
-                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "slider.horizontal.3")
+                                            .font(.system(size: 13, weight: .bold))
+                                        Text("Compare").shotiqBody(14, weight: .black)
                                     }
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .padding(.horizontal, 10)
+                                    .frame(height: 34)
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.35)))
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.top, 18)
                             .id("section-OVERVIEW")
-                            HStack(alignment: .top, spacing: 12) {
-                                // Canonical 053 shows five shooting rates here —
-                                // FG%, 3P%, FT%, eFG%, TS% — not height/weight.
-                                ShotIQCard {
-                                    HStack(spacing: 0) {
-                                        summaryStat("FG%", shotiqPercentText(shooter.careerFieldGoalPct),
-                                                    valueID: "elite-detail-fg")
-                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("3P%", shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct),
-                                                    valueID: "elite-detail-three")
-                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("FT%", shotiqPercentText(shooter.careerFreeThrowPct))
-                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("eFG%", shotiqPercentText(shooter.careerEfgPct))
-                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("TS%", shotiqPercentText(shooter.careerTsPct))
-                                    }
-                                    .padding(.vertical, 14)
-                                }
-                                ShotIQCard {
-                                    VStack(spacing: 3) {
-                                        Text("WSI TIER").shotiqBody(10, weight: .medium).kerning(0.5)
-                                            .foregroundStyle(ShotIQColor.graphite)
-                                        Text(detail.tierValue).font(.custom("Tungsten-Medium", size: 34))
-                                            .foregroundStyle(ShotIQColor.shotiqOrange)
-                                            .accessibilityIdentifier("elite-detail-tier")
-                                        Text(detail.tierLabel.uppercased())
-                                            .shotiqBody(10, weight: .medium).kerning(0.5)
-                                            .foregroundStyle(ShotIQColor.graphite)
-                                    }
-                                    .padding(.vertical, 12).padding(.horizontal, 16)
-                                }
-                            }
-                            .padding(.top, 12)
-                            Text("FORM SCORE").shotiqDisplay(20).padding(.top, 22)
-                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
-                            HStack(alignment: .top, spacing: 20) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(detail.scoreText).font(.custom("Tungsten-Medium", size: 54))
-                                        .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        .accessibilityIdentifier("elite-detail-score")
-                                    Text(detail.scoreVerdict).font(.custom("Tungsten-Medium", size: 17))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text(detail.scoreNote).shotiqBody(12)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                }
-                                VStack(spacing: 4) {
-                                    ScoreBar(pct: detail.scorePct).padding(.top, 22)
-                                    HStack {
-                                        ForEach(["0", "25", "50", "75", "100"], id: \.self) { t in
-                                            Text(t).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                            if t != "100" { Spacer() }
+                            ShotIQCard {
+                                VStack(alignment: .leading, spacing: 14) {
+                                    HStack(alignment: .top, spacing: 14) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("FORM SCORE").shotiqDisplay(18)
+                                            Text(detail.scoreText).font(.custom("Tungsten-Medium", size: 68))
+                                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                                .accessibilityIdentifier("elite-detail-score")
+                                            Text(detail.scoreVerdict).font(.custom("Tungsten-Medium", size: 19))
+                                                .foregroundStyle(ShotIQColor.analysisBlue)
+                                        }
+                                        Spacer()
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text("RANK").shotiqMicroCaps()
+                                                .foregroundStyle(ShotIQColor.graphite)
+                                            Text("\(resolvedRank)").font(.custom("Tungsten-Medium", size: 58))
+                                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                                .accessibilityIdentifier("elite-detail-tier")
+                                            Text("ELITE SHOOTERS")
+                                                .shotiqBody(11, weight: .bold).kerning(0.5)
+                                                .foregroundStyle(ShotIQColor.graphite)
                                         }
                                     }
+                                    VStack(spacing: 5) {
+                                        ScoreBar(pct: detail.scorePct)
+                                        HStack {
+                                            ForEach(["0", "25", "50", "75", "100"], id: \.self) { t in
+                                                Text(t).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                                if t != "100" { Spacer() }
+                                            }
+                                        }
+                                    }
+                                    Text(detail.scoreNote).shotiqBody(13)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(14)
+                            }
+                            .overlay(RoundedRectangle(cornerRadius: 8)
+                                .stroke(ShotIQColor.shotiqOrange.opacity(0.20), lineWidth: 1))
+                            .padding(.top, 12)
+
+                            Text("MECHANICS SNAPSHOT").shotiqDisplay(20).padding(.top, 22)
+                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
+                                .id("section-MECHANICS")
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
+                                ForEach(detail.mechanics, id: \.label) { item in
+                                    snapshotCol(item.label, item.value, valueID: "elite-detail-mechanic-\(item.label)")
                                 }
                             }
-                            .padding(.top, 6)
+                            .padding(.top, 10)
+
                             HStack {
                                 Text("SHOT BREAKDOWN (CAREER)").shotiqDisplay(20)
                                 Spacer()
@@ -2830,102 +4620,47 @@ struct EliteShooterDetailView: View { // 053
                             }
                             .padding(.top, 22)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
-                            HStack(spacing: 0) {
-                                ForEach(Array(detail.breakdown.enumerated()), id: \.element.label) { index, item in
-                                    if index > 0 {
-                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
-                                    }
-                                    breakdownCol(item.label, item.percent, item.shots)
+                            VStack(spacing: 8) {
+                                ForEach(detail.breakdown, id: \.label) { item in
+                                    breakdownRow(item.label, item.percent, item.shots)
                                         .accessibilityIdentifier("elite-detail-breakdown-\(item.label)")
                                 }
                             }
-                            .padding(.top, 8)
-                            Text("MECHANICS SNAPSHOT").shotiqDisplay(20).padding(.top, 22)
-                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
-                                .id("section-MECHANICS")
-                            HStack(spacing: 0) {
-                                ForEach(Array(detail.mechanics.enumerated()), id: \.element.label) { index, item in
-                                    if index > 0 {
-                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
-                                    }
-                                    snapshotCol(item.label, item.value, valueID: "elite-detail-mechanic-\(item.label)")
-                                }
-                            }
-                            .padding(.top, 8)
-                            HStack(alignment: .top, spacing: 24) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("STRENGTHS").shotiqDisplay(18).id("section-STRENGTHS")
-                                    ForEach(detail.strengths, id: \.self) { s in
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "checkmark.circle").font(.system(size: 14))
-                                                .foregroundStyle(ShotIQColor.confirmGreen)
-                                            Text(s).shotiqBody(13).foregroundStyle(ShotIQColor.ink)
-                                                .lineLimit(1).minimumScaleFactor(0.7)
-                                        }
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("WEAKNESSES").shotiqDisplay(18)
-                                    ForEach(detail.weaknesses, id: \.self) { w in
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "minus.circle").font(.system(size: 14))
-                                                .foregroundStyle(ShotIQColor.reviewRed)
-                                            Text(w).shotiqBody(13).foregroundStyle(ShotIQColor.ink)
-                                                .lineLimit(1).minimumScaleFactor(0.7)
-                                        }
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .padding(.top, 20)
+                            .padding(.top, 10)
                             Text("REFERENCE FORM FRAMES").shotiqDisplay(20).padding(.top, 22)
                                 .id("section-REFERENCE")
-                            HStack(spacing: 8) {
-                                ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                                    VStack(spacing: 6) {
-                                        CanonicalPhoto(referenceFrameKey(for: p), height: 96, cornerRadius: 4)
-                                            .overlay(SkeletonOverlay().opacity(0.72))
-                                        Text(p).shotiqBody(8, weight: p == "RELEASE" ? .bold : .regular).kerning(0.3)
-                                            .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                                            .lineLimit(1).minimumScaleFactor(0.6)
-                                        if p == "RELEASE" {
-                                            Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 34, height: 2)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
+                                        VStack(spacing: 6) {
+                                            CanonicalPhoto(referenceFrameKey(for: p), width: 118, height: 86, cornerRadius: 5)
+                                                .overlay(SkeletonOverlay().opacity(0.72))
+                                            Text(p).shotiqBody(9, weight: p == "RELEASE" ? .bold : .regular).kerning(0.3)
+                                                .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                                .lineLimit(1).minimumScaleFactor(0.6)
+                                            if p == "RELEASE" {
+                                                Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 42, height: 2)
+                                            }
                                         }
+                                        .frame(width: 118)
                                     }
-                                    .frame(maxWidth: .infinity)
                                 }
                             }
                             .padding(.top, 8)
                             HStack(spacing: 10) {
-                                NavigationLink {
-                                    if let latest = app.recentMedia.first {
-                                        PhotoComparisonView(presentation: AnalysisResultPresentation(result: latest.analysis),
-                                                            shooter: shooter)
-                                    } else if UITestHooks.demoData {
-                                        PhotoComparisonView(presentation: .canonicalDemo,
-                                                            shooter: shooter)
-                                    } else {
-                                        AnalyzeHubView()
-                                    }
+                                Button {
+                                    activeDrawer = .compare
                                 } label: {
                                     HStack(spacing: 8) {
                                         Image(systemName: "magnifyingglass")
-                                        Text("Compare with my shot").shotiqBody(15, weight: .medium)
+                                        Text("Compare").shotiqBody(15, weight: .medium)
                                             .lineLimit(1).minimumScaleFactor(0.7)
                                     }
                                     .frame(maxWidth: .infinity).frame(height: 52)
                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
                                     .foregroundStyle(.white)
                                 }
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    if !app.recentMedia.isEmpty || UITestHooks.demoData {
-                                        toast = .info("Opening comparison", shooter.name)
-                                    } else {
-                                        toast = .info("Analyze a shot first",
-                                                      "Upload a photo or video before comparing with \(shooter.name).")
-                                    }
-                                })
+                                .buttonStyle(.plain)
                                 Button {
                                     savedReference.toggle()
                                     EliteStudyStore.set(savedReference,
@@ -2952,22 +4687,18 @@ struct EliteShooterDetailView: View { // 053
                                         .stroke(savedReference ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                 }
                                 .buttonStyle(.plain)
-                                ShareLink(item: detail.shareText) {
+                                ShotIQShareButton(payload: sharePayload) {
                                     Image(systemName: "square.and.arrow.up").font(.system(size: 17))
                                         .foregroundStyle(ShotIQColor.ink)
                                         .frame(width: 52, height: 52)
                                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
                                 }
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    toast = .info("Opening share sheet", "\(shooter.name)'s reference summary is ready.")
-                                })
                             }
                             .padding(.top, 18)
                             Spacer(minLength: 24)
                         }
                         .padding(.horizontal, 20)
                     }
-                }
                 }
             }
         }
@@ -2976,12 +4707,30 @@ struct EliteShooterDetailView: View { // 053
                                                       key: EliteStudyStore.referencesKey)
             selectedShooterID = shooter.id
         }
-        .eliteInfoAlert($info)
+        .sheet(item: $activeDrawer) { drawer in
+            switch drawer {
+            case .bio:
+                EliteBioDrawer(shooter: shooter, detail: detail)
+                    .presentationDetents([.medium, .large])
+            case .compare:
+                EliteCompareDrawer(shooter: shooter,
+                                    detail: detail,
+                                    latestAnalysis: latestComparePresentation,
+                                    userHeight: heightIn,
+                                    userWingspan: wingspanIn,
+                                    userWeight: weightLbs,
+                                    userHand: hand,
+                                    userLevel: playerLevel)
+                    .presentationDetents([.large])
+            }
+        }
         .shotiqToast($toast)
     }
-    /// Strengths and weaknesses share one row, so both tabs land on the same anchor.
-    private func anchorID(for tab: String) -> String {
-        tab == "WEAKNESSES" ? "section-STRENGTHS" : "section-\(tab)"
+    private var latestComparePresentation: AnalysisResultPresentation? {
+        if let latest = app.recentMedia.first {
+            return AnalysisResultPresentation(result: latest.analysis)
+        }
+        return UITestHooks.demoData ? .canonicalDemo : nil
     }
     private func referenceFrameKey(for phase: String) -> String {
         switch phase {
@@ -2997,8 +4746,6 @@ struct EliteShooterDetailView: View { // 053
             Text(label).shotiqBody(10, weight: .medium).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            // Five columns share the card on 053, so the widest value ("100.0%")
-            // is allowed to shrink rather than truncate.
             if let valueID {
                 Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1).minimumScaleFactor(0.6)
@@ -3009,40 +4756,109 @@ struct EliteShooterDetailView: View { // 053
             }
         }
         .frame(maxWidth: .infinity)
+        .frame(minHeight: 66)
     }
-    private func breakdownCol(_ label: String, _ pct: String, _ shots: String) -> some View {
-        VStack(spacing: 4) {
-            // Shot *types*, not mechanics: routing these through
-            // `MechanicKind(metricLabel:)` matched nothing and dropped all four
-            // on `.impact`, which is the single identical mark both graders read
-            // off this row.
-            ShotTypeGlyph(kind: ShotTypeKind(shotTypeLabel: label) ?? .other, size: 26)
-                .foregroundStyle(ShotIQColor.ink)
-            Text(label).shotiqBody(11).foregroundStyle(ShotIQColor.ink)
+
+    private var sampleCountText: String {
+        let parts = detail.analyzedText.split(separator: " ")
+        return parts.first.map(String.init) ?? detail.analyzedText
+    }
+
+    private func profileInfoCell(_ label: String, _ value: String, _ caption: String) -> some View {
+        VStack(spacing: 2) {
+            Text(label).shotiqMicroCaps().foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(pct).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
-            Text(shots).shotiqBody(9, weight: .medium).kerning(0.4)
+            Text(value).font(.custom("Tungsten-Medium", size: 29))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.65)
+            Text(caption).shotiqBody(8, weight: .bold).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.55)
         }
         .frame(maxWidth: .infinity)
+        .frame(minHeight: 68)
     }
+
+    private func rankedRateCell(_ label: String, _ value: Double?, rank: Int?) -> some View {
+        profileInfoCell(label,
+                        shotiqPercentText(value),
+                        rank.map { "RANK \($0)" } ?? "RANK --")
+    }
+
+    private func rateRank(for shooter: EliteShooterDTO,
+                          metric: (EliteShooterDTO) -> Double?) -> Int? {
+        guard let current = metric(shooter) else { return nil }
+        let values = rankingCatalog.compactMap(metric)
+        guard !values.isEmpty else { return nil }
+        return 1 + values.filter { $0 > current }.count
+    }
+
+    private func estimatedTwoPointPct(_ shooter: EliteShooterDTO) -> Double? {
+        guard let fg = shooter.careerFieldGoalPct ?? shooter.careerPct else { return nil }
+        let three = shooter.careerThreePct ?? shooter.careerPct ?? fg
+        let finishingLift = shooter.height >= 78 ? 2.2 : 1.2
+        return min(72.0, max(35.0, fg + max(0, fg - three) * 0.85 + finishingLift))
+    }
+
+    private func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private func breakdownRow(_ label: String, _ pct: String, _ shots: String) -> some View {
+        let progress = percentValue(pct)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label).shotiqBody(13, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.ink)
+                    Text(shots).shotiqBody(10, weight: .medium).kerning(0.4)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer()
+                Text(pct).font(.custom("Tungsten-Medium", size: 30))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .lineLimit(1)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(ShotIQColor.rule)
+                    Capsule()
+                        .fill(ShotIQColor.shotiqOrange)
+                        .frame(width: geo.size.width * progress)
+                }
+            }
+            .frame(height: 7)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
     private func snapshotCol(_ label: String, _ value: String, valueID: String? = nil) -> some View {
-        VStack(spacing: 4) {
-            // Canonical 053 draws five different diagrams across MECHANICS
-            // SNAPSHOT; this row printed one SF runner five times.
-            MechanicGlyph(kind: .init(metricLabel: label), size: 30)
-                .foregroundStyle(ShotIQColor.ink)
-            Text(label).shotiqBody(9).foregroundStyle(ShotIQColor.graphite)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).shotiqMicroCaps()
+                .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
             if let valueID {
-                Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
+                Text(value).font(.custom("Tungsten-Medium", size: 28)).foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1).minimumScaleFactor(0.6)
                     .accessibilityIdentifier(valueID)
             } else {
-                Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
+                Text(value).font(.custom("Tungsten-Medium", size: 28)).foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1).minimumScaleFactor(0.6)
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
+    private func percentValue(_ text: String) -> CGFloat {
+        let number = text
+            .replacingOccurrences(of: "%", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value = Double(number) else { return 0 }
+        return CGFloat(min(max(value / 100.0, 0), 1))
     }
 }

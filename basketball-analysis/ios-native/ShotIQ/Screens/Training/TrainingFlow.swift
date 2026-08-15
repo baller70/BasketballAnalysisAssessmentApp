@@ -482,73 +482,20 @@ struct TrainingHomeView: View {     // 054
                     TopBar()
                     PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
                     VStack(alignment: .leading, spacing: 0) {
-                        // PRIMARY COACHING TARGET (canonical warm-canvas hero card)
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                MicroLabel(text: "PRIMARY COACHING TARGET")
-                                Text(homeData.target)
-                                    .shotiqBody(21, weight: .bold)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .accessibilityIdentifier("training-home-target")
-                            }
-                            Spacer(minLength: 8)
-                            VStack(spacing: 8) {
-                                CorrectionGlyph(kind: homeData.targetGlyph, size: 54).foregroundStyle(ShotIQColor.ink)
-                                Image(systemName: "checkmark.circle")
-                                    .font(.system(size: 19))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                            }
+                        NavigationLink { QuickStartView() } label: {
+                            trainingLabHeroCard
                         }
-                        .padding(16)
-                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 10))
+                        .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening training lab")
+                        })
+                        .accessibilityIdentifier("training-home-lab-hero")
                         .padding(.top, 16)
 
-                        NavigationLink { QuickStartView() } label: {
-                            HStack(spacing: 10) {
-                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
-                                                         size: 18,
-                                                         label: nil)
-                                Text("Quick start").shotiqBody(17, weight: .medium)
-                            }
-                            .frame(maxWidth: .infinity).frame(height: 54)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
-                            .foregroundStyle(.white)
-                        }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening quick start workout")
-                        })
-                        .padding(.top, 14)
-
                         HStack(spacing: 10) {
-                            NavigationLink { LiveCameraSetupView() } label: {
-                                trainingHomeAction("record.circle", "Record workout", primary: true)
-                            }
-                            .buttonStyle(.plain)
-                            .simultaneousGesture(TapGesture().onEnded {
-                                toast = .progress("Opening live camera",
-                                                  "Record this workout from the Workout tab.",
-                                                  progress: 0.35)
-                            })
-                            .accessibilityLabel("Record workout video")
-                            .accessibilityIdentifier("training-home-record-workout")
-
-                            NavigationLink { VideoUploadView() } label: {
-                                trainingHomeAction("square.and.arrow.up", "Upload clip", primary: false)
-                            }
-                            .buttonStyle(.plain)
-                            .simultaneousGesture(TapGesture().onEnded {
-                                toast = .info("Opening video upload",
-                                              "Choose a saved workout clip to analyze.")
-                            })
-                            .accessibilityLabel("Upload workout video")
-                            .accessibilityIdentifier("training-home-upload-clip")
-                        }
-                        .padding(.top, 10)
-
-                        HStack(spacing: 10) {
-                            optionCard("bookmark", "My drills", MyDrillsView())
-                            optionCard("magnifyingglass", "Discover", DiscoverDrillsView())
                             optionCard("calendar", "Calendar", WorkoutCalendarView())
+                            optionCard("target", "Goals", GoalsView())
+                            optionCard("chart.line.uptrend.xyaxis", "History", AnalyticsCardsView())
                         }
                         .padding(.top, 12)
 
@@ -577,8 +524,6 @@ struct TrainingHomeView: View {     // 054
                                         HStack(spacing: 8) {
                                             PhotoThumb(width: 84, height: 76,
                                                        photo: d.photo)
-                                            WorkoutGlyph(kind: .init(drillName: d.title), size: 28)
-                                                .foregroundStyle(i == 0 ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             VStack(alignment: .leading, spacing: 5) {
                                                 Text(d.title).shotiqBody(15, weight: .semibold)
                                                     .lineLimit(1).minimumScaleFactor(0.8)
@@ -660,7 +605,6 @@ struct TrainingHomeView: View {     // 054
                         .accessibilityIdentifier("training-home-recent-workout-card")
                         .accessibilityLabel("Recent workout")
                         .padding(.top, 8)
-                        PhaseStrip().padding(.top, 22)
                         Spacer(minLength: 30)
                     }
                     .padding(.horizontal, 20)
@@ -669,6 +613,17 @@ struct TrainingHomeView: View {     // 054
         }
         .shotiqToast($toast)
     }
+    private var trainingLabHeroCard: some View {
+        CanonicalPhoto("054-training-lab-hero",
+                       height: 126,
+                       cornerRadius: 10,
+                       alignment: .center)
+            .frame(maxWidth: .infinity)
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange.opacity(0.45)))
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .accessibilityLabel("ShotIQ Training Lab. Build your release. Form target 93.")
+    }
+
     private func trainingHomeAction(_ icon: String, _ label: String, primary: Bool) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon).font(.system(size: 24, weight: .semibold))
@@ -1161,8 +1116,11 @@ struct DiscoverDrillsView: View {   // 056
                                         HStack(spacing: 8) {
                                             HStack(spacing: 4) {
                                                 ForEach(0..<4, id: \.self) { i in
-                                                    PhaseGlyph(phase: ShotPhase.allCases[i],
-                                                               active: i == 3, size: 15)
+                                                    PhasePhotoThumbnail(phase: ShotPhase.allCases[i],
+                                                                        active: i == 3,
+                                                                        width: 28,
+                                                                        height: 20,
+                                                                        cornerRadius: 3)
                                                 }
                                             }
                                             Text("Release").shotiqBody(11, weight: .medium)
@@ -1682,7 +1640,7 @@ struct MyDrillsView: View {         // 058
     @Environment(\.dismiss) private var dismiss
     @AppStorage(TrainingSavedDrillStore.key) private var savedDrillsPayload = ""
     @AppStorage(TrainingHiddenDrillStore.key) private var hiddenDrillsPayload = "[]"
-    @State private var tab = 1                  // 0 TRAIN · 1 MY DRILLS · 2 ASSIGNED
+    @State private var tab = 0                  // 0 MY DRILLS · 1 TRAIN · 2 ASSIGNED
     @State private var sortMode = "Newest"
     @State private var phaseFilter = "All phases"
     @State private var toast: ShotIQToast?
@@ -1755,9 +1713,15 @@ struct MyDrillsView: View {         // 058
                         })
                         .padding(.top, 16)
                         HStack(spacing: 0) {
-                            tabButton("figure.run", "TRAIN", "Drills & workouts", 0)
-                            tabButton("point.3.connected.trianglepath.dotted", "MY DRILLS", "Saved for you", 1)
-                            tabButton("scribble.variable", "ASSIGNED", "From coach", 2)
+                            tabButton("MY DRILLS", "Saved for you", 0)
+                            NavigationLink { TrainingHomeView() } label: {
+                                tabButtonLabel("TRAIN", "Drills & workouts", selected: false)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening training")
+                            })
+                            tabButton("ASSIGNED", "From coach", 2)
                         }
                         .padding(.top, 18)
                         HStack {
@@ -1855,33 +1819,26 @@ struct MyDrillsView: View {         // 058
         }
         .shotiqToast($toast)
     }
-    private func tabButton(_ icon: String, _ title: String, _ caption: String, _ index: Int) -> some View {
+    private func tabButton(_ title: String, _ caption: String, _ index: Int) -> some View {
         let selected = tab == index
-        // TRAIN pops back to the training home this screen was pushed from;
-        // the other two switch the visible list in place.
         return Button {
-            if index == 0 {
-                toast = .info("Returning to training")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
-            } else {
-                tab = index
-                toast = .success("Showing \(title.capitalized)")
-            }
+            tab = index
+            toast = .success("Showing \(title.capitalized)")
         } label: {
-            VStack(spacing: 6) {
-                HStack(spacing: 6) {
-                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 24)
-                    Text(title).shotiqBody(12, weight: .bold).kerning(0.5)
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                }
-                .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                Text(caption).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                    .lineLimit(1).minimumScaleFactor(0.7)
-                Rectangle().fill(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
-                    .frame(height: selected ? 2 : 1)
-            }
-            .frame(maxWidth: .infinity)
+            tabButtonLabel(title, caption, selected: selected)
         }
+    }
+    private func tabButtonLabel(_ title: String, _ caption: String, selected: Bool) -> some View {
+        VStack(spacing: 6) {
+            Text(title).shotiqBody(12, weight: .bold).kerning(0.5)
+                .lineLimit(1).minimumScaleFactor(0.7)
+                .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+            Text(caption).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Rectangle().fill(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
+                .frame(height: selected ? 2 : 1)
+        }
+        .frame(maxWidth: .infinity)
     }
     private func drillCard(_ d: TrainingSavedDrill) -> some View {
         ShotIQCard {
@@ -1934,10 +1891,14 @@ struct MyDrillsView: View {         // 058
                         metaPill(d.difficulty)
                         metaPill(d.duration)
                     }
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
                         ForEach(phases, id: \.self) { p in
                             VStack(spacing: 3) {
-                                PhaseGlyph(phase: p, active: p == d.phase, size: 18)
+                                PhasePhotoThumbnail(phase: ShotPhase(label: p),
+                                                    active: p == d.phase,
+                                                    width: 34,
+                                                    height: 24,
+                                                    cornerRadius: 3)
                                 Rectangle().fill(p == d.phase ? ShotIQColor.shotiqOrange : .clear)
                                     .frame(width: 18, height: 2)
                             }
@@ -1981,13 +1942,13 @@ struct MyDrillsView: View {         // 058
 struct WorkoutCalendarView: View {  // 059
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
-    @State private var selected = 7
+    @State private var selectedDay = 7
     @State private var monthIndex = 4          // 0-based; 4 = May 2025 (has data)
     @State private var displayYear = 2025
-    @State private var dayCardExpanded = true
+    @State private var showingDayDetail = false
     @State private var toast: ShotIQToast?
-    private let monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-                              "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
+    private let monthNames = ["January", "February", "March", "April", "May", "June",
+                              "July", "August", "September", "October", "November", "December"]
     private let daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     private var latestWorkout: TrainingWorkoutRecord? {
         TrainingWorkoutStore.latest(in: completedWorkoutsPayload)
@@ -2006,30 +1967,30 @@ struct WorkoutCalendarView: View {  // 059
     private var selectedLocalWorkout: TrainingWorkoutRecord? {
         guard isLocalWorkoutMonth,
               let day = latestComponents?.day,
-              selected == day else { return nil }
+              selectedDay == day else { return nil }
         return latestWorkout
     }
-    private let completed: Set<Int> = [4, 5, 6, 9, 12, 15, 18]
-    private let missed: Set<Int> = [10, 17]
+    private let completed: Set<Int> = [2, 4, 5, 6, 9, 12, 15, 18]
+    private let missed: Set<Int> = [3, 10, 17]
     /// Canonical greys 24 with no marker and no duration — the legend's
     /// "no workout" state. 31 falls outside the scheduled range already.
     private let noWorkout: Set<Int> = [24]
-    private let minutes: [Int: String] = [4: "18 min", 5: "17 min", 6: "20 min", 9: "15 min",
+    private let minutes: [Int: String] = [1: "20 min", 2: "15 min", 4: "18 min", 5: "17 min", 6: "20 min", 9: "15 min",
                                           12: "17 min", 15: "15 min", 18: "18 min"]
-    private let weekdayNames = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
+    private let weekdayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     private var topWorkout: TrainingWorkoutRecord? { latestWorkout }
     private var selectedDayTitle: String {
         if let local = selectedLocalWorkout {
             let c = Calendar.current.dateComponents([.month, .day, .weekday], from: local.completedAt)
             let weekday = weekdayNames[max(0, min((c.weekday ?? 1) - 1, weekdayNames.count - 1))]
             let month = monthNames[max(0, min((c.month ?? 1) - 1, monthNames.count - 1))]
-            return "\(weekday), \(month) \(c.day ?? selected)"
+            return "\(weekday), \(month) \(c.day ?? selectedDay)"
         }
-        let weekday = weekdayNames[(4 + selected - 1) % 7]
-        return "\(weekday), MAY \(selected)"
+        let weekday = weekdayNames[(4 + selectedDay - 1) % 7]
+        return "\(weekday), May \(selectedDay)"
     }
     private var selectedStatusText: String {
-        selectedLocalWorkout == nil ? "IN PROGRESS" : "COMPLETED"
+        selectedLocalWorkout == nil ? "In Progress" : "Completed"
     }
     private var selectedWorkoutName: String {
         selectedLocalWorkout?.drillName ?? "Combo Ladder"
@@ -2037,156 +1998,10 @@ struct WorkoutCalendarView: View {  // 059
     var body: some View {
         CanonicalScreen(testID: "screen-ios-workout-calendar") {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    TopBar()
-                    PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Primary target strip
-                        HStack(spacing: 10) {
-                            CorrectionGlyph(kind: .stack, size: 28).foregroundStyle(ShotIQColor.ink)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("PRIMARY TARGET").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                Text("Keep elbow stacked through release")
-                                    .shotiqBody(13, weight: .semibold)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                            }
-                            Spacer(minLength: 6)
-                            stripStat("\(topWorkout?.shots ?? 24)", "SHOTS", id: "calendar-strip-shots")
-                            stripStat("\(topWorkout?.makes ?? 15)", "MAKES", id: "calendar-strip-makes")
-                            stripStat(topWorkout?.accuracyText ?? "62.5%", "FG%", id: "calendar-strip-fg")
-                        }
-                        .padding(12)
-                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
-                        .padding(.top, 16)
-                        // Month header
-                        HStack {
-                            Button {
-                                if monthIndex > 0 {
-                                    monthIndex -= 1
-                                    toast = .success("Showing \(monthNames[monthIndex]) \(displayYear)")
-                                } else {
-                                    toast = .info("Already at January")
-                                }
-                            } label: {
-                                Image(systemName: "chevron.left").font(.system(size: 17))
-                                    .foregroundStyle(monthIndex > 0 ? ShotIQColor.ink : ShotIQColor.muted)
-                            }
-                            .accessibilityLabel("Previous month")
-                            Spacer()
-                            Text("\(monthNames[monthIndex]) \(displayYear)").shotiqDisplay(26)
-                            Spacer()
-                            Button {
-                                if monthIndex < 11 {
-                                    monthIndex += 1
-                                    toast = .success("Showing \(monthNames[monthIndex]) \(displayYear)")
-                                } else {
-                                    toast = .info("Already at December")
-                                }
-                            } label: {
-                                Image(systemName: "chevron.right").font(.system(size: 17))
-                                    .foregroundStyle(monthIndex < 11 ? ShotIQColor.ink : ShotIQColor.muted)
-                            }
-                            .accessibilityLabel("Next month")
-                        }
-                        .padding(.top, 16)
-                        let cols = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
-                        LazyVGrid(columns: cols, spacing: 2) {
-                            ForEach(["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"], id: \.self) { d in
-                                Text(d).shotiqBody(9, weight: .bold).kerning(0.4)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                            }
-                            if isDataMonth {
-                                // Offset ids, exactly as the trailing run below does.
-                                // These April cells print 27-30, and so do May's real
-                                // 27-30 further down the SAME LazyVGrid — identical
-                                // \.self ids in one grid collide, SwiftUI keeps the
-                                // first of each and silently drops the later four, so
-                                // the month ended at 26 with 31 stranded.
-                                ForEach(227...230, id: \.self) { d in adjacentCell(d - 200) }
-                            }
-                            ForEach(1...daysInMonth[monthIndex], id: \.self) { d in dayCell(d) }
-                            if isDataMonth {
-                                ForEach(101...107, id: \.self) { d in adjacentCell(d - 100) }
-                            }
-                        }
-                        .padding(.top, 10)
-                        // Legend
-                        HStack(spacing: 10) {
-                            legendItem("Completed") { Image(systemName: "checkmark.circle").font(.system(size: 11)).foregroundStyle(ShotIQColor.confirmGreen) }
-                            legendItem("Scheduled") { Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4).frame(width: 10, height: 10) }
-                            legendItem("In Progress") { Circle().fill(ShotIQColor.shotiqOrange).frame(width: 10, height: 10) }
-                            legendItem("Missed") { Image(systemName: "xmark.circle").font(.system(size: 11)).foregroundStyle(ShotIQColor.reviewRed) }
-                            legendItem("No workout") { Text("24").font(.custom("Tungsten-Medium", size: 12)).foregroundStyle(ShotIQColor.muted) }
-                        }
-                        .padding(.top, 12)
-                        // Selected day card
-                        ShotIQCard {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack(spacing: 10) {
-                                    Text(selectedDayTitle)
-                                        .shotiqBody(15, weight: .bold)
-                                        .lineLimit(1).minimumScaleFactor(0.7)
-                                        .accessibilityIdentifier("calendar-selected-day-title")
-                                    Text(selectedStatusText).shotiqBody(9, weight: .bold).kerning(0.4)
-                                        .padding(.horizontal, 7).padding(.vertical, 3)
-                                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(selectedLocalWorkout == nil ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen))
-                                        .foregroundStyle(selectedLocalWorkout == nil ? ShotIQColor.shotiqOrange : ShotIQColor.confirmGreen)
-                                        .accessibilityIdentifier("calendar-selected-status")
-                                    Spacer()
-                                    Button {
-                                        withAnimation { dayCardExpanded.toggle() }
-                                        toast = .info(dayCardExpanded ? "Workout details expanded" : "Workout details collapsed")
-                                    } label: {
-                                        Image(systemName: dayCardExpanded ? "chevron.up" : "chevron.down")
-                                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
-                                    }
-                                    .accessibilityLabel(dayCardExpanded ? "Collapse day details" : "Expand day details")
-                                }
-                                if dayCardExpanded {
-                                HStack(alignment: .top, spacing: 12) {
-                                    PhotoThumb(width: 112, height: 128, photo: "059-visual-001")
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(selectedLocalWorkout?.drillName.uppercased() ?? "COMBO LADDER").shotiqDisplay(22)
-                                            .accessibilityIdentifier("calendar-selected-workout-name")
-                                        HStack(spacing: 5) {
-                                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "clock"), size: 42).font(.system(size: 11))
-                                            Text(selectedLocalWorkout.map { "Completed • \($0.shots) shots • \($0.accuracyText)" } ?? "Day 4 of 7 • 17 min").shotiqBody(12, weight: .semibold)
-                                                .accessibilityIdentifier("calendar-selected-workout-summary")
-                                        }
-                                        Text(selectedLocalWorkout.map { "Saved session: \($0.makes) makes, \($0.misses) misses, +\($0.pointsEarned) points earned." } ??
-                                             "Layer catch-and-shoot reps with movement progressions to reinforce release timing and alignment under fatigue.")
-                                            .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                        HStack(spacing: 12) {
-                                            ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                                                PhaseGlyph(phase: p, active: p == "RELEASE", size: 16)
-                                            }
-                                        }
-                                    }
-                                }
-                                NavigationLink { DrillExecutionView(drillName: selectedWorkoutName) } label: {
-                                    HStack(spacing: 8) {
-                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.viewfinder"),
-                                                                 size: 18,
-                                                                 label: nil)
-                                        Text("Open workout").shotiqBody(16, weight: .medium)
-                                    }
-                                    .frame(maxWidth: .infinity).frame(height: 50)
-                                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
-                                    .foregroundStyle(.white)
-                                }
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    toast = .success("Opening \(selectedWorkoutName)")
-                                })
-                                }
-                            }
-                            .padding(14)
-                        }
-                        .padding(.top, 14)
-                        Spacer(minLength: 30)
-                    }
-                    .padding(.horizontal, 20)
+                if showingDayDetail {
+                    calendarDetailPage
+                } else {
+                    calendarOverviewPage
                 }
             }
         }
@@ -2200,82 +2015,446 @@ struct WorkoutCalendarView: View {  // 059
               let day = c.day else { return }
         monthIndex = max(0, min(month - 1, 11))
         displayYear = year
-        selected = day
+        selectedDay = day
     }
-    private func stripStat(_ value: String, _ label: String, id: String? = nil) -> some View {
-        VStack(spacing: 1) {
-            Text(value).font(.custom("Tungsten-Medium", size: 17)).foregroundStyle(ShotIQColor.ink)
-                .lineLimit(1).minimumScaleFactor(0.6)
-                .accessibilityIdentifier(id ?? "")
-            Text(label).shotiqBody(7, weight: .medium).foregroundStyle(ShotIQColor.graphite)
+
+    private var calendarOverviewPage: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Workout Calendar").shotiqDisplay(40).foregroundStyle(ShotIQColor.ink)
+                Text("Stay consistent. See progress.")
+                    .shotiqBody(16, weight: .medium)
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            .padding(.top, 24)
+            targetSummaryCard
+            calendarMonthCard
+            legendCard
+            Spacer(minLength: 30)
+        }
+        .padding(.horizontal, 20)
+    }
+
+    private var calendarDetailPage: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            detailHeader
+            targetSummaryCard
+            workoutProgressCard
+            drillPlanCard
+            shotLogCard
+            notesCard
+            bottomActions
+            Spacer(minLength: 28)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+    }
+
+    private var detailHeader: some View {
+        HStack(alignment: .center) {
+            Button {
+                withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                    showingDayDetail = false
+                }
+            } label: {
+                Text("Calendar")
+                    .shotiqBody(16, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.ink)
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            Text("\(monthNames[monthIndex]) \(selectedDay), \(displayYear)")
+                .shotiqDisplay(30)
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Spacer()
+            Text(dayStatus(selectedDay).label)
+                .shotiqBody(12, weight: .semibold)
+                .foregroundStyle(dayStatus(selectedDay).accent)
+                .padding(.horizontal, 12)
+                .frame(height: 34)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(dayStatus(selectedDay).accent.opacity(0.55), lineWidth: 1))
+                .background(dayStatus(selectedDay).tint, in: RoundedRectangle(cornerRadius: 8))
         }
     }
-    private func adjacentCell(_ d: Int) -> some View {
-        Text("\(d)").shotiqBody(13).foregroundStyle(ShotIQColor.muted)
-            .frame(maxWidth: .infinity, minHeight: 54, alignment: .top)
-            .padding(.top, 4)
-    }
-    @ViewBuilder
-    private func dayCell(_ d: Int) -> some View {
-        Button {
-            selected = d
-            dayCardExpanded = true
-            if isLocalWorkoutMonth && d == latestComponents?.day {
-                toast = .success("Loaded completed workout for day \(d)")
-            } else if completed.contains(d) {
-                toast = .success("Loaded completed workout for May \(d)")
-            } else if missed.contains(d) {
-                toast = .info("May \(d) was marked missed")
-            } else {
-                toast = .info("Selected May \(d)")
+
+    private var targetSummaryCard: some View {
+        ShotIQCard {
+            HStack(spacing: 16) {
+                CanonicalPhoto("059-visual-001", width: 126, height: 126, cornerRadius: 63, alignment: .center)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("PRIMARY TARGET")
+                        .shotiqMicroCaps(13, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.graphite)
+                    Text("Keep elbow stacked\nthrough release")
+                        .shotiqBody(20, weight: .semibold)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.82)
+                    HStack(spacing: 0) {
+                        targetStat("\(topWorkout?.shots ?? 24)", "Shots")
+                        VRule(height: 42)
+                        targetStat("\(topWorkout?.makes ?? 15)", "Makes")
+                        VRule(height: 42)
+                        targetStat(topWorkout?.accuracyText ?? "62.5%", "FG%")
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-        } label: {
-            VStack(spacing: 3) {
-                if isLocalWorkoutMonth && d == latestComponents?.day {
-                    Text("\(d)").shotiqBody(12, weight: .bold)
-                        .foregroundStyle(d == selected ? .white : ShotIQColor.ink)
-                        .frame(width: 26, height: 26)
-                        .background(d == selected ? ShotIQColor.shotiqOrange : .clear, in: Circle())
-                    Image(systemName: "checkmark.circle").font(.system(size: 12))
-                        .foregroundStyle(ShotIQColor.confirmGreen)
-                    Text(latestWorkout.map { "\($0.shots) shots" } ?? "Done")
-                        .shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                } else if !isDataMonth {
-                    Text("\(d)").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
-                } else if d == selected {
-                    Text("\(d)").shotiqBody(12, weight: .bold).foregroundStyle(.white)
-                        .frame(width: 26, height: 26)
-                        .background(ShotIQColor.shotiqOrange, in: Circle())
-                    Text("In Progress").shotiqBody(7, weight: .semibold)
-                        .foregroundStyle(ShotIQColor.shotiqOrange)
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                } else {
-                    Text("\(d)").shotiqBody(13, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                    if completed.contains(d) {
-                        Image(systemName: "checkmark.circle").font(.system(size: 12))
-                            .foregroundStyle(ShotIQColor.confirmGreen)
-                        Text(minutes[d] ?? "").shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
-                    } else if missed.contains(d) {
-                        Image(systemName: "xmark.circle").font(.system(size: 12))
-                            .foregroundStyle(ShotIQColor.reviewRed)
-                        Text("Missed").shotiqBody(7).foregroundStyle(ShotIQColor.reviewRed)
-                    } else if d >= 8 && d <= 30 && !noWorkout.contains(d) {
-                        Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.3)
-                            .frame(width: 12, height: 12)
-                        Text("20 min").shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
+            .padding(14)
+        }
+    }
+
+    private var calendarMonthCard: some View {
+        ShotIQCard {
+            VStack(spacing: 0) {
+                HStack {
+                    Button("Prev") {
+                        if monthIndex > 0 { monthIndex -= 1 }
+                    }
+                    .shotiqBody(12, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .disabled(monthIndex == 0)
+                    Spacer()
+                    Text("\(monthNames[monthIndex]) \(displayYear)")
+                        .shotiqDisplay(28)
+                        .foregroundStyle(ShotIQColor.ink)
+                    Spacer()
+                    Button("Next") {
+                        if monthIndex < 11 { monthIndex += 1 }
+                    }
+                    .shotiqBody(12, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .disabled(monthIndex == 11)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
+                let cols = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
+                LazyVGrid(columns: cols, spacing: 0) {
+                    ForEach(["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"], id: \.self) { d in
+                        Text(d)
+                            .shotiqBody(10, weight: .semibold)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .frame(maxWidth: .infinity, minHeight: 30)
+                    }
+                    if isDataMonth {
+                        ForEach(227...230, id: \.self) { d in adjacentCell(d - 200) }
+                    }
+                    ForEach(1...daysInMonth[monthIndex], id: \.self) { d in dayCell(d) }
+                    if isDataMonth {
+                        ForEach(101...107, id: \.self) { d in adjacentCell(d - 100) }
                     }
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 54, alignment: .top)
-            .padding(.top, 4)
+            .padding(.bottom, 12)
         }
     }
-    private func legendItem(_ label: String, @ViewBuilder mark: () -> some View) -> some View {
+
+    private var legendCard: some View {
+        ShotIQCard {
+            HStack(spacing: 10) {
+                legendItem("Completed", color: ShotIQColor.confirmGreen, filled: true)
+                legendItem("Scheduled", color: ShotIQColor.shotiqOrange)
+                legendItem("In Progress", color: ShotIQColor.shotiqOrange, filled: true)
+                legendItem("Missed", color: Color(red: 0.93, green: 0.31, blue: 0.27), filled: true)
+                legendItem("No workout", color: ShotIQColor.muted, filled: true)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+        }
+    }
+
+    private var workoutProgressCard: some View {
+        ShotIQCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .lastTextBaseline) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("20 min workout").shotiqBody(18, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                        Text("12 min elapsed").shotiqBody(13, weight: .medium).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    Spacer()
+                    HStack(alignment: .lastTextBaseline, spacing: 4) {
+                        Text("60").font(.custom("Tungsten-Medium", size: 28)).foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("%").shotiqBody(13, weight: .bold).foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("complete").shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.graphite)
+                    }
+                }
+                progressBar(0.60)
+            }
+            .padding(14)
+        }
+    }
+
+    private var drillPlanCard: some View {
+        ShotIQCard {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Drill Plan").shotiqBody(18, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                    Spacer()
+                    Text("4 drills").shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.graphite)
+                }
+                .padding(.bottom, 8)
+                drillPlanRow(photo: "059-visual-001", title: "Form Shooting", detail: "3 sets • 10 shots", status: "Completed", color: ShotIQColor.confirmGreen)
+                drillPlanRow(photo: "070-visual-003", title: "Elbow Stack Reps", detail: "3 sets • 10 shots", status: "In Progress", color: ShotIQColor.shotiqOrange)
+                drillPlanRow(photo: "059-visual-001", title: "Free Throws", detail: "2 sets • 10 shots", status: "Not Started", color: ShotIQColor.muted)
+                drillPlanRow(photo: "054-visual-003", title: "Corner Makes", detail: "2 sets • 10 shots", status: "Not Started", color: ShotIQColor.muted, divider: false)
+            }
+            .padding(14)
+        }
+    }
+
+    private var shotLogCard: some View {
+        ShotIQCard {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Shot Log").shotiqBody(18, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                    Spacer()
+                    Text("View All").shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                }
+                .padding(.bottom, 8)
+                shotLogRow(result: "Make", time: "11:47 AM", location: "Right Elbow", made: true)
+                shotLogRow(result: "Make", time: "11:46 AM", location: "Right Elbow", made: true)
+                shotLogRow(result: "Miss", time: "11:45 AM", location: "Top of Key", made: false)
+                shotLogRow(result: "Make", time: "11:44 AM", location: "Right Elbow", made: true)
+                shotLogRow(result: "Miss", time: "11:43 AM", location: "Left Elbow", made: false, divider: false)
+            }
+            .padding(14)
+        }
+    }
+
+    private var notesCard: some View {
+        ShotIQCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Notes").shotiqBody(18, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                    Spacer()
+                    Text("Edit").shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                }
+                Text("Coach note: release elbow drifted late on misses.")
+                    .shotiqBody(13, weight: .medium)
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            .padding(14)
+        }
+    }
+
+    private var bottomActions: some View {
+        HStack(spacing: 12) {
+            calendarActionButton("Resume Workout", stroke: ShotIQColor.shotiqOrange, foreground: ShotIQColor.shotiqOrange)
+            calendarActionButton("Mark Complete", stroke: ShotIQColor.analysisBlue, foreground: ShotIQColor.analysisBlue)
+            calendarActionButton("Edit Plan", stroke: ShotIQColor.graphite.opacity(0.55), foreground: ShotIQColor.ink)
+        }
+    }
+
+    private func targetStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: 30))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .shotiqBody(12, weight: .medium)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func adjacentCell(_ d: Int) -> some View {
+        Text("\(d)")
+            .shotiqBody(14, weight: .semibold)
+            .foregroundStyle(ShotIQColor.muted)
+            .frame(maxWidth: .infinity, minHeight: 74, alignment: .top)
+            .padding(.top, 12)
+    }
+
+    @ViewBuilder
+    private func dayCell(_ d: Int) -> some View {
+        let status = dayStatus(d)
+        Button {
+            selectedDay = d
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                showingDayDetail = true
+            }
+        } label: {
+            VStack(spacing: 5) {
+                Text("\(d)")
+                    .shotiqBody(14, weight: .semibold)
+                    .foregroundStyle(status == .none ? ShotIQColor.muted : ShotIQColor.ink)
+                    .frame(width: 32, height: 32)
+                    .overlay(Circle().stroke(status == .inProgress ? ShotIQColor.shotiqOrange : .clear, lineWidth: 1))
+                statusMark(status)
+                if let line = statusLine(d) {
+                    Text(line)
+                        .shotiqBody(9, weight: .medium)
+                        .foregroundStyle(status == .missed ? Color(red: 0.93, green: 0.31, blue: 0.27) : ShotIQColor.graphite)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 74, alignment: .top)
+            .padding(.top, 8)
+            .background(d == selectedDay && status == .inProgress ? ShotIQColor.shotiqOrange.opacity(0.08) : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func legendItem(_ label: String, color: Color, filled: Bool = false) -> some View {
         HStack(spacing: 4) {
-            mark()
-            Text(label).shotiqBody(8.5).foregroundStyle(ShotIQColor.graphite)
+            Circle()
+                .fill(filled ? color : .clear)
+                .overlay(Circle().stroke(color, lineWidth: 1.3))
+                .frame(width: 10, height: 10)
+            Text(label).shotiqBody(9).foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.7)
+        }
+    }
+
+    private func statusMark(_ status: CalendarDayStatus) -> some View {
+        Group {
+            switch status {
+            case .completed:
+                Circle().fill(ShotIQColor.confirmGreen).frame(width: 14, height: 14)
+            case .scheduled:
+                Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.5).frame(width: 14, height: 14)
+            case .inProgress:
+                Circle().fill(ShotIQColor.shotiqOrange).frame(width: 14, height: 14)
+            case .missed:
+                Circle().stroke(Color(red: 0.93, green: 0.31, blue: 0.27), lineWidth: 1.5).frame(width: 14, height: 14)
+            case .none:
+                Circle().fill(ShotIQColor.muted).frame(width: 10, height: 10)
+            }
+        }
+    }
+
+    private func statusLine(_ day: Int) -> String? {
+        let status = dayStatus(day)
+        switch status {
+        case .completed:
+            if isLocalWorkoutMonth && day == latestComponents?.day, let latestWorkout {
+                return "\(max(latestWorkout.durationSeconds / 60, 1)) min"
+            }
+            return minutes[day] ?? "20 min"
+        case .scheduled:
+            return "20 min"
+        case .inProgress:
+            return "In Progress"
+        case .missed:
+            return "Missed"
+        case .none:
+            return nil
+        }
+    }
+
+    private func dayStatus(_ day: Int) -> CalendarDayStatus {
+        if isLocalWorkoutMonth && day == latestComponents?.day { return .completed }
+        guard isDataMonth else { return .scheduled }
+        if day == 7 { return .inProgress }
+        if completed.contains(day) { return .completed }
+        if missed.contains(day) { return .missed }
+        if noWorkout.contains(day) || day > 30 { return .none }
+        if day >= 1 && day <= 30 { return .scheduled }
+        return .none
+    }
+
+    private func progressBar(_ pct: Double) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(ShotIQColor.rule)
+                Capsule()
+                    .fill(ShotIQColor.shotiqOrange)
+                    .frame(width: geo.size.width * max(0, min(pct, 1)))
+            }
+        }
+        .frame(height: 6)
+    }
+
+    private func drillPlanRow(photo: String, title: String, detail: String, status: String, color: Color, divider: Bool = true) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 14) {
+                CanonicalPhoto(photo, width: 56, height: 56, cornerRadius: 28, alignment: .center)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).shotiqBody(15, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                    Text(detail).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer()
+                Text(status).shotiqBody(11, weight: .medium).foregroundStyle(color)
+                Circle().fill(color).frame(width: 8, height: 8)
+            }
+            .padding(.vertical, 9)
+            if divider { Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.leading, 70) }
+        }
+    }
+
+    private func shotLogRow(result: String, time: String, location: String, made: Bool, divider: Bool = true) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(result)
+                    .shotiqBody(12, weight: .semibold)
+                    .foregroundStyle(made ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                    .frame(width: 54, alignment: .leading)
+                Circle()
+                    .fill(made ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                    .frame(width: 8, height: 8)
+                Text(time).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.graphite)
+                    .frame(maxWidth: .infinity)
+                Text(location).shotiqBody(12, weight: .medium).foregroundStyle(ShotIQColor.graphite)
+                    .frame(width: 86, alignment: .trailing)
+            }
+            .padding(.vertical, 7)
+            if divider { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
+        }
+    }
+
+    private func calendarActionButton(_ title: String, stroke: Color, foreground: Color) -> some View {
+        Button {
+            toast = .info(title)
+        } label: {
+            Text(title)
+                .shotiqBody(13, weight: .semibold)
+                .foregroundStyle(foreground)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(stroke, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private enum CalendarDayStatus: Equatable {
+        case completed
+        case scheduled
+        case inProgress
+        case missed
+        case none
+
+        var label: String {
+            switch self {
+            case .completed: return "Completed"
+            case .scheduled: return "Scheduled"
+            case .inProgress: return "In Progress"
+            case .missed: return "Missed"
+            case .none: return "No Workout"
+            }
+        }
+
+        var accent: Color {
+            switch self {
+            case .completed: return ShotIQColor.confirmGreen
+            case .scheduled, .inProgress: return ShotIQColor.shotiqOrange
+            case .missed: return Color(red: 0.93, green: 0.31, blue: 0.27)
+            case .none: return ShotIQColor.muted
+            }
+        }
+
+        var tint: Color {
+            switch self {
+            case .completed: return ShotIQColor.confirmGreen.opacity(0.08)
+            case .scheduled, .inProgress: return ShotIQColor.shotiqOrange.opacity(0.08)
+            case .missed: return Color(red: 0.93, green: 0.31, blue: 0.27).opacity(0.08)
+            case .none: return ShotIQColor.warmCanvas
+            }
         }
     }
 }
@@ -3018,14 +3197,19 @@ struct ShotTrackerView: View {      // 061
                         }
                         .padding(.top, 8)
                         SectionLabel(text: "SHOT RAIL").padding(.top, 20)
-                        HStack(alignment: .top) {
+                        HStack(alignment: .top, spacing: 8) {
                             ForEach(Array(phaseScores.enumerated()), id: \.offset) { i, p in
-                                VStack(spacing: 3) {
-                                    PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 26)
+                                VStack(spacing: 5) {
+                                    PhasePhotoThumbnail(phase: ShotPhase(label: p.0),
+                                                        active: p.0 == "RELEASE",
+                                                        width: 46,
+                                                        height: 32,
+                                                        cornerRadius: 4)
                                     Text(p.0).shotiqBody(8, weight: p.0 == "RELEASE" ? .bold : .regular)
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                                        .lineLimit(1).minimumScaleFactor(0.6)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(2).minimumScaleFactor(0.62)
                                         .accessibilityIdentifier("tracker-phase-\(i)-name")
                                     Text(p.1).font(.custom("Tungsten-Medium", size: 12))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
@@ -3321,14 +3505,19 @@ struct WorkoutCompletionView: View { // 062
                         }
                         .padding(.top, 12)
                         SectionLabel(text: "PHASE BREAKDOWN").padding(.top, 20)
-                        HStack(alignment: .top) {
+                        HStack(alignment: .top, spacing: 8) {
                             ForEach(Array(resolvedWorkout.phaseScores.enumerated()), id: \.offset) { i, p in
-                                VStack(spacing: 4) {
-                                    PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 28)
+                                VStack(spacing: 5) {
+                                    PhasePhotoThumbnail(phase: ShotPhase(label: p.0),
+                                                        active: p.0 == "RELEASE",
+                                                        width: 48,
+                                                        height: 34,
+                                                        cornerRadius: 4)
                                     Text(p.0).shotiqBody(8, weight: p.0 == "RELEASE" ? .bold : .regular)
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                                        .lineLimit(1).minimumScaleFactor(0.6)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(2).minimumScaleFactor(0.62)
                                         .accessibilityIdentifier("completion-phase-\(i)-name")
                                     Text("\(p.1)").font(.custom("Tungsten-Medium", size: 16))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)

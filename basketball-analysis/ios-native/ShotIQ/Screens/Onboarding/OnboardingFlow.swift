@@ -134,21 +134,21 @@ private struct OnboardingTabBar: View {
             tab("point.3.connected.trianglepath.dotted", "Capture") {
                 toast = .info("Capture unlocks after setup", "Complete your profile and permissions first.")
             }
-            tab("film", "Train") {
+            tab("film", "My Drills") {
                 toast = .info("Training unlocks after setup", "Complete onboarding to start drills.")
             }
             tab("chart.line.uptrend.xyaxis", "Progress") {
                 toast = .info("Progress unlocks after setup", "Your analytics appear after setup and analysis.")
             }
             Button {
-                toast = .info("Profile setup is open", "Finish these steps to unlock your full profile tab.")
+                toast = .info("My Media unlocks after setup", "Finish these steps to unlock your media tab.")
             } label: {
                 VStack(spacing: 5) {
                     Text(initials)
                         .shotiqBody(12, weight: .bold)
                         .frame(width: 24, height: 24)
                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(ShotIQColor.graphite, lineWidth: 1.5))
-                    Text("Profile").shotiqBody(10)
+                    Text("My Media").shotiqBody(10)
                 }
                 .frame(maxWidth: .infinity)
                 .foregroundStyle(ShotIQColor.graphite)
