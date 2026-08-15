@@ -713,6 +713,9 @@ struct AnalyzeHubView: View {       // 021
                 let contentWidth = max(0, screenWidth - 44)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        CaptureHeader()
+                            .frame(width: screenWidth, alignment: .topLeading)
+                            .padding(.horizontal, -22)
                         v5HeroCard(width: contentWidth)
                         v5CaptureTypePanel(width: contentWidth)
                         NavigationLink { CaptureGuideView() } label: {
@@ -726,8 +729,7 @@ struct AnalyzeHubView: View {       // 021
                     }
                     .frame(width: contentWidth, alignment: .leading)
                     .padding(.horizontal, 22)
-                    .padding(.top, 22)
-                    .padding(.bottom, 120)
+                    .padding(.bottom, 170)
                 }
                 .frame(width: screenWidth, alignment: .leading)
                 .background(Color(red: 0.972, green: 0.976, blue: 0.982))
