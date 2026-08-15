@@ -3716,29 +3716,30 @@ struct AnalysisResultOverviewView: View { // 038
                 ZStack(alignment: .topLeading) {
                     AnalysisResultMediaSurface(presentation: p,
                                                fallbackKey: "038-visual-001",
-                                               height: 220,
+                                               height: 244,
                                                phase: "FOLLOW-THROUGH",
                                                showsPlaybackControl: false)
                     if p.id == "canonical-demo" {
                         SkeletonOverlay()
                     }
                 }
-                .frame(minWidth: 138, maxWidth: 168)
+                .frame(minWidth: 164, maxWidth: 184)
                 VStack(alignment: .leading, spacing: 0) {
                     NavigationLink { FormScoreView(presentation: p) } label: {
-                        FormScorePanel(numeralSize: 56, barWidth: 84,
+                        FormScorePanel(numeralSize: 64, barWidth: 104,
                                        score: p.scoreText,
                                        pct: p.scorePct,
                                        verdict: p.scoreVerdict,
                                        caption: p.scoreCaption)
                     }
-                    HStack(spacing: 8) {
+                    HStack(spacing: 20) {
                         miniStat(selectedPhase, "PHASE")
-                            .frame(maxWidth: .infinity)
+                            .frame(width: 70)
                         miniStat(p.mediaLabel.uppercased(), "MEDIA")
-                            .frame(maxWidth: .infinity)
+                            .frame(width: 70)
                     }
-                    .padding(.top, 14)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 18)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(1)
@@ -3788,17 +3789,17 @@ struct AnalysisResultOverviewView: View { // 038
             Text("Tap any card to learn what the score means.")
                 .shotiqBody(12, weight: .semibold)
                 .foregroundStyle(ShotIQColor.graphite)
-            ForEach(resultFormBreakdownItems(p), id: \.metric) { item in
-                Button {
-                    selectedBreakdown = AnalysisBreakdownExplanation(item: item,
-                                                                     provenanceSummary: p.provenanceSummary)
-                    toast = .info("Opening \(item.metric) breakdown")
-                } label: {
-                    AnalysisFormBreakdownCard(item: item, provenanceSummary: p.provenanceSummary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 10) {
+                ForEach(Array(resultFormBreakdownItems(p).enumerated()), id: \.offset) { _, item in
+                    Button {
+                        selectedBreakdown = AnalysisBreakdownExplanation(item: item,
+                                                                         provenanceSummary: p.provenanceSummary)
+                        toast = .info("Opening \(item.metric) breakdown")
+                    } label: {
+                        AnalysisFormBreakdownCard(item: item)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -6421,19 +6422,28 @@ fileprivate func orderedAnalysisBreakdownItems(_ items: [AnalysisScoreBreakdownI
 
 fileprivate struct AnalysisFormBreakdownCard: View {
     var item: AnalysisScoreBreakdownItem
-    var provenanceSummary: String
 
-    private var unavailable: Bool { item.isUnavailable }
-    private var progress: CGFloat { unavailable ? 0 : CGFloat(min(max(item.scorePct, 0), 1)) }
     private var statusColor: Color {
-        if unavailable { return ShotIQColor.analysisBlue }
-        return item.verdict.uppercased().contains("NEED") ? ShotIQColor.shotiqOrange : ShotIQColor.analysisBlue
+        if item.isUnavailable { return ShotIQColor.analysisBlue }
+        if item.verdict.uppercased().contains("NEED") { return ShotIQColor.shotiqOrange }
+        if item.scorePct >= 0.9 { return ShotIQColor.analysisBlue }
+        return ShotIQColor.analysisBlue
     }
+
+    private var progress: CGFloat {
+        item.isUnavailable ? 0 : CGFloat(min(max(item.scorePct, 0), 1))
+    }
+
+    private var sparkPoints: [Double] {
+        AnalysisBreakdownExplanation.trendPoints(for: item)
+    }
+
     private var trendNote: String {
-        unavailable ? "Waiting for analysis" : "Last 5 scores - latest right"
+        item.isUnavailable ? "Waiting for analysis" : "Last 5 scores - latest right"
     }
+
     private var analysisNote: String {
-        unavailable ? "No saved score loaded." : "Measured from this saved ShotIQ analysis."
+        item.isUnavailable ? "No saved score loaded." : "Measured from this saved ShotIQ analysis."
     }
 
     var body: some View {
@@ -6452,7 +6462,7 @@ fileprivate struct AnalysisFormBreakdownCard: View {
                     }
                     Text(item.scoreText)
                         .font(.custom("Tungsten-Medium", size: 70))
-                        .foregroundStyle(unavailable ? ShotIQColor.graphite.opacity(0.5) : ShotIQColor.shotiqOrange)
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
                         .lineLimit(1)
                         .minimumScaleFactor(0.55)
                         .frame(height: 58, alignment: .leading)
@@ -6474,12 +6484,12 @@ fileprivate struct AnalysisFormBreakdownCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .trailing, spacing: 6) {
-                    AnalysisMiniSparkline(points: AnalysisBreakdownExplanation.trendPoints(for: item),
-                                          color: unavailable ? ShotIQColor.graphite.opacity(0.55) : ShotIQColor.confirmGreen)
+                    AnalysisMiniSparkline(points: sparkPoints,
+                                          color: item.isUnavailable ? ShotIQColor.graphite.opacity(0.55) : ShotIQColor.confirmGreen)
                         .frame(width: 100, height: 42)
                     Text(trendNote)
                         .shotiqBody(9, weight: .semibold)
-                        .foregroundStyle(unavailable ? ShotIQColor.graphite : ShotIQColor.analysisBlue)
+                        .foregroundStyle(item.isUnavailable ? ShotIQColor.graphite : ShotIQColor.analysisBlue)
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
                 }
@@ -6490,8 +6500,8 @@ fileprivate struct AnalysisFormBreakdownCard: View {
                 ZStack(alignment: .leading) {
                     Capsule().fill(ShotIQColor.rule)
                     Capsule()
-                        .fill(unavailable ? ShotIQColor.rule : ShotIQColor.shotiqOrange)
-                        .frame(width: max(geo.size.width * progress, unavailable ? 0 : 18))
+                        .fill(ShotIQColor.shotiqOrange)
+                        .frame(width: max(geo.size.width * progress, item.isUnavailable ? 0 : 18))
                 }
             }
             .frame(height: 8)
@@ -6502,7 +6512,6 @@ fileprivate struct AnalysisFormBreakdownCard: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule, lineWidth: 1))
-        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(RoundedRectangle(cornerRadius: 8))
     }
 }
@@ -6849,17 +6858,16 @@ struct FormScoreView: View {        // 044
                                 Text("Tap any card to learn what the score means.")
                                     .shotiqBody(12, weight: .semibold)
                                     .foregroundStyle(ShotIQColor.graphite)
-                                ForEach(orderedAnalysisBreakdownItems(presentation.scoreBreakdown), id: \.metric) { item in
-                                    Button {
-                                        selectedBreakdown = AnalysisBreakdownExplanation(item: item,
-                                                                                         provenanceSummary: presentation.provenanceSummary)
-                                    } label: {
-                                        AnalysisFormBreakdownCard(item: item,
-                                                                  provenanceSummary: presentation.provenanceSummary)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                VStack(spacing: 10) {
+                                    ForEach(Array(orderedAnalysisBreakdownItems(presentation.scoreBreakdown).enumerated()), id: \.offset) { _, item in
+                                        Button {
+                                            selectedBreakdown = AnalysisBreakdownExplanation(item: item,
+                                                                                             provenanceSummary: presentation.provenanceSummary)
+                                        } label: {
+                                            AnalysisFormBreakdownCard(item: item)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
                             HStack(spacing: 6) {
