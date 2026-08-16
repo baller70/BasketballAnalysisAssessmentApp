@@ -3188,12 +3188,46 @@ fileprivate struct PlayerFlawReferenceHero: View {
                 .frame(width: displayWidth, height: heroHeight, alignment: .top)
                 .clipped()
 
-            // The reference hero image already carries the exact photo treatment
-            // and analytic overlay; keep it intact so the visual does not get
-            // blocked by an artificial dark patch.
+            heroTextBackplates
+            heroCopy
+            heroMeasurementCopy
         }
         .frame(width: displayWidth, height: heroHeight)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var heroTextBackplates: some View {
+        let s = scale
+        return ZStack(alignment: .topLeading) {
+            textBackplate(x: 235, y: 74, width: 390, height: 72, radius: 6, opacity: 0.74)
+            textBackplate(x: 143, y: 126, width: 188, height: 48, radius: 8, opacity: 0.74)
+            textBackplate(x: 154, y: valueY - 2, width: 250, height: 150, radius: 4, opacity: 0.72)
+            textBackplate(x: targetValueX + 18, y: targetValueY, width: metric.id == "centerline" ? 265 : 255, height: 122, radius: 4, opacity: 0.72)
+            textBackplate(x: metric.overlayType == .centerline ? 268 : 285,
+                          y: metric.overlayType == .centerline ? 420 : insightY,
+                          width: metric.overlayType == .centerline ? 430 : 500,
+                          height: metric.overlayType == .releaseHeight ? 142 : 120,
+                          radius: 8,
+                          opacity: 0.70)
+        }
+        .frame(width: baseSize.width, height: heroBaseHeight, alignment: .topLeading)
+        .scaleEffect(x: s, y: s, anchor: .topLeading)
+    }
+
+    private func textBackplate(x: CGFloat,
+                               y: CGFloat,
+                               width: CGFloat,
+                               height: CGFloat,
+                               radius: CGFloat,
+                               opacity: Double) -> some View {
+        RoundedRectangle(cornerRadius: radius)
+            .fill(LinearGradient(colors: [
+                Color(red: 0.012, green: 0.035, blue: 0.073).opacity(opacity),
+                Color(red: 0.012, green: 0.035, blue: 0.073).opacity(opacity * 0.76),
+                Color(red: 0.012, green: 0.035, blue: 0.073).opacity(opacity * 0.22)
+            ], startPoint: .leading, endPoint: .trailing))
+            .frame(width: width, height: height)
+            .position(x: x, y: y)
     }
 
     private var heroCopy: some View {
@@ -3271,6 +3305,63 @@ fileprivate struct PlayerFlawReferenceHero: View {
                     .position(x: insightTextX * s, y: insightY * s)
             }
         }
+        .allowsHitTesting(false)
+    }
+
+    private var heroMeasurementCopy: some View {
+        let s = scale
+        return ZStack(alignment: .topLeading) {
+            ForEach(measurementLabels, id: \.id) { label in
+                Text(label.text)
+                    .font(label.font == .display
+                          ? .custom("Tungsten-Medium", size: label.size * s)
+                          : .custom("AvenirNextCondensed-Heavy", size: label.size * s))
+                    .foregroundStyle(label.color)
+                    .lineLimit(label.lines)
+                    .minimumScaleFactor(0.55)
+                    .multilineTextAlignment(label.alignment)
+                    .frame(width: label.width * s, height: label.height * s, alignment: label.frameAlignment)
+                    .position(x: label.x * s, y: label.y * s)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private var measurementLabels: [PlayerFlawHeroTextBox] {
+        switch metric.id {
+        case "release-offset":
+            return [
+                .init("release-offset-callout", "-69°", 530, 106, 80, 34, 23, ShotIQColor.shotiqOrange, .display),
+                .init("release-offset-left-axis", "-45°", 492, 621, 70, 28, 18, .white, .body),
+                .init("release-offset-mid-axis", "0°", 640, 621, 50, 28, 18, .white, .body),
+                .init("release-offset-right-axis", "+45°", 806, 621, 70, 28, 18, .white, .body)
+            ]
+        case "elbow-angle":
+            return [
+                .init("elbow-angle-callout", "70°", 776, 312, 70, 42, 32, ShotIQColor.shotiqOrange, .display)
+            ]
+        case "wrist-angle":
+            return [
+                .init("wrist-axis-0", "0°", 80, 386, 44, 28, 17, .white, .body),
+                .init("wrist-axis-50", "50°", 305, 386, 60, 28, 17, .white, .body),
+                .init("wrist-axis-100", "100°", 525, 386, 70, 28, 17, .white, .body),
+                .init("wrist-axis-180", "180°", 850, 386, 70, 28, 17, .white, .body),
+                .init("wrist-callout", "159°", 788, 346, 78, 42, 30, ShotIQColor.shotiqOrange, .display)
+            ]
+        case "centerline":
+            return [
+                .init("centerline-callout", "-32°", 530, 90, 86, 42, 34, ShotIQColor.shotiqOrange, .display),
+                .init("centerline-target-low", "0°", 664, 28, 44, 28, 18, ShotIQColor.analysisBlue, .body),
+                .init("centerline-target-high", "3°", 722, 28, 44, 28, 18, ShotIQColor.analysisBlue, .body)
+            ]
+        case "release-height":
+            return [
+                .init("release-height-current", "YOUR RELEASE\n4'10\"", 758, 92, 150, 76, 23, ShotIQColor.shotiqOrange, .body, lines: 2, alignment: .leading, frameAlignment: .leading),
+                .init("release-height-target", "TARGET\n7'6\"+", 760, 410, 126, 72, 21, ShotIQColor.analysisBlue, .body, lines: 2, alignment: .leading, frameAlignment: .leading)
+            ]
+        default:
+            return []
+        }
     }
 
     private var valueFont: CGFloat { metric.valueLabel.count > 5 ? 69 : 78 }
@@ -3288,6 +3379,52 @@ fileprivate struct PlayerFlawReferenceHero: View {
     private var insightTextX: CGFloat { metric.id == "release-height" ? 203 : 285 }
     private var insightWidth: CGFloat { metric.id == "release-height" ? 265 : 375 }
     private var insightFontSize: CGFloat { metric.id == "release-height" ? 21 : 20 }
+}
+
+fileprivate struct PlayerFlawHeroTextBox {
+    enum TextFont {
+        case display
+        case body
+    }
+
+    let id: String
+    let text: String
+    let x: CGFloat
+    let y: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+    let size: CGFloat
+    let color: Color
+    let font: TextFont
+    let lines: Int
+    let alignment: TextAlignment
+    let frameAlignment: Alignment
+
+    init(_ id: String,
+         _ text: String,
+         _ x: CGFloat,
+         _ y: CGFloat,
+         _ width: CGFloat,
+         _ height: CGFloat,
+         _ size: CGFloat,
+         _ color: Color,
+         _ font: TextFont,
+         lines: Int = 1,
+         alignment: TextAlignment = .center,
+         frameAlignment: Alignment = .center) {
+        self.id = id
+        self.text = text
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.size = size
+        self.color = color
+        self.font = font
+        self.lines = lines
+        self.alignment = alignment
+        self.frameAlignment = frameAlignment
+    }
 }
 
 fileprivate struct PlayerFlawReferenceSummaryCard: View {
