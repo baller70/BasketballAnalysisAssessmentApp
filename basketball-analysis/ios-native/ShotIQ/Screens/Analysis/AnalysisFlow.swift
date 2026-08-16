@@ -3484,7 +3484,7 @@ fileprivate struct FlawsTabHeroCard: View {
 
                 Spacer(minLength: 10)
 
-                HStack(alignment: .bottom, spacing: 9) {
+                HStack(alignment: .bottom, spacing: 8) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("PRIMARY COACHING TARGET")
                             .shotiqBody(width * 0.025, weight: .heavy)
@@ -3499,14 +3499,16 @@ fileprivate struct FlawsTabHeroCard: View {
                     NavigationLink {
                         FlawDetailView(title: primaryFlaw.title, severity: primaryFlaw.impact, flaw: primaryFlaw, presentation: presentation)
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 3) {
                             Text("Start Fix")
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
                             Image(systemName: "chevron.right")
-                                .font(.system(size: width * 0.026, weight: .heavy))
+                                .font(.system(size: width * 0.024, weight: .heavy))
                         }
-                        .shotiqBody(width * 0.029, weight: .heavy)
+                        .shotiqBody(width * 0.024, weight: .heavy)
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 10)
+                        .frame(width: width * 0.235)
                         .frame(height: width * 0.072)
                         .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 5))
                     }
@@ -3514,7 +3516,7 @@ fileprivate struct FlawsTabHeroCard: View {
                     .simultaneousGesture(TapGesture().onEnded { onOpen(primaryFlaw.title) })
                 }
                 .padding(9)
-                .frame(width: width * 0.42)
+                .frame(width: width * 0.49)
                 .background(.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
                 .overlay(RoundedRectangle(cornerRadius: 7).stroke(.white.opacity(0.44), lineWidth: 0.8))
 
@@ -3534,8 +3536,8 @@ fileprivate struct FlawsTabHeroCard: View {
                 heroSideStat("RELEASE\nHEIGHT", items.first(where: { $0.id == "release-height-low" })?.valueLabel ?? "6'5\"")
                 heroSideStat("SHOT ARC", FlawsTabFixCatalog.shotArc(for: presentation))
             }
-            .frame(width: width * 0.16, alignment: .leading)
-            .position(x: width * 0.885, y: height * 0.55)
+            .frame(width: width * 0.22, alignment: .leading)
+            .position(x: width * 0.855, y: height * 0.54)
         }
         .frame(width: width, height: height)
         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -3562,11 +3564,11 @@ fileprivate struct FlawsTabHeroCard: View {
     private func heroSideStat(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(label)
-                .shotiqBody(width * 0.026, weight: .heavy)
+                .shotiqBody(width * 0.039, weight: .heavy)
                 .foregroundStyle(.white.opacity(0.86))
                 .lineSpacing(0)
             Text(value)
-                .shotiqDisplay(width * 0.047)
+                .shotiqDisplay(width * 0.087)
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
@@ -3579,7 +3581,7 @@ fileprivate struct FlawsTabSummaryStrip: View {
     let items: [FlawsTabFixItem]
     let width: CGFloat
 
-    private var height: CGFloat { width * 0.315 }
+    private var height: CGFloat { width * 0.335 }
     private var primaryItem: FlawsTabFixItem? { items.first }
     private var primaryImpact: String {
         let impact = primaryItem?.impact.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3606,19 +3608,19 @@ fileprivate struct FlawsTabSummaryStrip: View {
                     .clipShape(Circle())
 
                 Text("Your shot was analyzed and\n\(items.count) key flaws were identified.")
-                    .shotiqBody(width * 0.035, weight: .regular)
+                    .shotiqBody(width * 0.031, weight: .regular)
                     .foregroundStyle(ShotIQColor.ink)
-                    .lineSpacing(4)
+                    .lineSpacing(3)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.78)
+                    .minimumScaleFactor(0.68)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .layoutPriority(1)
                     .padding(.top, width * 0.012)
 
                 VStack(spacing: -3) {
                     Text("\(items.count)")
-                        .shotiqDisplay(width * 0.135)
+                        .shotiqDisplay(width * 0.15)
                         .foregroundStyle(ShotIQColor.shotiqOrange)
                     Text("CHECKPOINTS")
                         .shotiqBody(width * 0.033, weight: .heavy)
@@ -3626,11 +3628,11 @@ fileprivate struct FlawsTabSummaryStrip: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                 }
-                .frame(width: width * 0.23, alignment: .center)
+                .frame(width: width * 0.20, alignment: .center)
             }
             .padding(.horizontal, width * 0.035)
             .padding(.top, width * 0.033)
-            .padding(.bottom, width * 0.105)
+            .padding(.bottom, width * 0.115)
 
             statusPill
                 .offset(x: width * 0.078, y: -width * 0.026)
@@ -3681,10 +3683,10 @@ fileprivate struct FlawsTabFixCard: View {
     let width: CGFloat
     let onOpen: (String) -> Void
 
-    private var height: CGFloat { width * 0.54 }
+    private var height: CGFloat { width * 0.66 }
     private var railWidth: CGFloat { max(8, width * 0.021) }
-    private var textPanelWidth: CGFloat { width * 0.505 }
-    private var imagePanelWidth: CGFloat { width - textPanelWidth }
+    private var textPanelWidth: CGFloat { width * 0.535 }
+    private var imagePanelWidth: CGFloat { width * 0.72 }
     private var ctaWidth: CGFloat {
         if item.cta.count > 17 { return textPanelWidth * 0.86 }
         return textPanelWidth * 0.72
@@ -3693,13 +3695,33 @@ fileprivate struct FlawsTabFixCard: View {
     var body: some View {
         ZStack(alignment: .leading) {
             Color.white
+            ZStack(alignment: .trailing) {
+                FlawsTabShotImageSlot(presentation: presentation,
+                                      assetName: item.imageAsset,
+                                      phase: item.phase,
+                                      height: height,
+                                      alignment: .trailing,
+                                      cornerRadius: 2)
+                    .frame(width: imagePanelWidth, height: height)
+
+                LinearGradient(stops: [
+                    .init(color: .white, location: 0),
+                    .init(color: .white, location: 0.36),
+                    .init(color: .white.opacity(0.98), location: 0.47),
+                    .init(color: .white.opacity(0.80), location: 0.58),
+                    .init(color: .white.opacity(0.38), location: 0.70),
+                    .init(color: .white.opacity(0.0), location: 0.86)
+                ], startPoint: .leading, endPoint: .trailing)
+            }
+            .frame(width: width, height: height, alignment: .trailing)
+
             Rectangle()
                 .fill(ShotIQColor.shotiqOrange)
                 .frame(width: railWidth)
                 .frame(maxHeight: .infinity)
 
             HStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 13) {
                     if item.rank == 1 {
                         HStack(spacing: 5) {
                             Image(systemName: "star.fill")
@@ -3720,15 +3742,15 @@ fileprivate struct FlawsTabFixCard: View {
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                             .frame(width: width * 0.085, alignment: .leading)
                         Text(item.title)
-                            .shotiqDisplay(width * 0.067)
+                            .shotiqDisplay(width * 0.064)
                             .foregroundStyle(ShotIQColor.ink)
                             .lineSpacing(-3)
                             .lineLimit(2)
-                            .minimumScaleFactor(0.62)
+                            .minimumScaleFactor(0.82)
                     }
 
                     Text(item.body)
-                        .shotiqBody(width * 0.035, weight: .semibold)
+                        .shotiqBody(width * 0.036, weight: .semibold)
                         .foregroundStyle(ShotIQColor.ink)
                         .lineSpacing(2)
                         .lineLimit(3)
@@ -3761,24 +3783,7 @@ fileprivate struct FlawsTabFixCard: View {
                 .padding(.vertical, width * 0.032)
                 .frame(width: textPanelWidth, height: height, alignment: .topLeading)
 
-                ZStack(alignment: .trailing) {
-                    FlawsTabShotImageSlot(presentation: presentation,
-                                          assetName: item.imageAsset,
-                                          phase: item.phase,
-                                          height: height,
-                                          alignment: .trailing,
-                                          cornerRadius: 2)
-                    LinearGradient(colors: [.white.opacity(1.0),
-                                            .white.opacity(0.98),
-                                            .white.opacity(0.82),
-                                            .white.opacity(0.34),
-                                            .white.opacity(0.0)],
-                                   startPoint: .leading,
-                                   endPoint: .trailing)
-                        .frame(width: width * 0.32)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(width: imagePanelWidth, height: height)
+                Spacer(minLength: 0)
             }
         }
         .frame(width: width, height: height)
