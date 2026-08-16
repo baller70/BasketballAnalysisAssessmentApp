@@ -3579,7 +3579,7 @@ fileprivate struct FlawsTabSummaryStrip: View {
     let items: [FlawsTabFixItem]
     let width: CGFloat
 
-    private var height: CGFloat { width * 0.265 }
+    private var height: CGFloat { width * 0.315 }
     private var primaryItem: FlawsTabFixItem? { items.first }
     private var primaryImpact: String {
         let impact = primaryItem?.impact.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3597,40 +3597,42 @@ fileprivate struct FlawsTabSummaryStrip: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            HStack(alignment: .top, spacing: width * 0.038) {
+            HStack(alignment: .top, spacing: width * 0.04) {
                 FlawsTabShotImageSlot(presentation: presentation,
                                       assetName: "flaws-tab-summary-thumb",
                                       phase: items.first?.phase ?? "RELEASE",
-                                      height: height * 0.66)
-                    .frame(width: height * 0.66, height: height * 0.66)
+                                      height: height * 0.68)
+                    .frame(width: height * 0.68, height: height * 0.68)
                     .clipShape(Circle())
 
                 Text("Your shot was analyzed and\n\(items.count) key flaws were identified.")
-                    .shotiqBody(width * 0.041, weight: .semibold)
+                    .shotiqBody(width * 0.046, weight: .medium)
                     .foregroundStyle(ShotIQColor.ink)
-                    .lineSpacing(4)
+                    .lineSpacing(5)
                     .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.88)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, width * 0.006)
+                    .padding(.top, width * 0.01)
 
-                VStack(spacing: -2) {
+                VStack(spacing: -3) {
                     Text("\(items.count)")
-                        .shotiqDisplay(width * 0.095)
+                        .shotiqDisplay(width * 0.135)
                         .foregroundStyle(ShotIQColor.shotiqOrange)
                     Text("CHECKPOINTS")
-                        .shotiqBody(width * 0.026, weight: .heavy)
+                        .shotiqBody(width * 0.033, weight: .heavy)
                         .foregroundStyle(ShotIQColor.graphite)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.86)
+                        .minimumScaleFactor(0.78)
                 }
-                .frame(width: width * 0.18, alignment: .center)
+                .frame(width: width * 0.22, alignment: .center)
             }
-            .padding(.horizontal, width * 0.032)
-            .padding(.top, width * 0.025)
-            .padding(.bottom, width * 0.078)
+            .padding(.horizontal, width * 0.035)
+            .padding(.top, width * 0.033)
+            .padding(.bottom, width * 0.105)
 
             statusPill
-                .offset(x: width * 0.08, y: -width * 0.022)
+                .offset(x: width * 0.078, y: -width * 0.026)
         }
         .frame(width: width, height: height)
         .background(.white, in: RoundedRectangle(cornerRadius: 10))
@@ -3650,7 +3652,7 @@ fileprivate struct FlawsTabSummaryStrip: View {
                 .minimumScaleFactor(0.75)
         }
         .padding(.horizontal, width * 0.029)
-        .frame(width: width * 0.72, height: width * 0.054)
+        .frame(width: width * 0.74, height: width * 0.058)
         .background(.black, in: Capsule())
     }
 
@@ -3678,7 +3680,7 @@ fileprivate struct FlawsTabFixCard: View {
     let width: CGFloat
     let onOpen: (String) -> Void
 
-    private var height: CGFloat { width * 0.365 }
+    private var height: CGFloat { width * 0.49 }
     private var railWidth: CGFloat { max(8, width * 0.021) }
     private var textPanelWidth: CGFloat { width * 0.505 }
     private var imagePanelWidth: CGFloat { width - textPanelWidth }
@@ -3696,40 +3698,40 @@ fileprivate struct FlawsTabFixCard: View {
                 .frame(maxHeight: .infinity)
 
             HStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: item.isFeatured ? 10 : 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     if item.rank == 1 {
                         HStack(spacing: 5) {
                             Image(systemName: "star.fill")
-                                .font(.system(size: width * 0.027, weight: .bold))
+                                .font(.system(size: width * 0.031, weight: .bold))
                             Text("FIX THIS FIRST")
-                                .shotiqBody(width * 0.028, weight: .heavy)
+                                .shotiqBody(width * 0.032, weight: .heavy)
                                 .lineLimit(1)
                         }
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 9)
-                        .frame(height: width * 0.05)
+                        .padding(.horizontal, width * 0.022)
+                        .frame(height: width * 0.06)
                         .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 4))
                     }
 
-                    HStack(alignment: .top, spacing: width * 0.026) {
+                    HStack(alignment: .top, spacing: width * 0.032) {
                         Text("\(item.rank)")
-                            .shotiqDisplay(width * 0.105)
+                            .shotiqDisplay(width * 0.14)
                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                            .frame(width: width * 0.073, alignment: .leading)
+                            .frame(width: width * 0.085, alignment: .leading)
                         Text(item.title)
-                            .shotiqDisplay(width * 0.054)
+                            .shotiqDisplay(width * 0.067)
                             .foregroundStyle(ShotIQColor.ink)
-                            .lineSpacing(-2)
+                            .lineSpacing(-3)
                             .lineLimit(2)
-                            .minimumScaleFactor(0.72)
+                            .minimumScaleFactor(0.62)
                     }
 
                     Text(item.body)
-                        .shotiqBody(width * 0.031, weight: .semibold)
+                        .shotiqBody(width * 0.037, weight: .semibold)
                         .foregroundStyle(ShotIQColor.ink)
                         .lineSpacing(2)
                         .lineLimit(3)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.68)
 
                     NavigationLink {
                         FlawDetailView(title: item.navigationFlaw.title,
@@ -3744,10 +3746,10 @@ fileprivate struct FlawsTabFixCard: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: width * 0.026, weight: .heavy))
                         }
-                        .shotiqDisplay(width * 0.037)
+                        .shotiqDisplay(width * 0.043)
                         .foregroundStyle(.white)
                         .frame(width: ctaWidth,
-                               height: width * 0.066)
+                               height: width * 0.079)
                         .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 5))
                     }
                     .buttonStyle(.plain)
@@ -3755,7 +3757,7 @@ fileprivate struct FlawsTabFixCard: View {
                     .padding(.top, 1)
                 }
                 .padding(.leading, width * 0.045)
-                .padding(.vertical, width * 0.024)
+                .padding(.vertical, width * 0.032)
                 .frame(width: textPanelWidth, height: height, alignment: .topLeading)
 
                 ZStack(alignment: .trailing) {
