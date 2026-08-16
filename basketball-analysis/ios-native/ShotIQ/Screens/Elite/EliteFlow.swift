@@ -3189,51 +3189,54 @@ fileprivate struct EliteShooterDetailRoute: Identifiable, Hashable {
 }
 
 fileprivate struct EliteShooterPoseOverlay: View {
+    var compact = false
+
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
+            let shift: CGFloat = compact ? -0.08 : 0
             let joints = [
-                CGPoint(x: 0.42, y: 0.94), CGPoint(x: 0.46, y: 0.74),
-                CGPoint(x: 0.47, y: 0.56), CGPoint(x: 0.52, y: 0.37),
-                CGPoint(x: 0.66, y: 0.28), CGPoint(x: 0.68, y: 0.15),
-                CGPoint(x: 0.75, y: 0.12)
+                CGPoint(x: 0.42 + shift, y: 0.94), CGPoint(x: 0.46 + shift, y: 0.74),
+                CGPoint(x: 0.47 + shift, y: 0.56), CGPoint(x: 0.52 + shift, y: 0.37),
+                CGPoint(x: 0.66 + shift, y: 0.28), CGPoint(x: 0.68 + shift, y: 0.15),
+                CGPoint(x: 0.75 + shift, y: 0.12)
             ]
             ZStack {
                 Path { path in
-                    path.move(to: CGPoint(x: w * 0.29, y: h * 0.00))
-                    path.addLine(to: CGPoint(x: w * 0.29, y: h * 1.00))
+                    path.move(to: CGPoint(x: w * (0.29 + shift), y: h * 0.00))
+                    path.addLine(to: CGPoint(x: w * (0.29 + shift), y: h * 1.00))
                 }
                 .stroke(.white.opacity(0.78), style: StrokeStyle(lineWidth: 1.2, dash: [6, 6]))
 
                 Path { path in
-                    path.move(to: CGPoint(x: w * 0.42, y: h * 0.94))
-                    path.addLine(to: CGPoint(x: w * 0.46, y: h * 0.74))
-                    path.addLine(to: CGPoint(x: w * 0.47, y: h * 0.56))
-                    path.addLine(to: CGPoint(x: w * 0.52, y: h * 0.37))
-                    path.addLine(to: CGPoint(x: w * 0.66, y: h * 0.28))
-                    path.addLine(to: CGPoint(x: w * 0.68, y: h * 0.15))
+                    path.move(to: CGPoint(x: w * (0.42 + shift), y: h * 0.94))
+                    path.addLine(to: CGPoint(x: w * (0.46 + shift), y: h * 0.74))
+                    path.addLine(to: CGPoint(x: w * (0.47 + shift), y: h * 0.56))
+                    path.addLine(to: CGPoint(x: w * (0.52 + shift), y: h * 0.37))
+                    path.addLine(to: CGPoint(x: w * (0.66 + shift), y: h * 0.28))
+                    path.addLine(to: CGPoint(x: w * (0.68 + shift), y: h * 0.15))
                 }
                 .stroke(.white, style: StrokeStyle(lineWidth: 3.0, lineCap: .round, lineJoin: .round))
 
                 Path { path in
-                    path.move(to: CGPoint(x: w * 0.63, y: h * 0.36))
-                    path.addLine(to: CGPoint(x: w * 0.70, y: h * 0.29))
-                    path.addLine(to: CGPoint(x: w * 0.75, y: h * 0.15))
+                    path.move(to: CGPoint(x: w * (0.63 + shift), y: h * 0.36))
+                    path.addLine(to: CGPoint(x: w * (0.70 + shift), y: h * 0.29))
+                    path.addLine(to: CGPoint(x: w * (0.75 + shift), y: h * 0.15))
                 }
                 .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
 
                 Path { path in
-                    path.move(to: CGPoint(x: w * 0.63, y: h * 0.14))
-                    path.addCurve(to: CGPoint(x: w * 0.78, y: h * 0.52),
-                                  control1: CGPoint(x: w * 0.82, y: h * 0.18),
-                                  control2: CGPoint(x: w * 0.88, y: h * 0.35))
+                    path.move(to: CGPoint(x: w * (0.63 + shift), y: h * 0.14))
+                    path.addCurve(to: CGPoint(x: w * (0.78 + shift), y: h * 0.52),
+                                  control1: CGPoint(x: w * (0.82 + shift), y: h * 0.18),
+                                  control2: CGPoint(x: w * (0.88 + shift), y: h * 0.35))
                 }
                 .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 1.8, dash: [7, 6]))
 
                 Path { path in
-                    path.move(to: CGPoint(x: w * 0.28, y: h * 0.58))
-                    path.addLine(to: CGPoint(x: w * 0.52, y: h * 0.58))
+                    path.move(to: CGPoint(x: w * (0.28 + shift), y: h * 0.58))
+                    path.addLine(to: CGPoint(x: w * (0.52 + shift), y: h * 0.58))
                 }
                 .stroke(.white.opacity(0.9), style: StrokeStyle(lineWidth: 1.2, dash: [6, 5]))
 
@@ -3247,21 +3250,21 @@ fileprivate struct EliteShooterPoseOverlay: View {
                 }
 
                 Text("159°")
-                    .shotiqBody(11, weight: .black)
+                    .shotiqBody(compact ? 9 : 11, weight: .black)
                     .foregroundStyle(.white)
-                    .position(x: w * 0.42, y: h * 0.18)
+                    .position(x: w * (0.42 + shift), y: h * 0.18)
                 Text("50°")
-                    .shotiqBody(11, weight: .black)
+                    .shotiqBody(compact ? 9 : 11, weight: .black)
                     .foregroundStyle(Color(red: 0.98, green: 0.76, blue: 0.36))
-                    .position(x: w * 0.80, y: h * 0.17)
+                    .position(x: w * (0.80 + shift), y: h * 0.17)
                 Text("-32°")
-                    .shotiqBody(11, weight: .black)
+                    .shotiqBody(compact ? 9 : 11, weight: .black)
                     .foregroundStyle(Color(red: 0.98, green: 0.76, blue: 0.36))
                     .position(x: w * 0.13, y: h * 0.44)
                 Text("0°")
-                    .shotiqBody(11, weight: .black)
+                    .shotiqBody(compact ? 9 : 11, weight: .black)
                     .foregroundStyle(.white)
-                    .position(x: w * 0.53, y: h * 0.56)
+                    .position(x: w * (0.53 + shift), y: h * 0.56)
             }
         }
         .allowsHitTesting(false)
@@ -3622,35 +3625,46 @@ struct EliteShootersView: View {    // 052
             GeometryReader { geo in
                 let width = geo.size.width
                 let compact = width < 380
+                let innerWidth = max(0, width - 16)
+                let imageWidth = compact ? min(158, innerWidth * 0.42) : innerWidth * 0.43
+                let rightWidth = max(0, innerWidth - imageWidth - 8)
                 let topHeight: CGFloat = compact ? 402 : 430
                 VStack(spacing: 10) {
                     HStack(alignment: .top, spacing: 8) {
                         eliteShooterImagePanel(phase: activePhase,
                                                height: topHeight,
-                                               width: width * 0.43)
+                                               width: imageWidth,
+                                               compact: compact)
                         VStack(spacing: 8) {
-                            eliteIdentityTile(shooter: s, rank: rankNumber)
+                            eliteIdentityTile(shooter: s, rank: rankNumber, compact: compact)
                                 .frame(height: compact ? 100 : 112)
                             eliteMetricsTile(wsi: EliteShooterDetailData.wsiScore(s),
                                              threePct: s.careerThreePct ?? s.careerPct,
-                                             fit: fit)
+                                             fit: fit,
+                                             compact: compact)
                                 .frame(height: compact ? 140 : 154)
                             eliteComparisonTile(shooter: s,
                                                 elbow: elbowValue,
-                                                release: releaseValue)
+                                                release: releaseValue,
+                                                compact: compact)
                                 .frame(height: compact ? 144 : 154)
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(width: rightWidth)
+                        .clipped()
                     }
+                    .frame(width: innerWidth, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         selectedShooterID = s.id
                         detailRoute = EliteShooterDetailRoute(shooter: s, rank: rankNumber)
                     }
-                    elitePhaseFilmstrip(activePhase: activePhase, shooterID: s.id, rank: rank)
+                    elitePhaseFilmstrip(activePhase: activePhase, shooterID: s.id, rank: rank, compact: compact)
+                        .frame(width: innerWidth)
                         .frame(height: compact ? 104 : 118)
                 }
                 .padding(8)
+                .frame(width: width, alignment: .leading)
+                .clipped()
             }
             .frame(height: UIScreen.main.bounds.width < 600 ? 542 : 578)
         }
@@ -3658,7 +3672,7 @@ struct EliteShootersView: View {    // 052
             .stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4))
     }
 
-    private func eliteShooterImagePanel(phase: String, height: CGFloat, width: CGFloat) -> some View {
+    private func eliteShooterImagePanel(phase: String, height: CGFloat, width: CGFloat, compact: Bool) -> some View {
         ZStack {
             CanonicalPhoto(elitePhasePhotoKey(phase),
                            width: width,
@@ -3666,42 +3680,42 @@ struct EliteShootersView: View {    // 052
                            cornerRadius: 9,
                            contentMode: .fill,
                            alignment: .top)
-            EliteShooterPoseOverlay()
+            EliteShooterPoseOverlay(compact: compact)
         }
         .frame(width: width, height: height)
         .clipShape(RoundedRectangle(cornerRadius: 9))
     }
 
-    private func eliteIdentityTile(shooter: EliteShooterDTO, rank: Int) -> some View {
+    private func eliteIdentityTile(shooter: EliteShooterDTO, rank: Int, compact: Bool) -> some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(shooter.name.uppercased())
-                    .shotiqDisplay(30)
+                    .shotiqDisplay(compact ? 22 : 30)
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.45)
+                    .minimumScaleFactor(0.38)
                     .accessibilityIdentifier("elite-card-name-\(shooter.id)")
                 HStack(spacing: 4) {
                     Text("RIGHT-HANDED")
                     Circle().fill(ShotIQColor.shotiqOrange).frame(width: 3, height: 3)
                     Text(shortPosition(shooter.position).uppercased())
                 }
-                .shotiqBody(8.5, weight: .black)
+                .shotiqBody(compact ? 6.5 : 8.5, weight: .black)
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.48)
+                .minimumScaleFactor(0.36)
                 Text(shooter.team.uppercased())
-                    .shotiqBody(10, weight: .bold)
+                    .shotiqBody(compact ? 8 : 10, weight: .bold)
                     .foregroundStyle(ShotIQColor.graphite)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.5)
+                    .minimumScaleFactor(0.45)
                 Text(shooter.league.uppercased())
-                    .shotiqBody(10, weight: .bold)
+                    .shotiqBody(compact ? 8 : 10, weight: .bold)
                     .foregroundStyle(ShotIQColor.graphite)
                     .lineLimit(1)
             }
-            .padding(.leading, 9)
-            .padding(.trailing, 6)
+            .padding(.leading, compact ? 7 : 9)
+            .padding(.trailing, compact ? 4 : 6)
             .frame(maxWidth: .infinity, alignment: .leading)
             Rectangle().fill(ShotIQColor.rule).frame(width: 1)
             VStack(spacing: 1) {
@@ -3710,44 +3724,44 @@ struct EliteShootersView: View {    // 052
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1)
                 Text("\(rank)")
-                    .font(.custom("Tungsten-Medium", size: 60))
+                    .font(.custom("Tungsten-Medium", size: compact ? 46 : 60))
                     .foregroundStyle(ShotIQColor.shotiqOrange)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 28, height: 2)
+                Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: compact ? 22 : 28, height: 2)
             }
-            .frame(width: 52)
+            .frame(width: compact ? 40 : 52)
         }
         .background(Color.white, in: RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(ShotIQColor.rule))
         .accessibilityLabel("\(shooter.name) rank \(rank)")
     }
 
-    private func eliteMetricsTile(wsi: Int, threePct: Double?, fit: Int) -> some View {
+    private func eliteMetricsTile(wsi: Int, threePct: Double?, fit: Int, compact: Bool) -> some View {
         let three = Int(round(threePct ?? 33))
-        return VStack(spacing: 7) {
+        return VStack(spacing: compact ? 5 : 7) {
             HStack(spacing: 0) {
-                eliteDarkMetric(label: "WSI", value: "\(wsi)", color: .white, size: 66)
-                Rectangle().fill(.white.opacity(0.58)).frame(width: 1, height: 62)
-                eliteDarkMetric(label: "3P%", value: "\(three)%", color: ShotIQColor.shotiqOrange, size: 56)
+                eliteDarkMetric(label: "WSI", value: "\(wsi)", color: .white, size: compact ? 47 : 66)
+                Rectangle().fill(.white.opacity(0.58)).frame(width: 1, height: compact ? 48 : 62)
+                eliteDarkMetric(label: "3P%", value: "\(three)%", color: ShotIQColor.shotiqOrange, size: compact ? 40 : 56)
             }
             Rectangle().fill(.white.opacity(0.68)).frame(height: 1)
             HStack(alignment: .lastTextBaseline, spacing: 6) {
                 Text("\(fit)%")
-                    .font(.custom("Tungsten-Medium", size: 68))
+                    .font(.custom("Tungsten-Medium", size: compact ? 51 : 68))
                     .foregroundStyle(ShotIQColor.shotiqOrange)
                     .lineLimit(1)
                     .minimumScaleFactor(0.55)
                 Text("FIT")
-                    .font(.custom("Tungsten-Medium", size: 48))
+                    .font(.custom("Tungsten-Medium", size: compact ? 35 : 48))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.55)
             }
             .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 10)
+        .padding(.horizontal, compact ? 7 : 10)
+        .padding(.vertical, compact ? 8 : 10)
         .background {
             ZStack {
                 LinearGradient(colors: [Color(red: 0.02, green: 0.05, blue: 0.08),
@@ -3775,7 +3789,7 @@ struct EliteShootersView: View {    // 052
         .frame(maxWidth: .infinity)
     }
 
-    private func eliteComparisonTile(shooter: EliteShooterDTO, elbow: String, release: String) -> some View {
+    private func eliteComparisonTile(shooter: EliteShooterDTO, elbow: String, release: String, compact: Bool) -> some View {
         let eliteWingspan = estimatedWingspan(for: shooter)
         return VStack(alignment: .leading, spacing: 6) {
             Text("PROFILE COMPARISON")
@@ -3783,39 +3797,39 @@ struct EliteShootersView: View {    // 052
                 .foregroundStyle(ShotIQColor.ink)
             Rectangle().fill(ShotIQColor.rule).frame(height: 1)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
-                eliteComparisonMetric("YOUR HEIGHT", inchesText(heightIn))
-                eliteComparisonMetric("ELITE HEIGHT", inchesText(shooter.height))
-                eliteComparisonMetric("SIZE GAP", heightGapText(user: heightIn, elite: shooter.height))
-                eliteComparisonMetric("WEIGHT GAP", weightGapText(user: weightLbs, elite: shooter.weight))
-                eliteComparisonMetric("ELBOW", elbow)
-                eliteComparisonMetric("RELEASE", release)
+                eliteComparisonMetric("YOUR HEIGHT", inchesText(heightIn), compact: compact)
+                eliteComparisonMetric("ELITE HEIGHT", inchesText(shooter.height), compact: compact)
+                eliteComparisonMetric("SIZE GAP", heightGapText(user: heightIn, elite: shooter.height), compact: compact)
+                eliteComparisonMetric("WEIGHT GAP", weightGapText(user: weightLbs, elite: shooter.weight), compact: compact)
+                eliteComparisonMetric("ELBOW", elbow, compact: compact)
+                eliteComparisonMetric("RELEASE", release, compact: compact)
             }
         }
-        .padding(8)
+        .padding(compact ? 6 : 8)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(ShotIQColor.rule))
         .accessibilityLabel("Profile comparison. Wingspan estimate \(inchesText(eliteWingspan))")
     }
 
-    private func eliteComparisonMetric(_ label: String, _ value: String) -> some View {
+    private func eliteComparisonMetric(_ label: String, _ value: String, compact: Bool) -> some View {
         VStack(spacing: 1) {
             Text(label)
                 .shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.48)
+                .minimumScaleFactor(0.34)
             Text(value)
-                .font(.custom("Tungsten-Medium", size: 27))
+                .font(.custom("Tungsten-Medium", size: compact ? 21 : 27))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
                 .lineLimit(1)
                 .minimumScaleFactor(0.52)
         }
-        .frame(maxWidth: .infinity, minHeight: 48)
+        .frame(maxWidth: .infinity, minHeight: compact ? 43 : 48)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(width: 1), alignment: .trailing)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
     }
 
-    private func elitePhaseFilmstrip(activePhase: String, shooterID: Int, rank: Int) -> some View {
+    private func elitePhaseFilmstrip(activePhase: String, shooterID: Int, rank: Int, compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("SHOT PHASE PROFILE")
                 .shotiqMicroCaps()
@@ -3825,7 +3839,7 @@ struct EliteShootersView: View {    // 052
                     Button {
                         activePhaseByShooter[shooterID] = phase
                     } label: {
-                        elitePhaseFrame(phase, isActive: activePhase == phase)
+                        elitePhaseFrame(phase, isActive: activePhase == phase, compact: compact)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(phase.capitalized) phase\(activePhase == phase ? " selected" : "")")
@@ -3836,11 +3850,11 @@ struct EliteShootersView: View {    // 052
         .background(Color(red: 0.02, green: 0.05, blue: 0.08), in: RoundedRectangle(cornerRadius: 9))
     }
 
-    private func elitePhaseFrame(_ phase: String, isActive: Bool) -> some View {
+    private func elitePhaseFrame(_ phase: String, isActive: Bool, compact: Bool) -> some View {
         VStack(spacing: 4) {
             ZStack {
                 CanonicalPhoto(elitePhasePhotoKey(phase),
-                               height: 52,
+                               height: compact ? 44 : 52,
                                cornerRadius: 4,
                                alignment: .top)
                 SkeletonOverlay(showJoints: true,
@@ -3854,7 +3868,7 @@ struct EliteShootersView: View {    // 052
                 .stroke(isActive ? ShotIQColor.shotiqOrange : Color.clear,
                         lineWidth: isActive ? 2 : 0))
             Text(phase)
-                .shotiqBody(8, weight: .black)
+                .shotiqBody(compact ? 7 : 8, weight: .black)
                 .kerning(0.2)
                 .foregroundStyle(isActive ? ShotIQColor.shotiqOrange : .white)
                 .lineLimit(1)
