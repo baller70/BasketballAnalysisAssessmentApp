@@ -3154,17 +3154,296 @@ fileprivate struct PlayerFlawReferenceMetricCard: View {
     }
 
     var body: some View {
+        VStack(spacing: 10) {
+            PlayerFlawReferenceHero(metric: metric,
+                                    assetName: assetName,
+                                    baseSize: baseSize,
+                                    displayWidth: displayWidth,
+                                    sourceDisplayHeight: displayHeight)
+            PlayerFlawReferenceSummaryCard(metric: metric)
+            PlayerFlawReferenceCompareCard(metric: metric)
+            PlayerFlawReferenceActions(metric: metric)
+        }
+        .frame(width: displayWidth)
+    }
+}
+
+fileprivate struct PlayerFlawReferenceHero: View {
+    let metric: PlayerFlawMetricConfig
+    let assetName: String
+    let baseSize: CGSize
+    let displayWidth: CGFloat
+    let sourceDisplayHeight: CGFloat
+
+    private var scale: CGFloat { displayWidth / baseSize.width }
+    private var heroBaseHeight: CGFloat { metric.id == "release-height" ? 646 : 650 }
+    private var heroHeight: CGFloat { heroBaseHeight * scale }
+
+    var body: some View {
         ZStack(alignment: .topLeading) {
             Image(assetName)
                 .resizable()
                 .interpolation(.high)
-                .scaledToFit()
-                .frame(width: displayWidth, height: displayHeight)
+                .frame(width: displayWidth, height: sourceDisplayHeight, alignment: .top)
+                .frame(width: displayWidth, height: heroHeight, alignment: .top)
+                .clipped()
 
-            PlayerFlawReferenceOverlay(metric: metric, baseSize: baseSize)
-                .frame(width: displayWidth, height: displayHeight)
+            LinearGradient(colors: [
+                Color(red: 0.018, green: 0.055, blue: 0.105),
+                Color(red: 0.018, green: 0.055, blue: 0.105).opacity(0.97),
+                Color(red: 0.018, green: 0.055, blue: 0.105).opacity(0.76),
+                Color(red: 0.018, green: 0.055, blue: 0.105).opacity(0.0)
+            ], startPoint: .leading, endPoint: .trailing)
+            .frame(width: displayWidth * 0.58, height: heroHeight)
+
+            heroCopy
         }
-        .frame(width: displayWidth, height: displayHeight)
+        .frame(width: displayWidth, height: heroHeight)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var heroCopy: some View {
+        let s = scale
+        return ZStack(alignment: .topLeading) {
+            Text(metric.title.uppercased())
+                .shotiqDisplay((metric.id == "release-height" ? 44 : 47) * s)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 390 * s, alignment: .leading)
+                .position(x: 220 * s, y: 64 * s)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(17 * s, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .frame(width: 170 * s, height: 34 * s)
+                .overlay(RoundedRectangle(cornerRadius: 7 * s).stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s))
+                .position(x: 142 * s, y: 126 * s)
+
+            Text("YOUR VALUE")
+                .shotiqBody(15 * s, weight: .black)
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 160 * s, alignment: .leading)
+                .position(x: 116 * s, y: valueLabelY * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: valueFont * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.64)
+                .frame(width: 215 * s, height: 84 * s, alignment: .leading)
+                .position(x: 145 * s, y: valueY * s)
+
+            Rectangle()
+                .fill(.white.opacity(metric.overlayType == .releaseHeight ? 0.35 : 0.45))
+                .frame(width: 1.4 * s, height: dividerHeight * s)
+                .position(x: dividerX * s, y: dividerY * s)
+
+            Text("TARGET")
+                .shotiqBody(15 * s, weight: .black)
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 150 * s, alignment: .leading)
+                .position(x: targetLabelX * s, y: targetLabelY * s)
+
+            Text(metric.targetLabel)
+                .font(.custom("Tungsten-Medium", size: targetFont * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.56)
+                .frame(width: 245 * s, height: 70 * s, alignment: .leading)
+                .position(x: targetValueX * s, y: targetValueY * s)
+
+            if metric.overlayType == .centerline {
+                Text(metric.insight)
+                    .shotiqBody(21 * s, weight: .semibold)
+                    .foregroundStyle(.white)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.72)
+                    .frame(width: 372 * s, alignment: .leading)
+                    .position(x: 242 * s, y: 420 * s)
+            } else {
+                Image(systemName: "lightbulb")
+                    .font(.system(size: 30 * s, weight: .regular))
+                    .foregroundStyle(.white)
+                    .frame(width: 70 * s, height: 70 * s)
+                    .overlay(Circle().stroke(.white.opacity(0.42), lineWidth: 1.4 * s))
+                    .position(x: 73 * s, y: insightY * s)
+                Text(metric.insight)
+                    .shotiqBody(insightFontSize * s, weight: .semibold)
+                    .foregroundStyle(.white)
+                    .lineLimit(metric.overlayType == .releaseHeight ? 5 : 4)
+                    .minimumScaleFactor(0.72)
+                    .frame(width: insightWidth * s, alignment: .leading)
+                    .position(x: insightTextX * s, y: insightY * s)
+            }
+        }
+    }
+
+    private var valueFont: CGFloat { metric.valueLabel.count > 5 ? 69 : 78 }
+    private var targetFont: CGFloat { metric.targetLabel.count > 7 ? 45 : 54 }
+    private var valueLabelY: CGFloat { metric.id == "release-height" ? 205 : 210 }
+    private var valueY: CGFloat { metric.id == "release-height" ? 290 : 285 }
+    private var dividerX: CGFloat { metric.id == "release-height" ? 275 : (metric.id == "centerline" ? 250 : 275) }
+    private var dividerY: CGFloat { metric.id == "release-height" ? 285 : 275 }
+    private var dividerHeight: CGFloat { metric.id == "release-height" ? 72 : 90 }
+    private var targetLabelX: CGFloat { metric.id == "release-height" ? 318 : (metric.id == "centerline" ? 338 : 78) }
+    private var targetLabelY: CGFloat { metric.id == "release-height" ? 205 : (metric.id == "centerline" ? 210 : 358) }
+    private var targetValueX: CGFloat { metric.id == "release-height" ? 337 : (metric.id == "centerline" ? 370 : 122) }
+    private var targetValueY: CGFloat { metric.id == "release-height" ? 287 : (metric.id == "centerline" ? 283 : 410) }
+    private var insightY: CGFloat { metric.id == "release-height" ? 505 : 520 }
+    private var insightTextX: CGFloat { metric.id == "release-height" ? 203 : 285 }
+    private var insightWidth: CGFloat { metric.id == "release-height" ? 265 : 375 }
+    private var insightFontSize: CGFloat { metric.id == "release-height" ? 21 : 20 }
+}
+
+fileprivate struct PlayerFlawReferenceSummaryCard: View {
+    let metric: PlayerFlawMetricConfig
+
+    var body: some View {
+        HStack(spacing: 0) {
+            summaryCell("YOUR VALUE", value: metric.valueLabel, color: ShotIQColor.shotiqOrange)
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 72)
+            summaryCell("TARGET", value: metric.targetLabel, color: ShotIQColor.analysisBlue)
+        }
+        .padding(.vertical, 13)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.rule, lineWidth: 1))
+    }
+
+    private func summaryCell(_ label: String, value: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(label)
+                .shotiqBody(12, weight: .black)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: value.count > 6 ? 44 : 58))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(height: 54)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+fileprivate struct PlayerFlawReferenceCompareCard: View {
+    let metric: PlayerFlawMetricConfig
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 15, weight: .black))
+                    .foregroundStyle(ShotIQColor.ink)
+                    .frame(width: 20)
+                Text("COMPARE BY LEVEL")
+                    .shotiqDisplay(21)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 42)
+
+            Rectangle().fill(ShotIQColor.rule).frame(height: 1)
+
+            ForEach(Array(metric.levels.enumerated()), id: \.element.id) { index, level in
+                PlayerFlawReferenceLevelRow(metric: metric, level: level)
+                if index != metric.levels.count - 1 {
+                    Rectangle().fill(ShotIQColor.rule).frame(height: 1)
+                        .padding(.horizontal, 14)
+                }
+            }
+        }
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.rule, lineWidth: 1))
+        .clipped()
+    }
+}
+
+fileprivate struct PlayerFlawReferenceLevelRow: View {
+    let metric: PlayerFlawMetricConfig
+    let level: PlayerFlawLevelCompare
+
+    var body: some View {
+        Button {
+            // Rows remain tappable for the player comparison surface.
+        } label: {
+            HStack(spacing: 12) {
+                ZStack(alignment: .bottomLeading) {
+                    CanonicalPhoto(level.photoKey, width: 54, height: 54, cornerRadius: 7, alignment: .top)
+                    LinearGradient(colors: [.clear, .black.opacity(0.72)], startPoint: .top, endPoint: .bottom)
+                    Text(level.shortLabel)
+                        .shotiqBody(10, weight: .black)
+                        .foregroundStyle(.white)
+                        .padding(.leading, 5)
+                        .padding(.bottom, 4)
+                }
+                .frame(width: 54, height: 54)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(level.label)
+                        .shotiqDisplay(20)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.74)
+                    Text("DEVELOPMENT TARGET")
+                        .shotiqBody(8.5, weight: .black)
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(1)
+                    Text(level.targetLabel)
+                        .shotiqBody(14, weight: .black)
+                        .foregroundStyle(ShotIQColor.analysisBlue)
+                        .lineLimit(1)
+                }
+                .frame(width: 118, alignment: .leading)
+
+                PlayerFlawRangeMeter(metric: metric, level: level)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(level.label), target \(level.targetLabel), \(level.comparisonText)")
+    }
+}
+
+fileprivate struct PlayerFlawReferenceActions: View {
+    let metric: PlayerFlawMetricConfig
+
+    var body: some View {
+        HStack(spacing: 12) {
+            NavigationLink {
+                DrillExecutionView(drillName: metric.drillName)
+            } label: {
+                Text("TRAIN THIS FLAW")
+                    .shotiqBody(14, weight: .black)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 7))
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                DiscoverDrillsView()
+            } label: {
+                Text("VIEW DRILLS")
+                    .shotiqBody(14, weight: .black)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 7))
+                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.ink, lineWidth: 1.2))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
     }
 }
 
