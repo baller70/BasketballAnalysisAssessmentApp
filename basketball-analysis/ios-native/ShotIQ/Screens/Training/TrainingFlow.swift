@@ -2112,50 +2112,93 @@ struct WorkoutCalendarView: View {  // 059
         ShotIQCard {
             GeometryReader { geo in
                 let compact = geo.size.width < 520
-                let imageWidth = compact ? max(108, geo.size.width * 0.30) : geo.size.width * 0.37
-                let innerHeight: CGFloat = compact ? 368 : 410
-                HStack(spacing: compact ? 10 : 22) {
-                    CanonicalPhoto("059-visual-001",
-                                   width: imageWidth,
-                                   height: innerHeight,
-                                   cornerRadius: 12,
-                                   alignment: compact ? .topTrailing : .top)
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
-                    HStack(alignment: .top, spacing: compact ? 9 : 18) {
-                        Rectangle()
-                            .fill(ShotIQColor.shotiqOrange)
-                            .frame(width: 3, height: compact ? 136 : 154)
-                            .padding(.top, 8)
-                        VStack(alignment: .leading, spacing: compact ? 10 : 14) {
-                            VStack(alignment: .leading, spacing: compact ? -10 : -8) {
-                                HStack(alignment: .lastTextBaseline, spacing: compact ? 5 : 8) {
-                                    Text("62.5")
-                                        .font(.custom("Tungsten-Medium", size: compact ? 124 : 170))
-                                        .foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.48)
-                                    Text("%")
-                                        .font(.custom("Tungsten-Medium", size: compact ? 68 : 88))
-                                        .foregroundStyle(ShotIQColor.ink)
-                                        .baselineOffset(compact ? 10 : 15)
+                if compact {
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            CanonicalPhoto("059-visual-001",
+                                           width: max(142, geo.size.width * 0.40),
+                                           height: 176,
+                                           cornerRadius: 12,
+                                           alignment: .topTrailing)
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
+                            HStack(alignment: .top, spacing: 9) {
+                                Rectangle()
+                                    .fill(ShotIQColor.shotiqOrange)
+                                    .frame(width: 3, height: 136)
+                                    .padding(.top, 8)
+                                VStack(alignment: .leading, spacing: 10) {
+                                    VStack(alignment: .leading, spacing: -10) {
+                                        HStack(alignment: .lastTextBaseline, spacing: 5) {
+                                            Text("62.5")
+                                                .font(.custom("Tungsten-Medium", size: 116))
+                                                .foregroundStyle(ShotIQColor.ink)
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.48)
+                                            Text("%")
+                                                .font(.custom("Tungsten-Medium", size: 62))
+                                                .foregroundStyle(ShotIQColor.ink)
+                                                .baselineOffset(9)
+                                        }
+                                        Text("FG%")
+                                            .shotiqDisplay(24)
+                                            .foregroundStyle(ShotIQColor.ink)
+                                            .padding(.leading, 2)
+                                    }
+                                    HStack(spacing: 8) {
+                                        calendarMiniStat(icon: "basketball", value: "15", label: "Makes", compact: true)
+                                        calendarMiniStat(icon: "xmark.circle", value: "9", label: "Misses", compact: true)
+                                    }
                                 }
-                                Text("FG%")
-                                    .shotiqDisplay(compact ? 24 : 33)
-                                    .foregroundStyle(ShotIQColor.ink)
-                                    .padding(.leading, 2)
                             }
-                            HStack(spacing: 10) {
-                                calendarMiniStat(icon: "basketball", value: "15", label: "Makes", compact: compact)
-                                calendarMiniStat(icon: "xmark.circle", value: "9", label: "Misses", compact: compact)
-                            }
-                            calendarTrendCard(compact: compact)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        calendarTrendCard(compact: true)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                } else {
+                    HStack(spacing: 22) {
+                        CanonicalPhoto("059-visual-001",
+                                       width: geo.size.width * 0.37,
+                                       height: 410,
+                                       cornerRadius: 12,
+                                       alignment: .top)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
+                        HStack(alignment: .top, spacing: 18) {
+                            Rectangle()
+                                .fill(ShotIQColor.shotiqOrange)
+                                .frame(width: 3, height: 154)
+                                .padding(.top, 8)
+                            VStack(alignment: .leading, spacing: 14) {
+                                VStack(alignment: .leading, spacing: -8) {
+                                    HStack(alignment: .lastTextBaseline, spacing: 8) {
+                                        Text("62.5")
+                                            .font(.custom("Tungsten-Medium", size: 170))
+                                            .foregroundStyle(ShotIQColor.ink)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.48)
+                                        Text("%")
+                                            .font(.custom("Tungsten-Medium", size: 88))
+                                            .foregroundStyle(ShotIQColor.ink)
+                                            .baselineOffset(15)
+                                    }
+                                    Text("FG%")
+                                        .shotiqDisplay(33)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .padding(.leading, 2)
+                                }
+                                HStack(spacing: 10) {
+                                    calendarMiniStat(icon: "basketball", value: "15", label: "Makes", compact: false)
+                                    calendarMiniStat(icon: "xmark.circle", value: "9", label: "Misses", compact: false)
+                                }
+                                calendarTrendCard(compact: false)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(12)
                 }
-                .padding(12)
             }
-            .frame(height: UIScreen.main.bounds.width < 600 ? 402 : 436)
+            .frame(height: UIScreen.main.bounds.width < 600 ? 420 : 436)
         }
     }
 
@@ -2612,28 +2655,30 @@ struct WorkoutCalendarView: View {  // 059
                     showingCreateWorkoutModal = false
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 24, weight: .bold))
-                    Text("Calendar")
-                        .shotiqBody(18, weight: .bold)
+                        .font(.system(size: 22, weight: .bold))
+                    Text("Cal")
+                        .shotiqBody(15, weight: .bold)
+                        .lineLimit(1)
                 }
                 .foregroundStyle(ShotIQColor.ink)
             }
             .buttonStyle(.plain)
-            .frame(width: 126, alignment: .leading)
+            .frame(width: 70, alignment: .leading)
             Spacer()
-            Text("\(monthNames[monthIndex]) \(selectedDay), \(displayYear)")
-                .shotiqDisplay(42)
+            Text("\(monthNames[monthIndex].prefix(3)) \(selectedDay), \(displayYear)")
+                .shotiqDisplay(30)
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.42)
+                .minimumScaleFactor(0.7)
             Spacer()
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Text("Draft")
-                    .shotiqBody(15, weight: .semibold)
+                    .shotiqBody(13, weight: .semibold)
                     .foregroundStyle(ShotIQColor.shotiqOrange)
-                    .frame(width: 82, height: 42)
+                    .lineLimit(1)
+                    .frame(width: 66, height: 38)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange, lineWidth: 1))
                 Button {
                     withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
@@ -2641,18 +2686,18 @@ struct WorkoutCalendarView: View {  // 059
                     }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(ShotIQColor.ink)
-                        .frame(width: 42, height: 42)
+                        .frame(width: 38, height: 38)
                         .background(ShotIQColor.rule.opacity(0.55), in: Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close workout popup")
             }
-            .frame(width: 132, alignment: .trailing)
+            .frame(width: 110, alignment: .trailing)
         }
-        .padding(.horizontal, 18)
-        .frame(height: 68)
+        .padding(.horizontal, 14)
+        .frame(height: 62)
         .background(Color.white)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
     }
@@ -2661,50 +2706,80 @@ struct WorkoutCalendarView: View {  // 059
         ShotIQCard {
             GeometryReader { geo in
                 let compact = geo.size.width < 500
-                let imageWidth = compact ? max(124, geo.size.width * 0.34) : geo.size.width * 0.34
-                let imageHeight: CGFloat = compact ? 196 : 304
-                HStack(spacing: compact ? 12 : 18) {
-                    CanonicalPhoto("059-visual-001",
-                                   width: imageWidth,
-                                   height: imageHeight,
-                                   cornerRadius: 10,
-                                   alignment: .top)
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
-                    VStack(alignment: .leading, spacing: compact ? 10 : 14) {
-                        Text("CREATE WORKOUT")
-                            .shotiqDisplay(compact ? 42 : 64)
-                            .foregroundStyle(ShotIQColor.ink)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.55)
-                        segmentedTabs
-                        HStack(spacing: 0) {
-                            modalStat(icon: "clock", value: "\(draftDurationMinutes)", label: "MIN")
-                            VRule(height: 42)
-                            modalStat(icon: "list.clipboard", value: "\(calendarDraftDrills.count)", label: "DRILLS")
-                            VRule(height: 42)
-                            modalStat(icon: "scope", value: "\(draftShotCount)", label: "SHOTS")
+                if compact {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 12) {
+                            CanonicalPhoto("059-visual-001",
+                                           width: 142,
+                                           height: 142,
+                                           cornerRadius: 10,
+                                           alignment: .top)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
+                            Text("CREATE\nWORKOUT")
+                                .shotiqDisplay(42)
+                                .foregroundStyle(ShotIQColor.ink)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.72)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(height: compact ? 60 : 74)
+                        segmentedTabs(compact: true)
+                        HStack(spacing: 0) {
+                            modalStat(icon: "clock", value: "\(draftDurationMinutes)", label: "Min", compact: true)
+                            VRule(height: 42)
+                            modalStat(icon: "list.clipboard", value: "\(calendarDraftDrills.count)", label: "Drills", compact: true)
+                            VRule(height: 42)
+                            modalStat(icon: "scope", value: "\(draftShotCount)", label: "Shots", compact: true)
+                        }
+                        .frame(height: 64)
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule, lineWidth: 1))
                     }
+                    .padding(14)
+                } else {
+                    HStack(spacing: 18) {
+                        CanonicalPhoto("059-visual-001",
+                                       width: geo.size.width * 0.34,
+                                       height: 304,
+                                       cornerRadius: 10,
+                                       alignment: .top)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("CREATE WORKOUT")
+                                .shotiqDisplay(64)
+                                .foregroundStyle(ShotIQColor.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.55)
+                            segmentedTabs(compact: false)
+                            HStack(spacing: 0) {
+                                modalStat(icon: "clock", value: "\(draftDurationMinutes)", label: "MIN", compact: false)
+                                VRule(height: 42)
+                                modalStat(icon: "list.clipboard", value: "\(calendarDraftDrills.count)", label: "DRILLS", compact: false)
+                                VRule(height: 42)
+                                modalStat(icon: "scope", value: "\(draftShotCount)", label: "SHOTS", compact: false)
+                            }
+                            .frame(height: 74)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule, lineWidth: 1))
+                        }
+                    }
+                    .padding(14)
                 }
-                .padding(14)
             }
-            .frame(height: UIScreen.main.bounds.width < 600 ? 226 : 332)
+            .frame(height: UIScreen.main.bounds.width < 600 ? 286 : 332)
         }
     }
 
-    private var segmentedTabs: some View {
+    private func segmentedTabs(compact: Bool) -> some View {
         HStack(spacing: 0) {
             ForEach(["Workout", "Training", "Analysis"], id: \.self) { label in
                 Button {
                     selectedSessionType = label
                 } label: {
-                    Text(label)
-                        .shotiqBody(13, weight: selectedSessionType == label ? .bold : .medium)
+                    Text(compact ? compactSessionLabel(label) : label)
+                        .shotiqBody(compact ? 12 : 13, weight: selectedSessionType == label ? .bold : .medium)
                         .foregroundStyle(selectedSessionType == label ? .white : ShotIQColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 42)
+                        .frame(height: compact ? 38 : 42)
                         .background(selectedSessionType == label ? ShotIQColor.shotiqOrange : Color.white)
                         .overlay(Rectangle().stroke(ShotIQColor.rule, lineWidth: 0.7))
                 }
@@ -2715,19 +2790,30 @@ struct WorkoutCalendarView: View {  // 059
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
 
-    private func modalStat(icon: String, value: String, label: String) -> some View {
-        HStack(spacing: 8) {
+    private func compactSessionLabel(_ label: String) -> String {
+        switch label {
+        case "Workout": return "Work"
+        case "Training": return "Train"
+        case "Analysis": return "AI"
+        default: return label
+        }
+    }
+
+    private func modalStat(icon: String, value: String, label: String, compact: Bool) -> some View {
+        VStack(spacing: compact ? 1 : 2) {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: compact ? 17 : 18, weight: .semibold))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(value)
-                    .font(.custom("Tungsten-Medium", size: 32))
-                    .foregroundStyle(ShotIQColor.ink)
-                Text(label)
-                    .shotiqBody(10, weight: .bold)
-                    .foregroundStyle(ShotIQColor.ink)
-            }
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: compact ? 30 : 34))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .shotiqBody(compact ? 8 : 10, weight: .bold)
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
         .frame(maxWidth: .infinity)
     }
@@ -2736,11 +2822,11 @@ struct WorkoutCalendarView: View {  // 059
         ShotIQCard {
             VStack(spacing: 0) {
                 cardHeader("SESSION SETUP", trailing: "May \(selectedDay)")
-                setupRow("Workout Name", value: "Elbow Stack Builder")
+                setupRow("Name", value: "Elbow Stack")
                 setupRow("Focus", custom: AnyView(
                     HStack(spacing: 8) {
-                        focusChip("Elbow Alignment")
-                        focusChip("Release Point")
+                        focusChip("Elbow")
+                        focusChip("Release")
                         Image(systemName: "plus")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(ShotIQColor.ink)
@@ -2749,7 +2835,7 @@ struct WorkoutCalendarView: View {  // 059
                     }
                 ))
                 setupRow("Mode", value: "Step-by-step", chevron: true)
-                setupRow("Tracking", value: "Live camera + manual backup", chevron: true, divider: false)
+                setupRow("Track", value: "Camera + backup", chevron: true, divider: false)
             }
             .padding(12)
         }
@@ -2873,13 +2959,13 @@ struct WorkoutCalendarView: View {  // 059
 
     private var createWorkoutActionBar: some View {
         HStack(spacing: 10) {
-            workoutActionButton("Save Workout", filled: true) {
+            workoutActionButton("Save", filled: true) {
                 saveCalendarWorkoutDraft()
             }
-            workoutActionButton("Start Now") {
+            workoutActionButton("Start") {
                 startCalendarWorkoutDraft()
             }
-            workoutActionButton("Auto-Generate") {
+            workoutActionButton("Auto") {
                 autoGenerateCalendarWorkout()
             }
         }
@@ -2891,16 +2977,16 @@ struct WorkoutCalendarView: View {  // 059
     private func workoutActionButton(_ title: String, filled: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .shotiqBody(16, weight: .bold)
+                .shotiqBody(15, weight: .bold)
                 .foregroundStyle(filled ? .white : ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.68)
+                .minimumScaleFactor(0.78)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
                 .background(filled ? ShotIQColor.shotiqOrange : Color.clear, in: RoundedRectangle(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(filled ? Color.clear : (title == "Start Now" ? ShotIQColor.ink : ShotIQColor.graphite.opacity(0.55)), lineWidth: 1)
+                        .stroke(filled ? Color.clear : (title == "Start" ? ShotIQColor.ink : ShotIQColor.graphite.opacity(0.55)), lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -2929,7 +3015,7 @@ struct WorkoutCalendarView: View {  // 059
                     .shotiqBody(13, weight: .semibold)
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.62)
                 if chevron {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .semibold))
@@ -2945,7 +3031,9 @@ struct WorkoutCalendarView: View {  // 059
                 Text(label)
                     .shotiqBody(13, weight: .medium)
                     .foregroundStyle(ShotIQColor.graphite)
-                    .frame(width: 128, alignment: .leading)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: 76, alignment: .leading)
                 Spacer()
                 custom
             }
