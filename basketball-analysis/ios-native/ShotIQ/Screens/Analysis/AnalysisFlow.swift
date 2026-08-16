@@ -3188,15 +3188,9 @@ fileprivate struct PlayerFlawReferenceHero: View {
                 .frame(width: displayWidth, height: heroHeight, alignment: .top)
                 .clipped()
 
-            LinearGradient(colors: [
-                Color(red: 0.018, green: 0.055, blue: 0.105),
-                Color(red: 0.018, green: 0.055, blue: 0.105).opacity(0.97),
-                Color(red: 0.018, green: 0.055, blue: 0.105).opacity(0.76),
-                Color(red: 0.018, green: 0.055, blue: 0.105).opacity(0.0)
-            ], startPoint: .leading, endPoint: .trailing)
-            .frame(width: displayWidth * 0.58, height: heroHeight)
-
-            heroCopy
+            // The reference hero image already carries the exact photo treatment
+            // and analytic overlay; keep it intact so the visual does not get
+            // blocked by an artificial dark patch.
         }
         .frame(width: displayWidth, height: heroHeight)
         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -3371,17 +3365,7 @@ fileprivate struct PlayerFlawReferenceLevelRow: View {
             // Rows remain tappable for the player comparison surface.
         } label: {
             HStack(spacing: 12) {
-                ZStack(alignment: .bottomLeading) {
-                    CanonicalPhoto(level.photoKey, width: 54, height: 54, cornerRadius: 7, alignment: .top)
-                    LinearGradient(colors: [.clear, .black.opacity(0.72)], startPoint: .top, endPoint: .bottom)
-                    Text(level.shortLabel)
-                        .shotiqBody(10, weight: .black)
-                        .foregroundStyle(.white)
-                        .padding(.leading, 5)
-                        .padding(.bottom, 4)
-                }
-                .frame(width: 54, height: 54)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                PlayerFlawReferenceLevelTile(metricID: metric.id, level: level)
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(level.label)
@@ -3402,14 +3386,47 @@ fileprivate struct PlayerFlawReferenceLevelRow: View {
 
                 PlayerFlawRangeMeter(metric: metric, level: level)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: 56)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 7)
+            .padding(.vertical, 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(level.label), target \(level.targetLabel), \(level.comparisonText)")
+    }
+}
+
+fileprivate struct PlayerFlawReferenceLevelTile: View {
+    let metricID: String
+    let level: PlayerFlawLevelCompare
+
+    private var assetName: String {
+        "player-flaw-level-\(metricID)-\(level.id)"
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            if let image = UIImage(named: assetName) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                CanonicalPhoto(level.photoKey, width: 54, height: 54, cornerRadius: 7, alignment: .top)
+            }
+
+            LinearGradient(colors: [.clear, .black.opacity(0.86)],
+                           startPoint: .center,
+                           endPoint: .bottom)
+
+            Text(level.shortLabel)
+                .shotiqBody(10, weight: .black)
+                .foregroundStyle(.white)
+                .padding(.leading, 5)
+                .padding(.bottom, 4)
+        }
+        .frame(width: 54, height: 54)
+        .clipShape(RoundedRectangle(cornerRadius: 7))
     }
 }
 
@@ -3874,62 +3891,89 @@ fileprivate struct PlayerFlawRangeMeter: View {
             let markerX = width * markerPercent
             let bandX = width * bandStart
             let bandWidth = max(4, width * (bandEnd - bandStart))
-            VStack(spacing: 4) {
-                ZStack(alignment: .leading) {
-                    Text(metric.valueLabel)
-                        .shotiqBody(11, weight: .black)
-                        .foregroundStyle(ShotIQColor.shotiqOrange)
-                        .position(x: min(max(markerX, 16), width - 16), y: 8)
-                    Text(edgeLabel(metric.meterMin))
-                        .shotiqBody(9, weight: .bold)
-                        .foregroundStyle(ShotIQColor.ink)
-                        .position(x: 0, y: 28)
-                    Text(targetStartLabel)
-                        .shotiqBody(9, weight: .bold)
-                        .foregroundStyle(ShotIQColor.ink)
-                        .position(x: bandX, y: 28)
-                    Text(edgeLabel(metric.meterMax))
-                        .shotiqBody(9, weight: .bold)
-                        .foregroundStyle(ShotIQColor.ink)
-                        .position(x: width, y: 28)
-                }
-                .frame(height: 35)
+            ZStack(alignment: .topLeading) {
+                markerValueLabel
+                    .position(x: labelX(markerX, width: width), y: 6)
+
+                meterLabel(edgeLabel(metric.meterMin))
+                    .position(x: 12, y: 22)
+                meterLabel(targetStartLabel)
+                    .position(x: labelX(bandX, width: width), y: 22)
+                meterLabel(targetEndLabel)
+                    .position(x: labelX(bandX + bandWidth, width: width), y: 22)
+                meterLabel(edgeLabel(metric.meterMax))
+                    .position(x: width - 12, y: 22)
 
                 ZStack(alignment: .leading) {
-                    Capsule().fill(ShotIQColor.rule)
+                    Capsule()
+                        .fill(ShotIQColor.rule)
+                        .frame(height: 5)
                     Capsule()
                         .fill(ShotIQColor.analysisBlue)
-                        .frame(width: bandWidth)
+                        .frame(width: bandWidth, height: 5)
                         .offset(x: bandX)
                     Rectangle()
                         .fill(ShotIQColor.shotiqOrange)
-                        .frame(width: 1, height: 27)
-                        .offset(x: min(max(markerX, 1), width - 1), y: -12)
+                        .frame(width: 1, height: 18)
+                        .offset(x: min(max(markerX, 1), width - 1), y: -7)
                     Circle()
-                        .stroke(ShotIQColor.shotiqOrange, lineWidth: 3)
+                        .stroke(ShotIQColor.shotiqOrange, lineWidth: 2.2)
                         .background(Circle().fill(Color.white))
-                        .frame(width: 16, height: 16)
-                        .offset(x: min(max(markerX - 8, 0), width - 16), y: -5)
+                        .frame(width: 11, height: 11)
+                        .offset(x: min(max(markerX - 5.5, 0), width - 11), y: -3)
                 }
-                .frame(height: 10)
+                .frame(width: width, height: 5)
+                .position(x: width / 2, y: 32)
 
-                HStack(spacing: 3) {
-                    Text(comparisonLead)
-                        .shotiqBody(10)
-                        .foregroundStyle(ShotIQColor.ink)
-                    Text(comparisonAmount)
-                        .shotiqBody(12, weight: .black)
-                        .foregroundStyle(ShotIQColor.shotiqOrange)
-                }
-                .lineLimit(1)
-                .minimumScaleFactor(0.56)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                comparisonLabel
+                    .position(x: width / 2, y: 48)
             }
         }
     }
 
+    private var markerValueLabel: some View {
+        Text(metric.valueLabel)
+            .shotiqBody(10, weight: .black)
+            .foregroundStyle(ShotIQColor.shotiqOrange)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+    }
+
+    private func meterLabel(_ text: String) -> some View {
+        Text(text)
+            .shotiqBody(8.5, weight: .bold)
+            .foregroundStyle(ShotIQColor.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+    }
+
+    private var comparisonLabel: some View {
+        HStack(spacing: 3) {
+            Text(comparisonLead)
+                .shotiqBody(9.5)
+                .foregroundStyle(ShotIQColor.ink)
+            Text(comparisonAmount)
+                .shotiqBody(10.5, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.62)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
     private var markerPercent: CGFloat {
-        percent(metric.value, min: metric.meterMin, max: metric.meterMax)
+        switch metric.id {
+        case "release-offset":
+            return 0.84
+        case "centerline":
+            return 0.12
+        case "release-height":
+            return 0.90
+        case "elbow-angle":
+            return 0.90
+        default:
+            return percent(metric.value, min: metric.meterMin, max: metric.meterMax)
+        }
     }
 
     private var bandStart: CGFloat {
@@ -3954,6 +3998,18 @@ fileprivate struct PlayerFlawRangeMeter: View {
         }
         let value = level.targetMin ?? metric.targetMin ?? 0
         return degreeLabel(value)
+    }
+
+    private var targetEndLabel: String {
+        let targetMax = level.targetMax ?? metric.targetMax
+        if let targetMax {
+            return metric.id == "release-height" ? inchesLabel(targetMax) : degreeLabel(targetMax)
+        }
+        return edgeLabel(metric.meterMax)
+    }
+
+    private func labelX(_ x: CGFloat, width: CGFloat) -> CGFloat {
+        min(max(x, 12), width - 12)
     }
 
     private func edgeLabel(_ value: Double) -> String {
