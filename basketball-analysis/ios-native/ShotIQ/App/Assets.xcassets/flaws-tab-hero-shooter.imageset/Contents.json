@@ -1,0 +1,13 @@
+{
+  "images": [
+    {
+      "filename": "flaws-tab-hero-shooter.png",
+      "idiom": "universal",
+      "scale": "1x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}

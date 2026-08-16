@@ -2884,6 +2884,49 @@ fileprivate enum PlayerFlawMetricsCatalog {
             ])
     ]
 
+    static func metrics(for presentation: AnalysisResultPresentation) -> [PlayerFlawMetricConfig] {
+        guard presentation.id != "canonical-demo" else { return all }
+
+        return all.map { metric in
+            let sessionMetric = sessionMetric(for: metric.id, in: presentation)
+            guard let sessionValue = sessionMetric.value else {
+                return PlayerFlawMetricConfig(
+                    id: metric.id,
+                    title: metric.title,
+                    status: "Unavailable",
+                    value: fallbackValue(for: metric),
+                    valueLabel: "--",
+                    targetMin: metric.targetMin,
+                    targetMax: metric.targetMax,
+                    targetLabel: metric.targetLabel,
+                    meterMin: metric.meterMin,
+                    meterMax: metric.meterMax,
+                    insight: metric.insight,
+                    heroPhotoKey: metric.heroPhotoKey,
+                    overlayType: metric.overlayType,
+                    drillName: metric.drillName,
+                    levels: metric.levels.map { unavailableLevel($0) })
+            }
+
+            return PlayerFlawMetricConfig(
+                id: metric.id,
+                title: metric.title,
+                status: status(for: metric, value: sessionValue),
+                value: sessionValue,
+                valueLabel: sessionMetric.label,
+                targetMin: metric.targetMin,
+                targetMax: metric.targetMax,
+                targetLabel: metric.targetLabel,
+                meterMin: metric.meterMin,
+                meterMax: metric.meterMax,
+                insight: metric.insight,
+                heroPhotoKey: metric.heroPhotoKey,
+                overlayType: metric.overlayType,
+                drillName: metric.drillName,
+                levels: metric.levels.map { dynamicLevel($0, metric: metric, value: sessionValue) })
+        }
+    }
+
     private static func level(_ id: String,
                               _ label: String,
                               _ shortLabel: String,
@@ -2900,6 +2943,630 @@ fileprivate enum PlayerFlawMetricsCatalog {
                                targetLabel: targetLabel,
                                comparisonText: comparisonText,
                                photoKey: photoKey)
+    }
+
+    private static func sessionMetric(for id: String,
+                                      in presentation: AnalysisResultPresentation) -> (value: Double?, label: String) {
+        let label: String
+        let value: Double?
+        switch id {
+        case "release-height":
+            label = normalizedMetricLabel(presentation.releaseHeightText)
+            value = inchesValue(label)
+        case "release-offset":
+            label = normalizedMetricLabel(presentation.releaseOffsetText)
+            value = degreeValue(label)
+        case "elbow-angle":
+            label = normalizedMetricLabel(presentation.elbowAngleText)
+            value = degreeValue(label)
+        case "wrist-angle":
+            label = normalizedMetricLabel(presentation.wristAngleText)
+            value = degreeValue(label)
+        case "centerline":
+            label = normalizedMetricLabel(presentation.metrics.first { $0.label == "CENTERLINE" }?.value ?? "--")
+            value = degreeValue(label)
+        default:
+            label = "--"
+            value = nil
+        }
+        return (value, label)
+    }
+
+    private static func dynamicLevel(_ level: PlayerFlawLevelCompare,
+                                     metric: PlayerFlawMetricConfig,
+                                     value: Double) -> PlayerFlawLevelCompare {
+        let difference = outsideDistance(value: value, min: level.targetMin, max: level.targetMax)
+        let comparisonText: String
+        if difference <= 0.001 {
+            comparisonText = "Inside target band"
+        } else if metric.id == "release-height",
+                  let minimum = level.targetMin,
+                  value < minimum {
+            comparisonText = "Below target by \(feetInchesDifference(minimum - value))+"
+        } else {
+            comparisonText = "Outside target band by \(degreeDifference(difference))"
+        }
+
+        return PlayerFlawLevelCompare(id: level.id,
+                                      label: level.label,
+                                      shortLabel: level.shortLabel,
+                                      targetMin: level.targetMin,
+                                      targetMax: level.targetMax,
+                                      targetLabel: level.targetLabel,
+                                      comparisonText: comparisonText,
+                                      photoKey: level.photoKey)
+    }
+
+    private static func unavailableLevel(_ level: PlayerFlawLevelCompare) -> PlayerFlawLevelCompare {
+        PlayerFlawLevelCompare(id: level.id,
+                               label: level.label,
+                               shortLabel: level.shortLabel,
+                               targetMin: level.targetMin,
+                               targetMax: level.targetMax,
+                               targetLabel: level.targetLabel,
+                               comparisonText: "Measurement unavailable",
+                               photoKey: level.photoKey)
+    }
+
+    private static func status(for metric: PlayerFlawMetricConfig, value: Double) -> String {
+        outsideDistance(value: value, min: metric.targetMin, max: metric.targetMax) <= 0.001
+            ? "On Track"
+            : metric.status
+    }
+
+    private static func outsideDistance(value: Double, min: Double?, max: Double?) -> Double {
+        if let min, value < min { return min - value }
+        if let max, value > max { return value - max }
+        return 0
+    }
+
+    private static func normalizedMetricLabel(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "--" : trimmed
+    }
+
+    private static func degreeValue(_ label: String) -> Double? {
+        let cleaned = label
+            .replacingOccurrences(of: "°", with: "")
+            .replacingOccurrences(of: "+", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleaned != "--" else { return nil }
+        return Double(cleaned)
+    }
+
+    private static func inchesValue(_ label: String) -> Double? {
+        guard label != "--" else { return nil }
+        let cleaned = label
+            .replacingOccurrences(of: "\"", with: "")
+            .replacingOccurrences(of: "+", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let pieces = cleaned.split(separator: "'")
+        guard let feetText = pieces.first,
+              let feet = Double(feetText) else {
+            return nil
+        }
+        let inches = pieces.count > 1 ? (Double(pieces[1]) ?? 0) : 0
+        return feet * 12 + inches
+    }
+
+    private static func fallbackValue(for metric: PlayerFlawMetricConfig) -> Double {
+        if let min = metric.targetMin, let max = metric.targetMax {
+            return (min + max) / 2
+        }
+        return metric.targetMin ?? metric.targetMax ?? metric.meterMin
+    }
+
+    private static func degreeDifference(_ value: Double) -> String {
+        "\(Int(value.rounded()))°"
+    }
+
+    private static func feetInchesDifference(_ value: Double) -> String {
+        let totalInches = max(0, Int(value.rounded()))
+        let feet = totalInches / 12
+        let inches = totalInches % 12
+        return "\(feet)'\(inches)\""
+    }
+}
+
+fileprivate struct FlawsTabFixItem: Identifiable, Hashable {
+    let id: String
+    let rank: Int
+    let title: String
+    let body: String
+    let cta: String
+    let phase: String
+    let impact: String
+    let confidence: String
+    let valueLabel: String
+    let imageAsset: String
+    let isFeatured: Bool
+    let sourceFlaw: AnalysisFlawItem?
+
+    var detailTitle: String {
+        title.replacingOccurrences(of: "\n", with: " ")
+    }
+
+    var navigationFlaw: AnalysisFlawItem {
+        sourceFlaw ?? AnalysisFlawItem(rank: rank,
+                                      title: detailTitle,
+                                      impact: impact.uppercased(),
+                                      description: body.replacingOccurrences(of: "\n", with: " "),
+                                      confidence: confidence,
+                                      cta: cta,
+                                      phase: phase,
+                                      trendEnd: valueLabel,
+                                      source: "flaws-tab")
+    }
+}
+
+fileprivate enum FlawsTabFixCatalog {
+    static func items(for presentation: AnalysisResultPresentation) -> [FlawsTabFixItem] {
+        let byTitle = Dictionary(grouping: presentation.flaws) { normalized($0.title) }
+        let centerlineValue = clean(presentation.releaseOffsetText, fallback: "-32°")
+        let elbowValue = clean(presentation.elbowAngleText, fallback: "70°")
+        let releaseHeightValue = clean(presentation.releaseHeightText, fallback: "6'5\"")
+        let wristValue = clean(presentation.wristAngleText, fallback: "OPEN")
+        let consistency = presentation.scoreBreakdown
+            .first { normalized($0.metric).contains("CONSISTENCY") }?
+            .scoreText
+        let consistencyValue = clean(consistency, fallback: "66")
+
+        return [
+            FlawsTabFixItem(id: "centerline-deviation",
+                            rank: 1,
+                            title: "CENTERLINE\nDEVIATION",
+                            body: "Your elbow and ball drift\nleft of centerline.\nStart with release path.",
+                            cta: "TRAIN THIS FLAW",
+                            phase: "Release",
+                            impact: "HIGH IMPACT",
+                            confidence: flawConfidence(byTitle, id: "CENTERLINE", fallback: "88%"),
+                            valueLabel: centerlineValue,
+                            imageAsset: "flaws-tab-fix-centerline",
+                            isFeatured: true,
+                            sourceFlaw: match(byTitle, keys: ["CENTERLINE", "RELEASE OFFSET"])),
+            FlawsTabFixItem(id: "elbow-angle-out-of-range",
+                            rank: 2,
+                            title: "ELBOW ANGLE\nOUT OF RANGE",
+                            body: "Elbow angle is \(elbowValue); target\nband is 150°-180° for a\nstacked release.",
+                            cta: "TRAIN THIS FLAW",
+                            phase: "Release",
+                            impact: "HIGH IMPACT",
+                            confidence: flawConfidence(byTitle, id: "ELBOW", fallback: "88%"),
+                            valueLabel: elbowValue,
+                            imageAsset: "flaws-tab-fix-elbow-angle",
+                            isFeatured: false,
+                            sourceFlaw: match(byTitle, keys: ["ELBOW"])),
+            FlawsTabFixItem(id: "consistency-score-gap",
+                            rank: 3,
+                            title: "CONSISTENCY\nSCORE GAP",
+                            body: "Consistency score is \(consistencyValue),\nlowering the saved\nform result.",
+                            cta: "IMPROVE CONSISTENCY",
+                            phase: "Follow Through",
+                            impact: "HIGH IMPACT",
+                            confidence: flawConfidence(byTitle, id: "CONSISTENCY", fallback: "88%"),
+                            valueLabel: consistencyValue,
+                            imageAsset: "flaws-tab-fix-consistency",
+                            isFeatured: false,
+                            sourceFlaw: match(byTitle, keys: ["CONSISTENCY"])),
+            FlawsTabFixItem(id: "release-height-low",
+                            rank: 4,
+                            title: "RELEASE HEIGHT\nLOW",
+                            body: "Release point is below the\ntarget window. Finish taller\nfor a cleaner arc.",
+                            cta: "TRAIN THIS FLAW",
+                            phase: "Release",
+                            impact: "MEDIUM IMPACT",
+                            confidence: flawConfidence(byTitle, id: "HEIGHT", fallback: "82%"),
+                            valueLabel: releaseHeightValue,
+                            imageAsset: "flaws-tab-fix-release-height",
+                            isFeatured: false,
+                            sourceFlaw: match(byTitle, keys: ["HEIGHT"])),
+            FlawsTabFixItem(id: "wrist-angle-open",
+                            rank: 5,
+                            title: "WRIST ANGLE\nOPEN",
+                            body: wristValue == "OPEN"
+                                ? "Wrist is too open at release.\nSnap down for a tighter\nbackspin."
+                                : "Wrist angle is \(wristValue).\nSnap down for a tighter\nbackspin.",
+                            cta: "TRAIN THIS FLAW",
+                            phase: "Release",
+                            impact: "MEDIUM IMPACT",
+                            confidence: flawConfidence(byTitle, id: "WRIST", fallback: "78%"),
+                            valueLabel: wristValue,
+                            imageAsset: "flaws-tab-fix-wrist-angle",
+                            isFeatured: false,
+                            sourceFlaw: match(byTitle, keys: ["WRIST"]))
+        ]
+    }
+
+    static func shotArc(for presentation: AnalysisResultPresentation) -> String {
+        clean(presentation.metrics.first { normalized($0.label) == "SHOT ARC" }?.value, fallback: "41°")
+    }
+
+    static func primaryTarget(for presentation: AnalysisResultPresentation) -> String {
+        let target = presentation.coachingTarget.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty, target != "No coaching target available" else {
+            return "Stack elbow higher\nthrough release"
+        }
+        return target
+    }
+
+    private static func match(_ grouped: [String: [AnalysisFlawItem]], keys: [String]) -> AnalysisFlawItem? {
+        for key in keys {
+            if let found = grouped.first(where: { $0.key.contains(key) })?.value.first {
+                return found
+            }
+        }
+        return nil
+    }
+
+    private static func flawConfidence(_ grouped: [String: [AnalysisFlawItem]], id: String, fallback: String) -> String {
+        guard let confidence = match(grouped, keys: [id])?.confidence.trimmingCharacters(in: .whitespacesAndNewlines),
+              !confidence.isEmpty else {
+            return fallback
+        }
+        return confidence
+    }
+
+    private static func clean(_ value: String?, fallback: String) -> String {
+        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty,
+              trimmed != "--" else {
+            return fallback
+        }
+        return trimmed
+    }
+
+    private static func normalized(_ value: String) -> String {
+        value.uppercased().replacingOccurrences(of: "-", with: " ")
+    }
+}
+
+fileprivate struct ShotIQFlawsTabContent: View {
+    let presentation: AnalysisResultPresentation
+    let onOpen: (String) -> Void
+
+    private var items: [FlawsTabFixItem] { FlawsTabFixCatalog.items(for: presentation) }
+    private var cardWidth: CGFloat { max(300, min(UIScreen.main.bounds.width - 40, 430)) }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            FlawsTabHeroCard(presentation: presentation, items: items, width: cardWidth, onOpen: onOpen)
+            FlawsTabSummaryStrip(items: items, width: cardWidth)
+            VStack(spacing: 10) {
+                ForEach(items) { item in
+                    FlawsTabFixCard(item: item, presentation: presentation, width: cardWidth, onOpen: onOpen)
+                }
+            }
+        }
+        .frame(width: cardWidth)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+fileprivate struct FlawsTabAssetImage: View {
+    let assetName: String
+    var contentMode: ContentMode = .fill
+    var alignment: Alignment = .center
+
+    var body: some View {
+        if let image = UIImage(named: assetName) {
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: contentMode)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+                .clipped()
+        } else {
+            Rectangle()
+                .fill(LinearGradient(colors: [Color(red: 0.02, green: 0.05, blue: 0.09),
+                                             Color(red: 0.12, green: 0.14, blue: 0.17)],
+                                     startPoint: .topLeading,
+                                     endPoint: .bottomTrailing))
+                .overlay(Image(systemName: "figure.basketball")
+                    .font(.system(size: 36, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.28)))
+        }
+    }
+}
+
+fileprivate struct FlawsTabHeroCard: View {
+    let presentation: AnalysisResultPresentation
+    let items: [FlawsTabFixItem]
+    let width: CGFloat
+    let onOpen: (String) -> Void
+
+    private var height: CGFloat { width * 0.62 }
+    private var primaryFlaw: AnalysisFlawItem { (items.first?.navigationFlaw) ?? AnalysisFlawItem(rank: 1, title: "Centerline Deviation", impact: "HIGH IMPACT", description: "", confidence: "88%", cta: "TRAIN THIS FLAW", phase: "Release", trendEnd: "-32°", source: "flaws-tab") }
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Color(red: 0.02, green: 0.04, blue: 0.07)
+            HStack(spacing: 0) {
+                Spacer(minLength: width * 0.34)
+                FlawsTabAssetImage(assetName: "flaws-tab-hero-shooter", alignment: .trailing)
+                    .frame(width: width * 0.62, height: height)
+            }
+            LinearGradient(stops: [
+                .init(color: Color(red: 0.02, green: 0.04, blue: 0.07), location: 0),
+                .init(color: Color(red: 0.02, green: 0.04, blue: 0.07).opacity(0.86), location: 0.45),
+                .init(color: Color(red: 0.02, green: 0.04, blue: 0.07).opacity(0.16), location: 0.78),
+                .init(color: .clear, location: 1)
+            ], startPoint: .leading, endPoint: .trailing)
+
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: -3) {
+                    Text("\(items.count) FORM")
+                        .shotiqDisplay(width * 0.095)
+                        .foregroundStyle(.white)
+                    Text("FLAWS FOUND")
+                        .shotiqDisplay(width * 0.095)
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                }
+                .padding(.top, width * 0.065)
+
+                Text("Prioritized from highest\nimpact to easiest fix.")
+                    .shotiqBody(width * 0.038, weight: .semibold)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineSpacing(1)
+                    .padding(.top, 8)
+
+                Spacer(minLength: 10)
+
+                HStack(alignment: .bottom, spacing: 9) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("PRIMARY COACHING TARGET")
+                            .shotiqBody(width * 0.025, weight: .heavy)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text(FlawsTabFixCatalog.primaryTarget(for: presentation))
+                            .shotiqBody(width * 0.037, weight: .semibold)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.78)
+                    }
+                    Spacer(minLength: 6)
+                    NavigationLink {
+                        FlawDetailView(title: primaryFlaw.title, severity: primaryFlaw.impact, flaw: primaryFlaw, presentation: presentation)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Start Fix")
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: width * 0.026, weight: .heavy))
+                        }
+                        .shotiqBody(width * 0.029, weight: .heavy)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .frame(height: width * 0.072)
+                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 5))
+                    }
+                    .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded { onOpen(primaryFlaw.title) })
+                }
+                .padding(9)
+                .frame(width: width * 0.42)
+                .background(.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(.white.opacity(0.44), lineWidth: 0.8))
+
+                HStack(spacing: 12) {
+                    heroFooterItem("sparkles", "AI ANALYZED")
+                    divider
+                    heroFooterItem("scope", "\(items.count) CHECKPOINTS")
+                    divider
+                    heroFooterItem("camera.metering.center.weighted", "1 SHOT")
+                }
+                .padding(.top, 10)
+                .padding(.bottom, width * 0.032)
+            }
+            .padding(.horizontal, width * 0.032)
+
+            VStack(alignment: .leading, spacing: 24) {
+                heroSideStat("RELEASE\nHEIGHT", items.first(where: { $0.id == "release-height-low" })?.valueLabel ?? "6'5\"")
+                heroSideStat("SHOT ARC", FlawsTabFixCatalog.shotArc(for: presentation))
+            }
+            .frame(width: width * 0.16, alignment: .leading)
+            .position(x: width * 0.885, y: height * 0.55)
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(.white.opacity(0.12), lineWidth: 1))
+        .shadow(color: .black.opacity(0.12), radius: 14, x: 0, y: 8)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(.white.opacity(0.36)).frame(width: 1, height: width * 0.033)
+    }
+
+    private func heroFooterItem(_ icon: String, _ label: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: width * 0.028, weight: .semibold))
+            Text(label)
+                .shotiqBody(width * 0.026, weight: .heavy)
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
+        }
+        .foregroundStyle(.white.opacity(0.9))
+    }
+
+    private func heroSideStat(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label)
+                .shotiqBody(width * 0.026, weight: .heavy)
+                .foregroundStyle(.white.opacity(0.86))
+                .lineSpacing(0)
+            Text(value)
+                .shotiqDisplay(width * 0.047)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+    }
+}
+
+fileprivate struct FlawsTabSummaryStrip: View {
+    let items: [FlawsTabFixItem]
+    let width: CGFloat
+
+    private var height: CGFloat { width * 0.23 }
+
+    var body: some View {
+        HStack(spacing: width * 0.035) {
+            FlawsTabAssetImage(assetName: "flaws-tab-summary-thumb")
+                .frame(width: height * 0.66, height: height * 0.66)
+                .clipShape(Circle())
+
+            Text("Your shot was analyzed and\n\(items.count) key flaws were identified.")
+                .shotiqBody(width * 0.039, weight: .semibold)
+                .foregroundStyle(ShotIQColor.ink)
+                .lineSpacing(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(spacing: 0) {
+                Text("\(items.count)")
+                    .shotiqDisplay(width * 0.075)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                Text("CHECKPOINTS")
+                    .shotiqBody(width * 0.023, weight: .heavy)
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+        }
+        .padding(.horizontal, width * 0.032)
+        .frame(width: width, height: height)
+        .background(.white, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(alignment: .bottom) {
+            HStack(spacing: 0) {
+                statusPillIcon("arrow.up.right", "HIGH IMPACT", tint: ShotIQColor.shotiqOrange)
+                pillDivider
+                statusPillIcon("scope", "RELEASE", tint: .white)
+                pillDivider
+                Text("88% CONFIDENCE")
+                    .shotiqBody(width * 0.025, weight: .heavy)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .padding(.horizontal, 11)
+            .frame(width: width * 0.72, height: width * 0.052)
+            .background(.black, in: Capsule())
+            .offset(x: width * 0.08, y: -width * 0.018)
+        }
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule, lineWidth: 1))
+    }
+
+    private var pillDivider: some View {
+        Rectangle().fill(.white.opacity(0.42)).frame(width: 1, height: width * 0.033).padding(.horizontal, 8)
+    }
+
+    private func statusPillIcon(_ icon: String, _ label: String, tint: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: width * 0.024, weight: .heavy))
+                .foregroundStyle(tint)
+            Text(label)
+                .shotiqBody(width * 0.025, weight: .heavy)
+                .foregroundStyle(tint == ShotIQColor.shotiqOrange ? tint : .white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+    }
+}
+
+fileprivate struct FlawsTabFixCard: View {
+    let item: FlawsTabFixItem
+    let presentation: AnalysisResultPresentation
+    let width: CGFloat
+    let onOpen: (String) -> Void
+
+    private var height: CGFloat { item.isFeatured ? width * 0.345 : width * 0.275 }
+    private var railWidth: CGFloat { max(8, width * 0.021) }
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Color.white
+            Rectangle()
+                .fill(ShotIQColor.shotiqOrange)
+                .frame(width: railWidth)
+                .frame(maxHeight: .infinity)
+
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: item.isFeatured ? 9 : 6) {
+                    if item.rank == 1 {
+                        HStack(spacing: 5) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: width * 0.027, weight: .bold))
+                            Text("FIX THIS FIRST")
+                                .shotiqBody(width * 0.028, weight: .heavy)
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 9)
+                        .frame(height: width * 0.05)
+                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 4))
+                    }
+
+                    HStack(alignment: .top, spacing: width * 0.026) {
+                        Text("\(item.rank)")
+                            .shotiqDisplay(item.isFeatured ? width * 0.095 : width * 0.083)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .frame(width: width * 0.065, alignment: .leading)
+                        Text(item.title)
+                            .shotiqDisplay(item.isFeatured ? width * 0.052 : width * 0.046)
+                            .foregroundStyle(ShotIQColor.ink)
+                            .lineSpacing(item.isFeatured ? -2 : -1)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.72)
+                    }
+
+                    Text(item.body)
+                        .shotiqBody(item.isFeatured ? width * 0.033 : width * 0.029, weight: .medium)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineSpacing(2)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.72)
+
+                    NavigationLink {
+                        FlawDetailView(title: item.navigationFlaw.title,
+                                       severity: item.navigationFlaw.impact,
+                                       flaw: item.navigationFlaw,
+                                       presentation: presentation)
+                    } label: {
+                        HStack(spacing: 7) {
+                            Text(item.cta)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.72)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: width * 0.026, weight: .heavy))
+                        }
+                        .shotiqDisplay(item.isFeatured ? width * 0.037 : width * 0.032)
+                        .foregroundStyle(.white)
+                        .frame(width: item.cta.count > 15 ? width * 0.31 : width * 0.28,
+                               height: width * 0.06)
+                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 5))
+                    }
+                    .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded { onOpen(item.detailTitle) })
+                    .padding(.top, 1)
+                }
+                .padding(.leading, width * 0.045)
+                .padding(.vertical, width * 0.024)
+                .frame(width: width * 0.48, height: height, alignment: .topLeading)
+
+                ZStack(alignment: .trailing) {
+                    FlawsTabAssetImage(assetName: item.imageAsset, alignment: .trailing)
+                    LinearGradient(colors: [.white.opacity(0.96),
+                                            .white.opacity(0.62),
+                                            .white.opacity(0.02)],
+                                   startPoint: .leading,
+                                   endPoint: .trailing)
+                        .frame(width: width * 0.2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: width * 0.52, height: height)
+            }
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule, lineWidth: 1))
+        .shadow(color: .black.opacity(0.045), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("flaws-tab-fix-card-\(item.id)")
     }
 }
 
@@ -3192,11 +3859,8 @@ fileprivate struct PlayerFlawReferenceHero: View {
         }
     }
     private var heroHeight: CGFloat { heroBaseHeight * scale }
-    private var usesComposedHeaderAsset: Bool {
-        metric.id == "release-offset"
-    }
     private var usesCleanCodedHero: Bool {
-        ["elbow-angle", "wrist-angle", "centerline", "release-height"].contains(metric.id)
+        ["elbow-angle", "wrist-angle", "centerline", "release-height", "release-offset"].contains(metric.id)
     }
 
     var body: some View {
@@ -3208,11 +3872,9 @@ fileprivate struct PlayerFlawReferenceHero: View {
                 .frame(width: displayWidth, height: heroHeight, alignment: .top)
                 .clipped()
 
-            if !usesComposedHeaderAsset {
-                heroTextBackplates
-                heroCopy
-                heroMeasurementCopy
-            }
+            heroTextBackplates
+            heroCopy
+            heroMeasurementCopy
         }
         .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -3268,6 +3930,8 @@ fileprivate struct PlayerFlawReferenceHero: View {
             elbowAngleHeroCopy(scale: s)
         } else if metric.id == "wrist-angle" {
             wristAngleHeroCopy(scale: s)
+        } else if metric.id == "release-offset" {
+            releaseOffsetHeroCopy(scale: s)
         } else if usesCleanCodedHero {
             codedReferenceHeroCopy(scale: s)
         } else {
@@ -3418,11 +4082,7 @@ fileprivate struct PlayerFlawReferenceHero: View {
 
     private func releaseHeightInsight(scale s: CGFloat) -> some View {
         HStack(alignment: .top, spacing: 12 * s) {
-            Image(systemName: "lightbulb.max")
-                .font(.system(size: 30 * s, weight: .regular))
-                .foregroundStyle(.white)
-                .frame(width: 84 * s, height: 84 * s)
-                .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 2 * s))
+            flawInsightBulb(scale: s, size: 84)
             Text(metric.insight)
                 .shotiqBody(22 * s, weight: .medium)
                 .foregroundStyle(.white)
@@ -3487,11 +4147,7 @@ fileprivate struct PlayerFlawReferenceHero: View {
 
     private func wristAngleInsight(scale s: CGFloat) -> some View {
         HStack(alignment: .top, spacing: 15 * s) {
-            Image(systemName: "lightbulb.max")
-                .font(.system(size: 31 * s, weight: .regular))
-                .foregroundStyle(.white)
-                .frame(width: 76 * s, height: 76 * s)
-                .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 1.8 * s))
+            flawInsightBulb(scale: s, size: 76)
             Text(metric.insight)
                 .shotiqBody(23 * s, weight: .medium)
                 .foregroundStyle(.white)
@@ -3572,11 +4228,7 @@ fileprivate struct PlayerFlawReferenceHero: View {
 
     private func elbowAngleInsight(scale s: CGFloat) -> some View {
         HStack(alignment: .top, spacing: 15 * s) {
-            Image(systemName: "lightbulb.max")
-                .font(.system(size: 31 * s, weight: .regular))
-                .foregroundStyle(.white)
-                .frame(width: 76 * s, height: 76 * s)
-                .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 1.8 * s))
+            flawInsightBulb(scale: s, size: 76)
             Text(metric.insight)
                 .shotiqBody(23 * s, weight: .medium)
                 .foregroundStyle(.white)
@@ -3586,6 +4238,91 @@ fileprivate struct PlayerFlawReferenceHero: View {
         }
         .frame(width: 520 * s, height: 154 * s, alignment: .topLeading)
         .position(x: 320 * s, y: 438 * s)
+    }
+
+    private func releaseOffsetHeroCopy(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text(metric.title.uppercased())
+                .shotiqDisplay(74 * s)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 390 * s, height: 66 * s, alignment: .leading)
+                .position(x: 239 * s, y: 81 * s)
+
+            RoundedRectangle(cornerRadius: 9 * s)
+                .stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s)
+                .frame(width: 184 * s, height: 47 * s)
+                .position(x: 138 * s, y: 149 * s)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(24 * s, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
+                .frame(width: 184 * s, height: 47 * s, alignment: .center)
+                .position(x: 138 * s, y: 149 * s)
+
+            Text("YOUR VALUE")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 155 * s, height: 30 * s, alignment: .leading)
+                .position(x: 114 * s, y: 220 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 104 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(width: 215 * s, height: 98 * s, alignment: .leading)
+                .position(x: 146 * s, y: 286 * s)
+
+            Rectangle()
+                .fill(.white.opacity(0.48))
+                .frame(width: 1.4 * s, height: 132 * s)
+                .position(x: 282 * s, y: 274 * s)
+
+            Text("TARGET")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 122 * s, height: 30 * s, alignment: .leading)
+                .position(x: 95 * s, y: 384 * s)
+
+            Text(metric.targetLabel)
+                .font(.custom("Tungsten-Medium", size: 70 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.58)
+                .frame(width: 220 * s, height: 72 * s, alignment: .leading)
+                .position(x: 142 * s, y: 432 * s)
+
+            HStack(alignment: .top, spacing: 15 * s) {
+                flawInsightBulb(scale: s, size: 76)
+                Text(metric.insight)
+                    .shotiqBody(23 * s, weight: .medium)
+                    .foregroundStyle(.white)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.62)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(width: 445 * s, height: 126 * s, alignment: .topLeading)
+            .position(x: 285 * s, y: 548 * s)
+        }
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
+        .allowsHitTesting(false)
+    }
+
+    private func flawInsightBulb(scale s: CGFloat, size: CGFloat) -> some View {
+        Image("player-flaw-insight-bulb")
+            .resizable()
+            .interpolation(.high)
+            .scaledToFit()
+            .frame(width: size * s, height: size * s)
     }
 
     private var heroMeasurementCopy: some View {
@@ -3698,11 +4435,7 @@ fileprivate struct PlayerFlawReferenceHero: View {
                 .position(x: 249 * s, y: 438 * s)
         } else {
             HStack(alignment: .top, spacing: 15 * s) {
-                Image(systemName: "lightbulb.max")
-                    .font(.system(size: 31 * s, weight: .regular))
-                    .foregroundStyle(.white)
-                    .frame(width: 76 * s, height: 76 * s)
-                    .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 1.8 * s))
+                flawInsightBulb(scale: s, size: 76)
                 Text(metric.insight)
                     .shotiqBody((metric.id == "wrist-angle" ? 23 : 22) * s, weight: .medium)
                     .foregroundStyle(.white)
@@ -3727,8 +4460,54 @@ fileprivate struct PlayerFlawReferenceHero: View {
             wristAngleMeasurementOverlay(scale: s)
         case "centerline":
             centerlineMeasurementOverlay(scale: s)
+        case "release-offset":
+            releaseOffsetMeasurementOverlay(scale: s)
         default:
             EmptyView()
+        }
+    }
+
+    private func releaseOffsetMeasurementOverlay(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Path { path in
+                path.move(to: CGPoint(x: 558 * s, y: 108 * s))
+                path.addLine(to: CGPoint(x: 594 * s, y: 119 * s))
+            }
+            .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 2 * s, lineCap: .round))
+
+            RoundedRectangle(cornerRadius: 7 * s)
+                .stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s)
+                .frame(width: 78 * s, height: 38 * s)
+                .position(x: 521 * s, y: 108 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 27 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(width: 64 * s, height: 31 * s, alignment: .center)
+                .position(x: 521 * s, y: 108 * s)
+
+            Text("-45°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .frame(width: 70 * s, height: 30 * s, alignment: .center)
+                .position(x: 475 * s, y: 621 * s)
+
+            Text("0°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .frame(width: 46 * s, height: 30 * s, alignment: .center)
+                .position(x: 628 * s, y: 621 * s)
+
+            Text("+45°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .frame(width: 70 * s, height: 30 * s, alignment: .center)
+                .position(x: 794 * s, y: 621 * s)
         }
     }
 
@@ -3963,12 +4742,7 @@ fileprivate struct PlayerFlawReferenceHero: View {
     private var measurementLabels: [PlayerFlawHeroTextBox] {
         switch metric.id {
         case "release-offset":
-            return [
-                .init("release-offset-callout", "-69°", 530, 106, 80, 34, 23, ShotIQColor.shotiqOrange, .display),
-                .init("release-offset-left-axis", "-45°", 492, 621, 70, 28, 18, .white, .body),
-                .init("release-offset-mid-axis", "0°", 640, 621, 50, 28, 18, .white, .body),
-                .init("release-offset-right-axis", "+45°", 806, 621, 70, 28, 18, .white, .body)
-            ]
+            return []
         case "elbow-angle", "wrist-angle", "centerline", "release-height":
             return []
         default:
@@ -4786,17 +5560,18 @@ fileprivate struct PlayerFlawRangeMeter: View {
 
     private var markerPercent: CGFloat {
         switch metric.id {
-        case "release-offset":
+        case "release-offset" where abs(metric.value - (-69)) < 0.001:
             return 0.84
-        case "centerline":
+        case "centerline" where abs(metric.value - (-32)) < 0.001:
             return 0.12
-        case "release-height":
+        case "release-height" where abs(metric.value - 58) < 0.001:
             return 0.90
-        case "elbow-angle":
+        case "elbow-angle" where abs(metric.value - 70) < 0.001:
             return 0.90
         default:
-            return percent(metric.value, min: metric.meterMin, max: metric.meterMax)
+            break
         }
+        return percent(metric.value, min: metric.meterMin, max: metric.meterMax)
     }
 
     private var bandStart: CGFloat {
@@ -6771,42 +7546,15 @@ struct AnalysisResultOverviewView: View { // 038
     }
 
     private func flawsInlineContent(_ p: AnalysisResultPresentation) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            CoachTargetCard(title: p.coachingTarget)
-                .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
-            Text(p.flaws.isEmpty
-                 ? "AI analysis built no coaching checkpoints from the saved measurements."
-                 : "AI analysis built \(p.flaws.count) coaching checkpoint\(p.flaws.count == 1 ? "" : "s") from this saved shot.")
-                .shotiqBody(14)
-                .foregroundStyle(ShotIQColor.graphite)
-            if p.flaws.isEmpty {
-                inlineStatusCard("NO PRIORITY FLAWS DETECTED",
-                                 "Saved measurements are inside the current ShotIQ target bands.",
-                                 icon: "checkmark.circle",
-                                 tint: ShotIQColor.confirmGreen)
-            } else {
-                ForEach(p.flaws) { flaw in
-                    NavigationLink {
-                        FlawDetailView(title: flaw.title,
-                                       severity: flaw.impact,
-                                       flaw: flaw,
-                                       presentation: p)
-                    } label: {
-                        inlineFlawCard(flaw)
-                    }
-                    .buttonStyle(.plain)
-                    .simultaneousGesture(TapGesture().onEnded {
-                        toast = .info("Opening flaw detail", flaw.title)
-                    })
-                }
-            }
+        ShotIQFlawsTabContent(presentation: p) { title in
+            toast = .info("Opening flaw detail", title)
         }
         .padding(.top, 16)
     }
 
     private func playerInlineContent(_ p: AnalysisResultPresentation) -> some View {
         VStack(alignment: .leading, spacing: 18) {
-            ForEach(PlayerFlawMetricsCatalog.all) { metric in
+            ForEach(PlayerFlawMetricsCatalog.metrics(for: p)) { metric in
                 PlayerFlawMetricDetailCard(metric: metric)
             }
         }
