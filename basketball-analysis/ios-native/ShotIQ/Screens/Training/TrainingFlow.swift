@@ -2113,8 +2113,8 @@ struct WorkoutCalendarView: View {  // 059
         ShotIQCard {
             GeometryReader { geo in
                 let compact = geo.size.width < 520
-                let imageWidth = compact ? max(128, geo.size.width * 0.38) : geo.size.width * 0.37
-                let innerHeight: CGFloat = compact ? 326 : 398
+                let imageWidth = compact ? max(132, geo.size.width * 0.39) : geo.size.width * 0.37
+                let innerHeight: CGFloat = compact ? 354 : 410
                 HStack(spacing: compact ? 12 : 22) {
                     CanonicalPhoto("059-visual-001",
                                    width: imageWidth,
@@ -2128,17 +2128,17 @@ struct WorkoutCalendarView: View {  // 059
                             .frame(width: 3, height: compact ? 126 : 154)
                             .padding(.top, 8)
                         VStack(alignment: .leading, spacing: compact ? 10 : 14) {
-                            VStack(alignment: .leading, spacing: -8) {
+                            VStack(alignment: .leading, spacing: compact ? -10 : -8) {
                                 HStack(alignment: .lastTextBaseline, spacing: compact ? 5 : 8) {
                                     Text("62.5")
-                                        .font(.custom("Tungsten-Medium", size: compact ? 104 : 154))
+                                        .font(.custom("Tungsten-Medium", size: compact ? 124 : 170))
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1)
-                                        .minimumScaleFactor(0.54)
+                                        .minimumScaleFactor(0.48)
                                     Text("%")
-                                        .font(.custom("Tungsten-Medium", size: compact ? 56 : 80))
+                                        .font(.custom("Tungsten-Medium", size: compact ? 68 : 88))
                                         .foregroundStyle(ShotIQColor.ink)
-                                        .baselineOffset(compact ? 8 : 14)
+                                        .baselineOffset(compact ? 10 : 15)
                                 }
                                 Text("FG%")
                                     .shotiqDisplay(compact ? 24 : 33)
@@ -2156,7 +2156,7 @@ struct WorkoutCalendarView: View {  // 059
                 }
                 .padding(12)
             }
-            .frame(height: UIScreen.main.bounds.width < 600 ? 350 : 424)
+            .frame(height: UIScreen.main.bounds.width < 600 ? 382 : 436)
         }
     }
 
@@ -2422,14 +2422,9 @@ struct WorkoutCalendarView: View {  // 059
     private func statusMark(_ status: CalendarDayStatus, selected: Bool) -> some View {
         ZStack(alignment: .bottomTrailing) {
             Image(systemName: status.icon)
-                .font(.system(size: status == .none ? 15 : 18, weight: .semibold))
+                .font(.system(size: status == .none ? 15 : 20, weight: .semibold))
                 .foregroundStyle(selected ? .white : status.accent)
-            if status == .completed {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 7, weight: .bold))
-                    .foregroundStyle(selected ? .white : ShotIQColor.shotiqOrange)
-                    .offset(x: 5, y: 3)
-            } else if status == .inProgress {
+            if status == .inProgress {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(selected ? .white : ShotIQColor.shotiqOrange)
@@ -2478,21 +2473,26 @@ struct WorkoutCalendarView: View {  // 059
     }
 
     private func calendarMiniStat(icon: String, value: String, label: String) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 24, weight: .semibold))
+                .font(.system(size: 28, weight: .semibold))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
+                .frame(width: 30)
             VStack(alignment: .leading, spacing: 1) {
                 Text(value)
-                    .font(.custom("Tungsten-Medium", size: 36))
+                    .font(.custom("Tungsten-Medium", size: 42))
                     .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 Text(label)
-                    .shotiqBody(13, weight: .medium)
+                    .shotiqBody(13, weight: .semibold)
                     .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 62, alignment: .center)
-        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, minHeight: 70, alignment: .center)
+        .padding(.horizontal, 7)
         .background(.white, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
@@ -2505,7 +2505,7 @@ struct WorkoutCalendarView: View {  // 059
                     .foregroundStyle(ShotIQColor.ink)
                 Spacer()
                 Text("62.5%")
-                    .shotiqBody(compact ? 14 : 17, weight: .bold)
+                    .shotiqBody(compact ? 16 : 18, weight: .bold)
                     .foregroundStyle(ShotIQColor.shotiqOrange)
             }
             HStack(alignment: .bottom, spacing: 7) {
@@ -2518,10 +2518,10 @@ struct WorkoutCalendarView: View {  // 059
                 }
                 .shotiqBody(compact ? 9 : 12, weight: .medium)
                 .foregroundStyle(ShotIQColor.ink)
-                .frame(width: compact ? 30 : 40, height: compact ? 100 : 142)
+                .frame(width: compact ? 34 : 42, height: compact ? 130 : 156)
                 VStack(spacing: 6) {
                     CalendarTrendPlot()
-                        .frame(height: compact ? 100 : 142)
+                        .frame(height: compact ? 130 : 156)
                     HStack {
                         ForEach(Array(["S", "M", "T", "W", "T", "F", "S"].enumerated()), id: \.offset) { _, label in
                             Text(label)
@@ -2533,7 +2533,7 @@ struct WorkoutCalendarView: View {  // 059
                 }
             }
         }
-        .padding(12)
+        .padding(compact ? 14 : 16)
         .background(.white, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
@@ -2588,7 +2588,7 @@ struct WorkoutCalendarView: View {  // 059
     }
 
     private var createWorkoutOverlay: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.black.opacity(0.40)
                 .ignoresSafeArea()
                 .onTapGesture {
@@ -2597,13 +2597,19 @@ struct WorkoutCalendarView: View {  // 059
                     }
                 }
             createWorkoutModal
-                .padding(.horizontal, 14)
-                .padding(.vertical, 24)
+                .frame(width: min(UIScreen.main.bounds.width - 24, 960))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
         }
+        .ignoresSafeArea(edges: .bottom)
     }
 
     private var createWorkoutModal: some View {
         VStack(spacing: 0) {
+            Capsule()
+                .fill(ShotIQColor.graphite.opacity(0.45))
+                .frame(width: 62, height: 6)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
             createWorkoutModalHeader
             ScrollView {
                 VStack(spacing: 12) {
@@ -2617,10 +2623,9 @@ struct WorkoutCalendarView: View {  // 059
             }
             createWorkoutActionBar
         }
-        .frame(maxWidth: 960)
-        .frame(maxHeight: UIScreen.main.bounds.height * 0.90)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
-        .overlay(RoundedRectangle(cornerRadius: 24).stroke(ShotIQColor.rule, lineWidth: 1))
+        .frame(maxHeight: UIScreen.main.bounds.height * 0.88)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 30))
+        .overlay(RoundedRectangle(cornerRadius: 30).stroke(ShotIQColor.rule, lineWidth: 1))
         .shadow(color: Color.black.opacity(0.22), radius: 28, x: 0, y: 16)
         .accessibilityIdentifier("calendar-create-workout-modal")
     }
@@ -2644,19 +2649,35 @@ struct WorkoutCalendarView: View {  // 059
             .frame(width: 126, alignment: .leading)
             Spacer()
             Text("\(monthNames[monthIndex]) \(selectedDay), \(displayYear)")
-                .shotiqDisplay(46)
+                .shotiqDisplay(42)
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
+                .minimumScaleFactor(0.42)
             Spacer()
-            Text("Draft")
-                .shotiqBody(16, weight: .semibold)
-                .foregroundStyle(ShotIQColor.shotiqOrange)
-                .frame(width: 106, height: 44)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange, lineWidth: 1))
+            HStack(spacing: 8) {
+                Text("Draft")
+                    .shotiqBody(15, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .frame(width: 82, height: 42)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.shotiqOrange, lineWidth: 1))
+                Button {
+                    withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+                        showingCreateWorkoutModal = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(width: 42, height: 42)
+                        .background(ShotIQColor.rule.opacity(0.55), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close workout popup")
+            }
+            .frame(width: 132, alignment: .trailing)
         }
         .padding(.horizontal, 18)
-        .frame(height: 70)
+        .frame(height: 68)
         .background(Color.white)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
     }
@@ -2805,48 +2826,14 @@ struct WorkoutCalendarView: View {  // 059
                 Text("ADD DRILLS")
                     .shotiqDisplay(25)
                     .foregroundStyle(ShotIQColor.ink)
-                HStack(spacing: 10) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(ShotIQColor.ink)
-                        TextField("Search drills...", text: $calendarSearchQuery)
-                            .shotiqBody(14, weight: .medium)
-                            .foregroundStyle(ShotIQColor.graphite)
-                            .textInputAutocapitalization(.never)
-                        Spacer()
+                VStack(spacing: 10) {
+                    drillSearchField
+                    HStack(spacing: 10) {
+                        drillFilterButton
+                        drillAddButton
                     }
-                    .padding(.horizontal, 12)
-                    .frame(height: 46)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                    Button {
-                        calendarFilterReleaseOnly.toggle()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "line.3.horizontal.decrease")
-                            Text("Filter")
-                            Image(systemName: "chevron.down")
-                        }
-                        .shotiqBody(13, weight: .semibold)
-                        .foregroundStyle(calendarFilterReleaseOnly ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                        .frame(width: 112, height: 46)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(calendarFilterReleaseOnly ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
-                    }
-                    .buttonStyle(.plain)
-                    Button {
-                        addNextRecommendedDrill()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "plus")
-                            Text("Add Drill")
-                        }
-                        .shotiqBody(13, weight: .semibold)
-                        .foregroundStyle(ShotIQColor.shotiqOrange)
-                        .frame(width: 116, height: 46)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
-                    }
-                    .buttonStyle(.plain)
                 }
-                HStack(spacing: 10) {
+                VStack(spacing: 10) {
                     ForEach(filteredCalendarRecommendations.prefix(3)) { drill in
                         addDrillRecommendation(drill: drill)
                     }
@@ -2856,45 +2843,92 @@ struct WorkoutCalendarView: View {  // 059
         }
     }
 
+    private var drillSearchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(ShotIQColor.ink)
+            TextField("Search drills...", text: $calendarSearchQuery)
+                .shotiqBody(14, weight: .medium)
+                .foregroundStyle(ShotIQColor.graphite)
+                .textInputAutocapitalization(.never)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 46)
+        .frame(maxWidth: .infinity)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
+    private var drillFilterButton: some View {
+        Button {
+            calendarFilterReleaseOnly.toggle()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "line.3.horizontal.decrease")
+                Text("Filter")
+                Image(systemName: "chevron.down")
+            }
+            .shotiqBody(13, weight: .semibold)
+            .foregroundStyle(calendarFilterReleaseOnly ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+            .frame(maxWidth: .infinity)
+            .frame(height: 46)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(calendarFilterReleaseOnly ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
+        }
+        .buttonStyle(.plain)
+        .frame(width: 112)
+    }
+
+    private var drillAddButton: some View {
+        Button {
+            addNextRecommendedDrill()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                Text("Add Drill")
+            }
+            .shotiqBody(13, weight: .semibold)
+            .foregroundStyle(ShotIQColor.shotiqOrange)
+            .frame(maxWidth: .infinity)
+            .frame(height: 46)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
+        }
+        .buttonStyle(.plain)
+        .frame(width: 116)
+    }
+
     private var createWorkoutActionBar: some View {
-        HStack(spacing: 12) {
-            Button {
+        HStack(spacing: 10) {
+            workoutActionButton("Save Workout", filled: true) {
                 saveCalendarWorkoutDraft()
-            } label: {
-                Text("Save Workout")
-                    .shotiqBody(16, weight: .bold)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
             }
-            .buttonStyle(.plain)
-            Button {
+            workoutActionButton("Start Now") {
                 startCalendarWorkoutDraft()
-            } label: {
-                Text("Start Now")
-                    .shotiqBody(16, weight: .bold)
-                    .foregroundStyle(ShotIQColor.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.ink, lineWidth: 1))
             }
-            .buttonStyle(.plain)
-            Button {
+            workoutActionButton("Auto-Generate") {
                 autoGenerateCalendarWorkout()
-            } label: {
-                Text("Auto-Generate")
-                    .shotiqBody(16, weight: .bold)
-                    .foregroundStyle(ShotIQColor.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.graphite.opacity(0.55), lineWidth: 1))
             }
-            .buttonStyle(.plain)
         }
         .padding(14)
         .background(Color.white)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+    }
+
+    private func workoutActionButton(_ title: String, filled: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .shotiqBody(16, weight: .bold)
+                .foregroundStyle(filled ? .white : ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(filled ? ShotIQColor.shotiqOrange : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(filled ? Color.clear : (title == "Start Now" ? ShotIQColor.ink : ShotIQColor.graphite.opacity(0.55)), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private func cardHeader(_ title: String, trailing: String? = nil) -> some View {
@@ -3130,7 +3164,7 @@ struct WorkoutCalendarView: View {  // 059
 
         var icon: String {
             switch self {
-            case .completed: return "medal"
+            case .completed: return "flame.fill"
             case .scheduled: return "calendar"
             case .inProgress: return "timer"
             case .missed: return "calendar"
@@ -3140,7 +3174,7 @@ struct WorkoutCalendarView: View {  // 059
 
         var accent: Color {
             switch self {
-            case .completed: return ShotIQColor.confirmGreen
+            case .completed: return ShotIQColor.shotiqOrange
             case .scheduled: return ShotIQColor.ink
             case .inProgress: return ShotIQColor.shotiqOrange
             case .missed: return ShotIQColor.ink
@@ -3150,7 +3184,7 @@ struct WorkoutCalendarView: View {  // 059
 
         var tint: Color {
             switch self {
-            case .completed: return ShotIQColor.confirmGreen.opacity(0.06)
+            case .completed: return ShotIQColor.shotiqOrange.opacity(0.06)
             case .scheduled: return Color.clear
             case .inProgress: return ShotIQColor.shotiqOrange.opacity(0.06)
             case .missed: return Color(red: 0.93, green: 0.31, blue: 0.27).opacity(0.06)
@@ -3248,12 +3282,12 @@ private struct CalendarTrendPlot: View {
                         path.addLine(to: point)
                     }
                 }
-                .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                 ForEach(Array(points.enumerated()), id: \.offset) { _, point in
                     Circle()
                         .fill(Color.white)
-                        .frame(width: 12, height: 12)
-                        .overlay(Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 3))
+                        .frame(width: 15, height: 15)
+                        .overlay(Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 4))
                         .position(point)
                 }
             }
