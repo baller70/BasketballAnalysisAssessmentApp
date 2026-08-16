@@ -2911,12 +2911,7 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 10) {
-            hero
-            summary
-            compare
-            actions
-        }
+        PlayerFlawReferenceMetricCard(metric: metric, displayWidth: displayWidth)
         .frame(width: displayWidth)
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
@@ -3139,6 +3134,392 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
             .accessibilityLabel("View drills for \(metric.title)")
         }
         .padding(.horizontal, 10)
+    }
+}
+
+fileprivate struct PlayerFlawReferenceMetricCard: View {
+    let metric: PlayerFlawMetricConfig
+    let displayWidth: CGFloat
+
+    private var assetName: String {
+        "player-flaw-reference-\(metric.id)"
+    }
+
+    private var baseSize: CGSize {
+        metric.id == "release-height" ? CGSize(width: 882, height: 1532) : CGSize(width: 908, height: 1504)
+    }
+
+    private var displayHeight: CGFloat {
+        displayWidth * baseSize.height / baseSize.width
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            Image(assetName)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: displayWidth, height: displayHeight)
+
+            PlayerFlawReferenceOverlay(metric: metric, baseSize: baseSize)
+                .frame(width: displayWidth, height: displayHeight)
+        }
+        .frame(width: displayWidth, height: displayHeight)
+    }
+}
+
+fileprivate struct PlayerFlawReferenceOverlay: View {
+    let metric: PlayerFlawMetricConfig
+    let baseSize: CGSize
+
+    private let heroDark = Color(red: 0.018, green: 0.055, blue: 0.105)
+    private let whiteCard = Color.white
+
+    var body: some View {
+        GeometryReader { geo in
+            let sx = geo.size.width / baseSize.width
+            let sy = geo.size.height / baseSize.height
+
+            ZStack(alignment: .topLeading) {
+                heroTextLayer(sx: sx, sy: sy)
+                summaryLayer(sx: sx, sy: sy)
+                compareLayer(sx: sx, sy: sy)
+                actionLayer(sx: sx, sy: sy)
+            }
+        }
+    }
+
+    private func heroTextLayer(sx: CGFloat, sy: CGFloat) -> some View {
+        let titleSize: CGFloat = baseSize.width < 900 ? 44 : 47
+        let valueSize: CGFloat = metric.valueLabel.count > 5 ? 69 : 78
+        let targetSize: CGFloat = metric.targetLabel.count > 7 ? 45 : 54
+        return ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(LinearGradient(colors: [heroDark.opacity(0.99), heroDark.opacity(0.86), heroDark.opacity(0.08)],
+                                     startPoint: .leading,
+                                     endPoint: .trailing))
+                .frame(width: baseSize.width * 0.48 * sx, height: heroHeight * sy)
+                .position(x: baseSize.width * 0.24 * sx, y: heroHeight * 0.5 * sy)
+
+            Text(metric.title.uppercased())
+                .shotiqDisplay(titleSize * sx)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(width: 390 * sx, alignment: .leading)
+                .position(x: 220 * sx, y: 64 * sy)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(17 * sx, weight: .black)
+                .kerning(0)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .frame(width: 170 * sx, height: 34 * sy)
+                .overlay(RoundedRectangle(cornerRadius: 7 * sx).stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * sx))
+                .position(x: 142 * sx, y: 126 * sy)
+
+            Text("YOUR VALUE")
+                .shotiqBody(15 * sx, weight: .black)
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 160 * sx, alignment: .leading)
+                .position(x: 116 * sx, y: valueLabelY * sy)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: valueSize * sx))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(width: 215 * sx, height: 82 * sy, alignment: .leading)
+                .position(x: 145 * sx, y: valueY * sy)
+
+            Rectangle()
+                .fill(.white.opacity(metric.overlayType == .releaseHeight ? 0.35 : 0.45))
+                .frame(width: 1.4 * sx, height: dividerHeight * sy)
+                .position(x: dividerX * sx, y: dividerY * sy)
+
+            Text("TARGET")
+                .shotiqBody(15 * sx, weight: .black)
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 150 * sx, alignment: .leading)
+                .position(x: targetLabelX * sx, y: targetLabelY * sy)
+
+            Text(metric.targetLabel)
+                .font(.custom("Tungsten-Medium", size: targetSize * sx))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .frame(width: 245 * sx, height: 68 * sy, alignment: .leading)
+                .position(x: targetValueX * sx, y: targetValueY * sy)
+
+            if metric.overlayType != .centerline {
+                heroBulbCopy(sx: sx, sy: sy)
+            } else {
+                centerlineCopy(sx: sx, sy: sy)
+            }
+        }
+    }
+
+    private func heroBulbCopy(sx: CGFloat, sy: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Image(systemName: "lightbulb")
+                .font(.system(size: 30 * sx, weight: .regular))
+                .foregroundStyle(.white)
+                .frame(width: 70 * sx, height: 70 * sy)
+                .overlay(Circle().stroke(.white.opacity(0.42), lineWidth: 1.4 * sx))
+                .position(x: 73 * sx, y: insightY * sy)
+            Text(metric.insight)
+                .shotiqBody(insightFontSize * sx, weight: .semibold)
+                .foregroundStyle(.white)
+                .lineLimit(metric.overlayType == .releaseHeight ? 5 : 4)
+                .minimumScaleFactor(0.7)
+                .frame(width: insightWidth * sx, alignment: .leading)
+                .position(x: insightTextX * sx, y: insightY * sy)
+        }
+    }
+
+    private func centerlineCopy(sx: CGFloat, sy: CGFloat) -> some View {
+        Text(metric.insight)
+            .shotiqBody(21 * sx, weight: .semibold)
+            .foregroundStyle(.white)
+            .lineLimit(4)
+            .minimumScaleFactor(0.72)
+            .frame(width: 372 * sx, alignment: .leading)
+            .position(x: 242 * sx, y: 420 * sy)
+    }
+
+    private func summaryLayer(sx: CGFloat, sy: CGFloat) -> some View {
+        let y = summaryY
+        return ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 14 * sx)
+                .fill(whiteCard)
+                .overlay(RoundedRectangle(cornerRadius: 14 * sx).stroke(ShotIQColor.rule, lineWidth: 1 * sx))
+                .frame(width: baseSize.width * sx, height: summaryHeight * sy)
+                .position(x: baseSize.width * 0.5 * sx, y: (y + summaryHeight * 0.5) * sy)
+
+            Rectangle()
+                .fill(ShotIQColor.rule)
+                .frame(width: 1 * sx, height: 104 * sy)
+                .position(x: baseSize.width * 0.5 * sx, y: (y + 84) * sy)
+
+            summaryText("YOUR VALUE", value: metric.valueLabel, color: ShotIQColor.shotiqOrange, x: baseSize.width * 0.25, y: y + 78, sx: sx, sy: sy)
+            summaryText("TARGET", value: metric.targetLabel, color: ShotIQColor.analysisBlue, x: baseSize.width * 0.75, y: y + 78, sx: sx, sy: sy)
+        }
+    }
+
+    private func summaryText(_ label: String, value: String, color: Color, x: CGFloat, y: CGFloat, sx: CGFloat, sy: CGFloat) -> some View {
+        VStack(spacing: 7 * sy) {
+            Text(label)
+                .shotiqBody(17 * sx, weight: .black)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1)
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: (value.count > 6 ? 55 : 72) * sx))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        }
+        .frame(width: baseSize.width * 0.42 * sx, height: 128 * sy)
+        .position(x: x * sx, y: y * sy)
+    }
+
+    private func compareLayer(sx: CGFloat, sy: CGFloat) -> some View {
+        let y = compareY
+        return ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 14 * sx)
+                .fill(whiteCard)
+                .overlay(RoundedRectangle(cornerRadius: 14 * sx).stroke(ShotIQColor.rule, lineWidth: 1 * sx))
+                .frame(width: baseSize.width * sx, height: compareHeight * sy)
+                .position(x: baseSize.width * 0.5 * sx, y: (y + compareHeight * 0.5) * sy)
+
+            HStack(spacing: 10 * sx) {
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 18 * sx, weight: .black))
+                    .foregroundStyle(ShotIQColor.ink)
+                    .frame(width: 22 * sx)
+                Text("COMPARE BY LEVEL")
+                    .shotiqDisplay(25 * sx)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .frame(width: (baseSize.width - 56) * sx, height: 48 * sy)
+            .position(x: baseSize.width * 0.5 * sx, y: (y + 38) * sy)
+
+            Rectangle()
+                .fill(ShotIQColor.rule)
+                .frame(width: (baseSize.width - 52) * sx, height: 1 * sy)
+                .position(x: baseSize.width * 0.5 * sx, y: (y + 67) * sy)
+
+            ForEach(Array(metric.levels.enumerated()), id: \.element.id) { index, level in
+                referenceLevelRow(level: level, rowIndex: index, sectionY: y, sx: sx, sy: sy)
+            }
+        }
+    }
+
+    private func referenceLevelRow(level: PlayerFlawLevelCompare, rowIndex: Int, sectionY: CGFloat, sx: CGFloat, sy: CGFloat) -> some View {
+        let rowY = sectionY + 105 + CGFloat(rowIndex) * rowGap
+        return ZStack(alignment: .topLeading) {
+            if rowIndex > 0 {
+                Rectangle()
+                    .fill(ShotIQColor.rule)
+                    .frame(width: (baseSize.width - 52) * sx, height: 1 * sy)
+                    .position(x: baseSize.width * 0.5 * sx, y: (rowY - 49) * sy)
+            }
+
+            ZStack(alignment: .bottomLeading) {
+                CanonicalPhoto(level.photoKey, width: 104 * sx, height: 104 * sx, cornerRadius: 9 * sx, alignment: .top)
+                LinearGradient(colors: [.clear, .black.opacity(0.68)], startPoint: .top, endPoint: .bottom)
+                Text(level.shortLabel)
+                    .shotiqBody(17 * sx, weight: .black)
+                    .foregroundStyle(.white)
+                    .padding(.leading, 5 * sx)
+                    .padding(.bottom, 5 * sy)
+            }
+            .frame(width: 104 * sx, height: 104 * sx)
+            .clipShape(RoundedRectangle(cornerRadius: 8 * sx))
+            .position(x: 78 * sx, y: rowY * sy)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(level.label)
+                    .shotiqDisplay(27 * sx)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text("DEVELOPMENT TARGET")
+                    .shotiqBody(14 * sx, weight: .black)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+                Text(level.targetLabel)
+                    .shotiqBody(20 * sx, weight: .black)
+                    .foregroundStyle(ShotIQColor.analysisBlue)
+                    .lineLimit(1)
+            }
+            .frame(width: 250 * sx, height: 90 * sy, alignment: .leading)
+            .position(x: 285 * sx, y: rowY * sy)
+
+            PlayerFlawRangeMeter(metric: metric, level: level)
+                .frame(width: meterWidth * sx, height: 62 * sy)
+                .position(x: meterX * sx, y: rowY * sy)
+        }
+    }
+
+    private func actionLayer(sx: CGFloat, sy: CGFloat) -> some View {
+        let y = actionY
+        return HStack(spacing: 28 * sx) {
+            NavigationLink {
+                DrillExecutionView(drillName: metric.drillName)
+            } label: {
+                Text("TRAIN THIS FLAW")
+                    .shotiqBody(25 * sx, weight: .black)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60 * sy)
+                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8 * sx))
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                DiscoverDrillsView()
+            } label: {
+                Text("VIEW DRILLS")
+                    .shotiqBody(25 * sx, weight: .black)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60 * sy)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 8 * sx))
+                    .overlay(RoundedRectangle(cornerRadius: 8 * sx).stroke(ShotIQColor.ink, lineWidth: 1.4 * sx))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(width: (baseSize.width - 48) * sx, height: 70 * sy)
+        .position(x: baseSize.width * 0.5 * sx, y: y * sy)
+    }
+
+    private var heroHeight: CGFloat {
+        metric.id == "release-height" ? 646 : 650
+    }
+
+    private var valueLabelY: CGFloat {
+        metric.id == "release-height" ? 205 : 210
+    }
+
+    private var valueY: CGFloat {
+        metric.id == "release-height" ? 290 : 285
+    }
+
+    private var dividerX: CGFloat {
+        metric.id == "release-height" ? 275 : (metric.id == "centerline" ? 250 : 275)
+    }
+
+    private var dividerY: CGFloat {
+        metric.id == "release-height" ? 285 : 275
+    }
+
+    private var dividerHeight: CGFloat {
+        metric.id == "release-height" ? 72 : 90
+    }
+
+    private var targetLabelX: CGFloat {
+        metric.id == "release-height" ? 318 : (metric.id == "centerline" ? 338 : 78)
+    }
+
+    private var targetLabelY: CGFloat {
+        metric.id == "release-height" ? 205 : (metric.id == "centerline" ? 210 : 358)
+    }
+
+    private var targetValueX: CGFloat {
+        metric.id == "release-height" ? 337 : (metric.id == "centerline" ? 370 : 122)
+    }
+
+    private var targetValueY: CGFloat {
+        metric.id == "release-height" ? 287 : (metric.id == "centerline" ? 283 : 410)
+    }
+
+    private var insightY: CGFloat {
+        metric.id == "release-height" ? 505 : 520
+    }
+
+    private var insightTextX: CGFloat {
+        metric.id == "release-height" ? 203 : 285
+    }
+
+    private var insightWidth: CGFloat {
+        metric.id == "release-height" ? 265 : 375
+    }
+
+    private var insightFontSize: CGFloat {
+        metric.id == "release-height" ? 21 : 20
+    }
+
+    private var summaryY: CGFloat {
+        metric.id == "release-height" ? 664 : 672
+    }
+
+    private var summaryHeight: CGFloat {
+        metric.id == "release-height" ? 164 : 166
+    }
+
+    private var compareY: CGFloat {
+        metric.id == "release-height" ? 846 : 858
+    }
+
+    private var compareHeight: CGFloat {
+        metric.id == "release-height" ? 540 : 530
+    }
+
+    private var rowGap: CGFloat {
+        metric.id == "release-height" ? 118 : 115
+    }
+
+    private var meterX: CGFloat {
+        baseSize.width * 0.72
+    }
+
+    private var meterWidth: CGFloat {
+        baseSize.width * 0.47
+    }
+
+    private var actionY: CGFloat {
+        metric.id == "release-height" ? 1433 : 1462
     }
 }
 
