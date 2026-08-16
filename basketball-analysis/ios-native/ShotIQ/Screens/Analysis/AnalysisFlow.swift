@@ -2906,51 +2906,19 @@ fileprivate enum PlayerFlawMetricsCatalog {
 fileprivate struct PlayerFlawMetricDetailCard: View {
     let metric: PlayerFlawMetricConfig
 
-    private var artworkName: String { "player-flaw-card-\(metric.id)" }
-
-    private var artworkAspectRatio: CGFloat {
-        metric.id == "release-height" ? 1532.0 / 882.0 : 1504.0 / 908.0
-    }
-
     private var displayWidth: CGFloat {
         max(280, min(UIScreen.main.bounds.width - 40, 430))
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Image(artworkName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: displayWidth)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .allowsHitTesting(false)
-
-            HStack(spacing: displayWidth * 0.03) {
-                NavigationLink {
-                    DrillExecutionView(drillName: metric.drillName)
-                } label: {
-                    Color.clear
-                        .frame(maxWidth: .infinity)
-                        .frame(height: displayWidth * 0.08)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Train \(metric.title)")
-
-                NavigationLink {
-                    DiscoverDrillsView()
-                } label: {
-                    Color.clear
-                        .frame(maxWidth: .infinity)
-                        .frame(height: displayWidth * 0.08)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("View drills for \(metric.title)")
-            }
-            .frame(width: displayWidth * 0.94)
-            .padding(.bottom, displayWidth * 0.018)
+        VStack(spacing: 10) {
+            hero
+            summary
+            compare
+            actions
         }
+        .frame(width: displayWidth)
         .frame(maxWidth: .infinity)
-        .frame(height: displayWidth * artworkAspectRatio)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("player-flaw-metric-\(metric.id)")
     }
@@ -2988,7 +2956,7 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
-        .frame(height: 328)
+        .frame(height: displayWidth >= 400 ? 342 : 328)
     }
 
     private func standardHeroCopy(width: CGFloat) -> some View {
@@ -3025,7 +2993,7 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
                 .frame(height: 70, alignment: .leading)
             PlayerFlawHeroRangeMeter(metric: metric)
                 .frame(maxWidth: .infinity)
-                .frame(height: 46)
+                .frame(height: 50)
                 .padding(.top, 8)
                 .padding(.trailing, 4)
             Spacer(minLength: 8)
@@ -3087,10 +3055,10 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
     private var summary: some View {
         HStack(spacing: 0) {
             summaryCell("YOUR VALUE", metric.valueLabel, ShotIQColor.shotiqOrange)
-            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 74)
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 82)
             summaryCell("TARGET", metric.targetLabel, ShotIQColor.analysisBlue)
         }
-        .padding(.vertical, 13)
+        .padding(.vertical, 15)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.rule, lineWidth: 1))
     }
@@ -3102,7 +3070,7 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
                 .kerning(0.6)
                 .foregroundStyle(ShotIQColor.graphite)
             Text(value)
-                .font(.custom("Tungsten-Medium", size: value.count > 6 ? 48 : 64))
+                .font(.custom("Tungsten-Medium", size: value.count > 6 ? 50 : 70))
                 .foregroundStyle(tint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -3131,6 +3099,7 @@ fileprivate struct PlayerFlawMetricDetailCard: View {
                 if index != metric.levels.count - 1 {
                     Rectangle().fill(ShotIQColor.rule).frame(height: 1)
                         .padding(.leading, 14)
+                        .padding(.trailing, 14)
                 }
             }
         }
@@ -3181,44 +3150,53 @@ fileprivate struct PlayerFlawLevelRow: View {
         Button {
             // Keep level rows interactive without changing the current tab.
         } label: {
-            HStack(spacing: 10) {
-                ZStack(alignment: .bottomLeading) {
-                    CanonicalPhoto(level.photoKey, width: 55, height: 66, cornerRadius: 6, alignment: .top)
-                    LinearGradient(colors: [.clear, .black.opacity(0.64)], startPoint: .top, endPoint: .bottom)
-                    Text(level.shortLabel)
-                        .shotiqBody(9, weight: .black)
-                        .foregroundStyle(.white)
-                        .padding(.leading, 5)
-                        .padding(.bottom, 4)
-                }
-                .frame(width: 55, height: 66)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 10) {
+                    ZStack(alignment: .bottomLeading) {
+                        CanonicalPhoto(level.photoKey, width: 58, height: 58, cornerRadius: 7, alignment: .top)
+                        LinearGradient(colors: [.clear, .black.opacity(0.64)], startPoint: .top, endPoint: .bottom)
+                        Text(level.shortLabel)
+                            .shotiqBody(9, weight: .black)
+                            .foregroundStyle(.white)
+                            .padding(.leading, 5)
+                            .padding(.bottom, 4)
+                    }
+                    .frame(width: 58, height: 58)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(level.label)
-                        .shotiqDisplay(20)
-                        .foregroundStyle(ShotIQColor.ink)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(level.label)
+                            .shotiqDisplay(22)
+                            .foregroundStyle(ShotIQColor.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.66)
+                        Text("DEVELOPMENT TARGET")
+                            .shotiqBody(9, weight: .bold)
+                            .kerning(0.35)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .lineLimit(1)
+                        Text(level.targetLabel)
+                            .shotiqBody(15, weight: .black)
+                            .foregroundStyle(ShotIQColor.analysisBlue)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.58)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Text(metric.valueLabel)
+                        .shotiqBody(15, weight: .black)
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.66)
-                    Text("DEVELOPMENT TARGET")
-                        .shotiqBody(9, weight: .bold)
-                        .kerning(0.35)
-                        .foregroundStyle(ShotIQColor.graphite)
-                        .lineLimit(1)
-                    Text(level.targetLabel)
-                        .shotiqBody(14, weight: .black)
-                        .foregroundStyle(ShotIQColor.analysisBlue)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.58)
+                        .minimumScaleFactor(0.7)
                 }
-                .frame(width: 112, alignment: .leading)
 
                 PlayerFlawRangeMeter(metric: metric, level: level)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 64)
+                    .frame(height: 56)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 9)
+            .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
