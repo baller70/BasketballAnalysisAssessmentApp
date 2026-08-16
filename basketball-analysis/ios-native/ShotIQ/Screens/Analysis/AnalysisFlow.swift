@@ -3101,6 +3101,17 @@ fileprivate struct FlawsTabFixItem: Identifiable, Hashable {
 
 fileprivate enum FlawsTabFixCatalog {
     static func items(for presentation: AnalysisResultPresentation) -> [FlawsTabFixItem] {
+        if presentation.id != AnalysisResultPresentation.canonicalDemo.id,
+           !presentation.flaws.isEmpty {
+            return Array(presentation.flaws.prefix(5)).enumerated().map { index, flaw in
+                item(from: flaw, presentation: presentation, rank: index + 1)
+            }
+        }
+
+        return sidecarItems(for: presentation)
+    }
+
+    private static func sidecarItems(for presentation: AnalysisResultPresentation) -> [FlawsTabFixItem] {
         let byTitle = Dictionary(grouping: presentation.flaws) { normalized($0.title) }
         let centerlineValue = clean(presentation.releaseOffsetText, fallback: "-32°")
         let elbowValue = clean(presentation.elbowAngleText, fallback: "70°")
@@ -3177,6 +3188,113 @@ fileprivate enum FlawsTabFixCatalog {
         ]
     }
 
+    private static func item(from flaw: AnalysisFlawItem,
+                             presentation: AnalysisResultPresentation,
+                             rank: Int) -> FlawsTabFixItem {
+        let template = template(for: flaw)
+        let value = cleanValue(for: template.id, flaw: flaw, presentation: presentation)
+        return FlawsTabFixItem(id: template.id + "-\(rank)",
+                               rank: rank,
+                               title: templateTitle(template, fallback: flaw.title),
+                               body: bodyText(for: flaw, value: value, template: template),
+                               cta: template.cta,
+                               phase: flaw.phase.isEmpty ? template.phase : flaw.phase,
+                               impact: flaw.impact.isEmpty ? template.impact : flaw.impact,
+                               confidence: flaw.confidence.isEmpty ? template.confidence : flaw.confidence,
+                               valueLabel: value,
+                               imageAsset: template.imageAsset,
+                               isFeatured: rank == 1,
+                               sourceFlaw: flaw)
+    }
+
+    private static func template(for flaw: AnalysisFlawItem) -> FlawsTabFixItem {
+        let title = normalized(flaw.title)
+        let fallback = sidecarItems(for: .canonicalDemo)
+        if title.contains("CENTERLINE") || title.contains("RELEASE PATH") || title.contains("OFFSET") {
+            return fallback[0]
+        }
+        if title.contains("ELBOW") {
+            return fallback[1]
+        }
+        if title.contains("CONSISTENCY") || title.contains("FORM SCORE") || title.contains("RELEASE SCORE") {
+            return fallback[2]
+        }
+        if title.contains("HEIGHT") {
+            return fallback[3]
+        }
+        if title.contains("WRIST") {
+            return fallback[4]
+        }
+        return fallback[min(max(flaw.rank - 1, 0), fallback.count - 1)]
+    }
+
+    private static func templateTitle(_ template: FlawsTabFixItem, fallback: String) -> String {
+        let cleanFallback = fallback.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanFallback.isEmpty else { return template.title }
+        let normalizedFallback = normalized(cleanFallback)
+        if normalizedFallback.contains("CENTERLINE") { return "CENTERLINE\nDEVIATION" }
+        if normalizedFallback.contains("ELBOW") { return "ELBOW ANGLE\nOUT OF RANGE" }
+        if normalizedFallback.contains("CONSISTENCY") { return "CONSISTENCY\nSCORE GAP" }
+        if normalizedFallback.contains("HEIGHT") { return "RELEASE HEIGHT\nLOW" }
+        if normalizedFallback.contains("WRIST") { return "WRIST ANGLE\nOPEN" }
+        if normalizedFallback.contains("RELEASE PATH") || normalizedFallback.contains("OFFSET") { return "CENTERLINE\nDEVIATION" }
+        let words = cleanFallback.uppercased().split(separator: " ")
+        guard words.count > 2 else { return cleanFallback.uppercased() }
+        let midpoint = Int(ceil(Double(words.count) / 2.0))
+        return words[..<midpoint].joined(separator: " ") + "\n" + words[midpoint...].joined(separator: " ")
+    }
+
+    private static func cleanValue(for id: String,
+                                   flaw: AnalysisFlawItem,
+                                   presentation: AnalysisResultPresentation) -> String {
+        switch id {
+        case "centerline-deviation":
+            return clean(presentation.releaseOffsetText, fallback: valueWithDegree(flaw.trendEnd, fallback: "-32°"))
+        case "elbow-angle-out-of-range":
+            return clean(presentation.elbowAngleText, fallback: valueWithDegree(flaw.trendEnd, fallback: "70°"))
+        case "release-height-low":
+            return clean(presentation.releaseHeightText, fallback: flaw.trendEnd.isEmpty ? "6'5\"" : flaw.trendEnd)
+        case "wrist-angle-open":
+            return clean(presentation.wristAngleText, fallback: valueWithDegree(flaw.trendEnd, fallback: "159°"))
+        case "consistency-score-gap":
+            return clean(presentation.scoreBreakdown.first { normalized($0.metric).contains("CONSISTENCY") }?.scoreText,
+                         fallback: flaw.trendEnd.isEmpty ? "66" : flaw.trendEnd)
+        default:
+            return flaw.trendEnd.isEmpty ? "--" : flaw.trendEnd
+        }
+    }
+
+    private static func valueWithDegree(_ value: String, fallback: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return fallback }
+        return trimmed.contains("°") ? trimmed : "\(trimmed)°"
+    }
+
+    private static func bodyText(for flaw: AnalysisFlawItem,
+                                 value: String,
+                                 template: FlawsTabFixItem) -> String {
+        let source = flaw.description.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !source.isEmpty, source.count <= 92 {
+            return source
+        }
+        switch template.id {
+        case "centerline-deviation":
+            return "Your elbow and ball drift\nleft of centerline.\nStart with release path."
+        case "elbow-angle-out-of-range":
+            return "Elbow angle is \(value); target\nband is 150°-180° for a\nstacked release."
+        case "consistency-score-gap":
+            return "Consistency score is \(value),\nlowering the saved\nform result."
+        case "release-height-low":
+            return "Release point is below the\ntarget window. Finish taller\nfor a cleaner arc."
+        case "wrist-angle-open":
+            return value.uppercased() == "OPEN"
+                ? "Wrist is too open at release.\nSnap down for a tighter\nbackspin."
+                : "Wrist angle is \(value).\nSnap down for a tighter\nbackspin."
+        default:
+            return template.body
+        }
+    }
+
     static func shotArc(for presentation: AnalysisResultPresentation) -> String {
         clean(presentation.metrics.first { normalized($0.label) == "SHOT ARC" }?.value, fallback: "41°")
     }
@@ -3230,7 +3348,7 @@ fileprivate struct ShotIQFlawsTabContent: View {
     var body: some View {
         VStack(spacing: 12) {
             FlawsTabHeroCard(presentation: presentation, items: items, width: cardWidth, onOpen: onOpen)
-            FlawsTabSummaryStrip(items: items, width: cardWidth)
+            FlawsTabSummaryStrip(presentation: presentation, items: items, width: cardWidth)
             VStack(spacing: 10) {
                 ForEach(items) { item in
                     FlawsTabFixCard(item: item, presentation: presentation, width: cardWidth, onOpen: onOpen)
@@ -3267,6 +3385,48 @@ fileprivate struct FlawsTabAssetImage: View {
     }
 }
 
+fileprivate struct FlawsTabShotImageSlot: View {
+    let presentation: AnalysisResultPresentation
+    let assetName: String
+    let phase: String
+    let height: CGFloat
+    var alignment: Alignment = .center
+    var cornerRadius: CGFloat = 2
+
+    private var hasRealMedia: Bool {
+        presentation.id != AnalysisResultPresentation.canonicalDemo.id &&
+        (presentation.mediaURL != nil || presentation.videoURL != nil)
+    }
+
+    private var fallbackKey: String {
+        switch phase.uppercased() {
+        case "SETUP": return "041-visual-001"
+        case "LOAD": return "047-visual-004"
+        case "RISE": return "041-visual-003"
+        case "FOLLOW-THROUGH": return "041-visual-004"
+        default: return "041-visual-002"
+        }
+    }
+
+    var body: some View {
+        Group {
+            if hasRealMedia {
+                PhaseMediaThumbnail(presentation: presentation,
+                                    fallbackKey: fallbackKey,
+                                    height: height,
+                                    phase: phase)
+            } else {
+                FlawsTabAssetImage(assetName: assetName, alignment: alignment)
+                    .frame(height: height)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .accessibilityIdentifier(hasRealMedia ? "flaws-tab-real-media-slot" : "flaws-tab-placeholder-slot-\(assetName)")
+    }
+}
+
 fileprivate struct FlawsTabHeroCard: View {
     let presentation: AnalysisResultPresentation
     let items: [FlawsTabFixItem]
@@ -3275,14 +3435,28 @@ fileprivate struct FlawsTabHeroCard: View {
 
     private var height: CGFloat { width * 0.62 }
     private var primaryFlaw: AnalysisFlawItem { (items.first?.navigationFlaw) ?? AnalysisFlawItem(rank: 1, title: "Centerline Deviation", impact: "HIGH IMPACT", description: "", confidence: "88%", cta: "TRAIN THIS FLAW", phase: "Release", trendEnd: "-32°", source: "flaws-tab") }
+    private var hasLiveMedia: Bool {
+        presentation.id != AnalysisResultPresentation.canonicalDemo.id &&
+        (presentation.mediaURL != nil || presentation.videoURL != nil)
+    }
 
     var body: some View {
         ZStack(alignment: .leading) {
             Color(red: 0.02, green: 0.04, blue: 0.07)
             HStack(spacing: 0) {
                 Spacer(minLength: width * 0.34)
-                FlawsTabAssetImage(assetName: "flaws-tab-hero-shooter", alignment: .trailing)
-                    .frame(width: width * 0.62, height: height)
+                Group {
+                    if hasLiveMedia {
+                        PhaseMediaThumbnail(presentation: presentation,
+                                            fallbackKey: "041-visual-002",
+                                            height: height,
+                                            phase: items.first?.phase ?? "Release")
+                    } else {
+                        FlawsTabAssetImage(assetName: "flaws-tab-hero-shooter", alignment: .trailing)
+                    }
+                }
+                .frame(width: width * 0.62, height: height)
+                .clipped()
             }
             LinearGradient(stops: [
                 .init(color: Color(red: 0.02, green: 0.04, blue: 0.07), location: 0),
@@ -3401,14 +3575,32 @@ fileprivate struct FlawsTabHeroCard: View {
 }
 
 fileprivate struct FlawsTabSummaryStrip: View {
+    let presentation: AnalysisResultPresentation
     let items: [FlawsTabFixItem]
     let width: CGFloat
 
     private var height: CGFloat { width * 0.23 }
+    private var primaryItem: FlawsTabFixItem? { items.first }
+    private var primaryImpact: String {
+        let impact = primaryItem?.impact.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (impact?.isEmpty == false ? impact! : "HIGH IMPACT").uppercased()
+    }
+    private var primaryPhase: String {
+        let phase = primaryItem?.phase.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (phase?.isEmpty == false ? phase! : "RELEASE").uppercased()
+    }
+    private var primaryConfidence: String {
+        let confidence = primaryItem?.confidence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let value = confidence?.isEmpty == false ? confidence! : "88%"
+        return value.uppercased().contains("CONFIDENCE") ? value.uppercased() : "\(value) CONFIDENCE"
+    }
 
     var body: some View {
         HStack(spacing: width * 0.035) {
-            FlawsTabAssetImage(assetName: "flaws-tab-summary-thumb")
+            FlawsTabShotImageSlot(presentation: presentation,
+                                  assetName: "flaws-tab-summary-thumb",
+                                  phase: items.first?.phase ?? "RELEASE",
+                                  height: height * 0.66)
                 .frame(width: height * 0.66, height: height * 0.66)
                 .clipShape(Circle())
 
@@ -3432,11 +3624,11 @@ fileprivate struct FlawsTabSummaryStrip: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 10))
         .overlay(alignment: .bottom) {
             HStack(spacing: 0) {
-                statusPillIcon("arrow.up.right", "HIGH IMPACT", tint: ShotIQColor.shotiqOrange)
+                statusPillIcon("arrow.up.right", primaryImpact, tint: ShotIQColor.shotiqOrange)
                 pillDivider
-                statusPillIcon("scope", "RELEASE", tint: .white)
+                statusPillIcon("scope", primaryPhase, tint: .white)
                 pillDivider
-                Text("88% CONFIDENCE")
+                Text(primaryConfidence)
                     .shotiqBody(width * 0.025, weight: .heavy)
                     .foregroundStyle(.white)
                     .lineLimit(1)
@@ -3474,8 +3666,14 @@ fileprivate struct FlawsTabFixCard: View {
     let width: CGFloat
     let onOpen: (String) -> Void
 
-    private var height: CGFloat { item.isFeatured ? width * 0.345 : width * 0.275 }
+    private var height: CGFloat { item.isFeatured ? width * 0.355 : width * 0.305 }
     private var railWidth: CGFloat { max(8, width * 0.021) }
+    private var textPanelWidth: CGFloat { item.isFeatured ? width * 0.505 : width * 0.57 }
+    private var imagePanelWidth: CGFloat { width - textPanelWidth }
+    private var ctaWidth: CGFloat {
+        if item.cta.count > 17 { return textPanelWidth * 0.78 }
+        return item.isFeatured ? textPanelWidth * 0.66 : textPanelWidth * 0.70
+    }
 
     var body: some View {
         ZStack(alignment: .leading) {
@@ -3515,11 +3713,11 @@ fileprivate struct FlawsTabFixCard: View {
                     }
 
                     Text(item.body)
-                        .shotiqBody(item.isFeatured ? width * 0.033 : width * 0.029, weight: .medium)
+                        .shotiqBody(item.isFeatured ? width * 0.032 : width * 0.027, weight: .semibold)
                         .foregroundStyle(ShotIQColor.ink)
                         .lineSpacing(2)
                         .lineLimit(3)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.7)
 
                     NavigationLink {
                         FlawDetailView(title: item.navigationFlaw.title,
@@ -3536,8 +3734,8 @@ fileprivate struct FlawsTabFixCard: View {
                         }
                         .shotiqDisplay(item.isFeatured ? width * 0.037 : width * 0.032)
                         .foregroundStyle(.white)
-                        .frame(width: item.cta.count > 15 ? width * 0.31 : width * 0.28,
-                               height: width * 0.06)
+                        .frame(width: ctaWidth,
+                               height: width * 0.061)
                         .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 5))
                     }
                     .buttonStyle(.plain)
@@ -3546,10 +3744,15 @@ fileprivate struct FlawsTabFixCard: View {
                 }
                 .padding(.leading, width * 0.045)
                 .padding(.vertical, width * 0.024)
-                .frame(width: width * 0.48, height: height, alignment: .topLeading)
+                .frame(width: textPanelWidth, height: height, alignment: .topLeading)
 
                 ZStack(alignment: .trailing) {
-                    FlawsTabAssetImage(assetName: item.imageAsset, alignment: .trailing)
+                    FlawsTabShotImageSlot(presentation: presentation,
+                                          assetName: item.imageAsset,
+                                          phase: item.phase,
+                                          height: height,
+                                          alignment: .trailing,
+                                          cornerRadius: 2)
                     LinearGradient(colors: [.white.opacity(0.96),
                                             .white.opacity(0.62),
                                             .white.opacity(0.02)],
@@ -3558,7 +3761,7 @@ fileprivate struct FlawsTabFixCard: View {
                         .frame(width: width * 0.2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: width * 0.52, height: height)
+                .frame(width: imagePanelWidth, height: height)
             }
         }
         .frame(width: width, height: height)
