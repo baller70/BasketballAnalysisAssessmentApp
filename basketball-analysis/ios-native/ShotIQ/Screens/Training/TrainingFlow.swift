@@ -2025,17 +2025,16 @@ struct WorkoutCalendarView: View {  // 059
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-workout-calendar") {
-            ZStack {
-                ScrollView {
-                    calendarOverviewPage
-                }
-                if showingCreateWorkoutModal {
-                    createWorkoutOverlay
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                }
+            ScrollView {
+                calendarOverviewPage
             }
         }
         .shotiqToast($toast)
+        .sheet(isPresented: $showingCreateWorkoutModal) {
+            createWorkoutModal
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .onAppear(perform: syncLatestWorkoutSelection)
     }
     private func syncLatestWorkoutSelection() {
@@ -2113,19 +2112,19 @@ struct WorkoutCalendarView: View {  // 059
         ShotIQCard {
             GeometryReader { geo in
                 let compact = geo.size.width < 520
-                let imageWidth = compact ? max(132, geo.size.width * 0.39) : geo.size.width * 0.37
-                let innerHeight: CGFloat = compact ? 354 : 410
-                HStack(spacing: compact ? 12 : 22) {
+                let imageWidth = compact ? max(108, geo.size.width * 0.30) : geo.size.width * 0.37
+                let innerHeight: CGFloat = compact ? 368 : 410
+                HStack(spacing: compact ? 10 : 22) {
                     CanonicalPhoto("059-visual-001",
                                    width: imageWidth,
                                    height: innerHeight,
                                    cornerRadius: 12,
-                                   alignment: .top)
+                                   alignment: compact ? .topTrailing : .top)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
-                    HStack(alignment: .top, spacing: compact ? 12 : 18) {
+                    HStack(alignment: .top, spacing: compact ? 9 : 18) {
                         Rectangle()
                             .fill(ShotIQColor.shotiqOrange)
-                            .frame(width: 3, height: compact ? 126 : 154)
+                            .frame(width: 3, height: compact ? 136 : 154)
                             .padding(.top, 8)
                         VStack(alignment: .leading, spacing: compact ? 10 : 14) {
                             VStack(alignment: .leading, spacing: compact ? -10 : -8) {
@@ -2146,8 +2145,8 @@ struct WorkoutCalendarView: View {  // 059
                                     .padding(.leading, 2)
                             }
                             HStack(spacing: 10) {
-                                calendarMiniStat(icon: "basketball", value: "15", label: "Makes")
-                                calendarMiniStat(icon: "xmark.circle", value: "9", label: "Misses")
+                                calendarMiniStat(icon: "basketball", value: "15", label: "Makes", compact: compact)
+                                calendarMiniStat(icon: "xmark.circle", value: "9", label: "Misses", compact: compact)
                             }
                             calendarTrendCard(compact: compact)
                         }
@@ -2156,7 +2155,7 @@ struct WorkoutCalendarView: View {  // 059
                 }
                 .padding(12)
             }
-            .frame(height: UIScreen.main.bounds.width < 600 ? 382 : 436)
+            .frame(height: UIScreen.main.bounds.width < 600 ? 402 : 436)
         }
     }
 
@@ -2472,15 +2471,15 @@ struct WorkoutCalendarView: View {  // 059
         return .none
     }
 
-    private func calendarMiniStat(icon: String, value: String, label: String) -> some View {
-        HStack(spacing: 8) {
+    private func calendarMiniStat(icon: String, value: String, label: String, compact: Bool) -> some View {
+        HStack(spacing: compact ? 6 : 8) {
             Image(systemName: icon)
-                .font(.system(size: 28, weight: .semibold))
+                .font(.system(size: compact ? 24 : 28, weight: .semibold))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
-                .frame(width: 30)
+                .frame(width: compact ? 26 : 30)
             VStack(alignment: .leading, spacing: 1) {
                 Text(value)
-                    .font(.custom("Tungsten-Medium", size: 42))
+                    .font(.custom("Tungsten-Medium", size: compact ? 38 : 42))
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
@@ -2491,8 +2490,8 @@ struct WorkoutCalendarView: View {  // 059
                     .minimumScaleFactor(0.62)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 70, alignment: .center)
-        .padding(.horizontal, 7)
+        .frame(maxWidth: .infinity, minHeight: compact ? 68 : 70, alignment: .center)
+        .padding(.horizontal, compact ? 6 : 7)
         .background(.white, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
@@ -2587,29 +2586,8 @@ struct WorkoutCalendarView: View {  // 059
         }
     }
 
-    private var createWorkoutOverlay: some View {
-        ZStack(alignment: .bottom) {
-            Color.black.opacity(0.40)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
-                        showingCreateWorkoutModal = false
-                    }
-                }
-            createWorkoutModal
-                .frame(width: min(UIScreen.main.bounds.width - 24, 960))
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-
     private var createWorkoutModal: some View {
         VStack(spacing: 0) {
-            Capsule()
-                .fill(ShotIQColor.graphite.opacity(0.45))
-                .frame(width: 62, height: 6)
-                .padding(.top, 10)
-                .padding(.bottom, 4)
             createWorkoutModalHeader
             ScrollView {
                 VStack(spacing: 12) {
@@ -2623,10 +2601,7 @@ struct WorkoutCalendarView: View {  // 059
             }
             createWorkoutActionBar
         }
-        .frame(maxHeight: UIScreen.main.bounds.height * 0.88)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 30))
-        .overlay(RoundedRectangle(cornerRadius: 30).stroke(ShotIQColor.rule, lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.22), radius: 28, x: 0, y: 16)
+        .background(Color.white)
         .accessibilityIdentifier("calendar-create-workout-modal")
     }
 
