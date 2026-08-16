@@ -3597,23 +3597,24 @@ fileprivate struct FlawsTabSummaryStrip: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            HStack(alignment: .top, spacing: width * 0.04) {
+            HStack(alignment: .top, spacing: width * 0.032) {
                 FlawsTabShotImageSlot(presentation: presentation,
                                       assetName: "flaws-tab-summary-thumb",
                                       phase: items.first?.phase ?? "RELEASE",
-                                      height: height * 0.68)
-                    .frame(width: height * 0.68, height: height * 0.68)
+                                      height: height * 0.62)
+                    .frame(width: height * 0.62, height: height * 0.62)
                     .clipShape(Circle())
 
                 Text("Your shot was analyzed and\n\(items.count) key flaws were identified.")
-                    .shotiqBody(width * 0.046, weight: .medium)
+                    .shotiqBody(width * 0.035, weight: .regular)
                     .foregroundStyle(ShotIQColor.ink)
-                    .lineSpacing(5)
+                    .lineSpacing(4)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.88)
+                    .minimumScaleFactor(0.78)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, width * 0.01)
+                    .layoutPriority(1)
+                    .padding(.top, width * 0.012)
 
                 VStack(spacing: -3) {
                     Text("\(items.count)")
@@ -3625,7 +3626,7 @@ fileprivate struct FlawsTabSummaryStrip: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                 }
-                .frame(width: width * 0.22, alignment: .center)
+                .frame(width: width * 0.23, alignment: .center)
             }
             .padding(.horizontal, width * 0.035)
             .padding(.top, width * 0.033)
@@ -3680,7 +3681,7 @@ fileprivate struct FlawsTabFixCard: View {
     let width: CGFloat
     let onOpen: (String) -> Void
 
-    private var height: CGFloat { width * 0.49 }
+    private var height: CGFloat { width * 0.54 }
     private var railWidth: CGFloat { max(8, width * 0.021) }
     private var textPanelWidth: CGFloat { width * 0.505 }
     private var imagePanelWidth: CGFloat { width - textPanelWidth }
@@ -3727,7 +3728,7 @@ fileprivate struct FlawsTabFixCard: View {
                     }
 
                     Text(item.body)
-                        .shotiqBody(width * 0.037, weight: .semibold)
+                        .shotiqBody(width * 0.035, weight: .semibold)
                         .foregroundStyle(ShotIQColor.ink)
                         .lineSpacing(2)
                         .lineLimit(3)
@@ -3746,7 +3747,7 @@ fileprivate struct FlawsTabFixCard: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: width * 0.026, weight: .heavy))
                         }
-                        .shotiqDisplay(width * 0.043)
+                        .shotiqDisplay(width * 0.039)
                         .foregroundStyle(.white)
                         .frame(width: ctaWidth,
                                height: width * 0.079)
@@ -3767,12 +3768,14 @@ fileprivate struct FlawsTabFixCard: View {
                                           height: height,
                                           alignment: .trailing,
                                           cornerRadius: 2)
-                    LinearGradient(colors: [.white.opacity(0.96),
-                                            .white.opacity(0.62),
-                                            .white.opacity(0.02)],
+                    LinearGradient(colors: [.white.opacity(1.0),
+                                            .white.opacity(0.98),
+                                            .white.opacity(0.82),
+                                            .white.opacity(0.34),
+                                            .white.opacity(0.0)],
                                    startPoint: .leading,
                                    endPoint: .trailing)
-                        .frame(width: width * 0.2)
+                        .frame(width: width * 0.32)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(width: imagePanelWidth, height: height)
