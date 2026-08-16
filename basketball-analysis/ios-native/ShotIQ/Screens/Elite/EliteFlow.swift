@@ -3626,9 +3626,9 @@ struct EliteShootersView: View {    // 052
                 let width = geo.size.width
                 let compact = width < 380
                 let innerWidth = max(0, width - 16)
-                let imageWidth = compact ? min(158, innerWidth * 0.42) : innerWidth * 0.43
+                let imageWidth = compact ? min(166, innerWidth * 0.44) : innerWidth * 0.43
                 let rightWidth = max(0, innerWidth - imageWidth - 8)
-                let topHeight: CGFloat = compact ? 402 : 430
+                let topHeight: CGFloat = compact ? 444 : 430
                 VStack(spacing: 10) {
                     HStack(alignment: .top, spacing: 8) {
                         eliteShooterImagePanel(phase: activePhase,
@@ -3637,17 +3637,17 @@ struct EliteShootersView: View {    // 052
                                                compact: compact)
                         VStack(spacing: 8) {
                             eliteIdentityTile(shooter: s, rank: rankNumber, compact: compact)
-                                .frame(height: compact ? 100 : 112)
+                                .frame(height: compact ? 112 : 112)
                             eliteMetricsTile(wsi: EliteShooterDetailData.wsiScore(s),
                                              threePct: s.careerThreePct ?? s.careerPct,
                                              fit: fit,
                                              compact: compact)
-                                .frame(height: compact ? 140 : 154)
+                                .frame(height: compact ? 158 : 154)
                             eliteComparisonTile(shooter: s,
                                                 elbow: elbowValue,
                                                 release: releaseValue,
                                                 compact: compact)
-                                .frame(height: compact ? 144 : 154)
+                                .frame(height: compact ? 158 : 154)
                         }
                         .frame(width: rightWidth)
                         .clipped()
@@ -3660,16 +3660,16 @@ struct EliteShootersView: View {    // 052
                     }
                     elitePhaseFilmstrip(activePhase: activePhase, shooterID: s.id, rank: rank, compact: compact)
                         .frame(width: innerWidth)
-                        .frame(height: compact ? 104 : 118)
+                        .frame(height: compact ? 122 : 118)
                 }
                 .padding(8)
                 .frame(width: width, alignment: .leading)
                 .clipped()
             }
-            .frame(height: UIScreen.main.bounds.width < 600 ? 542 : 578)
+            .frame(height: UIScreen.main.bounds.width < 600 ? 600 : 578)
         }
         .overlay(RoundedRectangle(cornerRadius: 12)
-            .stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4))
+            .stroke(ShotIQColor.shotiqOrange, lineWidth: 2))
     }
 
     private func eliteShooterImagePanel(phase: String, height: CGFloat, width: CGFloat, compact: Bool) -> some View {
@@ -3690,27 +3690,27 @@ struct EliteShootersView: View {    // 052
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(shooter.name.uppercased())
-                    .shotiqDisplay(compact ? 22 : 30)
+                    .shotiqDisplay(compact ? 29 : 30)
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.38)
+                    .minimumScaleFactor(0.34)
                     .accessibilityIdentifier("elite-card-name-\(shooter.id)")
                 HStack(spacing: 4) {
                     Text("RIGHT-HANDED")
                     Circle().fill(ShotIQColor.shotiqOrange).frame(width: 3, height: 3)
                     Text(shortPosition(shooter.position).uppercased())
                 }
-                .shotiqBody(compact ? 6.5 : 8.5, weight: .black)
+                .shotiqBody(compact ? 8.2 : 8.5, weight: .black)
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.36)
+                .minimumScaleFactor(0.32)
                 Text(shooter.team.uppercased())
-                    .shotiqBody(compact ? 8 : 10, weight: .bold)
+                    .shotiqBody(compact ? 10 : 10, weight: .bold)
                     .foregroundStyle(ShotIQColor.graphite)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.45)
+                    .minimumScaleFactor(0.34)
                 Text(shooter.league.uppercased())
-                    .shotiqBody(compact ? 8 : 10, weight: .bold)
+                    .shotiqBody(compact ? 10 : 10, weight: .bold)
                     .foregroundStyle(ShotIQColor.graphite)
                     .lineLimit(1)
             }
@@ -3724,13 +3724,13 @@ struct EliteShootersView: View {    // 052
                     .foregroundStyle(ShotIQColor.ink)
                     .lineLimit(1)
                 Text("\(rank)")
-                    .font(.custom("Tungsten-Medium", size: compact ? 46 : 60))
+                    .font(.custom("Tungsten-Medium", size: compact ? 61 : 60))
                     .foregroundStyle(ShotIQColor.shotiqOrange)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: compact ? 22 : 28, height: 2)
+                Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: compact ? 28 : 28, height: 2)
             }
-            .frame(width: compact ? 40 : 52)
+            .frame(width: compact ? 48 : 52)
         }
         .background(Color.white, in: RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(ShotIQColor.rule))
@@ -3741,19 +3741,19 @@ struct EliteShootersView: View {    // 052
         let three = Int(round(threePct ?? 33))
         return VStack(spacing: compact ? 5 : 7) {
             HStack(spacing: 0) {
-                eliteDarkMetric(label: "WSI", value: "\(wsi)", color: .white, size: compact ? 47 : 66)
-                Rectangle().fill(.white.opacity(0.58)).frame(width: 1, height: compact ? 48 : 62)
-                eliteDarkMetric(label: "3P%", value: "\(three)%", color: ShotIQColor.shotiqOrange, size: compact ? 40 : 56)
+                eliteDarkMetric(label: "WSI", value: "\(wsi)", color: .white, size: compact ? 61 : 66)
+                Rectangle().fill(.white.opacity(0.58)).frame(width: 1, height: compact ? 62 : 62)
+                eliteDarkMetric(label: "3P%", value: "\(three)%", color: ShotIQColor.shotiqOrange, size: compact ? 52 : 56)
             }
             Rectangle().fill(.white.opacity(0.68)).frame(height: 1)
             HStack(alignment: .lastTextBaseline, spacing: 6) {
                 Text("\(fit)%")
-                    .font(.custom("Tungsten-Medium", size: compact ? 51 : 68))
+                    .font(.custom("Tungsten-Medium", size: compact ? 70 : 68))
                     .foregroundStyle(ShotIQColor.shotiqOrange)
                     .lineLimit(1)
                     .minimumScaleFactor(0.55)
                 Text("FIT")
-                    .font(.custom("Tungsten-Medium", size: compact ? 35 : 48))
+                    .font(.custom("Tungsten-Medium", size: compact ? 45 : 48))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.55)
@@ -3793,7 +3793,8 @@ struct EliteShootersView: View {    // 052
         let eliteWingspan = estimatedWingspan(for: shooter)
         return VStack(alignment: .leading, spacing: 6) {
             Text("PROFILE COMPARISON")
-                .shotiqMicroCaps()
+                .shotiqBody(compact ? 10 : 11, weight: .black)
+                .kerning(0.3)
                 .foregroundStyle(ShotIQColor.ink)
             Rectangle().fill(ShotIQColor.rule).frame(height: 1)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
@@ -3814,17 +3815,18 @@ struct EliteShootersView: View {    // 052
     private func eliteComparisonMetric(_ label: String, _ value: String, compact: Bool) -> some View {
         VStack(spacing: 1) {
             Text(label)
-                .shotiqMicroCaps()
+                .shotiqBody(compact ? 8 : 9, weight: .black)
+                .kerning(0.15)
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.34)
+                .minimumScaleFactor(0.28)
             Text(value)
-                .font(.custom("Tungsten-Medium", size: compact ? 21 : 27))
+                .font(.custom("Tungsten-Medium", size: compact ? 32 : 27))
                 .foregroundStyle(ShotIQColor.shotiqOrange)
                 .lineLimit(1)
-                .minimumScaleFactor(0.52)
+                .minimumScaleFactor(0.38)
         }
-        .frame(maxWidth: .infinity, minHeight: compact ? 43 : 48)
+        .frame(maxWidth: .infinity, minHeight: compact ? 52 : 48)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(width: 1), alignment: .trailing)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
     }
@@ -3832,7 +3834,8 @@ struct EliteShootersView: View {    // 052
     private func elitePhaseFilmstrip(activePhase: String, shooterID: Int, rank: Int, compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("SHOT PHASE PROFILE")
-                .shotiqMicroCaps()
+                .shotiqBody(compact ? 10 : 11, weight: .black)
+                .kerning(0.3)
                 .foregroundStyle(.white)
             HStack(spacing: 5) {
                 ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW"], id: \.self) { phase in
@@ -3854,7 +3857,7 @@ struct EliteShootersView: View {    // 052
         VStack(spacing: 4) {
             ZStack {
                 CanonicalPhoto(elitePhasePhotoKey(phase),
-                               height: compact ? 44 : 52,
+                               height: compact ? 58 : 52,
                                cornerRadius: 4,
                                alignment: .top)
                 SkeletonOverlay(showJoints: true,
@@ -3868,7 +3871,7 @@ struct EliteShootersView: View {    // 052
                 .stroke(isActive ? ShotIQColor.shotiqOrange : Color.clear,
                         lineWidth: isActive ? 2 : 0))
             Text(phase)
-                .shotiqBody(compact ? 7 : 8, weight: .black)
+                .shotiqBody(compact ? 8.5 : 8, weight: .black)
                 .kerning(0.2)
                 .foregroundStyle(isActive ? ShotIQColor.shotiqOrange : .white)
                 .lineLimit(1)
