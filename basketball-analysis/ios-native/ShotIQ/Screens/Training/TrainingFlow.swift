@@ -495,7 +495,7 @@ struct TrainingHomeView: View {     // 054
                         HStack(spacing: 10) {
                             optionCard("calendar", "Calendar", WorkoutCalendarView())
                             optionCard("target", "Goals", GoalsView())
-                            optionCard("chart.line.uptrend.xyaxis", "History", AnalyticsCardsView())
+                            optionCard("chart.line.uptrend.xyaxis", "Progress", AnalyticsCardsView())
                         }
                         .padding(.top, 12)
 
