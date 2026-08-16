@@ -876,9 +876,9 @@ struct AnalyzeHubView: View {       // 021
     private func v5RecentCaptures(width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                SectionLabel(text: "RECENT CAPTURES")
+                SectionLabel(text: "UPLOAD HISTORY")
                 Spacer()
-                NavigationLink { UploadQueueView() } label: {
+                NavigationLink { MyMediaView() } label: {
                     Text("VIEW ALL")
                         .shotiqDisplay(18)
                         .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -886,7 +886,7 @@ struct AnalyzeHubView: View {       // 021
                 }
                 .buttonStyle(.plain)
                 .simultaneousGesture(TapGesture().onEnded {
-                    toast = .info("Opening upload queue", "Queued media and retries are there.")
+                    toast = .info("Opening upload history", "Your saved media and analysis history are there.")
                 })
             }
             ForEach(v5Recents) { item in
