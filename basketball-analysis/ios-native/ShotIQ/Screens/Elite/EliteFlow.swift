@@ -3172,6 +3172,147 @@ private enum EliteShooterDrawer: Identifiable {
     }
 }
 
+fileprivate struct EliteShooterDetailRoute: Identifiable, Hashable {
+    let shooter: EliteShooterDTO
+    let rank: Int
+
+    var id: Int { shooter.id }
+
+    static func == (lhs: EliteShooterDetailRoute, rhs: EliteShooterDetailRoute) -> Bool {
+        lhs.id == rhs.id && lhs.rank == rhs.rank
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(rank)
+    }
+}
+
+fileprivate struct EliteShooterPoseOverlay: View {
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let joints = [
+                CGPoint(x: 0.42, y: 0.94), CGPoint(x: 0.46, y: 0.74),
+                CGPoint(x: 0.47, y: 0.56), CGPoint(x: 0.52, y: 0.37),
+                CGPoint(x: 0.66, y: 0.28), CGPoint(x: 0.68, y: 0.15),
+                CGPoint(x: 0.75, y: 0.12)
+            ]
+            ZStack {
+                Path { path in
+                    path.move(to: CGPoint(x: w * 0.29, y: h * 0.00))
+                    path.addLine(to: CGPoint(x: w * 0.29, y: h * 1.00))
+                }
+                .stroke(.white.opacity(0.78), style: StrokeStyle(lineWidth: 1.2, dash: [6, 6]))
+
+                Path { path in
+                    path.move(to: CGPoint(x: w * 0.42, y: h * 0.94))
+                    path.addLine(to: CGPoint(x: w * 0.46, y: h * 0.74))
+                    path.addLine(to: CGPoint(x: w * 0.47, y: h * 0.56))
+                    path.addLine(to: CGPoint(x: w * 0.52, y: h * 0.37))
+                    path.addLine(to: CGPoint(x: w * 0.66, y: h * 0.28))
+                    path.addLine(to: CGPoint(x: w * 0.68, y: h * 0.15))
+                }
+                .stroke(.white, style: StrokeStyle(lineWidth: 3.0, lineCap: .round, lineJoin: .round))
+
+                Path { path in
+                    path.move(to: CGPoint(x: w * 0.63, y: h * 0.36))
+                    path.addLine(to: CGPoint(x: w * 0.70, y: h * 0.29))
+                    path.addLine(to: CGPoint(x: w * 0.75, y: h * 0.15))
+                }
+                .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
+
+                Path { path in
+                    path.move(to: CGPoint(x: w * 0.63, y: h * 0.14))
+                    path.addCurve(to: CGPoint(x: w * 0.78, y: h * 0.52),
+                                  control1: CGPoint(x: w * 0.82, y: h * 0.18),
+                                  control2: CGPoint(x: w * 0.88, y: h * 0.35))
+                }
+                .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 1.8, dash: [7, 6]))
+
+                Path { path in
+                    path.move(to: CGPoint(x: w * 0.28, y: h * 0.58))
+                    path.addLine(to: CGPoint(x: w * 0.52, y: h * 0.58))
+                }
+                .stroke(.white.opacity(0.9), style: StrokeStyle(lineWidth: 1.2, dash: [6, 5]))
+
+                ForEach(joints.indices, id: \.self) { index in
+                    let point = joints[index]
+                    Circle()
+                        .fill(ShotIQColor.shotiqOrange)
+                        .frame(width: 10, height: 10)
+                        .overlay(Circle().stroke(.white, lineWidth: 2))
+                        .position(x: point.x * w, y: point.y * h)
+                }
+
+                Text("159°")
+                    .shotiqBody(11, weight: .black)
+                    .foregroundStyle(.white)
+                    .position(x: w * 0.42, y: h * 0.18)
+                Text("50°")
+                    .shotiqBody(11, weight: .black)
+                    .foregroundStyle(Color(red: 0.98, green: 0.76, blue: 0.36))
+                    .position(x: w * 0.80, y: h * 0.17)
+                Text("-32°")
+                    .shotiqBody(11, weight: .black)
+                    .foregroundStyle(Color(red: 0.98, green: 0.76, blue: 0.36))
+                    .position(x: w * 0.13, y: h * 0.44)
+                Text("0°")
+                    .shotiqBody(11, weight: .black)
+                    .foregroundStyle(.white)
+                    .position(x: w * 0.53, y: h * 0.56)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+fileprivate struct EliteDarkContourTexture: View {
+    var body: some View {
+        GeometryReader { geo in
+            Canvas { ctx, size in
+                for i in 0..<7 {
+                    var path = Path()
+                    let inset = CGFloat(i) * 13
+                    path.addRoundedRect(in: CGRect(x: inset - 28,
+                                                   y: inset - 22,
+                                                   width: size.width - inset * 0.9 + 42,
+                                                   height: size.height - inset * 1.1 + 36),
+                                        cornerSize: CGSize(width: 28, height: 28))
+                    ctx.stroke(path, with: .color(.white.opacity(0.08)), lineWidth: 0.7)
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+}
+
+fileprivate struct EliteFilmPerforation: View {
+    var body: some View {
+        VStack {
+            HStack(spacing: 5) {
+                ForEach(0..<9, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(.black.opacity(0.72))
+                        .frame(width: 5, height: 5)
+                }
+            }
+            Spacer()
+            HStack(spacing: 5) {
+                ForEach(0..<9, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(.black.opacity(0.72))
+                        .frame(width: 5, height: 5)
+                }
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 3)
+        .allowsHitTesting(false)
+    }
+}
+
 struct EliteShootersView: View {    // 052
     /// Canonical list-row crops, in the top-to-bottom order they appear on the
     /// 853x1844 render. The fifth row is cut off there, so it has no crop.
@@ -3187,6 +3328,8 @@ struct EliteShootersView: View {    // 052
     @State private var sortKey = "WSI"
     @State private var activeDrawer: EliteShooterDrawer?
     @State private var info: EliteInfoNote?
+    @State private var detailRoute: EliteShooterDetailRoute?
+    @State private var activePhaseByShooter: [Int: String] = [:]
     @AppStorage("profileHeightIn") private var heightIn = 75
     @AppStorage("profileWingspanIn") private var wingspanIn = 77
     @AppStorage("profileWeightLbs") private var weightLbs = 185
@@ -3324,14 +3467,9 @@ struct EliteShootersView: View {    // 052
                             .padding(.top, 14)
                         }
                         ForEach(Array(filtered.enumerated()), id: \.element.id) { i, s in
-                            NavigationLink { EliteShooterDetailView(shooter: s, rank: i + 1, catalog: vm.shooters) } label: {
-                                shooterCard(s, rank: i)
-                            }
-                            .simultaneousGesture(TapGesture().onEnded {
-                                selectedShooterID = s.id
-                            })
-                            .accessibilityIdentifier("elite-shooter-row-\(s.id)")
-                            .padding(.top, 12)
+                            shooterCard(s, rank: i)
+                                .accessibilityIdentifier("elite-shooter-row-\(s.id)")
+                                .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
                             ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-ui-training-goal",
@@ -3371,6 +3509,9 @@ struct EliteShootersView: View {    // 052
             await vm.load()
         }
         .eliteInfoAlert($info)
+        .navigationDestination(item: $detailRoute) { route in
+            EliteShooterDetailView(shooter: route.shooter, rank: route.rank, catalog: vm.shooters)
+        }
         .sheet(item: $activeDrawer) { drawer in
             drawerView(for: drawer)
                 .presentationDetents([.medium, .large])
@@ -3473,113 +3614,275 @@ struct EliteShootersView: View {    // 052
     private func shooterCard(_ s: EliteShooterDTO, rank: Int) -> some View {
         let detail = EliteShooterDetailData.make(shooter: s)
         let rankNumber = rank + 1
-        let match = profileMatchScore(for: s)
-        let eliteWingspan = estimatedWingspan(for: s)
+        let fit = profileMatchScore(for: s)
         let releaseValue = detail.mechanics.indices.contains(2) ? detail.mechanics[2].value : "--"
         let elbowValue = detail.mechanics.indices.contains(0) ? detail.mechanics[0].value : "--"
-        let balanceValue = detail.mechanics.indices.contains(3) ? detail.mechanics[3].value : "--"
+        let activePhase = activePhaseByShooter[s.id] ?? "RELEASE"
         return ShotIQCard {
-            ZStack(alignment: .topTrailing) {
-                Text("\(rankNumber)")
-                    .font(.custom("Tungsten-Medium", size: 138))
-                    .foregroundStyle(ShotIQColor.shotiqOrange.opacity(0.055))
-                    .padding(.trailing, 14)
-                    .padding(.top, 8)
-                    .allowsHitTesting(false)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .top, spacing: 12) {
-                        Group {
-                            if rank < Self.cardPhotoKeys.count {
-                                CanonicalPhoto(Self.cardPhotoKeys[rank], width: 108, height: 136, cornerRadius: 6)
-                            } else {
-                                RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.rule)
-                                    .frame(width: 108, height: 136)
-                                    .overlay(Text(String(s.name.prefix(1)))
-                                        .shotiqBody(28, weight: .bold).foregroundStyle(ShotIQColor.graphite))
-                            }
+            GeometryReader { geo in
+                let width = geo.size.width
+                let compact = width < 380
+                let topHeight: CGFloat = compact ? 402 : 430
+                VStack(spacing: 10) {
+                    HStack(alignment: .top, spacing: 8) {
+                        eliteShooterImagePanel(phase: activePhase,
+                                               height: topHeight,
+                                               width: width * 0.43)
+                        VStack(spacing: 8) {
+                            eliteIdentityTile(shooter: s, rank: rankNumber)
+                                .frame(height: compact ? 100 : 112)
+                            eliteMetricsTile(wsi: EliteShooterDetailData.wsiScore(s),
+                                             threePct: s.careerThreePct ?? s.careerPct,
+                                             fit: fit)
+                                .frame(height: compact ? 140 : 154)
+                            eliteComparisonTile(shooter: s,
+                                                elbow: elbowValue,
+                                                release: releaseValue)
+                                .frame(height: compact ? 144 : 154)
                         }
-                        .clipped()
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(alignment: .top, spacing: 8) {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(s.name.uppercased()).shotiqDisplay(31)
-                                        .foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(2)
-                                        .minimumScaleFactor(0.58)
-                                    Text("Right-handed - \(s.position)").shotiqBody(10, weight: .semibold)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                        .lineLimit(1).minimumScaleFactor(0.72)
-                                    Text(s.team).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                                        .lineLimit(1).minimumScaleFactor(0.72)
-                                    Text(s.league).shotiqBody(10, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(1)
-                                }
-                                Spacer(minLength: 4)
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                    .padding(.top, 4)
-                            }
-
-                            HStack(spacing: 0) {
-                                eliteStat("RANK", "\(rankNumber)", ShotIQColor.shotiqOrange)
-                                VRule(height: 42)
-                                eliteStat("WSI", "\(EliteShooterDetailData.wsiScore(s))", ShotIQColor.ink)
-                                VRule(height: 42)
-                                eliteStat("MATCH", "\(match)%", ShotIQColor.shotiqOrange, valueSize: 34)
-                            }
-                        }
+                        .frame(maxWidth: .infinity)
                     }
-
-                    VStack(alignment: .leading, spacing: 7) {
-                        HStack {
-                            Text("PROFILE COMPARISON").shotiqMicroCaps()
-                                .foregroundStyle(ShotIQColor.graphite)
-                            Spacer()
-                            Text("\(match)% FIT")
-                                .font(.custom("Tungsten-Medium", size: 30))
-                                .foregroundStyle(ShotIQColor.shotiqOrange)
-                                .lineLimit(1)
-                        }
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
-                            matrixCell("YOUR HEIGHT", inchesText(heightIn), "WS \(wingspanDeltaText(wingspanIn - heightIn))")
-                            matrixCell("ELITE HEIGHT", inchesText(s.height), "\(s.weight) LB")
-                            matrixCell("SIZE GAP", heightGapText(user: heightIn, elite: s.height), wingspanGapText(user: wingspanIn, elite: eliteWingspan))
-                            matrixCell("WEIGHT GAP", weightGapText(user: weightLbs, elite: s.weight), "ELITE \(s.weight) LB")
-                            matrixCell("ELBOW", elbowValue, "STACK ANGLE")
-                            matrixCell("RELEASE", releaseValue, "BALANCE \(balanceValue)")
-                        }
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedShooterID = s.id
+                        detailRoute = EliteShooterDetailRoute(shooter: s, rank: rankNumber)
                     }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text("SHOT PHASE PROFILE").shotiqMicroCaps()
-                                .foregroundStyle(ShotIQColor.graphite)
-                            Spacer()
-                            Text("RELEASE FRAME")
-                                .shotiqBody(8, weight: .black)
-                                .kerning(0.35)
-                                .foregroundStyle(ShotIQColor.graphite)
-                        }
-                        HStack(spacing: 5) {
-                            elitePhaseMini("SETUP", rank: rank, isActive: false)
-                            elitePhaseMini("LOAD", rank: rank, isActive: false)
-                            elitePhaseMini("RISE", rank: rank, isActive: false)
-                            elitePhaseMini("RELEASE", rank: rank, isActive: true)
-                            elitePhaseMini("FOLLOW", rank: rank, isActive: false)
-                        }
-                    }
+                    elitePhaseFilmstrip(activePhase: activePhase, shooterID: s.id, rank: rank)
+                        .frame(height: compact ? 104 : 118)
                 }
-                .padding(12)
+                .padding(8)
+            }
+            .frame(height: UIScreen.main.bounds.width < 600 ? 542 : 578)
+        }
+        .overlay(RoundedRectangle(cornerRadius: 12)
+            .stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4))
+    }
+
+    private func eliteShooterImagePanel(phase: String, height: CGFloat, width: CGFloat) -> some View {
+        ZStack {
+            CanonicalPhoto(elitePhasePhotoKey(phase),
+                           width: width,
+                           height: height,
+                           cornerRadius: 9,
+                           contentMode: .fill,
+                           alignment: .top)
+            EliteShooterPoseOverlay()
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 9))
+    }
+
+    private func eliteIdentityTile(shooter: EliteShooterDTO, rank: Int) -> some View {
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(shooter.name.uppercased())
+                    .shotiqDisplay(30)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.45)
+                    .accessibilityIdentifier("elite-card-name-\(shooter.id)")
+                HStack(spacing: 4) {
+                    Text("RIGHT-HANDED")
+                    Circle().fill(ShotIQColor.shotiqOrange).frame(width: 3, height: 3)
+                    Text(shortPosition(shooter.position).uppercased())
+                }
+                .shotiqBody(8.5, weight: .black)
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.48)
+                Text(shooter.team.uppercased())
+                    .shotiqBody(10, weight: .bold)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Text(shooter.league.uppercased())
+                    .shotiqBody(10, weight: .bold)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+            }
+            .padding(.leading, 9)
+            .padding(.trailing, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1)
+            VStack(spacing: 1) {
+                Text("RANK")
+                    .shotiqMicroCaps()
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                Text("\(rank)")
+                    .font(.custom("Tungsten-Medium", size: 60))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 28, height: 2)
+            }
+            .frame(width: 52)
+        }
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 9))
+        .overlay(RoundedRectangle(cornerRadius: 9).stroke(ShotIQColor.rule))
+        .accessibilityLabel("\(shooter.name) rank \(rank)")
+    }
+
+    private func eliteMetricsTile(wsi: Int, threePct: Double?, fit: Int) -> some View {
+        let three = Int(round(threePct ?? 33))
+        return VStack(spacing: 7) {
+            HStack(spacing: 0) {
+                eliteDarkMetric(label: "WSI", value: "\(wsi)", color: .white, size: 66)
+                Rectangle().fill(.white.opacity(0.58)).frame(width: 1, height: 62)
+                eliteDarkMetric(label: "3P%", value: "\(three)%", color: ShotIQColor.shotiqOrange, size: 56)
+            }
+            Rectangle().fill(.white.opacity(0.68)).frame(height: 1)
+            HStack(alignment: .lastTextBaseline, spacing: 6) {
+                Text("\(fit)%")
+                    .font(.custom("Tungsten-Medium", size: 68))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                Text("FIT")
+                    .font(.custom("Tungsten-Medium", size: 48))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .background {
+            ZStack {
+                LinearGradient(colors: [Color(red: 0.02, green: 0.05, blue: 0.08),
+                                        Color(red: 0.03, green: 0.08, blue: 0.12)],
+                               startPoint: .topLeading,
+                               endPoint: .bottomTrailing)
+                EliteDarkContourTexture().opacity(0.35)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+        }
+        .accessibilityLabel("WSI \(wsi), three point percentage \(three) percent, fit score \(fit) percent")
+    }
+
+    private func eliteDarkMetric(label: String, value: String, color: Color, size: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Text(label)
+                .shotiqMicroCaps()
+                .foregroundStyle(.white)
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: size))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.48)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func eliteComparisonTile(shooter: EliteShooterDTO, elbow: String, release: String) -> some View {
+        let eliteWingspan = estimatedWingspan(for: shooter)
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("PROFILE COMPARISON")
+                .shotiqMicroCaps()
+                .foregroundStyle(ShotIQColor.ink)
+            Rectangle().fill(ShotIQColor.rule).frame(height: 1)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
+                eliteComparisonMetric("YOUR HEIGHT", inchesText(heightIn))
+                eliteComparisonMetric("ELITE HEIGHT", inchesText(shooter.height))
+                eliteComparisonMetric("SIZE GAP", heightGapText(user: heightIn, elite: shooter.height))
+                eliteComparisonMetric("WEIGHT GAP", weightGapText(user: weightLbs, elite: shooter.weight))
+                eliteComparisonMetric("ELBOW", elbow)
+                eliteComparisonMetric("RELEASE", release)
             }
         }
-        .overlay(RoundedRectangle(cornerRadius: 8)
-            .stroke(ShotIQColor.shotiqOrange.opacity(0.28), lineWidth: 1.2))
+        .padding(8)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 9))
+        .overlay(RoundedRectangle(cornerRadius: 9).stroke(ShotIQColor.rule))
+        .accessibilityLabel("Profile comparison. Wingspan estimate \(inchesText(eliteWingspan))")
+    }
+
+    private func eliteComparisonMetric(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 1) {
+            Text(label)
+                .shotiqMicroCaps()
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.48)
+            Text(value)
+                .font(.custom("Tungsten-Medium", size: 27))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.52)
+        }
+        .frame(maxWidth: .infinity, minHeight: 48)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(width: 1), alignment: .trailing)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+    }
+
+    private func elitePhaseFilmstrip(activePhase: String, shooterID: Int, rank: Int) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("SHOT PHASE PROFILE")
+                .shotiqMicroCaps()
+                .foregroundStyle(.white)
+            HStack(spacing: 5) {
+                ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW"], id: \.self) { phase in
+                    Button {
+                        activePhaseByShooter[shooterID] = phase
+                    } label: {
+                        elitePhaseFrame(phase, isActive: activePhase == phase)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(phase.capitalized) phase\(activePhase == phase ? " selected" : "")")
+                }
+            }
+        }
+        .padding(8)
+        .background(Color(red: 0.02, green: 0.05, blue: 0.08), in: RoundedRectangle(cornerRadius: 9))
+    }
+
+    private func elitePhaseFrame(_ phase: String, isActive: Bool) -> some View {
+        VStack(spacing: 4) {
+            ZStack {
+                CanonicalPhoto(elitePhasePhotoKey(phase),
+                               height: 52,
+                               cornerRadius: 4,
+                               alignment: .top)
+                SkeletonOverlay(showJoints: true,
+                                boneColor: .white,
+                                jointColor: ShotIQColor.shotiqOrange)
+                    .opacity(0.52)
+                EliteFilmPerforation()
+                    .opacity(0.75)
+            }
+            .overlay(RoundedRectangle(cornerRadius: 5)
+                .stroke(isActive ? ShotIQColor.shotiqOrange : Color.clear,
+                        lineWidth: isActive ? 2 : 0))
+            Text(phase)
+                .shotiqBody(8, weight: .black)
+                .kerning(0.2)
+                .foregroundStyle(isActive ? ShotIQColor.shotiqOrange : .white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+            Rectangle()
+                .fill(isActive ? ShotIQColor.shotiqOrange : Color.clear)
+                .frame(width: 32, height: 2)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func elitePhasePhotoKey(_ phase: String) -> String {
+        switch phase {
+        case "SETUP": return "041-visual-001"
+        case "LOAD": return "041-visual-002"
+        case "RISE": return "041-visual-003"
+        case "RELEASE": return "041-visual-002"
+        default: return "041-visual-004"
+        }
+    }
+
+    private func shortPosition(_ position: String) -> String {
+        let cleaned = position.replacingOccurrences(of: "_", with: " ")
+        if cleaned.localizedCaseInsensitiveContains("small forward") { return "Small Forward" }
+        if cleaned.localizedCaseInsensitiveContains("shooting guard") { return "Shooting Guard" }
+        if cleaned.localizedCaseInsensitiveContains("point guard") { return "Point Guard" }
+        if cleaned.localizedCaseInsensitiveContains("power forward") { return "Power Forward" }
+        return cleaned
     }
 
     private func matrixCell(_ label: String, _ primary: String, _ secondary: String) -> some View {
