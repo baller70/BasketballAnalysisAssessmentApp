@@ -54,7 +54,7 @@ targets:
         SDKROOT: iphoneos
         SWIFT_VERSION: "5.0"
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "45"
+        CURRENT_PROJECT_VERSION: "46"
         CODE_SIGN_IDENTITY: iPhone Developer
         # Device installs must launch from the home screen without depending on
         # a debugger-oriented split executable/debug dylib product.

@@ -3146,7 +3146,14 @@ fileprivate struct PlayerFlawReferenceMetricCard: View {
     }
 
     private var baseSize: CGSize {
-        metric.id == "release-height" ? CGSize(width: 882, height: 1532) : CGSize(width: 908, height: 1504)
+        switch metric.id {
+        case "release-height":
+            return CGSize(width: 882, height: 1532)
+        case "release-offset":
+            return CGSize(width: 917, height: 667)
+        default:
+            return CGSize(width: 908, height: 1504)
+        }
     }
 
     private var displayHeight: CGFloat {
@@ -3176,8 +3183,21 @@ fileprivate struct PlayerFlawReferenceHero: View {
     let sourceDisplayHeight: CGFloat
 
     private var scale: CGFloat { displayWidth / baseSize.width }
-    private var heroBaseHeight: CGFloat { metric.id == "release-height" ? 646 : 650 }
+    private var heroBaseHeight: CGFloat {
+        switch metric.id {
+        case "release-height": return 636
+        case "release-offset": return 667
+        case "elbow-angle", "wrist-angle": return 576
+        default: return 650
+        }
+    }
     private var heroHeight: CGFloat { heroBaseHeight * scale }
+    private var usesComposedHeaderAsset: Bool {
+        metric.id == "release-offset"
+    }
+    private var usesCleanCodedHero: Bool {
+        ["elbow-angle", "wrist-angle", "centerline", "release-height"].contains(metric.id)
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -3188,30 +3208,38 @@ fileprivate struct PlayerFlawReferenceHero: View {
                 .frame(width: displayWidth, height: heroHeight, alignment: .top)
                 .clipped()
 
-            heroTextBackplates
-            heroCopy
-            heroMeasurementCopy
+            if !usesComposedHeaderAsset {
+                heroTextBackplates
+                heroCopy
+                heroMeasurementCopy
+            }
         }
-        .frame(width: displayWidth, height: heroHeight)
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
+    @ViewBuilder
     private var heroTextBackplates: some View {
+        if usesCleanCodedHero {
+            EmptyView()
+        } else {
         let s = scale
-        return ZStack(alignment: .topLeading) {
-            textBackplate(x: 235, y: 74, width: 390, height: 72, radius: 6, opacity: 0.74)
-            textBackplate(x: 143, y: 126, width: 188, height: 48, radius: 8, opacity: 0.74)
-            textBackplate(x: 154, y: valueY - 2, width: 250, height: 150, radius: 4, opacity: 0.72)
-            textBackplate(x: targetValueX + 18, y: targetValueY, width: metric.id == "centerline" ? 265 : 255, height: 122, radius: 4, opacity: 0.72)
-            textBackplate(x: metric.overlayType == .centerline ? 268 : 285,
-                          y: metric.overlayType == .centerline ? 420 : insightY,
-                          width: metric.overlayType == .centerline ? 430 : 500,
-                          height: metric.overlayType == .releaseHeight ? 142 : 120,
-                          radius: 8,
-                          opacity: 0.70)
+            ZStack(alignment: .topLeading) {
+                textBackplate(x: 235, y: 74, width: 390, height: 72, radius: 6, opacity: 0.74, scale: s)
+                textBackplate(x: 143, y: 126, width: 188, height: 48, radius: 8, opacity: 0.74, scale: s)
+                textBackplate(x: 154, y: valueY - 2, width: 250, height: 150, radius: 4, opacity: 0.72, scale: s)
+                textBackplate(x: targetValueX + 18, y: targetValueY, width: metric.id == "centerline" ? 265 : 255, height: 122, radius: 4, opacity: 0.72, scale: s)
+                textBackplate(x: metric.overlayType == .centerline ? 268 : 285,
+                              y: metric.overlayType == .centerline ? 420 : insightY,
+                              width: metric.overlayType == .centerline ? 430 : 500,
+                              height: 120,
+                              radius: 8,
+                              opacity: 0.70,
+                              scale: s)
+            }
+            .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
+            .allowsHitTesting(false)
         }
-        .frame(width: baseSize.width, height: heroBaseHeight, alignment: .topLeading)
-        .scaleEffect(x: s, y: s, anchor: .topLeading)
     }
 
     private func textBackplate(x: CGFloat,
@@ -3219,20 +3247,31 @@ fileprivate struct PlayerFlawReferenceHero: View {
                                width: CGFloat,
                                height: CGFloat,
                                radius: CGFloat,
-                               opacity: Double) -> some View {
+                               opacity: Double,
+                               scale: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: radius)
             .fill(LinearGradient(colors: [
                 Color(red: 0.012, green: 0.035, blue: 0.073).opacity(opacity),
                 Color(red: 0.012, green: 0.035, blue: 0.073).opacity(opacity * 0.76),
                 Color(red: 0.012, green: 0.035, blue: 0.073).opacity(opacity * 0.22)
             ], startPoint: .leading, endPoint: .trailing))
-            .frame(width: width, height: height)
-            .position(x: x, y: y)
+            .frame(width: width * scale, height: height * scale)
+            .position(x: x * scale, y: y * scale)
     }
 
+    @ViewBuilder
     private var heroCopy: some View {
         let s = scale
-        return ZStack(alignment: .topLeading) {
+        if metric.id == "release-height" {
+            releaseHeightHeroCopy(scale: s)
+        } else if metric.id == "elbow-angle" {
+            elbowAngleHeroCopy(scale: s)
+        } else if metric.id == "wrist-angle" {
+            wristAngleHeroCopy(scale: s)
+        } else if usesCleanCodedHero {
+            codedReferenceHeroCopy(scale: s)
+        } else {
+            ZStack(alignment: .topLeading) {
             Text(metric.title.uppercased())
                 .shotiqDisplay((metric.id == "release-height" ? 44 : 47) * s)
                 .foregroundStyle(.white)
@@ -3304,13 +3343,261 @@ fileprivate struct PlayerFlawReferenceHero: View {
                     .frame(width: insightWidth * s, alignment: .leading)
                     .position(x: insightTextX * s, y: insightY * s)
             }
+            }
+            .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
+            .allowsHitTesting(false)
         }
+    }
+
+    private func releaseHeightHeroCopy(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text(metric.title.uppercased())
+                .shotiqDisplay(55 * s)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 354 * s, height: 57 * s, alignment: .leading)
+                .position(x: 213 * s, y: 77 * s)
+
+            RoundedRectangle(cornerRadius: 9 * s)
+                .stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s)
+                .frame(width: 171 * s, height: 38 * s)
+                .position(x: 121.5 * s, y: 138 * s)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(24 * s, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
+                .multilineTextAlignment(.center)
+                .frame(width: 171 * s, height: 38 * s, alignment: .center)
+                .position(x: 122 * s, y: 138 * s)
+
+            Text("YOUR VALUE")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 142 * s, height: 29 * s, alignment: .leading)
+                .position(x: 107 * s, y: 197.5 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 88 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(width: 168 * s, height: 90 * s, alignment: .leading)
+                .position(x: 121 * s, y: 258 * s)
+
+            Rectangle()
+                .fill(.white.opacity(0.48))
+                .frame(width: 250 * s, height: 1 * s)
+                .position(x: 161 * s, y: 310 * s)
+
+            Text("TARGET")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 122 * s, height: 29 * s, alignment: .leading)
+                .position(x: 97 * s, y: 343.5 * s)
+
+            Text(metric.targetLabel)
+                .font(.custom("Tungsten-Medium", size: 76 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(width: 183 * s, height: 73 * s, alignment: .leading)
+                .position(x: 128.5 * s, y: 396.5 * s)
+
+            releaseHeightInsight(scale: s)
+        }
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
         .allowsHitTesting(false)
+    }
+
+    private func releaseHeightInsight(scale s: CGFloat) -> some View {
+        HStack(alignment: .top, spacing: 12 * s) {
+            Image(systemName: "lightbulb.max")
+                .font(.system(size: 30 * s, weight: .regular))
+                .foregroundStyle(.white)
+                .frame(width: 84 * s, height: 84 * s)
+                .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 2 * s))
+            Text(metric.insight)
+                .shotiqBody(22 * s, weight: .medium)
+                .foregroundStyle(.white)
+                .lineLimit(5)
+                .minimumScaleFactor(0.62)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 366 * s, height: 142 * s, alignment: .topLeading)
+        .position(x: 215 * s, y: 526 * s)
+    }
+
+    private func wristAngleHeroCopy(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text(metric.title.uppercased())
+                .shotiqDisplay(80 * s)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 365 * s, height: 68 * s, alignment: .leading)
+                .position(x: 220 * s, y: 77 * s)
+
+            RoundedRectangle(cornerRadius: 9 * s)
+                .stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s)
+                .frame(width: 186 * s, height: 45 * s)
+                .position(x: 131 * s, y: 149 * s)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(24 * s, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
+                .frame(width: 186 * s, height: 45 * s, alignment: .center)
+                .position(x: 131 * s, y: 149 * s)
+
+            Text("YOUR VALUE")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 150 * s, height: 30 * s, alignment: .leading)
+                .position(x: 112 * s, y: 222 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 104 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(width: 205 * s, height: 96 * s, alignment: .leading)
+                .position(x: 142 * s, y: 290 * s)
+
+            Rectangle()
+                .fill(.white.opacity(0.48))
+                .frame(width: 1.4 * s, height: 132 * s)
+                .position(x: 274 * s, y: 276 * s)
+
+            wristAngleInsight(scale: s)
+        }
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
+        .allowsHitTesting(false)
+    }
+
+    private func wristAngleInsight(scale s: CGFloat) -> some View {
+        HStack(alignment: .top, spacing: 15 * s) {
+            Image(systemName: "lightbulb.max")
+                .font(.system(size: 31 * s, weight: .regular))
+                .foregroundStyle(.white)
+                .frame(width: 76 * s, height: 76 * s)
+                .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 1.8 * s))
+            Text(metric.insight)
+                .shotiqBody(23 * s, weight: .medium)
+                .foregroundStyle(.white)
+                .lineLimit(3)
+                .minimumScaleFactor(0.62)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 735 * s, height: 110 * s, alignment: .topLeading)
+        .position(x: 420 * s, y: 510 * s)
+    }
+
+    private func elbowAngleHeroCopy(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text(metric.title.uppercased())
+                .shotiqDisplay(80 * s)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 365 * s, height: 68 * s, alignment: .leading)
+                .position(x: 220 * s, y: 77 * s)
+
+            RoundedRectangle(cornerRadius: 9 * s)
+                .stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s)
+                .frame(width: 186 * s, height: 45 * s)
+                .position(x: 131 * s, y: 149 * s)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(24 * s, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
+                .frame(width: 186 * s, height: 45 * s, alignment: .center)
+                .position(x: 131 * s, y: 149 * s)
+
+            Text("YOUR VALUE")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 150 * s, height: 30 * s, alignment: .leading)
+                .position(x: 112 * s, y: 222 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 104 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(width: 175 * s, height: 96 * s, alignment: .leading)
+                .position(x: 117 * s, y: 290 * s)
+
+            Rectangle()
+                .fill(.white.opacity(0.48))
+                .frame(width: 1.4 * s, height: 132 * s)
+                .position(x: 209 * s, y: 276 * s)
+
+            Text("TARGET")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 122 * s, height: 30 * s, alignment: .leading)
+                .position(x: 287 * s, y: 222 * s)
+
+            Text(metric.targetLabel)
+                .font(.custom("Tungsten-Medium", size: 72 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.60)
+                .frame(width: 230 * s, height: 76 * s, alignment: .leading)
+                .position(x: 333 * s, y: 290 * s)
+
+            elbowAngleInsight(scale: s)
+        }
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
+        .allowsHitTesting(false)
+    }
+
+    private func elbowAngleInsight(scale s: CGFloat) -> some View {
+        HStack(alignment: .top, spacing: 15 * s) {
+            Image(systemName: "lightbulb.max")
+                .font(.system(size: 31 * s, weight: .regular))
+                .foregroundStyle(.white)
+                .frame(width: 76 * s, height: 76 * s)
+                .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 1.8 * s))
+            Text(metric.insight)
+                .shotiqBody(23 * s, weight: .medium)
+                .foregroundStyle(.white)
+                .lineLimit(5)
+                .minimumScaleFactor(0.62)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(width: 520 * s, height: 154 * s, alignment: .topLeading)
+        .position(x: 320 * s, y: 438 * s)
     }
 
     private var heroMeasurementCopy: some View {
         let s = scale
         return ZStack(alignment: .topLeading) {
+            if metric.id == "release-height" {
+                releaseHeightMeasurementOverlay(scale: s)
+                releaseHeightRightMeasurementLabels(scale: s)
+            } else if usesCleanCodedHero {
+                codedReferenceMeasurementOverlay(scale: s)
+            }
+
             ForEach(measurementLabels, id: \.id) { label in
                 Text(label.text)
                     .font(label.font == .display
@@ -3324,7 +3611,353 @@ fileprivate struct PlayerFlawReferenceHero: View {
                     .position(x: label.x * s, y: label.y * s)
             }
         }
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
         .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func codedReferenceHeroCopy(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text(metric.title.uppercased())
+                .shotiqDisplay(86 * s)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 430 * s, height: 78 * s, alignment: .leading)
+                .position(x: 252 * s, y: 77 * s)
+
+            RoundedRectangle(cornerRadius: 9 * s)
+                .stroke(ShotIQColor.shotiqOrange, lineWidth: 2 * s)
+                .frame(width: 186 * s, height: 45 * s)
+                .position(x: 130 * s, y: 143 * s)
+
+            Text(metric.status.uppercased())
+                .shotiqBody(24 * s, weight: .black)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
+                .frame(width: 186 * s, height: 45 * s, alignment: .center)
+                .position(x: 130 * s, y: 143 * s)
+
+            Text("YOUR VALUE")
+                .shotiqCondensed(31 * s, weight: .medium)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+                .frame(width: 150 * s, height: 30 * s, alignment: .leading)
+                .position(x: 112 * s, y: 222 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: codedHeroValueFont * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+                .frame(width: codedHeroValueWidth * s, height: 96 * s, alignment: .leading)
+                .position(x: codedHeroValueX * s, y: 290 * s)
+
+            Rectangle()
+                .fill(.white.opacity(0.48))
+                .frame(width: 1.4 * s, height: 116 * s)
+                .position(x: codedDividerX * s, y: 282 * s)
+
+            if metric.id != "wrist-angle" {
+                Text("TARGET")
+                    .shotiqCondensed(31 * s, weight: .medium)
+                    .foregroundStyle(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.74)
+                    .frame(width: 122 * s, height: 30 * s, alignment: .leading)
+                    .position(x: codedTargetLabelX * s, y: 222 * s)
+
+                Text(metric.targetLabel)
+                    .font(.custom("Tungsten-Medium", size: codedTargetFont * s))
+                    .foregroundStyle(ShotIQColor.analysisBlue)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.60)
+                    .frame(width: codedTargetWidth * s, height: 76 * s, alignment: .leading)
+                    .position(x: codedTargetValueX * s, y: 291 * s)
+            }
+
+            codedInsight(scale: s)
+        }
+        .frame(width: displayWidth, height: heroHeight, alignment: .topLeading)
+        .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func codedInsight(scale s: CGFloat) -> some View {
+        if metric.id == "centerline" {
+            Text(metric.insight)
+                .shotiqBody(24 * s, weight: .medium)
+                .foregroundStyle(.white)
+                .lineLimit(4)
+                .minimumScaleFactor(0.66)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: 425 * s, alignment: .leading)
+                .position(x: 249 * s, y: 438 * s)
+        } else {
+            HStack(alignment: .top, spacing: 15 * s) {
+                Image(systemName: "lightbulb.max")
+                    .font(.system(size: 31 * s, weight: .regular))
+                    .foregroundStyle(.white)
+                    .frame(width: 76 * s, height: 76 * s)
+                    .overlay(Circle().stroke(.white.opacity(0.45), lineWidth: 1.8 * s))
+                Text(metric.insight)
+                    .shotiqBody((metric.id == "wrist-angle" ? 23 : 22) * s, weight: .medium)
+                    .foregroundStyle(.white)
+                    .lineLimit(metric.id == "wrist-angle" ? 3 : 5)
+                    .minimumScaleFactor(0.62)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(width: (metric.id == "wrist-angle" ? 735 : 490) * s,
+                   height: (metric.id == "wrist-angle" ? 110 : 150) * s,
+                   alignment: .topLeading)
+            .position(x: (metric.id == "wrist-angle" ? 420 : 285) * s,
+                      y: (metric.id == "wrist-angle" ? 510 : 500) * s)
+        }
+    }
+
+    @ViewBuilder
+    private func codedReferenceMeasurementOverlay(scale s: CGFloat) -> some View {
+        switch metric.id {
+        case "elbow-angle":
+            elbowAngleMeasurementOverlay(scale: s)
+        case "wrist-angle":
+            wristAngleMeasurementOverlay(scale: s)
+        case "centerline":
+            centerlineMeasurementOverlay(scale: s)
+        default:
+            EmptyView()
+        }
+    }
+
+    private func elbowAngleMeasurementOverlay(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 43 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .frame(width: 82 * s, height: 48 * s, alignment: .leading)
+                .position(x: 770 * s, y: 316 * s)
+        }
+    }
+
+    private func wristAngleMeasurementOverlay(scale s: CGFloat) -> some View {
+        let x1: CGFloat = 52
+        let x2: CGFloat = 872
+        let y: CGFloat = 419
+        let left = x1 + CGFloat(50.0 / 180.0) * (x2 - x1)
+        let right = x1 + CGFloat(100.0 / 180.0) * (x2 - x1)
+        let marker = x1 + CGFloat(metric.value / 180) * (x2 - x1)
+
+        return ZStack(alignment: .topLeading) {
+            Capsule()
+                .fill(.white.opacity(0.55))
+                .frame(width: (x2 - x1) * s, height: 16 * s)
+                .position(x: ((x1 + x2) / 2) * s, y: y * s)
+
+            Capsule()
+                .fill(ShotIQColor.analysisBlue)
+                .frame(width: (right - left) * s, height: 16 * s)
+                .position(x: ((left + right) / 2) * s, y: y * s)
+
+            ForEach([x1, left, right, x2], id: \.self) { tickX in
+                Rectangle()
+                    .fill(.white)
+                    .frame(width: 2 * s, height: 30 * s)
+                    .position(x: tickX * s, y: y * s)
+            }
+
+            Circle()
+                .fill(ShotIQColor.shotiqOrange)
+                .frame(width: 28 * s, height: 28 * s)
+                .overlay(Circle().stroke(.white, lineWidth: 6 * s))
+                .overlay(Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 4 * s).frame(width: 44 * s, height: 44 * s))
+                .position(x: marker * s, y: y * s)
+
+            Text("0°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .position(x: 64 * s, y: 386 * s)
+            Text("50°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .position(x: 278 * s, y: 386 * s)
+            Text("100°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .position(x: 500 * s, y: 386 * s)
+            Text("180°")
+                .font(.custom("Tungsten-Medium", size: 25 * s))
+                .foregroundStyle(.white)
+                .position(x: 850 * s, y: 386 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 42 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .frame(width: 88 * s, height: 46 * s, alignment: .center)
+                .position(x: marker * s, y: 360 * s)
+        }
+    }
+
+    private func centerlineMeasurementOverlay(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Path { path in
+                path.move(to: CGPoint(x: 666 * s, y: 20 * s))
+                path.addLine(to: CGPoint(x: 666 * s, y: 622 * s))
+            }
+            .stroke(.white.opacity(0.92),
+                    style: StrokeStyle(lineWidth: 3 * s, lineCap: .round, dash: [14 * s, 12 * s]))
+
+            Path { path in
+                path.move(to: CGPoint(x: 718 * s, y: 50 * s))
+                path.addLine(to: CGPoint(x: 718 * s, y: 210 * s))
+            }
+            .stroke(ShotIQColor.analysisBlue,
+                    style: StrokeStyle(lineWidth: 2 * s, lineCap: .round, dash: [12 * s, 8 * s]))
+
+            Text("0°")
+                .font(.custom("Tungsten-Medium", size: 36 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .frame(width: 48 * s, height: 36 * s)
+                .position(x: 682 * s, y: 31 * s)
+            Text("3°")
+                .font(.custom("Tungsten-Medium", size: 36 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .frame(width: 48 * s, height: 36 * s)
+                .position(x: 736 * s, y: 31 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 45 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .frame(width: 92 * s, height: 48 * s, alignment: .center)
+                .position(x: 540 * s, y: 76 * s)
+
+            measurementPath(points: [
+                CGPoint(x: 590, y: 82),
+                CGPoint(x: 596, y: 178),
+                CGPoint(x: 576, y: 290),
+                CGPoint(x: 602, y: 410)
+            ], color: ShotIQColor.shotiqOrange, width: 5, scale: s)
+            measurementPath(points: [
+                CGPoint(x: 616, y: 82),
+                CGPoint(x: 620, y: 178),
+                CGPoint(x: 604, y: 290),
+                CGPoint(x: 634, y: 410),
+                CGPoint(x: 666, y: 430)
+            ], color: .white, width: 4, scale: s)
+            ForEach([
+                CGPoint(x: 590, y: 82),
+                CGPoint(x: 596, y: 178),
+                CGPoint(x: 576, y: 290),
+                CGPoint(x: 602, y: 410),
+                CGPoint(x: 666, y: 430),
+                CGPoint(x: 666, y: 552)
+            ], id: \.self) { point in
+                measurementDot(x: point.x, y: point.y, color: point.x == 666 ? ShotIQColor.analysisBlue : ShotIQColor.shotiqOrange, scale: s)
+            }
+        }
+    }
+
+    private func measurementPath(points: [CGPoint], color: Color, width: CGFloat, scale s: CGFloat) -> some View {
+        Path { path in
+            guard let first = points.first else { return }
+            path.move(to: CGPoint(x: first.x * s, y: first.y * s))
+            for point in points.dropFirst() {
+                path.addLine(to: CGPoint(x: point.x * s, y: point.y * s))
+            }
+        }
+        .stroke(color, style: StrokeStyle(lineWidth: width * s, lineCap: .round, lineJoin: .round))
+    }
+
+    private func releaseHeightRightMeasurementLabels(scale s: CGFloat) -> some View {
+        ZStack(alignment: .topLeading) {
+            Text("TARGET")
+                .font(.custom("Tungsten-Medium", size: 36 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .frame(width: 142 * s, height: 29 * s, alignment: .leading)
+                .position(x: 792 * s, y: 47 * s)
+
+            Text(metric.targetLabel)
+                .font(.custom("Tungsten-Medium", size: 45 * s))
+                .foregroundStyle(ShotIQColor.analysisBlue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .frame(width: 142 * s, height: 44 * s, alignment: .leading)
+                .position(x: 792 * s, y: 77 * s)
+
+            Text("YOUR RELEASE")
+                .font(.custom("Tungsten-Medium", size: 36 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .frame(width: 150 * s, height: 28 * s, alignment: .leading)
+                .position(x: 797 * s, y: 410 * s)
+
+            Text(metric.valueLabel)
+                .font(.custom("Tungsten-Medium", size: 42 * s))
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(width: 112 * s, height: 42 * s, alignment: .leading)
+                .position(x: 776 * s, y: 438 * s)
+        }
+    }
+
+    private func releaseHeightMeasurementOverlay(scale s: CGFloat) -> some View {
+        let rulerX: CGFloat = 681
+        let topY: CGFloat = 52
+        let bottomY: CGFloat = 620
+        let targetY: CGFloat = 55
+        let releaseY: CGFloat = 438
+
+        return ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(.white.opacity(0.92))
+                .frame(width: 2 * s, height: (bottomY - topY) * s)
+                .position(x: rulerX * s, y: ((topY + bottomY) / 2) * s)
+
+            ForEach(0..<43, id: \.self) { index in
+                let y = (68 + CGFloat(index) * 13) * s
+                let tickWidth = (index % 5 == 0 ? 24 : 13) * s
+                Rectangle()
+                    .fill(.white.opacity(0.86))
+                    .frame(width: tickWidth, height: 1 * s)
+                    .position(x: rulerX * s, y: y)
+            }
+
+            Circle()
+                .fill(.white)
+                .frame(width: 12 * s, height: 12 * s)
+                .position(x: rulerX * s, y: bottomY * s)
+
+            dashedGuide(y: targetY, x1: 585, x2: 720, color: ShotIQColor.analysisBlue, scale: s)
+            measurementDot(x: rulerX, y: targetY, color: ShotIQColor.analysisBlue, scale: s)
+
+            dashedGuide(y: releaseY, x1: 527, x2: 720, color: ShotIQColor.shotiqOrange, scale: s)
+            measurementDot(x: rulerX, y: releaseY, color: ShotIQColor.shotiqOrange, scale: s)
+        }
+    }
+
+    private func dashedGuide(y: CGFloat, x1: CGFloat, x2: CGFloat, color: Color, scale s: CGFloat) -> some View {
+        Path { path in
+            path.move(to: CGPoint(x: x1 * s, y: y * s))
+            path.addLine(to: CGPoint(x: x2 * s, y: y * s))
+        }
+        .stroke(color, style: StrokeStyle(lineWidth: 3 * s, dash: [10 * s, 8 * s]))
+    }
+
+    private func measurementDot(x: CGFloat, y: CGFloat, color: Color, scale s: CGFloat) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: 13 * s, height: 13 * s)
+            .overlay(Circle().stroke(.white, lineWidth: 4 * s))
+            .position(x: x * s, y: y * s)
     }
 
     private var measurementLabels: [PlayerFlawHeroTextBox] {
@@ -3336,31 +3969,70 @@ fileprivate struct PlayerFlawReferenceHero: View {
                 .init("release-offset-mid-axis", "0°", 640, 621, 50, 28, 18, .white, .body),
                 .init("release-offset-right-axis", "+45°", 806, 621, 70, 28, 18, .white, .body)
             ]
-        case "elbow-angle":
-            return [
-                .init("elbow-angle-callout", "70°", 776, 312, 70, 42, 32, ShotIQColor.shotiqOrange, .display)
-            ]
-        case "wrist-angle":
-            return [
-                .init("wrist-axis-0", "0°", 80, 386, 44, 28, 17, .white, .body),
-                .init("wrist-axis-50", "50°", 305, 386, 60, 28, 17, .white, .body),
-                .init("wrist-axis-100", "100°", 525, 386, 70, 28, 17, .white, .body),
-                .init("wrist-axis-180", "180°", 850, 386, 70, 28, 17, .white, .body),
-                .init("wrist-callout", "159°", 788, 346, 78, 42, 30, ShotIQColor.shotiqOrange, .display)
-            ]
-        case "centerline":
-            return [
-                .init("centerline-callout", "-32°", 530, 90, 86, 42, 34, ShotIQColor.shotiqOrange, .display),
-                .init("centerline-target-low", "0°", 664, 28, 44, 28, 18, ShotIQColor.analysisBlue, .body),
-                .init("centerline-target-high", "3°", 722, 28, 44, 28, 18, ShotIQColor.analysisBlue, .body)
-            ]
-        case "release-height":
-            return [
-                .init("release-height-current", "YOUR RELEASE\n4'10\"", 758, 92, 150, 76, 23, ShotIQColor.shotiqOrange, .body, lines: 2, alignment: .leading, frameAlignment: .leading),
-                .init("release-height-target", "TARGET\n7'6\"+", 760, 410, 126, 72, 21, ShotIQColor.analysisBlue, .body, lines: 2, alignment: .leading, frameAlignment: .leading)
-            ]
+        case "elbow-angle", "wrist-angle", "centerline", "release-height":
+            return []
         default:
             return []
+        }
+    }
+
+    private var codedHeroValueFont: CGFloat {
+        switch metric.id {
+        case "wrist-angle": return 104
+        case "centerline": return 96
+        default: return 96
+        }
+    }
+
+    private var codedHeroValueWidth: CGFloat {
+        switch metric.id {
+        case "wrist-angle": return 205
+        case "centerline": return 185
+        default: return 170
+        }
+    }
+
+    private var codedHeroValueX: CGFloat {
+        switch metric.id {
+        case "wrist-angle": return 142
+        case "centerline": return 132
+        default: return 121
+        }
+    }
+
+    private var codedDividerX: CGFloat {
+        switch metric.id {
+        case "wrist-angle": return 274
+        case "centerline": return 232
+        default: return 206
+        }
+    }
+
+    private var codedTargetLabelX: CGFloat {
+        switch metric.id {
+        case "centerline": return 326
+        default: return 302
+        }
+    }
+
+    private var codedTargetValueX: CGFloat {
+        switch metric.id {
+        case "centerline": return 358
+        default: return 336
+        }
+    }
+
+    private var codedTargetFont: CGFloat {
+        switch metric.id {
+        case "centerline": return 82
+        default: return 72
+        }
+    }
+
+    private var codedTargetWidth: CGFloat {
+        switch metric.id {
+        case "centerline": return 230
+        default: return 250
         }
     }
 
@@ -3501,32 +4173,42 @@ fileprivate struct PlayerFlawReferenceLevelRow: View {
         Button {
             // Rows remain tappable for the player comparison surface.
         } label: {
-            HStack(spacing: 12) {
-                PlayerFlawReferenceLevelTile(metricID: metric.id, level: level)
+            GeometryReader { geo in
+                let compact = geo.size.width < 360
+                let horizontalInset: CGFloat = compact ? 10 : 14
+                let tileSize: CGFloat = compact ? 54 : 60
+                let textWidth: CGFloat = compact ? 98 : 110
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(level.label)
-                        .shotiqDisplay(20)
-                        .foregroundStyle(ShotIQColor.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.74)
-                    Text("DEVELOPMENT TARGET")
-                        .shotiqBody(8.5, weight: .black)
-                        .foregroundStyle(ShotIQColor.graphite)
-                        .lineLimit(1)
-                    Text(level.targetLabel)
-                        .shotiqBody(14, weight: .black)
-                        .foregroundStyle(ShotIQColor.analysisBlue)
-                        .lineLimit(1)
+                HStack(spacing: compact ? 8 : 9) {
+                    PlayerFlawReferenceLevelTile(metricID: metric.id, level: level, size: tileSize)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(level.label)
+                            .shotiqDisplay(compact ? 17 : 19)
+                            .foregroundStyle(ShotIQColor.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text("DEVELOPMENT TARGET")
+                            .shotiqBody(compact ? 8 : 8.6, weight: .black)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text(level.targetLabel)
+                            .shotiqBody(compact ? 13 : 14, weight: .black)
+                            .foregroundStyle(ShotIQColor.analysisBlue)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.65)
+                    }
+                    .frame(width: textWidth, alignment: .leading)
+
+                    PlayerFlawRangeMeter(metric: metric, level: level)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
                 }
-                .frame(width: 118, alignment: .leading)
-
-                PlayerFlawRangeMeter(metric: metric, level: level)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
+                .padding(.horizontal, horizontalInset)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .frame(height: 72)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -3537,32 +4219,33 @@ fileprivate struct PlayerFlawReferenceLevelRow: View {
 fileprivate struct PlayerFlawReferenceLevelTile: View {
     let metricID: String
     let level: PlayerFlawLevelCompare
+    let size: CGFloat
 
     private var assetName: String {
         "player-flaw-level-\(metricID)-\(level.id)"
     }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        Group {
             if let image = UIImage(named: assetName) {
                 Image(uiImage: image)
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
             } else {
-                CanonicalPhoto(level.photoKey, width: 54, height: 54, cornerRadius: 7, alignment: .top)
+                ZStack(alignment: .bottomLeading) {
+                    CanonicalPhoto(level.photoKey, width: size, height: size, cornerRadius: 7, alignment: .top)
+                    LinearGradient(colors: [.clear, .black.opacity(0.78)],
+                                   startPoint: .center,
+                                   endPoint: .bottom)
+                    Text(level.shortLabel)
+                        .shotiqBody(10, weight: .black)
+                        .foregroundStyle(.white)
+                        .padding(.leading, 5)
+                        .padding(.bottom, 4)
+                }
             }
-
-            LinearGradient(colors: [.clear, .black.opacity(0.86)],
-                           startPoint: .center,
-                           endPoint: .bottom)
-
-            Text(level.shortLabel)
-                .shotiqBody(10, weight: .black)
-                .foregroundStyle(.white)
-                .padding(.leading, 5)
-                .padding(.bottom, 4)
         }
-        .frame(width: 54, height: 54)
+        .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: 7))
     }
 }
@@ -4025,21 +4708,23 @@ fileprivate struct PlayerFlawRangeMeter: View {
     var body: some View {
         GeometryReader { geo in
             let width = geo.size.width
-            let markerX = width * markerPercent
-            let bandX = width * bandStart
-            let bandWidth = max(4, width * (bandEnd - bandStart))
+            let railInset: CGFloat = 10
+            let railWidth = max(1, width - railInset * 2)
+            let markerX = railInset + railWidth * markerPercent
+            let bandX = railInset + railWidth * bandStart
+            let bandWidth = max(5, railWidth * (bandEnd - bandStart))
             ZStack(alignment: .topLeading) {
                 markerValueLabel
-                    .position(x: labelX(markerX, width: width), y: 6)
+                    .position(x: labelX(markerX, width: width), y: 8)
 
                 meterLabel(edgeLabel(metric.meterMin))
-                    .position(x: 12, y: 22)
+                    .position(x: railInset, y: 25)
                 meterLabel(targetStartLabel)
-                    .position(x: labelX(bandX, width: width), y: 22)
+                    .position(x: labelX(bandX, width: width), y: 25)
                 meterLabel(targetEndLabel)
-                    .position(x: labelX(bandX + bandWidth, width: width), y: 22)
+                    .position(x: labelX(bandX + bandWidth, width: width), y: 25)
                 meterLabel(edgeLabel(metric.meterMax))
-                    .position(x: width - 12, y: 22)
+                    .position(x: width - railInset, y: 25)
 
                 ZStack(alignment: .leading) {
                     Capsule()
@@ -4048,53 +4733,54 @@ fileprivate struct PlayerFlawRangeMeter: View {
                     Capsule()
                         .fill(ShotIQColor.analysisBlue)
                         .frame(width: bandWidth, height: 5)
-                        .offset(x: bandX)
+                        .offset(x: bandX - railInset)
                     Rectangle()
                         .fill(ShotIQColor.shotiqOrange)
-                        .frame(width: 1, height: 18)
-                        .offset(x: min(max(markerX, 1), width - 1), y: -7)
+                        .frame(width: 1.2, height: 22)
+                        .offset(x: min(max(markerX - railInset, 1), railWidth - 1), y: -9)
                     Circle()
-                        .stroke(ShotIQColor.shotiqOrange, lineWidth: 2.2)
+                        .stroke(ShotIQColor.shotiqOrange, lineWidth: 2.4)
                         .background(Circle().fill(Color.white))
-                        .frame(width: 11, height: 11)
-                        .offset(x: min(max(markerX - 5.5, 0), width - 11), y: -3)
+                        .frame(width: 14, height: 14)
+                        .offset(x: min(max(markerX - railInset - 7, 0), railWidth - 14), y: -4.5)
                 }
-                .frame(width: width, height: 5)
-                .position(x: width / 2, y: 32)
+                .frame(width: railWidth, height: 5)
+                .position(x: width / 2, y: 37)
 
                 comparisonLabel
-                    .position(x: width / 2, y: 48)
+                    .frame(width: width, alignment: .trailing)
+                    .position(x: width / 2, y: 56)
             }
         }
     }
 
     private var markerValueLabel: some View {
         Text(metric.valueLabel)
-            .shotiqBody(10, weight: .black)
+            .shotiqBody(13, weight: .black)
             .foregroundStyle(ShotIQColor.shotiqOrange)
             .lineLimit(1)
-            .minimumScaleFactor(0.75)
+            .minimumScaleFactor(0.72)
     }
 
     private func meterLabel(_ text: String) -> some View {
         Text(text)
-            .shotiqBody(8.5, weight: .bold)
+            .shotiqBody(9.6, weight: .black)
             .foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
-            .minimumScaleFactor(0.75)
+            .minimumScaleFactor(0.62)
     }
 
     private var comparisonLabel: some View {
         HStack(spacing: 3) {
             Text(comparisonLead)
-                .shotiqBody(9.5)
+                .shotiqBody(10.5, weight: .medium)
                 .foregroundStyle(ShotIQColor.ink)
             Text(comparisonAmount)
-                .shotiqBody(10.5, weight: .black)
+                .shotiqBody(12, weight: .black)
                 .foregroundStyle(ShotIQColor.shotiqOrange)
         }
         .lineLimit(1)
-        .minimumScaleFactor(0.62)
+        .minimumScaleFactor(0.58)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
@@ -4146,7 +4832,7 @@ fileprivate struct PlayerFlawRangeMeter: View {
     }
 
     private func labelX(_ x: CGFloat, width: CGFloat) -> CGFloat {
-        min(max(x, 12), width - 12)
+        min(max(x, 8), width - 8)
     }
 
     private func edgeLabel(_ value: Double) -> String {
@@ -4252,16 +4938,20 @@ fileprivate struct PlayerFlawHeroOverlay: View {
     private func overlayLabels(width: CGFloat, height: CGFloat) -> some View {
         switch metric.overlayType {
         case .releaseHeight:
-            Text("YOUR RELEASE\n\(metric.valueLabel)")
-                .shotiqBody(11, weight: .black)
-                .foregroundStyle(ShotIQColor.shotiqOrange)
-                .multilineTextAlignment(.leading)
-                .position(x: width * 0.78, y: height * 0.16)
             Text("TARGET\n\(metric.targetLabel)")
-                .shotiqBody(11, weight: .black)
+                .shotiqBody(17, weight: .black)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(ShotIQColor.analysisBlue)
                 .multilineTextAlignment(.leading)
-                .position(x: width * 0.82, y: height * 0.58)
+                .position(x: width * 0.83, y: height * 0.11)
+            Text("YOUR RELEASE\n\(metric.valueLabel)")
+                .shotiqBody(16, weight: .black)
+                .lineLimit(2)
+                .minimumScaleFactor(0.68)
+                .foregroundStyle(ShotIQColor.shotiqOrange)
+                .multilineTextAlignment(.leading)
+                .position(x: width * 0.82, y: height * 0.63)
         case .centerline:
             Text(metric.valueLabel)
                 .shotiqBody(18, weight: .black)
