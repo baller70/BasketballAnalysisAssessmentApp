@@ -2906,15 +2906,51 @@ fileprivate enum PlayerFlawMetricsCatalog {
 fileprivate struct PlayerFlawMetricDetailCard: View {
     let metric: PlayerFlawMetricConfig
 
-    private var statusTint: Color { ShotIQColor.shotiqOrange }
+    private var artworkName: String { "player-flaw-card-\(metric.id)" }
+
+    private var artworkAspectRatio: CGFloat {
+        metric.id == "release-height" ? 1532.0 / 882.0 : 1504.0 / 908.0
+    }
+
+    private var displayWidth: CGFloat {
+        max(280, min(UIScreen.main.bounds.width - 40, 430))
+    }
 
     var body: some View {
-        VStack(spacing: 10) {
-            hero
-            summary
-            compare
-            actions
+        ZStack(alignment: .bottom) {
+            Image(artworkName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: displayWidth)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .allowsHitTesting(false)
+
+            HStack(spacing: displayWidth * 0.03) {
+                NavigationLink {
+                    DrillExecutionView(drillName: metric.drillName)
+                } label: {
+                    Color.clear
+                        .frame(maxWidth: .infinity)
+                        .frame(height: displayWidth * 0.08)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Train \(metric.title)")
+
+                NavigationLink {
+                    DiscoverDrillsView()
+                } label: {
+                    Color.clear
+                        .frame(maxWidth: .infinity)
+                        .frame(height: displayWidth * 0.08)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("View drills for \(metric.title)")
+            }
+            .frame(width: displayWidth * 0.94)
+            .padding(.bottom, displayWidth * 0.018)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: displayWidth * artworkAspectRatio)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("player-flaw-metric-\(metric.id)")
     }
@@ -5248,14 +5284,9 @@ struct AnalysisResultOverviewView: View { // 038
     }
 
     private func playerInlineContent(_ p: AnalysisResultPresentation) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            inlineStatusCard(overviewChrome.playerName.uppercased(),
-                             "Five measured mechanics from this saved \(p.mediaLabel.lowercased()) analysis.",
-                             icon: "chart.bar.xaxis",
-                             tint: ShotIQColor.shotiqOrange)
+        VStack(alignment: .leading, spacing: 18) {
             ForEach(PlayerFlawMetricsCatalog.all) { metric in
                 PlayerFlawMetricDetailCard(metric: metric)
-                    .padding(.top, 6)
             }
         }
         .padding(.top, 16)
