@@ -35,14 +35,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Rate limit: 10 signin attempts per minute per IP.
-  const { response: limited } = checkRateLimit(request, {
-    bucket: 'auth-signin',
-    limit: 10,
-    windowMs: 60_000,
-  })
-  if (limited) return limited
-
   // CSRF: reject requests that don't echo the double-submit token.
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
@@ -51,6 +43,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => null)
     const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body?.password === 'string' ? body.password : ''
+
+    // RATE LIMIT PER (CLIENT, ACCOUNT), AND IT MOVED BELOW THE BODY PARSE TO
+    // GET THE ACCOUNT. Keyed on the client alone it was an application-wide
+    // denial of service: `request.ip` is undefined under `next start` and the
+    // default trusted-proxy depth is 0, so every caller keys as 'unknown' and
+    // ten junk attempts a minute from anywhere locked every user out of
+    // signin — measured, with the victim's correct password returning 429.
+    // Keyed with the attempted address as well, junk aimed at other accounts
+    // can no longer consume a given player's budget. An attacker can still
+    // exhaust the window for an address they name, which is the ordinary
+    // trade a per-account limiter makes, and far better than the whole app.
+    const { response: limited } = checkRateLimit(request, {
+      bucket: 'auth-signin',
+      limit: 10,
+      windowMs: 60_000,
+      subject: email || undefined,
+    })
+    if (limited) return limited
 
     // Validate input
     if (!email || !password) {

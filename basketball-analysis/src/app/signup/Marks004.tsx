@@ -43,7 +43,33 @@ export function Monogram() {
   return (
     <svg viewBox="80 424 76 58" width="100%" height="100%" fill="none" aria-hidden="true">
       <rect x={89.15} y={428.45} width={60.63} height={6.83} fill={INK} />
-      <path d="M112 431.9 V462.12 A11.8 11.8 0 0 1 88.4 464.6"
+      {/* THE ARC WAS MALFORMED — and the semicircle that replaced it was wrong
+          too, in the other direction. Both are kept, because the second mistake
+          was made while fixing the first.
+          THE ORIGINAL FAULT: the old path was
+              M112 431.9 V462.12 A11.8 11.8 0 0 1 88.4 464.6
+          whose endpoint is NOT on a circle of r=11.8: the chord from (112,
+          462.12) to (88.4, 464.6) is 23.729 long, so the minimum radius that
+          can join them is 11.865. Per the SVG spec Chromium scales the radii up
+          until the arc fits and puts the centre at the chord midpoint — (100.2,
+          463.36), 1.24 px below the 462.12 the path intended. Measured on
+          per-column 50% crossings the hook sat 0.954 px low and 1.037 px right
+          while the E-arm block beside it was within 0.53 px on every side, which
+          is what says the arc and not the placement.
+          THE OVER-CORRECTION: it was rewritten as a full semicircle —
+          V461.70 then r=12.8 to (86.40, 461.70), a chord of 25.6 = 2r. That
+          closes exactly and it draws too much hook. Canonical has NO INK AT ALL
+          at x 83-90 above row 465, where the semicircle lays a full-width butt
+          cap across rows 462-464. Leftmost outer 50% crossing: canonical 84.02
+          at y468 against the render's 82.86 at y463. Canonical's arm TAPERS in
+          from row 465, i.e. the arc stops short of 180 degrees.
+          Re-cut at ~160 degrees about (99.2, 461.5), r 12.8: the endpoint is
+          (99.2 + 12.8*cos160, 461.5 + 12.8*sin160) = (87.17, 465.88), a chord
+          of 25.22 against 2r = 25.6, so it closes without Chromium rescaling
+          anything — which is the whole point of the original fault above.
+          large-arc-flag stays 0 because 160 < 180.
+          monogram 4.4879 -> 3.7996, and its max 255 -> 166. */}
+      <path d="M112 431.9 V461.5 A12.8 12.8 0 0 1 87.17 465.88"
             stroke={INK} strokeWidth={6.8} fill="none" strokeLinecap="butt" />
       <rect x={121.82} y={442.52} width={28.06} height={6.85} fill={INK} />
       <rect x={121.87} y={456.60} width={28.09} height={6.76} fill={INK} />
@@ -74,7 +100,24 @@ export function EyeMark004({ off, dy = 0 }: { off: boolean; dy?: number }) {
              C729.27 1214.51 722.19 1210.86 714.80 1199.50 Z"
           stroke={INK} strokeWidth={3.6} strokeLinejoin="round"
         />
-        <circle cx={734.75} cy={1199.50} r={6.6} stroke={INK} strokeWidth={3.6} />
+        {/* THE "DIFFERENT DRAWING" CONCLUSION WAS WRONG, and how it was reached
+            is the lesson. The argument ran: r=0 — no pupil at all — scores
+            BETTER than any positive radius, and a size error cannot do that, so
+            the shape must be wrong. The premise was true; the conclusion did not
+            follow, because that sweep varied the RADIUS AT A FIXED CENTRE.
+            Position was never in it.
+            Measured with the centre free: r=0 gives eyePass 4.6179 / eyeConf
+            4.1552, and (cx -2.2, r 2.6) gives 4.3232 / 3.9912 — a positive
+            radius at a shifted centre beats having no pupil at all. The pupil
+            was MISPLACED, not mis-drawn.
+            A sweep over one parameter cannot license a claim about a second one.
+            cx 734.75 -> 732.55, r 4.2 -> 2.6.
+            NOTE for anyone sweeping this: `[data-s4="eyePass"] circle` matches
+            TWO circles. The desktop lucide Eye (r=3) sits in a display:none
+            span beside this one, so a querySelector-based injection hits the
+            invisible one and returns a null that reads exactly like "this lever
+            does nothing". CSS was safe only because just one of them paints. */}
+        <circle cx={732.55} cy={1199.50} r={2.6} stroke={INK} strokeWidth={2.6} />
         {off && (
           <path d="M717.5 1182 L752.5 1218.5" stroke={INK} strokeWidth={3.6} strokeLinecap="round" />
         )}
@@ -188,8 +231,13 @@ export function Marks004({ agreed }: { agreed: boolean }) {
         [1151.19, 92.90],
         [1356.35, 90.74],
       ].map(([y, h]) => (
+        /* 1.74 -> 1.66, together with --s4-field-rule #DBDCE0 -> #DEDFE3. The
+           borders were both too heavy AND too dark, and the pair had to move
+           together: the five field bands sum 12.3829 -> 11.0135 and n_over8
+           falls 2081. Weight and value are separable here because the stroke is
+           a flat fill — width moves the covered area, colour moves the level. */
         <rect key={y} x={68.85} y={y} width={712.75} height={h} rx={8.5}
-              stroke={FIELD} strokeWidth={1.74} fill="none" />
+              stroke={FIELD} strokeWidth={1.66} fill="none" />
       ))}
 
       {/* the Create account plate */}
@@ -204,15 +252,26 @@ export function Marks004({ agreed }: { agreed: boolean }) {
       <rect x={460.78} y={1673.81 - 0.85} width={321.64} height={1.70} fill={HAIR} />
 
       {/* the Sign in button border */}
+      {/* 1.70 -> 1.60 with --s4-hair #D1D2D6 -> #D5D6DA: the same too-heavy,
+          too-dark pair as the field borders, on the same kind of stroke.
+          signin 3.0637 -> 3.0047. */}
       <rect x={68.86} y={1705.88} width={712.74} height={90.75} rx={8.5}
-            stroke={HAIR} strokeWidth={1.70} fill="none" />
+            stroke={HAIR} strokeWidth={1.60} fill="none" />
 
       {/* the terms checkbox */}
-      <rect x={69.31} y={1473.27} width={37.47} height={37.21} rx={7.4}
-            stroke={agreed ? "var(--s4-green)" : FIELD} strokeWidth={2.24} fill="none" />
+      {/* Ring and tick were both oversized. The ledger recorded this band's
+          7.1859 as shape whose lever is this file rather than phone-004.ts, and
+          that was right — it just went six rounds without anyone opening the
+          file. rx 7.4 -> 6.0, stroke 2.24 -> 1.90; the tick re-traced to
+          canonical's own corners and 3.5 -> 3.2. Band 7.1859 -> 5.1401.
+          The rect's EXTENTS were already exact (advance ratio 1.0015, extent
+          ratio 1.00023, centre off by 0.06 px) and a rigid shift buys zero,
+          which is why nothing but the radii and the weights moved. */}
+      <rect x={69.31} y={1473.27} width={37.47} height={37.21} rx={6.0}
+            stroke={agreed ? "var(--s4-green)" : FIELD} strokeWidth={1.90} fill="none" />
       {agreed && (
-        <path d="M79.6 1492.6 L85.6 1499.2 L97.6 1485.6"
-              stroke="var(--s4-green)" strokeWidth={3.5} fill="none"
+        <path d="M79.96 1492.35 L85.57 1498.10 L96.78 1486.26"
+              stroke="var(--s4-green)" strokeWidth={3.2} fill="none"
               strokeLinecap="round" strokeLinejoin="round" />
       )}
     </svg>

@@ -31,11 +31,16 @@ interface VisionAnalysisRequest {
 }
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 30 vision analyses per minute per IP.
+  // 30 a minute, ONE BUCKET FOR EVERYONE, and a KNOWN HOLE — see the long note
+  // in /api/llm. Unauthenticated and CSRF-free like its siblings, so one
+  // anonymous client at 30 requests a minute denies paid vision analysis to
+  // everyone, and anyone can spend the budget. The fix is authentication, and it
+  // is recorded in docs/SCREEN-LEDGER.md as Kevin's call.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'vision-analyze',
     limit: 30,
     windowMs: 60_000,
+    subject: null,
   })
   if (limited) return limited
 

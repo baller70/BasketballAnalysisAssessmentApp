@@ -37,6 +37,7 @@ import { chromium } from 'playwright'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
 
 const S = process.env.S
 const OUT = process.env.OUT
@@ -63,7 +64,7 @@ const SETTLE = Number(process.env.SETTLE || 2600)
  * `S` stays what its name says: scratch. Outputs go to `OUT`. Inputs come from
  * the repo, so what runs is what was reviewed and committed.
  */
-const HERE = path.dirname(new URL(import.meta.url).pathname)
+const HERE = path.dirname(fileURLToPath(import.meta.url))
 const MAP_PATH = process.env.ROUTE_MAP || path.join(HERE, 'ios-route-map.json')
 const map = JSON.parse(fs.readFileSync(MAP_PATH, 'utf8'))
 console.log(`map   ${MAP_PATH}`)
@@ -129,7 +130,22 @@ const NO_CARET = () => {
   else document.addEventListener('DOMContentLoaded', inject, { once: true })
 }
 
-const b = await chromium.launch({ args: ['--font-render-hinting=none'] })
+// `--disable-lcd-text` sits beside the hinting flag for exactly the same class
+// of reason: it makes the instrument render the way the device does.
+// Canonical's small-type bands are achromatic (chroma 0.19-1.18); without
+// this the render's carry 2.2-6.3, because Chromium applies LCD subpixel
+// antialiasing that iOS does not. Proof it is chroma and not weight, per
+// channel: R 2.4985 -> 2.3923 and B 2.7819 -> 2.7206 improve while G - this
+// project's own weight channel - gets slightly WORSE, 2.7488 -> 2.7693.
+//
+// THIS IS A RULER CHANGE, NOT A SCREEN IMPROVEMENT, and it is not
+// common-mode: 004 gains 0.0490 and 003 only 0.0207. Every figure measured
+// before this flag is on a different instrument from every figure after it,
+// so both canvases were re-measured together and the ledger records the
+// before/after pair rather than booking the difference to either screen.
+const b = await chromium.launch({
+  args: ['--font-render-hinting=none', '--disable-lcd-text'],
+})
 
 async function newPage(sessionSeed) {
   const ctx = await b.newContext(CONTEXT)
@@ -220,6 +236,14 @@ async function shoot(p, row) {
     steps: (row.steps || []).length,
     innerWidth: await p.evaluate(() => window.innerWidth),
     scrollWidth: await p.evaluate(() => document.documentElement.scrollWidth),
+    // The guard had a horizontal arm and no vertical one, and a whole screen
+    // got past it: 004 carried an ungated `min-height: 900` that made the phone
+    // page scroll 48pt, and every capture still looked right because `quiesce()`
+    // scrolls to the top before each shot. scrollY is therefore ALWAYS 0 here
+    // and is not the measurement — scrollHeight is, and quiesce does not touch
+    // it. Recorded for all 72 so the class is checked rather than the instance.
+    scrollHeight: await p.evaluate(() => document.documentElement.scrollHeight),
+    innerHeight: await p.evaluate(() => window.innerHeight),
   }
 }
 
@@ -266,17 +290,42 @@ for (const f of got) {
 }
 
 const wide = Object.entries(meta).filter(([, v]) => v.scrollWidth > 393 || v.innerWidth !== 393)
-
-if (!ONLY.length) {
-  fs.writeFileSync(S + '/IOS-CAPTURE-LATEST.json', JSON.stringify(
-    { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, failures, meta }, null, 1))
-}
+// REPORTED, NOT THROWN, and deliberately so. `wide` is a hard invariant — a
+// phone screen wider than 393 is always a defect. Height is not: some routes
+// legitimately scroll. So this names the screens whose content exceeds the
+// viewport and leaves the judgement to whoever reads it, which is what makes it
+// safe to switch on for all 72 at once without breaking a single existing run.
+const tall = Object.entries(meta).filter(([, v]) => v.scrollHeight > v.innerHeight + 1)
 
 console.log(`captured   ${got.length} / ${expected.length}`)
 console.log(`distinct   ${seen.size} md5s`)
 console.log(`gaps       ${gaps.length}${gaps.length ? ' — ' + gaps.join(', ') : ''}`)
 console.log(`step fails ${failures.length}${failures.length ? '\n  ' + failures.join('\n  ') : ''}`)
 console.log(`wider>393  ${wide.length}${wide.length ? ' — ' + JSON.stringify(wide) : ''}`)
+console.log(`scrolls    ${tall.length}${tall.length
+  ? ' — ' + tall.map(([n, v]) => `${n} ${v.scrollHeight}>${v.innerHeight}`).join(', ') : ''}`)
+
+// THE SUMMARY IS WRITTEN AFTER THE FINDINGS ARE PRINTED, AND ITS FAILURE IS NOT
+// FATAL. It used to run before them, unguarded, so a full 72-screen run — eight
+// minutes of captures, every one of them successful — died on
+// `undefined/IOS-CAPTURE-LATEST.json` because `S` was not exported, and threw
+// away all 72 measurements without printing one of them. The captures were on
+// disk and the numbers were gone.
+//
+// A bookkeeping write must never be able to destroy the measurement it is
+// bookkeeping. Print first, persist second, and treat the persist as best
+// effort.
+if (!ONLY.length) {
+  const summary = S ? `${S}/IOS-CAPTURE-LATEST.json` : `${OUT}/IOS-CAPTURE-LATEST.json`
+  try {
+    fs.writeFileSync(summary, JSON.stringify(
+      { out: OUT, captured: got.length, distinct: seen.size, gaps, dupes, wide, tall, failures, meta },
+      null, 1))
+    console.log(`summary    ${summary}`)
+  } catch (e) {
+    console.log(`summary    NOT WRITTEN (${e.message}) — the numbers above still stand`)
+  }
+}
 
 if (dupes.length) {
   throw new Error(`DUPLICATE CAPTURE:\n  ${dupes.join('\n  ')}\n— a redirect ate a screen`)

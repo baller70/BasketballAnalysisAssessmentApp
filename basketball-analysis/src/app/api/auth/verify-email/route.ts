@@ -25,6 +25,17 @@ export async function GET(request: NextRequest) {
       where: { id: userId },
       data: { emailVerified: new Date() },
     })
+    // AND THE SIBLING CODE IS SPENT TOO — the symmetric half of what the code
+    // route already does. Both credentials are issued together and either one
+    // verifies the address, so once the LINK has done it the six-digit code is
+    // a live credential that outlives its purpose, sitting in the same inbox
+    // for the rest of its TTL. The code route deletes the sibling link with
+    // exactly that argument; the argument is symmetric and the code was not.
+    // Best-effort: the address is verified either way, so a failure here must
+    // not turn a successful verification into an error redirect.
+    await prisma.verificationToken
+      .deleteMany({ where: { userId, type: "email_verify_code" } })
+      .catch(() => {})
   } catch (error) {
     console.error("Failed to mark email verified:", error)
     return NextResponse.redirect(new URL("/verify-email?status=error", base))

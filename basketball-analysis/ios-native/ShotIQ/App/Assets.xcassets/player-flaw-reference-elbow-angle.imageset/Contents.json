@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "player-flaw-reference-elbow-angle.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

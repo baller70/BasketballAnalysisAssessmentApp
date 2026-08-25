@@ -1,0 +1,5 @@
+KCLOUD_XCODE_REPOSITORY=baller70/BasketballAnalysisAssessmentApp
+KCLOUD_XCODE_REF=claude/shotiq-production-build-txi5pl
+KCLOUD_XCODE_MODE=simshots
+KCLOUD_XCODE_SCREENSHOTS=75
+KCLOUD_XCODE_READY: simshots (75 screenshots)

@@ -33,6 +33,46 @@ import CoreGraphics
 import UIKit
 import Vision
 
+enum PoseDetectionResult: Equatable {
+    case detected(DetectedPose)
+    case noPose
+    case unavailable(String)
+}
+
+struct AnalysisPosePointDTO: Codable, Equatable {
+    var x: Double
+    var y: Double
+}
+
+struct AnalysisPoseDTO: Codable, Equatable {
+    var confidence: Float?
+    var keypoints: [String: AnalysisPosePointDTO]
+
+    init(confidence: Float? = nil, keypoints: [String: AnalysisPosePointDTO]) {
+        self.confidence = confidence
+        self.keypoints = keypoints
+    }
+
+    init(pose: DetectedPose) {
+        confidence = pose.confidence
+        keypoints = Dictionary(uniqueKeysWithValues: pose.joints.map { joint, point in
+            (joint.rawValue.rawValue,
+             AnalysisPosePointDTO(x: Double(point.x), y: Double(point.y)))
+        })
+    }
+
+    var detectedPose: DetectedPose? {
+        var joints: [DetectedPose.Joint: CGPoint] = [:]
+        for (rawName, point) in keypoints {
+            let key = VNRecognizedPointKey(rawValue: rawName)
+            let joint = VNHumanBodyPoseObservation.JointName(rawValue: key)
+            joints[joint] = CGPoint(x: point.x, y: point.y)
+        }
+        let pose = DetectedPose(joints: joints, confidence: confidence ?? 0)
+        return pose.isUsable ? pose : nil
+    }
+}
+
 /// A body pose located in one still, in top-left-origin unit coordinates so it
 /// can be drawn straight into a SwiftUI Canvas without a second flip.
 struct DetectedPose: Equatable {
@@ -61,6 +101,34 @@ struct DetectedPose: Equatable {
     /// Every confident joint, for the dots drawn on top of the bones.
     var points: [CGPoint] { Array(joints.values) }
 
+    var trackingBounds: CGRect? {
+        let drawable = joints.filter { joint, _ in
+            joint == .nose || joint == .leftEye || joint == .rightEye
+                || joint == .leftEar || joint == .rightEar
+                || joint == .neck
+                || joint == .leftShoulder || joint == .rightShoulder
+                || joint == .leftElbow || joint == .rightElbow
+                || joint == .leftWrist || joint == .rightWrist
+                || joint == .leftHip || joint == .rightHip
+                || joint == .leftKnee || joint == .rightKnee
+                || joint == .leftAnkle || joint == .rightAnkle
+        }.map(\.value)
+        guard let minX = drawable.map(\.x).min(),
+              let maxX = drawable.map(\.x).max(),
+              let minY = drawable.map(\.y).min(),
+              let maxY = drawable.map(\.y).max() else {
+            return nil
+        }
+        return CGRect(x: minX,
+                      y: minY,
+                      width: max(0, maxX - minX),
+                      height: max(0, maxY - minY))
+    }
+
+    var trackingCenter: CGPoint? {
+        trackingBounds.map { CGPoint(x: $0.midX, y: $0.midY) }
+    }
+
     /// Is the shooting hand in frame? The wrists are the joints the shot is
     /// actually graded on, so this is the only honest question about hands the
     /// detection can answer.
@@ -84,6 +152,25 @@ struct DetectedPose: Equatable {
         return found([.neck, .leftShoulder, .rightShoulder])
             && found([.leftAnkle, .rightAnkle, .leftKnee, .rightKnee])
     }
+
+    static let uiTestSample = DetectedPose(joints: [
+        .nose: CGPoint(x: 0.50, y: 0.12),
+        .leftEye: CGPoint(x: 0.47, y: 0.10),
+        .rightEye: CGPoint(x: 0.53, y: 0.10),
+        .leftEar: CGPoint(x: 0.44, y: 0.12),
+        .rightEar: CGPoint(x: 0.56, y: 0.12),
+        .neck: CGPoint(x: 0.50, y: 0.18),
+        .leftShoulder: CGPoint(x: 0.42, y: 0.30),
+        .rightShoulder: CGPoint(x: 0.58, y: 0.30),
+        .rightElbow: CGPoint(x: 0.64, y: 0.42),
+        .rightWrist: CGPoint(x: 0.70, y: 0.28),
+        .rightHip: CGPoint(x: 0.56, y: 0.58),
+        .rightKnee: CGPoint(x: 0.50, y: 0.74),
+        .rightAnkle: CGPoint(x: 0.46, y: 0.90),
+        .leftHip: CGPoint(x: 0.46, y: 0.58),
+        .leftKnee: CGPoint(x: 0.42, y: 0.74),
+        .leftAnkle: CGPoint(x: 0.38, y: 0.90)
+    ], confidence: 0.91)
 }
 
 enum ShotIQPose {
@@ -93,10 +180,12 @@ enum ShotIQPose {
     /// floor the web pipeline uses, so both platforms discard the same points.
     static let minimumJointConfidence: Float = 0.3
 
-    /// The segments drawn between joints. Eyes and ears are deliberately absent:
-    /// canonical's figure is a shooting-form skeleton, not an anatomy diagram,
-    /// and they add clutter over the face without adding a graded mechanic.
+    /// The segments drawn between joints. Match the original MoveNet ShotIQ
+    /// skeleton: face landmarks help the overlay read as locked to the shooter
+    /// during load/release, while the form scoring still comes from the body.
     static let bones: [(DetectedPose.Joint, DetectedPose.Joint)] = [
+        (.leftEar, .leftEye), (.leftEye, .nose),
+        (.nose, .rightEye), (.rightEye, .rightEar),
         (.neck, .leftShoulder), (.neck, .rightShoulder),
         (.leftShoulder, .rightShoulder),
         (.leftShoulder, .leftElbow), (.leftElbow, .leftWrist),
@@ -154,52 +243,81 @@ enum ShotIQPose {
     ///
     /// Runs off the main thread: on a full-resolution iPhone photo the request
     /// takes long enough to stutter the UI if it runs during a view update.
-    static func detect(in image: UIImage) async -> DetectedPose? {
-        guard let cgImage = image.cgImage else { return nil }
+    static func detect(in image: UIImage,
+                       minimumConfidence: Float = minimumJointConfidence,
+                       preferredCenter: CGPoint? = nil) async -> DetectedPose? {
+        if case .detected(let pose) = await detectResult(in: image,
+                                                         minimumConfidence: minimumConfidence,
+                                                         preferredCenter: preferredCenter) { return pose }
+        return nil
+    }
+
+    static func detectResult(in image: UIImage,
+                             minimumConfidence: Float = minimumJointConfidence,
+                             preferredCenter: CGPoint? = nil) async -> PoseDetectionResult {
+        guard let cgImage = image.cgImage else { return .unavailable("Image could not be read.") }
         let orientation = cgOrientation(image.imageOrientation)
 
-        return await withCheckedContinuation { (continuation: CheckedContinuation<DetectedPose?, Never>) in
+        return await withCheckedContinuation { (continuation: CheckedContinuation<PoseDetectionResult, Never>) in
             DispatchQueue.global(qos: .userInitiated).async {
                 let request = VNDetectHumanBodyPoseRequest()
                 let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
                 do {
                     try handler.perform([request])
                 } catch {
-                    continuation.resume(returning: nil)
+                    continuation.resume(returning: .unavailable("Pose detector unavailable on this simulator/device."))
                     return
                 }
 
                 guard let observations = request.results, !observations.isEmpty else {
-                    continuation.resume(returning: nil)
+                    continuation.resume(returning: .noPose)
                     return
                 }
 
-                // A gym has other people in it. The shooter is the figure Vision
-                // is surest of across the most joints — a bystander in the
-                // background resolves into far fewer.
-                let best = observations.max { a, b in
-                    (a.availableJointNames.count, a.confidence) < (b.availableJointNames.count, b.confidence)
+                // A gym has other people in it. The shooter in an uploaded
+                // phone clip is usually the foreground body, not always the
+                // highest-confidence body in the background. Mirror the web
+                // overlay's behavior by ranking usable poses by body footprint
+                // first, with confidence and joint count as tie-breakers.
+                let candidates = observations.compactMap { observation -> (pose: DetectedPose, score: Double)? in
+                    guard let points = try? observation.recognizedPoints(.all) else { return nil }
+                    var joints: [DetectedPose.Joint: CGPoint] = [:]
+                    var confidences: [Float] = []
+                    for (name, point) in points where point.confidence >= minimumConfidence {
+                        joints[name] = topLeft(point.location)
+                        confidences.append(point.confidence)
+                    }
+                    let pose = DetectedPose(
+                        joints: joints,
+                        confidence: confidences.isEmpty
+                            ? 0
+                            : confidences.reduce(0, +) / Float(confidences.count)
+                    )
+                    guard pose.isUsable else { return nil }
+                    let bounds = pose.trackingBounds ?? .zero
+                    let area = bounds.width * bounds.height
+                    let center = CGPoint(x: bounds.midX, y: bounds.midY)
+                    let continuityBonus: Double
+                    if let preferredCenter {
+                        let distance = hypot(center.x - preferredCenter.x, center.y - preferredCenter.y)
+                        continuityBonus = max(0, 1 - Double(distance)) * 55
+                    } else {
+                        let centrality = 1 - min(1, hypot(center.x - 0.5, center.y - 0.55))
+                        continuityBonus = Double(centrality) * 10
+                    }
+                    let score = Double(area) * 100
+                        + continuityBonus
+                        + Double(joints.count) * 0.08
+                        + Double(pose.confidence)
+                    return (pose, score)
                 }
-                guard let observation = best,
-                      let points = try? observation.recognizedPoints(.all) else {
-                    continuation.resume(returning: nil)
+
+                guard let best = candidates.max(by: { $0.score < $1.score }) else {
+                    continuation.resume(returning: .noPose)
                     return
                 }
 
-                var joints: [DetectedPose.Joint: CGPoint] = [:]
-                var confidences: [Float] = []
-                for (name, point) in points where point.confidence >= minimumJointConfidence {
-                    joints[name] = topLeft(point.location)
-                    confidences.append(point.confidence)
-                }
-
-                let pose = DetectedPose(
-                    joints: joints,
-                    confidence: confidences.isEmpty
-                        ? 0
-                        : confidences.reduce(0, +) / Float(confidences.count)
-                )
-                continuation.resume(returning: pose.isUsable ? pose : nil)
+                continuation.resume(returning: .detected(best.pose))
             }
         }
     }

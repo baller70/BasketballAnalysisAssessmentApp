@@ -13,11 +13,19 @@ import {
 import { checkRateLimit } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 20 uploads per minute per IP.
+  // 20 a minute, ONE BUCKET FOR EVERYONE, and a KNOWN HOLE — see the long note
+  // in /api/llm. This route has no session check and no CSRF, and the only
+  // identifier in the request is a `userId` read out of the form body with
+  // nothing authenticating it, so keying on it would let an attacker rotate it
+  // and bypass the limit altogether. Measured consequence of the single bucket:
+  // one anonymous client at 20 requests a minute denies uploads to everyone.
+  // The fix is authentication, which is a product decision recorded in
+  // docs/SCREEN-LEDGER.md, not a different key.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'upload',
     limit: 20,
     windowMs: 60_000,
+    subject: null,
   })
   if (limited) return limited
 

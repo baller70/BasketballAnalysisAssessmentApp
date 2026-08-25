@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import CoreImage
 
 /// Real camera plumbing for the capture screens. The canonical mockups show a
 /// live viewfinder; this provides one — permission flow, preview layer, photo
@@ -11,10 +12,15 @@ final class CameraService: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published var lastPhoto: Data?
     @Published var lastVideoURL: URL?
+    @Published var latestFrame: UIImage?
+    @Published var latestFrameID = 0
 
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
     private let movieOutput = AVCaptureMovieFileOutput()
+    private let videoOutput = AVCaptureVideoDataOutput()
+    private let videoOutputQueue = DispatchQueue(label: "shotiq.camera.video-output")
+    nonisolated private static let frameContext = CIContext()
     private var configured = false
 
     func start() {
@@ -56,6 +62,12 @@ final class CameraService: NSObject, ObservableObject {
             }
             if session.canAddOutput(photoOutput) { session.addOutput(photoOutput) }
             if session.canAddOutput(movieOutput) { session.addOutput(movieOutput) }
+            videoOutput.alwaysDiscardsLateVideoFrames = true
+            videoOutput.videoSettings = [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+            ]
+            videoOutput.setSampleBufferDelegate(self, queue: videoOutputQueue)
+            if session.canAddOutput(videoOutput) { session.addOutput(videoOutput) }
             session.commitConfiguration()
             configured = true
         }
@@ -70,6 +82,7 @@ final class CameraService: NSObject, ObservableObject {
 
     func startRecording() {
         guard !movieOutput.isRecording else { return }
+        lastVideoURL = nil
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("shotiq-\(UUID().uuidString).mov")
         movieOutput.startRecording(to: url, recordingDelegate: self)
@@ -109,6 +122,21 @@ extension CameraService: AVCaptureFileOutputRecordingDelegate {
     }
 }
 
+extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
+    nonisolated func captureOutput(_ output: AVCaptureOutput,
+                                   didOutput sampleBuffer: CMSampleBuffer,
+                                   from connection: AVCaptureConnection) {
+        guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let ciImage = CIImage(cvPixelBuffer: buffer)
+        guard let cgImage = Self.frameContext.createCGImage(ciImage, from: ciImage.extent) else { return }
+        let image = UIImage(cgImage: cgImage, scale: 1, orientation: .right)
+        Task { @MainActor in
+            self.latestFrame = image
+            self.latestFrameID += 1
+        }
+    }
+}
+
 /// Live viewfinder surface. Drop into any capture screen in place of the
 /// former placeholder rectangle.
 struct CameraPreviewView: UIViewRepresentable {
@@ -132,14 +160,21 @@ struct CameraPreviewView: UIViewRepresentable {
 
 /// Standard denied-permission card: explains and deep-links to Settings.
 struct CameraDeniedView: View {
+    @State private var toast: ShotIQToast?
+
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: "video.slash").font(.system(size: 30)).foregroundStyle(ShotIQColor.graphite)
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "video.slash"), size: 32).font(.system(size: 30)).foregroundStyle(ShotIQColor.graphite)
             Text("Camera access is off").shotiqBody(16, weight: .semibold)
             Text("ShotIQ needs the camera to record your shot. Turn it on in Settings.")
                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                 .multilineTextAlignment(.center)
-            Button { CameraService.openSystemSettings() } label: {
+            Button {
+                toast = .info("Opening Settings", "Turn on Camera access for ShotIQ, then return here.")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    CameraService.openSystemSettings()
+                }
+            } label: {
                 Text("Open Settings").shotiqBody(15, weight: .semibold)
                     .frame(maxWidth: .infinity).frame(height: 46)
                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
@@ -149,5 +184,6 @@ struct CameraDeniedView: View {
         .padding(18)
         .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+        .shotiqToast($toast)
     }
 }

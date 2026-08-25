@@ -47,6 +47,13 @@ struct ShotIQApp: App {
                 // `-uiTestNoTypeClamp` lifts the clamp so the capture harness
                 // can shoot the unclamped arm and prove this is the cause.
                 .modifier(CanonicalTypeScale())
+                // UI-test launches sometimes need to skip Splash before the
+                // splash view's own task has become observable to XCTest.
+                .task {
+                    if UITestHooks.active {
+                        await app.boot()
+                    }
+                }
         }
     }
 }
@@ -79,10 +86,16 @@ struct CanonicalTypeScale: ViewModifier {
 /// SpringBoard never carries them, so none of this is reachable in production.
 /// See ShotIQ/UITests/CanonicalScreenshotTests.swift.
 enum UITestHooks {
-    private static let args = ProcessInfo.processInfo.arguments
+    private static let args = ProcessInfo.processInfo.arguments +
+        (ProcessInfo.processInfo.environment["SHOTIQ_UI_TEST_ARGS"]?
+            .split(separator: "|")
+            .map(String.init) ?? [])
 
     /// Skip splash/auth and drop straight into the signed-in tab shell.
     static var bypassAuth: Bool { args.contains("-uiTestBypassAuth") }
+
+    /// Clear stored tokens and drop straight into the signed-out auth stack.
+    static var signedOut: Bool { args.contains("-uiTestSignedOut") }
 
     /// Land in the onboarding flow instead of the main tabs (implies bypass).
     static var startOnboarding: Bool { args.contains("-uiTestOnboarding") }
@@ -117,6 +130,12 @@ enum UITestHooks {
     /// and the real cause is still out there.
     static var noTypeClamp: Bool { args.contains("-uiTestNoTypeClamp") }
 
+    /// Feed the staged media screens with the bundled full-body shooter photo
+    /// instead of their empty canonical placeholders. This lets the simulator
+    /// prove the real-image path, including pose/framing feedback, without
+    /// needing to operate the system photo picker.
+    static var useSampleMedia: Bool { args.contains("-uiTestSampleMedia") }
+
     /// `-uiTestHomeVariant new|standard|pro` forces one of the three canonical
     /// home states (017/018/019) instead of inferring it from history data.
     static var homeVariant: String? {
@@ -124,7 +143,65 @@ enum UITestHooks {
         return args[i + 1]
     }
 
-    /// `-uiTestStage <slug>` roots the app at one of the seven canonical screens
+    /// Optional asset name paired with `-uiTestSampleMedia`, so the simulator can
+    /// prove the pose path with a sample that Vision recognizes on iOS.
+    static var sampleMediaName: String {
+        guard let i = args.firstIndex(of: "-uiTestSampleMediaName"), args.indices.contains(i + 1) else {
+            return "photo-068-visual-004"
+        }
+        return args[i + 1]
+    }
+
+    /// Force the history endpoint branch to fail for production-path proof.
+    /// Without this hook the simulator can only prove an empty account, not the
+    /// more dangerous case where a backend error was being mistaken for empty.
+    static var historyFailure: Bool { args.contains("-uiTestHistoryFailure") }
+
+    /// Force the photo-analysis submission to fail after a selected image has
+    /// loaded, proving screen 040 preserves media for retry/reframe paths.
+    static var analysisFailure: Bool { args.contains("-uiTestAnalysisFailure") }
+
+    /// Force a deterministic pose into the local analysis DTO so the simulator
+    /// can prove downstream pose rendering even when Vision weights are absent.
+    static var forceSamplePose: Bool { args.contains("-uiTestForceSamplePose") }
+
+    /// Seed analysis screens with measured-but-weak mechanics so simulator
+    /// proof can verify derived flaws instead of canonical demo flaws.
+    static var weakAnalysis: Bool { args.contains("-uiTestWeakAnalysis") }
+
+    /// Seed more than one elite shooter so focused proof can verify selected
+    /// shooter detail state instead of the one-row canonical screenshot path.
+    static var eliteShooterCatalog: Bool { args.contains("-uiTestEliteShooterCatalog") }
+
+    /// Clear locally persisted annotation proof data before a focused toolbar
+    /// test. Normal launches never pass this flag.
+    static var resetAnnotations: Bool { args.contains("-uiTestResetAnnotations") }
+
+    /// Clear locally persisted saved-drill proof data before focused training
+    /// catalog tests. Normal launches never pass this flag.
+    static var resetTrainingDrills: Bool { args.contains("-uiTestResetTrainingDrills") }
+
+    /// Clear locally persisted completed-workout proof data before focused
+    /// shot-tracker tests. Normal launches never pass this flag.
+    static var resetTrainingWorkouts: Bool { args.contains("-uiTestResetTrainingWorkouts") }
+
+    /// Clear locally persisted created-goal proof data before focused goals
+    /// tests. Normal launches never pass this flag.
+    static var resetCreatedGoals: Bool { args.contains("-uiTestResetCreatedGoals") }
+
+    /// Expose route-only Goals proof buttons for focused functional coverage.
+    /// Normal launches and canonical screenshot tests never pass this flag.
+    static var goalsRouteProof: Bool { args.contains("-uiTestGoalsRouteProof") }
+
+    /// Clear locally persisted settings proof data before focused settings
+    /// tests. Normal launches never pass this flag.
+    static var resetSettings: Bool { args.contains("-uiTestResetSettings") }
+
+    /// Launch media-gated staged screens empty so functional tests can prove
+    /// customer feedback instead of using the canonical screenshot sample.
+    static var noMedia: Bool { args.contains("-uiTestNoMedia") }
+
+    /// `-uiTestStage <slug>` roots the app at one of the canonical screens
     /// whose *state* the harness cannot manufacture offline. Each slug is the
     /// screen's canonical slug, so the argument and the screenshot name match:
     ///
@@ -132,9 +209,17 @@ enum UITestHooks {
     /// |--------------------------|--------|-------------------------------------|
     /// | `verify-email`           | 005    | a real network account sign-up       |
     /// | `reset-password`         | 007    | a reset token from an emailed link   |
+    /// | `photo-upload-source`    | 022    | signed-in photo intake               |
     /// | `photo-review-crop`      | 023    | a photo picked from the library      |
     /// | `upload-quality-check`   | 024    | a picked photo/video to inspect      |
     /// | `video-review`           | 027    | a video picked from the library      |
+    /// | `live-camera-setup`      | 028    | camera permission / live capture     |
+    /// | `hoop-calibration`       | 029    | camera setup                         |
+    /// | `readiness-check`        | 030    | hoop/camera setup                    |
+    /// | `capture-ready`          | 031    | readiness confirmation               |
+    /// | `live-recording`         | 032    | camera capture session               |
+    /// | `live-form-feedback`     | 033    | live coaching feedback               |
+    /// | `shot-detected`          | 034    | live detector event                  |
     /// | `analysis-taking-longer` | 037    | analysis slower than the watchdog    |
     /// | `analysis-error`         | 040    | an analyze/upload round trip failing |
     ///
@@ -149,13 +234,26 @@ enum UITestHooks {
         return args[i + 1]
     }
 
-    /// The five `stage` slugs that are rendered inside the signed-in tab shell.
-    static let mainShellStages = ["photo-review-crop", "upload-quality-check", "video-review",
-                                  "analysis-taking-longer", "analysis-error"]
+    /// The `stage` slugs that are rendered inside the signed-in tab shell.
+    static let mainShellStages = ["analyze-hub", "photo-upload-source", "photo-review-crop", "upload-quality-check", "video-review",
+                                  "live-camera-setup", "hoop-calibration", "readiness-check",
+                                  "capture-ready", "live-recording", "live-form-feedback", "shot-detected",
+                                  "analysis-processing", "analysis-taking-longer",
+                                  "analysis-result-overview", "analysis-error",
+                                  "flaws-overview",
+                                  "training-home", "quick-start", "discover-drills", "drill-detail", "my-drills",
+                                  "workout-calendar", "shot-tracker", "workout-completion",
+                                  "analytics-cards", "analytics-detailed", "profile",
+                                  "player-card", "customize-player-card", "my-media",
+                                  "media-detail", "goals", "create-goal", "goal-detail",
+                                  "settings-hub", "share-results"]
 
     /// Any hook at all — used to keep test-only branches out of normal launches.
     static var active: Bool {
-        bypassAuth || startOnboarding || demoData || holdSplash || homeVariant != nil || stage != nil
+        bypassAuth || signedOut || startOnboarding || demoData || holdSplash || noTypeClamp ||
+        useSampleMedia || historyFailure || analysisFailure || weakAnalysis || eliteShooterCatalog ||
+        resetAnnotations || resetTrainingDrills || resetTrainingWorkouts || resetCreatedGoals || resetSettings || noMedia ||
+        homeVariant != nil || stage != nil
     }
 
     static let demoUser = APIUser(id: "uitest", email: "uitest@shotiq.local",
@@ -165,18 +263,166 @@ enum UITestHooks {
 
 /// App-level state machine: splash → auth → onboarding → main.
 @MainActor
+struct ShotIQRecentMediaEntry: Identifiable, Equatable, Codable {
+    var id: String
+    var title: String
+    var kind: String
+    var durationText: String
+    var analysis: ShotIQAnalysisResultDTO
+}
+
+struct ShotIQShootingMediaEntry: Equatable, Codable {
+    var url: String
+    var kind: String
+    var title: String
+    var durationText: String
+}
+
+struct ShotIQParticipationSummary: Equatable {
+    var streak: String
+    var points: String
+    var analyses: Int
+    var workouts: Int
+
+    static let zero = ShotIQParticipationSummary(streak: "0", points: "0", analyses: 0, workouts: 0)
+    static let canonicalDemo = ShotIQParticipationSummary(streak: "6", points: "2,840", analyses: 12, workouts: 0)
+}
+
 final class AppState: ObservableObject {
     enum Phase { case splash, welcome, main }
     @Published var phase: Phase = .splash
     @Published var user: APIUser?
-    @Published var onboardingComplete = false
+    @Published var onboardingComplete = false {
+        didSet { persistOnboardingComplete() }
+    }
     @Published var tab: RootTab = .home
+    @Published var recentMedia: [ShotIQRecentMediaEntry] = [] {
+        didSet { persistRecentMedia() }
+    }
+    @Published var latestShootingMedia: ShotIQShootingMediaEntry? = nil {
+        didSet { persistLatestShootingMedia() }
+    }
+    private var sessionHydrationStarted = false
+    private static let onboardingCompleteKey = "shotiq.onboardingComplete.v1"
+    private static let recentMediaKey = "shotiq.recentMedia.v1"
+    private static let latestShootingMediaKey = "shotiq.latestShootingMedia.v1"
+
+    var participationSummary: ShotIQParticipationSummary {
+        guard !UITestHooks.demoData else { return .canonicalDemo }
+        let workoutPayload = UserDefaults.standard.string(forKey: TrainingWorkoutStore.key) ?? ""
+        let workouts = TrainingWorkoutStore.decode(workoutPayload)
+        let analysisCount = recentMedia.count
+        let workoutPoints = workouts.reduce(0) { $0 + $1.pointsEarned }
+        let analysisPoints = analysisCount * 100
+        let totalPoints = workoutPoints + analysisPoints
+        let activeDays = Self.activeParticipationDays(recentMedia: recentMedia, workouts: workouts)
+        return ShotIQParticipationSummary(streak: "\(Self.currentStreak(from: activeDays))",
+                                          points: Self.groupedNumber(totalPoints),
+                                          analyses: analysisCount,
+                                          workouts: workouts.count)
+    }
+
+    init() {
+        applyUITestResets()
+        if !UITestHooks.active {
+            onboardingComplete = Self.loadPersistedOnboardingComplete()
+            recentMedia = Self.loadPersistedRecentMedia()
+            latestShootingMedia = Self.loadPersistedLatestShootingMedia()
+        }
+
+        if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
+            phase = .welcome
+        } else if UITestHooks.signedOut {
+            KeychainStore.delete(key: "accessToken")
+            KeychainStore.delete(key: "refreshToken")
+            user = nil
+            onboardingComplete = false
+            phase = .welcome
+        } else if UITestHooks.bypassAuth || UITestHooks.startOnboarding {
+            user = UITestHooks.demoUser
+            onboardingComplete = !UITestHooks.startOnboarding
+            phase = .main
+        }
+        seedUITestAnalysisIfNeeded()
+    }
+
+    func rememberAnalysisMedia(_ analysis: ShotIQAnalysisResultDTO, title: String? = nil) {
+        let existing = recentMedia.first { entry in
+            entry.id == analysis.id
+            || (analysis.clientSessionId != nil && entry.analysis.clientSessionId == analysis.clientSessionId)
+        }
+        let mergedAnalysis = existing.map { Self.mergeAnalysis(incoming: analysis, existing: $0.analysis) } ?? analysis
+        let kind = mergedAnalysis.media.type?.lowercased() == "video" ? "Videos" : "Images"
+        let entry = ShotIQRecentMediaEntry(
+            id: mergedAnalysis.id,
+            title: title ?? existing?.title ?? (kind == "Videos" ? "Analyzed Video" : "Analyzed Photo"),
+            kind: kind,
+            durationText: existing?.durationText ?? (kind == "Videos" ? "clip" : "photo"),
+            analysis: mergedAnalysis)
+        recentMedia.removeAll { existingEntry in
+            existingEntry.id == entry.id
+            || (entry.analysis.clientSessionId != nil && existingEntry.analysis.clientSessionId == entry.analysis.clientSessionId)
+        }
+        recentMedia.insert(entry, at: 0)
+        if recentMedia.count > 24 {
+            recentMedia = Array(recentMedia.prefix(24))
+        }
+    }
+
+    func rememberShootingMedia(url: URL, kind: String, title: String, durationText: String) {
+        latestShootingMedia = ShotIQShootingMediaEntry(url: url.absoluteString,
+                                                       kind: kind,
+                                                       title: title,
+                                                       durationText: durationText)
+    }
+
+    private static func mergeAnalysis(incoming: ShotIQAnalysisResultDTO,
+                                      existing: ShotIQAnalysisResultDTO) -> ShotIQAnalysisResultDTO {
+        var merged = incoming
+        if merged.media.localVideoUrl?.isEmpty != false {
+            merged.media.localVideoUrl = existing.media.localVideoUrl
+        }
+        if merged.media.localImageUrl?.isEmpty != false {
+            merged.media.localImageUrl = existing.media.localImageUrl
+        }
+        if merged.media.videoUrl?.isEmpty != false {
+            merged.media.videoUrl = existing.media.videoUrl
+        }
+        if merged.media.displayImageUrl?.isEmpty != false {
+            merged.media.displayImageUrl = existing.media.displayImageUrl
+        }
+        if merged.media.annotatedImageUrl?.isEmpty != false {
+            merged.media.annotatedImageUrl = existing.media.annotatedImageUrl
+        }
+        if merged.media.imageUrl?.isEmpty != false {
+            merged.media.imageUrl = existing.media.imageUrl
+        }
+        if merged.pose == nil {
+            merged.pose = existing.pose
+        }
+        if merged.bodyPositions?.isEmpty != false {
+            merged.bodyPositions = existing.bodyPositions
+        }
+        return merged
+    }
 
     func boot() async {
+        applyUITestResets()
+        guard phase == .splash else { return }
         // Test-only: the two auth stages (005 verify-email, 007 reset-password)
         // live inside the signed-out stack, so hand straight to it rather than
         // waiting out the splash hold. See UITestHooks.stage.
         if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
+            phase = .welcome
+            return
+        }
+        // Test-only: force a signed-out auth shell regardless of simulator
+        // keychain state, so smoke tests do not depend on earlier app launches.
+        if UITestHooks.signedOut {
+            KeychainStore.delete(key: "accessToken")
+            KeychainStore.delete(key: "refreshToken")
+            user = nil
+            onboardingComplete = false
             phase = .welcome
             return
         }
@@ -186,6 +432,7 @@ final class AppState: ObservableObject {
             user = UITestHooks.demoUser
             onboardingComplete = !UITestHooks.startOnboarding
             phase = .main
+            seedUITestAnalysisIfNeeded()
             return
         }
         // Canonical 001 is a real screen, not a flash: hold the brand moment long
@@ -199,24 +446,236 @@ final class AppState: ObservableObject {
         leaveSplash()
     }
 
+    private func applyUITestResets() {
+        if UITestHooks.resetAnnotations {
+            UserDefaults.standard.removeObject(forKey: "shotiq.annotations.frame43.v1")
+        }
+        if UITestHooks.resetTrainingDrills {
+            UserDefaults.standard.removeObject(forKey: "shotiq.training.savedDrills.v1")
+        }
+        if UITestHooks.resetTrainingWorkouts {
+            UserDefaults.standard.removeObject(forKey: "shotiq.training.completedWorkouts.v1")
+        }
+        if UITestHooks.resetCreatedGoals {
+            UserDefaults.standard.removeObject(forKey: CreatedGoalStore.key)
+        }
+        if UITestHooks.resetSettings {
+            for key in ["notifications", "coachingAudio", "units", "autoAnalysis",
+                        "dataBackup", "anonAnalytics", "peerComparisons"] {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+    }
+
+    private func seedUITestAnalysisIfNeeded() {
+        guard UITestHooks.weakAnalysis,
+              recentMedia.contains(where: { $0.id == "ios-ui-test-weak-analysis" }) == false else { return }
+        rememberAnalysisMedia(ShotIQLocalAnalysisFactory.uiTestWeakAnalysis(),
+                              title: "Weak mechanics proof")
+    }
+
     /// Leave screen 001 for whatever the stored session says comes next. Safe to
     /// call more than once — the first caller wins.
     func leaveSplash() {
         guard phase == .splash else { return }
-        // A stored access token means a returning user.
-        phase = KeychainStore.read(key: "accessToken") != nil ? .main : .welcome
+        guard KeychainStore.read(key: "accessToken") != nil else {
+            phase = .welcome
+            return
+        }
+        // A stored access token means a returning user, but the tabs still need
+        // the current profile and latest repo-backed analysis contract.
+        phase = .main
+        hydrateSignedInSessionIfNeeded()
     }
 
     func signedIn(_ user: APIUser) {
         self.user = user
-        onboardingComplete = user.profileComplete ?? false
+        onboardingComplete = Self.loadPersistedOnboardingComplete()
         phase = .main
+        sessionHydrationStarted = false
+        hydrateSignedInSessionIfNeeded()
     }
 
     func signOut() {
         Task { await APIClient.shared.signOut() }
         user = nil
+        recentMedia = []
+        latestShootingMedia = nil
+        onboardingComplete = false
+        Self.clearPersistedOnboardingComplete()
+        Self.clearPersistedRecentMedia()
+        Self.clearPersistedLatestShootingMedia()
+        sessionHydrationStarted = false
         phase = .welcome
+    }
+
+    private static func loadPersistedOnboardingComplete() -> Bool {
+        UserDefaults.standard.bool(forKey: onboardingCompleteKey)
+    }
+
+    private func persistOnboardingComplete() {
+        guard !UITestHooks.active else { return }
+        UserDefaults.standard.set(onboardingComplete, forKey: Self.onboardingCompleteKey)
+    }
+
+    private static func clearPersistedOnboardingComplete() {
+        UserDefaults.standard.removeObject(forKey: onboardingCompleteKey)
+    }
+
+    private static func loadPersistedRecentMedia() -> [ShotIQRecentMediaEntry] {
+        guard let data = UserDefaults.standard.data(forKey: recentMediaKey),
+              let entries = try? JSONDecoder().decode([ShotIQRecentMediaEntry].self, from: data) else {
+            return []
+        }
+        return Array(entries.prefix(24)).map { entry in
+            var repaired = entry
+            repaired.analysis = repairPersistedMediaURLs(entry.analysis)
+            return repaired
+        }
+    }
+
+    private func persistRecentMedia() {
+        guard !UITestHooks.active else { return }
+        if recentMedia.isEmpty {
+            Self.clearPersistedRecentMedia()
+            return
+        }
+        if let data = try? JSONEncoder().encode(recentMedia) {
+            UserDefaults.standard.set(data, forKey: Self.recentMediaKey)
+        }
+    }
+
+    private static func clearPersistedRecentMedia() {
+        UserDefaults.standard.removeObject(forKey: recentMediaKey)
+    }
+
+    private static func loadPersistedLatestShootingMedia() -> ShotIQShootingMediaEntry? {
+        guard let data = UserDefaults.standard.data(forKey: latestShootingMediaKey),
+              let entry = try? JSONDecoder().decode(ShotIQShootingMediaEntry.self, from: data) else {
+            return nil
+        }
+        return entry
+    }
+
+    private func persistLatestShootingMedia() {
+        guard !UITestHooks.active else { return }
+        guard let latestShootingMedia else {
+            Self.clearPersistedLatestShootingMedia()
+            return
+        }
+        if let data = try? JSONEncoder().encode(latestShootingMedia) {
+            UserDefaults.standard.set(data, forKey: Self.latestShootingMediaKey)
+        }
+    }
+
+    private static func clearPersistedLatestShootingMedia() {
+        UserDefaults.standard.removeObject(forKey: latestShootingMediaKey)
+    }
+
+    private static func repairPersistedMediaURLs(_ analysis: ShotIQAnalysisResultDTO) -> ShotIQAnalysisResultDTO {
+        var repaired = analysis
+        repaired.media.localVideoUrl = repairedLocalMediaURL(from: repaired.media.localVideoUrl)
+        repaired.media.localImageUrl = repairedLocalMediaURL(from: repaired.media.localImageUrl)
+        return repaired
+    }
+
+    private static func repairedLocalMediaURL(from raw: String?) -> String? {
+        guard let raw, raw.isEmpty == false else { return raw }
+        guard let url = URL(string: raw), url.isFileURL else { return raw }
+        if FileManager.default.fileExists(atPath: url.path) { return raw }
+        guard url.path.contains("/ShotIQMedia/"),
+              let dir = persistentMediaDirectory() else {
+            return raw
+        }
+        let repaired = dir.appendingPathComponent(url.lastPathComponent)
+        return FileManager.default.fileExists(atPath: repaired.path) ? repaired.absoluteString : raw
+    }
+
+    private static func persistentMediaDirectory() -> URL? {
+        guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                  in: .userDomainMask).first else {
+            return nil
+        }
+        return base.appendingPathComponent("ShotIQMedia", isDirectory: true)
+    }
+
+    private static func activeParticipationDays(recentMedia: [ShotIQRecentMediaEntry],
+                                                workouts: [TrainingWorkoutRecord]) -> Set<Date> {
+        var days = Set<Date>()
+        let calendar = Calendar.current
+        for entry in recentMedia {
+            if let date = isoDate(entry.analysis.recordedAt) {
+                days.insert(calendar.startOfDay(for: date))
+            }
+        }
+        for workout in workouts {
+            days.insert(calendar.startOfDay(for: workout.completedAt))
+        }
+        return days
+    }
+
+    private static func currentStreak(from days: Set<Date>) -> Int {
+        guard !days.isEmpty else { return 0 }
+        let calendar = Calendar.current
+        var cursor = calendar.startOfDay(for: Date())
+        if !days.contains(cursor),
+           let yesterday = calendar.date(byAdding: .day, value: -1, to: cursor),
+           days.contains(yesterday) {
+            cursor = yesterday
+        }
+        var streak = 0
+        while days.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return streak
+    }
+
+    private static func isoDate(_ value: String) -> Date? {
+        let precise = ISO8601DateFormatter()
+        precise.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return precise.date(from: value) ?? ISO8601DateFormatter().date(from: value)
+    }
+
+    private static func groupedNumber(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private func hydrateSignedInSessionIfNeeded() {
+        guard !UITestHooks.active else {
+            seedUITestAnalysisIfNeeded()
+            return
+        }
+        guard !sessionHydrationStarted else { return }
+        sessionHydrationStarted = true
+
+        Task {
+            async let profile: APIProfileDTO? = try? APIClient.shared.profile()
+            async let latest: ShotIQAnalysisResultDTO? = try? APIClient.shared.latestAnalysis()
+
+            if let loadedProfile = await profile {
+                await MainActor.run {
+                    var merged = self.user ?? APIUser()
+                    merged.email = loadedProfile.email ?? merged.email
+                    merged.displayName = loadedProfile.displayName ?? merged.displayName
+                    merged.firstName = loadedProfile.firstName ?? merged.firstName
+                    merged.lastName = loadedProfile.lastName ?? merged.lastName
+                    merged.profileComplete = loadedProfile.profileComplete ?? merged.profileComplete
+                    self.user = merged
+                }
+            }
+
+            if let latestAnalysis = await latest {
+                await MainActor.run {
+                    let isVideo = latestAnalysis.media.type?.lowercased() == "video"
+                    self.rememberAnalysisMedia(latestAnalysis,
+                                               title: isVideo ? "Latest Video Analysis" : "Latest Photo Analysis")
+                }
+            }
+        }
     }
 }
 
@@ -237,10 +696,12 @@ struct RootView: View {
 struct MainTabView: View {
     @EnvironmentObject var app: AppState
 
-    /// Test-only: true when `-uiTestStage` names one of the five canonical
+    /// Test-only: true when `-uiTestStage` names one of the canonical
     /// screens that live inside this shell but can only be reached from a photo
-    /// or video the harness cannot pick (023/024/027) or from an analysis that
-    /// runs long or fails (037/040). Always false in a shipped build, because
+    /// or video the harness cannot pick (023/024/027), from a camera/hoop
+    /// state (028-034), from an analysis that runs long or fails (037/040), or
+    /// from long-scroll profile/progress surfaces that need direct proof entry.
+    /// Always false in a shipped build, because
     /// `UITestHooks.stage` is nil unless a launch argument set it.
     private var isStaged: Bool {
         guard let stage = UITestHooks.stage else { return false }
@@ -248,15 +709,57 @@ struct MainTabView: View {
     }
 
     /// The staged screen, rooted in its own stack so its pushes still work. The
-    /// tab bar below it is untouched, which is what canonical 023/024/027/037/040
+    /// tab bar below it is untouched, which is what canonical staged screens
     /// show. `image: nil` and the no-argument initialisers are the exact states
     /// those renders depict: the canonical review frame, the canonical clip.
     @ViewBuilder private var stagedRoot: some View {
         switch UITestHooks.stage ?? "" {
-        case "photo-review-crop": PhotoReviewCropView(image: nil)
-        case "upload-quality-check": UploadQualityCheckView()
+        case "analyze-hub": AnalyzeHubView()
+        case "photo-upload-source": PhotoUploadSourceView()
+        case "photo-review-crop": PhotoReviewCropView(image: UITestHooks.noMedia ? nil : UITestHooks.sampleShotImage)
+        case "upload-quality-check": UploadQualityCheckView(image: UITestHooks.noMedia ? nil : UITestHooks.sampleShotImage)
         case "video-review": VideoReviewView()
+        case "live-camera-setup": LiveCameraSetupView()
+        case "hoop-calibration": HoopCalibrationView()
+        case "readiness-check": ReadinessCheckView()
+        case "capture-ready": CaptureReadyView()
+        case "live-recording": LiveRecordingView()
+        case "live-form-feedback": LiveFormFeedbackView()
+        case "shot-detected": ShotDetectedView()
+        case "analysis-processing": AnalysisProcessingView(initialResult: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis())
         case "analysis-taking-longer": AnalysisTakingLongerView()
+        case "analysis-result-overview": AnalysisResultOverviewView(initialResult: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis())
+        case "flaws-overview": FlawsOverviewView(presentation: AnalysisResultPresentation(result: ShotIQLocalAnalysisFactory.uiTestWeakAnalysis()))
+        case "training-home": TrainingHomeView()
+        case "quick-start": QuickStartView()
+        case "discover-drills": DiscoverDrillsView()
+        case "drill-detail": DrillDetailView(name: "STACK & SHOOT")
+        case "my-drills": MyDrillsView()
+        case "workout-calendar": WorkoutCalendarView()
+        case "shot-tracker": ShotTrackerView()
+        case "workout-completion": WorkoutCompletionView()
+        case "analytics-cards": AnalyticsCardsView()
+        case "analytics-detailed": AnalyticsDetailedView()
+        case "profile": ProfileView()
+        case "player-card": PlayerCardView()
+        case "customize-player-card": CustomizePlayerCardView()
+        case "my-media": MyMediaView()
+        case "media-detail": MediaDetailView()
+        case "goals": GoalsView()
+        case "create-goal": CreateGoalView()
+        case "goal-detail":
+            GoalDetailView(goal: GoalRecord(
+                id: "uitest-goal",
+                name: "Keep elbow stacked through release",
+                description: "Keep your shooting elbow stacked under the ball through release for a repeatable shot.",
+                targetValue: 100,
+                currentValue: 72,
+                unit: "%",
+                category: "Form",
+                xpReward: 250
+            ))
+        case "settings-hub": SettingsHubView()
+        case "share-results": ShareResultsView()
         // "analysis-error" is the only slug left; a `default` arm keeps the
         // ViewBuilder's conditional chain one branch shorter.
         default: AnalysisErrorView()
@@ -272,8 +775,11 @@ struct MainTabView: View {
                     switch app.tab {
                     case .home: NavigationStack { HomeView() }
                     case .analyze: NavigationStack { AnalyzeHubView() }
-                    case .training: NavigationStack { TrainingHomeView() }
+                    case .training: NavigationStack { MyDrillsView() }
                     case .progress: NavigationStack { AnalyticsCardsView() }
+                    case .elite: NavigationStack { EliteShootersView() }
+                    case .media: NavigationStack { MyMediaView() }
+                    case .goals: NavigationStack { GoalsView() }
                     case .profile: NavigationStack { ProfileView() }
                     }
                 }
@@ -283,5 +789,11 @@ struct MainTabView: View {
         }
         .background(ShotIQColor.paper)
         .statusBarHidden(true)
+    }
+}
+
+extension UITestHooks {
+    static var sampleShotImage: UIImage? {
+        useSampleMedia ? UIImage(named: sampleMediaName) : nil
     }
 }

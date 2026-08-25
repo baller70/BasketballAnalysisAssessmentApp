@@ -35,12 +35,50 @@ import {
 } from '@/lib/llm';
 import { checkRateLimit } from '@/lib/rateLimit';
 
+/**
+ * PER REQUEST, DECLARED. This handler takes no arguments and reads nothing
+ * request-scoped, which is exactly the shape Next 14 classifies as static and
+ * PRERENDERS — and that is not hypothetical here: /api/auth/csrf had the same
+ * shape and its token was frozen into the dist, shared by every caller, the
+ * moment the build started succeeding. This route reports live router status and capacity,
+ * so baking one build's answer into the artefact would serve stale data with no
+ * error anywhere.
+ *
+ * It is dynamic today only because Next happens to classify it so. Declaring it
+ * removes the dependence on that classification, and docs/shotiq/csrf-gate.mjs
+ * now fails if a zero-argument handler appears without this line.
+ */
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
-  // Rate limit: 30 LLM requests per minute per IP.
+  // 30 a minute, ONE BUCKET FOR EVERYONE, and this is a KNOWN HOLE rather than
+  // a defended choice. The previous comment here said there was "no identity to
+  // key on" and treated that as a reason the global bucket was acceptable. That
+  // reasoning was backwards: there is no identity to key on because THIS ROUTE
+  // HAS NO AUTHENTICATION AT ALL — no session check, no CSRF, and
+  // `middleware.ts` exempts everything under /api — so the premise was itself
+  // the more serious finding, and it was written down as a justification.
+  //
+  // Measured, unauthenticated, no cookie and no CSRF header:
+  //
+  //     30 malformed POSTs (rotating XFF, correctly ignored)  400 x29 then 429
+  //     a DIFFERENT caller, different XFF and UA, valid body  429
+  //
+  // So one anonymous client at 30 requests a minute denies paid model access to
+  // every user of the product, and anyone on the internet can spend the budget
+  // in the first place.
+  //
+  // `subject: null` STAYS for now, because the fix is authentication, not a
+  // different key: keying on an unauthenticated caller-supplied id lets an
+  // attacker rotate it and bypass the limit entirely, which is worse than
+  // sharing. Requiring a session here changes who can use the product and would
+  // break any existing caller, which is Kevin's call and is recorded as such in
+  // docs/SCREEN-LEDGER.md rather than decided in a screen's round.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'llm',
     limit: 30,
     windowMs: 60_000,
+    subject: null,
   });
   if (limited) return limited;
 

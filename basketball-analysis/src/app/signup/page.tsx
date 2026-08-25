@@ -28,6 +28,8 @@ import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown } from "@/components/shotiq/ApprovedLucide"
 import { PHONE_CSS } from "./phone-004"
 import { Marks004, Monogram, EyeMark004, FocusMark004, ShareMark } from "./Marks004"
+import { words, glyphsWithSpaces, srSpace, LEDE1_DX, LEDE2_DX, ONEACCT_DX,
+         TERMS_DX, DISPLAY_GX } from "./PerWord004"
 
 /** Canonical 004 sets the helper under PASSWORD as "Use at least 8
  *  characters.", and the client gate is moved with it so the screen does not
@@ -41,32 +43,67 @@ export default function SignUpPage() {
     email: "", password: "", confirmPassword: "", firstName: "", lastName: "",
   })
   const [error, setError] = useState("")
+  // Which control the current error belongs to. The error was announced
+  // (role="alert") but nothing linked it to the field at fault, and no field
+  // carried aria-invalid, so a screen-reader user heard the message and then
+  // had to guess which of five inputs it meant.
+  const [invalid, setInvalid] = useState<"email" | "password" | "confirm" | "agree" | "">("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const confirmRef = useRef<HTMLInputElement>(null)
+  const agreeRef = useRef<HTMLInputElement>(null)
 
   // --- preserved account-creation behaviour --------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setInvalid("")
 
+    // ONE BRANCH, TWO CAUSES — and the first version of this flagged `email`
+    // for both. With a valid address typed and the password left empty, the
+    // screen-reader user was told the email was wrong when it was correct, and
+    // keyboard focus landed on a valid field. WCAG 3.3.1. The other four rules
+    // were fine precisely because each one has a single cause; the hole was
+    // exactly where two share a branch.
     if (!formData.email || !formData.password) {
       setError("Email and password are required")
+      const culprit = !formData.email ? "email" : "password"
+      setInvalid(culprit)
+      if (culprit === "email") emailRef.current?.focus()
+      else passwordRef.current?.focus()
+      return
+    }
+    // The form is noValidate, so `type="email"` never fires and the ONLY email
+    // check was the server's. `not-an-email` therefore cost a POST to
+    // /api/auth/signup and a 400 before the player saw anything, where the
+    // other three rules are enforced without a request. Same shape as the
+    // others now, and the same 400 still backstops it.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError("Enter a valid email address")
+      setInvalid("email")
       emailRef.current?.focus()
       return
     }
     if (formData.password.length < MIN_PASSWORD) {
       setError(`Password must be at least ${MIN_PASSWORD} characters`)
+      setInvalid("password")
+      passwordRef.current?.focus()
       return
     }
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setInvalid("confirm")
+      confirmRef.current?.focus()
       return
     }
     if (!agreed) {
       setError("Please agree to the Terms of Use and Privacy Policy")
+      setInvalid("agree")
+      agreeRef.current?.focus()
       return
     }
 
@@ -79,9 +116,42 @@ export default function SignUpPage() {
         formData.lastName || undefined
       )
       if (result.success) {
+        // The signup API has just mailed a six-digit verification code (and the
+        // link beside it). /verify-email needs to know WHICH address it went to
+        // and WHEN, so it can name the address and run the resend cooldown down
+        // from the real send — the session may not have settled on a phone by
+        // the time that screen mounts. Written here, at the one moment the
+        // answer is certainly known; read by src/app/verify-email/page.tsx.
+        try {
+          sessionStorage.setItem("shotiq-pending-email", formData.email)
+          sessionStorage.setItem("shotiq-verify-sent-at", String(Date.now()))
+          // Where /verify-email sends the player once they are done. A new
+          // account still owes onboarding, which is where this screen used to
+          // go directly.
+          sessionStorage.setItem("shotiq-verify-next", "/onboarding")
+        } catch { /* opaque origin — /verify-email falls back to the session */ }
+        // AND THE HANDOFF ABOVE NOW HAS SOMEWHERE TO LAND.
+        //
+        // This wrote both of those keys "read by src/app/verify-email/page.tsx"
+        // and then navigated to /onboarding, which reads neither. The result was
+        // that /verify-email had NO in-app entry point at all: grepped across
+        // every .ts/.tsx, the only references outside the route's own files are
+        // middleware's allowlist, the API redirects and the mailer. A real
+        // signup landed on /onboarding fully signed in, and the only ways to the
+        // screen were the emailed link or typing the URL.
+        //
+        // The canonical iOS order is 004-create-account then 005-verify-email,
+        // and the two sessionStorage keys above were written for exactly this
+        // handoff, so this restores the designed flow rather than inventing one.
+        // It also makes the countdown real on the one path a player actually
+        // takes: `shotiq-verify-sent-at` is written a line above, so the screen
+        // opens mid-cooldown the way canonical draws it, instead of opening with
+        // "You can resend the code now" and inviting the one action that used to
+        // rotate the code being read.
+        //
         // signUp already awaited the API response, so the httpOnly session
         // cookie is set by the time we get here — navigate immediately, no race.
-        window.location.assign("/onboarding")
+        window.location.assign("/verify-email")
       } else {
         setError(result.error || "Sign up failed")
         setIsSubmitting(false)
@@ -93,6 +163,18 @@ export default function SignUpPage() {
   }
   // --------------------------------------------------------------------------
 
+  // A CORRECTED FIELD MUST STOP BEING WRONG. Both the aria-invalid flag AND
+  // the message survived the user fixing the problem: type a valid address
+  // after an email error and the field still reported aria-invalid="true"
+  // with "Enter a valid email address" still on screen underneath it. The
+  // flag is an AT defect; the stale MESSAGE is read by everyone, which makes
+  // it the worse half. Cleared on the first edit of whichever control the
+  // error was attributed to — not on every keystroke everywhere, so an error
+  // about the password does not vanish because the player edits their name.
+  const clearIfFixing = (who: typeof invalid) => {
+    if (invalid === who) { setInvalid(""); setError("") }
+  }
+
   const busy = isSubmitting || isLoading
   const label = "text-[12px] font-bold tracking-[0.04em] text-[var(--shotiq-color-ink)]"
   const field =
@@ -103,8 +185,7 @@ export default function SignUpPage() {
   return (
     <div
       data-testid="screen-desktop-web-create-account"
-      className="s4 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
-      style={{ minHeight: 900 }}
+      className="s4 shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)] md:min-h-[900px]"
     >
       <style dangerouslySetInnerHTML={{ __html: PHONE_CSS }} />
       <Marks004 agreed={agreed} />
@@ -133,7 +214,16 @@ export default function SignUpPage() {
 
         <section data-s4-contents className="w-[430px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pb-[40px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]"
                  data-testid="region-main">
-          <h1 data-s4="display" className="shotiq-display text-[46px] leading-[50px]">CREATE ACCOUNT</h1>
+          {/* Per-GLYPH, not per-word: this run's per-word floor is exactly
+              0.0000 and its per-glyph work is worth 4.3 of band, which is
+              what says the two are different defects. The space carries no
+              span, so the run's own word-spacing stays live. */}
+          {/* aria-label because the glyph spans below are aria-hidden: without
+              it the heading has no accessible name at all. Zero pixels. */}
+          <h1 data-s4="display" aria-label="CREATE ACCOUNT"
+              className="shotiq-display text-[46px] leading-[50px]">
+            {glyphsWithSpaces("CREATE ACCOUNT", DISPLAY_GX)}
+          </h1>
           {/* The phone lede is TWO runs, not one with a line-height: a line box
               quantises to two device rows, so a single element cannot land
               canonical's L1->L2 baseline delta. Placed independently each line
@@ -141,8 +231,20 @@ export default function SignUpPage() {
               below is untouched. */}
           <p data-s4-contents className="mt-[10px] text-[15px] leading-[21px] text-[var(--shotiq-color-graphite)]">
             <span className="md:hidden">
-              <span data-s4="lede1">Create your ShotIQ account to save analyses,</span>
-              <span data-s4="lede2">training, goals, and progress.</span>
+              {/* Per-word spans, measured. See PerWord004.tsx for why this is
+                  markup rather than a transform on the run, and for what the
+                  wrap actually costs. */}
+              {/* Two levels, and they ADD: the word spans carry LEDE1_DX and
+                  each glyph inside them carries LEDE1_GX relative to that. */}
+              {/* Per-WORD only. The per-glyph layer was removed — it welded
+                  letters at this size; see PerWord004.LEDE1_GX. The trailing
+                  srSpace is the separator the phone's two-run lede otherwise
+                  loses when the sentence is copied. */}
+              <span data-s4="lede1">
+                {words("Create your ShotIQ account to save analyses,", LEDE1_DX)}
+                {srSpace()}
+              </span>
+              <span data-s4="lede2">{words("training, goals, and progress.", LEDE2_DX)}</span>
             </span>
             <span className="hidden md:inline">
               Create your ShotIQ account to save analyses, training, goals, and progress.
@@ -154,14 +256,20 @@ export default function SignUpPage() {
                 three E arms. The desktop chip is kept and hidden on the phone. */}
             <span data-s4-off className="grid h-[30px] w-[30px] place-items-center rounded-[6px] border border-dashed border-[var(--shotiq-color-ink)] text-[11px] font-bold">JE</span>
             <span data-s4="monogram" className="md:hidden"><Monogram /></span>
-            <span data-s4="oneacct">One account across web and iOS.</span>
+            <span data-s4="oneacct">{words("One account across web and iOS.", ONEACCT_DX)}</span>
           </p>
 
           <form data-s4-contents onSubmit={handleSubmit} className="mt-[24px]" noValidate>
             <div data-s4-contents className="grid grid-cols-2 gap-[14px]">
               <div data-s4-contents>
                 <label htmlFor="firstName" data-s4="labFirst" className={label}>FIRST NAME</label>
+                {/* The other three inputs on this form declare autoComplete and
+                    these two did not, so the browser offered to fill an email
+                    and two passwords and left the player to type their own name.
+                    No pixel changes; the fifth grade found it by reading the
+                    markup rather than the render. */}
                 <input id="firstName" data-testid="signup-first-name"
+                       autoComplete="given-name"
                        data-s4="valFirst"
                        className={`${field} mt-[8px]`} placeholder="Jordan"
                        value={formData.firstName}
@@ -170,6 +278,7 @@ export default function SignUpPage() {
               <div data-s4-contents>
                 <label htmlFor="lastName" data-s4="labLast" className={label}>LAST NAME</label>
                 <input id="lastName" data-testid="signup-last-name"
+                       autoComplete="family-name"
                        data-s4="valLast"
                        className={`${field} mt-[8px]`} placeholder="Ellis"
                        value={formData.lastName}
@@ -178,20 +287,31 @@ export default function SignUpPage() {
             </div>
 
             <label htmlFor="email" data-s4="labEmail" className={`${label} mt-[18px] block`}>EMAIL</label>
+            {/* aria-invalid + aria-describedby on the control the message is
+                actually about. Only ONE can be at fault at a time here, because
+                handleSubmit returns at the first failing rule. */}
             <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signup-email"
+                   required
+                   aria-invalid={invalid === "email" || undefined}
+                   aria-describedby={invalid === "email" ? "signup-error" : undefined}
                    data-s4="valEmail"
                    className={`${field} mt-[8px]`} placeholder="jordan.ellis@example.com"
                    value={formData.email}
-                   onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                   onChange={(e) => { clearIfFixing("email")
+                                      setFormData({ ...formData, email: e.target.value }) }} />
 
             <label htmlFor="password" data-s4="labPass" className={`${label} mt-[18px] block`}>PASSWORD</label>
             <div data-s4-contents className="relative mt-[8px]">
-              <input id="password" type={showPassword ? "text" : "password"}
+              <input id="password" ref={passwordRef} type={showPassword ? "text" : "password"}
                      autoComplete="new-password" data-testid="signup-password"
+                     required
+                     aria-invalid={invalid === "password" || undefined}
+                     aria-describedby={invalid === "password" ? "signup-error" : undefined}
                      data-s4="valPass"
                      className={`${field} pr-[44px]`} placeholder="Create a password"
                      value={formData.password}
-                     onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                     onChange={(e) => { clearIfFixing("password")
+                                        setFormData({ ...formData, password: e.target.value }) }} />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       data-s4="eyePass"
@@ -206,14 +326,25 @@ export default function SignUpPage() {
 
             <label htmlFor="confirmPassword" data-s4="labConfirm" className={`${label} mt-[16px] block`}>CONFIRM PASSWORD</label>
             <div data-s4-contents className="relative mt-[8px]">
-              <input id="confirmPassword" type={showConfirm ? "text" : "password"}
+              <input id="confirmPassword" ref={confirmRef} type={showConfirm ? "text" : "password"}
                      autoComplete="new-password" data-testid="signup-confirm-password"
+                     required
+                     aria-invalid={invalid === "confirm" || undefined}
+                     aria-describedby={invalid === "confirm" ? "signup-error" : undefined}
                      data-s4="valConfirm"
                      className={`${field} pr-[44px]`} placeholder="Repeat your password"
                      value={formData.confirmPassword}
-                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
+                     onChange={(e) => { clearIfFixing("confirm")
+                                        setFormData({ ...formData, confirmPassword: e.target.value }) }} />
+              {/* The eye button below is named for ITS OWN field. Both eye
+                  buttons said "Show password", so an ARIA snapshot of this page
+                  read `button "Show password"` twice and a screen-reader user
+                  met two identically-named controls with no way to tell which
+                  one reveals PASSWORD and which reveals CONFIRM PASSWORD. 003
+                  has a single password field and could not have surfaced this —
+                  it is 004's own defect. */}
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                      aria-label={showConfirm ? "Hide password" : "Show password"}
+                      aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
                       data-s4="eyeConfirm"
                       className="absolute right-[13px] top-1/2 -translate-y-1/2 text-[var(--shotiq-color-graphite)]">
                 <span className="hidden md:inline">
@@ -224,19 +355,33 @@ export default function SignUpPage() {
             </div>
 
             <label data-s4-contents className="mt-[18px] flex items-start gap-[10px] text-[13px] leading-[18px]">
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
+              <input type="checkbox" checked={agreed}
+                     onChange={(e) => { clearIfFixing("agree"); setAgreed(e.target.checked) }}
+                     ref={agreeRef}
                      data-testid="signup-agree"
+                     aria-invalid={invalid === "agree" || undefined}
+                     aria-describedby={invalid === "agree" ? "signup-error" : undefined}
                      data-s4="checkbox"
                      className="mt-[2px] h-[15px] w-[15px] rounded-[3px] border border-[var(--shotiq-color-rule)] accent-[var(--shotiq-color-confirmGreen)]" />
+              {/* The offset array runs CONTINUOUSLY across the link boundaries:
+                  words 0-3 here, 4-6 inside /terms, 7 here, 8-9 inside
+                  /privacy, and the trailing "." is an eleventh token with no
+                  entry, measured unmoved. The <Link> elements are untouched —
+                  only their label text is wrapped — which is why both still
+                  measure one client rect at their original width. */}
               <span data-s4="terms">
-                I agree to the{" "}
-                <Link href="/terms" className="text-[var(--shotiq-color-shotiqOrange)]">Terms of Use</Link> and{" "}
-                <Link href="/privacy" className="text-[var(--shotiq-color-shotiqOrange)]">Privacy Policy</Link>.
+                {words("I agree to the", TERMS_DX, 0)}{" "}
+                <Link href="/terms" className="text-[var(--shotiq-color-shotiqOrange)]">
+                  {words("Terms of Use", TERMS_DX, 4)}
+                </Link>{" "}{words("and", TERMS_DX, 7)}{" "}
+                <Link href="/privacy" className="text-[var(--shotiq-color-shotiqOrange)]">
+                  {words("Privacy Policy", TERMS_DX, 8)}
+                </Link>.
               </span>
             </label>
 
             {error && (
-              <p role="alert" data-testid="signup-error" data-s4="error"
+              <p role="alert" id="signup-error" data-testid="signup-error" data-s4="error"
                  className="mt-[12px] text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
             )}
 

@@ -71,6 +71,22 @@ struct AnalysisSummary: Codable, Identifiable {
     var score: Double?
 }
 
+struct APIProfileDTO: Codable, Equatable {
+    var displayName: String?
+    var email: String?
+    var firstName: String?
+    var lastName: String?
+    var profileComplete: Bool?
+    var dominantHand: String?
+    var experienceLevel: String?
+    var bodyType: String?
+}
+
+struct APIProfileResponseDTO: Codable, Equatable {
+    var success: Bool?
+    var profile: APIProfileDTO?
+}
+
 struct EliteShooterDTO: Codable, Identifiable {
     var id: Int
     var name: String
@@ -103,10 +119,198 @@ struct GoalDTO: Codable, Identifiable {
     var status: String?
 }
 
+struct BadgeProgressDTO: Codable, Equatable {
+    var current: Double?
+    var total: Double?
+}
+
+struct BadgeDTO: Codable, Equatable {
+    var id: String?
+    var title: String?
+    var name: String?
+    var description: String?
+    var unlocked: Bool?
+    var earnedAt: String?
+    var progress: BadgeProgressDTO?
+    var untracked: String?
+}
+
+struct BadgesResponseDTO: Codable, Equatable {
+    var success: Bool?
+    var profileId: String?
+    var stats: BadgeStatsDTO?
+    var badges: [BadgeDTO]?
+    var challenges: [BadgeDTO]?
+}
+
+struct BadgeStatsDTO: Codable, Equatable {
+    var totalPoints: Int?
+    var totalAnalyses: Int?
+    var currentStreak: Int?
+    var longestStreak: Int?
+    var activeDates: [String]?
+}
+
+struct EliteMatchReferenceDTO: Codable, Equatable {
+    var releaseAngle: Double?
+    var elbowAngle: Double?
+    var entryAngle: Double?
+}
+
+struct EliteMatchTopDTO: Codable, Equatable {
+    var name: String?
+    var team: String?
+    var overall: Int?
+    var photoUrl: String?
+    var reason: String?
+    var reference: EliteMatchReferenceDTO?
+    var estimated: Bool?
+}
+
+struct EliteMatchResponseDTO: Codable, Equatable {
+    var success: Bool?
+    var matched: Bool?
+    var reason: String?
+    var top: EliteMatchTopDTO?
+}
+
+struct AnalysisMetricDTO: Codable, Equatable {
+    var value: Double?
+    var unit: String?
+    var source: String
+}
+
+struct AnalysisTextMetricDTO: Codable, Equatable {
+    var value: String?
+    var unit: String?
+    var source: String
+}
+
+struct AnalysisMediaDTO: Codable, Equatable {
+    var type: String?
+    var imageUrl: String?
+    var annotatedImageUrl: String?
+    var displayImageUrl: String?
+    var videoUrl: String?
+    var localImageUrl: String?
+    var localVideoUrl: String?
+}
+
+struct AnalysisScoresDTO: Codable, Equatable {
+    var overall: AnalysisMetricDTO
+    var form: AnalysisMetricDTO
+    var balance: AnalysisMetricDTO
+    var release: AnalysisMetricDTO
+    var consistency: AnalysisMetricDTO
+}
+
+struct AnalysisAnglesDTO: Codable, Equatable {
+    var elbow: AnalysisMetricDTO
+    var knee: AnalysisMetricDTO
+    var wrist: AnalysisMetricDTO
+    var shoulder: AnalysisMetricDTO
+    var hip: AnalysisMetricDTO
+    var release: AnalysisMetricDTO
+    var kneeMin: AnalysisMetricDTO
+}
+
+struct AnalysisMeasurementsDTO: Codable, Equatable {
+    var releaseHeightInches: AnalysisMetricDTO
+    var releaseDistanceInches: AnalysisMetricDTO
+    var verticalJumpInches: AnalysisMetricDTO
+    var centerlineDeviationDeg: AnalysisMetricDTO
+}
+
+struct AnalysisProvenanceDTO: Codable, Equatable {
+    var measured: [String]
+    var missing: [String]
+    var estimated: [String]
+    var demo: [String]
+}
+
+struct ShotIQAnalysisResultDTO: Codable, Identifiable, Equatable {
+    var id: String
+    var clientSessionId: String?
+    var captureSessionId: String?
+    var recordedAt: String
+    var source: String
+    var media: AnalysisMediaDTO
+    var pose: AnalysisPoseDTO?
+    var scores: AnalysisScoresDTO
+    var angles: AnalysisAnglesDTO
+    var measurements: AnalysisMeasurementsDTO
+    var phase: AnalysisTextMetricDTO
+    var provenance: AnalysisProvenanceDTO
+    var bodyPositions: [VideoPoseFrameRecord]? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, clientSessionId, captureSessionId, recordedAt, source, media, pose
+        case scores, angles, measurements, phase, provenance, bodyPositions
+    }
+
+    init(id: String, clientSessionId: String?, captureSessionId: String?,
+         recordedAt: String, source: String, media: AnalysisMediaDTO,
+         pose: AnalysisPoseDTO?, scores: AnalysisScoresDTO,
+         angles: AnalysisAnglesDTO, measurements: AnalysisMeasurementsDTO,
+         phase: AnalysisTextMetricDTO, provenance: AnalysisProvenanceDTO,
+         bodyPositions: [VideoPoseFrameRecord]? = nil) {
+        self.id = id
+        self.clientSessionId = clientSessionId
+        self.captureSessionId = captureSessionId
+        self.recordedAt = recordedAt
+        self.source = source
+        self.media = media
+        self.pose = pose
+        self.scores = scores
+        self.angles = angles
+        self.measurements = measurements
+        self.phase = phase
+        self.provenance = provenance
+        self.bodyPositions = bodyPositions
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        clientSessionId = try c.decodeIfPresent(String.self, forKey: .clientSessionId)
+        captureSessionId = try c.decodeIfPresent(String.self, forKey: .captureSessionId)
+        recordedAt = try c.decode(String.self, forKey: .recordedAt)
+        source = try c.decode(String.self, forKey: .source)
+        media = try c.decode(AnalysisMediaDTO.self, forKey: .media)
+        pose = try c.decodeIfPresent(AnalysisPoseDTO.self, forKey: .pose)
+        scores = try c.decode(AnalysisScoresDTO.self, forKey: .scores)
+        angles = try c.decode(AnalysisAnglesDTO.self, forKey: .angles)
+        measurements = try c.decode(AnalysisMeasurementsDTO.self, forKey: .measurements)
+        phase = try c.decode(AnalysisTextMetricDTO.self, forKey: .phase)
+        provenance = try c.decode(AnalysisProvenanceDTO.self, forKey: .provenance)
+        bodyPositions = try? c.decodeIfPresent([VideoPoseFrameRecord].self, forKey: .bodyPositions)
+    }
+}
+
+struct LatestAnalysisResponseDTO: Codable, Equatable {
+    var success: Bool
+    var analysis: ShotIQAnalysisResultDTO?
+    var analysisResult: ShotIQAnalysisResultDTO?
+
+    var result: ShotIQAnalysisResultDTO? { analysisResult ?? analysis }
+}
+
 // MARK: - API client (async/await, URLSession, rotating token refresh)
 
 actor APIClient {
     static let shared = APIClient()
+
+    struct ShotEventRecordBody: Codable, Equatable {
+        struct Event: Codable, Equatable {
+            var sequence: Int
+            var detected = true
+            var detectedResult: String
+            var confidence: Double
+            var metadata: [String: String]
+        }
+
+        var events: [Event]
+    }
 
     /// Same origin the web client talks to (the live production deploy);
     /// override with the SHOTIQ_API environment variable (Xcode scheme →
@@ -241,6 +445,11 @@ actor APIClient {
         return (r.stats, r.history ?? [])
     }
 
+    func profile() async throws -> APIProfileDTO? {
+        let r: APIProfileResponseDTO = try await request("/api/profile")
+        return r.profile
+    }
+
     func shooters() async throws -> [EliteShooterDTO] {
         struct Resp: Codable { var shooters: [EliteShooterDTO] }
         let r: Resp = try await request("/api/shooters")
@@ -253,10 +462,64 @@ actor APIClient {
         return r.goals ?? []
     }
 
-    func recordShotEvent(drillId: String, made: Bool) async {
+    func badges() async throws -> BadgesResponseDTO {
+        try await request("/api/badges")
+    }
+
+    func refreshBadges() async throws -> BadgesResponseDTO {
+        struct EmptyBody: Codable {}
+        return try await request("/api/badges", method: "POST", body: EmptyBody())
+    }
+
+    func shooterMatch() async throws -> EliteMatchResponseDTO {
+        try await request("/api/shooters/match")
+    }
+
+    func latestAnalysis() async throws -> ShotIQAnalysisResultDTO? {
+        let r: LatestAnalysisResponseDTO = try await request("/api/analysis/latest")
+        return r.result
+    }
+
+    func deleteMedia(analysisId: String) async throws {
+        try await ensureCsrfToken()
+        guard var comps = URLComponents(url: baseURL.appending(path: "/api/media"),
+                                        resolvingAgainstBaseURL: false) else {
+            throw APIError.network
+        }
+        comps.queryItems = [URLQueryItem(name: "analysisId", value: analysisId)]
+        guard let url = comps.url else { throw APIError.network }
+        var req = URLRequest(url: url)
+        req.httpMethod = "DELETE"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let csrf = csrfToken {
+            req.setValue(csrf, forHTTPHeaderField: "x-csrf-token")
+        }
+        if let token = accessToken {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let (_, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw APIError.network }
+        guard (200..<300).contains(http.statusCode) else { throw APIError.http(http.statusCode) }
+    }
+
+    func recordShotEvent(drillId: String, made: Bool) async -> Bool {
         struct Empty: Codable {}
-        _ = try? await request("/api/shot-events", method: "POST",
-                               body: ["drillId": drillId, "result": made ? "make" : "miss"]) as Empty?
+        let body = Self.shotEventRecordBody(drillId: drillId, made: made)
+        do {
+            _ = try await request("/api/shot-events", method: "POST", body: body) as Empty?
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    static func shotEventRecordBody(drillId: String, made: Bool) -> ShotEventRecordBody {
+        ShotEventRecordBody(events: [
+            .init(sequence: 0,
+                  detectedResult: made ? "make" : "miss",
+                  confidence: 1.0,
+                  metadata: ["drillId": drillId, "source": "ios-live-capture"])
+        ])
     }
 
     // MARK: generic helpers so every screen can reach any web endpoint
@@ -273,9 +536,100 @@ actor APIClient {
         _ = try? await request(path, method: method, body: body) as Anything?
     }
 
+    /// Resumable-compatible video upload matching the web `/api/media-uploads`
+    /// flow. Native sends every part in this foreground pass; the server keeps
+    /// the same durable `clientSessionId` join used by `/api/save-analysis`.
+    func uploadVideo(_ fileURL: URL,
+                     filename: String,
+                     contentType: String,
+                     sizeBytes: Int,
+                     clientSessionId: String,
+                     durationSeconds: Double?) async throws -> String? {
+        struct InitiateBody: Codable {
+            var clientSessionId: String
+            var fileName: String
+            var contentType: String
+            var sizeBytes: Int
+        }
+        struct UploadDTO: Codable {
+            var id: String?
+            var status: String?
+            var mediaUrl: String?
+        }
+        struct InitiateResp: Codable {
+            var success: Bool?
+            var upload: UploadDTO?
+        }
+        struct PartBody: Codable { var partNumber: Int }
+        struct PartResp: Codable {
+            var success: Bool?
+            var partNumber: Int?
+            var url: String?
+        }
+        struct CompletedPart: Codable {
+            var partNumber: Int
+            var eTag: String
+        }
+        struct CompleteBody: Codable {
+            var parts: [CompletedPart]
+            var durationSeconds: Double?
+        }
+        struct CompleteResp: Codable {
+            var success: Bool?
+            var upload: UploadDTO?
+        }
+
+        let initiated: InitiateResp = try await request(
+            "/api/media-uploads", method: "POST",
+            body: InitiateBody(clientSessionId: clientSessionId,
+                               fileName: filename,
+                               contentType: contentType,
+                               sizeBytes: sizeBytes))
+        guard let upload = initiated.upload, let uploadId = upload.id else { throw APIError.decode }
+        if upload.status == "complete" { return upload.mediaUrl }
+
+        let fileData = try Data(contentsOf: fileURL)
+        let partSize = 8 * 1_024 * 1_024
+        var completedParts: [CompletedPart] = []
+        var offset = 0
+        var partNumber = 1
+        while offset < fileData.count {
+            let next = min(fileData.count, offset + partSize)
+            let signed: PartResp = try await request(
+                "/api/media-uploads/\(uploadId)/parts", method: "POST",
+                body: PartBody(partNumber: partNumber))
+            guard let signedURLString = signed.url, let signedURL = URL(string: signedURLString) else {
+                throw APIError.decode
+            }
+
+            var put = URLRequest(url: signedURL)
+            put.httpMethod = "PUT"
+            put.setValue(contentType, forHTTPHeaderField: "Content-Type")
+            let partData = fileData.subdata(in: offset..<next)
+            let (_, response) = try await URLSession.shared.upload(for: put, from: partData)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                throw APIError.http((response as? HTTPURLResponse)?.statusCode ?? 0)
+            }
+            guard let eTag = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "ETag") else {
+                throw APIError.decode
+            }
+            completedParts.append(CompletedPart(partNumber: partNumber, eTag: eTag))
+            offset = next
+            partNumber += 1
+        }
+
+        let completed: CompleteResp = try await request(
+            "/api/media-uploads/\(uploadId)/complete", method: "POST",
+            body: CompleteBody(parts: completedParts, durationSeconds: durationSeconds))
+        return completed.upload?.mediaUrl
+    }
+
     /// Multipart image upload matching POST /api/upload (field "image").
     func uploadImage(_ imageData: Data, filename: String = "shot.jpg",
-                     uploadType: String = "user") async throws -> Data {
+                     uploadType: String = "user",
+                     shootingAngle: String? = nil,
+                     imageCategory: String? = nil,
+                     capturePhase: String? = nil) async throws -> Data {
         try await ensureCsrfToken()
         var req = URLRequest(url: baseURL.appending(path: "/api/upload"))
         req.httpMethod = "POST"
@@ -288,6 +642,12 @@ actor APIClient {
             bodyData.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".data(using: .utf8)!)
         }
         field("uploadType", uploadType)
+        if let shootingAngle {
+            field("angle", shootingAngle)
+            field("shootingAngle", shootingAngle)
+        }
+        if let imageCategory { field("imageCategory", imageCategory) }
+        if let capturePhase { field("capturePhase", capturePhase) }
         bodyData.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"image\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
         bodyData.append(imageData)
         bodyData.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)

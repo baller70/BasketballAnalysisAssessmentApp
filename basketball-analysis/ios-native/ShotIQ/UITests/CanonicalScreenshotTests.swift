@@ -28,9 +28,12 @@ final class CanonicalScreenshotTests: XCTestCase {
     private static var shotIndex = 0
 
     /// Signed-in shell with deterministic offline data.
-    private static let mainArgs = ["-uiTestBypassAuth", "-uiTestDemoData"]
+    private static let mainArgs = ["-uiTestBypassAuth", "-uiTestDemoData",
+                                   "-uiTestResetTrainingDrills", "-uiTestResetTrainingWorkouts",
+                                   "-uiTestResetCreatedGoals"]
 
     private var app: XCUIApplication!
+    private var lastLaunchArguments: [String] = []
 
     override func setUp() {
         // Collect every dead tap in one run instead of stopping at the first.
@@ -47,8 +50,10 @@ final class CanonicalScreenshotTests: XCTestCase {
     @discardableResult
     private func launch(_ args: [String]) -> XCUIApplication {
         app?.terminate()
+        lastLaunchArguments = args
         let a = XCUIApplication()
         a.launchArguments = args + Self.extraLaunchArguments
+        a.launchEnvironment["SHOTIQ_UI_TEST_ARGS"] = (args + Self.extraLaunchArguments).joined(separator: "|")
         a.launch()
         app = a
         return a
@@ -67,6 +72,15 @@ final class CanonicalScreenshotTests: XCTestCase {
             .split(whereSeparator: \.isWhitespace).map(String.init)
     }
 
+    private static var fullScrollScreenshots: Bool {
+        ProcessInfo.processInfo.environment["SIMSHOTS_FULL_SCROLL"] == "1"
+    }
+
+    private static var fullScrollSteps: Int {
+        let raw = ProcessInfo.processInfo.environment["SIMSHOTS_SCROLL_STEPS"] ?? "4"
+        return min(max(Int(raw) ?? 4, 1), 6)
+    }
+
     private func slug(_ screenID: String) -> String {
         screenID.replacingOccurrences(of: "screen-ios-", with: "")
     }
@@ -75,11 +89,33 @@ final class CanonicalScreenshotTests: XCTestCase {
     private func shot(_ name: String) {
         Self.shotIndex += 1
         let full = String(format: "%03d-%@", Self.shotIndex, name)
+        if Self.fullScrollScreenshots {
+            let scroller = scrollContainer()
+            var swipes = 0
+            attachScreenshot("\(full)__scroll-01")
+            if scroller.exists, Self.fullScrollSteps > 1 {
+                for index in 2...Self.fullScrollSteps {
+                    scroller.swipeUp()
+                    swipes += 1
+                    Thread.sleep(forTimeInterval: 0.35)
+                    attachScreenshot(String(format: "%@__scroll-%02d", full, index))
+                }
+                for _ in 0..<swipes {
+                    scroller.swipeDown()
+                    Thread.sleep(forTimeInterval: 0.12)
+                }
+            }
+        } else {
+            attachScreenshot(full)
+        }
+        Self.captured.append(full)
+    }
+
+    private func attachScreenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = full
+        attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
-        Self.captured.append(full)
     }
 
     private func note(_ message: String, required: Bool) {
@@ -147,30 +183,57 @@ final class CanonicalScreenshotTests: XCTestCase {
                               from source: String, index: Int = 0,
                               timeout: TimeInterval = 8,
                               required: Bool = true, capture: Bool = true) -> Bool {
-        guard let element = findControl(control, index: index) else {
-            note("MISSING CONTROL — “\(control)” was not on \(source); cannot verify it opens \(destination)",
-                 required: required)
-            return false
-        }
-        tap(element)
-        if screenExists(destination, timeout: timeout) {
-            if capture { shot(slug(destination)) }
-            return true
+        for attempt in 0..<2 {
+            guard let element = findControl(control, index: index, maxSwipes: attempt == 0 ? 5 : 2) else {
+                note("MISSING CONTROL — “\(control)” was not on \(source); cannot verify it opens \(destination)",
+                     required: required)
+                return false
+            }
+            tap(element)
+            if screenExists(destination, timeout: timeout) {
+                if capture { shot(slug(destination)) }
+                return true
+            }
         }
         note("DEAD TAP — “\(control)” on \(source) did not open \(destination)", required: required)
         return false
     }
 
     /// Tab bar buttons carry the canonical short labels.
-    private func selectTab(_ label: String) {
+    private func selectTab(_ label: String, expecting expectedRoot: String? = nil) {
+        let tabButton = app.tabBars.buttons[label]
+        if tabButton.waitForExistence(timeout: 8) {
+            tap(tabButton)
+            if expectedRoot == nil || screenExists(expectedRoot!, timeout: 4) { return }
+        }
         let button = app.buttons[label]
-        if button.waitForExistence(timeout: 8) { tap(button) }
+        if button.waitForExistence(timeout: 8) {
+            tap(button)
+            if expectedRoot == nil || screenExists(expectedRoot!, timeout: 4) { return }
+        }
+        if label == "Capture", expectedRoot == "screen-ios-analyze-hub",
+           let newCapture = findControl("New capture", maxSwipes: 0) {
+            tap(newCapture)
+            _ = screenExists("screen-ios-analyze-hub", timeout: 8)
+            return
+        }
     }
 
-    /// Cheap navigation reset: leaving a tab tears its NavigationStack down, so
-    /// bouncing off another tab returns the tab to its root screen.
+    /// Navigation reset for independent click paths. SwiftUI preserves each
+    /// tab's pushed NavigationStack, so relaunch the deterministic signed-in
+    /// shell before each route branch.
     private func resetTab(_ label: String, root: String) {
-        selectTab(label == "Progress" ? "Home" : "Progress")
+        if label == "Capture", root == "screen-ios-analyze-hub" {
+            launch(Self.mainArgs + ["-uiTestStage", "analyze-hub"])
+            _ = screenExists(root, timeout: 12)
+            return
+        }
+        if label == "Train", root == "screen-ios-training-home" {
+            launch(Self.mainArgs + ["-uiTestStage", "training-home"])
+            _ = screenExists(root, timeout: 12)
+            return
+        }
+        launch(lastLaunchArguments.isEmpty ? Self.mainArgs : lastLaunchArguments)
         selectTab(label)
         _ = screenExists(root, timeout: 8)
     }
@@ -245,9 +308,11 @@ final class CanonicalScreenshotTests: XCTestCase {
         launch(Self.mainArgs + ["-uiTestHomeVariant", "new"])
         guard expectScreen("screen-ios-home-new-player", timeout: 20) else { return }
         tapAndExpect("Analyze your first shot", "screen-ios-analyze-hub", from: "home-new-player", capture: false)
-        resetTab("Home", root: "screen-ios-home-new-player")
+        launch(Self.mainArgs + ["-uiTestHomeVariant", "new"])
+        guard screenExists("screen-ios-home-new-player", timeout: 20) else { return }
         tapAndExpect("GET AI ANALYSIS", "screen-ios-no-analysis-yet", from: "home-new-player")
-        resetTab("Home", root: "screen-ios-home-new-player")
+        launch(Self.mainArgs + ["-uiTestHomeVariant", "new"])
+        guard screenExists("screen-ios-home-new-player", timeout: 20) else { return }
         tapAndExpect("See capture guide", "screen-ios-capture-guide", from: "home-new-player")
 
         launch(Self.mainArgs + ["-uiTestHomeVariant", "standard"])
@@ -279,7 +344,7 @@ final class CanonicalScreenshotTests: XCTestCase {
 
     func test04CaptureScreens() {
         launch(Self.mainArgs)
-        selectTab("Capture")
+        selectTab("Capture", expecting: "screen-ios-analyze-hub")
         guard expectScreen("screen-ios-analyze-hub", timeout: 20) else { return }
 
         tapAndExpect("Upload image", "screen-ios-photo-upload-source", from: "analyze-hub")
@@ -375,8 +440,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     // MARK: - 054-062 · training
 
     func test06TrainingScreens() {
-        launch(Self.mainArgs)
-        selectTab("Train")
+        launch(Self.mainArgs + ["-uiTestStage", "training-home"])
         guard expectScreen("screen-ios-training-home", timeout: 20) else { return }
 
         tapAndExpect("Quick start", "screen-ios-quick-start", from: "training-home")
@@ -397,10 +461,8 @@ final class CanonicalScreenshotTests: XCTestCase {
         tapAndExpect("End workout", "screen-ios-workout-completion", from: "drill-execution", timeout: 40)
 
         resetTab("Train", root: "screen-ios-training-home")
-        // The RECENT WORKOUT card is the second "Quick Release Builder" on the
-        // page and opens the shot tracker.
-        tapAndExpect("Quick Release Builder", "screen-ios-shot-tracker",
-                     from: "training-home", index: 1)
+        tapAndExpect("training-home-recent-workout-card", "screen-ios-shot-tracker",
+                     from: "training-home")
     }
 
     // MARK: - 063-072 · goals, analytics, media, profile
@@ -466,6 +528,17 @@ final class CanonicalScreenshotTests: XCTestCase {
         // 027, and the queue/error panels on 037/040.
         for slug in ["photo-review-crop", "upload-quality-check", "video-review",
                      "analysis-taking-longer", "analysis-error"] {
+            launch(Self.mainArgs + ["-uiTestStage", slug])
+            expectScreen("screen-ios-\(slug)", timeout: 25)
+        }
+    }
+
+    func test09ReviewBoardMissingScreens() {
+        launch(["-uiTestSignedOut", "-uiTestStage", "create-account"])
+        expectScreen("screen-ios-create-account", timeout: 25)
+
+        for slug in ["analysis-processing", "analysis-result-overview",
+                     "flaws-overview", "workout-completion"] {
             launch(Self.mainArgs + ["-uiTestStage", slug])
             expectScreen("screen-ios-\(slug)", timeout: 25)
         }

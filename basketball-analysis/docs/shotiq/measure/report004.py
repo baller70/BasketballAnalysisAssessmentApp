@@ -44,7 +44,19 @@ WINDOWS: dict[str, tuple[int, int, int, int]] = {
     # worse, 5.3708 -> 5.3801, and row 238 alone went 11.9 -> 71.5.
     # Every other window on this screen was checked the same way and is clear.
     "display":    (148, 248, 0, 853),
-    "lede":       (268, 352, 0, 853),
+    # SPLIT, AFTER A SINGLE `lede` WINDOW (268-352) HID A DEFECT FOR FIVE ROUNDS.
+    # The two lede lines are independently positioned runs, and their optimal
+    # horizontal corrections have OPPOSITE SIGNS — line 1 wanted -0.536 CSS px,
+    # line 2 was already on its optimum. A window spanning both averaged a
+    # 2.1496 defect on line 1 down to a 0.4413 compromise, so five consecutive
+    # grades read the band as "already solved" while line 1 was the hottest
+    # region on the entire screen (rows 285-299). Rule 57.
+    # The split is at 312, which is inside the gap between the two lines' ink
+    # (line 1 spans 285-299, line 2 spans 331-345), so neither run is clipped —
+    # the fault rule 50 records, and the reason the boundary is not the midpoint
+    # of the two `top` values.
+    "lede1":      (268, 312, 0, 853),
+    "lede2":      (312, 352, 0, 853),
     "monogram":   (415, 492, 60, 180),
     "oneacct":    (415, 492, 180, 853),
     "labFirst":   (552, 600, 0, 853),
@@ -65,6 +77,26 @@ WINDOWS: dict[str, tuple[int, int, int, int]] = {
     "plate":      (1538, 1642, 0, 853),
     "orrow":      (1650, 1690, 0, 853),
     "signin":     (1700, 1802, 0, 853),
+}
+
+#: Diagnostic sub-windows, reported SEPARATELY and deliberately NOT merged into
+#: WINDOWS. They overlap the bands above, so putting them in one table would
+#: make the rows double-count and would silently change the meaning of every
+#: band number this ledger has recorded for five rounds.
+#:
+#: They exist because a band that mixes a solved BOX with an unsolved LABEL
+#: dilutes the label the same way the single `lede` window diluted line 1. On
+#: 004 that cost two real findings: `plate` bounded createLab's error at 0.0073
+#: while the label's own window bounded it at 0.0273 and it delivered 0.0352,
+#: and `signin` did the same to signinLab. A box that is already right is a
+#: large area of near-zero difference, and averaging a small hot label into it
+#: is arithmetic, not measurement.
+#:
+#: Rows are the label's ink rows with a few px of margin; columns are the
+#: label's own span rather than the full width, for the same reason.
+SUBWINDOWS: dict[str, tuple[int, int, int, int]] = {
+    "createLab": (1570, 1615, 330, 520),
+    "signinLab": (1728, 1772, 395, 560),
 }
 
 
@@ -88,6 +120,17 @@ def main(argv: list[str]) -> int:
     print("-" * (w + 28))
     for name, d in rows:
         print(f"{name.ljust(w)}  {d.mean_abs:9.4f}  {d.max_abs:5.0f}  {d.n_over:8d}")
+
+    sub = compare.band_report(canon, render, SUBWINDOWS)
+    print()
+    print("diagnostic sub-windows — these OVERLAP the bands above and are not")
+    print("part of the table; a label inside a solved box is diluted by the box's")
+    print("area, so its own error is only visible here (rule 57).")
+    sw = max(len(k) for k in sub)
+    print(f"{'run'.ljust(sw)}  {'mean|d|':>9}  {'max':>5}  {'n_over8':>8}")
+    print("-" * (sw + 28))
+    for name, d in sorted(sub.items(), key=lambda kv: -kv[1].mean_abs):
+        print(f"{name.ljust(sw)}  {d.mean_abs:9.4f}  {d.max_abs:5.0f}  {d.n_over:8d}")
     return 0
 
 

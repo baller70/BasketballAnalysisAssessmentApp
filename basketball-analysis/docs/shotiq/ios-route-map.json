@@ -32,7 +32,7 @@
     "shotiq-splash-hold": "1"
    },
    "steps": [],
-   "note": "sessionStorage['shotiq-splash-hold']='1' pins the screen open \u2014 the deterministic entry the page itself documents for the harness, since a 1.6s dwell cannot be raced reliably."
+   "note": "sessionStorage['shotiq-splash-hold']='1' pins the screen open — the deterministic entry the page itself documents for the harness, since a 1.6s dwell cannot be raced reliably."
   },
   {
    "canonical": "002-welcome",
@@ -46,7 +46,7 @@
    "canonical": "003-sign-in",
    "route": "/signin",
    "context": "anon",
-   "userPath": "'Sign in' on 002-welcome, or any auth-gated deep link (middleware redirects to /signin?from=\u2026).",
+   "userPath": "'Sign in' on 002-welcome, or any auth-gated deep link (middleware redirects to /signin?from=…).",
    "source": "src/app/signin/page.tsx + src/app/signin/phone-003.ts",
    "steps": [
     {
@@ -63,7 +63,7 @@
      "action": "blur"
     }
    ],
-   "note": "Canonical 003 is the FILLED, validated state: the address jordan.ellis@example.com typed in, a 16-character password masked to 16 bullets, the green ring beside the address and the two \"Looks good.\" lines. Those are live validation driven by the fields' own values, so they only exist after the player types \u2014 the steps put the screen in the state canonical shows, by the path a real player takes. Captured signed out, in the anonymous context: /signin is in middleware's AUTH_PAGES and redirects a signed-in user away, so an authenticated capture measures a different screen."
+   "note": "Canonical 003 is the FILLED, validated state: the address jordan.ellis@example.com typed in, a 16-character password masked to 16 bullets, the green ring beside the address and the two \"Looks good.\" lines. Those are live validation driven by the fields' own values, so they only exist after the player types — the steps put the screen in the state canonical shows, by the path a real player takes. Captured signed out, in the anonymous context: /signin is in middleware's AUTH_PAGES and redirects a signed-in user away, so an authenticated capture measures a different screen."
   },
   {
    "canonical": "004-create-account",
@@ -105,16 +105,44 @@
      "action": "blur"
     }
    ],
-   "note": "Canonical 004 is the FILLED, VALIDATED state, not an empty form: FIRST NAME \"Jordan\", LAST NAME \"Ellis\", EMAIL \"jordan.ellis@example.com\", both password fields masked to NINE bullets, and the terms checkbox TICKED with its green ring and tick. Eleven of the twenty ink bands do not exist until the player types, and the checkbox ring only turns green when it is really checked \u2014 so the box is clicked rather than defaulted on. Nine characters go into both password fields because canonical draws nine bullets and Chromium masks one bullet per character. Captured signed out, in the anonymous context: /signup is in middleware's AUTH_PAGES and redirects a signed-in user away, so an authenticated capture measures a different screen."
+   "note": "Canonical 004 is the FILLED, VALIDATED state, not an empty form: FIRST NAME \"Jordan\", LAST NAME \"Ellis\", EMAIL \"jordan.ellis@example.com\", both password fields masked to NINE bullets, and the terms checkbox TICKED with its green ring and tick. Eleven of the twenty ink bands do not exist until the player types, and the checkbox ring only turns green when it is really checked — so the box is clicked rather than defaulted on. Nine characters go into both password fields because canonical draws nine bullets and Chromium masks one bullet per character. Captured signed out, in the anonymous context: /signup is in middleware's AUTH_PAGES and redirects a signed-in user away, so an authenticated capture measures a different screen."
   },
   {
    "canonical": "005-verify-email",
-   "route": "/verify-email",
+   "route": "/verify-email?email=marcus%40example.com",
    "context": "anon",
-   "userPath": "Emailed verification link hits /api/auth/verify-email?token=\u2026 and redirects back here with ?status=\u2026; also reachable from the account before verifying.",
-   "source": "src/app/verify-email/page.tsx",
-   "steps": [],
-   "note": "GAP: this route has no phone-specific design \u2014 it renders the same centred card at 393pt as at 1440pt, with no PhoneScreen chrome and no code boxes, where canonical 005 draws the phone header, a six-box code entry and a resend countdown. Signed out it shows the 'Sign in, then open this page' variant; signed in it shows the resend variant, which is the closer match to canonical. Captured signed-out per the harness contract that 001-007 are anonymous."
+   "userPath": "The verification email carries BOTH a six-digit code and a link. Its 'Enter it here' link opens this screen with ?email= so the screen can name the address back; /signup also writes shotiq-pending-email and shotiq-verify-sent-at into sessionStorage the moment the account is created, so the screen knows the address and the resend cooldown even before the session settles. The link half of the mail still hits /api/auth/verify-email?token= and redirects back here with ?status=.",
+   "source": "src/app/verify-email/page.tsx + src/app/verify-email/phone-005.ts + src/app/verify-email/Marks005.tsx; backend src/lib/auth/verification.ts (issueEmailCode/consumeEmailCode), src/lib/auth/verificationEmail.ts, src/app/api/auth/verify-email-code/route.ts",
+   "steps": [
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"verify-code-0\"]",
+     "value": "2"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"verify-code-1\"]",
+     "value": "8"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"verify-code-2\"]",
+     "value": "4"
+    },
+    {
+     "action": "fill",
+     "selector": "[data-testid=\"verify-code-3\"]",
+     "value": "7"
+    },
+    {
+     "action": "click",
+     "selector": "[data-testid=\"verify-code-4\"]"
+    }
+   ],
+   "note": "Canonical 005 is a FILLED, FOCUSED, MID-COUNTDOWN state, not a default render, and the route map declared 0 steps for it — capturing as-is shoots an empty form against a filled canonical (rule 17). Canonical draws 2 8 4 7 typed, box FIVE focused with a caret, box six empty, and 'Resend code in 0:42'. The four fills are the real typing path (each digit auto-advances, so focus lands on box five on its own; the click is there so the focused state is asserted rather than inferred). No blur step: unlike 003 and 004, canonical 005 SHOWS a focused control, so blurring would leave the screen. THE COUNTDOWN IS PINNED, not raced: sessionStorage['shotiq-verify-cooldown']='42' fixes the value and stops the tick, the same deterministic entry 001 uses for 'shotiq-splash-hold'. A live timer differs every capture and its band could never be stable. A real player never has this key and the timer ticks normally. Captured signed out: /verify-email is public (it is in middleware's PUBLIC_ROUTES and NOT in AUTH_PAGES), so the anonymous context per the 001-007 harness contract renders the same screen a just-signed-up player sees.",
+   "sessionStorage": {
+    "shotiq-verify-cooldown": "42"
+   }
   },
   {
    "canonical": "006-forgot-password",
@@ -208,7 +236,7 @@
    "canonical": "017-home-new-player",
    "route": "/dashboard?view=basic",
    "context": "auth",
-   "userPath": "The home a player sees before any analysis exists \u2014 it paints whenever the account has no analyses, and whenever the home layout is set to the simplified 'basic' view (Settings -> Preferences -> Dashboard layout, or ?view= on this route).",
+   "userPath": "The home a player sees before any analysis exists — it paints whenever the account has no analyses, and whenever the home layout is set to the simplified 'basic' view (Settings -> Preferences -> Dashboard layout, or ?view= on this route).",
    "source": "src/app/dashboard/page.tsx + src/components/shotiq/phone/HomeNewPlayer.tsx",
    "steps": [],
    "note": "?view=basic is used rather than emptying the account, so 017 stays distinct from 018/019 on the seeded grading account."
@@ -300,7 +328,7 @@
      "file": "public/images/canonical/094-t1.png"
     }
    ],
-   "note": "The ONLY screen in the set that is not reachable by navigation alone. This route holds the chosen clip in component state (`clip`) with no query key, unlike every other split family. Reached by driving the page's own file input \u2014 the same handler the 'Choose video' button fires \u2014 rather than by a scroll or a synthetic click on a hit box. A fixed repo asset is used so the printed file size is reproducible."
+   "note": "The ONLY screen in the set that is not reachable by navigation alone. This route holds the chosen clip in component state (`clip`) with no query key, unlike every other split family. Reached by driving the page's own file input — the same handler the 'Choose video' button fires — rather than by a scroll or a synthetic click on a hit box. A fixed repo asset is used so the printed file size is reproducible."
   },
   {
    "canonical": "028-live-camera-setup",
@@ -373,13 +401,13 @@
    "userPath": "'Analyze video' on 027, or 'Analyze session' on 035, starts the job and this paints immediately. Progress is stage-derived, not clock-derived.",
    "source": "src/app/video-analysis/processing/page.tsx + AnalysisProcessing",
    "steps": [],
-   "note": "The job becomes 037 after SLOW_AFTER_MS = 15000ms on the same screen, so this must be shot within 15s of load \u2014 the harness's 2.6s settle is well inside that."
+   "note": "The job becomes 037 after SLOW_AFTER_MS = 15000ms on the same screen, so this must be shot within 15s of load — the harness's 2.6s settle is well inside that."
   },
   {
    "canonical": "037-analysis-taking-longer",
    "route": "/video-analysis/processing?state=slow",
    "context": "auth",
-   "userPath": "Stay on 036 for 15s without the job finishing \u2014 the same timeout the copy on 036 promises. ?state=slow selects it directly.",
+   "userPath": "Stay on 036 for 15s without the job finishing — the same timeout the copy on 036 promises. ?state=slow selects it directly.",
    "source": "src/app/video-analysis/processing/page.tsx + AnalysisTakingLonger",
    "steps": []
   },
@@ -395,7 +423,7 @@
    "canonical": "039-no-analysis-yet",
    "route": "/analyze?state=empty",
    "context": "auth",
-   "userPath": "The analyze hub as a just-onboarded account sees it \u2014 it paints whenever /api/analysis-history comes back empty. ?state=empty selects the same branch on a seeded account (the grading account always has history).",
+   "userPath": "The analyze hub as a just-onboarded account sees it — it paints whenever /api/analysis-history comes back empty. ?state=empty selects the same branch on a seeded account (the grading account always has history).",
    "source": "src/app/analyze/page.tsx + src/components/shotiq/phone/NoAnalysisYet.tsx",
    "steps": []
   },
@@ -419,7 +447,7 @@
    "canonical": "042-frame-detail-skeleton",
    "route": "/results/demo/biomechanics",
    "context": "auth",
-   "userPath": "The BIOMECHANICS tab \u2014 the frame viewer with the skeleton and joint overlays.",
+   "userPath": "The BIOMECHANICS tab — the frame viewer with the skeleton and joint overlays.",
    "source": "src/app/results/demo/biomechanics/page.tsx + FrameDetail",
    "steps": []
   },
@@ -427,7 +455,7 @@
    "canonical": "043-annotation-toolbar",
    "route": "/results/demo/biomechanics?view=annotate",
    "context": "auth",
-   "userPath": "The Annotations overlay card on 042. It is a PAGE in canonical, not a modal \u2014 it draws no scrim and fills the canvas. Each view is its own history entry.",
+   "userPath": "The Annotations overlay card on 042. It is a PAGE in canonical, not a modal — it draws no scrim and fills the canvas. Each view is its own history entry.",
    "source": "src/app/results/demo/biomechanics/page.tsx + AnnotationToolbar",
    "steps": []
   },
@@ -475,7 +503,7 @@
    "canonical": "049-customize-player-card",
    "route": "/results/demo/player?view=customize",
    "context": "auth",
-   "userPath": "'Customize' on 048 \u2014 style, accent colour, badge and stat toggles.",
+   "userPath": "'Customize' on 048 — style, accent colour, badge and stat toggles.",
    "source": "src/app/results/demo/(tabs)/player/page.tsx + CustomizeCard",
    "steps": []
   },
@@ -483,7 +511,7 @@
    "canonical": "050-elite-match",
    "route": "/results/demo/compare",
    "context": "auth",
-   "userPath": "The COMPARE tab on the results surface \u2014 the elite match summary.",
+   "userPath": "The COMPARE tab on the results surface — the elite match summary.",
    "source": "src/app/results/demo/(tabs)/compare/page.tsx + EliteMatch",
    "steps": []
   },
@@ -603,7 +631,7 @@
    "canonical": "065-goal-detail",
    "route": "/results/demo/goals?step=detail",
    "context": "auth",
-   "userPath": "Opening the primary goal on 063 \u2014 progress, trend, log progress, mark complete.",
+   "userPath": "Opening the primary goal on 063 — progress, trend, log progress, mark complete.",
    "source": "src/app/results/demo/goals/page.tsx + GoalDetail",
    "steps": []
   },
@@ -667,7 +695,7 @@
      "selector": "[data-testid=\"player-share\"]"
     }
    ],
-   "note": "Not reachable by navigation alone: the share surface is held in the page's `sharing` useState and is checked BEFORE usePhoneRoute('view'), so it has no query key. Reached by clicking the card's own labelled SHARE control. The testid resolves to two nodes on this route \u2014 the phone card and the hidden 1440pt tree, which is display:none below md rather than unmounted \u2014 so the harness takes the visible one."
+   "note": "Not reachable by navigation alone: the share surface is held in the page's `sharing` useState and is checked BEFORE usePhoneRoute('view'), so it has no query key. Reached by clicking the card's own labelled SHARE control. The testid resolves to two nodes on this route — the phone card and the hidden 1440pt tree, which is display:none below md rather than unmounted — so the harness takes the visible one."
   }
  ]
 }

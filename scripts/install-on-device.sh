@@ -6,14 +6,47 @@
 #
 # Ported from the hooptrack lane that put HoopTrack on the phone. This is not
 # the App Store path: an app-store-signed IPA cannot be installed on a device
-# directly, so this builds Debug with a *development* identity that xcodebuild
-# creates on demand through the App Store Connect key, and hands the result to
-# devicectl. It never touches the archive, the upload, or anything in review.
+# directly, so this builds a device-installable configuration with a
+# *development* identity that xcodebuild creates on demand through the App
+# Store Connect key, and hands the result to devicectl. It never touches the
+# archive, the upload, or anything in review.
+#
+# Default to Release for phone persistence. Debug installs on modern Xcode can
+# produce a split executable plus <App>.debug.dylib; those debugger-oriented
+# products have failed on Kevin's phone with EBADEXEC when launched normally
+# from the home screen.
 set -Eeuo pipefail
 
 die() { printf 'INSTALL_ERROR: %s\n' "$*" >&2; exit 1; }
 note() { printf '  %s\n' "$*"; }
 step() { printf '\n==> %s\n' "$*"; }
+
+diagnose_device_visibility() {
+  step 'Device visibility diagnostics'
+  note "DEVELOPER_DIR=${DEVELOPER_DIR:-<unset>}"
+
+  if system_profiler SPUSBDataType 2>/dev/null | grep -Eiq 'iPhone|iPad|Apple Mobile'; then
+    note 'macOS USB can see an Apple mobile device:'
+    system_profiler SPUSBDataType 2>/dev/null \
+      | grep -Ei -C 4 'iPhone|iPad|Apple Mobile' \
+      | sed 's/^/    /' || true
+  else
+    note 'macOS USB does not show an iPhone/iPad/Apple Mobile device.'
+    note 'That is below Xcode: unlock the phone, use a data-capable cable,'
+    note 'tap Trust This Computer, and confirm it appears in Finder first.'
+  fi
+
+  note 'devicectl currently reports:'
+  xcrun devicectl list devices --verbose 2>&1 | sed -n '1,80p' | sed 's/^/    /' || true
+
+  note 'xctrace currently reports:'
+  xcrun xctrace list devices 2>&1 | sed -n '1,120p' | sed 's/^/    /' || true
+
+  note 'xcdevice currently reports physical devices as:'
+  xcrun xcdevice list 2>/dev/null \
+    | python3 -c 'import json,sys; data=json.load(sys.stdin); phys=[d for d in data if not d.get("simulator")]; print("\n".join("    {name} ({identifier}) available={available} interface={interface}".format(**{**{"name":"?","identifier":"?","available":"?","interface":"?"}, **d}) for d in phys) or "    (none)")' \
+    || note 'xcdevice list was unavailable or unreadable.'
+}
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
@@ -22,7 +55,37 @@ team_id="DD9G8RP575"
 project_dir="basketball-analysis/ios-native"
 project="ShotIQ.xcodeproj"
 scheme="ShotIQ"
-derived_data="${HOME}/Library/Developer/Xcode/DerivedData/shotiq-device"
+configuration="${SHOTIQ_DEVICE_CONFIGURATION:-Release}"
+products_dir_name="${configuration}-iphoneos"
+
+choose_derived_data() {
+  if [ -n "${SHOTIQ_DERIVED_DATA:-}" ]; then
+    printf '%s\n' "$SHOTIQ_DERIVED_DATA"
+    return
+  fi
+
+  local candidates=()
+  if [ -n "${XCODE_WORK_ROOT:-}" ]; then
+    candidates+=("${XCODE_WORK_ROOT}/DerivedData/shotiq-device")
+  fi
+  candidates+=(
+    "/Volumes/APPLICATIONS/06_XCODE_TESTING/DerivedData/shotiq-device"
+    "/Volumes/TBF SKILLZ.INC/CodexWork/DerivedData/shotiq-device"
+  )
+
+  local candidate parent
+  for candidate in "${candidates[@]}"; do
+    parent="$(dirname "$candidate")"
+    if mkdir -p "$parent" 2>/dev/null && [ -w "$parent" ]; then
+      printf '%s\n' "$candidate"
+      return
+    fi
+  done
+
+  die 'no writable external DerivedData location found; set SHOTIQ_DERIVED_DATA to an external-drive path'
+}
+
+derived_data="$(choose_derived_data)"
 
 # ---------------------------------------------------------------- the device --
 
@@ -57,7 +120,32 @@ def is_iphone(d):
     product = (d.get('hardwareProperties', {}) or {}).get('productType', '')
     return product.startswith('iPhone') or 'iphone' in name_of(d).lower()
 
-candidates = [d for d in devices if not wanted or udid_of(d) == wanted]
+def matches(d, wanted):
+    """DEVICE_UDID accepts EITHER id devicectl prints for the phone.
+
+    `xcrun devicectl list devices` shows an Identifier column — a CoreDevice
+    UUID like 37711652-37E7-57D1-9C76-8E028428D01B — and that is the value
+    anyone reads off the terminal and pastes in. It is NOT
+    hardwareProperties.udid, which is the 00008030-style hardware id. Matching
+    only the latter meant a correct-looking DEVICE_UDID selected nothing and
+    the script reported 'no paired iPhone at all' while devicectl was listing
+    the phone as available (paired) one command earlier.
+
+    Case-insensitive because the two ids differ in case between tools.
+    """
+    w = wanted.lower()
+    return w in (udid_of(d).lower(), (d.get('identifier', '') or '').lower())
+
+candidates = [d for d in devices if not wanted or matches(d, wanted)]
+if wanted and not candidates:
+    # Say which id was looked for and what is actually attached, rather than
+    # claiming nothing is paired.
+    sys.stderr.write(
+        'DEVICE_UDID=%s matched no device. Attached:\n%s\n' % (
+            wanted,
+            '\n'.join('  %s  udid=%s  identifier=%s' % (
+                name_of(d), udid_of(d) or '-', d.get('identifier', '-'))
+                for d in devices) or '  (none)'))
 ranked = sorted(candidates, key=lambda d: (not is_iphone(d), not usable(d)))
 chosen = (ranked or [None])[0]
 
@@ -66,14 +154,20 @@ if chosen is None:
 else:
     print(' '.join([
         chosen.get('identifier', ''),
-        udid_of(chosen) or '-',
+        # Second field feeds `-destination id=...`. Prefer the hardware udid,
+        # but a device that reports none must not turn into a literal '-' and
+        # send xcodebuild looking for a device called dash.
+        udid_of(chosen) or chosen.get('identifier', ''),
         name_of(chosen).replace(' ', '_'),
         state_of(chosen),
     ]))
 PY
 )"
 
-[ -n "${device_id:-}" ] || die 'no paired iPhone at all — pair it with the Mac in Xcode first'
+if [ -z "${device_id:-}" ]; then
+  diagnose_device_visibility
+  die 'no paired iPhone visible to this Mac — make the phone appear in Finder/Xcode, then rerun'
+fi
 note "Device: ${device_name//_/ } (${device_udid})"
 note "Connection state: ${device_state}"
 
@@ -153,11 +247,25 @@ cleanup() {
     fi
   fi
 }
-trap cleanup EXIT INT TERM
+
+on_exit() {
+  local status=$?
+  cleanup
+  exit "$status"
+}
+trap on_exit EXIT INT TERM
 
 step 'Preparing a keychain codesign can actually use'
 
-signing_keychain="$(mktemp -d)/device-signing.keychain-db"
+signing_root="${SHOTIQ_SIGNING_KEYCHAIN_ROOT:-}"
+if [ -n "$signing_root" ]; then
+  mkdir -p "$signing_root"
+  chmod 700 "$signing_root" 2>/dev/null || true
+  signing_dir="$(mktemp -d "${signing_root%/}/device-signing.XXXXXX")"
+else
+  signing_dir="$(mktemp -d)"
+fi
+signing_keychain="${signing_dir}/device-signing.keychain-db"
 signing_password="$(openssl rand -base64 24)"
 
 original_keychains=""
@@ -177,10 +285,13 @@ security list-keychains -d user -s "$signing_keychain"
 security default-keychain -d user -s "$signing_keychain"
 security set-key-partition-list -S apple-tool:,apple:,codesign: \
   -k "$signing_password" "$signing_keychain" >/dev/null 2>&1 || true
-unset signing_password
 
 note "Signing into ${signing_keychain}"
-note 'xcodebuild will create a development certificate here through the API key.'
+if [ "${SHOTIQ_CREATE_DEV_CERT:-0}" != "0" ]; then
+  note 'A fresh development identity will be imported here before xcodebuild runs.'
+else
+  note 'xcodebuild will create a development certificate here through the API key.'
+fi
 
 # A previous device build's certificate has its private key in a deleted
 # throwaway keychain; Apple refuses to mint a new one while that orphan
@@ -191,26 +302,95 @@ step 'Revoking orphaned development certificates'
 node_bin="$(command -v node || echo /opt/homebrew/bin/node)"
 "$node_bin" "${repo_root}/scripts/revoke-stale-dev-cert.mjs" --confirm || true
 
+if [ "${SHOTIQ_CREATE_DEV_CERT:-0}" != "0" ]; then
+  step 'Creating a local Apple Development signing identity'
+  signing_work_root="${SHOTIQ_SIGNING_WORK_ROOT:-${XCODE_WORK_ROOT:-${repo_root}/artifacts}/device-signing}"
+  mkdir -p "$signing_work_root"
+  signing_work="$(mktemp -d "${signing_work_root%/}/manual-cert.XXXXXX")"
+  "$node_bin" "${repo_root}/scripts/create-dev-certificate.mjs" \
+    --keychain "$signing_keychain" \
+    --keychain-password "$signing_password" \
+    --work-dir "$signing_work" \
+    --common-name 'ShotIQ Device Development'
+fi
+unset signing_password
+
 # ------------------------------------------------------------------ install --
 
 cd "${repo_root}/${project_dir}"
+
+# ALWAYS regenerate the project, the way the CI workflow does.
+#
+# ShotIQ.xcodeproj is generated by XcodeGen from project.yml, but a copy of it
+# is ALSO committed — and a committed generated file goes stale the moment a
+# source file is added without re-running xcodegen. It had: PoseDetection.swift
+# and CapturedPoseImage.swift were in git and on disk but were not members of
+# the target, so the device build died with
+#
+#     error: cannot find type 'DetectedPose' in scope
+#
+# in the two screens that draw the player's skeleton. The whole on-device pose
+# feature was simply not being compiled. CI never noticed because
+# `ios-appstore.yml` runs `xcodegen generate` first and overwrites the stale
+# file; only builds that trusted the committed project broke.
+#
+# Generating unconditionally means target membership always matches the files
+# actually on disk, so adding a source file can never silently not-ship again.
+if [ -f project.yml ]; then
+  step "Generating ${project} from project.yml"
+
+  xcodegen_bin="$(command -v xcodegen || true)"
+  for candidate in /opt/homebrew/bin/xcodegen /usr/local/bin/xcodegen "${HOME}/.mint/bin/xcodegen"; do
+    [ -n "$xcodegen_bin" ] && break
+    [ -x "$candidate" ] && xcodegen_bin="$candidate"
+  done
+
+  if [ -z "$xcodegen_bin" ]; then
+    brew_bin="$(command -v brew || true)"
+    [ -n "$brew_bin" ] || { [ -x /opt/homebrew/bin/brew ] && brew_bin=/opt/homebrew/bin/brew; }
+    if [ -n "$brew_bin" ]; then
+      note 'XcodeGen is missing; installing it with Homebrew.'
+      "$brew_bin" install xcodegen >/dev/null 2>&1 || true
+      xcodegen_bin="$(command -v xcodegen || true)"
+      [ -n "$xcodegen_bin" ] || [ ! -x /opt/homebrew/bin/xcodegen ] || xcodegen_bin=/opt/homebrew/bin/xcodegen
+    fi
+  fi
+
+  if [ -n "$xcodegen_bin" ]; then
+    "$xcodegen_bin" generate || die 'xcodegen could not generate the project'
+    note "Generated ${project}"
+  elif [ -d "$project" ]; then
+    # Falling back to the committed project is worth doing rather than
+    # refusing outright, but say so plainly: if it is out of date this build
+    # fails on a missing type, and that error will not mention xcodegen.
+    note 'WARNING: XcodeGen is not installed and could not be installed.'
+    note "         Using the COMMITTED ${project}, which may be missing files"
+    note '         added since it was generated. A "cannot find type ... in'
+    note '         scope" error below means exactly that — install XcodeGen.'
+  else
+    die "no ${project} and XcodeGen is not available to generate one"
+  fi
+fi
+
+[ -d "$project" ] || die "no ${project} in ${PWD}"
 
 step "Destinations this project can actually target"
 xcodebuild -showdestinations -project "$project" -scheme "$scheme" 2>&1 \
   | sed -n '/Available destinations/,/^$/p' | head -12 || true
 
-step "Building ${scheme} for the device"
+step "Building ${scheme} (${configuration}) for the device"
 xcodebuild build \
   -project "$project" \
   -scheme "$scheme" \
-  -configuration Debug \
+  -configuration "$configuration" \
   -destination "platform=iOS,id=${device_udid}" \
   -derivedDataPath "$derived_data" \
   -allowProvisioningUpdates \
   "${auth_args[@]+"${auth_args[@]}"}" \
-  DEVELOPMENT_TEAM="$team_id"
+  DEVELOPMENT_TEAM="$team_id" \
+  ENABLE_DEBUG_DYLIB=NO
 
-app_path="${derived_data}/Build/Products/Debug-iphoneos/${scheme}.app"
+app_path="${derived_data}/Build/Products/${products_dir_name}/${scheme}.app"
 [ -d "$app_path" ] || die "no ${scheme}.app at ${app_path}"
 note "Built: ${app_path}"
 

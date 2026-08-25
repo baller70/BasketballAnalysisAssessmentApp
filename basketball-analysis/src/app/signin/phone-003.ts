@@ -161,6 +161,19 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  * 490 and makes the whole CDF worse (.1145 against .1035).
  */
 const COLOURS = `
+  /* Canonical's paper is NOT white — 254, not 255 — and this screen was graded
+     A without anyone measuring the ground its ink sits on. Found on 004, where
+     the same one unit over the whole 853x1844 canvas is worth 0.5744 of whole
+     screen; here it takes 003 from 3.6443 to 3.0569.
+     That number matters beyond this screen: 3.6443 is the A BAR the whole
+     campaign calibrates against, and it was set 0.57 too high. What the ledger
+     called a "canonical export floor" of 0.9281/0.9398 is in substance this
+     offset, and it is not a floor — it is reachable, on both canvases, from one
+     screen-scoped line. It is common-mode, so it does not explain the 004-003
+     gap; it means the bar itself was wrong.
+     Screen-scoped like every role here; at 1440px the token still resolves
+     #fff, so the 20 desktop screens cannot move. */
+  --shotiq-color-paper:#FEFEFE;
   --shotiq-color-ink:#000000;
   --s3-rule:#D2D4D9;
   --s3-field-rule:#D5D5D9;
@@ -518,7 +531,19 @@ function hitbox(name: string, y: number, h: number) {
 
 export const PHONE_CSS = `@media (max-width: 767.98px){
 .s3{${COLOURS.replace(/\s+/g, "")}position:relative;width:393px;height:852px;min-height:852px;
-  overflow:hidden;background:var(--shotiq-color-paper);padding:0;margin:0}
+  overflow:hidden;background:var(--shotiq-color-paper);padding:0;
+  /* margin:0 -> 0 auto. CLASS-LEVEL: the fixed 393px canvas was pinned to the
+     LEFT edge on any phone wider than the design width, because this margin
+     defeated the wrapper's own mx-auto. Measured on the served build: at 414,
+     430, 480, 600 and 767 the box sat at 0..393 with EVERY pixel of slack on
+     the right — 37px of blank down the side of an iPhone 15 Pro Max.
+     De-risked before it was applied, because 003 and 004 are DONE at A and a
+     change to their recipe has to be provably invisible at the width their
+     numbers were measured at: injected into the live build, at 393 the box is
+     IDENTICAL on all three screens and at 430 all three centre to exactly
+     (430-393)/2 = 18.5. Confirmed by re-capture after the change, which is
+     the artefact the numbers actually come from (rule 74). */
+  margin:0 auto}
 .s3 [data-s3-contents]{display:contents}
 .s3 [data-s3-off]{display:none!important}
 .s3 [data-s3-iq]{color:var(--s3-orange-text)}
@@ -573,6 +598,25 @@ ${hitbox("google", GOOGLE.y, GOOGLE.h)}
   padding-bottom:0;padding-right:0;margin:0}
 .s3 [data-s3="valuePass"]::placeholder,.s3 [data-s3="valueEmail"]::placeholder{
   color:var(--shotiq-color-muted);letter-spacing:0em}
+/* KEYBOARD FOCUS, and 003 carried this defect too. The two value rules above
+   set 'outline:none' to hold the canonical render and put nothing back, so
+   neither field had any visible focus indicator: tabbed to, ':focus-visible'
+   matched and the page was byte-identical to the unfocused one. WCAG 2.4.7.
+   Found by the seventh grade of 004 — which flagged it as class-level rather
+   than 004's own — and fixed here in the same change, because 003 is graded A
+   and a screen at A should not be sitting on a known failure.
+   ':focus-visible'. Note that a text input matches it on a POINTER click as
+   well — that is the spec for controls that accept keyboard input — so the ring
+   shows either way. What keeps the canonical captures and every band mean
+   untouched is the BLUR, not the pointer/keyboard distinction: canonical is the
+   filled, blurred form and the route map's steps end with a blur. Inset shadow
+   rather than outline for the same reason as 004 — the visible border is an SVG
+   rect beneath the input. */
+.s3 [data-s3="valueEmail"]:focus-visible,
+.s3 [data-s3="valuePass"]:focus-visible{
+  outline:none;box-shadow:inset 0 0 0 ${u(3.4)} var(--shotiq-color-ink);border-radius:${u(11.5)}}
+.s3 [data-s3="eye"]:focus-visible{
+  outline:${u(3.4)} solid var(--shotiq-color-ink);outline-offset:${u(1.5)};border-radius:${u(4)}}
 .s3 [data-s3="eye"]{position:absolute;left:${u(729)};top:${u(857)};width:${u(52)};height:${u(41)};
   padding:0;margin:0;transform:none;display:block;color:var(--shotiq-color-ink)}
 .s3 [data-s3="checkbox"]{position:absolute;left:${u(52.60)};top:${u(1015.35)};width:${u(28.4)};

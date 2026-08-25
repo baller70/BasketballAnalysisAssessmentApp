@@ -10,8 +10,7 @@ import {
   AUTH_TOKEN_MAX_AGE,
 } from "@/lib/authToken"
 import { ensureUserProfile } from "@/lib/data/ensureProfile"
-import { issueToken } from "@/lib/auth/verification"
-import { sendEmail, getAppBaseUrl } from "@/lib/auth/mailer"
+import { sendVerificationEmail } from "@/lib/auth/verificationEmail"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD_LENGTH = 6
@@ -37,14 +36,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Rate limit: 5 signups per minute per IP.
-  const { response: limited } = checkRateLimit(request, {
-    bucket: 'auth-signup',
-    limit: 5,
-    windowMs: 60_000,
-  })
-  if (limited) return limited
-
   // CSRF: reject requests that don't echo the double-submit token.
   const csrfError = validateCsrf(request)
   if (csrfError) return csrfError
@@ -55,6 +46,18 @@ export async function POST(request: NextRequest) {
     const password = typeof body?.password === 'string' ? body.password : ''
     const firstName = typeof body?.firstName === 'string' ? body.firstName : undefined
     const lastName = typeof body?.lastName === 'string' ? body.lastName : undefined
+
+    // 5 signups a minute PER ADDRESS. Keyed per client alone this was keyed on
+    // nothing — every caller resolves to 'unknown' on this deployment — so five
+    // junk signups a minute would deny registration to the whole product.
+    // Moved below the body parse so the address exists to key on.
+    const { response: limited } = checkRateLimit(request, {
+      bucket: 'auth-signup',
+      limit: 5,
+      windowMs: 60_000,
+      subject: email || 'anon',
+    })
+    if (limited) return limited
 
     // Validate input
     if (!email || !password) {
@@ -129,18 +132,15 @@ export async function POST(request: NextRequest) {
     // resolveProfileId never 404s for a brand-new account.
     await ensureUserProfile(user.id)
 
-    // Kick off email verification: issue a single-use token and (stub) email
-    // the confirmation link. Non-fatal — the account is usable while unverified;
-    // emailVerified stays null until they click the link.
+    // Kick off email verification: issue the single-use link token AND the
+    // six-digit code, and email both. Non-fatal — the account is usable while
+    // unverified; emailVerified stays null until one of them is used.
+    //
+    // The code is what iOS 005-verify-email's six boxes ask for. It is composed
+    // in `sendVerificationEmail` rather than here so signup and resend cannot
+    // drift apart, and it is NEVER returned in this response.
     try {
-      const { token: verifyToken } = await issueToken(user.id, "email_verify")
-      const verifyUrl = `${getAppBaseUrl()}/api/auth/verify-email?token=${verifyToken}`
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your SHOTIQ email",
-        text: `Welcome to SHOTIQ! Confirm your email to finish setting up your account:\n\n${verifyUrl}\n\nThis link expires in 24 hours.`,
-        actionUrl: verifyUrl,
-      })
+      await sendVerificationEmail(user.id, user.email, { welcome: true })
     } catch (verifyError) {
       console.error("Failed to issue email verification token:", verifyError)
     }

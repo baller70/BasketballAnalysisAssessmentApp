@@ -43,3 +43,34 @@ ios/.build/
 next-env.d.ts
 
 /src/generated/prisma
+
+# Agent scratch. Grading and measurement agents write throwaway probe scripts
+# (sweep specs, shift searches, transform readbacks) into the repo so they run
+# against the project's own tooling and node_modules. It is working material,
+# not source: the findings belong in docs/SCREEN-LEDGER.md and the fixes in the
+# tree, and the scripts that produced them are regenerated every round.
+# Named by convention so a running agent's files are ignored, never deleted
+# out from under it, and never committed.
+.g*tmp/
+.agent-tmp/
+
+# Scratch written by dispatched grading agents while they measure a screen.
+# Not a deliverable: it is an agent's working directory, it is recreated per
+# run, and leaving it untracked trips the repo's uncommitted-changes check
+# mid-grade — when deleting it would break the grader still using it.
+.grade/
+
+# Same convention, prefix form: a dispatched grader writes probe scripts beside
+# the harness it is measuring (docs/shotiq/_grader-*.mjs) rather than into a
+# directory. Ignored for the same reason .grade/ is — they are an agent working
+# file, they are recreated per run, and deleting them mid-grade breaks the agent
+# still using them.
+#
+# THE PATTERN WAS `_grader-*` AND IT MISSED BY ONE CHARACTER. A grader wrote
+# `docs/shotiq/_grader_tools.py` — underscore, not hyphen — which the hyphen
+# form does not match, so the repo's uncommitted-changes check fired mid-grade
+# on a file that must neither be committed (it is agent scratch) nor deleted
+# (the agent was still running). A convention enforced by an exact-prefix glob
+# only holds while every agent happens to punctuate the same way, and none of
+# them were told to. `_grader*` covers both spellings and any future one.
+_grader*

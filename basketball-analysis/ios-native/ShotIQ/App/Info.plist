@@ -26,6 +26,8 @@
 	<string>ShotIQ records audio with your shot videos for coaching playback.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ShotIQ imports shot photos and videos for analysis.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ShotIQ saves exported player cards, annotated frames, and result summaries to your photo library.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>ShotIQ reminds you about workouts and analysis results.</string>
 	<key>UIAppFonts</key>
@@ -39,14 +41,6 @@
 		<string>tungsten_black.otf</string>
 	</array>
 	<key>UILaunchScreen</key>
-	<!-- An EMPTY <dict/> here does not mean "no launch screen" — it means iOS
-	     paints the DEFAULT SYSTEM BACKGROUND, which follows the SYSTEM
-	     appearance. The app forces .preferredColorScheme(.light), but a launch
-	     screen renders before any app code runs and cannot be told that, so on a
-	     phone set to dark mode the first thing a player saw was a BLACK flash
-	     before the white splash. Pinning it to a colour set with a single
-	     universal (appearance-independent) entry makes it paper white always,
-	     which is what canonical 001 opens on. -->
 	<dict>
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>

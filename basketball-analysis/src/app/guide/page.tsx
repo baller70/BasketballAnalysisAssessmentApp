@@ -108,8 +108,55 @@ const FORM_MISTAKES: GuideItem[] = [
 
 const NAV = [
   ["start", "Getting started"], ["dos-donts", "Do's & don'ts"], ["capture", "Capture modes"],
-  ["form", "Shooting form"], ["ready", "Start analyzing"],
+  ["form", "Shooting form"], ["email", "Email & verification"], ["ready", "Start analyzing"],
 ] as const
+
+/**
+ * THE TWO ANCHORS 005 HAS BEEN LINKING TO SINCE IT WAS BUILT.
+ *
+ * /verify-email's "didn't get the email?" rows point at `/guide#email-spam`
+ * and `/guide#email-delay`, and a comment in that file asserted the guidance
+ * "lives in the guide's own anchors". It did not. Measured on the served page
+ * before this section existed: ids were exactly guide-capture, guide-dos-donts,
+ * guide-form, guide-ready, guide-start, and the words spam / inbox / verif /
+ * promotion / email each appeared ZERO times in the extracted text. Both rows
+ * carried a chevron — which promises a destination — and landed the player at
+ * the top of a shot-capture guide with nothing about email on it.
+ *
+ * The rows were not repointed, because the topic they name is the one a player
+ * standing on the verification screen actually needs. The destinations were
+ * made real instead. `id` sits on the block rather than the card so each row
+ * lands on its own answer, and `scroll-mt` matches the other sections so the
+ * sticky header does not cover the heading it just jumped to.
+ */
+const EMAIL_HELP: { id: string; title: string; description: string; points: string[]; tip: string }[] = [
+  {
+    id: "email-spam",
+    title: "Check your spam or promotions folder",
+    description:
+      "Verification mail is automated, so filters often file it away from your inbox before you ever see it.",
+    points: [
+      "Search your mail for “SHOTIQ” rather than scrolling — the message may be filed under Promotions, Updates, or Junk",
+      "On Gmail, check the Promotions and Updates tabs; on Outlook, check Junk Email and Other",
+      "Mark the message “Not spam” so later mail from us reaches your inbox",
+      "Corporate and school accounts sometimes block outside senders entirely — a personal address is the quicker fix",
+    ],
+    tip: "Add support@shotiqai.com to your contacts before you resend.",
+  },
+  {
+    id: "email-delay",
+    title: "Wait a few minutes, then resend",
+    description:
+      "Delivery is usually seconds, but a busy mail provider can hold a message for several minutes.",
+    points: [
+      "Give it up to five minutes before resending — a second request does not speed the first one up",
+      "The resend button unlocks on its own timer; the countdown beside it is the wait",
+      "Resending re-sends the SAME code while your current one is still valid, so an older mail is not made useless by a newer one",
+      "A code expires ten minutes after it is issued — if yours has, resend and use the newest mail",
+    ],
+    tip: "Still nothing after two resends? Contact support rather than making a second account.",
+  },
+]
 
 function GuideBlock({ item, tone }: { item: GuideItem; tone?: "good" | "bad" }) {
   return (
@@ -256,6 +303,28 @@ export default function GuidePage() {
         </div>
 
         {/* Ready to start */}
+        {/* Email & verification — the destinations /verify-email links to */}
+        <Card id="guide-email" className="mt-[16px] scroll-mt-[76px] p-[18px]">
+          <SectionHead icon={<ConceptGlyph concept="Help guide" size={18} />}
+                       label="EMAIL &amp; VERIFICATION"
+                       sub="If the verification email hasn&rsquo;t arrived yet." />
+          <div className="mt-[10px] grid gap-[16px] lg:grid-cols-2">
+            {EMAIL_HELP.map((item) => (
+              <div key={item.id} id={item.id} className="scroll-mt-[76px]">
+                <GuideBlock item={item} />
+              </div>
+            ))}
+          </div>
+          <p className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-[12px] text-[var(--shotiq-color-graphite)]">
+            Still stuck?{" "}
+            <a href="mailto:support@shotiqai.com?subject=Email%20verification"
+               className="text-[var(--shotiq-color-shotiqOrange)] underline underline-offset-2">
+              Contact support
+            </a>{" "}
+            and we&rsquo;ll verify your account by hand.
+          </p>
+        </Card>
+
         <Card id="guide-ready" className="mt-[16px] scroll-mt-[76px] p-[18px]">
           <SectionHead icon={<ConceptGlyph concept="Help guide" size={18} />}
                        label="YOU'RE READY" sub="Everything you need to get the most out of ShotIQ." />

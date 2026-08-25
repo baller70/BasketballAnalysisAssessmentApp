@@ -1,5 +1,31 @@
 import SwiftUI
 
+// MARK: - Approved ImageGen icons
+
+struct ShotIQApprovedRasterIcon: View {
+    var assetName: String
+    var size: CGFloat
+    var width: CGFloat? = nil
+    var height: CGFloat? = nil
+    var label: String? = nil
+
+    var body: some View {
+        let baseWidth = width ?? size
+        let baseHeight = height ?? size
+        let renderedHeight = max(baseHeight, 32)
+        let renderedWidth = baseWidth * renderedHeight / max(baseHeight, 1)
+
+        Image(assetName)
+            .resizable()
+            .renderingMode(.original)
+            .scaledToFit()
+            .accessibilityLabel(label ?? assetName)
+            .frame(width: renderedWidth, height: renderedHeight)
+    }
+}
+
+enum ShotIQApprovedIconAsset {}
+
 // ShotIQ bespoke line-art glyph family — the iOS half of the vocabulary that
 // lives on the web at `src/components/shotiq/Glyphs.tsx`.
 //
@@ -68,6 +94,16 @@ struct ShotIQGlyphPen {
                          accent: Bool = false, dash: [CGFloat] = []) {
         let p = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
         marks.append(ShotIQGlyphMark(path: p, accent: accent, dash: dash))
+    }
+
+    mutating func basketball(_ x: CGFloat, _ y: CGFloat, r: CGFloat = 2.2,
+                             accent: Bool = true) {
+        circle(x, y, r: r, accent: accent)
+        line(x - r, y, x + r, y, accent: accent)
+        quad(CGPoint(x: x, y: y - r), CGPoint(x: x + r * 0.58, y: y),
+             CGPoint(x: x, y: y + r), accent: accent)
+        quad(CGPoint(x: x, y: y - r), CGPoint(x: x - r * 0.58, y: y),
+             CGPoint(x: x, y: y + r), accent: accent)
     }
 
     mutating func rect(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat,
@@ -202,24 +238,24 @@ enum ShotPhase: String, CaseIterable {
             p.line(9.8, 6.4, 10.4, 13.4)
             p.poly([CGPoint(x: 10.4, y: 13.4), CGPoint(x: 8.4, y: 17.4), CGPoint(x: 8, y: 21.4)])
             p.poly([CGPoint(x: 10.4, y: 13.4), CGPoint(x: 12.6, y: 17.4), CGPoint(x: 13.2, y: 21.4)])
-            p.line(10, 8.4, 12.6, 11.4)
-            p.node(14.8, 12.8, r: 2.2, accent: active, filled: active, knockout: false)
+            p.poly([CGPoint(x: 10, y: 8.4), CGPoint(x: 12.6, y: 11.4), CGPoint(x: 14.4, y: 12.2)])
+            p.basketball(15.4, 12.5, r: 2.3, accent: active)
         case .load:
             // Deep knee bend, ball low and in front — gathering.
             p.circle(8.6, 6.4, r: 2)
             p.line(8.6, 8.4, 10.8, 13)
             p.poly([CGPoint(x: 10.8, y: 13), CGPoint(x: 7.8, y: 16.2), CGPoint(x: 8.6, y: 21.4)])
             p.poly([CGPoint(x: 10.8, y: 13), CGPoint(x: 13.6, y: 16.4), CGPoint(x: 13.6, y: 21.4)])
-            p.line(9.5, 10.4, 12.2, 12.4)
-            p.node(14.4, 13.6, r: 2.2, accent: active, filled: active, knockout: false)
+            p.poly([CGPoint(x: 9.5, y: 10.4), CGPoint(x: 12.2, y: 12.4), CGPoint(x: 14, y: 13.2)])
+            p.basketball(15.2, 13.8, r: 2.3, accent: active)
         case .rise:
             // Extending upward, ball at the forehead — the lift.
             p.circle(10.6, 5.6, r: 2)
             p.line(10.6, 7.6, 10.6, 13.6)
             p.poly([CGPoint(x: 10.6, y: 13.6), CGPoint(x: 8.2, y: 17.4), CGPoint(x: 8.6, y: 21.4)])
             p.poly([CGPoint(x: 10.6, y: 13.6), CGPoint(x: 12.8, y: 17.2), CGPoint(x: 13.8, y: 20.8)])
-            p.line(10.6, 9, 12.8, 7.2)
-            p.node(15.4, 6, r: 2.2, accent: active, filled: active, knockout: false)
+            p.poly([CGPoint(x: 10.6, y: 9), CGPoint(x: 12.8, y: 7.2), CGPoint(x: 14.4, y: 6.5)])
+            p.basketball(15.7, 5.8, r: 2.3, accent: active)
         case .release:
             // Full extension, ball leaving the hand overhead.
             p.circle(9.6, 8, r: 2)
@@ -227,7 +263,8 @@ enum ShotPhase: String, CaseIterable {
             p.poly([CGPoint(x: 10.4, y: 15.2), CGPoint(x: 8.4, y: 18.6), CGPoint(x: 8, y: 21.6)])
             p.poly([CGPoint(x: 10.4, y: 15.2), CGPoint(x: 12.8, y: 18.4), CGPoint(x: 13.8, y: 21.4)])
             p.poly([CGPoint(x: 9.9, y: 11), CGPoint(x: 12.4, y: 7.8), CGPoint(x: 13.2, y: 5.4)])
-            p.node(14.4, 2.8, r: 2.2, accent: active, filled: active, knockout: false)
+            p.line(13.2, 5.4, 14.1, 6.6, accent: active)
+            p.basketball(15.1, 2.8, r: 2.2, accent: active)
         case .follow:
             // Arm held out long with the wrist relaxed — the ball is gone.
             p.circle(9.6, 7, r: 2)
@@ -238,6 +275,7 @@ enum ShotPhase: String, CaseIterable {
             p.line(16.6, 4.8, 17.2, 7.2, accent: active)
             p.quad(CGPoint(x: 17.6, y: 3.2), CGPoint(x: 20.2, y: 2.2), CGPoint(x: 20.6, y: 5),
                    accent: active, dash: [1.4, 1.6])
+            p.basketball(21.1, 4.7, r: 1.5, accent: active)
         }
     }
 }
@@ -260,10 +298,24 @@ struct PhaseGlyph: View {
     }
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: ShotIQColor.shotiqOrange) { p in
-            phase.draw(&p, active: active)
+        PhasePhotoThumbnail(phase: phase,
+                            active: active,
+                            width: size * 1.18,
+                            height: size,
+                            cornerRadius: max(4, size * 0.12))
+            .accessibilityLabel(phase.title)
+    }
+}
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for phase: ShotPhase) -> String {
+        switch phase {
+        case .setup: return "shotiq-approved-phase-setup"
+        case .load: return "shotiq-approved-phase-load"
+        case .rise: return "shotiq-approved-phase-rise"
+        case .release: return "shotiq-approved-phase-release"
+        case .follow: return "shotiq-approved-phase-follow"
         }
-        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
     }
 }
 
@@ -287,33 +339,32 @@ struct CaptureSourceGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch source {
-            case .uploadImage:
-                p.captureBrackets()
-                p.poly([CGPoint(x: 7, y: 14.6), CGPoint(x: 10.4, y: 11.2),
-                        CGPoint(x: 13.4, y: 13.2), CGPoint(x: 17, y: 9.2)])
-                p.node(7, 14.6, r: 1.4)
-                p.node(10.4, 11.2, r: 1.4, accent: true)
-                p.node(13.4, 13.2, r: 1.4)
-                p.node(17, 9.2, r: 1.4, accent: true)
-            case .uploadVideo:
-                p.rect(3, 7, 18, 10, radius: 1)
-                p.line(9, 7, 9, 17)
-                p.line(15, 7, 15, 17)
-                p.line(6, 10.6, 6, 13.4)
-                p.line(18, 10.6, 18, 13.4)
-                p.line(12, 5.4, 12, 18.6, accent: true)
-                p.node(12, 12, r: 1.7, accent: true, filled: true)
-            case .liveCamera:
-                p.captureBrackets()
-                p.circle(11.2, 8.6, r: 1.5)
-                p.line(11.2, 10.1, 11.6, 14)
-                p.poly([CGPoint(x: 11.6, y: 14), CGPoint(x: 9.6, y: 16.8)])
-                p.poly([CGPoint(x: 11.6, y: 14), CGPoint(x: 13.6, y: 16.6)])
-                p.poly([CGPoint(x: 11.3, y: 11.2), CGPoint(x: 14, y: 9.4)])
-                p.node(15.4, 8.6, r: 1.5, accent: true, filled: true)
-            }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: source),
+                                 size: size,
+                                 width: source.frameWidth(forHeight: size),
+                                 height: size,
+                                 label: label)
+    }
+}
+
+extension CaptureSource {
+    func frameWidth(forHeight height: CGFloat) -> CGFloat {
+        let aspect: CGFloat
+        switch self {
+        case .uploadImage: aspect = 48 / 36
+        case .uploadVideo: aspect = 60 / 26
+        case .liveCamera: aspect = 80 / 30
+        }
+        return (height * aspect).rounded()
+    }
+}
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for source: CaptureSource) -> String {
+        switch source {
+        case .liveCamera: return "shotiq-approved-ui-live-camera"
+        case .uploadVideo: return "shotiq-approved-ui-upload-video"
+        case .uploadImage: return "shotiq-approved-ui-analytics-upload"
         }
     }
 }
@@ -337,10 +388,9 @@ struct CaptureReticleGlyph: View {
     var size: CGFloat = 22
     var label: String? = nil
     var body: some View {
-        ShotIQGlyph(size: size, label: label) { p in
-            p.captureBrackets(inset: 3.5, arm: 4, radius: 1.4)
-            p.node(12, 12, r: 2.2, filled: true)
-        }
+        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-ui-target-reticle",
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -362,6 +412,47 @@ enum MechanicKind {
     case flightTime
     /// Plan-view left/right deviation of the shot — canonical 070 "Shot shape".
     case shotShape
+    /// Straight vertical release path, distinct from flight arc.
+    case releasePath
+}
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: MechanicKind) -> String {
+        switch kind {
+        case .elbowAngle:
+            return "shotiq-approved-mechanics-elbow-under-ball"
+        case .wristArc:
+            return "shotiq-approved-mechanics-wrist-over-elbow"
+        case .releasePath:
+            return "shotiq-approved-mechanics-elbow-stack"
+        case .releaseHeight:
+            return "shotiq-approved-mechanics-release-height"
+        case .distance:
+            return "shotiq-approved-mechanics-spot-ruler"
+        case .impact:
+            return "shotiq-approved-ui-target-reticle"
+        case .jump:
+            return "shotiq-approved-mechanics-shot-path-runner"
+        case .ballArc, .arcHeight, .flightTime:
+            return "shotiq-approved-mechanics-ball-speed"
+        case .releaseAngle:
+            return "shotiq-approved-mechanics-release-angle"
+        case .shotShape:
+            return "shotiq-approved-mechanics-shot-path-bounce"
+        case .centerline:
+            return "shotiq-approved-mechanics-body-centerline"
+        case .balance:
+            return "shotiq-approved-mechanics-balance-archetype"
+        case .drift:
+            return "shotiq-approved-mechanics-shot-path-bounce"
+        case .tempo:
+            return "shotiq-approved-ui-performance-gauge"
+        case .consistency:
+            return "shotiq-approved-ui-progress-line"
+        case .spin:
+            return "shotiq-approved-mechanics-backspin"
+        }
+    }
 }
 
 struct MechanicGlyph: View {
@@ -371,160 +462,9 @@ struct MechanicGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .elbowAngle:
-                // Two limb segments meeting at a joint, measured sweep dotted in.
-                p.poly([CGPoint(x: 4.5, y: 16.5), CGPoint(x: 11, y: 8), CGPoint(x: 19.5, y: 14.5)])
-                p.quad(CGPoint(x: 8, y: 13.4), CGPoint(x: 11.4, y: 16.2), CGPoint(x: 15, y: 12.6),
-                       accent: true, dash: [1.4, 1.8])
-                p.node(4.5, 16.5, r: 1.5)
-                p.node(11, 8, r: 1.5, accent: true)
-                p.node(19.5, 14.5, r: 1.5)
-            case .wristArc:
-                // Forearm into a cocked hand, flexion dotted at the joint.
-                p.poly([CGPoint(x: 4.5, y: 19), CGPoint(x: 10.5, y: 11.5), CGPoint(x: 16, y: 9)])
-                p.line(16, 9, 18.5, 11)
-                p.quad(CGPoint(x: 12.4, y: 9.6), CGPoint(x: 9.4, y: 9.8), CGPoint(x: 9.4, y: 13.6),
-                       accent: true, dash: [1.4, 1.8])
-                p.node(10.5, 11.5, r: 1.5, accent: true)
-                p.node(4.5, 19, r: 1.5)
-            case .releaseHeight:
-                // Floor-to-hand ruler beside a standing figure.
-                p.line(4, 4.5, 4, 19.5)
-                p.arrowHead(at: CGPoint(x: 4, y: 4.2), from: CGPoint(x: 4, y: 8), span: 1.8)
-                p.arrowHead(at: CGPoint(x: 4, y: 19.8), from: CGPoint(x: 4, y: 16), span: 1.8)
-                p.circle(13.5, 6.5, r: 1.6)
-                p.line(13.5, 8.1, 13.5, 13.5)
-                p.line(13.5, 10, 16.5, 8.4)
-                p.line(13.5, 13.5, 11.6, 17.4)
-                p.line(13.5, 13.5, 15.6, 17.4)
-                p.line(9, 19.6, 19, 19.6)
-            case .distance:
-                // Tape measure laid along the floor.
-                p.line(3, 13, 20, 13)
-                p.arrowHead(at: CGPoint(x: 20.4, y: 13), from: CGPoint(x: 16, y: 13))
-                p.line(6, 13, 6, 8.6)
-                p.line(10, 13, 10, 10)
-                p.line(14, 13, 14, 8.6)
-                p.line(3, 18.5, 21, 18.5, dash: [2.5, 2.5])
-            case .jump:
-                // Rise arrow beside the tracked hip/head nodes.
-                p.line(5, 20.5, 5, 4.5)
-                p.arrowHead(at: CGPoint(x: 5, y: 4.2), from: CGPoint(x: 5, y: 8.4))
-                p.line(14, 10, 14, 14, accent: true, dash: [1.4, 1.6])
-                p.node(14, 8.2, r: 2, accent: true)
-                p.node(14, 15.4, r: 2)
-                p.line(9.5, 20.5, 19.5, 20.5)
-            case .ballArc:
-                // Ball flight: dotted parabola with launch and landing nodes.
-                p.quad(CGPoint(x: 4.5, y: 18.5), CGPoint(x: 11.5, y: 0.5), CGPoint(x: 19.5, y: 11.5),
-                       dash: [1.6, 2])
-                p.line(4.5, 18.5, 8.5, 9, accent: true)
-                p.node(4.5, 18.5, r: 1.5, accent: true)
-                p.node(19.5, 11.5, r: 1.5)
-            case .centerline:
-                // Body midline with the measured lateral offset arrowed off it.
-                p.line(12, 3, 12, 21, dash: [2, 2])
-                p.circle(12, 12, r: 2.4)
-                p.line(14.6, 12, 20, 12, accent: true)
-                p.arrowHead(at: CGPoint(x: 20.2, y: 12), from: CGPoint(x: 16, y: 12), accent: true)
-                p.line(6.4, 12, 9.6, 12)
-            case .balance:
-                // Level bar across a planted stance.
-                p.circle(12, 4.6, r: 1.9)
-                p.line(12, 6.5, 12, 13)
-                p.line(12, 13, 9.2, 18.6)
-                p.line(12, 13, 14.8, 18.6)
-                p.line(5.5, 9.6, 18.5, 9.6, accent: true)
-                p.line(7.5, 20.6, 16.5, 20.6, dash: [2, 2])
-            case .drift:
-                // Reference line and how far the release point has drifted off it.
-                p.line(7.5, 4, 7.5, 20, dash: [2, 2])
-                p.node(7.5, 12, r: 1.5)
-                p.line(9.6, 12, 17.4, 12, accent: true)
-                p.arrowHead(at: CGPoint(x: 17.6, y: 12), from: CGPoint(x: 14, y: 12), accent: true)
-                p.node(18.5, 7, r: 1.5, accent: true)
-                p.line(18.5, 8.5, 18.5, 17, accent: true, dash: [1.6, 1.8])
-            case .impact:
-                // Effect landing on the tracked outcome node.
-                p.line(12, 3.5, 12, 11.5, accent: true)
-                p.arrowHead(at: CGPoint(x: 12, y: 11.8), from: CGPoint(x: 12, y: 8), accent: true)
-                p.circle(12, 16, r: 3, accent: true)
-                p.line(5, 20.5, 19, 20.5)
-            case .tempo:
-                // Beat rail — evenly spaced marks with the measured beat filled.
-                p.line(3, 16.5, 21, 16.5)
-                p.line(6, 16.5, 6, 11.5)
-                p.line(12, 16.5, 12, 7)
-                p.line(18, 16.5, 18, 11.5)
-                p.node(6, 10.2, r: 1.4)
-                p.node(12, 5.8, r: 1.6, accent: true, filled: true)
-                p.node(18, 10.2, r: 1.4)
-            case .consistency:
-                // Repeat-band: a tight scatter of releases inside a dotted band.
-                p.line(3.5, 8.5, 20.5, 8.5, dash: [2, 2])
-                p.line(3.5, 15.5, 20.5, 15.5, dash: [2, 2])
-                p.node(7, 12.6, r: 1.4)
-                p.node(11, 11.2, r: 1.4, accent: true)
-                p.node(15, 12.9, r: 1.4)
-                p.node(18.6, 11.6, r: 1.4)
-                p.poly([CGPoint(x: 7, y: 12.6), CGPoint(x: 11, y: 11.2),
-                        CGPoint(x: 15, y: 12.9), CGPoint(x: 18.6, y: 11.6)])
-            case .arcHeight:
-                // Canonical 041: a low node polyline whose apex is picked out, with
-                // the apex measured down to the rail. Not a parabola — the apex is
-                // what is being read, so the shoulders sit on the floor line.
-                p.poly([CGPoint(x: 3.6, y: 15.4), CGPoint(x: 7.2, y: 17.6),
-                        CGPoint(x: 12, y: 8.2), CGPoint(x: 16.8, y: 13.2),
-                        CGPoint(x: 20.4, y: 11)], dash: [1.6, 1.8])
-                p.node(3.6, 15.4, r: 1.3)
-                p.node(7.2, 17.6, r: 1.3, accent: true, filled: true)
-                p.node(12, 8.2, r: 1.5, accent: true, filled: true)
-                p.node(16.8, 13.2, r: 1.3, accent: true, filled: true)
-                p.node(20.4, 11, r: 1.3)
-            case .releaseAngle:
-                // Canonical 041/070: a protractor corner — the horizontal, the
-                // launch ray and the swept angle between them.
-                p.line(5, 18.5, 20, 18.5)
-                p.line(5, 18.5, 5, 6)
-                p.line(5, 18.5, 18.5, 7.5)
-                p.arc(5, 18.5, r: 7.2, from: -38, to: 0, accent: true, dash: [1.4, 1.8])
-                p.node(5, 18.5, r: 1.4, accent: true, filled: true)
-            case .spin:
-                // Canonical 041: the ball with its two rotation arrows. The ball
-                // seams are what separate it from `.accuracy`'s concentric target.
-                p.circle(12, 12, r: 4.6)
-                p.quad(CGPoint(x: 12, y: 7.4), CGPoint(x: 14.9, y: 12), CGPoint(x: 12, y: 16.6))
-                p.quad(CGPoint(x: 12, y: 7.4), CGPoint(x: 9.1, y: 12), CGPoint(x: 12, y: 16.6))
-                p.arc(12, 12, r: 7.6, from: 128, to: 202, accent: true)
-                p.arrowHead(at: CGPoint(x: 7.5, y: 9), from: CGPoint(x: 5.6, y: 11.4),
-                            span: 1.7, accent: true)
-                p.arc(12, 12, r: 7.6, from: -52, to: 22, accent: true)
-                p.arrowHead(at: CGPoint(x: 16.5, y: 15), from: CGPoint(x: 18.4, y: 12.6),
-                            span: 1.7, accent: true)
-            case .flightTime:
-                // Canonical 041: the dotted flight path between the two timing
-                // nodes — the *span*, not the height, is the measurement.
-                p.quad(CGPoint(x: 4.5, y: 15.5), CGPoint(x: 12, y: 3), CGPoint(x: 19.5, y: 15.5),
-                       dash: [1.5, 2])
-                p.node(4.5, 15.5, r: 1.8, filled: true)
-                p.node(19.5, 15.5, r: 1.8, filled: true)
-                p.line(4.5, 19.6, 19.5, 19.6, accent: true)
-                p.line(4.5, 18.4, 4.5, 20.8, accent: true)
-                p.line(19.5, 18.4, 19.5, 20.8, accent: true)
-            case .shotShape:
-                // Canonical 070: plan view down the court — the rim line, the
-                // dashed path and how far left or right of centre it finished.
-                p.line(4, 19.5, 20, 19.5)
-                p.node(6.5, 19.5, r: 1.4, accent: true, filled: true)
-                p.node(17.5, 19.5, r: 1.4, accent: true, filled: true)
-                p.line(12, 3.5, 12, 14, dash: [2, 2])
-                p.poly([CGPoint(x: 12, y: 5), CGPoint(x: 10.4, y: 10.6),
-                        CGPoint(x: 12.6, y: 14.4)], accent: true, dash: [1.4, 1.8])
-                p.node(12, 3.5, r: 1.5)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -546,6 +486,8 @@ extension MechanicKind {
         case k.contains("wrist") || k.contains("snap"): self = .wristArc
         case k.contains("release angle") || k.contains("launch"): self = .releaseAngle
         case k.contains("height"): self = .releaseHeight
+        case k.contains("release path") || k.contains("shot path") || k.contains("straight path"):
+            self = .releasePath
         case k.contains("angle") || k.contains("arc"): self = .ballArc
         // Before the balance arm: "distance" *contains* "stance", so
         // "RELEASE DISTANCE" on 051 was resolving to the balance diagram and
@@ -618,6 +560,19 @@ extension ReadinessKind {
 /// nodes and links. Each kind is a different fragment, so no two cues share one.
 enum CueKind { case peak, apex, shoulders, extensionLine, base, tree }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: CueKind) -> String {
+        switch kind {
+        case .peak: return "shotiq-approved-v2-cue-peak"
+        case .apex: return "shotiq-approved-v2-cue-apex"
+        case .shoulders: return "shotiq-approved-v2-cue-shoulders"
+        case .extensionLine: return "shotiq-approved-v2-cue-extension"
+        case .base: return "shotiq-approved-v2-cue-base"
+        case .tree: return "shotiq-approved-v2-cue-tree"
+        }
+    }
+}
+
 struct CueGlyph: View {
     var kind: CueKind
     var size: CGFloat = 26
@@ -625,61 +580,9 @@ struct CueGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .peak:
-                p.poly([CGPoint(x: 3.5, y: 16.5), CGPoint(x: 7.5, y: 19), CGPoint(x: 12, y: 5.5),
-                        CGPoint(x: 16.5, y: 19), CGPoint(x: 20.5, y: 16.5)])
-                p.node(3.5, 16.5, r: 1.7, accent: true, filled: true)
-                p.node(7.5, 19, r: 1.7, accent: true, filled: true)
-                p.node(12, 5.5, r: 1.7)
-                p.node(16.5, 19, r: 1.7, accent: true, filled: true)
-                p.node(20.5, 16.5, r: 1.7, accent: true, filled: true)
-            case .apex:
-                p.poly([CGPoint(x: 5, y: 19.5), CGPoint(x: 10.5, y: 7),
-                        CGPoint(x: 16, y: 11), CGPoint(x: 20, y: 8.5)])
-                p.node(5, 19.5, r: 1.7, accent: true, filled: true)
-                p.node(10.5, 7, r: 1.7, accent: true, filled: true)
-                p.node(16, 11, r: 1.7)
-                p.node(20, 8.5, r: 1.7)
-            case .shoulders:
-                p.line(12, 4.5, 12, 9)
-                p.line(12, 9, 5.5, 14)
-                p.line(12, 9, 18.5, 14)
-                p.poly([CGPoint(x: 5.5, y: 14), CGPoint(x: 12, y: 19), CGPoint(x: 18.5, y: 14)],
-                       dash: [2, 2])
-                p.node(12, 4.5, r: 1.7)
-                p.node(12, 9, r: 1.7, accent: true, filled: true)
-                p.node(5.5, 14, r: 1.7, accent: true, filled: true)
-                p.node(18.5, 14, r: 1.7, accent: true, filled: true)
-            case .extensionLine:
-                p.poly([CGPoint(x: 6, y: 19.5), CGPoint(x: 10, y: 13),
-                        CGPoint(x: 14.5, y: 11), CGPoint(x: 19, y: 4.5)])
-                p.line(14.5, 11, 16.5, 15, dash: [1.6, 1.8])
-                p.node(6, 19.5, r: 1.7)
-                p.node(10, 13, r: 1.7, accent: true, filled: true)
-                p.node(14.5, 11, r: 1.7, accent: true, filled: true)
-                p.node(19, 4.5, r: 1.7)
-            case .base:
-                p.line(12, 4.5, 12, 12)
-                p.line(12, 12, 7, 20)
-                p.line(12, 12, 17, 20)
-                p.line(6.5, 9.5, 17.5, 9.5)
-                p.node(12, 4.5, r: 1.7)
-                p.node(7, 20, r: 1.7, accent: true, filled: true)
-                p.node(17, 20, r: 1.7, accent: true, filled: true)
-            case .tree:
-                p.line(12, 4.5, 5.5, 12)
-                p.line(12, 4.5, 18.5, 12)
-                p.line(5.5, 12, 8.5, 19.5)
-                p.line(18.5, 12, 15.5, 19.5)
-                p.node(12, 4.5, r: 1.7)
-                p.node(5.5, 12, r: 1.7)
-                p.node(18.5, 12, r: 1.7)
-                p.node(8.5, 19.5, r: 1.7, accent: true, filled: true)
-                p.node(15.5, 19.5, r: 1.7, accent: true, filled: true)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -688,6 +591,16 @@ struct CueGlyph: View {
 /// A figure demonstrating the fix, not the fault.
 enum CorrectionKind { case stack, square, drive }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: CorrectionKind) -> String {
+        switch kind {
+        case .stack: return "shotiq-approved-mechanics-elbow-stack"
+        case .square: return "shotiq-approved-ui-target-reticle"
+        case .drive: return "shotiq-approved-mechanics-shot-path-runner"
+        }
+    }
+}
+
 struct CorrectionGlyph: View {
     var kind: CorrectionKind
     var size: CGFloat = 22
@@ -695,35 +608,9 @@ struct CorrectionGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .stack:
-                p.circle(12, 9.4, r: 2)
-                p.line(12, 11.4, 12, 16.5)
-                p.line(12, 16.5, 9.6, 21.2)
-                p.line(12, 16.5, 14.4, 21.2)
-                p.poly([CGPoint(x: 12, y: 12.6), CGPoint(x: 9, y: 9.6), CGPoint(x: 9.6, y: 6.2)])
-                p.poly([CGPoint(x: 12, y: 12.6), CGPoint(x: 15, y: 9.6), CGPoint(x: 14.4, y: 6.2)])
-                p.line(8.6, 3.8, 15.4, 3.8, accent: true, dash: [2, 2])
-            case .square:
-                p.circle(11, 4.6, r: 2)
-                p.line(11, 6.6, 11, 13.4)
-                p.line(11, 13.4, 8.4, 20.6)
-                p.line(11, 13.4, 13.8, 20.6)
-                p.poly([CGPoint(x: 11, y: 8.6), CGPoint(x: 16.4, y: 8.6), CGPoint(x: 16.4, y: 4.2)])
-                p.poly([CGPoint(x: 14.6, y: 8.6), CGPoint(x: 14.6, y: 6.8), CGPoint(x: 16.4, y: 6.8)],
-                       accent: true)
-                p.line(6, 8.6, 9.2, 8.6)
-            case .drive:
-                p.circle(10.4, 7.6, r: 2)
-                p.line(10.4, 9.6, 11, 15.4)
-                p.poly([CGPoint(x: 11, y: 15.4), CGPoint(x: 8.4, y: 19.4), CGPoint(x: 8, y: 21.6)])
-                p.poly([CGPoint(x: 11, y: 15.4), CGPoint(x: 13.8, y: 19), CGPoint(x: 14.6, y: 21.4)])
-                p.line(10.6, 10.8, 13.4, 8)
-                p.line(17, 20, 17, 4.6, accent: true, dash: [2, 2])
-                p.arrowHead(at: CGPoint(x: 17, y: 4.4), from: CGPoint(x: 17, y: 8.4), accent: true)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -733,6 +620,18 @@ struct CorrectionGlyph: View {
 /// ~56pt diagram canonical prints on each top-flaw card.
 enum FlawKind { case elbow, wrist, release, base, guideHand }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: FlawKind) -> String {
+        switch kind {
+        case .elbow: return "shotiq-approved-v2-flaw-elbow"
+        case .wrist: return "shotiq-approved-v2-flaw-wrist"
+        case .release: return "shotiq-approved-v2-flaw-release"
+        case .base: return "shotiq-approved-v2-flaw-base"
+        case .guideHand: return "shotiq-approved-v2-flaw-guide"
+        }
+    }
+}
+
 struct FlawFigure: View {
     var kind: FlawKind
     var size: CGFloat = 56
@@ -740,39 +639,9 @@ struct FlawFigure: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            p.circle(10.6, 7.6, r: 2)
-            p.line(10.6, 9.6, 11.2, 15.2)
-            p.poly([CGPoint(x: 11.2, y: 15.2), CGPoint(x: 8.8, y: 19), CGPoint(x: 8.4, y: 21.6)])
-            p.poly([CGPoint(x: 11.2, y: 15.2), CGPoint(x: 13.8, y: 18.8), CGPoint(x: 14.8, y: 21.4)])
-            switch kind {
-            case .elbow:
-                p.poly([CGPoint(x: 10.8, y: 10.8), CGPoint(x: 13.6, y: 7.6), CGPoint(x: 15.4, y: 4.6)],
-                       accent: true)
-                p.node(13.6, 7.6, r: 1.4, accent: true)
-                p.circle(15.8, 4, r: 1.8, accent: true)
-            case .wrist:
-                p.line(10.8, 10.8, 13.4, 8.6)
-                p.circle(15.4, 6.4, r: 3.2, accent: true)
-                p.line(17.4, 4.4, 19, 3, accent: true, dash: [1.4, 1.6])
-            case .release:
-                p.line(10.8, 10.8, 12.8, 8.4)
-                p.circle(14.8, 4.4, r: 3, accent: true)
-                p.line(14.8, 7.4, 14.8, 12.6, accent: true, dash: [1.4, 1.8])
-            case .base:
-                p.line(10.8, 10.8, 13.6, 8.8)
-                p.circle(15.4, 7, r: 2)
-                p.line(8.4, 21.6, 14.8, 21.6, accent: true)
-                p.line(6.4, 21.6, 8, 21.6, accent: true, dash: [1.2, 1.4])
-                p.line(15.2, 21.6, 16.8, 21.6, accent: true, dash: [1.2, 1.4])
-            case .guideHand:
-                p.line(10.8, 10.8, 13.6, 8)
-                p.circle(15.6, 6, r: 2)
-                p.line(11.6, 12.4, 14.4, 11, accent: true)
-                p.line(14.4, 11, 16.6, 12.4, accent: true)
-                p.node(14.4, 11, r: 1.2, accent: true)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -830,76 +699,23 @@ struct StatMarkGlyph: View {
         }
     }
 
-    var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .points:
-                p.poly([CGPoint(x: 12, y: 2.6), CGPoint(x: 20.2, y: 7.3), CGPoint(x: 20.2, y: 16.7),
-                        CGPoint(x: 12, y: 21.4), CGPoint(x: 3.8, y: 16.7), CGPoint(x: 3.8, y: 7.3),
-                        CGPoint(x: 12, y: 2.6)])
-                p.circle(12, 12, r: 4)
-                p.line(8, 12, 16, 12)
-                p.quad(CGPoint(x: 12, y: 8), CGPoint(x: 14.6, y: 12), CGPoint(x: 12, y: 16))
-                p.quad(CGPoint(x: 12, y: 8), CGPoint(x: 9.4, y: 12), CGPoint(x: 12, y: 16))
-            case .formScore:
-                p.arc(12, 14.5, r: 8.2, from: 180, to: 360, dash: [1.5, 2])
-                p.line(12, 14.5, 17.2, 9.4, accent: true)
-                p.node(12, 14.5, r: 1.5, accent: true, filled: true)
-                p.line(3.8, 14.5, 5.6, 14.5)
-                p.line(18.4, 14.5, 20.2, 14.5)
-            case .dayStreak:
-                p.rect(3, 6, 18, 12, radius: 1.2)
-                p.line(7.4, 6, 7.4, 18)
-                p.line(16.6, 6, 16.6, 18)
-                p.line(5.2, 9, 5.2, 10.2)
-                p.line(5.2, 13.8, 5.2, 15)
-                p.line(18.8, 9, 18.8, 10.2)
-                p.line(18.8, 13.8, 18.8, 15)
-                p.node(12, 12, r: 1.7, accent: true, filled: true)
-            case .volume:
-                p.line(4, 19.5, 20, 19.5)
-                p.line(7, 19.5, 7, 13)
-                p.line(12, 19.5, 12, 8.5)
-                p.line(17, 19.5, 17, 11)
-                p.node(12, 6.9, r: 1.5, accent: true, filled: true)
-            case .accuracy:
-                p.circle(12, 12, r: 8)
-                p.circle(12, 12, r: 4, dash: [1.6, 1.8])
-                p.node(12, 12, r: 1.6, accent: true, filled: true)
-                p.line(12, 4, 12, 2.4)
-                p.line(12, 21.6, 12, 20)
-                p.line(4, 12, 2.4, 12)
-                p.line(21.6, 12, 20, 12)
-            case .makes:
-                // Backboard, rim and net, face on — canonical 062's MAKES mark.
-                p.rect(5.5, 4.5, 13, 8, radius: 0.8)
-                p.rect(9.5, 8, 5, 4.5, radius: 0.4)
-                p.line(6.5, 14.5, 17.5, 14.5, accent: true)
-                p.poly([CGPoint(x: 7.6, y: 14.5), CGPoint(x: 9.4, y: 20),
-                        CGPoint(x: 14.6, y: 20), CGPoint(x: 16.4, y: 14.5)])
-                p.line(10.4, 14.5, 11.4, 20)
-                p.line(13.6, 14.5, 12.6, 20)
-            case .makePercent:
-                // A ring with the made share swept out of it — a rate.
-                p.circle(12, 12, r: 7.6, dash: [1.6, 2])
-                p.arc(12, 12, r: 7.6, from: -90, to: 135, accent: true)
-                p.node(12, 4.4, r: 1.5, accent: true, filled: true)
-                p.line(8.4, 15.4, 15.6, 8.6)
-                p.node(9.4, 9.6, r: 1.1)
-                p.node(14.6, 14.4, r: 1.1)
-            case .pointsEarned:
-                // Rising node line, the earned step picked out — a gain, not a
-                // lifetime balance (that is `.points`, the hexagon token).
-                p.poly([CGPoint(x: 3.6, y: 17.4), CGPoint(x: 8, y: 14.6),
-                        CGPoint(x: 12, y: 16.2), CGPoint(x: 16, y: 8.6),
-                        CGPoint(x: 20.4, y: 11.4)])
-                p.node(3.6, 17.4, r: 1.4)
-                p.node(8, 14.6, r: 1.4)
-                p.node(12, 16.2, r: 1.4)
-                p.node(16, 8.6, r: 1.8, accent: true, filled: true)
-                p.node(20.4, 11.4, r: 1.4)
-            }
+    private var approvedAssetName: String {
+        switch kind {
+        case .points: return "shotiq-approved-ui-badge-target"
+        case .formScore: return "shotiq-approved-ui-performance-gauge"
+        case .dayStreak: return "shotiq-approved-ui-calendar-heat"
+        case .volume: return "shotiq-approved-v2-stat-volume"
+        case .accuracy: return "shotiq-approved-ui-target-reticle"
+        case .makes: return "shotiq-approved-v2-stat-makes"
+        case .makePercent: return "shotiq-approved-v2-stat-make-percent"
+        case .pointsEarned: return "shotiq-approved-ui-progress-line"
         }
+    }
+
+    var body: some View {
+        ShotIQApprovedRasterIcon(assetName: approvedAssetName,
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -908,6 +724,16 @@ struct StatMarkGlyph: View {
 /// Scheduled-workout marks — one shape per drill family.
 enum WorkoutKind { case release, ladder, flow }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: WorkoutKind) -> String {
+        switch kind {
+        case .release: return "shotiq-approved-phase-release"
+        case .ladder: return "shotiq-approved-ui-ladder-balls"
+        case .flow: return "shotiq-approved-mechanics-routine-refresh"
+        }
+    }
+}
+
 struct WorkoutGlyph: View {
     var kind: WorkoutKind
     var size: CGFloat = 20
@@ -915,28 +741,9 @@ struct WorkoutGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .release:
-                p.line(12, 4.5, 6, 12.5)
-                p.line(12, 4.5, 18, 10.5)
-                p.line(6, 12.5, 11, 19.5)
-                p.node(12, 4.5, r: 1.8, accent: true)
-                p.node(6, 12.5, r: 1.8)
-                p.node(18, 10.5, r: 1.8)
-                p.node(11, 19.5, r: 1.8)
-            case .ladder:
-                p.line(7.5, 3.5, 5.5, 20.5)
-                p.line(16.5, 3.5, 18.5, 20.5)
-                p.line(7.1, 7, 16.9, 7)
-                p.line(6.6, 11.5, 17.4, 11.5)
-                p.line(6.1, 16, 17.9, 16)
-            case .flow:
-                p.arc(11.5, 13, r: 4.5, from: 220, to: 120)
-                p.poly([CGPoint(x: 9.6, y: 5.4), CGPoint(x: 8.4, y: 8.8), CGPoint(x: 11.8, y: 9.6)])
-                p.node(15.5, 9, r: 2, accent: true)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -945,6 +752,17 @@ struct WorkoutGlyph: View {
 /// Capture-readiness checks — bracketed framing marks, one per check.
 enum ReadinessKind { case athlete, framing, lighting, stability }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: ReadinessKind) -> String {
+        switch kind {
+        case .athlete: return "shotiq-approved-mechanics-routine-refresh"
+        case .framing: return "shotiq-approved-mechanics-capture-frame"
+        case .lighting: return "shotiq-approved-mechanics-environment-light"
+        case .stability: return "shotiq-approved-mechanics-camera-position"
+        }
+    }
+}
+
 struct ReadinessGlyph: View {
     var kind: ReadinessKind
     var size: CGFloat = 24
@@ -952,38 +770,49 @@ struct ReadinessGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            if kind != .lighting { p.captureBrackets() }
-            switch kind {
-            case .athlete:
-                p.circle(11, 8.2, r: 1.4)
-                p.line(11, 9.6, 11.4, 13.6)
-                p.line(11.4, 13.6, 9.6, 16.4)
-                p.line(11.4, 13.6, 13.4, 16.2)
-                p.line(11.1, 10.8, 13.4, 12.4)
-            case .framing:
-                p.rect(8.5, 6.5, 7, 11, radius: 1, accent: true)
-                p.circle(12, 9.4, r: 1.1)
-                p.line(12, 10.5, 12, 14)
-                p.line(12, 11.6, 10.3, 12.6)
-                p.line(12, 11.6, 13.7, 12.6)
-                p.line(12, 14, 10.6, 16.2)
-                p.line(12, 14, 13.4, 16.2)
-            case .lighting:
-                p.circle(12, 12, r: 4, accent: true)
-                p.line(12, 3.5, 12, 5.5)
-                p.line(12, 18.5, 12, 20.5)
-                p.line(3.5, 12, 5.5, 12)
-                p.line(18.5, 12, 20.5, 12)
-                p.line(6.2, 6.2, 7.6, 7.6)
-                p.line(16.4, 16.4, 17.8, 17.8)
-                p.line(17.8, 6.2, 16.4, 7.6)
-                p.line(7.6, 16.4, 6.2, 17.8)
-            case .stability:
-                p.rect(6.5, 8.5, 11, 7, radius: 1)
-                p.line(12, 14, 12, 10, accent: true)
-                p.arrowHead(at: CGPoint(x: 12, y: 9.6), from: CGPoint(x: 12, y: 13), accent: true)
-            }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
+    }
+}
+
+// MARK: - Equipment and setup
+
+enum EquipmentKind { case basketball, cones, spot, location }
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: EquipmentKind) -> String {
+        switch kind {
+        case .basketball: return "shotiq-approved-mechanics-ball-speed"
+        case .cones: return "shotiq-approved-mechanics-cones"
+        case .spot: return "shotiq-approved-mechanics-spot-ruler"
+        case .location: return "shotiq-approved-mechanics-location-pin"
+        }
+    }
+}
+
+struct EquipmentGlyph: View {
+    var kind: EquipmentKind
+    var size: CGFloat = 24
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
+    }
+}
+
+extension EquipmentKind {
+    init?(equipmentLabel: String) {
+        let k = equipmentLabel.lowercased()
+        switch true {
+        case k.contains("basketball") || shotiqLabelHasWord(k, "ball"): self = .basketball
+        case k.contains("cone"): self = .cones
+        case k.contains("spot") || k.contains("free throw") || k.contains("line"): self = .spot
+        case k.contains("location") || k.contains("court"): self = .location
+        default: return nil
         }
     }
 }
@@ -995,37 +824,26 @@ struct ReadinessGlyph: View {
 /// player's initials for Profile — five unrelated shapes.
 enum NavMark { case home, capture, train, progress }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for mark: NavMark) -> String {
+        switch mark {
+        case .home: return "shotiq-approved-ui-target-reticle"
+        case .capture: return "shotiq-approved-ui-pose-shooter"
+        case .train: return "shotiq-approved-ui-ladder-balls"
+        case .progress: return "shotiq-approved-ui-progress-line"
+        }
+    }
+}
+
 struct NavGlyph: View {
     var mark: NavMark
     var size: CGFloat = 22
     var active = false
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: ShotIQColor.shotiqOrange) { p in
-            switch mark {
-            case .home:
-                p.captureBrackets(inset: 3.5, arm: 4, radius: 1.4)
-                p.node(12, 12, r: 2.2, accent: active, filled: active)
-            case .capture:
-                p.line(6.5, 15.5, 12, 9.5)
-                p.line(12, 9.5, 18, 14)
-                p.node(6.5, 15.5, r: 2)
-                p.node(12, 9.5, r: 2.2, accent: active, filled: active)
-                p.node(18, 14, r: 2)
-            case .train:
-                p.line(3.5, 8.5, 20.5, 8.5)
-                p.line(3.5, 15.5, 20.5, 15.5)
-                p.node(7.5, 12, r: 1.9)
-                p.node(12, 12, r: 1.9, accent: active, filled: active)
-                p.node(16.5, 12, r: 1.9)
-            case .progress:
-                p.quad(CGPoint(x: 3.5, y: 18), CGPoint(x: 9, y: 5.5), CGPoint(x: 20.5, y: 7.5))
-                p.node(3.5, 18, r: 1.8)
-                p.node(11.6, 8.6, r: 1.8)
-                p.node(20.5, 7.5, r: 1.8, accent: active, filled: active)
-            }
-        }
-        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: mark),
+                                 size: size,
+                                 label: nil)
     }
 }
 
@@ -1039,6 +857,15 @@ struct NavGlyph: View {
 /// what both graders read as "left and right render the same".
 enum HandKind { case right, left }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: HandKind) -> String {
+        switch kind {
+        case .right: return "shotiq-correction-hand-right"
+        case .left: return "shotiq-correction-hand-left"
+        }
+    }
+}
+
 struct HandGlyph: View {
     var kind: HandKind
     var size: CGFloat = 30
@@ -1046,26 +873,9 @@ struct HandGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            // Drawn right-handed on the 24-grid, then reflected for the left.
-            let flip = kind == .left
-            func x(_ v: CGFloat) -> CGFloat { flip ? 24 - v : v }
-            // Two opposed corner brackets, on the shooting side.
-            p.poly([CGPoint(x: x(4), y: 8.5), CGPoint(x: x(4), y: 4),
-                    CGPoint(x: x(9), y: 4)])
-            p.poly([CGPoint(x: x(4), y: 15.5), CGPoint(x: x(4), y: 20),
-                    CGPoint(x: x(9), y: 20)])
-            // Wrist -> palm -> two fingers: the constellation itself is chiral,
-            // so the two marks stay apart even at row size.
-            p.poly([CGPoint(x: x(8), y: 16.6), CGPoint(x: x(10.6), y: 10),
-                    CGPoint(x: x(14.4), y: 7.2), CGPoint(x: x(18.4), y: 11)])
-            p.line(x(14.4), 7.2, x(15.6), 13.2)
-            p.node(x(8), 16.6, r: 1.6)
-            p.node(x(10.6), 10, r: 1.6, accent: true, filled: true)
-            p.node(x(14.4), 7.2, r: 1.6, accent: true, filled: true)
-            p.node(x(18.4), 11, r: 1.6, accent: true)
-            p.node(x(15.6), 13.2, r: 1.6)
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -1086,6 +896,17 @@ extension HandKind {
 /// RELEASE HEIGHT.
 enum BodyMetricKind { case age, height, weight, wingspan }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: BodyMetricKind) -> String {
+        switch kind {
+        case .age: return "shotiq-correction-age"
+        case .height: return "shotiq-correction-height"
+        case .weight: return "shotiq-correction-weight"
+        case .wingspan: return "shotiq-approved-v2-body-wingspan"
+        }
+    }
+}
+
 struct BodyMetricGlyph: View {
     var kind: BodyMetricKind
     var size: CGFloat = 22
@@ -1093,46 +914,9 @@ struct BodyMetricGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .age:
-                // Bracketed tick scale — elapsed years read off a framed rule.
-                p.captureBrackets(inset: 4.5, arm: 3.6, radius: 1.2)
-                p.line(12, 5.6, 12, 18.4)
-                p.line(12, 8.4, 15, 8.4, accent: true)
-                p.line(12, 12, 15, 12, accent: true)
-                p.line(12, 15.6, 15, 15.6, accent: true)
-                p.node(12, 5.2, r: 1.5, accent: true, filled: true)
-                p.node(12, 18.8, r: 1.5, accent: true, filled: true)
-            case .height:
-                // Standing rule: one vertical span between two capped ends.
-                p.poly([CGPoint(x: 7.5, y: 4), CGPoint(x: 5.5, y: 4),
-                        CGPoint(x: 5.5, y: 20), CGPoint(x: 7.5, y: 20)])
-                p.line(12, 5.6, 12, 18.4, accent: true, dash: [1.6, 1.8])
-                p.line(9.6, 9.4, 14.4, 9.4)
-                p.line(9.6, 14.6, 14.4, 14.6)
-                p.node(12, 4.4, r: 1.6, accent: true, filled: true)
-                p.node(12, 19.6, r: 1.6, accent: true, filled: true)
-            case .weight:
-                // Balance beam with a centre pointer — mass, read horizontally.
-                p.line(4, 14.5, 20, 14.5)
-                p.line(12, 14.5, 12, 9.5)
-                p.line(9, 9.5, 15, 9.5)
-                p.line(6, 18.5, 18, 18.5, dash: [2, 2])
-                p.node(4.4, 18.5, r: 1.6, accent: true, filled: true)
-                p.node(19.6, 18.5, r: 1.6, accent: true, filled: true)
-            case .wingspan:
-                // Front-on figure, arms out, span measured fingertip to fingertip.
-                p.circle(12, 6.4, r: 2.2)
-                p.line(12, 8.6, 12, 15)
-                p.line(4.6, 10.8, 19.4, 10.8)
-                p.line(12, 15, 9, 20.6)
-                p.line(12, 15, 15, 20.6)
-                p.line(3.6, 7.4, 20.4, 7.4, accent: true, dash: [1.6, 1.8])
-                p.node(3.6, 7.4, r: 1.6, accent: true, filled: true)
-                p.node(20.4, 7.4, r: 1.6, accent: true, filled: true)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -1176,6 +960,18 @@ extension BodyMetricKind {
 /// the "four identical marks" both graders named.
 enum ShotTypeKind { case catchShoot, pullUp, offDribble, stepBack, other }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: ShotTypeKind) -> String {
+        switch kind {
+        case .catchShoot: return "shotiq-approved-v2-shot-catch-shoot"
+        case .pullUp: return "shotiq-approved-v2-shot-pull-up"
+        case .offDribble: return "shotiq-approved-v2-shot-off-dribble"
+        case .stepBack: return "shotiq-approved-v2-shot-step-back"
+        case .other: return "shotiq-approved-v2-shot-other"
+        }
+    }
+}
+
 struct ShotTypeGlyph: View {
     var kind: ShotTypeKind
     var size: CGFloat = 26
@@ -1183,55 +979,9 @@ struct ShotTypeGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            switch kind {
-            case .catchShoot:
-                // A closed catch-and-release loop: the pass arrives and leaves
-                // from the same spot, so the path is a ring.
-                p.circle(12, 12, r: 6.6, dash: [1.8, 2])
-                p.node(12, 5.4, r: 1.7, accent: true, filled: true)
-                p.node(18.6, 12, r: 1.7)
-                p.node(12, 18.6, r: 1.7, accent: true, filled: true)
-                p.node(5.4, 12, r: 1.7)
-            case .pullUp:
-                // Travel, then a hard stop and a vertical rise off two feet.
-                p.poly([CGPoint(x: 4, y: 19.5), CGPoint(x: 9.5, y: 17.5)], dash: [1.6, 1.8])
-                p.line(11.5, 16.5, 11.5, 6.5, accent: true)
-                p.arrowHead(at: CGPoint(x: 11.5, y: 6.2), from: CGPoint(x: 11.5, y: 10.5),
-                            accent: true)
-                p.node(9.5, 17.5, r: 1.7, filled: true)
-                p.node(15.5, 8.5, r: 1.7, accent: true, filled: true)
-                p.line(13, 15, 15.5, 10)
-            case .offDribble:
-                // Two bounces into the gather — the dribble path is the mark.
-                p.quad(CGPoint(x: 4.5, y: 8), CGPoint(x: 7, y: 20), CGPoint(x: 10, y: 9),
-                       dash: [1.5, 1.9])
-                p.quad(CGPoint(x: 10, y: 9), CGPoint(x: 13, y: 20), CGPoint(x: 16, y: 9),
-                       dash: [1.5, 1.9])
-                p.node(4.5, 8, r: 1.6)
-                p.node(10, 9, r: 1.6)
-                p.node(16, 9, r: 1.7, accent: true, filled: true)
-                p.line(17.5, 7.5, 20, 5, accent: true)
-            case .stepBack:
-                // Retreating step then the release — the path runs backwards.
-                p.poly([CGPoint(x: 19.5, y: 18), CGPoint(x: 13, y: 18)], accent: true)
-                p.arrowHead(at: CGPoint(x: 12.6, y: 18), from: CGPoint(x: 16, y: 18),
-                            accent: true)
-                p.node(19.5, 18, r: 1.7)
-                p.node(12.6, 18, r: 1.7, accent: true, filled: true)
-                p.line(9.5, 15.5, 9.5, 6.5)
-                p.node(9.5, 5.4, r: 1.7)
-            case .other:
-                // Unclassified: three loose attempts with no shared path.
-                p.node(6.5, 16.5, r: 1.7)
-                p.node(12, 8.5, r: 1.7, accent: true, filled: true)
-                p.node(17.5, 15, r: 1.7)
-                p.line(3.5, 20.5, 20.5, 20.5, dash: [2, 2])
-                p.line(6.5, 18.1, 6.5, 20.5, dash: [1.4, 1.6])
-                p.line(12, 10.2, 12, 20.5, dash: [1.4, 1.6])
-                p.line(17.5, 16.7, 17.5, 20.5, dash: [1.4, 1.6])
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -1263,6 +1013,18 @@ extension ShotTypeKind {
 /// already draws them shifts; the two new ones interleave.
 enum AbilityKind { case developing, intermediate, advanced, elite, professional }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: AbilityKind) -> String {
+        switch kind {
+        case .developing: return "shotiq-correction-developing-experience"
+        case .intermediate: return "shotiq-approved-v2-ability-intermediate"
+        case .advanced: return "shotiq-correction-advanced-experience"
+        case .elite: return "shotiq-correction-elite-experience"
+        case .professional: return "shotiq-approved-v2-ability-professional"
+        }
+    }
+}
+
 struct AbilityGlyph: View {
     var kind: AbilityKind
     var size: CGFloat = 30
@@ -1270,33 +1032,9 @@ struct AbilityGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            // The rail is shared; the arc height and the marker position are what
-            // separate the three grades.
-            p.line(4, 16.5, 20, 16.5)
-            for i in 0...7 { p.line(4.6 + CGFloat(i) * 2.2, 16.5, 4.6 + CGFloat(i) * 2.2, 18.4) }
-            let apex: CGFloat, markerX: CGFloat, spread: CGFloat
-            switch kind {
-            case .developing: apex = 11.6; markerX = 8.2; spread = 5.4
-            case .intermediate: apex = 10.0; markerX = 10.1; spread = 5.0
-            case .advanced: apex = 8.4; markerX = 12.0; spread = 4.6
-            case .elite: apex = 5.2; markerX = 15.8; spread = 3.4
-            case .professional: apex = 3.8; markerX = 17.6; spread = 2.8
-            }
-            p.poly([CGPoint(x: 12 - spread - 1.6, y: 14.6),
-                    CGPoint(x: 12 - spread, y: apex + 2.2),
-                    CGPoint(x: 12, y: apex),
-                    CGPoint(x: 12 + spread, y: apex + 2.2),
-                    CGPoint(x: 12 + spread + 1.6, y: 14.6)])
-            p.node(12 - spread - 1.6, 14.6, r: 1.5)
-            p.node(12 - spread, apex + 2.2, r: 1.5)
-            p.node(12, apex, r: 1.6)
-            p.node(12 + spread, apex + 2.2, r: 1.5)
-            p.node(12 + spread + 1.6, 14.6, r: 1.5)
-            p.poly([CGPoint(x: markerX - 1.5, y: 20.6), CGPoint(x: markerX, y: 18.6),
-                    CGPoint(x: markerX + 1.5, y: 20.6), CGPoint(x: markerX - 1.5, y: 20.6)],
-                   accent: true)
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -1316,6 +1054,132 @@ extension AbilityKind {
         case k.contains("elite"): self = .elite
         case k.contains("pro"): self = .professional
         default: return nil
+        }
+    }
+}
+
+// MARK: - Onboarding correction-board icons
+
+enum OnboardingBenefitKind { case personalizedAnalysis, betterComparisons, smarterCoaching }
+
+struct OnboardingBenefitGlyph: View {
+    var kind: OnboardingBenefitKind
+    var size: CGFloat = 34
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .personalizedAnalysis:
+                p.captureBrackets(inset: 4, arm: 3.5)
+                p.circle(12, 8, r: 2.4)
+                p.line(12, 10.5, 12, 17.5)
+                p.line(8.5, 13, 15.5, 13)
+                p.line(12, 17.5, 9, 21)
+                p.line(12, 17.5, 15, 21)
+                p.basketball(18, 6.5, r: 2.0)
+            case .betterComparisons:
+                p.circle(8, 7.5, r: 2.0)
+                p.line(8, 9.8, 8, 17.2)
+                p.line(5.6, 12.5, 10.4, 12.5)
+                p.line(8, 17.2, 5.5, 20.5)
+                p.line(8, 17.2, 10.5, 20.5)
+                p.circle(16, 7.5, r: 2.0)
+                p.line(16, 9.8, 16, 17.2)
+                p.line(13.6, 12.5, 18.4, 12.5)
+                p.line(16, 17.2, 13.5, 20.5)
+                p.line(16, 17.2, 18.5, 20.5)
+                p.line(11.1, 5.1, 12.9, 5.1, accent: true)
+                p.line(11.1, 18.8, 12.9, 18.8, accent: true)
+                p.basketball(12, 12.4, r: 2.0)
+            case .smarterCoaching:
+                p.circle(12, 10.8, r: 5.6)
+                p.line(8.4, 16, 15.6, 16)
+                p.line(10, 19, 14, 19)
+                p.line(12, 5.2, 12, 3.4, accent: true)
+                p.line(6.3, 6.3, 5, 5, accent: true)
+                p.line(17.7, 6.3, 19, 5, accent: true)
+                p.basketball(12, 10.8, r: 2.1)
+            }
+        }
+    }
+}
+
+enum RecordingInfoKind { case fullBodyMotion, ballTrajectory, timingSequence }
+
+struct RecordingInfoGlyph: View {
+    var kind: RecordingInfoKind
+    var size: CGFloat = 40
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .fullBodyMotion:
+                p.captureBrackets(inset: 3.6, arm: 3.6)
+                p.circle(12, 6.5, r: 2.0)
+                p.line(12, 8.8, 11, 13.2)
+                p.line(11, 13.2, 8, 19.5)
+                p.line(11, 13.2, 15.5, 19.2)
+                p.line(11.5, 10.5, 7.2, 12.2)
+                p.line(11.5, 10.5, 16.7, 9.2)
+                p.basketball(18.2, 8.8, r: 1.8)
+            case .ballTrajectory:
+                p.line(4.5, 18, 19.5, 18)
+                p.arc(12, 18, r: 9.2, from: -170, to: -22, accent: true, dash: [1.2, 2.2])
+                p.basketball(5.3, 14.5, r: 1.9)
+                p.basketball(19.1, 14.5, r: 1.9)
+                p.node(12, 9.1, r: 1.15, accent: true, filled: true, knockout: false)
+            case .timingSequence:
+                p.line(5, 7, 19, 7)
+                p.line(5, 12, 19, 12)
+                p.line(5, 17, 19, 17)
+                p.node(7, 7, r: 1.4)
+                p.node(12, 12, r: 1.4)
+                p.node(17, 17, r: 1.4)
+                p.line(7, 7, 12, 12, accent: true)
+                p.line(12, 12, 17, 17, accent: true)
+                p.basketball(18.6, 5.3, r: 1.7)
+            }
+        }
+    }
+}
+
+enum PhotoAccessKind { case selectedPhotos, privateSecure, usedForAnalysis }
+
+struct PhotoAccessGlyph: View {
+    var kind: PhotoAccessKind
+    var size: CGFloat = 34
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .selectedPhotos:
+                p.rect(4, 5, 14, 12, radius: 1.4)
+                p.poly([CGPoint(x: 6, y: 15), CGPoint(x: 9.5, y: 11),
+                        CGPoint(x: 12, y: 13.4), CGPoint(x: 15.5, y: 9)])
+                p.basketball(18.2, 17.5, r: 2.0)
+                p.node(8, 8, r: 1.1, accent: true, filled: true, knockout: false)
+            case .privateSecure:
+                p.poly([CGPoint(x: 12, y: 3.2), CGPoint(x: 19, y: 6.2),
+                        CGPoint(x: 18, y: 14.3), CGPoint(x: 12, y: 20.5),
+                        CGPoint(x: 6, y: 14.3), CGPoint(x: 5, y: 6.2),
+                        CGPoint(x: 12, y: 3.2)])
+                p.rect(8.2, 10, 7.6, 5.8, radius: 1.2, accent: true)
+                p.arc(12, 10.2, r: 2.5, from: 180, to: 360, accent: true)
+                p.node(12, 13.1, r: 0.9, accent: true, filled: true, knockout: false)
+            case .usedForAnalysis:
+                p.captureBrackets(inset: 3.8, arm: 3.5)
+                p.circle(10, 10, r: 3.1)
+                p.line(12.4, 12.4, 18.2, 18.2, accent: true)
+                p.node(7.8, 17.2, r: 1.3)
+                p.node(12, 15, r: 1.3, accent: true, filled: true, knockout: false)
+                p.node(16.2, 13.2, r: 1.3)
+            }
         }
     }
 }
@@ -1356,6 +1220,18 @@ struct AngleWedgeGlyph: View {
 /// shipped screen printed the same filled `photo` symbol for JPG, PNG and HEIC.
 enum MediaFormatKind { case mp4, mov, jpg, png, heic }
 
+extension ShotIQApprovedIconAsset {
+    static func assetName(for kind: MediaFormatKind) -> String {
+        switch kind {
+        case .mp4: return "shotiq-approved-v2-media-mp4"
+        case .mov: return "shotiq-approved-v2-media-mov"
+        case .jpg: return "shotiq-approved-v2-media-jpg"
+        case .png: return "shotiq-approved-v2-media-png"
+        case .heic: return "shotiq-approved-v2-media-heic"
+        }
+    }
+}
+
 struct MediaFormatGlyph: View {
     var kind: MediaFormatKind
     var size: CGFloat = 24
@@ -1363,42 +1239,9 @@ struct MediaFormatGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            p.captureBrackets(inset: 3, arm: 4, radius: 1.4)
-            switch kind {
-            case .mp4:
-                // Frame run: four cells on a strip.
-                p.rect(6.5, 9, 11, 6, radius: 0.8)
-                p.line(9.25, 9, 9.25, 15)
-                p.line(12, 9, 12, 15)
-                p.line(14.75, 9, 14.75, 15)
-                p.node(12, 12, r: 1.2, accent: true, filled: true)
-            case .mov:
-                // Playhead on a rail — a timeline, not a strip.
-                p.line(6, 15.5, 18, 15.5)
-                p.poly([CGPoint(x: 10, y: 8), CGPoint(x: 15.5, y: 11.4),
-                        CGPoint(x: 10, y: 14.8), CGPoint(x: 10, y: 8)])
-                p.node(13, 15.5, r: 1.3, accent: true, filled: true)
-            case .jpg:
-                // Single still: one framed horizon with a subject node.
-                p.rect(6.5, 8.5, 11, 7, radius: 0.8)
-                p.poly([CGPoint(x: 7.6, y: 14), CGPoint(x: 10.6, y: 11),
-                        CGPoint(x: 13, y: 12.6), CGPoint(x: 16.4, y: 9.6)])
-                p.node(16.4, 9.6, r: 1.2, accent: true, filled: true)
-            case .png:
-                // Transparency: the checker corner is the whole point of PNG.
-                p.rect(6.5, 8.5, 11, 7, radius: 0.8)
-                p.line(6.5, 12, 17.5, 12)
-                p.line(12, 8.5, 12, 15.5)
-                p.rect(6.5, 8.5, 5.5, 3.5, radius: 0, accent: true, dash: [1.3, 1.5])
-                p.rect(12, 12, 5.5, 3.5, radius: 0, accent: true, dash: [1.3, 1.5])
-            case .heic:
-                // Stacked variants: HEIC carries more than one rendition.
-                p.rect(8.5, 7.5, 9.5, 6, radius: 0.8)
-                p.rect(6.5, 10.5, 9.5, 6, radius: 0.8)
-                p.node(11.2, 13.5, r: 1.3, accent: true, filled: true)
-            }
-        }
+        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(for: kind),
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -1427,28 +1270,9 @@ struct ReleaseHandGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            // Forearm.
-            p.line(8.2, 21.5, 10.2, 11.4)
-            p.line(12.6, 21.5, 13.8, 11.8)
-            // Back of the hand and the knuckle line.
-            p.quad(CGPoint(x: 10.2, y: 11.4), CGPoint(x: 11.4, y: 7.4),
-                   CGPoint(x: 15.4, y: 6.4))
-            p.quad(CGPoint(x: 13.8, y: 11.8), CGPoint(x: 16.4, y: 10.6),
-                   CGPoint(x: 17.6, y: 8.4))
-            // Relaxed fingers hanging over.
-            p.quad(CGPoint(x: 15.4, y: 6.4), CGPoint(x: 19.4, y: 6),
-                   CGPoint(x: 19.8, y: 9.2))
-            p.quad(CGPoint(x: 15.2, y: 8), CGPoint(x: 19, y: 7.8),
-                   CGPoint(x: 19.4, y: 10.6))
-            // The measured wrist break.
-            p.node(11.4, 13.6, r: 1.5, filled: true)
-            p.quad(CGPoint(x: 13.4, y: 14.6), CGPoint(x: 15.6, y: 16.6),
-                   CGPoint(x: 18, y: 15.4), accent: true, dash: [1.4, 1.8])
-            p.arrowHead(at: CGPoint(x: 18.4, y: 15.2), from: CGPoint(x: 16, y: 16.4),
-                        span: 1.7, accent: true)
-            p.node(14.6, 5.4, r: 1.6, accent: true, filled: true)
-        }
+        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-release-hand",
+                                 size: size,
+                                 label: label)
     }
 }
 
@@ -1465,16 +1289,64 @@ struct CoachingTargetGlyph: View {
     var label: String? = nil
 
     var body: some View {
-        ShotIQGlyph(size: size, accent: accent, label: label) { p in
-            p.captureBrackets(inset: 2.5, arm: 4.2, radius: 1.4)
-            p.poly([CGPoint(x: 7, y: 16.4), CGPoint(x: 10.4, y: 12.6),
-                    CGPoint(x: 14.6, y: 13.4)])
-            p.quad(CGPoint(x: 10.4, y: 12.6), CGPoint(x: 13.6, y: 7.4),
-                   CGPoint(x: 16.4, y: 9.6), accent: true, dash: [1.5, 1.8])
-            p.node(7, 16.4, r: 1.5)
-            p.node(10.4, 12.6, r: 1.5, accent: true, filled: true)
-            p.node(14.6, 13.4, r: 1.5)
-            p.node(16.4, 9.6, r: 1.5, accent: true)
+        ShotIQApprovedRasterIcon(assetName: "shotiq-approved-v2-coaching-target",
+                                 size: size,
+                                 label: label)
+    }
+}
+
+extension ShotIQApprovedIconAsset {
+    static func assetName(forSystemFallback fallback: String) -> String {
+        let k = fallback.lowercased()
+        switch true {
+        case k.contains("film") || k.contains("video") || k.contains("play"):
+            return "shotiq-approved-ui-upload-video"
+        case k.contains("photo") || k.contains("image") || k.contains("doc"):
+            return "shotiq-approved-ui-analytics-upload"
+        case k.contains("camera") || k.contains("viewfinder") || k.contains("scope"):
+            return "shotiq-approved-ui-target-reticle"
+        case k.contains("crop"):
+            return "shotiq-approved-mechanics-capture-frame"
+        case k.contains("clock") || k.contains("stopwatch"):
+            return "shotiq-approved-v2-ui-stopwatch"
+        case k.contains("wifi") || k.contains("icloud") || k.contains("sync"):
+            return "shotiq-approved-v2-ui-upload"
+        case k.contains("sparkle"):
+            return "shotiq-approved-v2-ui-coaching-tip"
+        case k.contains("shield") || k.contains("privacy"):
+            return "shotiq-approved-v2-ui-privacy-info"
+        case k.contains("flag"):
+            return "shotiq-approved-v2-ui-flag"
+        case k.contains("waveform"):
+            return "shotiq-approved-ui-performance-gauge"
+        case k.contains("chart") || k.contains("trend") || k.contains("progress"):
+            return "shotiq-approved-ui-progress-line"
+        case k.contains("point.3") || k.contains("connected") || k.contains("node"):
+            return "shotiq-approved-ui-pose-shooter"
+        case k.contains("ruler") || k.contains("measure"):
+            return "shotiq-approved-v2-onboarding-measurements"
+        case k.contains("person") || k.contains("profile"):
+            return "shotiq-approved-v2-onboarding-profile"
+        case k.contains("calendar"):
+            return "shotiq-approved-ui-calendar-heat"
+        case k.contains("hexagon") || k.contains("point"):
+            return "shotiq-approved-ui-badge-target"
+        case k.contains("trash"):
+            return "shotiq-approved-v2-ui-trash"
+        case k.contains("share"):
+            return "shotiq-approved-v2-ui-share"
+        case k.contains("upload") || k.contains("arrow.down") || k.contains("arrow.up"):
+            return "shotiq-approved-v2-ui-upload"
+        case k.contains("gear") || k.contains("setting") || k.contains("slider"):
+            return "shotiq-approved-v2-ui-settings"
+        case k.contains("rotate"):
+            return "shotiq-approved-mechanics-routine-refresh"
+        case k.contains("check"):
+            return "shotiq-approved-v2-ui-check-ring"
+        case k.contains("warning") || k.contains("exclamation"):
+            return "shotiq-approved-v2-ui-warning"
+        default:
+            return "shotiq-approved-v2-coaching-target"
         }
     }
 }
@@ -1509,6 +1381,7 @@ enum ShotIQConcept {
     case nav(NavMark)
     case workout(WorkoutKind)
     case cue(CueKind)
+    case equipment(EquipmentKind)
     case coachingTarget
     case captureReticle
 
@@ -1540,7 +1413,9 @@ enum ShotIQConcept {
         // 3b. Ball path. 057's TARGET MECHANICS lists ELBOW STACK, WRIST
         //     ALIGNMENT and RELEASE PATH side by side, so the third needs its
         //     own diagram rather than falling through to a system symbol.
-        if k.contains("release path") || k.contains("shot path") { return .mechanic(.ballArc) }
+        if k.contains("release path") || k.contains("shot path") || k.contains("straight path") {
+            return .mechanic(.releasePath)
+        }
 
         // 4. Where media comes from. "Take photo" is a live capture and
         //    "Choose from library" is a stored still — matching on the word
@@ -1551,7 +1426,12 @@ enum ShotIQConcept {
         }
         if k.contains("upload video") || k.contains("choose video") { return .source(.uploadVideo) }
         if k.contains("upload image") || k.contains("upload photo")
-            || k.contains("library") { return .source(.uploadImage) }
+            || k.contains("library") || k.contains("selected photos") {
+            return .source(.uploadImage)
+        }
+        if k.contains("select camera") || k.contains("camera access") {
+            return .source(.liveCamera)
+        }
 
         // 5. Capture readiness checks. 017's four-row checklist and 030's
         //    setup rows each need four different bracket marks.
@@ -1565,6 +1445,9 @@ enum ShotIQConcept {
         if k.contains("stable") || k.contains("steady") || k.contains("tripod")
             || k.contains("camera position") { return .readiness(.stability) }
         if k.contains("routine") || k.contains("athlete visible") { return .readiness(.athlete) }
+
+        // 5b. Drill equipment and setup cards.
+        if let e = EquipmentKind(equipmentLabel: caption) { return .equipment(e) }
 
         // 6. Navigation and the four product pillars canonical draws on 002/017.
         if k == "home" { return .nav(.home) }
@@ -1593,8 +1476,8 @@ enum ShotIQConcept {
     }
 }
 
-/// Draws the bespoke mark for a caption, falling back to a system symbol only
-/// when the family genuinely has no mark for that concept.
+/// Draws the bespoke mark for a caption, keeping unknown feature rows inside
+/// the ShotIQ raster icon family instead of falling back to SF Symbols.
 struct ShotIQConceptGlyph: View {
     var concept: String
     var fallback: String
@@ -1615,9 +1498,13 @@ struct ShotIQConceptGlyph: View {
         case .nav(let k): NavGlyph(mark: k, size: size)
         case .workout(let k): WorkoutGlyph(kind: k, size: size, accent: accent)
         case .cue(let k): CueGlyph(kind: k, size: size, accent: accent)
+        case .equipment(let k): EquipmentGlyph(kind: k, size: size, accent: accent)
         case .coachingTarget: CoachingTargetGlyph(size: size, accent: accent)
         case .captureReticle: CaptureReticleGlyph(size: size)
-        case .none: Image(systemName: fallback).font(.system(size: size * 0.8))
+        case .none:
+            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: fallback),
+                                     size: size,
+                                     label: nil)
         }
     }
 }

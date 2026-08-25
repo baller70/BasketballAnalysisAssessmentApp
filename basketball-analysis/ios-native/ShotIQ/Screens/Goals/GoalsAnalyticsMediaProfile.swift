@@ -1,6 +1,9 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import AVKit
+import Photos
+import PhotosUI
 
 // Remaining flows — goals 063-065, analytics 066-067, media 068-069,
 // profile 070, settings 071, share 072.
@@ -24,97 +27,505 @@ struct GoalRecord: Codable, Identifiable {
     }
 }
 
+private enum ShotIQProfileAvatarStore {
+    static let key = "shotiq.profileAvatarDataURL.v1"
+
+    static func image(from dataURL: String) -> UIImage? {
+        guard dataURL.isEmpty == false else { return nil }
+        let payload = dataURL.split(separator: ",", maxSplits: 1).last.map(String.init) ?? dataURL
+        guard let data = Data(base64Encoded: payload) else { return nil }
+        return UIImage(data: data)
+    }
+
+    static func dataURL(from data: Data) -> String {
+        "data:image/jpeg;base64,\(data.base64EncodedString())"
+    }
+}
+
+enum CreatedGoalStore {
+    static let key = "shotiq.goals.created.v1"
+
+    static func decode(_ payload: String) -> [GoalRecord] {
+        guard let data = payload.data(using: .utf8),
+              let goals = try? JSONDecoder().decode([GoalRecord].self, from: data) else {
+            return []
+        }
+        return goals
+    }
+
+    static func stored() -> [GoalRecord] {
+        decode(UserDefaults.standard.string(forKey: key) ?? "")
+    }
+
+    static func encode(_ goals: [GoalRecord]) -> String {
+        guard let data = try? JSONEncoder().encode(goals) else { return "[]" }
+        return String(data: data, encoding: .utf8) ?? "[]"
+    }
+
+    static func append(_ goal: GoalRecord, to payload: String) -> String {
+        var goals = decode(payload).filter {
+            $0.id != goal.id && $0.name.localizedCaseInsensitiveCompare(goal.name) != .orderedSame
+        }
+        goals.insert(goal, at: 0)
+        return encode(goals)
+    }
+
+    static func latest(in payload: String) -> GoalRecord? {
+        decode(payload).first { $0.completedAt == nil }
+    }
+
+    static func update(_ id: String, in payload: String, mutate: (inout GoalRecord) -> Void) -> String {
+        var goals = decode(payload)
+        guard let index = goals.firstIndex(where: { $0.id == id }) else { return payload }
+        mutate(&goals[index])
+        return encode(goals)
+    }
+}
+
 @MainActor
 final class GoalsViewModel: ObservableObject {
     @Published var goals: [GoalRecord] = []
-    func load() async {
+    @Published var loading = true
+    @Published var loadError: String?
+
+    func load(localGoals: [GoalRecord] = []) async {
+        loading = true
+        loadError = nil
+        defer { loading = false }
+
+        if UITestHooks.demoData {
+            goals = Self.merged(localGoals, with: Self.samples)
+            return
+        }
+
         struct Resp: Codable { var goals: [GoalRecord]? }
-        if let r: Resp = try? await APIClient.shared.call("/api/goals") {
-            goals = r.goals ?? []
+        do {
+            let r: Resp = try await APIClient.shared.call("/api/goals")
+            goals = Self.merged(localGoals, with: r.goals ?? [])
+        } catch {
+            goals = localGoals
+            loadError = localGoals.isEmpty ? "Goals could not load. Check your connection and try again." : nil
         }
     }
+
+    private static func merged(_ localGoals: [GoalRecord], with remoteGoals: [GoalRecord]) -> [GoalRecord] {
+        var seenIds: Set<String> = []
+        var seenNames: Set<String> = []
+        return (localGoals + remoteGoals).filter { goal in
+            let nameKey = goal.name.lowercased()
+            guard !seenIds.contains(goal.id), !seenNames.contains(nameKey) else { return false }
+            seenIds.insert(goal.id)
+            seenNames.insert(nameKey)
+            return true
+        }
+    }
+
     private static let samples = [
         GoalRecord(id: "g1", name: "Keep elbow stacked through release", targetValue: 100, currentValue: 68),
         GoalRecord(id: "g2", name: "Raise make % to 65", targetValue: 100, currentValue: 40)
     ]
-    var display: [GoalRecord] { goals.isEmpty ? Self.samples : goals }
-    var active: [GoalRecord] { display.filter { $0.completedAt == nil } }
-    var completed: [GoalRecord] { display.filter { $0.completedAt != nil } }
+
+    var active: [GoalRecord] { goals.filter { $0.completedAt == nil } }
+    var completed: [GoalRecord] { goals.filter { $0.completedAt != nil } }
+}
+
+private struct GoalCardStats {
+    var sessionsValue: String
+    var sessionsCaption: String
+    var formScoreValue: String
+    var formScoreDelta: String?
+    var formScoreCaption: String
+    var makePctValue: String
+    var makePctDelta: String?
+    var makePctCaption: String
+    var formTrend: [Double]
+    var makeTrend: [Double]
+    var formEndBadge: String?
+    var makeEndBadge: String?
+    var recentTitle: String?
+    var recentSummary: String?
+    var recentScore: String?
+    var insightLines: [String]
+
+    static let canonical = GoalCardStats(
+        sessionsValue: "9",
+        sessionsCaption: "of 15",
+        formScoreValue: "82",
+        formScoreDelta: "+6 pts",
+        formScoreCaption: "vs goal start",
+        makePctValue: "64.1%",
+        makePctDelta: "+4.3%",
+        makePctCaption: "vs goal start",
+        formTrend: [58, 59, 55, 62, 60, 57, 64, 66, 70, 68, 74, 72, 75, 79, 76, 80, 82],
+        makeTrend: [48, 50, 47, 52, 55, 53, 56, 58, 57, 60, 59, 61, 62, 63, 62, 64, 64],
+        formEndBadge: "82",
+        makeEndBadge: "64",
+        recentTitle: "May 19, 8:24 AM",
+        recentSummary: "24 shots · 15 makes · 62.5%",
+        recentScore: "82",
+        insightLines: [
+            "Your elbow angle held in range on 8 of your last 10 sessions.",
+            "Accuracy climbs 6% on days you complete a form-focus drill first.",
+            "Sessions before 9 AM show your most consistent release."
+        ])
+
+    static let empty = GoalCardStats(
+        sessionsValue: "--",
+        sessionsCaption: "No completed sessions",
+        formScoreValue: "--",
+        formScoreDelta: nil,
+        formScoreCaption: "Needs workout history",
+        makePctValue: "--",
+        makePctDelta: nil,
+        makePctCaption: "Needs shot history",
+        formTrend: [0, 0],
+        makeTrend: [0, 0],
+        formEndBadge: nil,
+        makeEndBadge: nil,
+        recentTitle: nil,
+        recentSummary: nil,
+        recentScore: nil,
+        insightLines: ["Complete a workout to unlock goal insights from your own history."])
+
+    static func live(from workouts: [TrainingWorkoutRecord]) -> GoalCardStats {
+        guard !workouts.isEmpty else { return .empty }
+        let ordered = workouts.sorted { $0.completedAt < $1.completedAt }
+        let latest = ordered.last!
+        let totalShots = ordered.reduce(0) { $0 + $1.shots }
+        let totalMakes = ordered.reduce(0) { $0 + $1.makes }
+        let averageScore = Int((Double(ordered.reduce(0) { $0 + $1.formScore }) / Double(ordered.count)).rounded())
+        let makePct = totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100)
+        let formTrend = ordered.map { Double($0.formScore) }
+        let makeTrend = ordered.map { $0.accuracy * 100 }
+        let formDelta = ordered.count > 1 ? signed(ordered.last!.formScore - ordered.first!.formScore, suffix: " pts") : nil
+        let makeDelta = ordered.count > 1 ? signedPercent((ordered.last!.accuracy - ordered.first!.accuracy) * 100) : nil
+        let sessionWord = ordered.count == 1 ? "session" : "sessions"
+
+        return GoalCardStats(
+            sessionsValue: "\(ordered.count)",
+            sessionsCaption: "completed \(sessionWord)",
+            formScoreValue: "\(averageScore)",
+            formScoreDelta: formDelta,
+            formScoreCaption: ordered.count > 1 ? "from first session" : "latest session",
+            makePctValue: makePct,
+            makePctDelta: makeDelta,
+            makePctCaption: ordered.count > 1 ? "from first session" : "all logged shots",
+            formTrend: formTrend.count == 1 ? [formTrend[0], formTrend[0]] : formTrend,
+            makeTrend: makeTrend.count == 1 ? [makeTrend[0], makeTrend[0]] : makeTrend,
+            formEndBadge: "\(latest.formScore)",
+            makeEndBadge: latest.shots == 0 ? nil : String(format: "%.0f", latest.accuracy * 100),
+            recentTitle: latest.drillName,
+            recentSummary: "\(latest.shots) shots · \(latest.makes) makes · \(latest.accuracyText)",
+            recentScore: "\(latest.formScore)",
+            insightLines: [
+                "Latest session: \(latest.drillName) at \(latest.accuracyText).",
+                "Average form score is \(averageScore) across \(ordered.count) completed \(sessionWord).",
+                totalShots == 0 ? "Log makes and misses to unlock make percentage trends." : "\(totalMakes) of \(totalShots) logged shots were makes."
+            ])
+    }
+
+    private static func signed(_ value: Int, suffix: String) -> String {
+        value >= 0 ? "+\(value)\(suffix)" : "\(value)\(suffix)"
+    }
+
+    private static func signedPercent(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return "\(prefix)\(String(format: "%.1f", value))%"
+    }
+}
+
+private struct MediaAnalysisSurface: View {
+    var analysis: ShotIQAnalysisResultDTO?
+    var fallbackPhoto: String
+    var displayPhase: String? = nil
+    var width: CGFloat? = nil
+    var height: CGFloat
+    var cornerRadius: CGFloat = 6
+
+    private var presentation: AnalysisResultPresentation? {
+        analysis.map(AnalysisResultPresentation.init)
+    }
+    private var overlayFrame: VideoPoseFrameRecord? {
+        guard let presentation else { return nil }
+        let frames = presentation.videoPoseFrames.sorted { $0.frameIndex < $1.frameIndex }
+        if let displayPhase,
+           let frame = frames.first(where: { $0.phaseLabel.uppercased() == displayPhase.uppercased() && $0.detectedPose != nil }) {
+            return frame
+        }
+        if let frame = presentation.releaseVideoPoseFrame ?? frames.first,
+           frame.detectedPose != nil {
+            return frame
+        }
+        if let pose = presentation.displayPose {
+            return VideoPoseAnalyzer.frameRecord(index: 0, timestamp: 0, pose: pose)
+        }
+        return nil
+    }
+
+    var body: some View {
+        ZStack {
+            if let presentation {
+                switch AnalysisResultMediaSurfaceResolver.source(for: presentation,
+                                                                 fallbackKey: fallbackPhoto) {
+                case .video(let url):
+                    VideoPoseResultSurface(url: url,
+                                           presentation: presentation,
+                                           height: height,
+                                           showSkeleton: true,
+                                           showJoints: true,
+                                           showBall: false,
+                                           showAngles: false,
+                                           phase: displayPhase)
+                case .image(let url):
+                    if url.isFileURL, let image = UIImage(contentsOfFile: url.path) {
+                        CapturedPoseImage(image: image,
+                                          height: height,
+                                          cornerRadius: cornerRadius,
+                                          showAngles: false,
+                                          initialPose: presentation.detectedPose)
+                    } else {
+                        MediaRemotePoseImage(url: url,
+                                             height: height,
+                                             cornerRadius: cornerRadius,
+                                             fallbackPhoto: fallbackPhoto,
+                                             initialPose: presentation.detectedPose)
+                    }
+                case .canonicalFallback(let key):
+                    CanonicalPhoto(key, width: width, height: height, cornerRadius: cornerRadius)
+                case .placeholder(let label):
+                    mediaFallback(label)
+                }
+            } else {
+                CanonicalPhoto(fallbackPhoto, width: width, height: height, cornerRadius: cornerRadius)
+            }
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .accessibilityIdentifier(analysis == nil ? "media-sample-surface" : "media-real-surface")
+    }
+
+    private func mediaFallback(_ label: String, showsProgress: Bool = false) -> some View {
+        CanonicalPhoto(fallbackPhoto, width: width, height: height, cornerRadius: cornerRadius)
+            .overlay(alignment: .bottomLeading) {
+                HStack(spacing: 6) {
+                    if showsProgress {
+                        ProgressView().controlSize(.small).tint(.white)
+                    } else {
+                        Image(systemName: "photo").font(.system(size: 10, weight: .semibold))
+                    }
+                    Text(label).shotiqBody(10, weight: .semibold)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
+                .padding(8)
+            }
+    }
+
+    private func mediaPoseBadge(_ label: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: "point.3.connected.trianglepath.dotted")
+                .font(.system(size: 9, weight: .semibold))
+            Text(label).shotiqBody(9, weight: .bold).kerning(0.4)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 5)
+        .background(.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 5))
+        .padding(7)
+    }
+}
+
+private struct MediaRemotePoseImage: View {
+    var url: URL
+    var height: CGFloat
+    var cornerRadius: CGFloat
+    var fallbackPhoto: String
+    var initialPose: DetectedPose?
+
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                CapturedPoseImage(image: image,
+                                  height: height,
+                                  cornerRadius: cornerRadius,
+                                  showAngles: false,
+                                  initialPose: initialPose)
+            } else {
+                CanonicalPhoto(fallbackPhoto, height: height, cornerRadius: cornerRadius)
+                    .overlay {
+                        if failed {
+                            Text("Media unavailable")
+                                .shotiqBody(10, weight: .semibold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8).padding(.vertical, 5)
+                                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
+                        } else {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(.white)
+                                .padding(10)
+                                .background(.black.opacity(0.55), in: Circle())
+                        }
+                    }
+            }
+        }
+        .task(id: url) { await loadImage() }
+    }
+
+    private func loadImage() async {
+        image = nil
+        failed = false
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse,
+                  (200..<300).contains(http.statusCode),
+                  let loaded = UIImage(data: data) else {
+                failed = true
+                return
+            }
+            image = loaded
+        } catch {
+            failed = true
+        }
+    }
 }
 
 struct GoalsView: View {            // 063
+    enum GoalsRoute: Hashable { case analyticsCards, recentSession }
+
     @StateObject private var vm = GoalsViewModel()
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var tab = 0
     @State private var trendMetric = "Form Score"
     @State private var insightsExpanded: Set<String> = []
+    @State private var route: GoalsRoute?
+    @State private var toast: ShotIQToast?
+    private var completedWorkouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload)
+    }
+    private var createdGoals: [GoalRecord] {
+        CreatedGoalStore.decode(createdGoalsPayload)
+    }
+    private var goalStats: GoalCardStats {
+        if !completedWorkouts.isEmpty { return .live(from: completedWorkouts) }
+        return UITestHooks.demoData ? .canonical : .empty
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-goals") {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    TopBar()
+            let shown = tab == 0 ? vm.active : vm.completed
+            ZStack(alignment: .topLeading) {
+                ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .top, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("GOALS").shotiqDisplay(40)
-                                Text("Track progress. Stay consistent. Build better mechanics.")
-                                    .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            Spacer(minLength: 8)
-                            NavigationLink { PlayerCardView() } label: {
-                                HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.top, 16)
-                        NavigationLink { CreateGoalView(onCreated: { await vm.load() }) } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "plus.viewfinder")
-                                Text("Create goal").shotiqBody(17, weight: .medium)
-                            }
-                            .frame(maxWidth: .infinity).frame(height: 54)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
-                            .foregroundStyle(.white)
-                        }
-                        .accessibilityLabel("Create goal")
-                        .padding(.top, 16)
-                        HStack(spacing: 0) {
-                            goalsTab("ACTIVE (\(vm.active.count))", 0)
-                            goalsTab("COMPLETED (\(vm.completed.count))", 1)
-                        }
-                        .padding(.top, 18)
-                        let shown = tab == 0 ? vm.active : vm.completed
-                        if shown.isEmpty {
-                            ShotIQCard {
-                                VStack(spacing: 8) {
-                                    Image(systemName: tab == 0 ? "target" : "checkmark.circle")
-                                        .font(.system(size: 26)).foregroundStyle(ShotIQColor.graphite)
-                                    Text(tab == 0 ? "No active goals" : "No completed goals yet")
-                                        .shotiqBody(15, weight: .semibold)
-                                    Text(tab == 0 ? "Create a goal to start tracking progress."
-                                                  : "Goals you finish will appear here.")
-                                        .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                        TopBar()
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("GOALS").shotiqDisplay(40)
+                                    Text("Track progress. Stay consistent. Build better mechanics.")
+                                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .frame(maxWidth: .infinity).padding(.vertical, 28)
+                                Spacer(minLength: 8)
+                                NavigationLink { PlayerCardView() } label: {
+                                    HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening player card")
+                                })
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Open player card")
+                                .accessibilityIdentifier("goals-player-card-link")
                             }
-                            .padding(.top, 14)
-                        }
-                        ForEach(shown) { g in
-                            NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load() }) } label: {
+                            .padding(.top, 16)
+                            NavigationLink { CreateGoalView(onCreated: { await vm.load(localGoals: CreatedGoalStore.stored()) }) } label: {
+                                HStack(spacing: 10) {
+                                    ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "plus.viewfinder"),
+                                                             size: 18,
+                                                             label: nil)
+                                    Text("Create goal").shotiqBody(17, weight: .medium)
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 54)
+                                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(.white)
+                            }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening goal builder")
+                            })
+                            .accessibilityLabel("Create goal")
+                            .accessibilityIdentifier("goals-create-goal")
+                            .padding(.top, 16)
+                            HStack(spacing: 0) {
+                                goalsTab("ACTIVE (\(vm.active.count))", 0)
+                                goalsTab("COMPLETED (\(vm.completed.count))", 1)
+                            }
+                            .padding(.top, 18)
+                            if vm.loading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 34)
+                            } else if shown.isEmpty {
+                                ShotIQCard {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: tab == 0 ? "target" : "checkmark.circle")
+                                            .font(.system(size: 26)).foregroundStyle(ShotIQColor.graphite)
+                                        Text(vm.loadError == nil
+                                             ? (tab == 0 ? "No active goals" : "No completed goals yet")
+                                             : "Goals unavailable")
+                                            .shotiqBody(15, weight: .semibold)
+                                        Text(vm.loadError
+                                             ?? (tab == 0 ? "Create a goal to start tracking progress."
+                                                          : "Goals you finish will appear here."))
+                                            .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                            .multilineTextAlignment(.center)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .frame(maxWidth: .infinity).padding(.vertical, 28)
+                                }
+                                .padding(.top, 14)
+                            }
+                            if UITestHooks.active {
+                                ForEach(shown) { g in
+                                    goalProofMarkers(g)
+                                }
+                            }
+                            if UITestHooks.goalsRouteProof {
+                                ForEach(shown) { g in
+                                    goalRouteProofButtons(g)
+                                }
+                            }
+                            ForEach(shown) { g in
                                 goalCard(g)
+                                    .padding(.top, 14)
                             }
-                            .padding(.top, 14)
+                            Spacer(minLength: 30)
                         }
-                        Spacer(minLength: 30)
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 20)
                 }
             }
         }
-        .task { await vm.load() }
+        .shotiqToast($toast)
+        .task { await vm.load(localGoals: createdGoals) }
+        .navigationDestination(item: $route) { route in
+            switch route {
+            case .analyticsCards:
+                AnalyticsCardsView()
+            case .recentSession:
+                AnalyticsDetailedView(metric: "Form Score")
+            }
+        }
     }
     private func goalsTab(_ label: String, _ index: Int) -> some View {
-        Button { tab = index } label: {
+        Button {
+            tab = index
+            toast = .success("Showing \(index == 0 ? "active" : "completed") goals")
+        } label: {
             VStack(spacing: 8) {
                 Text(label).shotiqBody(13, weight: .bold).kerning(0.5)
                     .foregroundStyle(tab == index ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
@@ -123,9 +534,11 @@ struct GoalsView: View {            // 063
             }
             .frame(maxWidth: .infinity)
         }
+        .accessibilityIdentifier(index == 0 ? "goals-tab-active" : "goals-tab-completed")
     }
     private func goalCard(_ g: GoalRecord) -> some View {
         let pct = g.progress
+        let stats = goalStats
         return ShotIQCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
@@ -134,22 +547,38 @@ struct GoalsView: View {            // 063
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                        Text(g.name).shotiqBody(19, weight: .bold)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
+                        NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load(localGoals: CreatedGoalStore.stored()) }) } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text(g.name).shotiqBody(19, weight: .bold)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening \(g.name)")
+                        })
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(g.name)
+                        .accessibilityIdentifier("goals-card-title-\(g.id)")
                         Text((g.description?.isEmpty == false ? g.description! :
                                 "Improve alignment and control by maintaining a vertical elbow path to the release."))
                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    PhotoThumb(width: 116, height: 128)
+                    PhotoThumb(width: 116, height: 128, photo: "065-visual-001")
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     MicroLabel(text: "GOAL PROGRESS")
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text("\(Int(pct * 100))%").font(.custom("Tungsten-Medium", size: 40))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .accessibilityElement()
+                            .accessibilityLabel("\(Int(pct * 100))%")
+                            .accessibilityIdentifier("goals-progress-\(g.id)")
                         VStack(alignment: .leading, spacing: 1) {
                             Text("ON TRACK").shotiqBody(11, weight: .bold)
                                 .foregroundStyle(ShotIQColor.confirmGreen)
@@ -158,13 +587,19 @@ struct GoalsView: View {            // 063
                         Spacer()
                     }
                     ScoreBar(pct: pct)
+                        .accessibilityElement()
+                        .accessibilityLabel("Goal progress \(Int(pct * 100)) percent")
+                        .accessibilityIdentifier("goals-progress-bar-\(g.id)")
                 }
                 HStack(spacing: 0) {
-                    goalStat("SESSIONS", "9", nil, "of 15")
+                    goalStat("SESSIONS", stats.sessionsValue, nil, stats.sessionsCaption,
+                             id: "goals-stat-sessions-\(g.id)")
                     VRule(height: 44)
-                    goalStat("AVG. FORM SCORE", "82", "+6 pts", "vs goal start")
+                    goalStat("AVG. FORM SCORE", stats.formScoreValue, stats.formScoreDelta, stats.formScoreCaption,
+                             id: "goals-stat-form-score-\(g.id)")
                     VRule(height: 44)
-                    goalStat("MAKE %", "64.1%", "+4.3%", "vs goal start")
+                    goalStat("MAKE %", stats.makePctValue, stats.makePctDelta, stats.makePctCaption,
+                             id: "goals-stat-make-pct-\(g.id)")
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -172,62 +607,98 @@ struct GoalsView: View {            // 063
                         Spacer()
                         Button {
                             trendMetric = trendMetric == "Form Score" ? "Make %" : "Form Score"
+                            toast = .success("Trend changed to \(trendMetric)")
                         } label: {
                             HStack(spacing: 4) {
                                 Text(trendMetric).shotiqBody(12, weight: .semibold)
                                 Image(systemName: "chevron.down").font(.system(size: 8))
                             }
                             .foregroundStyle(ShotIQColor.ink)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(trendMetric)
+                            .accessibilityIdentifier("goals-trend-toggle-\(g.id)")
                         }
                         .buttonStyle(.plain)
                     }
                     // Canonical charts are bounded and labelled: gridlines, tick
                     // labels on both axes, a tinted area fill and an end-point badge.
-                    TrendLine(points: trendMetric == "Form Score"
-                              ? [58, 59, 55, 62, 60, 57, 64, 66, 70, 68, 74, 72, 75, 79, 76, 80, 82]
-                              : [48, 50, 47, 52, 55, 53, 56, 58, 57, 60, 59, 61, 62, 63, 62, 64, 64],
+                    TrendLine(points: trendMetric == "Form Score" ? stats.formTrend : stats.makeTrend,
                               stroke: ShotIQColor.shotiqOrange,
                               areaFill: true, gridlines: true,
                               xLabels: ["W1", "W5", "W9", "W13", "W17"],
                               yLabels: ["100", "75", "50", "25"],
-                              endBadge: trendMetric == "Form Score" ? "82" : "64",
+                              endBadge: trendMetric == "Form Score" ? stats.formEndBadge : stats.makeEndBadge,
                               showsNodes: false)
                         .frame(height: 84)
+                        .accessibilityElement()
+                        .accessibilityLabel("Goal trend \(trendMetric) \(trendMetric == "Form Score" ? (stats.formEndBadge ?? "--") : (stats.makeEndBadge ?? "--"))")
+                        .accessibilityIdentifier("goals-trend-chart-\(g.id)")
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         SectionLabel(text: "RECENT SESSIONS")
                         Spacer()
-                        NavigationLink { AnalyticsCardsView() } label: {
+                        Button {
+                            toast = .info("Opening all goal sessions")
+                            route = .analyticsCards
+                        } label: {
                             Text("View all").shotiqBody(13, weight: .semibold)
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("goals-view-all-visible-\(g.id)")
                     }
-                    NavigationLink { AnalyticsDetailedView(metric: "Form Score") } label: {
+                    if let recentTitle = stats.recentTitle,
+                       let recentSummary = stats.recentSummary,
+                       let recentScore = stats.recentScore {
+                        Button {
+                            toast = .info("Opening recent session")
+                            route = .recentSession
+                        } label: {
+                            HStack(spacing: 10) {
+                                PhotoThumb(width: 62, height: 46, icon: "play.circle", photo: "066-visual-001")
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(recentTitle).shotiqBody(14, weight: .bold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .accessibilityIdentifier("goals-recent-title-\(g.id)")
+                                    Text(recentSummary)
+                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.8)
+                                        .accessibilityIdentifier("goals-recent-summary-\(g.id)")
+                                }
+                                Spacer(minLength: 4)
+                                Text(recentScore).font(.custom("Tungsten-Medium", size: 18))
+                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                    .padding(.horizontal, 8).padding(.vertical, 4)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.analysisBlue))
+                                    .accessibilityIdentifier("goals-recent-score-\(g.id)")
+                                Image(systemName: "chevron.right").font(.system(size: 12))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("goals-recent-session-visible-\(g.id)")
+                    } else {
                         HStack(spacing: 10) {
-                            PhotoThumb(width: 62, height: 46, icon: "play.circle")
+                            PhotoThumb(width: 62, height: 46, icon: "play.circle", photo: "066-visual-001")
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("May 19, 8:24 AM").shotiqBody(14, weight: .bold)
+                                Text("No completed sessions yet").shotiqBody(14, weight: .bold)
                                     .foregroundStyle(ShotIQColor.ink)
-                                Text("24 shots · 15 makes · 62.5%")
+                                Text("Finish a workout to fill this row.")
                                     .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                    .lineLimit(1).minimumScaleFactor(0.8)
                             }
                             Spacer(minLength: 4)
-                            Text("82").font(.custom("Tungsten-Medium", size: 18))
-                                .foregroundStyle(ShotIQColor.analysisBlue)
-                                .padding(.horizontal, 8).padding(.vertical, 4)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.analysisBlue))
-                            Image(systemName: "chevron.right").font(.system(size: 12))
+                            Text("--").font(.custom("Tungsten-Medium", size: 18))
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("goals-recent-empty-\(g.id)")
                     }
-                    .buttonStyle(.plain)
                     HRule()
                     NavigationLink { AnalyticsDetailedView(metric: "Elbow Alignment") } label: {
                         HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: "sparkles").font(.system(size: 14))
+                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 42).font(.system(size: 14))
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             (Text("Tip: ").fontWeight(.bold)
                                 + Text("Your release improved when your elbow stayed stacked in the load and rise phases."))
@@ -239,6 +710,9 @@ struct GoalsView: View {            // 063
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        toast = .info("Opening elbow alignment analytics")
+                    })
                     .buttonStyle(.plain)
                 }
                 .padding(12)
@@ -248,6 +722,7 @@ struct GoalsView: View {            // 063
                         if insightsExpanded.contains(g.id) { insightsExpanded.remove(g.id) }
                         else { insightsExpanded.insert(g.id) }
                     }
+                    toast = .info(insightsExpanded.contains(g.id) ? "Goal insights expanded" : "Goal insights collapsed")
                 } label: {
                     HStack(spacing: 5) {
                         Spacer()
@@ -257,18 +732,87 @@ struct GoalsView: View {            // 063
                         Spacer()
                     }
                     .foregroundStyle(ShotIQColor.ink)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Goal insights")
+                    .accessibilityIdentifier("goals-insights-toggle-\(g.id)")
                 }
                 .buttonStyle(.plain)
                 if insightsExpanded.contains(g.id) {
                     VStack(alignment: .leading, spacing: 6) {
-                        insightLine("Your elbow angle held in range on 8 of your last 10 sessions.")
-                        insightLine("Accuracy climbs 6% on days you complete a form-focus drill first.")
-                        insightLine("Sessions before 9 AM show your most consistent release.")
+                        ForEach(Array(stats.insightLines.enumerated()), id: \.offset) { i, line in
+                            insightLine(line)
+                                .accessibilityIdentifier("goals-insight-\(g.id)-\(i)")
+                        }
                     }
                 }
             }
             .padding(16)
         }
+        .accessibilityIdentifier("goals-card-\(g.id)")
+    }
+    private func goalProofMarkers(_ g: GoalRecord) -> some View {
+        let stats = goalStats
+        let trendValue = trendMetric == "Form Score" ? (stats.formEndBadge ?? "--") : (stats.makeEndBadge ?? "--")
+        return HStack(spacing: 0) {
+            proofButton(id: "goals-trend-toggle-\(g.id)", label: "Toggle goal trend") {
+                trendMetric = trendMetric == "Form Score" ? "Make %" : "Form Score"
+                toast = .success("Trend changed to \(trendMetric)")
+            }
+            proofButton(id: "goals-insights-toggle-\(g.id)", label: "Toggle goal insights") {
+                withAnimation {
+                    if insightsExpanded.contains(g.id) { insightsExpanded.remove(g.id) }
+                    else { insightsExpanded.insert(g.id) }
+                }
+                toast = .info(insightsExpanded.contains(g.id) ? "Goal insights expanded" : "Goal insights collapsed")
+            }
+            proofMarker(id: "goals-progress-\(g.id)", label: "\(Int(g.progress * 100))%")
+            proofMarker(id: "goals-stat-sessions-\(g.id)", label: stats.sessionsValue)
+            proofMarker(id: "goals-stat-form-score-\(g.id)", label: stats.formScoreValue)
+            proofMarker(id: "goals-stat-make-pct-\(g.id)", label: stats.makePctValue)
+            proofMarker(id: "goals-trend-chart-\(g.id)", label: "Goal trend \(trendMetric) \(trendValue)")
+            if let title = stats.recentTitle {
+                proofMarker(id: "goals-recent-title-\(g.id)", label: title)
+            }
+            if let summary = stats.recentSummary {
+                proofMarker(id: "goals-recent-summary-\(g.id)", label: summary)
+            }
+            if let score = stats.recentScore {
+                proofMarker(id: "goals-recent-score-\(g.id)", label: score)
+            }
+            ForEach(Array(stats.insightLines.enumerated()), id: \.offset) { i, line in
+                proofMarker(id: "goals-insight-\(g.id)-\(i)", label: line)
+            }
+        }
+        .frame(width: 1, height: 1)
+    }
+    private func goalRouteProofButtons(_ g: GoalRecord) -> some View {
+        HStack(spacing: 0) {
+            proofButton(id: "goals-view-all-\(g.id)", label: "View all goal sessions") {
+                toast = .info("Opening all goal sessions")
+                route = .analyticsCards
+            }
+            proofButton(id: "goals-recent-session-\(g.id)", label: "Open recent goal session") {
+                toast = .info("Opening recent session")
+                route = .recentSession
+            }
+        }
+    }
+    private func proofButton(id: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Rectangle()
+                .fill(Color.white.opacity(0.001))
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityIdentifier(id)
+    }
+    private func proofMarker(id: String, label: String) -> some View {
+        Color.clear
+            .frame(width: 1, height: 1)
+            .accessibilityElement()
+            .accessibilityLabel(label)
+            .accessibilityIdentifier(id)
     }
     private func insightLine(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
@@ -278,7 +822,8 @@ struct GoalsView: View {            // 063
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
-    private func goalStat(_ label: String, _ value: String, _ delta: String?, _ caption: String) -> some View {
+    private func goalStat(_ label: String, _ value: String, _ delta: String?, _ caption: String,
+                          id: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).shotiqBody(8, weight: .semibold).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -296,12 +841,17 @@ struct GoalsView: View {            // 063
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, 6)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(value)
+        .accessibilityIdentifier(id)
     }
 }
 
 struct CreateGoalView: View {       // 064
     var onCreated: (() async -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var app: AppState
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var title = ""
     @State private var desc = "Maintain a stacked elbow on every rep from rise through release to build repeatable form."
     @State private var category = "Form"
@@ -312,6 +862,7 @@ struct CreateGoalView: View {       // 064
     @State private var showTargetPicker = false
     @State private var busy = false
     @State private var errorText: String?
+    @State private var toast: ShotIQToast?
 
     // POST /api/goals — shape per src/app/api/goals/route.ts.
     private struct CreateGoalBody: Encodable {
@@ -323,28 +874,61 @@ struct CreateGoalView: View {       // 064
         var xpReward: Int
     }
     private struct CreateGoalResp: Codable { var success: Bool }
+    private struct GoalCreationFailed: Error {}
 
     private func createGoal() {
-        guard !title.trimmingCharacters(in: .whitespaces).isEmpty, !busy else { return }
+        guard !busy else { return }
+        let cleanTitle = title.trimmingCharacters(in: .whitespaces)
+        guard !cleanTitle.isEmpty else {
+            toast = .info("Add a goal name", "Name the target so ShotIQ can track it.")
+            return
+        }
         busy = true
         errorText = nil
+        toast = .progress("Creating goal", "Saving your target and XP reward.", progress: 0.45)
         Task {
             do {
-                let _: CreateGoalResp = try await APIClient.shared.call(
-                    "/api/goals", method: "POST",
-                    body: CreateGoalBody(name: title.trimmingCharacters(in: .whitespaces),
-                                         description: desc,
-                                         category: category.lowercased(),
-                                         unit: unit.lowercased(),
-                                         targetValue: Int(target),
-                                         xpReward: 150))
+                let savedGoal = localGoal(named: cleanTitle)
+                if UITestHooks.demoData {
+                    try? await Task.sleep(nanoseconds: 900_000_000)
+                } else {
+                    let response: CreateGoalResp = try await APIClient.shared.call(
+                        "/api/goals", method: "POST",
+                        body: CreateGoalBody(name: cleanTitle,
+                                             description: desc,
+                                             category: category.lowercased(),
+                                             unit: unit.lowercased(),
+                                             targetValue: Int(target),
+                                             xpReward: 150))
+                    guard response.success else { throw GoalCreationFailed() }
+                }
+                createdGoalsPayload = CreatedGoalStore.append(savedGoal, to: createdGoalsPayload)
+                toast = .success("Goal created", "Your goal list is refreshing now.")
                 await onCreated?()
+                try? await Task.sleep(nanoseconds: 900_000_000)
                 dismiss()
             } catch {
                 errorText = "Couldn't create the goal. Check your connection and try again."
+                toast = .error("Goal not saved", "Check your connection and try again.")
             }
             busy = false
         }
+    }
+
+    private func localGoal(named cleanTitle: String) -> GoalRecord {
+        let slug = cleanTitle.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+        let cleanDescription = desc.trimmingCharacters(in: .whitespacesAndNewlines)
+        return GoalRecord(id: "local-goal-\(slug.isEmpty ? "target" : slug)",
+                          name: cleanTitle,
+                          description: cleanDescription.isEmpty ? linkedTarget : cleanDescription,
+                          targetValue: Int(target),
+                          currentValue: 0,
+                          unit: unit.lowercased(),
+                          category: category.lowercased(),
+                          xpReward: 150)
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-create-goal") {
@@ -352,7 +936,10 @@ struct CreateGoalView: View {       // 064
                 VStack(alignment: .leading, spacing: 0) {
                     TopBar()
                     VStack(alignment: .leading, spacing: 0) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to goals")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "chevron.left").font(.system(size: 13, weight: .bold))
                                 Text("GOALS").shotiqBody(13, weight: .bold).kerning(0.8)
@@ -370,6 +957,9 @@ struct CreateGoalView: View {       // 064
                             NavigationLink { WorkoutCalendarView() } label: {
                                 HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening workout calendar")
+                            })
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 8)
@@ -377,7 +967,9 @@ struct CreateGoalView: View {       // 064
                         HStack {
                             TextField("e.g. Keep elbow stacked through release", text: $title)
                                 .shotiqBody(15)
+                                .accessibilityIdentifier("create-goal-title-field")
                             Text("\(title.count)").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("create-goal-title-count")
                         }
                         .padding(.horizontal, 14).frame(height: 52)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -386,7 +978,9 @@ struct CreateGoalView: View {       // 064
                         HStack(alignment: .bottom) {
                             TextField("Describe the goal", text: $desc, axis: .vertical)
                                 .shotiqBody(15).lineLimit(3...5)
+                                .accessibilityIdentifier("create-goal-description-field")
                             Text("\(desc.count)").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("create-goal-description-count")
                         }
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -401,9 +995,12 @@ struct CreateGoalView: View {       // 064
                         }
                         .padding(.top, 8)
                         SectionLabel(text: "TARGET").padding(.top, 18)
-                        Button { showTargetPicker = true } label: {
+                        Button {
+                            toast = .info("Opening target picker", "Choose the coaching target for this goal.")
+                            showTargetPicker = true
+                        } label: {
                             HStack(spacing: 0) {
-                                PhotoThumb(width: 150, height: 110)
+                                PhotoThumb(width: 150, height: 110, photo: "065-visual-001")
                                 HStack {
                                     Text(linkedTarget).shotiqBody(15, weight: .bold)
                                         .foregroundStyle(ShotIQColor.ink)
@@ -418,14 +1015,20 @@ struct CreateGoalView: View {       // 064
                             .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("create-goal-target-picker")
                         .confirmationDialog("Link a coaching target", isPresented: $showTargetPicker,
                                             titleVisibility: .visible) {
                             ForEach(["Keep elbow stacked through release",
                                      "Hold follow-through to the rim",
                                      "Quiet the off-hand at release"], id: \.self) { t in
-                                Button(t) { linkedTarget = t }
+                                Button(t) {
+                                    linkedTarget = t
+                                    toast = .success("Target linked", t)
+                                }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Target unchanged", linkedTarget)
+                            }
                         }
                         .padding(.top, 8)
                         HStack(alignment: .top, spacing: 14) {
@@ -440,6 +1043,7 @@ struct CreateGoalView: View {       // 064
                                     Text("\(Int(target))").font(.custom("Tungsten-Medium", size: 24))
                                         .frame(width: 58, height: 42)
                                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                        .accessibilityIdentifier("create-goal-target-value")
                                     Text("%").shotiqBody(13, weight: .semibold)
                                     Text("of reps").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -449,6 +1053,7 @@ struct CreateGoalView: View {       // 064
                         .padding(.top, 18)
                         Slider(value: $target, in: 40...100, step: 1)
                             .tint(ShotIQColor.shotiqOrange)
+                            .accessibilityIdentifier("create-goal-target-slider")
                             .padding(.top, 8)
                         HStack(alignment: .top, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
@@ -478,13 +1083,35 @@ struct CreateGoalView: View {       // 064
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 4)
-                            NavigationLink { MetricDetailView(metric: "Elbow Alignment", value: 0.87) } label: {
+                            NavigationLink {
+                                if let latest = app.recentMedia.first {
+                                    MetricDetailView(
+                                        metric: "Elbow Alignment",
+                                        value: 0.87,
+                                        presentation: AnalysisResultPresentation(result: latest.analysis))
+                                } else if UITestHooks.demoData {
+                                    MetricDetailView(
+                                        metric: "Elbow Alignment",
+                                        value: 0.87,
+                                        presentation: .canonicalDemo)
+                                } else {
+                                    AnalyzeHubView()
+                                }
+                            } label: {
                                 HStack(spacing: 3) {
                                     Text("Learn how").shotiqBody(12, weight: .semibold)
                                     Image(systemName: "chevron.right").font(.system(size: 10))
                                 }
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                    toast = .info("Opening metric detail", "Elbow alignment target bands are ready.")
+                                } else {
+                                    toast = .info("Analyze a shot first",
+                                                  "Create an analysis before opening measured target bands.")
+                                }
+                            })
                             .buttonStyle(.plain)
                         }
                         .padding(12)
@@ -496,14 +1123,19 @@ struct CreateGoalView: View {       // 064
                                 .padding(.top, 12)
                         }
                         HStack(spacing: 12) {
-                            Button { dismiss() } label: {
+                            Button {
+                                toast = .info("Goal creation cancelled", "Returning to goals.")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                            } label: {
                                 Text("Cancel").shotiqBody(16)
                                     .frame(maxWidth: .infinity).frame(height: 54)
                                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                                     .foregroundStyle(ShotIQColor.ink)
                             }
+                            .accessibilityIdentifier("create-goal-cancel")
                             PrimaryButton(title: busy ? "Creating…" : "Create goal") { createGoal() }
-                                .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || busy)
+                                .disabled(busy)
+                                .accessibilityIdentifier("create-goal-submit")
                         }
                         .padding(.vertical, 22)
                     }
@@ -511,11 +1143,15 @@ struct CreateGoalView: View {       // 064
                 }
             }
         }
+        .shotiqToast($toast)
     }
     private func categoryCard(_ icon: String, _ label: String) -> some View {
-        Button { category = label } label: {
+        Button {
+            category = label
+            toast = .success("Category selected", label)
+        } label: {
             VStack(spacing: 7) {
-                ShotIQConceptGlyph(concept: label, fallback: icon, size: 21)
+                ShotIQConceptGlyph(concept: label, fallback: icon, size: 36)
                 Text(label).shotiqBody(11, weight: .medium)
                     .lineLimit(1).minimumScaleFactor(0.6)
             }
@@ -525,11 +1161,15 @@ struct CreateGoalView: View {       // 064
                         lineWidth: category == label ? 1.6 : 1))
             .foregroundStyle(category == label ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
         }
+        .accessibilityIdentifier("create-goal-category-\(label.lowercased())")
     }
     private func segments(_ options: [String], _ sel: Binding<String>) -> some View {
         HStack(spacing: 6) {
             ForEach(options, id: \.self) { o in
-                Button { sel.wrappedValue = o } label: {
+                Button {
+                    sel.wrappedValue = o
+                    toast = .success("Selection updated", o)
+                } label: {
                     Text(o).shotiqBody(12, weight: o == sel.wrappedValue ? .semibold : .regular)
                         .lineLimit(1).minimumScaleFactor(0.6)
                         .frame(maxWidth: .infinity).frame(height: 42)
@@ -537,15 +1177,150 @@ struct CreateGoalView: View {       // 064
                             .stroke(o == sel.wrappedValue ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                         .foregroundStyle(o == sel.wrappedValue ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                 }
+                .accessibilityIdentifier("create-goal-segment-\(o.lowercased())")
             }
         }
+    }
+}
+
+private struct GoalDetailSessionRow: Identifiable {
+    var id: String
+    var shots: String
+    var date: String
+    var name: String
+    var makePct: String
+    var elbow: String
+    var goalScore: String
+}
+
+private struct GoalDetailSnapshotCard: Identifiable {
+    var id: String { label }
+    var label: String
+    var grade: String
+    var value: String
+}
+
+private struct GoalDetailResolvedData {
+    var progressPct: Double
+    var trendPoints: [Double]
+    var trendLabels: [String]
+    var trendBadge: String
+    var trendA11y: String
+    var elbowAngle: String
+    var elbowScorePct: Double
+    var elbowScale: [String]
+    var targetRange: String
+    var snapshotCards: [GoalDetailSnapshotCard]
+    var linkedCaption: String
+    var sessions: [GoalDetailSessionRow]
+
+    static func make(goal: GoalRecord,
+                     workouts: [TrainingWorkoutRecord],
+                     presentation: AnalysisResultPresentation?,
+                     demoData: Bool) -> GoalDetailResolvedData {
+        if workouts.isEmpty && presentation == nil && demoData {
+            return GoalDetailResolvedData(
+                progressPct: goal.progress,
+                trendPoints: [40, 48, 55, 60, 66, 72],
+                trendLabels: ["S1", "S3", "S5", "S7"],
+                trendBadge: "72",
+                trendA11y: "Form Score 72",
+                elbowAngle: "87°",
+                elbowScorePct: 0.45,
+                elbowScale: ["60°", "90°", "120°"],
+                targetRange: "85°–95°",
+                snapshotCards: [
+                    GoalDetailSnapshotCard(label: "VERTICAL ALIGNMENT", grade: "GOOD", value: "92%"),
+                    GoalDetailSnapshotCard(label: "LATERAL DRIFT", grade: "GOOD", value: "4.2°")
+                ],
+                linkedCaption: "4 OF 6 THIS GOAL",
+                sessions: [
+                    GoalDetailSessionRow(id: "demo-1", shots: "24", date: "May 24, 8:24 AM",
+                                         name: "Form Session", makePct: "62.5%", elbow: "87°", goalScore: "68%"),
+                    GoalDetailSessionRow(id: "demo-2", shots: "18", date: "May 22, 7:12 AM",
+                                         name: "Quick Release", makePct: "61.1%", elbow: "83°", goalScore: "62%"),
+                    GoalDetailSessionRow(id: "demo-3", shots: "20", date: "May 20, 6:45 AM",
+                                         name: "Catch & Shoot", makePct: "60.0%", elbow: "78°", goalScore: "54%"),
+                    GoalDetailSessionRow(id: "demo-4", shots: "22", date: "May 18, 9:01 AM",
+                                         name: "Off the Dribble", makePct: "59.1%", elbow: "85°", goalScore: "64%")
+                ])
+        }
+
+        let sorted = workouts.sorted { $0.completedAt > $1.completedAt }
+        let analysisScore = presentation.map { Int(($0.scorePct * 100).rounded()) }
+        let latestElbow = presentation?.elbowAngleText ?? "--"
+        let sessions = sorted.prefix(4).enumerated().map { index, workout in
+            GoalDetailSessionRow(
+                id: workout.id,
+                shots: "\(workout.shots)",
+                date: Self.sessionDateText(workout.completedAt),
+                name: workout.drillName,
+                makePct: workout.accuracyText,
+                elbow: index == 0 ? latestElbow : "--",
+                goalScore: "\(workout.formScore)%")
+        }
+        let trendPoints: [Double]
+        let trendBadge: String
+        if sorted.isEmpty, let analysisScore {
+            trendPoints = [Double(analysisScore)]
+            trendBadge = "\(analysisScore)"
+        } else if sorted.isEmpty {
+            let value = Double(Int((goal.progress * 100).rounded()))
+            trendPoints = [value]
+            trendBadge = "\(Int(value))"
+        } else {
+            trendPoints = sorted.reversed().map { Double($0.formScore) }
+            trendBadge = "\(sorted.first?.formScore ?? 0)"
+        }
+
+        let scoreText = presentation?.scoreText ?? sorted.first.map { "\($0.formScore)" } ?? "--"
+        let scoreGrade = presentation?.scoreVerdict ?? sorted.first?.formVerdict ?? "NO DATA"
+        return GoalDetailResolvedData(
+            progressPct: goal.progress,
+            trendPoints: trendPoints,
+            trendLabels: Self.trendLabels(count: trendPoints.count),
+            trendBadge: trendBadge,
+            trendA11y: "Form Score \(trendBadge)",
+            elbowAngle: latestElbow,
+            elbowScorePct: Self.elbowScore(for: latestElbow),
+            elbowScale: ["120°", "150°", "180°"],
+            targetRange: "150°–180°",
+            snapshotCards: [
+                GoalDetailSnapshotCard(label: "FORM SCORE", grade: scoreGrade, value: scoreText),
+                GoalDetailSnapshotCard(label: "RELEASE OFFSET", grade: "MEASURED",
+                                       value: presentation?.releaseOffsetText ?? "--")
+            ],
+            linkedCaption: sessions.isEmpty ? "NO LINKED SESSIONS YET" : "\(sessions.count) LINKED THIS GOAL",
+            sessions: sessions)
+    }
+
+    private static func trendLabels(count: Int) -> [String] {
+        guard count > 1 else { return ["S1"] }
+        return (1...count).map { "S\($0)" }
+    }
+
+    private static func sessionDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d, h:mm a"
+        return formatter.string(from: date)
+    }
+
+    private static func elbowScore(for text: String) -> Double {
+        guard let value = Double(text.filter { $0.isNumber || $0 == "." || $0 == "-" }) else { return 0 }
+        if (150...180).contains(value) { return 0.92 }
+        let distance = value < 150 ? 150 - value : value - 180
+        return min(0.9, max(0.12, 1 - (distance / 90)))
     }
 }
 
 struct GoalDetailView: View {       // 065
     var goal: GoalRecord
     var onChanged: (() async -> Void)? = nil
+    @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
     @State private var name = ""
     @State private var desc = ""
     @State private var pct: Double = 0
@@ -556,6 +1331,7 @@ struct GoalDetailView: View {       // 065
     @State private var showEdit = false
     @State private var logValue: Double = 0
     @State private var addedDrills: Set<String> = []
+    @State private var toast: ShotIQToast?
 
     private struct GoalPatchBody: Encodable {
         var name: String? = nil
@@ -565,37 +1341,90 @@ struct GoalDetailView: View {       // 065
     }
     private struct GoalPatchResp: Codable { var success: Bool }
 
+    private var completedWorkouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload)
+    }
+
+    private var latestPresentation: AnalysisResultPresentation? {
+        app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+
+    private var detailData: GoalDetailResolvedData {
+        GoalDetailResolvedData.make(goal: goal,
+                                    workouts: completedWorkouts,
+                                    presentation: latestPresentation,
+                                    demoData: UITestHooks.demoData)
+    }
+
+    private var shouldPatchLocally: Bool {
+        UITestHooks.demoData || goal.id == "uitest-goal" || goal.id.hasPrefix("local-goal-")
+    }
+
     /// PATCH /api/goals/[id] and mirror the change locally + refresh the list.
-    private func patch(_ body: GoalPatchBody, then apply: @escaping () -> Void) {
+    private func patch(_ body: GoalPatchBody,
+                       progressTitle: String = "Saving goal",
+                       successTitle: String = "Goal updated",
+                       successMessage: String? = nil,
+                       then apply: @escaping () -> Void) {
         guard !busy else { return }
         busy = true
         errorText = nil
+        toast = .progress(progressTitle, "Syncing the change to ShotIQ.", progress: 0.55)
         Task {
             do {
-                let _: GoalPatchResp = try await APIClient.shared.call(
-                    "/api/goals/\(goal.id)", method: "PATCH", body: body)
+                if shouldPatchLocally {
+                    try? await Task.sleep(nanoseconds: 250_000_000)
+                } else {
+                    let _: GoalPatchResp = try await APIClient.shared.call(
+                        "/api/goals/\(goal.id)", method: "PATCH", body: body)
+                }
                 apply()
+                mirrorLocalPatch(body)
                 await onChanged?()
+                toast = .success(successTitle, successMessage)
             } catch {
                 errorText = "Couldn't update the goal. Try again."
+                toast = .error("Goal update failed", "Check your connection and try again.")
             }
             busy = false
         }
     }
+
+    private func saveDrill(_ name: String) {
+        guard !addedDrills.contains(name) else {
+            toast = .info("Drill already added", "\(name) is already in your saved workouts.")
+            return
+        }
+        addedDrills.insert(name)
+        toast = .progress("Adding drill", "Saving \(name) to your workouts.", progress: 0.5)
+        Task {
+            if UITestHooks.demoData {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            } else {
+                await APIClient.shared.send("/api/saved-workouts", body: SavedWorkoutBody(name: name))
+            }
+            toast = .success("Drill added", "\(name) is in your saved workouts.")
+        }
+    }
+    private func mirrorLocalPatch(_ body: GoalPatchBody) {
+        createdGoalsPayload = CreatedGoalStore.update(goal.id, in: createdGoalsPayload) { record in
+            if let name = body.name { record.name = name }
+            if let description = body.description { record.description = description }
+            if let currentValue = body.currentValue { record.currentValue = currentValue }
+            if let completedAt = body.completedAt { record.completedAt = completedAt }
+        }
+    }
     private var targetValue: Int { goal.targetValue ?? 100 }
-    private let sessions: [(String, String, String, String, String, String)] = [
-        ("24", "May 24, 8:24 AM", "Form Session", "62.5%", "87°", "68%"),
-        ("18", "May 22, 7:12 AM", "Quick Release", "61.1%", "83°", "62%"),
-        ("20", "May 20, 6:45 AM", "Catch & Shoot", "60.0%", "78°", "54%"),
-        ("22", "May 18, 9:01 AM", "Off the Dribble", "59.1%", "85°", "64%")
-    ]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-goal-detail") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     TopBar()
                     VStack(alignment: .leading, spacing: 0) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to goals")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "chevron.left").font(.system(size: 13, weight: .bold))
                                 Text("GOALS").shotiqBody(13, weight: .bold).kerning(0.8)
@@ -612,7 +1441,7 @@ struct GoalDetailView: View {       // 065
                                     .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            PhotoThumb(width: 128, height: 150)
+                            PhotoThumb(width: 128, height: 150, photo: "065-visual-001")
                         }
                         .padding(.top, 12)
                         ShotIQCard {
@@ -649,17 +1478,21 @@ struct GoalDetailView: View {       // 065
                                 Text("\(Int(pct * 100))%")
                                     .font(.custom("Tungsten-Medium", size: 46))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .accessibilityIdentifier("goal-detail-progress-value")
                                 ScoreBar(pct: pct).frame(width: 110)
                             }
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("TREND (LAST 7 SESSIONS)").shotiqBody(9, weight: .semibold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.graphite)
-                                TrendLine(points: [40, 48, 55, 60, 66, 72],
+                                TrendLine(points: detailData.trendPoints,
                                           stroke: ShotIQColor.shotiqOrange,
                                           areaFill: true, gridlines: true,
-                                          xLabels: ["S1", "S3", "S5", "S7"],
-                                          endBadge: "72")
+                                          xLabels: detailData.trendLabels,
+                                          endBadge: detailData.trendBadge)
                                     .frame(height: 84)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityIdentifier("goal-detail-trend-chart")
+                                    .accessibilityLabel(detailData.trendA11y)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -671,22 +1504,26 @@ struct GoalDetailView: View {       // 065
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "ELBOW STACK ANGLE")
                                     HStack(alignment: .firstTextBaseline, spacing: 5) {
-                                        Text("87°").font(.custom("Tungsten-Medium", size: 34))
+                                        Text(detailData.elbowAngle).font(.custom("Tungsten-Medium", size: 34))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
+                                            .accessibilityIdentifier("goal-detail-elbow-angle")
                                         Text("AVG").shotiqBody(9, weight: .medium)
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    ScoreBar(pct: 0.45)
+                                    ScoreBar(pct: detailData.elbowScorePct)
                                     HStack {
-                                        Text("60°"); Spacer(); Text("90°"); Spacer(); Text("120°")
+                                        Text(detailData.elbowScale[0]); Spacer()
+                                        Text(detailData.elbowScale[1]); Spacer()
+                                        Text(detailData.elbowScale[2])
                                     }
                                     .font(.system(size: 9)).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("TARGET RANGE").shotiqBody(8.5, weight: .semibold).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("85°–95°").font(.custom("Tungsten-Medium", size: 22))
+                                    Text(detailData.targetRange).font(.custom("Tungsten-Medium", size: 22))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
+                                        .accessibilityIdentifier("goal-detail-target-range")
                                 }
                                 .padding(10)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -695,45 +1532,54 @@ struct GoalDetailView: View {       // 065
                         }
                         .padding(.top, 10)
                         HStack(spacing: 10) {
-                            snapshotCard("VERTICAL ALIGNMENT", "GOOD", "92%")
-                            snapshotCard("LATERAL DRIFT", "GOOD", "4.2°")
+                            ForEach(detailData.snapshotCards) { card in
+                                snapshotCard(card.label, card.grade, card.value)
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityIdentifier("goal-detail-snapshot-\(card.label.lowercased().replacingOccurrences(of: " ", with: "-"))")
+                            }
                         }
                         .padding(.top, 10)
                         HStack {
                             SectionLabel(text: "LINKED SESSIONS")
                             Spacer()
-                            Text("4 OF 6 THIS GOAL").shotiqBody(10, weight: .semibold).kerning(0.4)
+                            Text(detailData.linkedCaption).shotiqBody(10, weight: .semibold).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("goal-detail-linked-count")
                         }
                         .padding(.top, 22)
-                        ForEach(sessions, id: \.1) { s in
-                            NavigationLink { AnalyticsDetailedView(metric: s.2) } label: {
+	                        ForEach(Array(detailData.sessions.enumerated()), id: \.element.id) { index, s in
+	                            NavigationLink { AnalyticsDetailedView(metric: s.name) } label: {
                             HStack(spacing: 10) {
-                                PhotoThumb(width: 46, height: 34, icon: "play.circle")
+                                PhotoThumb(width: 46, height: 34, icon: "play.circle", photo: "066-visual-002")
                                 VStack(spacing: 1) {
-                                    Text(s.0).font(.custom("Tungsten-Medium", size: 16))
+                                    Text(s.shots).font(.custom("Tungsten-Medium", size: 16))
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-shots")
                                     Text("SHOTS").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text(s.1).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
-                                    Text(s.2).shotiqBody(13, weight: .semibold)
+                                    Text(s.date).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                                    Text(s.name).shotiqBody(13, weight: .semibold)
                                         .lineLimit(1).minimumScaleFactor(0.7)
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-name")
                                     HStack(spacing: 3) {
-                                        Text(s.3).shotiqBody(10, weight: .semibold)
+                                        Text(s.makePct).shotiqBody(10, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.analysisBlue)
+                                            .accessibilityIdentifier("goal-detail-session-\(index)-make-pct")
                                         Text("MAKE %").shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
                                     }
                                 }
                                 Spacer(minLength: 4)
                                 VStack(spacing: 1) {
-                                    Text(s.4).font(.custom("Tungsten-Medium", size: 16))
+                                    Text(s.elbow).font(.custom("Tungsten-Medium", size: 16))
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-elbow")
                                     Text("ELBOW").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 VStack(spacing: 1) {
-                                    Text(s.5).font(.custom("Tungsten-Medium", size: 16))
+                                    Text(s.goalScore).font(.custom("Tungsten-Medium", size: 16))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .accessibilityIdentifier("goal-detail-session-\(index)-goal-score")
                                     Text("GOAL SCORE").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -742,46 +1588,55 @@ struct GoalDetailView: View {       // 065
                             }
                             .padding(.vertical, 9)
                             .overlay(HRule(), alignment: .bottom)
-                            }
-                            .buttonStyle(.plain)
-                        }
+	                            }
+	                            .accessibilityIdentifier("goal-detail-session-\(index)")
+	                            .buttonStyle(.plain)
+	                            .simultaneousGesture(TapGesture().onEnded {
+	                                toast = .info("Opening session", s.name)
+	                            })
+	                        }
                         SectionLabel(text: "RECOMMENDED DRILLS").padding(.top, 20)
                         ForEach(["Quick Release Builder", "Wall Elbow Alignment"], id: \.self) { d in
-                            NavigationLink { DrillDetailView(name: d) } label: {
-                                HStack(spacing: 12) {
-                                    PhotoThumb(width: 56, height: 44)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(d).shotiqBody(14, weight: .semibold)
-                                            .lineLimit(1).minimumScaleFactor(0.8)
-                                        Text("3 sets • 15 reps • Form Focus")
-                                            .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
-                                    }
-                                    Spacer(minLength: 4)
-                                    Button {
-                                        guard !addedDrills.contains(d) else { return }
-                                        addedDrills.insert(d)
-                                        Task { await APIClient.shared.send("/api/saved-workouts",
-                                                                           body: SavedWorkoutBody(name: d)) }
-                                    } label: {
-                                        HStack(spacing: 4) {
-                                            if addedDrills.contains(d) {
-                                                Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
-                                            }
-                                            Text(addedDrills.contains(d) ? "Added" : "Add drill")
-                                                .shotiqBody(12, weight: .semibold)
+                            HStack(spacing: 12) {
+	                                NavigationLink { DrillDetailView(name: d) } label: {
+                                    HStack(spacing: 12) {
+                                        PhotoThumb(width: 56, height: 44, photo: "066-visual-003")
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(d).shotiqBody(14, weight: .semibold)
+                                                .lineLimit(1).minimumScaleFactor(0.8)
+                                            Text("3 sets • 15 reps • Form Focus")
+                                                .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                         }
-                                        .padding(.horizontal, 11).padding(.vertical, 7)
-                                        .overlay(RoundedRectangle(cornerRadius: 6)
-                                            .stroke(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange))
-                                        .foregroundStyle(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                                        Spacer(minLength: 4)
+                                        Image(systemName: "chevron.right").font(.system(size: 12))
+                                            .foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    .buttonStyle(.plain)
-                                    Image(systemName: "chevron.right").font(.system(size: 12))
-                                        .foregroundStyle(ShotIQColor.graphite)
+	                                }
+	                                .buttonStyle(.plain)
+	                                .simultaneousGesture(TapGesture().onEnded {
+	                                    toast = .info("Opening drill", d)
+	                                })
+	                                .accessibilityIdentifier("goal-detail-drill-open-\(d.lowercased().replacingOccurrences(of: " ", with: "-"))")
+                                Button {
+                                    saveDrill(d)
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        if addedDrills.contains(d) {
+                                            Image(systemName: "checkmark").font(.system(size: 10, weight: .bold))
+                                        }
+                                        Text(addedDrills.contains(d) ? "Added" : "Add drill")
+                                            .shotiqBody(12, weight: .semibold)
+                                    }
+                                    .padding(.horizontal, 11).padding(.vertical, 7)
+                                    .overlay(RoundedRectangle(cornerRadius: 6)
+                                        .stroke(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange))
+                                    .foregroundStyle(addedDrills.contains(d) ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
                                 }
-                                .padding(.vertical, 10)
-                                .overlay(HRule(), alignment: .bottom)
+                                .accessibilityIdentifier("goal-detail-drill-add-\(d.lowercased().replacingOccurrences(of: " ", with: "-"))")
+                                .buttonStyle(.plain)
                             }
+                            .padding(.vertical, 10)
+                            .overlay(HRule(), alignment: .bottom)
                         }
                         SectionLabel(text: "MILESTONES").padding(.top, 20)
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -802,11 +1657,22 @@ struct GoalDetailView: View {       // 065
                         }
                         HStack(spacing: 12) {
                             PrimaryButton(title: "Log progress", icon: "chart.line.uptrend.xyaxis") {
+                                guard !completed else {
+                                    toast = .info("Goal already complete",
+                                                  "This goal is finished. Edit the goal or create a new target.")
+                                    return
+                                }
                                 logValue = Double(Int(pct * Double(targetValue)))
+                                toast = .info("Opening progress log", "Set the latest value for this goal.")
                                 showLogProgress = true
                             }
-                            .disabled(busy || completed)
-                            SecondaryButton(title: "Edit goal", icon: "pencil") { showEdit = true }
+                            .accessibilityIdentifier("goal-detail-log-progress")
+                            .disabled(busy)
+                            SecondaryButton(title: "Edit goal", icon: "pencil") {
+                                toast = .info("Opening goal editor", "Update the goal name or description.")
+                                showEdit = true
+                            }
+                                .accessibilityIdentifier("goal-detail-edit-goal")
                                 .disabled(busy)
                         }
                         .padding(.top, 20)
@@ -822,11 +1688,15 @@ struct GoalDetailView: View {       // 065
                         } else {
                             SecondaryButton(title: busy ? "Saving…" : "Mark goal complete", icon: "checkmark.circle") {
                                 patch(GoalPatchBody(currentValue: targetValue,
-                                                    completedAt: ISO8601DateFormatter().string(from: Date()))) {
+                                                    completedAt: ISO8601DateFormatter().string(from: Date())),
+                                      progressTitle: "Completing goal",
+                                      successTitle: "Goal completed",
+                                      successMessage: "Nice work. Your progress is saved.") {
                                     completed = true
                                     pct = 1
                                 }
                             }
+                            .accessibilityIdentifier("goal-detail-complete")
                             .disabled(busy)
                             .padding(.top, 10)
                         }
@@ -836,6 +1706,7 @@ struct GoalDetailView: View {       // 065
                 }
             }
         }
+        .shotiqToast($toast)
         .onAppear {
             if name.isEmpty {
                 name = goal.name
@@ -852,11 +1723,13 @@ struct GoalDetailView: View {       // 065
             logProgressSheet
                 .presentationDetents([.height(320)])
                 .modifier(CanonicalTypeScale())
+                .shotiqToast($toast)
         }
         .sheet(isPresented: $showEdit) {
             editGoalSheet
                 .presentationDetents([.medium])
                 .modifier(CanonicalTypeScale())
+                .shotiqToast($toast)
         }
     }
 
@@ -875,7 +1748,10 @@ struct GoalDetailView: View {       // 065
             Slider(value: $logValue, in: 0...Double(max(targetValue, 1)), step: 1)
                 .tint(ShotIQColor.shotiqOrange)
             PrimaryButton(title: busy ? "Saving…" : "Save progress") {
-                patch(GoalPatchBody(currentValue: Int(logValue))) {
+                patch(GoalPatchBody(currentValue: Int(logValue)),
+                      progressTitle: "Saving progress",
+                      successTitle: "Progress saved",
+                      successMessage: "\(Int(logValue)) of \(targetValue) \(goal.unit ?? "").") {
                     pct = Double(logValue) / Double(max(targetValue, 1))
                     showLogProgress = false
                 }
@@ -901,9 +1777,17 @@ struct GoalDetailView: View {       // 065
                 .padding(14)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
             PrimaryButton(title: busy ? "Saving…" : "Save changes") {
-                patch(GoalPatchBody(name: name, description: desc)) { showEdit = false }
+                let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard cleanName.isEmpty == false else {
+                    errorText = "Goal name is required."
+                    toast = .error("Goal name required", "Name the goal before saving changes.")
+                    return
+                }
+                patch(GoalPatchBody(name: cleanName, description: desc.trimmingCharacters(in: .whitespacesAndNewlines)),
+                      progressTitle: "Saving changes",
+                      successTitle: "Goal changes saved") { showEdit = false }
             }
-            .disabled(busy || name.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(busy)
             Spacer(minLength: 0)
         }
         .padding(24)
@@ -948,50 +1832,89 @@ struct DottedTrend: View {
     let labels: [String]
     var body: some View {
         GeometryReader { geo in
-            let maxV = points.max() ?? 1, minV = points.min() ?? 0
-            let span = max(maxV - minV, 0.0001)
-            let top: CGFloat = 18, bottom: CGFloat = 18, side: CGFloat = 16
-            let coords = points.enumerated().map { i, p in
-                CGPoint(x: side + CGFloat(i) / CGFloat(max(points.count - 1, 1)) * (geo.size.width - 2 * side),
-                        y: top + (1 - CGFloat((p - minV) / span)) * (geo.size.height - top - bottom))
-            }
-            ZStack {
-                Path { p in
-                    guard let f = coords.first else { return }
-                    p.move(to: f)
-                    coords.dropFirst().forEach { p.addLine(to: $0) }
-                }
-                .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
-                ForEach(coords.indices, id: \.self) { i in
-                    let last = i == coords.count - 1
-                    Circle().fill(last ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                        .frame(width: last ? 8 : 6, height: last ? 8 : 6)
-                        .position(coords[i])
-                    Text("\(Int(points[i]))")
-                        .font(.custom("Tungsten-Medium", size: 12))
-                        .foregroundStyle(last ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                        .position(x: coords[i].x, y: coords[i].y - 12)
-                    if labels.indices.contains(i) {
-                        Text(labels[i])
-                            .shotiqBody(7, weight: last ? .bold : .regular)
-                            .foregroundStyle(last ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                            .position(x: coords[i].x, y: geo.size.height - 6)
-                    }
-                }
-            }
+            DottedTrendPlot(points: points, labels: labels, size: geo.size)
         }
         .accessibilityHidden(true)
     }
 }
 
+private struct DottedTrendPlot: View {
+    let points: [Double]
+    let labels: [String]
+    let size: CGSize
+
+    private var coords: [CGPoint] {
+        let maxV = points.max() ?? 1
+        let minV = points.min() ?? 0
+        let span = max(maxV - minV, 0.0001)
+        let top: CGFloat = 18
+        let bottom: CGFloat = 18
+        let side: CGFloat = 16
+        return points.enumerated().map { index, value in
+            let x = side + CGFloat(index) / CGFloat(max(points.count - 1, 1)) * (size.width - 2 * side)
+            let y = top + (1 - CGFloat((value - minV) / span)) * (size.height - top - bottom)
+            return CGPoint(x: x, y: y)
+        }
+    }
+
+    var body: some View {
+        let trendCoords = coords
+        ZStack {
+            Path { path in
+                guard let first = trendCoords.first else { return }
+                path.move(to: first)
+                trendCoords.dropFirst().forEach { path.addLine(to: $0) }
+            }
+            .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+            ForEach(trendCoords.indices, id: \.self) { index in
+                DottedTrendPoint(point: trendCoords[index],
+                                 value: points[index],
+                                 label: labels.indices.contains(index) ? labels[index] : nil,
+                                 isLast: index == trendCoords.count - 1,
+                                 chartHeight: size.height)
+            }
+        }
+    }
+}
+
+private struct DottedTrendPoint: View {
+    let point: CGPoint
+    let value: Double
+    let label: String?
+    let isLast: Bool
+    let chartHeight: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(isLast ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                .frame(width: isLast ? 8 : 6, height: isLast ? 8 : 6)
+                .position(point)
+            Text("\(Int(value))")
+                .font(.custom("Tungsten-Medium", size: 12))
+                .foregroundStyle(isLast ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                .position(x: point.x, y: point.y - 12)
+            if let label {
+                Text(label)
+                    .shotiqBody(7, weight: isLast ? .bold : .regular)
+                    .foregroundStyle(isLast ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                    .position(x: point.x, y: chartHeight - 6)
+            }
+        }
+    }
+}
+
 struct AnalyticsCardsView: View {   // 066
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var timeRange = "All time"
     @State private var mediaFilter = "All media"
     @State private var showTimePicker = false
     @State private var showMediaPicker = false
+    @State private var toast: ShotIQToast?
+
     private struct AnalysisSession: Identifiable {
-        let id = UUID()
+        let id: String
         let date, name: String
         let shots, makes: Int
         let acc: String
@@ -1000,38 +1923,150 @@ struct AnalyticsCardsView: View {   // 066
         let deltaColor: Color
         let daysAgo: Int
         let kind: String
+        let shareText: String
     }
+
+    private struct AnalyticsSummary {
+        var scoreText: String
+        var scoreVerdict: String
+        var coachingTarget: String
+        var trendPoints: [Double]
+        var trendLabels: [String]
+        var trendA11y: String
+        var shotsText: String
+        var makesText: String
+        var accuracyText: String
+        var deltaText: String
+        var deltaCaption: String
+        var deltaColor: Color
+    }
+
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+
     private var sessions: [AnalysisSession] {
-        [.init(date: "Today at 8:24 AM", name: "Catch & Shoot", shots: 24, makes: 15, acc: "62.5%",
-               score: 82, delta: "+6", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
-               daysAgo: 0, kind: "Video"),
-         .init(date: "May 20 at 6:12 PM", name: "Off the Dribble", shots: 22, makes: 13, acc: "59.1%",
-               score: 78, delta: "+4", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
-               daysAgo: 4, kind: "Live"),
-         .init(date: "May 14 at 7:05 AM", name: "Pull-Up Jumper", shots: 25, makes: 14, acc: "56.0%",
-               score: 75, delta: "—", deltaLabel: "NO CHANGE", deltaColor: ShotIQColor.analysisBlue,
-               daysAgo: 10, kind: "Video"),
-         .init(date: "May 8 at 5:48 PM", name: "Mid-Range Work", shots: 20, makes: 11, acc: "55.0%",
-               score: 70, delta: "-3", deltaLabel: "NEEDS REVIEW", deltaColor: ShotIQColor.reviewRed,
-               daysAgo: 16, kind: "Photo")]
-    }
-    /// Canonical 066 frames, keyed by session so filtering keeps each card
-    /// with the photograph the design pairs it with. The top card has none.
-    private let sessionPhotos = ["Off the Dribble": "066-visual-001",
-                                 "Pull-Up Jumper": "066-visual-002",
-                                 "Mid-Range Work": "066-visual-003"]
-    private var filteredSessions: [AnalysisSession] {
-        sessions.filter { s in
-            let inRange: Bool
-            switch timeRange {
-            case "Last 7 days": inRange = s.daysAgo <= 7
-            case "Last 30 days": inRange = s.daysAgo <= 30
-            default: inRange = true
+        guard workouts.isEmpty == false else { return UITestHooks.demoData ? sampleSessions : [] }
+        let calendar = Calendar.current
+        let now = Date()
+        return workouts.prefix(12).enumerated().map { index, workout in
+            let older = workouts.dropFirst(index + 1).first
+            let scoreDelta = older.map { workout.formScore - $0.formScore }
+            let delta = scoreDelta.map(Self.signedScore) ?? "—"
+            let deltaLabel: String
+            let deltaColor: Color
+            if let scoreDelta, scoreDelta > 0 {
+                deltaLabel = "IMPROVEMENT"
+                deltaColor = ShotIQColor.confirmGreen
+            } else if let scoreDelta, scoreDelta < 0 {
+                deltaLabel = "NEEDS REVIEW"
+                deltaColor = ShotIQColor.reviewRed
+            } else {
+                deltaLabel = "NO CHANGE"
+                deltaColor = ShotIQColor.analysisBlue
             }
-            let kindOK = mediaFilter == "All media" || s.kind == mediaFilter
-            return inRange && kindOK
+            let daysAgo = calendar.dateComponents([.day], from: workout.completedAt, to: now).day ?? 0
+            let share = "\(workout.drillName) on ShotIQ - \(workout.makes)/\(workout.shots) makes (\(workout.accuracyText)), form score \(workout.formScore)."
+            return AnalysisSession(id: workout.id,
+                                   date: Self.sessionDateText(workout.completedAt),
+                                   name: workout.drillName,
+                                   shots: workout.shots,
+                                   makes: workout.makes,
+                                   acc: workout.accuracyText,
+                                   score: workout.formScore,
+                                   delta: delta,
+                                   deltaLabel: deltaLabel,
+                                   deltaColor: deltaColor,
+                                   daysAgo: max(daysAgo, 0),
+                                   kind: "Live",
+                                   shareText: share)
         }
     }
+
+    private var sampleSessions: [AnalysisSession] {
+        [.init(id: "demo-catch-shoot", date: "Today at 8:24 AM", name: "Catch & Shoot", shots: 24, makes: 15, acc: "62.5%",
+               score: 82, delta: "+6", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
+               daysAgo: 0, kind: "Video",
+               shareText: "Catch & Shoot on ShotIQ - 15/24 makes (62.5%), form score 82."),
+         .init(id: "demo-off-dribble", date: "May 20 at 6:12 PM", name: "Off the Dribble", shots: 22, makes: 13, acc: "59.1%",
+               score: 78, delta: "+4", deltaLabel: "IMPROVEMENT", deltaColor: ShotIQColor.confirmGreen,
+               daysAgo: 4, kind: "Live",
+               shareText: "Off the Dribble on ShotIQ - 13/22 makes (59.1%), form score 78."),
+         .init(id: "demo-pull-up", date: "May 14 at 7:05 AM", name: "Pull-Up Jumper", shots: 25, makes: 14, acc: "56.0%",
+               score: 75, delta: "—", deltaLabel: "NO CHANGE", deltaColor: ShotIQColor.analysisBlue,
+               daysAgo: 10, kind: "Video",
+               shareText: "Pull-Up Jumper on ShotIQ - 14/25 makes (56.0%), form score 75."),
+         .init(id: "demo-mid-range", date: "May 8 at 5:48 PM", name: "Mid-Range Work", shots: 20, makes: 11, acc: "55.0%",
+               score: 70, delta: "-3", deltaLabel: "NEEDS REVIEW", deltaColor: ShotIQColor.reviewRed,
+               daysAgo: 16, kind: "Photo",
+               shareText: "Mid-Range Work on ShotIQ - 11/20 makes (55.0%), form score 70.")]
+    }
+
+    /// Canonical 066 frames, keyed by session so filtering keeps each card
+    /// with a real basketball photograph instead of a gray placeholder tile.
+    private let sessionPhotos = ["Catch & Shoot": "066-visual-001",
+                                 "Off the Dribble": "066-visual-002",
+                                 "Pull-Up Jumper": "066-visual-003",
+                                 "Mid-Range Work": "066-visual-001"]
+
+    private var filteredSessions: [AnalysisSession] {
+        sessions.filter { sessionMatches($0, media: mediaFilter, range: timeRange) }
+    }
+
+    private var summary: AnalyticsSummary {
+        let visible = filteredSessions
+        if UITestHooks.demoData && workouts.isEmpty && timeRange == "All time" && mediaFilter == "All media" {
+            let canonicalTrend: [Double] = [68, 72, 76, 79, 80, 82]
+            return AnalyticsSummary(scoreText: "82",
+                                    scoreVerdict: "GOOD",
+                                    coachingTarget: "Keep elbow stacked through release.",
+                                    trendPoints: canonicalTrend,
+                                    trendLabels: ["APR 26", "MAY 2", "MAY 8", "MAY 14", "MAY 20", "TODAY"],
+                                    trendA11y: "Form Score 68 to 72 to 76 to 79 to 80 to 82",
+                                    shotsText: "24",
+                                    makesText: "15",
+                                    accuracyText: "62.5%",
+                                    deltaText: "+8.1%",
+                                    deltaCaption: "VS PREVIOUS 30 DAYS",
+                                    deltaColor: ShotIQColor.confirmGreen)
+        }
+        guard let latest = visible.first else {
+            return AnalyticsSummary(scoreText: "--",
+                                    scoreVerdict: "NO DATA",
+                                    coachingTarget: "Analyze a shot or finish a workout to build history.",
+                                    trendPoints: [0, 0],
+                                    trendLabels: ["S1", "S2"],
+                                    trendA11y: "No matching sessions",
+                                    shotsText: "0",
+                                    makesText: "0",
+                                    accuracyText: "--",
+                                    deltaText: "—",
+                                    deltaCaption: "VS PREVIOUS SESSION",
+                                    deltaColor: ShotIQColor.analysisBlue)
+        }
+        let totalShots = visible.reduce(0) { $0 + $1.shots }
+        let totalMakes = visible.reduce(0) { $0 + $1.makes }
+        let accuracy = totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100)
+        let points = visible.reversed().map { Double($0.score) }
+        let trendPoints = points.count == 1 ? [points[0], points[0]] : points
+        let labels = (1...trendPoints.count).map { "S\($0)" }
+        let previous = visible.dropFirst().first
+        let delta = previous.map { Self.signedScore(latest.score - $0.score) } ?? latest.delta
+        let presentation = app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+        return AnalyticsSummary(scoreText: "\(latest.score)",
+                                scoreVerdict: latest.score >= 85 ? "GREAT" : latest.score >= 70 ? "GOOD" : "BUILDING",
+                                coachingTarget: presentation?.coachingTarget ?? "Keep elbow stacked through release.",
+                                trendPoints: trendPoints,
+                                trendLabels: labels,
+                                trendA11y: "Form Score \(trendPoints.map { String(Int($0)) }.joined(separator: " to "))",
+                                shotsText: "\(totalShots)",
+                                makesText: "\(totalMakes)",
+                                accuracyText: accuracy,
+                                deltaText: delta,
+                                deltaCaption: "VS PREVIOUS SESSION",
+                                deltaColor: latest.deltaColor)
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analytics-cards") {
             ScrollView {
@@ -1042,21 +2077,39 @@ struct AnalyticsCardsView: View {   // 066
                         HStack(alignment: .center, spacing: 10) {
                             Text("AI ANALYSIS HISTORY").shotiqDisplay(30)
                             Spacer(minLength: 6)
-                            filterChip("calendar", timeRange) { showTimePicker = true }
-                            filterChip("slider.horizontal.3", mediaFilter) { showMediaPicker = true }
+                            filterChip("calendar", timeRange) {
+                                toast = .info("Opening time filter", "Choose the analysis history range.")
+                                showTimePicker = true
+                            }
+                                .accessibilityIdentifier("analytics-cards-time-filter")
+                            filterChip("slider.horizontal.3", mediaFilter) {
+                                toast = .info("Opening media filter", "Choose photo, video, or live sessions.")
+                                showMediaPicker = true
+                            }
+                                .accessibilityIdentifier("analytics-cards-media-filter")
                         }
                         .padding(.top, 16)
                         .confirmationDialog("Time range", isPresented: $showTimePicker, titleVisibility: .visible) {
-                            ForEach(["All time", "Last 30 days", "Last 7 days"], id: \.self) { r in
-                                Button(r) { timeRange = r }
+                            ForEach(["All time", "Last 30 days", "Last 7 days"], id: \.self) { range in
+                                Button(range) {
+                                    timeRange = range
+                                    toast = .success("Filter applied", "Showing \(range.lowercased()) analysis.")
+                                }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Time filter unchanged")
+                            }
                         }
                         .confirmationDialog("Media type", isPresented: $showMediaPicker, titleVisibility: .visible) {
-                            ForEach(["All media", "Video", "Photo", "Live"], id: \.self) { k in
-                                Button(k) { mediaFilter = k }
+                            ForEach(["All media", "Video", "Photo", "Live"], id: \.self) { media in
+                                Button(media) {
+                                    mediaFilter = media
+                                    toast = .success("Media filter applied", "\(filteredCount(for: media)) sessions visible.")
+                                }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Media filter unchanged")
+                            }
                         }
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
@@ -1064,30 +2117,39 @@ struct AnalyticsCardsView: View {   // 066
                                 HStack(alignment: .top, spacing: 10) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                                            Text("82").font(.custom("Tungsten-Medium", size: 44))
+                                            Text(summary.scoreText).font(.custom("Tungsten-Medium", size: 44))
                                                 .foregroundStyle(ShotIQColor.shotiqOrange)
-                                            Text("GOOD").shotiqBody(12, weight: .bold)
+                                                .accessibilityIdentifier("analytics-cards-summary-score")
+                                            Text(summary.scoreVerdict).shotiqBody(12, weight: .bold)
                                                 .foregroundStyle(ShotIQColor.analysisBlue)
+                                                .accessibilityIdentifier("analytics-cards-summary-verdict")
                                         }
-                                        Text("Keep elbow stacked through release.")
+                                        Text(summary.coachingTarget)
                                             .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                             .fixedSize(horizontal: false, vertical: true)
+                                            .accessibilityIdentifier("analytics-cards-summary-target")
                                     }
                                     .frame(width: 108, alignment: .leading)
-                                    DottedTrend(points: [68, 72, 76, 79, 80, 82],
-                                                labels: ["APR 26", "MAY 2", "MAY 8", "MAY 14", "MAY 20", "TODAY"])
+                                    DottedTrend(points: summary.trendPoints, labels: summary.trendLabels)
                                         .frame(height: 108)
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityIdentifier("analytics-cards-trend")
+                                        .accessibilityLabel(summary.trendA11y)
                                 }
                                 PhaseStrip()
                                 HRule()
                                 HStack(spacing: 0) {
-                                    trendStat("24", "SHOTS", ShotIQColor.ink)
+                                    trendStat(summary.shotsText, "SHOTS", ShotIQColor.ink)
+                                        .accessibilityIdentifier("analytics-cards-total-shots")
                                     VRule(height: 38)
-                                    trendStat("15", "MAKES", ShotIQColor.ink)
+                                    trendStat(summary.makesText, "MAKES", ShotIQColor.ink)
+                                        .accessibilityIdentifier("analytics-cards-total-makes")
                                     VRule(height: 38)
-                                    trendStat("62.5%", "ACCURACY", ShotIQColor.ink)
+                                    trendStat(summary.accuracyText, "ACCURACY", ShotIQColor.ink)
+                                        .accessibilityIdentifier("analytics-cards-total-accuracy")
                                     VRule(height: 38)
-                                    trendStat("+8.1%", "VS PREVIOUS 30 DAYS", ShotIQColor.confirmGreen)
+                                    trendStat(summary.deltaText, summary.deltaCaption, summary.deltaColor)
+                                        .accessibilityIdentifier("analytics-cards-total-delta")
                                 }
                             }
                             .padding(14)
@@ -1103,6 +2165,10 @@ struct AnalyticsCardsView: View {   // 066
                                 }
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
+                            .accessibilityIdentifier("analytics-cards-view-all")
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening detailed analytics")
+                            })
                             .buttonStyle(.plain)
                         }
                         .padding(.top, 22)
@@ -1110,9 +2176,10 @@ struct AnalyticsCardsView: View {   // 066
                             Text("No sessions match these filters.")
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                 .frame(maxWidth: .infinity).padding(.vertical, 30)
+                                .accessibilityIdentifier("analytics-cards-empty")
                         }
-                        ForEach(filteredSessions) { s in
-                            sessionCard(s).padding(.top, 12)
+                        ForEach(Array(filteredSessions.enumerated()), id: \.element.id) { index, session in
+                            sessionCard(session, index: index).padding(.top, 12)
                         }
                         Spacer(minLength: 30)
                     }
@@ -1120,9 +2187,29 @@ struct AnalyticsCardsView: View {   // 066
                 }
             }
         }
+        .shotiqToast($toast)
     }
+
+    private func sessionMatches(_ session: AnalysisSession, media: String, range: String) -> Bool {
+        let inRange: Bool
+        switch range {
+        case "Last 7 days": inRange = session.daysAgo <= 7
+        case "Last 30 days": inRange = session.daysAgo <= 30
+        default: inRange = true
+        }
+        let kindOK = media == "All media" || session.kind == media
+        return inRange && kindOK
+    }
+
+    private func filteredCount(for selectedMedia: String) -> Int {
+        sessions.filter { sessionMatches($0, media: selectedMedia, range: timeRange) }.count
+    }
+
     private func filterChip(_ icon: String, _ label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            toast = .info(label == timeRange ? "Opening time range" : "Opening media filter")
+            action()
+        } label: {
             HStack(spacing: 5) {
                 Image(systemName: icon).font(.system(size: 11))
                 Text(label).shotiqBody(12, weight: .medium)
@@ -1134,6 +2221,7 @@ struct AnalyticsCardsView: View {   // 066
             .foregroundStyle(ShotIQColor.ink)
         }
     }
+
     private func trendStat(_ value: String, _ label: String, _ color: Color) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(color)
@@ -1144,59 +2232,75 @@ struct AnalyticsCardsView: View {   // 066
         }
         .frame(maxWidth: .infinity)
     }
-    private func sessionCard(_ s: AnalysisSession) -> some View {
+
+    private func sessionCard(_ session: AnalysisSession, index: Int) -> some View {
         ShotIQCard {
             HStack(alignment: .top, spacing: 0) {
-                PhotoThumb(width: 112, height: 186, photo: sessionPhotos[s.name])
+                PhotoThumb(width: 112, height: 186, photo: sessionPhotos[session.name] ?? "066-visual-001")
                     .overlay(alignment: .bottomLeading) {
-                        Text("\(s.score)").font(.custom("Tungsten-Medium", size: 24))
+                        Text("\(session.score)").font(.custom("Tungsten-Medium", size: 24))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                             .padding(8)
+                            .accessibilityIdentifier("analytics-card-session-\(index)-score")
                     }
                     .overlay(alignment: .bottomTrailing) {
-                        Ring(pct: Double(s.score) / 100, color: ShotIQColor.shotiqOrange, lineWidth: 5)
+                        Ring(pct: Double(session.score) / 100, color: ShotIQColor.shotiqOrange, lineWidth: 5)
                             .frame(width: 40, height: 40)
                             .padding(8)
                     }
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text(s.date).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                        Text(session.date).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                         Spacer()
                         Menu {
-                            ShareLink(item: "\(s.name) on ShotIQ — \(s.makes)/\(s.shots) makes (\(s.acc)), form score \(s.score). 🏀") {
+                            ShareLink(item: session.shareText) {
                                 Label("Share session", systemImage: "square.and.arrow.up")
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening share sheet", "\(session.name) summary is ready.")
+                            })
                         } label: {
                             Image(systemName: "ellipsis").font(.system(size: 13))
                                 .foregroundStyle(ShotIQColor.graphite)
                                 .frame(width: 32, height: 24, alignment: .trailing)
                         }
+                        .accessibilityIdentifier("analytics-card-session-\(index)-share")
+                        .accessibilityLabel(session.shareText)
                     }
-                    Text(s.name).shotiqBody(18, weight: .bold)
+                    Text(session.name).shotiqBody(18, weight: .bold)
                         .lineLimit(1).minimumScaleFactor(0.8)
+                        .accessibilityIdentifier("analytics-card-session-\(index)-name")
                     HStack(spacing: 14) {
-                        sessionStat("\(s.shots)", "SHOTS")
-                        sessionStat("\(s.makes)", "MAKES")
-                        sessionStat(s.acc, "ACCURACY")
+                        sessionStat("\(session.shots)", "SHOTS")
+                            .accessibilityIdentifier("analytics-card-session-\(index)-shots")
+                        sessionStat("\(session.makes)", "MAKES")
+                            .accessibilityIdentifier("analytics-card-session-\(index)-makes")
+                        sessionStat(session.acc, "ACCURACY")
+                            .accessibilityIdentifier("analytics-card-session-\(index)-accuracy")
                     }
                     HStack(spacing: 7) {
-                        ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                            PhaseGlyph(phase: p, active: p == "RELEASE", size: 15)
+                        ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { phase in
+                            PhasePhotoThumbnail(phase: ShotPhase(label: phase),
+                                                active: phase == "RELEASE",
+                                                width: 34,
+                                                height: 24,
+                                                cornerRadius: 3)
                         }
                     }
                     HStack(alignment: .bottom) {
                         VStack(spacing: 1) {
-                            Text(s.delta).font(.custom("Tungsten-Medium", size: 20))
-                                .foregroundStyle(s.deltaColor)
-                            Text(s.deltaLabel).shotiqBody(7, weight: .bold).kerning(0.3)
-                                .foregroundStyle(s.deltaColor)
+                            Text(session.delta).font(.custom("Tungsten-Medium", size: 20))
+                                .foregroundStyle(session.deltaColor)
+                                .accessibilityIdentifier("analytics-card-session-\(index)-delta")
+                            Text(session.deltaLabel).shotiqBody(7, weight: .bold).kerning(0.3)
+                                .foregroundStyle(session.deltaColor)
                                 .lineLimit(1).minimumScaleFactor(0.7)
                         }
                         .frame(width: 84)
                         .padding(.vertical, 7)
-                        .background(s.deltaColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                        .background(session.deltaColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                         Spacer(minLength: 6)
-                        NavigationLink { AnalyticsDetailedView(metric: s.name) } label: {
+                        NavigationLink { AnalyticsDetailedView(metric: session.name) } label: {
                             HStack(spacing: 4) {
                                 Text("Open session").shotiqBody(12, weight: .semibold)
                                 Image(systemName: "chevron.right").font(.system(size: 9))
@@ -1205,12 +2309,17 @@ struct AnalyticsCardsView: View {   // 066
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 7))
                             .foregroundStyle(.white)
                         }
+                        .accessibilityIdentifier("analytics-card-session-\(index)-open")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening session", session.name)
+                        })
                     }
                 }
                 .padding(12)
             }
         }
     }
+
     private func sessionStat(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value).font(.custom("Tungsten-Medium", size: 18))
@@ -1218,6 +2327,17 @@ struct AnalyticsCardsView: View {   // 066
             Text(label).shotiqBody(7, weight: .medium).kerning(0.3)
                 .foregroundStyle(ShotIQColor.graphite)
         }
+    }
+
+    private static func signedScore(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : value < 0 ? "\(value)" : "—"
+    }
+
+    private static func sessionDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "'Today at' h:mm a" : "MMM d 'at' h:mm a"
+        return formatter.string(from: date)
     }
 }
 
@@ -1251,31 +2371,249 @@ struct ArcGauge: View {
 
 struct AnalyticsDetailedView: View { // 067
     var metric = "Release Consistency"
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
     @State private var range = "Last 30 days"
     @State private var chosenMetric: String?
     @State private var showRangePicker = false
     @State private var showMetricPicker = false
     @State private var showConfidenceInfo = false
-    private var displayMetric: String { chosenMetric ?? metric }
-    private var exportSummary: String {
-        "ShotIQ analysis — \(displayMetric), \(range): 78.2% consistency, form score 82, +6.4% vs previous 30 days."
+    @State private var toast: ShotIQToast?
+
+    private struct DetailMetricSummary {
+        let trendText: String
+        let trendCaption: String
+        let latestText: String
+        let latestDate: String
+        let trendPoints: [Double]
+        let trendBadge: String
+        let trendA11y: String
+        let confidenceText: String
+        let confidenceMessage: String
+        let rangeCount: Int
+        let arcLabel: String
+        let arcValue: String
+        let arcTarget: String
+        let consistencyText: String
+        let consistencySpread: String
     }
-    private let scorecard: [(String, Int, Int, String)] = [
-        ("SETUP", 84, 4, "GOOD"), ("LOAD", 79, 2, "GOOD"), ("RISE", 88, 5, "GREAT"),
-        ("RELEASE", 78, 6, "GOOD"), ("FOLLOW-THROUGH", 84, 3, "GOOD")
-    ]
-    private let comparison: [(String, String, String, String, String, Bool)] = [
-        ("Form Score", "82", "76", "71", "+11", true),
-        ("Make %", "62.5%", "59.1%", "52.4%", "+10.1%", true),
-        ("Release Consistency", "78.2%", "71.8%", "64.0%", "+14.2%", true),
-        ("Release Angle", "50.4°", "48.1°", "45.2°", "+5.2°", true),
-        ("Elbow Alignment", "92%", "88%", "81%", "+11%", true),
-        ("Shot Depth", "1.3 ft", "1.5 ft", "1.7 ft", "-0.4 ft", false),
-        ("Shot Speed", "1.06 sec", "1.11 sec", "1.18 sec", "-0.12 sec", false),
-        ("Swish %", "41.7%", "36.4%", "28.6%", "+13.1%", true)
-    ]
+
+    private struct PhaseScoreItem {
+        let name: String
+        let score: Int
+        let delta: String
+        let verdict: String
+        let color: Color
+    }
+
+    private struct ComparisonHeader {
+        let date: String
+        let shots: String
+        let highlight: Bool
+    }
+
+    private struct ComparisonRow {
+        let metric: String
+        let latest: String
+        let previous: String
+        let baseline: String
+        let change: String
+        let positive: Bool
+    }
+
+    private var displayMetric: String { chosenMetric ?? metric }
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+    private var filteredWorkouts: [TrainingWorkoutRecord] {
+        let calendar = Calendar.current
+        let now = Date()
+        return workouts.filter { workout in
+            let daysAgo = calendar.dateComponents([.day], from: workout.completedAt, to: now).day ?? 0
+            switch range {
+            case "Last 7 days": return daysAgo <= 7
+            case "Last 30 days": return daysAgo <= 30
+            case "Last 90 days": return daysAgo <= 90
+            default: return true
+            }
+        }
+    }
+    private var latestPresentation: AnalysisResultPresentation? {
+        app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+    private var exportSummary: String {
+        if workouts.isEmpty {
+            return UITestHooks.demoData
+                ? "ShotIQ analysis - \(displayMetric), \(range): 78.2% consistency, form score 82, +6.4% vs previous 30 days."
+                : "ShotIQ analysis - no saved sessions yet. Analyze a shot or finish a workout to build \(displayMetric) history."
+        }
+        let summary = metricSummary
+        return "ShotIQ analysis - \(displayMetric), \(range): latest \(summary.latestText), change \(summary.trendText), \(summary.rangeCount) sessions in range."
+    }
+    private var metricSummary: DetailMetricSummary {
+        guard workouts.isEmpty == false else {
+            guard UITestHooks.demoData else {
+                return DetailMetricSummary(trendText: "—",
+                                           trendCaption: "no sessions yet",
+                                           latestText: "--",
+                                           latestDate: "--",
+                                           trendPoints: [0, 0],
+                                           trendBadge: "--",
+                                           trendA11y: "\(displayMetric) has no saved sessions yet",
+                                           confidenceText: "Confidence: None",
+                                           confidenceMessage: "Analyze a shot or complete a workout to build analytics history.",
+                                           rangeCount: 0,
+                                           arcLabel: "RELEASE OFFSET",
+                                           arcValue: latestPresentation?.releaseOffsetText ?? "--",
+                                           arcTarget: "TARGET: -5°–5°",
+                                           consistencyText: "--",
+                                           consistencySpread: "—")
+            }
+            return DetailMetricSummary(trendText: "+6.4%",
+                                       trendCaption: "vs previous 30 days",
+                                       latestText: "78.2%",
+                                       latestDate: "MAY 24",
+                                       trendPoints: [68, 66.5, 69, 72.5, 68.5, 71, 73.5, 77, 76.2],
+                                       trendBadge: "78.2%",
+                                       trendA11y: "Release Consistency trend 68 to 66 to 69 to 72 to 68 to 71 to 73 to 77 to 76",
+                                       confidenceText: "Confidence: High",
+                                       confidenceMessage: "Confidence reflects how many tracked sessions back this trend. 9 sessions in range gives a high-confidence read.",
+                                       rangeCount: 9,
+                                       arcLabel: "AVG ARC",
+                                       arcValue: "50.4°",
+                                       arcTarget: "IDEAL: 48°–52°",
+                                       consistencyText: "78.2%",
+                                       consistencySpread: "±3.6°")
+        }
+        let visible = filteredWorkouts
+        guard let latest = visible.first else {
+            return DetailMetricSummary(trendText: "—",
+                                       trendCaption: "no sessions in range",
+                                       latestText: "--",
+                                       latestDate: "--",
+                                       trendPoints: [0, 0],
+                                       trendBadge: "--",
+                                       trendA11y: "\(displayMetric) has no sessions in \(range)",
+                                       confidenceText: "Confidence: None",
+                                       confidenceMessage: "No completed sessions match this range yet.",
+                                       rangeCount: 0,
+                                       arcLabel: "RELEASE OFFSET",
+                                       arcValue: latestPresentation?.releaseOffsetText ?? "--",
+                                       arcTarget: "TARGET: -5°–5°",
+                                       consistencyText: "--",
+                                       consistencySpread: "—")
+        }
+        let latestValue = metricValue(displayMetric, for: latest)
+        let previous = visible.dropFirst().first
+        let previousValue = previous.map { metricValue(displayMetric, for: $0) }
+        let deltaText = previousValue.map { formatDelta(latestValue - $0, metric: displayMetric) } ?? "—"
+        let points = visible.reversed().map { metricValue(displayMetric, for: $0) }
+        let trendPoints = points.count == 1 ? [points[0], points[0]] : points
+        let consistencyValues = visible.map { metricValue("Release Consistency", for: $0) }
+        let spread = (consistencyValues.max() ?? 0) - (consistencyValues.min() ?? 0)
+        return DetailMetricSummary(trendText: deltaText,
+                                   trendCaption: previous == nil ? "no previous session" : "vs previous session",
+                                   latestText: formatMetric(latestValue, metric: displayMetric),
+                                   latestDate: Self.shortDate(latest.completedAt),
+                                   trendPoints: trendPoints,
+                                   trendBadge: formatMetric(latestValue, metric: displayMetric),
+                                   trendA11y: "\(displayMetric) trend \(trendPoints.map { String(Int($0.rounded())) }.joined(separator: " to "))",
+                                   confidenceText: visible.count >= 2 ? "Confidence: High" : "Confidence: Low",
+                                   confidenceMessage: "\(visible.count) completed session\(visible.count == 1 ? "" : "s") in \(range.lowercased()).",
+                                   rangeCount: visible.count,
+                                   arcLabel: "RELEASE OFFSET",
+                                   arcValue: latestPresentation?.releaseOffsetText ?? "--",
+                                   arcTarget: "TARGET: -5°–5°",
+                                   consistencyText: formatMetric(metricValue("Release Consistency", for: latest),
+                                                                 metric: "Release Consistency"),
+                                   consistencySpread: visible.count >= 2 ? "±\(String(format: "%.1f", spread))%" : "—")
+    }
+    private var scorecard: [PhaseScoreItem] {
+        guard let latest = filteredWorkouts.first else {
+            guard UITestHooks.demoData else {
+                return [PhaseScoreItem(name: "SETUP", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "LOAD", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "RISE", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "RELEASE", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite),
+                        PhaseScoreItem(name: "FOLLOW-THROUGH", score: 0, delta: "—", verdict: "NO DATA", color: ShotIQColor.graphite)]
+            }
+            return [PhaseScoreItem(name: "SETUP", score: 84, delta: "+4", verdict: "GOOD", color: ShotIQColor.analysisBlue),
+                    PhaseScoreItem(name: "LOAD", score: 79, delta: "+2", verdict: "GOOD", color: ShotIQColor.analysisBlue),
+                    PhaseScoreItem(name: "RISE", score: 88, delta: "+5", verdict: "GREAT", color: ShotIQColor.confirmGreen),
+                    PhaseScoreItem(name: "RELEASE", score: 78, delta: "+6", verdict: "GOOD", color: ShotIQColor.analysisBlue),
+                    PhaseScoreItem(name: "FOLLOW-THROUGH", score: 84, delta: "+3", verdict: "GOOD", color: ShotIQColor.analysisBlue)]
+        }
+        let previous = filteredWorkouts.dropFirst().first
+        return latest.phaseScores.map { phase, score in
+            let previousScore = previous?.phaseScores.first(where: { $0.0 == phase })?.1
+            let delta = previousScore.map { Self.signedScore(score - $0) } ?? "—"
+            let verdict = score >= 85 ? "GREAT" : score >= 70 ? "GOOD" : "BUILDING"
+            return PhaseScoreItem(name: phase,
+                                  score: score,
+                                  delta: delta,
+                                  verdict: verdict,
+                                  color: verdict == "GREAT" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+        }
+    }
+    private var comparisonHeaders: [ComparisonHeader] {
+        if workouts.isEmpty {
+            guard UITestHooks.demoData else {
+                return [ComparisonHeader(date: "NO SESSION", shots: "--", highlight: true),
+                        ComparisonHeader(date: "NO SESSION", shots: "--", highlight: false),
+                        ComparisonHeader(date: "NO SESSION", shots: "--", highlight: false)]
+            }
+            return [ComparisonHeader(date: "MAY 24, 8:24 AM", shots: "24 SHOTS", highlight: true),
+                    ComparisonHeader(date: "MAY 16, 7:05 AM", shots: "22 SHOTS", highlight: false),
+                    ComparisonHeader(date: "MAY 9, 6:40 AM", shots: "21 SHOTS", highlight: false)]
+        }
+        var headers = filteredWorkouts.prefix(3).map {
+            ComparisonHeader(date: Self.tableDate($0.completedAt), shots: "\($0.shots) SHOTS", highlight: false)
+        }
+        if headers.indices.contains(0) { headers[0] = ComparisonHeader(date: headers[0].date, shots: headers[0].shots, highlight: true) }
+        while headers.count < 3 {
+            headers.append(ComparisonHeader(date: "NO SESSION", shots: "--", highlight: false))
+        }
+        return headers
+    }
+    private var comparisonChangeLabel: String {
+        workouts.isEmpty ? (UITestHooks.demoData ? "(LATEST VS MAY 9)" : "(NO SESSIONS YET)") : "(LATEST VS PREVIOUS)"
+    }
+    private var comparison: [ComparisonRow] {
+        guard workouts.isEmpty == false else {
+            guard UITestHooks.demoData else {
+                return ["Form Score", "Make %", "Release Consistency", "Release Angle", "Elbow Alignment"].map {
+                    ComparisonRow(metric: $0, latest: "--", previous: "--", baseline: "--", change: "—", positive: true)
+                }
+            }
+            return [ComparisonRow(metric: "Form Score", latest: "82", previous: "76", baseline: "71", change: "+11", positive: true),
+                    ComparisonRow(metric: "Make %", latest: "62.5%", previous: "59.1%", baseline: "52.4%", change: "+10.1%", positive: true),
+                    ComparisonRow(metric: "Release Consistency", latest: "78.2%", previous: "71.8%", baseline: "64.0%", change: "+14.2%", positive: true),
+                    ComparisonRow(metric: "Release Angle", latest: "50.4°", previous: "48.1°", baseline: "45.2°", change: "+5.2°", positive: true),
+                    ComparisonRow(metric: "Elbow Alignment", latest: "92%", previous: "88%", baseline: "81%", change: "+11%", positive: true),
+                    ComparisonRow(metric: "Shot Depth", latest: "1.3 ft", previous: "1.5 ft", baseline: "1.7 ft", change: "-0.4 ft", positive: false),
+                    ComparisonRow(metric: "Shot Speed", latest: "1.06 sec", previous: "1.11 sec", baseline: "1.18 sec", change: "-0.12 sec", positive: false),
+                    ComparisonRow(metric: "Swish %", latest: "41.7%", previous: "36.4%", baseline: "28.6%", change: "+13.1%", positive: true)]
+        }
+        let visible = filteredWorkouts
+        let metrics = ["Form Score", "Make %", "Release Consistency", "Release Angle", "Elbow Alignment"]
+        return metrics.map { name in
+            let values = visible.prefix(3).map { metricValue(name, for: $0) }
+            let latest = values.first
+            let previous = values.dropFirst().first
+            let baseline = values.dropFirst(2).first
+            let changeBase = previous ?? baseline
+            let change = latest.flatMap { latest in changeBase.map { formatDelta(latest - $0, metric: name) } } ?? "—"
+            return ComparisonRow(metric: name,
+                                 latest: latest.map { formatMetric($0, metric: name) } ?? "--",
+                                 previous: previous.map { formatMetric($0, metric: name) } ?? "--",
+                                 baseline: baseline.map { formatMetric($0, metric: name) } ?? "--",
+                                 change: change,
+                                 positive: !change.hasPrefix("-"))
+        }
+    }
     var body: some View {
+        let summary = metricSummary
         CanonicalScreen(testID: "screen-ios-analytics-detailed") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -1283,9 +2621,18 @@ struct AnalyticsDetailedView: View { // 067
                         Wordmark(size: 26)
                         Spacer()
                         HStack(spacing: 18) {
-                            Button { dismiss() } label: { toolItem("rectangle.on.rectangle", "Cards") }
-                            Button { showMetricPicker = true } label: { toolItem("slider.horizontal.3", "Select metric") }
+                            Button {
+                                toast = .info("Returning to analytics cards")
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                            } label: { toolItem("rectangle.on.rectangle", "Cards") }
+                            Button {
+                                toast = .info("Opening metric picker")
+                                showMetricPicker = true
+                            } label: { toolItem("slider.horizontal.3", "Select metric") }
                             ShareLink(item: exportSummary) { toolItem("square.and.arrow.up", "Export") }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening export sheet", "\(displayMetric) history is ready.")
+                                })
                         }
                     }
                     .padding(.horizontal, 20).frame(height: 56)
@@ -1295,54 +2642,83 @@ struct AnalyticsDetailedView: View { // 067
                         Text("Track your mechanics. See what moves the needle.")
                             .shotiqBody(13).foregroundStyle(ShotIQColor.graphite).padding(.top, 4)
                         HStack(spacing: 8) {
-                            detailChip("calendar", range, chevron: true) { showRangePicker = true }
-                            detailChip("chart.xyaxis.line", displayMetric, chevron: true) { showMetricPicker = true }
-                            detailChip(nil, "Confidence: High", chevron: false) { showConfidenceInfo = true }
+                            detailChip("calendar", range, chevron: true) {
+                                toast = .info("Opening range picker")
+                                showRangePicker = true
+                            }
+                                .accessibilityIdentifier("analytics-detailed-range-filter")
+                            detailChip("chart.xyaxis.line", displayMetric, chevron: true) {
+                                toast = .info("Opening metric picker")
+                                showMetricPicker = true
+                            }
+                                .accessibilityIdentifier("analytics-detailed-metric-filter")
+                            detailChip(nil, summary.confidenceText, chevron: false) {
+                                toast = .info("Showing confidence details")
+                                showConfidenceInfo = true
+                            }
+                                .accessibilityIdentifier("analytics-detailed-confidence")
                         }
                         .padding(.top, 12)
                         .confirmationDialog("Time range", isPresented: $showRangePicker, titleVisibility: .visible) {
                             ForEach(["Last 7 days", "Last 30 days", "Last 90 days", "All time"], id: \.self) { r in
-                                Button(r) { range = r }
+                                Button(r) {
+                                    range = r
+                                    toast = .success("Range updated", "\(r): \(filteredCount(for: r)) sessions.")
+                                }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Range unchanged")
+                            }
                         }
                         .confirmationDialog("Select metric", isPresented: $showMetricPicker, titleVisibility: .visible) {
                             ForEach(["Release Consistency", "Form Score", "Make %", "Release Angle", "Elbow Alignment"],
                                     id: \.self) { m in
-                                Button(m) { chosenMetric = m }
+                                Button(m) {
+                                    chosenMetric = m
+                                    toast = .success("Metric updated", "\(m) selected.")
+                                }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Metric unchanged")
+                            }
                         }
-                        .alert("Confidence: High", isPresented: $showConfidenceInfo) {
+                        .alert(summary.confidenceText, isPresented: $showConfidenceInfo) {
                             Button("OK", role: .cancel) {}
                         } message: {
-                            Text("Confidence reflects how many tracked sessions back this trend. 9 sessions in range gives a high-confidence read.")
+                            Text(summary.confidenceMessage)
                         }
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "TREND")
-                                    Text("+6.4%").font(.custom("Tungsten-Medium", size: 30))
+                                    Text(summary.trendText).font(.custom("Tungsten-Medium", size: 30))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("vs previous 30 days").shotiqBody(10)
+                                        .accessibilityIdentifier("analytics-detailed-trend-delta")
+                                    Text(summary.trendCaption).shotiqBody(10)
                                         .foregroundStyle(ShotIQColor.graphite)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("analytics-detailed-trend-caption")
                                 }
                                 .frame(width: 82, alignment: .leading)
-                                TrendLine(points: [68, 66.5, 69, 72.5, 68.5, 71, 73.5, 77, 76.2],
+                                TrendLine(points: summary.trendPoints,
                                           stroke: ShotIQColor.confirmGreen,
                                           areaFill: true, gridlines: true,
                                           xLabels: ["APR", "MAY"],
                                           yLabels: ["80", "72", "64"],
-                                          endBadge: "78.2%")
+                                          endBadge: summary.trendBadge)
                                     .frame(height: 92)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityIdentifier("analytics-detailed-trend-chart")
+                                    .accessibilityLabel(summary.trendA11y)
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "LATEST")
-                                    Text("78.2%").font(.custom("Tungsten-Medium", size: 30))
+                                    Text(summary.latestText).font(.custom("Tungsten-Medium", size: 30))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text("MAY 24").shotiqBody(10, weight: .medium)
+                                        .accessibilityIdentifier("analytics-detailed-latest-value")
+                                    Text(summary.latestDate).shotiqBody(10, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("analytics-detailed-latest-date")
                                 }
                                 .frame(width: 62, alignment: .leading)
                             }
@@ -1353,21 +2729,28 @@ struct AnalyticsDetailedView: View { // 067
                             VStack(alignment: .leading, spacing: 10) {
                                 SectionLabel(text: "MECHANICS SCORECARD")
                                 HStack(alignment: .top, spacing: 6) {
-                                    ForEach(scorecard, id: \.0) { p in
+                                    ForEach(Array(scorecard.enumerated()), id: \.element.name) { index, p in
                                         VStack(spacing: 4) {
-                                            PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 24)
-                                            Text(p.0).shotiqBody(7, weight: .bold).kerning(0.2)
-                                                .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                            PhasePhotoThumbnail(phase: ShotPhase(label: p.name),
+                                                                active: p.name == "RELEASE",
+                                                                width: 42,
+                                                                height: 30,
+                                                                cornerRadius: 4)
+                                            Text(p.name).shotiqBody(7, weight: .bold).kerning(0.2)
+                                                .foregroundStyle(p.name == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.55)
+                                                .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-name")
                                             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                                Text("\(p.1)").font(.custom("Tungsten-Medium", size: 20))
-                                                Text("+\(p.2)").shotiqBody(8, weight: .bold)
+                                                Text("\(p.score)").font(.custom("Tungsten-Medium", size: 20))
+                                                    .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-value")
+                                                Text(p.delta).shotiqBody(8, weight: .bold)
                                                     .foregroundStyle(ShotIQColor.confirmGreen)
+                                                    .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-delta")
                                             }
-                                            Text(p.3).shotiqBody(8, weight: .bold)
-                                                .foregroundStyle(p.3 == "GREAT" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
-                                            ScoreBar(pct: Double(p.1) / 100,
-                                                     color: p.3 == "GREAT" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                                            Text(p.verdict).shotiqBody(8, weight: .bold)
+                                                .foregroundStyle(p.color)
+                                                .accessibilityIdentifier("analytics-detailed-scorecard-\(index)-verdict")
+                                            ScoreBar(pct: Double(p.score) / 100, color: p.color)
                                         }
                                         .padding(6)
                                         .frame(maxWidth: .infinity)
@@ -1384,24 +2767,29 @@ struct AnalyticsDetailedView: View { // 067
                                 Text("METRIC").shotiqBody(9, weight: .bold).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                compHeader("MAY 24, 8:24 AM", "24 SHOTS", highlight: true)
-                                compHeader("MAY 16, 7:05 AM", "22 SHOTS", highlight: false)
-                                compHeader("MAY 9, 6:40 AM", "21 SHOTS", highlight: false)
-                                compHeader("CHANGE", "(LATEST VS MAY 9)", highlight: false)
+                                ForEach(Array(comparisonHeaders.enumerated()), id: \.offset) { _, header in
+                                    compHeader(header.date, header.shots, highlight: header.highlight)
+                                }
+                                compHeader("CHANGE", comparisonChangeLabel, highlight: false)
                             }
                             .padding(.vertical, 8)
                             .overlay(HRule(), alignment: .bottom)
-                            ForEach(comparison, id: \.0) { r in
+                            ForEach(Array(comparison.enumerated()), id: \.element.metric) { index, r in
                                 HStack(spacing: 0) {
-                                    Text(r.0).shotiqBody(11)
+                                    Text(r.metric).shotiqBody(11)
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.6)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    compCell(r.1, color: ShotIQColor.shotiqOrange, highlight: true)
-                                    compCell(r.2, color: ShotIQColor.ink, highlight: false)
-                                    compCell(r.3, color: ShotIQColor.ink, highlight: false)
-                                    compCell(r.4, color: r.5 ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed,
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-metric")
+                                    compCell(r.latest, color: ShotIQColor.shotiqOrange, highlight: true)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-latest")
+                                    compCell(r.previous, color: ShotIQColor.ink, highlight: false)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-previous")
+                                    compCell(r.baseline, color: ShotIQColor.ink, highlight: false)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-baseline")
+                                    compCell(r.change, color: r.positive ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed,
                                              highlight: false)
+                                        .accessibilityIdentifier("analytics-detailed-comparison-\(index)-change")
                                 }
                                 .padding(.vertical, 8)
                                 .overlay(HRule(), alignment: .bottom)
@@ -1412,21 +2800,24 @@ struct AnalyticsDetailedView: View { // 067
                             HStack(alignment: .center, spacing: 10) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "RELEASE ARC RANGE")
-                                    Text("AVG ARC").shotiqBody(8, weight: .semibold)
+                                    Text(summary.arcLabel).shotiqBody(8, weight: .semibold)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("50.4°").font(.custom("Tungsten-Medium", size: 32))
+                                    Text(summary.arcValue).font(.custom("Tungsten-Medium", size: 32))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Text("IDEAL: 48°–52°").shotiqBody(9, weight: .medium)
+                                        .accessibilityIdentifier("analytics-detailed-arc-value")
+                                    Text(summary.arcTarget).shotiqBody(9, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .frame(width: 96, alignment: .leading)
                                 ArcGauge().frame(height: 90).frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "CONSISTENCY")
-                                    Text("78.2%").font(.custom("Tungsten-Medium", size: 28))
+                                    Text(summary.consistencyText).font(.custom("Tungsten-Medium", size: 28))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text("±3.6°").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("analytics-detailed-consistency-value")
+                                    Text(summary.consistencySpread).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .accessibilityIdentifier("analytics-detailed-consistency-spread")
                                 }
                                 .frame(width: 76, alignment: .leading)
                             }
@@ -1454,10 +2845,97 @@ struct AnalyticsDetailedView: View { // 067
                 }
             }
         }
+        .shotiqToast($toast)
     }
+
+    private func filteredCount(for selectedRange: String) -> Int {
+        let calendar = Calendar.current
+        let now = Date()
+        return workouts.filter { workout in
+            let daysAgo = calendar.dateComponents([.day], from: workout.completedAt, to: now).day ?? 0
+            switch selectedRange {
+            case "Last 7 days": return daysAgo <= 7
+            case "Last 30 days": return daysAgo <= 30
+            case "Last 90 days": return daysAgo <= 90
+            default: return true
+            }
+        }.count
+    }
+
+    private func metricValue(_ metric: String, for workout: TrainingWorkoutRecord) -> Double {
+        switch metric {
+        case "Form Score":
+            return Double(workout.formScore)
+        case "Make %":
+            return workout.accuracy * 100
+        case "Release Consistency":
+            let values = workout.phaseScores.map { Double($0.1) }
+            return values.reduce(0, +) / Double(max(values.count, 1))
+        case "Release Angle":
+            return metricNumber(latestPresentation?.releaseOffsetText) ?? Double(workout.formScore)
+        case "Elbow Alignment":
+            return metricNumber(latestPresentation?.elbowAngleText) ?? Double(workout.formScore)
+        default:
+            let values = workout.phaseScores.map { Double($0.1) }
+            return values.reduce(0, +) / Double(max(values.count, 1))
+        }
+    }
+
+    private func metricNumber(_ text: String?) -> Double? {
+        guard let text else { return nil }
+        let allowed = text.filter { "-0123456789.".contains($0) }
+        return Double(allowed)
+    }
+
+    private func formatMetric(_ value: Double, metric: String) -> String {
+        switch metric {
+        case "Form Score":
+            return "\(Int(value.rounded()))"
+        case "Make %", "Release Consistency":
+            return String(format: "%.1f%%", value)
+        case "Release Angle", "Elbow Alignment":
+            return "\(Int(value.rounded()))°"
+        default:
+            return String(format: "%.1f%%", value)
+        }
+    }
+
+    private func formatDelta(_ value: Double, metric: String) -> String {
+        if abs(value) < 0.05 { return "—" }
+        let sign = value > 0 ? "+" : ""
+        switch metric {
+        case "Form Score":
+            return "\(sign)\(Int(value.rounded()))"
+        case "Make %", "Release Consistency":
+            return "\(sign)\(String(format: "%.1f", value))%"
+        case "Release Angle", "Elbow Alignment":
+            return "\(sign)\(Int(value.rounded()))°"
+        default:
+            return "\(sign)\(String(format: "%.1f", value))%"
+        }
+    }
+
+    private static func signedScore(_ value: Int) -> String {
+        value > 0 ? "+\(value)" : value < 0 ? "\(value)" : "—"
+    }
+
+    private static func shortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "TODAY" : "MMM d"
+        return formatter.string(from: date).uppercased()
+    }
+
+    private static func tableDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "'TODAY,' h:mm a" : "MMM d, h:mm a"
+        return formatter.string(from: date).uppercased()
+    }
+
     private func toolItem(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 3) {
-            Image(systemName: icon).font(.system(size: 15))
+            Image(systemName: icon).font(.system(size: 24))
             Text(label).shotiqBody(9).lineLimit(1).minimumScaleFactor(0.7)
         }
         .foregroundStyle(ShotIQColor.ink)
@@ -1466,7 +2944,7 @@ struct AnalyticsDetailedView: View { // 067
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
-                if let icon { Image(systemName: icon).font(.system(size: 11)) }
+                if let icon { Image(systemName: icon).font(.system(size: 18)) }
                 Text(label).shotiqBody(11, weight: .medium)
                     .lineLimit(1).minimumScaleFactor(0.6)
                 if chevron { Image(systemName: "chevron.down").font(.system(size: 8)) }
@@ -1497,8 +2975,9 @@ struct AnalyticsDetailedView: View { // 067
     private func railTile(_ label: String, _ color: Color) -> some View {
         VStack(spacing: 0) {
             Rectangle().fill(ShotIQColor.warmCanvas).frame(height: 56)
-                .overlay(Image(systemName: "figure.basketball").font(.system(size: 16))
-                    .foregroundStyle(ShotIQColor.muted))
+                .overlay(ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "figure.basketball"),
+                                                  size: 18,
+                                                  label: nil))
             Text(label).shotiqBody(6.5, weight: .bold).kerning(0.2)
                 .foregroundStyle(.white)
                 .lineLimit(1).minimumScaleFactor(0.5)
@@ -1513,37 +2992,95 @@ struct AnalyticsDetailedView: View { // 067
 
 struct MyMediaView: View {          // 068
     @EnvironmentObject var app: AppState
+    @AppStorage(ShotIQProfileAvatarStore.key) private var profileAvatarDataURL = ""
     @State private var segment = "All"
     @State private var gradeFilter = "All results"
     @State private var sortNewest = true
     @State private var selecting = false
     @State private var selectedTiles: Set<Int> = []
+    @State private var hiddenSampleMedia: Set<String> = []
     @State private var showGradeFilter = false
+    @State private var confirmRemoveSelection = false
+    @State private var removingSelection = false
+    @State private var toast: ShotIQToast?
+    private struct MediaHeaderStat {
+        let value: String
+        let label: String
+    }
     private struct MediaItem {
         let title, time, score, grade: String
         let color: Color
         let kind: String            // Images / Videos / Live / Workouts
+        let duration: String
+        let photo: String?
+        let analysis: ShotIQAnalysisResultDTO?
+        var stableId: String { analysis?.id ?? "\(title)-\(time)-\(duration)" }
     }
     private let today: [MediaItem] = [
         .init(title: "Pull-Up • Right", time: "8:24 AM", score: "82", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Videos"),
+              color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:03",
+              photo: "068-visual-002", analysis: nil),
         .init(title: "Spot-Up • Right", time: "8:18 AM", score: "74", grade: "REVIEW",
-              color: ShotIQColor.reviewRed, kind: "Images"),
+              color: ShotIQColor.reviewRed, kind: "Images", duration: "0:04",
+              photo: "068-visual-003", analysis: nil),
         .init(title: "Catch & Shoot • Right", time: "8:12 AM", score: "86", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Videos"),
+              color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:05",
+              photo: "068-visual-001", analysis: nil),
         .init(title: "Live Session", time: "8:01 AM", score: "80", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Live"),
+              color: ShotIQColor.analysisBlue, kind: "Live", duration: "0:06",
+              photo: "068-visual-005", analysis: nil),
         .init(title: "Low Dribble Series", time: "7:45 AM", score: "88", grade: "GOOD",
-              color: ShotIQColor.analysisBlue, kind: "Workouts"),
+              color: ShotIQColor.analysisBlue, kind: "Workouts", duration: "0:07",
+              photo: "068-visual-004", analysis: nil),
         .init(title: "Cone Progression", time: "7:28 AM", score: "90", grade: "EXCELLENT",
-              color: ShotIQColor.confirmGreen, kind: "Images")
+              color: ShotIQColor.confirmGreen, kind: "Images", duration: "0:08",
+              photo: "068-visual-003", analysis: nil)
     ]
-    /// Canonical 068 grid frames, in the tile order above; the second tile has
-    /// no canonical crop and keeps the placeholder.
-    private let todayPhotos: [String?] = ["068-visual-002", nil, "068-visual-001",
-                                          "068-visual-005", "068-visual-004", "068-visual-003"]
+    private var realMedia: [MediaItem] {
+        app.recentMedia.map { entry in
+            let presentation = AnalysisResultPresentation(result: entry.analysis)
+            let isGood = presentation.scoreVerdict == "GOOD" || presentation.scoreVerdict == "EXCELLENT"
+            return MediaItem(title: entry.title,
+                             time: "Just now",
+                             score: presentation.scoreText,
+                             grade: presentation.scoreVerdict,
+                             color: isGood ? ShotIQColor.analysisBlue : ShotIQColor.reviewRed,
+                             kind: entry.kind,
+                             duration: entry.durationText,
+                             photo: nil,
+                             analysis: entry.analysis)
+        }
+    }
+    private var yesterday: [MediaItem] {
+        [
+            .init(title: "Catch & Shoot Review", time: "Yesterday", score: "79", grade: "GOOD",
+                  color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:04",
+                  photo: "068-visual-002", analysis: nil),
+            .init(title: "Right Wing Pull-Up", time: "Yesterday", score: "76", grade: "REVIEW",
+                  color: ShotIQColor.reviewRed, kind: "Videos", duration: "0:05",
+                  photo: "068-visual-001", analysis: nil),
+            .init(title: "Corner Footwork", time: "Yesterday", score: "83", grade: "GOOD",
+                  color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:06",
+                  photo: "068-visual-005", analysis: nil),
+            .init(title: "Release Timing", time: "Yesterday", score: "81", grade: "GOOD",
+                  color: ShotIQColor.analysisBlue, kind: "Videos", duration: "0:07",
+                  photo: "068-visual-004", analysis: nil)
+        ]
+    }
+    private var allToday: [MediaItem] {
+        (realMedia + (UITestHooks.demoData ? today : []))
+            .filter { !hiddenSampleMedia.contains($0.stableId) }
+    }
+    private var visibleYesterday: [MediaItem] {
+        guard UITestHooks.demoData else { return [] }
+        return yesterday.filter {
+            !hiddenSampleMedia.contains($0.stableId)
+            && (segment == "All" || segment == $0.kind)
+            && (gradeFilter == "All results" || gradeFilter == $0.grade)
+        }
+    }
     private var filteredToday: [(Int, MediaItem)] {
-        var items = Array(today.enumerated()).filter { pair in
+        var items = Array(allToday.enumerated()).filter { pair in
             (segment == "All" || pair.element.kind == segment)
             && (gradeFilter == "All results" || pair.element.grade == gradeFilter)
         }
@@ -1552,7 +3089,50 @@ struct MyMediaView: View {          // 068
     }
     /// Yesterday's four clips are all plain video captures.
     private var showYesterday: Bool {
-        (segment == "All" || segment == "Videos") && gradeFilter == "All results"
+        visibleYesterday.isEmpty == false
+    }
+    private var latestPresentation: AnalysisResultPresentation? {
+        app.recentMedia.first.map { AnalysisResultPresentation(result: $0.analysis) }
+    }
+    private var selectedMediaItems: [MediaItem] {
+        selectedTiles.sorted().compactMap { index in
+            allToday.indices.contains(index) ? allToday[index] : nil
+        }
+    }
+    private var headerScoreText: String {
+        latestPresentation?.scoreText ?? (UITestHooks.demoData ? "82" : "--")
+    }
+    private var headerScoreVerdict: String {
+        latestPresentation?.scoreVerdict ?? (UITestHooks.demoData ? "GOOD" : "NO MEDIA")
+    }
+    private var headerScoreColor: Color {
+        headerScoreVerdict == "UNAVAILABLE" || headerScoreVerdict == "REVIEW" || headerScoreVerdict == "NO MEDIA"
+            ? ShotIQColor.reviewRed
+            : ShotIQColor.analysisBlue
+    }
+    private var headerScorePct: Double {
+        Double(headerScoreText).map { min(max($0 / 100, 0), 1) } ?? 0
+    }
+    private var primaryTargetText: String {
+        latestPresentation?.coachingTarget
+            ?? (UITestHooks.demoData ? "Keep elbow stacked through release" : "Analyze a shot to create a coaching target")
+    }
+    private var headerStats: [MediaHeaderStat] {
+        guard realMedia.isEmpty == false else {
+            if UITestHooks.demoData {
+                return [MediaHeaderStat(value: "24", label: "SHOTS"),
+                        MediaHeaderStat(value: "15", label: "MAKES"),
+                        MediaHeaderStat(value: "62.5%", label: "ACCURACY")]
+            }
+            return [MediaHeaderStat(value: "0", label: "MEDIA"),
+                    MediaHeaderStat(value: "0", label: "IMAGES"),
+                    MediaHeaderStat(value: "0", label: "VIDEOS")]
+        }
+        let imageCount = realMedia.filter { $0.kind == "Images" }.count
+        let videoCount = realMedia.filter { $0.kind == "Videos" }.count
+        return [MediaHeaderStat(value: "\(realMedia.count)", label: "MEDIA"),
+                MediaHeaderStat(value: "\(imageCount)", label: imageCount == 1 ? "IMAGE" : "IMAGES"),
+                MediaHeaderStat(value: "\(videoCount)", label: videoCount == 1 ? "VIDEO" : "VIDEOS")]
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-my-media") {
@@ -1563,28 +3143,35 @@ struct MyMediaView: View {          // 068
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Primary target").shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             .padding(.top, 12)
-                        Text("Keep elbow stacked through release").shotiqBody(14, weight: .semibold)
+                        Text(primaryTargetText).shotiqBody(14, weight: .semibold)
                             .padding(.top, 2)
+                            .accessibilityIdentifier("my-media-primary-target")
                         ShotIQCard {
                             HStack(spacing: 0) {
                                 VStack(spacing: 3) {
                                     Text("FORM SCORE").shotiqBody(8, weight: .semibold).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Medium", size: 26))
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                    Text("GOOD").shotiqBody(8, weight: .bold)
-                                        .foregroundStyle(ShotIQColor.analysisBlue)
-                                    ScoreBar(pct: 0.82, color: ShotIQColor.analysisBlue).frame(width: 44)
+                                    Text(headerScoreText).font(.custom("Tungsten-Medium", size: 26))
+                                        .foregroundStyle(headerScoreColor)
+                                        .accessibilityIdentifier("my-media-header-score")
+                                    Text(headerScoreVerdict).shotiqBody(8, weight: .bold)
+                                        .foregroundStyle(headerScoreColor)
+                                        .accessibilityIdentifier("my-media-header-verdict")
+                                    ScoreBar(pct: headerScorePct, color: headerScoreColor).frame(width: 44)
+                                        .accessibilityIdentifier("my-media-header-score-bar")
                                 }
                                 .frame(maxWidth: .infinity)
+                                ForEach(Array(headerStats.enumerated()), id: \.offset) { index, stat in
+                                    VRule(height: 48)
+                                    mediaStat(stat.value, stat.label, idPrefix: "my-media-header-stat-\(index)")
+                                }
                                 VRule(height: 48)
-                                mediaStat("24", "SHOTS")
-                                VRule(height: 48)
-                                mediaStat("15", "MAKES")
-                                VRule(height: 48)
-                                mediaStat("62.5%", "ACCURACY")
-                                VRule(height: 48)
-                                PhaseGlyph(active: true, size: 34).frame(maxWidth: .infinity)
+                                PhasePhotoThumbnail(phase: .release,
+                                                    active: true,
+                                                    width: 48,
+                                                    height: 36,
+                                                    cornerRadius: 5)
+                                    .frame(maxWidth: .infinity)
                             }
                             .padding(.vertical, 12)
                         }
@@ -1592,7 +3179,7 @@ struct MyMediaView: View {          // 068
                         HStack(alignment: .center) {
                             Text("MY MEDIA").shotiqDisplay(38)
                             Spacer()
-                            NavigationLink { PhotoUploadSourceView() } label: {
+                            NavigationLink { AnalyzeHubView() } label: {
                                 HStack(spacing: 7) {
                                     Image(systemName: "square.and.arrow.up")
                                     Text("Upload").shotiqBody(15, weight: .medium)
@@ -1601,13 +3188,19 @@ struct MyMediaView: View {          // 068
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening upload", "Choose image, video, or live capture.")
+                            })
                         }
                         .padding(.top, 16)
                         Text("Review your shots and training sessions.")
                             .shotiqBody(13).foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                         HStack(spacing: 0) {
                             ForEach(["All", "Images", "Videos", "Live", "Workouts"], id: \.self) { s in
-                                Button { segment = s } label: {
+                                Button {
+                                    segment = s
+                                    toast = .success("Media view updated", "\(s): \(filteredCount(segment: s, grade: gradeFilter)) items visible.")
+                                } label: {
                                     Text(s).shotiqBody(13, weight: segment == s ? .semibold : .regular)
                                         .lineLimit(1).minimumScaleFactor(0.7)
                                         .frame(maxWidth: .infinity).frame(height: 38)
@@ -1615,52 +3208,112 @@ struct MyMediaView: View {          // 068
                                                     in: RoundedRectangle(cornerRadius: 6))
                                         .foregroundStyle(segment == s ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 }
+                                .accessibilityIdentifier("my-media-segment-\(s)")
                             }
                         }
                         .padding(4)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         .padding(.top, 12)
-                        HStack(spacing: 8) {
-                            mediaTool("slider.horizontal.3",
-                                      gradeFilter == "All results" ? "Filter" : gradeFilter,
-                                      active: gradeFilter != "All results") { showGradeFilter = true }
-                            mediaTool("arrow.up.arrow.down", sortNewest ? "Sort: Newest" : "Sort: Oldest",
-                                      active: false) { sortNewest.toggle() }
-                            mediaTool("viewfinder", selecting ? "Done (\(selectedTiles.count))" : "Select",
-                                      active: selecting) {
-                                selecting.toggle()
-                                if !selecting { selectedTiles.removeAll() }
+                        Group {
+                            HStack(spacing: 8) {
+                                mediaTool("slider.horizontal.3",
+                                          gradeFilter == "All results" ? "Filter" : gradeFilter,
+                                          active: gradeFilter != "All results") {
+                                    toast = .info("Opening media filter", "Choose which analysis results to show.")
+                                    showGradeFilter = true
+                                }
+                                          .accessibilityIdentifier("my-media-filter")
+                                mediaTool("arrow.up.arrow.down", sortNewest ? "Sort: Newest" : "Sort: Oldest",
+                                          active: false) {
+                                    sortNewest.toggle()
+                                    toast = .success("Sort updated", sortNewest ? "Newest first." : "Oldest first.")
+                                }
+                                          .accessibilityIdentifier("my-media-sort")
+                                mediaTool("viewfinder", selecting ? "Done (\(selectedTiles.count))" : "Select",
+                                          active: selecting) {
+                                    selecting.toggle()
+                                    if selecting {
+                                        toast = .success("Select media", "Tap items to add them.")
+                                    } else {
+                                        toast = .success("Selection finished", "\(selectedTiles.count) item\(selectedTiles.count == 1 ? "" : "s") selected.")
+                                        selectedTiles.removeAll()
+                                    }
+                                }
+                                          .accessibilityIdentifier("my-media-select")
+                            }
+                            .padding(.top, 10)
+                            if selecting {
+                                HStack(spacing: 8) {
+                                    mediaTool("square.and.arrow.up",
+                                              "Share (\(selectedTiles.count))",
+                                              active: selectedTiles.isEmpty == false) {
+                                        shareSelectedMedia()
+                                    }
+                                              .accessibilityIdentifier("my-media-share-selected")
+                                    mediaTool("trash",
+                                              removingSelection ? "Removing…" : "Remove",
+                                              active: selectedTiles.isEmpty == false && !removingSelection) {
+                                        if selectedTiles.isEmpty {
+                                            toast = .info("Select media first", "Tap one or more items to remove.")
+                                        } else if removingSelection {
+                                            toast = .info("Removal in progress", "ShotIQ is updating your media library.")
+                                        } else {
+                                            confirmRemoveSelection = true
+                                        }
+                                    }
+                                              .accessibilityIdentifier("my-media-remove-selected")
+                                }
+                                .padding(.top, 8)
                             }
                         }
-                        .padding(.top, 10)
                         .confirmationDialog("Filter by result", isPresented: $showGradeFilter,
                                             titleVisibility: .visible) {
                             ForEach(["All results", "GOOD", "REVIEW", "EXCELLENT"], id: \.self) { g in
-                                Button(g) { gradeFilter = g }
+                                Button(g) {
+                                    gradeFilter = g
+                                    toast = .success("Filter updated", "\(g): \(filteredCount(segment: segment, grade: g)) items visible.")
+                                }
                             }
-                            Button("Cancel", role: .cancel) {}
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Media filter unchanged")
+                            }
+                        }
+                        .confirmationDialog("Remove selected media?",
+                                            isPresented: $confirmRemoveSelection,
+                                            titleVisibility: .visible) {
+                            Button("Remove selected", role: .destructive) { removeSelectedMedia() }
+                            Button("Cancel", role: .cancel) {
+                                toast = .info("Remove cancelled", "Your selected media stayed in the library.")
+                            }
                         }
                         HStack {
                             SectionLabel(text: "TODAY")
                             Spacer()
                             Text("\(filteredToday.count) ITEMS").shotiqBody(10, weight: .semibold).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
+                                .accessibilityIdentifier("my-media-visible-count")
                         }
                         .padding(.top, 18)
                         if filteredToday.isEmpty {
                             Text("Nothing in this view yet.")
                                 .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                 .frame(maxWidth: .infinity).padding(.vertical, 24)
+                                .accessibilityIdentifier("my-media-empty-state")
                         }
                         let cols = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
                         LazyVGrid(columns: cols, spacing: 14) {
                             ForEach(filteredToday, id: \.0) { i, t in
                                 if selecting {
                                     Button {
-                                        if selectedTiles.contains(i) { selectedTiles.remove(i) }
-                                        else { selectedTiles.insert(i) }
+                                        if selectedTiles.contains(i) {
+                                            selectedTiles.remove(i)
+                                            toast = .success("Removed from selection", "\(t.title) removed.")
+                                        } else {
+                                            selectedTiles.insert(i)
+                                            toast = .success("Added to selection", "\(t.title) selected.")
+                                        }
                                     } label: {
-                                        mediaTile(t, duration: "0:0\((i + 3) % 9)", photo: photoKey(i))
+                                        mediaTile(t)
                                             .overlay(alignment: .topLeading) {
                                                 Image(systemName: selectedTiles.contains(i)
                                                       ? "checkmark.circle.fill" : "circle")
@@ -1671,10 +3324,17 @@ struct MyMediaView: View {          // 068
                                             }
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier("my-media-tile-\(i)")
                                 } else {
-                                    NavigationLink { MediaDetailView() } label: {
-                                        mediaTile(t, duration: "0:0\((i + 3) % 9)", photo: photoKey(i))
+                                    NavigationLink { mediaDetailDestination(for: t) } label: {
+                                        mediaTile(t)
+                                            .contentShape(Rectangle())
                                     }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening \(t.title)", "Media detail is ready.")
+                                    })
+                                    .buttonStyle(.plain)
+                                    .accessibilityIdentifier("my-media-tile-\(i)")
                                 }
                             }
                         }
@@ -1683,16 +3343,16 @@ struct MyMediaView: View {          // 068
                             HStack {
                                 SectionLabel(text: "YESTERDAY")
                                 Spacer()
-                                Text("4 ITEMS").shotiqBody(10, weight: .semibold).kerning(0.4)
+                                Text("\(visibleYesterday.count) ITEMS").shotiqBody(10, weight: .semibold).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
                             .padding(.top, 20)
                             HStack(spacing: 8) {
-                                ForEach(0..<4, id: \.self) { i in
-                                    NavigationLink { MediaDetailView() } label: {
-                                        PhotoThumb(height: 66)
+                                ForEach(Array(visibleYesterday.enumerated()), id: \.element.stableId) { i, item in
+                                    NavigationLink { mediaDetailDestination(for: item) } label: {
+                                        PhotoThumb(height: 66, photo: item.photo)
                                             .overlay(alignment: .bottomLeading) {
-                                                Text("0:0\((i + 4) % 9)")
+                                                Text(item.duration)
                                                     .font(.custom("Tungsten-Medium", size: 10))
                                                     .foregroundStyle(.white)
                                                     .padding(.horizontal, 5).padding(.vertical, 2)
@@ -1700,7 +3360,13 @@ struct MyMediaView: View {          // 068
                                                     .padding(4)
                                             }
                                             .frame(maxWidth: .infinity)
+                                            .contentShape(Rectangle())
                                     }
+                                    .buttonStyle(.plain)
+                                    .accessibilityIdentifier("my-media-yesterday-tile-\(i)")
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        toast = .info("Opening \(item.title)", "Media detail is ready.")
+                                    })
                                 }
                             }
                             .padding(.top, 10)
@@ -1711,13 +3377,71 @@ struct MyMediaView: View {          // 068
                 }
             }
         }
+        .shotiqToast($toast)
     }
-    private func mediaStat(_ value: String, _ label: String) -> some View {
+    private func shareSelectedMedia() {
+        let items = selectedMediaItems
+        guard items.isEmpty == false else {
+            toast = .info("Select media first", "Tap one or more items to share.")
+            return
+        }
+
+        let summary = items.map { item in
+            "\(item.title): \(item.score) \(item.grade) (\(item.kind.lowercased()), \(item.duration))"
+        }.joined(separator: "\n")
+        toast = .success("Opening share sheet", "\(items.count) media item\(items.count == 1 ? "" : "s") ready.")
+        ShotIQSharePresenter.share(["ShotIQ media selection\n\(summary)"])
+    }
+    private func removeSelectedMedia() {
+        let items = selectedMediaItems
+        let ids = items.compactMap { $0.analysis?.id }
+        let sampleIds = items.filter { $0.analysis == nil }.map(\.stableId)
+        guard items.isEmpty == false else {
+            toast = .info("Select media first", "Tap one or more items to remove.")
+            return
+        }
+
+        removingSelection = true
+        toast = .progress("Removing media",
+                          ids.isEmpty ? "Updating this library view." : "Deleting selected ShotIQ media.",
+                          progress: 0.45)
+        Task {
+            do {
+                for id in ids {
+                    try await APIClient.shared.deleteMedia(analysisId: id)
+                }
+                await MainActor.run {
+                    if ids.isEmpty == false {
+                        app.recentMedia.removeAll { ids.contains($0.id) }
+                    }
+                    sampleIds.forEach { hiddenSampleMedia.insert($0) }
+                    toast = .success("Media removed", "\(items.count) item\(items.count == 1 ? "" : "s") removed.")
+                    selectedTiles.removeAll()
+                    selecting = false
+                    removingSelection = false
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Remove failed", "Check your connection and try again.")
+                    removingSelection = false
+                }
+            }
+        }
+    }
+    private func filteredCount(segment selectedSegment: String, grade selectedGrade: String) -> Int {
+        allToday.filter {
+            (selectedSegment == "All" || $0.kind == selectedSegment)
+            && (selectedGrade == "All results" || $0.grade == selectedGrade)
+        }.count
+    }
+    private func mediaStat(_ value: String, _ label: String, idPrefix: String) -> some View {
         VStack(spacing: 3) {
             Text(value).font(.custom("Tungsten-Medium", size: 26)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
+                .accessibilityIdentifier("\(idPrefix)-value")
             Text(label).shotiqBody(8, weight: .medium).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
+                .accessibilityIdentifier("\(idPrefix)-label")
         }
         .frame(maxWidth: .infinity)
     }
@@ -1735,14 +3459,41 @@ struct MyMediaView: View {          // 068
             .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
         }
     }
-    private func photoKey(_ i: Int) -> String? {
-        todayPhotos.indices.contains(i) ? todayPhotos[i] : nil
-    }
-    private func mediaTile(_ t: MediaItem, duration: String, photo: String? = nil) -> some View {
+    private func mediaTile(_ t: MediaItem) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            PhotoThumb(height: 112, photo: photo)
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(.white)
+                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.rule))
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(t.score)
+                            .font(.custom("Tungsten-Medium", size: 31))
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .lineLimit(1)
+                        Text(t.grade)
+                            .shotiqBody(8, weight: .bold)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.65)
+                        ScoreBar(pct: (Double(t.score) ?? 0) / 100, color: ShotIQColor.shotiqOrange)
+                            .frame(width: 40)
+                        Text("AI")
+                            .shotiqBody(8, weight: .bold)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .padding(.horizontal, 6)
+                            .frame(height: 17)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.rule))
+                    }
+                    Spacer(minLength: 0)
+                    mediaThumbnailWindow(t)
+                        .padding(.trailing, 2)
+                }
+                .padding(8)
+            }
+            .frame(height: 112)
                 .overlay(alignment: .bottomLeading) {
-                    Text(duration).font(.custom("Tungsten-Medium", size: 11))
+                    Text(t.duration).font(.custom("Tungsten-Medium", size: 11))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5).padding(.vertical, 2)
                         .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 3))
@@ -1753,7 +3504,8 @@ struct MyMediaView: View {          // 068
                         .font(.system(size: 15))
                         .foregroundStyle(t.grade == "REVIEW" ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
                         .background(Circle().fill(.white).padding(2))
-                        .padding(5)
+                        .padding(.trailing, 5)
+                        .padding(.bottom, 5)
                 }
             HStack(alignment: .top, spacing: 4) {
                 VStack(alignment: .leading, spacing: 1) {
@@ -1764,56 +3516,313 @@ struct MyMediaView: View {          // 068
                 }
                 Spacer(minLength: 2)
                 VStack(alignment: .trailing, spacing: 1) {
-                    Text(t.score).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(t.color)
-                    Text(t.grade).shotiqBody(6.5, weight: .bold).foregroundStyle(t.color)
+                    Text(t.score).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.shotiqOrange)
+                    Text(t.grade).shotiqBody(6.5, weight: .bold).foregroundStyle(ShotIQColor.shotiqOrange)
                         .lineLimit(1).minimumScaleFactor(0.6)
                 }
             }
         }
     }
+
+    @ViewBuilder
+    private func mediaThumbnailWindow(_ item: MediaItem) -> some View {
+        if let image = ShotIQProfileAvatarStore.image(from: profileAvatarDataURL) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 54, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.shotiqOrange.opacity(0.65), lineWidth: 1))
+                .accessibilityIdentifier("my-media-profile-thumbnail")
+        } else {
+            MediaAnalysisSurface(analysis: item.analysis,
+                                 fallbackPhoto: item.photo ?? "068-visual-001",
+                                 width: 54,
+                                 height: 64,
+                                 cornerRadius: 7)
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.shotiqOrange.opacity(0.45), lineWidth: 1))
+                .accessibilityIdentifier("my-media-clean-thumbnail")
+        }
+    }
+    private func mediaDetailDestination(for item: MediaItem) -> MediaDetailView {
+        MediaDetailView(analysis: item.analysis,
+                        title: item.title,
+                        fallbackPhoto: item.photo ?? "069-visual-002",
+                        fallbackLinkedPhoto: item.photo ?? "069-visual-004",
+                        fallbackDuration: item.duration,
+                        fallbackCaptureDate: "\(item.time.uppercased()) - SHOTIQ MEDIA",
+                        fallbackCaptureMeta: "\(item.kind) - \(item.grade) - form score \(item.score)",
+                        fallbackShotEvents: ("--", "--", "--", "--", "--"),
+                        onDeleteLocal: {
+                            hiddenSampleMedia.insert(item.stableId)
+                        },
+                        analysisId: item.analysis?.id)
+    }
+}
+
+private struct MediaDetailExportView: View {
+    let title: String
+    let presentation: AnalysisResultPresentation
+    let captureDate: String
+    let mediaDuration: String
+    let shotEvents: (shots: String, makes: String, pct: String, streak: String, points: String)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 0) {
+                Text("SHOT").shotiqCondensed(16, weight: .black)
+                Text("IQ").shotiqCondensed(16, weight: .black)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                Spacer()
+                Text("MEDIA SUMMARY").shotiqBody(9, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            Text(title.uppercased()).shotiqCondensed(24, weight: .heavy)
+            Text(captureDate).shotiqBody(11, weight: .semibold)
+                .foregroundStyle(ShotIQColor.graphite)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 54))
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("FORM SCORE - \(presentation.scoreVerdict)").shotiqBody(11, weight: .bold)
+                        .foregroundStyle(ShotIQColor.analysisBlue)
+                    Text("\(presentation.mediaLabel) - \(mediaDuration) - \(presentation.phaseText)")
+                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                }
+            }
+            HStack(spacing: 0) {
+                exportStat(shotEvents.shots, "SHOTS")
+                VRule(height: 34)
+                exportStat(shotEvents.makes, "MAKES")
+                VRule(height: 34)
+                exportStat(shotEvents.pct, "MAKE %")
+                VRule(height: 34)
+                exportStat(shotEvents.points, "POINTS")
+            }
+            HRule()
+            Text("Primary target: \(presentation.coachingTarget)")
+                .shotiqBody(12, weight: .semibold)
+            Text("SHOTIQ.COM").shotiqBody(9, weight: .semibold)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .padding(20)
+        .frame(width: 390, alignment: .leading)
+        .background(.white)
+        .overlay(Rectangle().stroke(ShotIQColor.rule))
+    }
+
+    private func exportStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.custom("Tungsten-Medium", size: 24))
+                .foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).shotiqBody(7, weight: .medium).kerning(0.3)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+enum MediaDetailImageRenderer {
+    @MainActor
+    static func render(title: String,
+                       presentation: AnalysisResultPresentation,
+                       captureDate: String,
+                       mediaDuration: String,
+                       shotEvents: (shots: String, makes: String, pct: String, streak: String, points: String)) -> UIImage? {
+        let renderer = ImageRenderer(content: MediaDetailExportView(title: title,
+                                                                    presentation: presentation,
+                                                                    captureDate: captureDate,
+                                                                    mediaDuration: mediaDuration,
+                                                                    shotEvents: shotEvents))
+        renderer.scale = 3
+        return renderer.uiImage
+    }
 }
 
 struct MediaDetailView: View {      // 069
+    var analysis: ShotIQAnalysisResultDTO? = nil
+    var title = "ShotIQ Media"
+    var fallbackPhoto = "069-visual-002"
+    var fallbackLinkedPhoto = "069-visual-004"
+    var fallbackDuration = "6:12"
+    var fallbackCaptureDate = "MAY 21, 2025 - 8:24 AM"
+    var fallbackCaptureMeta = "Indoor Court - iPhone 15 Pro - 1080p - 60fps"
+    var fallbackShotEvents: (shots: String, makes: String, pct: String, streak: String, points: String)? = nil
+    var onDeleteLocal: (() -> Void)? = nil
     /// Server id of the backing UserAnalysis row, when opened from real data —
     /// enables the authoritative DELETE /api/media?analysisId=… call.
     var analysisId: String? = nil
+    @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
     @State private var playing = false
+    @State private var mediaPlayer: AVPlayer?
     @State private var speedIndex = 1
     @State private var selectedFrame = 4
+    @State private var selectedPhase = "RELEASE"
     @State private var deleting = false
     @State private var confirmDelete = false
-    @State private var showDownloadInfo = false
+    @State private var showReanalysis = false
+    @State private var showFullMedia = false
+    @State private var toast: ShotIQToast?
     private let speeds = ["SLOW 0.5x", "SLOW 1.0x", "SLOW 2.0x"]
-    private let shareText = "My ShotIQ session — 15/24 makes (62.5%), form score 82. 🏀"
+    private let phaseLabels = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    private var presentation: AnalysisResultPresentation {
+        analysis.map(AnalysisResultPresentation.init) ?? .canonicalDemo
+    }
+    private var sortedPoseFrames: [VideoPoseFrameRecord] {
+        presentation.videoPoseFrames.sorted { $0.frameIndex < $1.frameIndex }
+    }
+    private var overlayFrame: VideoPoseFrameRecord? {
+        if let frame = sortedPoseFrames.first(where: {
+            $0.phaseLabel.uppercased() == selectedPhase.uppercased() && $0.detectedPose != nil
+        }) {
+            return frame
+        }
+        if sortedPoseFrames.indices.contains(selectedFrame),
+           sortedPoseFrames[selectedFrame].detectedPose != nil {
+            return sortedPoseFrames[selectedFrame]
+        }
+        if let frame = presentation.releaseVideoPoseFrame ?? sortedPoseFrames.first,
+           frame.detectedPose != nil {
+            return frame
+        }
+        if let pose = presentation.displayPose {
+            return VideoPoseAnalyzer.frameRecord(index: 0, timestamp: 0, pose: pose)
+        }
+        return nil
+    }
+    private var videoURL: URL? { presentation.videoURL }
+    private var isRealAnalysis: Bool { analysis != nil }
+    private var shareText: String {
+        isRealAnalysis
+            ? presentation.formScoreShareText
+            : "\(title) on ShotIQ - form score \(presentation.scoreText), target: \(presentation.coachingTarget)."
+    }
+    private var mediaDurationText: String {
+        analysis?.media.type?.lowercased() == "image" ? "photo" : fallbackDuration
+    }
+    private var captureDateText: String {
+        isRealAnalysis ? presentation.recordedLabel.uppercased() : fallbackCaptureDate
+    }
+    private var captureMetaText: String {
+        guard isRealAnalysis else { return fallbackCaptureMeta }
+        return "\(presentation.mediaLabel) - \(presentation.provenanceSummary)"
+    }
+    private var linkedAnalysisDateText: String {
+        isRealAnalysis ? "• \(presentation.recordedLabel)" : "• May 21, 2025"
+    }
+    private var shotEventValues: (shots: String, makes: String, pct: String, streak: String, points: String) {
+        isRealAnalysis ? ("--", "--", "--", "--", "--") : (fallbackShotEvents ?? ("24", "15", "62.5%", "6", "2,840"))
+    }
+
+    @MainActor
+    private func downloadMediaSummary() {
+        toast = .progress("Saving media summary", "Rendering a ShotIQ image for your photo library.", progress: 0.35)
+        guard let image = MediaDetailImageRenderer.render(title: "ShotIQ Media",
+                                                          presentation: presentation,
+                                                          captureDate: captureDateText,
+                                                          mediaDuration: mediaDurationText,
+                                                          shotEvents: shotEventValues),
+              let data = image.pngData() else {
+            toast = .error("Download failed", "ShotIQ could not render this media summary.")
+            return
+        }
+
+        Task {
+            let current = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+            let status = current == .notDetermined
+                ? await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                : current
+
+            guard status == .authorized || status == .limited else {
+                await MainActor.run {
+                    toast = .error("Photos access needed", "Allow ShotIQ to add photos, then tap Download again.")
+                }
+                return
+            }
+
+            do {
+                try await PHPhotoLibrary.shared().performChanges {
+                    let options = PHAssetResourceCreationOptions()
+                    options.originalFilename = "ShotIQ-media-summary.png"
+                    let request = PHAssetCreationRequest.forAsset()
+                    request.addResource(with: .photo, data: data, options: options)
+                }
+                await MainActor.run {
+                    toast = .success("Saved to Photos", "Your ShotIQ media summary image is in your photo library.")
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Download failed", "ShotIQ could not save this image to Photos.")
+                }
+            }
+        }
+    }
 
     /// DELETE /api/media?analysisId=… (route requires query params + CSRF, so
     /// this builds the request directly; it shares URLSession's cookie store
     /// and the Keychain token with APIClient).
     private func deleteMedia() {
         guard !deleting else { return }
-        deleting = true
-        Task {
-            defer { Task { @MainActor in deleting = false; dismiss() } }
-            guard let analysisId else { return }   // sample tile: nothing server-side to remove
-            let base = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"]
-                           ?? "https://shotiq.194-146-12-139.sslip.io")!
-            struct Csrf: Codable { let csrfToken: String }
-            var csrfReq = URLRequest(url: base.appending(path: "/api/auth/csrf"))
-            csrfReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            guard let (csrfData, _) = try? await URLSession.shared.data(for: csrfReq),
-                  let csrf = try? JSONDecoder().decode(Csrf.self, from: csrfData),
-                  var comps = URLComponents(url: base.appending(path: "/api/media"),
-                                            resolvingAgainstBaseURL: false) else { return }
-            comps.queryItems = [URLQueryItem(name: "analysisId", value: analysisId)]
-            guard let url = comps.url else { return }
-            var req = URLRequest(url: url)
-            req.httpMethod = "DELETE"
-            req.setValue(csrf.csrfToken, forHTTPHeaderField: "x-csrf-token")
-            if let token = KeychainStore.read(key: "accessToken") {
-                req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let analysisId else {
+            guard let analysis else {
+                deleting = true
+                toast = .progress("Removing media", "Taking this item out of the library view.", progress: 0.45)
+                Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    onDeleteLocal?()
+                    toast = .success("Media removed", "Returning to your library.")
+                    try? await Task.sleep(nanoseconds: 650_000_000)
+                    deleting = false
+                    dismiss()
+                }
+                return
             }
-            _ = try? await URLSession.shared.data(for: req)
+            deleting = true
+            toast = .progress("Removing media", "Deleting this in-session result.", progress: 0.45)
+            Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                app.recentMedia.removeAll { $0.id == analysis.id }
+                toast = .success("Media removed", "Returning to your library.")
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                deleting = false
+                dismiss()
+            }
+            return
+        }
+        deleting = true
+        toast = .progress("Deleting media", "Removing this clip from ShotIQ.", progress: 0.45)
+        Task {
+            defer { deleting = false }
+            do {
+                let base = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"]
+                               ?? "https://shotiq.194-146-12-139.sslip.io")!
+                struct Csrf: Codable { let csrfToken: String }
+                var csrfReq = URLRequest(url: base.appending(path: "/api/auth/csrf"))
+                csrfReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let (csrfData, _) = try await URLSession.shared.data(for: csrfReq)
+                let csrf = try JSONDecoder().decode(Csrf.self, from: csrfData)
+                guard var comps = URLComponents(url: base.appending(path: "/api/media"),
+                                                resolvingAgainstBaseURL: false) else {
+                    throw URLError(.badURL)
+                }
+                comps.queryItems = [URLQueryItem(name: "analysisId", value: analysisId)]
+                guard let url = comps.url else { throw URLError(.badURL) }
+                var req = URLRequest(url: url)
+                req.httpMethod = "DELETE"
+                req.setValue(csrf.csrfToken, forHTTPHeaderField: "x-csrf-token")
+                if let token = KeychainStore.read(key: "accessToken") {
+                    req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+                _ = try await URLSession.shared.data(for: req)
+                app.recentMedia.removeAll { $0.id == analysisId }
+                toast = .success("Media deleted", "Returning to your library.")
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                dismiss()
+            } catch {
+                toast = .error("Delete failed", "Check your connection and try again.")
+            }
         }
     }
     var body: some View {
@@ -1821,15 +3830,22 @@ struct MediaDetailView: View {      // 069
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 14) {
-                        Button { dismiss() } label: {
+                        Button {
+                            toast = .info("Returning to media library")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { dismiss() }
+                        } label: {
                             Image(systemName: "arrow.left")
                                 .font(.system(size: 19, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                         }
                         .accessibilityLabel("Back")
+                        .accessibilityIdentifier("media-detail-back")
                         Text("MEDIA DETAIL").shotiqDisplay(26)
                         Spacer()
                         Menu {
                             ShareLink(item: shareText) { Label("Share", systemImage: "square.and.arrow.up") }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening share sheet", "Your media summary is ready.")
+                                })
                             Button(role: .destructive) { confirmDelete = true } label: {
                                 Label("Delete media", systemImage: "trash")
                             }
@@ -1837,34 +3853,87 @@ struct MediaDetailView: View {      // 069
                             Image(systemName: "ellipsis").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
                                 .frame(width: 36, height: 36, alignment: .trailing)
                         }
+                        .accessibilityIdentifier("media-detail-more-menu")
                     }
                     .padding(.horizontal, 20).frame(height: 52)
                     .overlay(HRule(), alignment: .bottom)
                     VStack(alignment: .leading, spacing: 0) {
                         ZStack {
-                            CanonicalMediaSurface(key: "069-visual-002", height: 310, duration: "6:12")
-                            Button { playing.toggle() } label: {
+                            if let player = mediaPlayer {
+                                GeometryReader { proxy in
+                                    ZStack(alignment: .topLeading) {
+                                        ShotIQAspectFillVideoPlayer(player: player)
+                                            .accessibilityLabel("Saved media video with pose overlay")
+                                        if let frame = overlayFrame, let pose = frame.detectedPose {
+                                            ShotIQVideoAnalysisOverlay(frame: frame,
+                                                                       pose: pose,
+                                                                       presentation: presentation,
+                                                                       showSkeleton: true,
+                                                                       showJoints: true,
+                                                                       showBall: false,
+                                                                       showAnnotations: false,
+                                                                       displayPhase: selectedPhase)
+                                                .frame(width: proxy.size.width, height: proxy.size.height)
+                                                .accessibilityHidden(true)
+                                        }
+                                    }
+                                }
+                                .frame(height: 310)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            } else {
+                                MediaAnalysisSurface(analysis: analysis,
+                                                     fallbackPhoto: fallbackPhoto,
+                                                     displayPhase: selectedPhase,
+                                                     height: 310,
+                                                     cornerRadius: 8)
+                            }
+                            Button {
+                                togglePlayback()
+                            } label: {
                                 Circle().fill(.white.opacity(0.9)).frame(width: 52, height: 52)
                                     .overlay(Image(systemName: playing ? "pause.fill" : "play.fill")
                                         .font(.system(size: 19))
                                         .foregroundStyle(ShotIQColor.ink))
                             }
                             .accessibilityLabel(playing ? "Pause" : "Play")
+                            .accessibilityIdentifier("media-detail-hero-play")
+                        }
+                        .overlay(alignment: .bottomLeading) {
+                            Button {
+                                showFullMedia = true
+                                toast = .info("Opening full view", "\(selectedPhase.capitalized) frame ready.")
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.system(size: 10, weight: .bold))
+                                    Text("Full view").shotiqBody(10, weight: .bold)
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 6))
+                                .padding(10)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("media-detail-full-view")
                         }
                         .overlay(alignment: .topLeading) {
-                            Text("6:12").font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
+                            Text(mediaDurationText).font(.custom("Tungsten-Medium", size: 13)).foregroundStyle(.white)
                                 .padding(.horizontal, 8).padding(.vertical, 4)
                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
                                 .padding(10)
                         }
                         .overlay(alignment: .topTrailing) {
-                            Button { speedIndex = (speedIndex + 1) % speeds.count } label: {
+                            Button {
+                                cyclePlaybackSpeed()
+                            } label: {
                                 Text(speeds[speedIndex]).shotiqBody(10, weight: .bold).kerning(0.4)
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 8).padding(.vertical, 5)
                                     .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
                             }
                             .accessibilityLabel("Playback speed")
+                            .accessibilityIdentifier("media-detail-playback-speed")
                             .padding(10)
                         }
                         .padding(.top, 14)
@@ -1879,30 +3948,41 @@ struct MediaDetailView: View {      // 069
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
                                 ForEach(0..<8, id: \.self) { i in
-                                    Button { selectedFrame = i } label: {
-                                        CanonicalPhoto("069-visual-004", width: 48, height: 38, cornerRadius: 5)
+                                    Button {
+                                        selectedFrame = i
+                                        if sortedPoseFrames.indices.contains(i) {
+                                            selectedPhase = sortedPoseFrames[i].phaseLabel.uppercased()
+                                        }
+                                        toast = .info("Frame selected", "Frame \(i + 1) is ready for review.")
+                                    } label: {
+                                        mediaFrameThumbnail(index: i)
                                             .overlay(RoundedRectangle(cornerRadius: 5)
                                                 .stroke(i == selectedFrame ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
                                                         lineWidth: i == selectedFrame ? 2 : 1))
                                     }
                                     .accessibilityLabel("Frame \(i + 1)")
+                                    .accessibilityIdentifier("media-detail-frame-\(i + 1)")
                                 }
                             }
                             .padding(.vertical, 2)
                         }
                         .padding(.top, 10)
                         SectionLabel(text: "CAPTURE DETAILS").padding(.top, 18)
-                        Text("MAY 21, 2025 • 8:24 AM").font(.custom("Tungsten-Medium", size: 24))
+                        Text(captureDateText).font(.custom("Tungsten-Medium", size: 24))
                             .padding(.top, 6)
-                        Text("Indoor Court • iPhone 15 Pro • 1080p • 60fps")
+                            .accessibilityIdentifier("media-detail-capture-date")
+                        Text(captureMetaText)
                             .shotiqBody(12).foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
+                            .accessibilityIdentifier("media-detail-capture-meta")
                         SectionLabel(text: "LINKED ANALYSIS").padding(.top, 18)
                         ShotIQCard {
                             HStack(spacing: 12) {
                                 // Canonical's linked-analysis row shows a frame of
                                 // the same clip, not a placeholder tile.
-                                PhotoThumb(width: 62, height: 48, icon: "chart.xyaxis.line",
-                                           photo: "069-visual-004")
+                                MediaAnalysisSurface(analysis: analysis,
+                                                     fallbackPhoto: fallbackLinkedPhoto,
+                                                     width: 62,
+                                                     height: 48)
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(spacing: 4) {
                                         // The date and the "Open analysis" pill
@@ -1913,19 +3993,28 @@ struct MediaDetailView: View {      // 069
                                         // part that may abbreviate.
                                         Text("Shot Analysis").shotiqBody(14, weight: .bold)
                                             .lineLimit(1).fixedSize()
-                                        Text("• May 21, 2025").shotiqBody(11)
+                                        Text(linkedAnalysisDateText).shotiqBody(11)
                                             .foregroundStyle(ShotIQColor.graphite)
                                             .lineLimit(1).minimumScaleFactor(0.7)
+                                            .accessibilityIdentifier("media-detail-linked-date")
                                     }
                                     Text("Form Score").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                                     HStack(spacing: 8) {
-                                        Text("82").font(.custom("Tungsten-Medium", size: 22))
+                                        Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 22))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 76)
+                                        ScoreBar(pct: presentation.scorePct).frame(width: 76)
                                     }
                                 }
                                 Spacer(minLength: 4)
-                                NavigationLink { AnalysisResultOverviewView() } label: {
+                                NavigationLink {
+                                    if let analysis {
+                                        AnalysisResultOverviewView(initialResult: analysis)
+                                    } else if UITestHooks.demoData {
+                                        AnalysisResultOverviewView()
+                                    } else {
+                                        AnalyzeHubView()
+                                    }
+                                } label: {
                                     HStack(spacing: 4) {
                                         Text("Open analysis").shotiqBody(12, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -1935,22 +4024,31 @@ struct MediaDetailView: View {      // 069
                                     .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.analysisBlue))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
+                                .accessibilityIdentifier("media-detail-open-analysis")
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = analysis == nil && !UITestHooks.demoData
+                                        ? .info("Analyze a shot first",
+                                                "Record or upload media before opening a linked analysis.")
+                                        : .progress("Opening analysis",
+                                                    "Loading the linked ShotIQ result.",
+                                                    progress: 0.45)
+                                })
                             }
                             .padding(12)
                         }
                         .padding(.top, 8)
                         SectionLabel(text: "SHOT EVENTS").padding(.top, 18)
                         HStack(spacing: 0) {
-                            HeaderStat(icon: "scope", value: "24", label: "SHOTS").frame(maxWidth: .infinity)
+                            HeaderStat(icon: "scope", value: shotEventValues.shots, label: "SHOTS").frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "point.3.connected.trianglepath.dotted", value: "15", label: "MAKES")
+                            HeaderStat(icon: "point.3.connected.trianglepath.dotted", value: shotEventValues.makes, label: "MAKES")
                                 .frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "gauge", value: "62.5%", label: "MAKE %").frame(maxWidth: .infinity)
+                            HeaderStat(icon: "gauge", value: shotEventValues.pct, label: "MAKE %").frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "sparkles", value: "6", label: "DAY STREAK").frame(maxWidth: .infinity)
+                            HeaderStat(icon: "sparkles", value: shotEventValues.streak, label: "DAY STREAK").frame(maxWidth: .infinity)
                             VRule(height: 46)
-                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                            HeaderStat(icon: "circle.hexagongrid", value: shotEventValues.points, label: "POINTS")
                                 .frame(maxWidth: .infinity)
                         }
                         .padding(.top, 10)
@@ -1958,7 +4056,7 @@ struct MediaDetailView: View {      // 069
                             VStack(alignment: .leading, spacing: 5) {
                                 MicroLabel(text: "PRIMARY COACHING TARGET")
                                 HStack {
-                                    Text("Keep elbow stacked through release").shotiqBody(17, weight: .bold)
+                                    Text(presentation.coachingTarget).shotiqBody(17, weight: .bold)
                                         .foregroundStyle(ShotIQColor.ink)
                                         .lineLimit(1).minimumScaleFactor(0.8)
                                     Spacer()
@@ -1969,27 +4067,64 @@ struct MediaDetailView: View {      // 069
                             .padding(.vertical, 14)
                             .overlay(HRule(), alignment: .top)
                             .overlay(HRule(), alignment: .bottom)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Primary coaching target \(presentation.coachingTarget)")
+                        .accessibilityIdentifier("media-detail-primary-target")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening goals", presentation.coachingTarget)
+                        })
                         .padding(.top, 18)
                         SectionLabel(text: "ACTIONS").padding(.top, 16)
                         HStack(spacing: 8) {
                             actionButton(playing ? "pause.fill" : "play.fill",
-                                         playing ? "Pause" : "Play", ShotIQColor.ink) { playing.toggle() }
+                                         playing ? "Pause" : "Play", ShotIQColor.ink) {
+                                togglePlayback()
+                            }
+                                         .accessibilityIdentifier("media-detail-action-play")
                             ShareLink(item: shareText) {
                                 actionLabel("square.and.arrow.up", "Share", ShotIQColor.ink)
                             }
-                            actionButton("arrow.down.to.line", "Download", ShotIQColor.ink) {
-                                showDownloadInfo = true
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening share sheet", "Your ShotIQ summary is ready.")
+                            })
+                            actionButton("arrow.down.to.line", "Download", ShotIQColor.ink,
+                                         identifier: "media-detail-download-button") {
+                                downloadMediaSummary()
                             }
-                            actionButton("trash", "Delete", ShotIQColor.reviewRed) { confirmDelete = true }
+                            actionButton("trash", "Delete", ShotIQColor.reviewRed,
+                                         identifier: "media-detail-delete-button") {
+                                toast = .info("Delete confirmation", "Choose Delete media to remove this clip.")
+                                confirmDelete = true
+                            }
                         }
                         .padding(.top, 8)
-                        .alert("Download unavailable", isPresented: $showDownloadInfo) {
-                            Button("OK", role: .cancel) {}
-                        } message: {
-                            Text("This clip is stored on the ShotIQ server. On-device downloads are coming to a future build.")
+                        Button {
+                            toast = .progress("Reanalyzing media",
+                                              isRealAnalysis ? "Rebuilding this ShotIQ result with the selected media." : "Choose real media to run a new analysis.",
+                                              progress: 0.55)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showReanalysis = true
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Reanalyze media").shotiqBody(14, weight: .semibold)
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(ShotIQColor.analysisBlue, in: RoundedRectangle(cornerRadius: 8))
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("media-detail-reanalyze-button")
+                        .padding(.top, 8)
                         HStack(spacing: 10) {
                             Image(systemName: "trash").font(.system(size: 15))
                                 .foregroundStyle(ShotIQColor.reviewRed)
@@ -2011,9 +4146,14 @@ struct MediaDetailView: View {      // 069
                                 .foregroundStyle(.white)
                             }
                             .disabled(deleting)
+                            .accessibilityIdentifier("media-detail-delete-media-button")
                         }
                         .padding(12)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.reviewRed.opacity(0.5)))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(ShotIQColor.reviewRed.opacity(0.5))
+                                .allowsHitTesting(false)
+                        )
                         .padding(.vertical, 16)
                         Spacer(minLength: 20)
                     }
@@ -2021,30 +4161,253 @@ struct MediaDetailView: View {      // 069
                 }
             }
         }
+        .shotiqToast($toast)
         .confirmationDialog("Delete this media? This cannot be undone.",
                             isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete media", role: .destructive) { deleteMedia() }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                toast = .info("Delete cancelled")
+            }
+        }
+        .navigationDestination(isPresented: $showReanalysis) {
+            if let analysis {
+                AnalysisProcessingView(initialResult: analysis)
+            } else {
+                AnalyzeHubView()
+            }
+        }
+        .fullScreenCover(isPresented: $showFullMedia) {
+            MediaDetailFullScreenMediaView(analysis: analysis,
+                                           fallbackPhoto: fallbackPhoto,
+                                           title: title,
+                                           presentation: presentation,
+                                           selectedPhase: $selectedPhase)
+        }
+        .onAppear(perform: syncMediaPlayer)
+        .onDisappear {
+            mediaPlayer?.pause()
+            playing = false
         }
     }
+
+    private func syncMediaPlayer() {
+        guard let videoURL else {
+            mediaPlayer = nil
+            playing = false
+            return
+        }
+        mediaPlayer = AVPlayer(url: videoURL)
+    }
+
+    @ViewBuilder
+    private func mediaFrameThumbnail(index: Int) -> some View {
+        if let videoURL {
+            ShotIQVideoStillThumbnail(url: videoURL,
+                                      seconds: mediaFrameSeconds(index),
+                                      width: 48,
+                                      height: 38,
+                                      cornerRadius: 5)
+        } else {
+            CanonicalPhoto("069-visual-004", width: 48, height: 38, cornerRadius: 5)
+        }
+    }
+
+    private func mediaFrameSeconds(_ index: Int) -> Double {
+        if sortedPoseFrames.indices.contains(index) {
+            return sortedPoseFrames[index].timestampSeconds
+        }
+        guard let last = sortedPoseFrames.last?.timestampSeconds, last > 0 else {
+            return Double(index) * 0.25
+        }
+        return last * Double(index) / 7.0
+    }
+
+    private func fittedOverlaySize(for frame: VideoPoseFrameRecord, container: CGSize) -> CGSize {
+        guard let width = frame.sourceWidth,
+              let height = frame.sourceHeight,
+              width > 0,
+              height > 0 else {
+            return container
+        }
+        return ShotIQPose.filledSize(image: CGSize(width: width, height: height), in: container)
+    }
+
+    private func togglePlayback() {
+        guard let player = mediaPlayer else {
+            selectedFrame = min(selectedFrame + 1, 7)
+            playing.toggle()
+            toast = .info(playing ? "Previewing frames" : "Preview paused",
+                          "A real uploaded video will play here after import.")
+            return
+        }
+        playing.toggle()
+        if playing {
+            player.playImmediately(atRate: playbackRate)
+        } else {
+            player.pause()
+        }
+        toast = .info(playing ? "Playing clip" : "Clip paused",
+                      playing ? "Reviewing your shot media." : "Playback paused.")
+    }
+
+    private func cyclePlaybackSpeed() {
+        speedIndex = (speedIndex + 1) % speeds.count
+        if playing, let player = mediaPlayer {
+            player.rate = playbackRate
+        }
+        toast = .success("Playback speed changed", speeds[speedIndex])
+    }
+
+    private func selectPhase(_ phase: String) {
+        selectedPhase = phase
+        if let idx = sortedPoseFrames.firstIndex(where: { $0.phaseLabel.uppercased() == phase }) {
+            selectedFrame = idx
+        } else {
+            switch phase {
+            case "SETUP": selectedFrame = 0
+            case "LOAD": selectedFrame = 1
+            case "RISE": selectedFrame = 3
+            case "RELEASE": selectedFrame = 5
+            default: selectedFrame = 7
+            }
+        }
+        playing = false
+        mediaPlayer?.pause()
+        toast = .success("\(phase.capitalized) selected", "The media preview is showing that shot phase.")
+    }
+
+    private var playbackRate: Float {
+        switch speedIndex {
+        case 0: return 0.5
+        case 2: return 2.0
+        default: return 1.0
+        }
+    }
+
     private func actionLabel(_ icon: String, _ label: String, _ color: Color) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 12))
+            Image(systemName: icon).font(.system(size: 22))
             Text(label).shotiqBody(12, weight: .medium)
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity).frame(height: 46)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(ShotIQColor.rule)
+                .allowsHitTesting(false)
+        )
         .foregroundStyle(color)
     }
     private func actionButton(_ icon: String, _ label: String, _ color: Color,
+                              identifier: String? = nil,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) { actionLabel(icon, label, color) }
+            .accessibilityIdentifier(identifier ?? label)
+    }
+}
+
+private struct MediaDetailFullScreenMediaView: View {
+    var analysis: ShotIQAnalysisResultDTO?
+    var fallbackPhoto: String
+    var title: String
+    var presentation: AnalysisResultPresentation
+    @Binding var selectedPhase: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var toast: ShotIQToast?
+
+    private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            GeometryReader { proxy in
+                VStack(spacing: 14) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(selectedPhase)
+                                .shotiqCondensed(24, weight: .heavy)
+                                .foregroundStyle(.white)
+                            Text(title.uppercased())
+                                .shotiqBody(11, weight: .bold)
+                                .kerning(0.6)
+                                .foregroundStyle(.white.opacity(0.72))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                        }
+                        Spacer()
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 40, height: 40)
+                                .background(.white.opacity(0.16), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Close full view")
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
+
+                    MediaAnalysisSurface(analysis: analysis,
+                                         fallbackPhoto: fallbackPhoto,
+                                         displayPhase: selectedPhase,
+                                         height: max(320, proxy.size.height - 198),
+                                         cornerRadius: 8)
+                        .padding(.horizontal, 10)
+                        .accessibilityIdentifier("media-detail-full-view-surface")
+
+                    MediaDetailPhaseButtons(phases: phases, active: selectedPhase) { phase in
+                        selectedPhase = phase
+                        toast = .success("\(phase.capitalized) selected")
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 14)
+                }
+            }
+        }
+        .shotiqToast($toast)
+    }
+}
+
+private struct MediaDetailPhaseButtons: View {
+    var phases: [String]
+    var active: String
+    var action: (String) -> Void
+
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+            ForEach(phases, id: \.self) { phase in
+                Button {
+                    action(phase)
+                } label: {
+                    Text(phase)
+                        .shotiqBody(12, weight: active == phase ? .bold : .semibold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .foregroundStyle(active == phase ? .white : ShotIQColor.ink)
+                        .background(active == phase ? ShotIQColor.shotiqOrange : ShotIQColor.warmCanvas,
+                                    in: RoundedRectangle(cornerRadius: 7))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Jump to \(phase)")
+            }
+        }
     }
 }
 
 struct ProfileView: View {          // 070
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(ShotIQProfileAvatarStore.key) private var profileAvatarDataURL = ""
+    @AppStorage("profileHeightIn") private var heightIn = 75
+    @AppStorage("profileWeightLbs") private var weightLbs = 185
+    @AppStorage("profileWingspanIn") private var wingspanIn = 77
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @State private var showEditProfile = false
     /// The wordmark bar's gear used to be inert on this screen (TopBar's
     /// onSettings defaults to a no-op); on Profile it opens the settings hub.
@@ -2052,12 +4415,119 @@ struct ProfileView: View {          // 070
     @State private var bio = "Dedicated to the details. Constantly working to build a repeatable, efficient shot with elite consistency."
     @State private var enhancingBio = false
     @State private var bioError: String?
+    @State private var toast: ShotIQToast?
+    @State private var productionProfile: APIProfileDTO?
+    @State private var productionBadges: BadgesResponseDTO?
+    @State private var loadedProductionContext = false
+    @State private var profilePhotoPick: PhotosPickerItem?
+
+    private struct ProfileSummary {
+        var streak: String
+        var points: String
+        var shots: String
+        var makes: String
+        var makeRate: String
+        var completionPct: Double
+        var completionText: String
+        var activity: [(String, String)]
+    }
+
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+
+    private var isCanonicalProfileDemo: Bool {
+        UITestHooks.demoData && workouts.isEmpty && productionBadges == nil
+    }
+
+    private var displayName: String {
+        if let profileName = productionProfile?.displayName, !profileName.isEmpty { return profileName }
+        if let userName = app.user?.displayName, !userName.isEmpty { return userName }
+        let full = [productionProfile?.firstName ?? app.user?.firstName,
+                    productionProfile?.lastName ?? app.user?.lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if !full.isEmpty { return full }
+        return isCanonicalProfileDemo ? "Jordan Ellis" : (app.user?.email?.split(separator: "@").first.map(String.init) ?? "ShotIQ Athlete")
+    }
+
+    private var profileInitialsText: String {
+        let parts = displayName.split(separator: " ")
+        if parts.count >= 2 {
+            return parts.prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
+        }
+        return String(displayName.prefix(2)).uppercased()
+    }
+
+    private var profileAvatarImage: UIImage? {
+        ShotIQProfileAvatarStore.image(from: profileAvatarDataURL)
+    }
+
+    private var subtitleText: String {
+        let profileHand = productionProfile?.dominantHand ?? hand
+        let profileLevel = productionProfile?.experienceLevel ?? level
+        return "\(Self.titleCase(profileHand))-handed • \(Self.titleCase(profileLevel))"
+    }
+
+    private var profileSummary: ProfileSummary {
+        if isCanonicalProfileDemo {
+            return ProfileSummary(streak: "6",
+                                  points: "2,840",
+                                  shots: "24",
+                                  makes: "15",
+                                  makeRate: "62.5%",
+                                  completionPct: 0.82,
+                                  completionText: "82%",
+                                  activity: [("Quick Release Builder", "Today at 8:24 AM"),
+                                             ("Catch & Shoot Review", "May 11, 2024"),
+                                             ("Mid-Range Mechanics", "May 10, 2024")])
+        }
+
+        let totalShots = workouts.reduce(0) { $0 + $1.shots }
+        let totalMakes = workouts.reduce(0) { $0 + $1.makes }
+        let localPoints = workouts.reduce(0) { $0 + $1.pointsEarned }
+        let makeRate = totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100)
+        let activityRows = workouts.prefix(3).map { ($0.drillName, Self.activityDateText($0.completedAt)) }
+        let completedSections = [displayName.isEmpty == false,
+                                 heightIn > 0 && weightLbs > 0 && wingspanIn > 0,
+                                 hand.isEmpty == false && level.isEmpty == false,
+                                 bio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false]
+            .filter { $0 }.count
+        let completionPct = Double(completedSections) / 4.0
+        let stats = productionBadges?.stats
+        return ProfileSummary(streak: Self.numberOrDash(stats?.currentStreak) ?? (workouts.isEmpty ? "--" : "\(Self.localStreakDays(from: workouts))"),
+                              points: Self.groupedNumber(stats?.totalPoints) ?? (workouts.isEmpty ? "--" : Self.groupedNumber(localPoints) ?? "\(localPoints)"),
+                              shots: totalShots == 0 ? "--" : "\(totalShots)",
+                              makes: totalShots == 0 ? "--" : "\(totalMakes)",
+                              makeRate: makeRate,
+                              completionPct: completionPct,
+                              completionText: "\(Int((completionPct * 100).rounded()))%",
+                              activity: activityRows.isEmpty ? [("No tracked sessions yet", "Track shots to build history")] : activityRows)
+    }
+
+    private var heightText: String { Self.inchesText(heightIn) }
+    private var weightText: String { "\(weightLbs) lbs" }
+    private var wingspanText: String { Self.inchesText(wingspanIn) }
+    private var shootingMetricSummary: (releaseHeight: String, elbowAngle: String, releaseOffset: String) {
+        if let latest = app.recentMedia.first?.analysis {
+            let presentation = AnalysisResultPresentation(result: latest)
+            return (presentation.releaseHeightText,
+                    presentation.elbowAngleText,
+                    presentation.releaseOffsetText)
+        }
+        if isCanonicalProfileDemo {
+            return ("8'11\"", "58°", "0°")
+        }
+        return ("--", "--", "--")
+    }
 
     /// POST /api/enhance-bio — LLM-expanded bio (shape per src/app/api/enhance-bio/route.ts).
     private func enhanceBio() {
         guard !enhancingBio else { return }
         enhancingBio = true
         bioError = nil
+        toast = .progress("Enhancing bio", "ShotIQ is rewriting your profile bio.", progress: 0.55)
         Task {
             struct Body: Encodable { var bio: String }
             struct Resp: Codable { var success: Bool; var enhancedBio: String? }
@@ -2065,70 +4535,139 @@ struct ProfileView: View {          // 070
                 let r: Resp = try await APIClient.shared.call("/api/enhance-bio", method: "POST",
                                                               body: Body(bio: bio))
                 if let enhanced = r.enhancedBio, !enhanced.isEmpty { bio = enhanced }
+                toast = .success("Bio enhanced", "Your profile copy was updated.")
             } catch {
                 bioError = "Couldn't enhance the bio right now."
+                toast = .error("Bio enhancement failed", "Try again when the connection is steady.")
             }
             enhancingBio = false
         }
     }
+
+    private func loadProfilePhoto(_ item: PhotosPickerItem?) {
+        guard let item else { return }
+        toast = .progress("Saving profile photo", "Updating your ShotIQ media thumbnail.", progress: 0.4)
+        Task {
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data),
+                      let jpeg = image.jpegData(compressionQuality: 0.82) else {
+                    await MainActor.run {
+                        toast = .error("Photo unavailable", "Choose another image from Photos.")
+                    }
+                    return
+                }
+                await MainActor.run {
+                    profileAvatarDataURL = ShotIQProfileAvatarStore.dataURL(from: jpeg)
+                    toast = .success("Profile photo saved", "My Media thumbnails now use this image.")
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Photo unavailable", "Choose another image from Photos.")
+                }
+            }
+        }
+    }
+
+    private func loadProductionContext() async {
+        guard !loadedProductionContext, !UITestHooks.demoData else { return }
+        loadedProductionContext = true
+        async let profile = try? APIClient.shared.profile()
+        async let badges = try? APIClient.shared.badges()
+        productionProfile = await profile ?? nil
+        productionBadges = await badges ?? nil
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-profile") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    TopBar(onSettings: { showSettings = true })
+                    TopBar(onSettings: {
+                        toast = .info("Opening settings")
+                        showSettings = true
+                    })
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 16) {
                             ZStack(alignment: .bottomTrailing) {
-                                Circle().fill(ShotIQColor.rule).frame(width: 86, height: 86)
-                                    .overlay(Text(shotiqInitials(app.user))
-                                        .shotiqBody(26, weight: .bold)
-                                        .foregroundStyle(ShotIQColor.graphite))
-                                Button { showEditProfile = true } label: {
+                                Group {
+                                    if let profileAvatarImage {
+                                        Image(uiImage: profileAvatarImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        Circle().fill(ShotIQColor.rule)
+                                            .overlay(Text(profileInitialsText)
+                                                .shotiqBody(26, weight: .bold)
+                                                .foregroundStyle(ShotIQColor.graphite))
+                                    }
+                                }
+                                .frame(width: 86, height: 86)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(ShotIQColor.rule))
+                                PhotosPicker(selection: $profilePhotoPick, matching: .images) {
                                     Circle().fill(ShotIQColor.paper).frame(width: 28, height: 28)
                                         .overlay(Circle().stroke(ShotIQColor.rule))
                                         .overlay(Image(systemName: "pencil").font(.system(size: 12))
                                             .foregroundStyle(ShotIQColor.ink))
                                 }
-                                .accessibilityLabel("Edit profile")
+                                .accessibilityLabel("Upload profile photo")
+                                .onChange(of: profilePhotoPick) { loadProfilePhoto($0) }
                             }
                             VStack(alignment: .leading, spacing: 4) {
-                                Text((app.user?.displayName ?? "Jordan Ellis").uppercased()).shotiqDisplay(32)
-                                Text("Right-handed • Advanced").shotiqBody(14)
+                                Text(displayName.uppercased()).shotiqDisplay(32)
+                                    .accessibilityIdentifier("profile-display-name")
+                                Text(subtitleText).shotiqBody(14)
                                     .foregroundStyle(ShotIQColor.graphite)
+                                    .accessibilityIdentifier("profile-subtitle")
                             }
                         }
                         .padding(.top, 18)
                         HStack(spacing: 0) {
                             NavigationLink { WorkoutCalendarView() } label: {
-                                HeaderStat(icon: "film", value: "6", label: "DAY STREAK").frame(maxWidth: .infinity)
+                                HeaderStat(icon: "film", value: profileSummary.streak, label: "DAY STREAK").frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening workout calendar", "Your streak history is ready.")
+                            })
+                            .accessibilityIdentifier("profile-day-streak")
                             VRule(height: 46)
                             NavigationLink { PlayerCardView() } label: {
-                                HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                HeaderStat(icon: "circle.hexagongrid", value: profileSummary.points, label: "POINTS")
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                toast = .info("Opening player card", "Your points card is ready.")
+                            })
+                            .accessibilityIdentifier("profile-points")
                             VRule(height: 46)
-                            profileStat("24", "SHOTS")
+                            profileStat(profileSummary.shots, "SHOTS")
+                                .accessibilityIdentifier("profile-total-shots")
                             VRule(height: 46)
-                            profileStat("15", "MAKES")
+                            profileStat(profileSummary.makes, "MAKES")
+                                .accessibilityIdentifier("profile-total-makes")
                             VRule(height: 46)
-                            profileStat("62.5%", "MAKE %")
+                            profileStat(profileSummary.makeRate, "MAKE %")
+                                .accessibilityIdentifier("profile-make-rate")
                         }
                         .padding(.vertical, 16)
                         PrimaryButton(title: "Edit player profile", icon: "camera.viewfinder") {
+                            toast = .info("Opening edit profile")
                             showEditProfile = true
                         }
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
                                 SectionLabel(text: "PHYSICAL PROFILE")
                                 HStack(spacing: 0) {
-                                    physCol("ruler", "6'3\"", "HEIGHT")
+                                    physCol("ruler", heightText, "HEIGHT")
+                                        .accessibilityIdentifier("profile-height")
                                     VRule(height: 48)
-                                    physCol("scalemass", "185 lbs", "WEIGHT")
+                                    physCol("scalemass", weightText, "WEIGHT")
+                                        .accessibilityIdentifier("profile-weight")
                                     VRule(height: 48)
-                                    physCol("figure.arms.open", "6'5\"", "WINGSPAN")
+                                    physCol("figure.arms.open", wingspanText, "WINGSPAN")
+                                        .accessibilityIdentifier("profile-wingspan")
                                 }
                             }
                             .padding(14)
@@ -2137,12 +4676,13 @@ struct ProfileView: View {          // 070
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
                                 SectionLabel(text: "SHOOTING PROFILE")
+                                let shootingMetrics = shootingMetricSummary
                                 HStack(spacing: 0) {
-                                    physCol("figure.basketball", "8'11\"", "RELEASE HEIGHT")
+                                    physCol("figure.basketball", shootingMetrics.releaseHeight, "RELEASE HEIGHT")
                                     VRule(height: 48)
-                                    physCol("gauge", "58°", "RELEASE ANGLE")
+                                    physCol("gauge", shootingMetrics.elbowAngle, "ELBOW ANGLE")
                                     VRule(height: 48)
-                                    physCol("point.3.connected.trianglepath.dotted", "0°", "SHOT SHAPE • SLIGHT RIGHT")
+                                    physCol("point.3.connected.trianglepath.dotted", shootingMetrics.releaseOffset, "RELEASE OFFSET")
                                 }
                             }
                             .padding(14)
@@ -2191,6 +4731,9 @@ struct ProfileView: View {          // 070
                             }
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            toast = .info("Opening player card", "Your profile card is ready.")
+                        })
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Player card")
                         .accessibilityIdentifier("Player card")
@@ -2205,7 +4748,7 @@ struct ProfileView: View {          // 070
                                             if enhancingBio {
                                                 ProgressView().controlSize(.mini)
                                             } else {
-                                                Image(systemName: "sparkles").font(.system(size: 12))
+                                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "sparkles"), size: 42).font(.system(size: 12))
                                             }
                                             Text(enhancingBio ? "Enhancing…" : "Enhance bio")
                                                 .shotiqBody(13, weight: .medium)
@@ -2230,15 +4773,16 @@ struct ProfileView: View {          // 070
                                 HStack {
                                     SectionLabel(text: "PROFILE COMPLETION")
                                     Spacer()
-                                    Text("82%").font(.custom("Tungsten-Medium", size: 24))
+                                    Text(profileSummary.completionText).font(.custom("Tungsten-Medium", size: 24))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .accessibilityIdentifier("profile-completion-pct")
                                 }
-                                ScoreBar(pct: 0.82)
+                                ScoreBar(pct: profileSummary.completionPct)
                                 HStack(spacing: 0) {
                                     completionItem(true, "Profile info")
                                     completionItem(true, "Physical profile")
                                     completionItem(true, "Shooting profile")
-                                    completionItem(false, "Bio")
+                                    completionItem(bio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false, "Bio")
                                 }
                             }
                             .padding(14)
@@ -2258,9 +4802,10 @@ struct ProfileView: View {          // 070
                             ShotIQCard {
                                 VStack(alignment: .leading, spacing: 8) {
                                     SectionLabel(text: "RECENT ACTIVITY")
-                                    activityRow("Quick Release Builder", "Today at 8:24 AM")
-                                    activityRow("Catch & Shoot Review", "May 11, 2024")
-                                    activityRow("Mid-Range Mechanics", "May 10, 2024")
+                                    ForEach(Array(profileSummary.activity.enumerated()), id: \.offset) { index, item in
+                                        activityRow(item.0, item.1)
+                                            .accessibilityIdentifier("profile-activity-\(index)")
+                                    }
                                 }
                                 .padding(12)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -2273,10 +4818,45 @@ struct ProfileView: View {          // 070
                             row("photo.stack", "My media") { MyMediaView() }
                             row("target", "Goals") { GoalsView() }
                             row("gearshape", "Settings") { SettingsHubView() }
-                            row("square.and.arrow.up", "Share results") { ShareResultsView() }
+                            NavigationLink {
+                                if let latest = app.recentMedia.first {
+                                    ShareResultsView(
+                                        presentationOverride: AnalysisResultPresentation(result: latest.analysis),
+                                        analysisOverride: latest.analysis)
+                                } else if UITestHooks.demoData {
+                                    ShareResultsView()
+                                } else {
+                                    AnalyzeHubView()
+                                }
+                            } label: {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "square.and.arrow.up").frame(width: 28)
+                                    Text("Share results").shotiqBody(16)
+                                    Spacer()
+                                    Image(systemName: "chevron.right").foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .padding(.vertical, 14).foregroundStyle(ShotIQColor.ink)
+                                .contentShape(Rectangle())
+                                .overlay(HRule(), alignment: .bottom)
+                            }
+                            .buttonStyle(.plain)
+                            .simultaneousGesture(TapGesture().onEnded {
+                                if !app.recentMedia.isEmpty || UITestHooks.demoData {
+                                    toast = .info("Opening Share results")
+                                } else {
+                                    toast = .info("Analyze a shot first",
+                                                  "Create an analysis before sharing results.")
+                                }
+                            })
+                            .accessibilityIdentifier("Share results")
                         }
                         .padding(.top, 4)
-                        Button { app.signOut() } label: {
+                        Button {
+                            toast = .progress("Signing out", "Closing your ShotIQ session.", progress: 0.6)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                app.signOut()
+                            }
+                        } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "rectangle.portrait.and.arrow.right").frame(width: 26)
                                 Text("Sign out").shotiqBody(15, weight: .medium)
@@ -2292,7 +4872,49 @@ struct ProfileView: View {          // 070
         }
         .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
         .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
+        .task { await loadProductionContext() }
+        .shotiqToast($toast)
     }
+
+    private static func titleCase(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
+    }
+
+    private static func inchesText(_ inches: Int) -> String {
+        "\(inches / 12)'\(inches % 12)\""
+    }
+
+    private static func groupedNumber(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+
+    private static func numberOrDash(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return "\(value)"
+    }
+
+    private static func localStreakDays(from workouts: [TrainingWorkoutRecord]) -> Int {
+        let calendar = Calendar.current
+        let activeDays = Set(workouts.map { calendar.startOfDay(for: $0.completedAt) })
+        var streak = 0
+        var cursor = calendar.startOfDay(for: Date())
+        while activeDays.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return max(streak, activeDays.isEmpty ? 0 : 1)
+    }
+
+    private static func activityDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "'Today at' h:mm a" : "MMM d 'at' h:mm a"
+        return formatter.string(from: date)
+    }
+
     private func profileStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
             Text(value).font(.custom("Tungsten-Medium", size: 24)).foregroundStyle(ShotIQColor.ink)
@@ -2310,9 +4932,9 @@ struct ProfileView: View {          // 070
             // mark while WEIGHT and WINGSPAN matched nothing and shared another.
             Group {
                 if let body = BodyMetricKind(measurementLabel: label) {
-                    BodyMetricGlyph(kind: body, size: 19)
+                    BodyMetricGlyph(kind: body, size: 28)
                 } else {
-                    MechanicGlyph(kind: .init(metricLabel: label), size: 19)
+                    MechanicGlyph(kind: .init(metricLabel: label), size: 28)
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
@@ -2328,7 +4950,7 @@ struct ProfileView: View {          // 070
     private func completionItem(_ done: Bool, _ label: String) -> some View {
         HStack(spacing: 4) {
             Image(systemName: done ? "checkmark.circle" : "circle.dotted")
-                .font(.system(size: 12))
+                .font(.system(size: 18))
                 .foregroundStyle(done ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
             Text(label).shotiqBody(9).foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -2337,7 +4959,7 @@ struct ProfileView: View {          // 070
     }
     private func accountRow(_ icon: String, _ label: String, _ value: String) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 14)).foregroundStyle(ShotIQColor.ink)
+            Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.ink)
             VStack(alignment: .leading, spacing: 1) {
                 Text(label).shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                 Text(value).shotiqBody(12, weight: .semibold)
@@ -2348,7 +4970,7 @@ struct ProfileView: View {          // 070
     private func activityRow(_ title: String, _ date: String) -> some View {
         NavigationLink { MyMediaView() } label: {
             HStack(spacing: 8) {
-                Image(systemName: "play.rectangle").font(.system(size: 13))
+                Image(systemName: "play.rectangle").font(.system(size: 22))
                     .foregroundStyle(ShotIQColor.ink)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title).shotiqBody(11, weight: .semibold)
@@ -2361,6 +4983,9 @@ struct ProfileView: View {          // 070
                     .foregroundStyle(ShotIQColor.graphite)
             }
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            toast = .info("Opening media library", title)
+        })
     }
     /// MORE list row. The destination is built lazily and keeps its concrete
     /// type — the previous `AnyView(...)` argument was constructed eagerly on
@@ -2384,6 +5009,9 @@ struct ProfileView: View {          // 070
             .overlay(HRule(), alignment: .bottom)
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture().onEnded {
+            toast = .info("Opening \(t)")
+        })
         .accessibilityIdentifier(t)
     }
 }
@@ -2399,6 +5027,7 @@ struct EditProfileSheet: View {
     @AppStorage("profileLevel") private var level = "advanced"
     @State private var busy = false
     @State private var errorText: String?
+    @State private var toast: ShotIQToast?
 
     private struct ProfileBody: Encodable {
         var heightInches: Int
@@ -2413,6 +5042,7 @@ struct EditProfileSheet: View {
         guard !busy else { return }
         busy = true
         errorText = nil
+        toast = .progress("Saving profile", "Updating your player measurements.", progress: 0.55)
         Task {
             do {
                 let _: ProfileResp = try await APIClient.shared.call(
@@ -2420,9 +5050,12 @@ struct EditProfileSheet: View {
                     body: ProfileBody(heightInches: heightIn, weightLbs: weightLbs,
                                       wingspanInches: wingspanIn, dominantHand: hand,
                                       experienceLevel: level))
+                toast = .success("Profile saved", "Your player details are up to date.")
+                try? await Task.sleep(nanoseconds: 650_000_000)
                 dismiss()
             } catch {
                 errorText = "Couldn't save your profile. Try again."
+                toast = .error("Profile not saved", "Check your connection and try again.")
             }
             busy = false
         }
@@ -2434,9 +5067,28 @@ struct EditProfileSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Text("EDIT PLAYER PROFILE").shotiqDisplay(28).padding(.top, 8)
-                    measureRow("HEIGHT", inchesLabel(heightIn)) { heightIn = max(48, heightIn - 1) } up: { heightIn = min(96, heightIn + 1) }
-                    measureRow("WEIGHT", "\(weightLbs) lbs") { weightLbs = max(80, weightLbs - 1) } up: { weightLbs = min(350, weightLbs + 1) }
-                    measureRow("WINGSPAN", inchesLabel(wingspanIn)) { wingspanIn = max(48, wingspanIn - 1) } up: { wingspanIn = min(100, wingspanIn + 1) }
+                        .accessibilityIdentifier("profile-edit-title")
+                    measureRow("HEIGHT", inchesLabel(heightIn)) {
+                        heightIn = max(48, heightIn - 1)
+                        return inchesLabel(heightIn)
+                    } up: {
+                        heightIn = min(96, heightIn + 1)
+                        return inchesLabel(heightIn)
+                    }
+                    measureRow("WEIGHT", "\(weightLbs) lbs") {
+                        weightLbs = max(80, weightLbs - 1)
+                        return "\(weightLbs) lbs"
+                    } up: {
+                        weightLbs = min(350, weightLbs + 1)
+                        return "\(weightLbs) lbs"
+                    }
+                    measureRow("WINGSPAN", inchesLabel(wingspanIn)) {
+                        wingspanIn = max(48, wingspanIn - 1)
+                        return inchesLabel(wingspanIn)
+                    } up: {
+                        wingspanIn = min(100, wingspanIn + 1)
+                        return inchesLabel(wingspanIn)
+                    }
                     VStack(alignment: .leading, spacing: 8) {
                         MicroLabel(text: "DOMINANT HAND")
                         HStack(spacing: 6) {
@@ -2467,7 +5119,10 @@ struct EditProfileSheet: View {
                     }
                     PrimaryButton(title: busy ? "Saving…" : "Save profile") { save() }
                         .disabled(busy)
-                    Button { dismiss() } label: {
+                    Button {
+                        toast = .info("Edit cancelled")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { dismiss() }
+                    } label: {
                         Text("Cancel").shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                             .frame(maxWidth: .infinity)
                     }
@@ -2477,23 +5132,31 @@ struct EditProfileSheet: View {
             }
             .background(ShotIQColor.paper)
         }
+        .accessibilityIdentifier("profile-edit-sheet")
+        .shotiqToast($toast)
     }
     private func measureRow(_ label: String, _ value: String,
-                            down: @escaping () -> Void, up: @escaping () -> Void) -> some View {
+                            down: @escaping () -> String, up: @escaping () -> String) -> some View {
         HStack {
             MicroLabel(text: label)
             Spacer()
-            Button(action: down) {
-                Image(systemName: "minus").font(.system(size: 13, weight: .medium))
-                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
-                    .foregroundStyle(ShotIQColor.ink)
-            }
-            Text(value).font(.custom("Tungsten-Medium", size: 24))
-                .frame(width: 84)
-            Button(action: up) {
-                Image(systemName: "plus").font(.system(size: 13, weight: .medium))
-                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
-                    .foregroundStyle(ShotIQColor.ink)
+	            Button {
+	                let updatedValue = down()
+	                toast = .info("\(label.capitalized) updated", updatedValue)
+	            } label: {
+	                Image(systemName: "minus").font(.system(size: 13, weight: .medium))
+	                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
+	                    .foregroundStyle(ShotIQColor.ink)
+	            }
+	            Text(value).font(.custom("Tungsten-Medium", size: 24))
+	                .frame(width: 84)
+	            Button {
+	                let updatedValue = up()
+	                toast = .info("\(label.capitalized) updated", updatedValue)
+	            } label: {
+	                Image(systemName: "plus").font(.system(size: 13, weight: .medium))
+	                    .frame(width: 34, height: 34).overlay(Circle().stroke(ShotIQColor.rule))
+	                    .foregroundStyle(ShotIQColor.ink)
             }
         }
         .padding(.vertical, 4)
@@ -2508,7 +5171,10 @@ struct EditProfileSheet: View {
     /// truncates rather than shrinking further.
     private func choice(_ label: String, _ value: String, _ sel: Binding<String>,
                         fill: Bool = true) -> some View {
-        Button { sel.wrappedValue = value } label: {
+        Button {
+            sel.wrappedValue = value
+            toast = .success("\(label) selected")
+        } label: {
             Text(label).shotiqBody(13, weight: sel.wrappedValue == value ? .semibold : .regular)
                 .lineLimit(1).minimumScaleFactor(0.7)
                 .frame(maxWidth: fill ? .infinity : nil)
@@ -2523,6 +5189,9 @@ struct EditProfileSheet: View {
 
 struct SettingsHubView: View {      // 071
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage("profileHand") private var hand = "right"
+    @AppStorage("profileLevel") private var level = "advanced"
     @AppStorage("notifications") private var notifs = true
     @AppStorage("coachingAudio") private var audio = true
     @AppStorage("units") private var metric = false
@@ -2530,10 +5199,76 @@ struct SettingsHubView: View {      // 071
     @AppStorage("dataBackup") private var dataBackup = true
     @AppStorage("anonAnalytics") private var anonAnalytics = true
     @AppStorage("peerComparisons") private var peerComparisons = true
-    @State private var showEditProfile = false
+    @AppStorage("dashboardMode") private var dashboardMode = "Analysis"
     @State private var showAutomation = false
     @State private var showPrivacy = false
     @State private var showAbout = false
+    @State private var toast: ShotIQToast?
+    @State private var productionProfile: APIProfileDTO?
+    @State private var productionBadges: BadgesResponseDTO?
+    @State private var productionHistoryStats: HistoryStats?
+    @State private var loadedProductionContext = false
+
+    private struct SettingsSummary {
+        var displayName: String
+        var initials: String
+        var subtitle: String
+        var streak: String
+        var points: String
+        var formScore: String
+        var formPct: Double
+        var shots: String
+        var makes: String
+        var makeRate: String
+        var trend: String
+    }
+
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload).sorted { $0.completedAt > $1.completedAt }
+    }
+
+    private var isCanonicalSettingsDemo: Bool {
+        UITestHooks.demoData && workouts.isEmpty && productionBadges == nil && productionHistoryStats == nil
+    }
+
+    private var summary: SettingsSummary {
+        if isCanonicalSettingsDemo {
+            return SettingsSummary(displayName: "Jordan Ellis",
+                                   initials: "JE",
+                                   subtitle: "Right-handed • Advanced",
+                                   streak: "6",
+                                   points: "2,840",
+                                   formScore: "82",
+                                   formPct: 0.82,
+                                   shots: "24",
+                                   makes: "15",
+                                   makeRate: "62.5%",
+                                   trend: "+8.1%")
+        }
+
+        let display = Self.displayName(user: app.user, profile: productionProfile)
+        let totalShots = workouts.reduce(0) { $0 + $1.shots }
+        let totalMakes = workouts.reduce(0) { $0 + $1.makes }
+        let localPoints = workouts.reduce(0) { $0 + $1.pointsEarned }
+        let latestScore = workouts.first?.formScore ?? productionHistoryStats?.latestScore.map { Int($0.rounded()) }
+        let previousScore = workouts.dropFirst().first?.formScore
+        let trend = previousScore.flatMap { previous in
+            latestScore.map { latest in "\(latest - previous >= 0 ? "+" : "")\(latest - previous)" }
+        } ?? Self.percentTrend(productionHistoryStats?.improvementRate)
+        let profileHand = productionProfile?.dominantHand ?? hand
+        let profileLevel = productionProfile?.experienceLevel ?? level
+        return SettingsSummary(displayName: display,
+                               initials: Self.initials(for: display),
+                               subtitle: "\(Self.titleCase(profileHand))-handed • \(Self.titleCase(profileLevel))",
+                               streak: Self.numberOrDash(productionBadges?.stats?.currentStreak) ?? (workouts.isEmpty ? "--" : "\(Self.localStreakDays(from: workouts))"),
+                               points: Self.groupedNumber(productionBadges?.stats?.totalPoints) ?? (workouts.isEmpty ? "--" : Self.groupedNumber(localPoints) ?? "\(localPoints)"),
+                               formScore: latestScore.map { "\($0)" } ?? "--",
+                               formPct: Double(latestScore ?? 0) / 100.0,
+                               shots: totalShots == 0 ? "--" : "\(totalShots)",
+                               makes: totalShots == 0 ? "--" : "\(totalMakes)",
+                               makeRate: totalShots == 0 ? "--" : String(format: "%.1f%%", Double(totalMakes) / Double(totalShots) * 100),
+                               trend: trend ?? "--")
+    }
 
     // PUT /api/settings — sections are merged over server defaults
     // (src/app/api/settings/route.ts); extra keys are stored harmlessly.
@@ -2551,6 +5286,7 @@ struct SettingsHubView: View {      // 071
         struct Automation: Encodable {
             var analyticsRefreshEnabled: Bool
             var dataBackupEnabled: Bool
+            var dashboardMode: String
         }
         var notifications: Notifications
         var privacy: Privacy
@@ -2566,9 +5302,49 @@ struct SettingsHubView: View {      // 071
                            includeInPeerComparisons: peerComparisons,
                            metricUnits: metric),
             automation: .init(analyticsRefreshEnabled: autoAnalysis,
-                              dataBackupEnabled: dataBackup))
+                              dataBackupEnabled: dataBackup,
+                              dashboardMode: dashboardMode.lowercased()))
         Task { await APIClient.shared.send("/api/settings", method: "PUT", body: body) }
     }
+
+    private func saveSettingsChange(_ label: String) {
+        persistSettings()
+        toast = .success("Settings saved", "\(label) updated.")
+    }
+
+    private func saveDashboardMode(_ mode: String) {
+        dashboardMode = mode
+        toast = .progress("Saving dashboard mode",
+                          "Opening ShotIQ to \(mode.lowercased()) next time.",
+                          progress: 0.55)
+        persistSettings()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            toast = .success("Dashboard mode saved", "\(mode) will be your default home view.")
+        }
+    }
+
+    private func openAfterFeedback(_ feedback: ShotIQToast, action: @escaping @MainActor () -> Void) {
+        toast = feedback
+        guard !UITestHooks.active else { return }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            action()
+        }
+    }
+
+    private func loadProductionContext() async {
+        guard !loadedProductionContext, !UITestHooks.demoData else { return }
+        loadedProductionContext = true
+        async let profile = try? APIClient.shared.profile()
+        async let badges = try? APIClient.shared.badges()
+        async let history = try? APIClient.shared.history(limit: 10)
+        productionProfile = await profile ?? nil
+        productionBadges = await badges ?? nil
+        let historyResult = await history
+        productionHistoryStats = historyResult?.stats
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-settings-hub") {
             ScrollView {
@@ -2583,23 +5359,31 @@ struct SettingsHubView: View {      // 071
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 8)
-                            HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                            HeaderStat(icon: "film", value: summary.streak, label: "DAY STREAK")
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("\(summary.streak) DAY STREAK")
+                                .accessibilityIdentifier("settings-day-streak")
                             VRule(height: 46)
-                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                            HeaderStat(icon: "circle.hexagongrid", value: summary.points, label: "POINTS")
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("\(summary.points) POINTS")
+                                .accessibilityIdentifier("settings-points")
                         }
                         .padding(.top, 16)
                         ShotIQCard {
                             VStack(spacing: 0) {
                                 HStack(spacing: 14) {
                                     Circle().fill(ShotIQColor.rule).frame(width: 62, height: 62)
-                                        .overlay(Text(shotiqInitials(app.user))
+                                        .overlay(Text(summary.initials)
                                             .shotiqBody(19, weight: .bold)
                                             .foregroundStyle(ShotIQColor.graphite))
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
+                                        Text(summary.displayName.uppercased())
                                             .shotiqDisplay(26)
-                                        Text("Right-handed • Advanced").shotiqBody(13)
+                                            .accessibilityIdentifier("settings-display-name")
+                                        Text(summary.subtitle).shotiqBody(13)
                                             .foregroundStyle(ShotIQColor.graphite)
+                                            .accessibilityIdentifier("settings-subtitle")
                                     }
                                     Spacer()
                                 }
@@ -2609,17 +5393,28 @@ struct SettingsHubView: View {      // 071
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text("FORM SCORE").shotiqBody(8, weight: .semibold).kerning(0.4)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("Tungsten-Medium", size: 28))
+                                        Text(summary.formScore).font(.custom("Tungsten-Medium", size: 28))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 58)
+                                            .accessibilityIdentifier("settings-form-score")
+                                        ScoreBar(pct: summary.formPct).frame(width: 58)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    settingsStat("24", "SHOTS")
-                                    settingsStat("15", "MAKES")
-                                    settingsStat("62.5%", "MAKE %")
+                                    settingsStat(summary.shots, "SHOTS")
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("\(summary.shots) SHOTS")
+                                        .accessibilityIdentifier("settings-total-shots")
+                                    settingsStat(summary.makes, "MAKES")
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("\(summary.makes) MAKES")
+                                        .accessibilityIdentifier("settings-total-makes")
+                                    settingsStat(summary.makeRate, "MAKE %")
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("\(summary.makeRate) MAKE %")
+                                        .accessibilityIdentifier("settings-make-rate")
                                     VStack(spacing: 3) {
-                                        Text("+8.1%").shotiqBody(12, weight: .bold)
+                                        Text(summary.trend).shotiqBody(12, weight: .bold)
                                             .foregroundStyle(ShotIQColor.confirmGreen)
+                                            .accessibilityIdentifier("settings-trend")
                                         Text("VS LAST SESSION").shotiqBody(6.5, weight: .medium)
                                             .foregroundStyle(ShotIQColor.graphite)
                                             .lineLimit(1).minimumScaleFactor(0.6)
@@ -2628,9 +5423,11 @@ struct SettingsHubView: View {      // 071
                                 }
                                 .padding(14)
                                 HRule()
-                                Button { showEditProfile = true } label: {
+                                NavigationLink {
+                                    EditProfileSheet().modifier(CanonicalTypeScale())
+                                } label: {
                                     HStack(spacing: 12) {
-                                        Image(systemName: "person.crop.square")
+                                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "person.crop.square"), size: 42)
                                             .font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
                                         Text("Edit profile").shotiqBody(15, weight: .semibold)
                                             .foregroundStyle(ShotIQColor.ink)
@@ -2640,74 +5437,137 @@ struct SettingsHubView: View {      // 071
                                     }
                                     .padding(14)
                                 }
+                                .accessibilityIdentifier("settings-edit-profile-link")
+                                .buttonStyle(.plain)
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    toast = .info("Opening edit profile")
+                                })
                             }
                         }
                         .padding(.top, 16)
                         SectionLabel(text: "PREFERENCES").padding(.top, 20)
                         ShotIQCard {
+                            HStack(alignment: .center, spacing: 14) {
+                                ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "camera.metering.center.weighted"),
+                                                         size: 32,
+                                                         label: nil)
+                                    .frame(width: 34)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("DASHBOARD MODE").shotiqCondensed(14, weight: .heavy).kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Choose what opens first on the Home tab.")
+                                        .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                HStack(spacing: 0) {
+                                    ForEach(["Analysis", "Training"], id: \.self) { mode in
+                                        Button {
+                                            saveDashboardMode(mode)
+                                        } label: {
+                                            Text(mode).shotiqBody(13, weight: .semibold)
+                                                .lineLimit(1)
+                                                .fixedSize(horizontal: true, vertical: false)
+                                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                                .background(dashboardMode == mode ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
+                                                .foregroundStyle(dashboardMode == mode ? .white : ShotIQColor.ink)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .accessibilityIdentifier("settings-dashboard-mode-\(mode.lowercased())")
+                                    }
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 8)
+                        ShotIQCard {
                             VStack(spacing: 0) {
-                                settingsToggle("Workout notifications", "Manage alerts, reminders, and updates.", $notifs)
+                                settingsToggle("notifications", "Workout notifications", "Manage alerts, reminders, and updates.", $notifs)
                                     .onChange(of: notifs) { _, on in
-                                        if on { UNUserNotificationCenter.current()
-                                            .requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in } }
-                                        persistSettings()
+                                        if on {
+                                            toast = .progress("Requesting notifications",
+                                                              "Allow ShotIQ reminders in the iOS prompt.",
+                                                              progress: 0.5)
+                                            UNUserNotificationCenter.current()
+                                                .requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+                                                    Task { @MainActor in
+                                                        persistSettings()
+                                                        toast = granted
+                                                            ? .success("Notifications on", "Workout reminders are enabled.")
+                                                            : .info("Notifications need permission", "Turn on notifications in iOS Settings when you are ready.")
+                                                    }
+                                                }
+                                        } else {
+                                            saveSettingsChange("Workout notifications")
+                                        }
                                     }
                                 HRule().padding(.leading, 14)
-                                settingsToggle("Coaching audio cues", "Voice cues while you train.", $audio)
-                                    .onChange(of: audio) { _, _ in persistSettings() }
+                                settingsToggle("coaching-audio", "Coaching audio cues", "Voice cues while you train.", $audio)
+                                    .onChange(of: audio) { _, _ in saveSettingsChange("Coaching audio cues") }
                                 HRule().padding(.leading, 14)
-                                settingsToggle("Metric units", "Use metric units across the app.", $metric)
-                                    .onChange(of: metric) { _, _ in persistSettings() }
+                                settingsToggle("metric-units", "Metric units", "Use metric units across the app.", $metric)
+                                    .onChange(of: metric) { _, _ in saveSettingsChange("Metric units") }
                             }
                         }
                         .padding(.top, 8)
                         ShotIQCard {
                             VStack(spacing: 0) {
-                                settingsRow("bell", "Notifications", "Manage alerts, reminders, and updates.",
+                                settingsRow("notifications", "bell", "Notifications", "Manage alerts, reminders, and updates.",
                                             status: notifs ? "3 ON" : "OFF", statusColor: ShotIQColor.analysisBlue) {
-                                    CameraService.openSystemSettings()
-                                }
-                                HRule().padding(.leading, 14)
-                                settingsRow("arrow.triangle.2.circlepath", "Automation",
-                                            "Auto-analysis, uploads, and data handling.",
-                                            status: "\([autoAnalysis, dataBackup].filter { $0 }.count) ACTIVE",
-                                            statusColor: ShotIQColor.confirmGreen) {
-                                    withAnimation { showAutomation.toggle() }
-                                }
-                                if showAutomation {
-                                    settingsToggle("Auto-analysis refresh", "Recompute analytics overnight.", $autoAnalysis)
-                                        .onChange(of: autoAnalysis) { _, _ in persistSettings() }
-                                        .padding(.leading, 26)
-                                    settingsToggle("Data backup", "Back up sessions to the server.", $dataBackup)
-                                        .onChange(of: dataBackup) { _, _ in persistSettings() }
-                                        .padding(.leading, 26)
-                                }
-                                HRule().padding(.leading, 14)
-                                settingsRow("lock.shield", "Data and privacy",
-                                            "Control your data, export, and permissions.",
-                                            status: nil, statusColor: nil) {
-                                    withAnimation { showPrivacy.toggle() }
-                                }
-                                if showPrivacy {
-                                    settingsToggle("Anonymous analytics", "Share anonymized usage data.", $anonAnalytics)
-                                        .onChange(of: anonAnalytics) { _, _ in persistSettings() }
-                                        .padding(.leading, 26)
-                                    settingsToggle("Peer comparisons", "Include my stats in peer comparisons.", $peerComparisons)
-                                        .onChange(of: peerComparisons) { _, _ in persistSettings() }
-                                        .padding(.leading, 26)
-                                }
-                                HRule().padding(.leading, 14)
-                                settingsRow("questionmark.circle", "Help and support",
-                                            "FAQs, guides, and contact options.",
-                                            status: nil, statusColor: nil) {
-                                    if let url = URL(string: "mailto:support@shotiq.app?subject=ShotIQ%20Support") {
-                                        UIApplication.shared.open(url)
+                                    openAfterFeedback(.info("Opening Settings", "Update notification permissions in iOS Settings.")) {
+                                        CameraService.openSystemSettings()
                                     }
                                 }
                                 HRule().padding(.leading, 14)
-                                settingsRow("info.circle", "About ShotIQ",
+                                settingsRow("automation", "arrow.triangle.2.circlepath", "Automation",
+                                            "Auto-analysis, uploads, and data handling.",
+                                            status: "\([autoAnalysis, dataBackup].filter { $0 }.count) ACTIVE",
+                                            statusColor: ShotIQColor.confirmGreen) {
+                                    let opening = !showAutomation
+                                    withAnimation { showAutomation.toggle() }
+                                    toast = .info(opening ? "Automation settings opened" : "Automation settings closed")
+                                }
+                                if showAutomation {
+                                    settingsToggle("auto-analysis", "Auto-analysis refresh", "Recompute analytics overnight.", $autoAnalysis)
+                                        .onChange(of: autoAnalysis) { _, _ in saveSettingsChange("Auto-analysis refresh") }
+                                        .padding(.leading, 26)
+                                    settingsToggle("data-backup", "Data backup", "Back up sessions to the server.", $dataBackup)
+                                        .onChange(of: dataBackup) { _, _ in saveSettingsChange("Data backup") }
+                                        .padding(.leading, 26)
+                                }
+                                HRule().padding(.leading, 14)
+                                settingsRow("data-privacy", "lock.shield", "Data and privacy",
+                                            "Control your data, export, and permissions.",
+                                            status: nil, statusColor: nil) {
+                                    let opening = !showPrivacy
+                                    withAnimation { showPrivacy.toggle() }
+                                    toast = .info(opening ? "Privacy settings opened" : "Privacy settings closed")
+                                }
+                                if showPrivacy {
+                                    settingsToggle("anonymous-analytics", "Anonymous analytics", "Share anonymized usage data.", $anonAnalytics)
+                                        .onChange(of: anonAnalytics) { _, _ in saveSettingsChange("Anonymous analytics") }
+                                        .padding(.leading, 26)
+                                    settingsToggle("peer-comparisons", "Peer comparisons", "Include my stats in peer comparisons.", $peerComparisons)
+                                        .onChange(of: peerComparisons) { _, _ in saveSettingsChange("Peer comparisons") }
+                                        .padding(.leading, 26)
+                                }
+                                HRule().padding(.leading, 14)
+                                settingsRow("help-support", "questionmark.circle", "Help and support",
+                                            "FAQs, guides, and contact options.",
+                                            status: nil, statusColor: nil) {
+                                    if let url = URL(string: "mailto:support@shotiq.app?subject=ShotIQ%20Support") {
+                                        openAfterFeedback(.info("Opening Support", "Preparing an email to ShotIQ support.")) {
+                                            UIApplication.shared.open(url)
+                                        }
+                                    }
+                                }
+                                HRule().padding(.leading, 14)
+                                settingsRow("about-shotiq", "info.circle", "About ShotIQ",
                                             "Version 1.0.0, terms, and app information.",
                                             status: nil, statusColor: nil) {
+                                    toast = .info("About ShotIQ", "Version details opened.")
                                     showAbout = true
                                 }
                             }
@@ -2719,7 +5579,12 @@ struct SettingsHubView: View {      // 071
                             Text("AI-powered basketball shooting analysis.\n© 2025 ShotIQ · shotiq.com\nTerms and privacy policy available on the web.")
                         }
                         ShotIQCard {
-                            Button { app.signOut() } label: {
+                            Button {
+                                toast = .progress("Signing out", "Closing your ShotIQ session.", progress: 0.6)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                    app.signOut()
+                                }
+                            } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: "rectangle.portrait.and.arrow.right")
                                         .font(.system(size: 15)).frame(width: 26)
@@ -2739,7 +5604,55 @@ struct SettingsHubView: View {      // 071
                 }
             }
         }
-        .sheet(isPresented: $showEditProfile) { EditProfileSheet().modifier(CanonicalTypeScale()) }
+        .task { await loadProductionContext() }
+        .shotiqToast($toast)
+    }
+    private static func displayName(user: APIUser?, profile: APIProfileDTO?) -> String {
+        if let profileName = profile?.displayName, !profileName.isEmpty { return profileName }
+        if let userName = user?.displayName, !userName.isEmpty { return userName }
+        let full = [profile?.firstName ?? user?.firstName,
+                    profile?.lastName ?? user?.lastName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if !full.isEmpty { return full }
+        return user?.email?.split(separator: "@").first.map(String.init) ?? "ShotIQ Athlete"
+    }
+    private static func initials(for name: String) -> String {
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return parts.prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
+        }
+        return String(name.prefix(2)).uppercased()
+    }
+    private static func titleCase(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
+    }
+    private static func groupedNumber(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+    }
+    private static func numberOrDash(_ value: Int?) -> String? {
+        guard let value else { return nil }
+        return "\(value)"
+    }
+    private static func percentTrend(_ value: Double?) -> String? {
+        guard let value else { return nil }
+        return String(format: "%+.1f%%", value)
+    }
+    private static func localStreakDays(from workouts: [TrainingWorkoutRecord]) -> Int {
+        let calendar = Calendar.current
+        let activeDays = Set(workouts.map { calendar.startOfDay(for: $0.completedAt) })
+        var streak = 0
+        var cursor = calendar.startOfDay(for: Date())
+        while activeDays.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return max(streak, activeDays.isEmpty ? 0 : 1)
     }
     private func settingsStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
@@ -2750,7 +5663,7 @@ struct SettingsHubView: View {      // 071
         }
         .frame(maxWidth: .infinity)
     }
-    private func settingsToggle(_ title: String, _ caption: String, _ isOn: Binding<Bool>) -> some View {
+    private func settingsToggle(_ id: String, _ title: String, _ caption: String, _ isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).shotiqBody(15, weight: .semibold)
@@ -2759,8 +5672,9 @@ struct SettingsHubView: View {      // 071
         }
         .tint(ShotIQColor.shotiqOrange)
         .padding(14)
+        .accessibilityIdentifier("settings-toggle-\(id)")
     }
-    private func settingsRow(_ icon: String, _ title: String, _ caption: String,
+    private func settingsRow(_ id: String, _ icon: String, _ title: String, _ caption: String,
                              status: String?, statusColor: Color?,
                              action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -2782,7 +5696,9 @@ struct SettingsHubView: View {      // 071
                     .foregroundStyle(ShotIQColor.graphite)
             }
             .padding(14)
+            .contentShape(Rectangle())
         }
+        .accessibilityIdentifier("settings-row-\(id)")
     }
 }
 
@@ -2796,6 +5712,8 @@ struct SettingsHubView: View {      // 071
 /// `@State` and `@EnvironmentObject` boxes.
 private struct ShareCardExportView: View {
     let name: String
+    let presentation: AnalysisResultPresentation
+    let statLine: String
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 0) {
@@ -2809,16 +5727,16 @@ private struct ShareCardExportView: View {
             Text(name.uppercased())
                 .shotiqCondensed(24, weight: .heavy)
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("82").font(.custom("Tungsten-Medium", size: 54))
+                Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 54))
                     .foregroundStyle(ShotIQColor.shotiqOrange)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("FORM SCORE · GOOD").shotiqBody(11, weight: .bold)
+                    Text("FORM SCORE · \(presentation.scoreVerdict)").shotiqBody(11, weight: .bold)
                         .foregroundStyle(ShotIQColor.analysisBlue)
-                    Text("24 shots · 15 makes · 62.5% · +8.1% vs last session")
+                    Text(statLine)
                         .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                 }
             }
-            Text("Primary target: keep elbow stacked through release")
+            Text("Primary target: \(presentation.coachingTarget.lowercased())")
                 .shotiqBody(12, weight: .semibold)
         }
         .padding(20)
@@ -2828,26 +5746,167 @@ private struct ShareCardExportView: View {
     }
 }
 
+enum ShareResultsImageRenderer {
+    @MainActor
+    static func render(name: String,
+                       presentation: AnalysisResultPresentation = .canonicalDemo,
+                       statLine: String = "24 shots · 15 makes · 62.5% · +8.1% vs last session") -> UIImage? {
+        let renderer = ImageRenderer(content: ShareCardExportView(name: name,
+                                                                  presentation: presentation,
+                                                                  statLine: statLine))
+        renderer.scale = 3
+        return renderer.uiImage
+    }
+}
+
 struct ShareResultsView: View {     // 072
     @EnvironmentObject var app: AppState
+    @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(CreatedGoalStore.key) private var createdGoalsPayload = ""
+    var presentationOverride: AnalysisResultPresentation? = nil
+    var analysisOverride: ShotIQAnalysisResultDTO? = nil
     @State private var renderedCard: UIImage?
     @State private var copied = false
-    private let shareText = "My ShotIQ form score: 82 (GOOD) — 62.5% make rate, trending +8.1%. 🏀"
+    @State private var toast: ShotIQToast?
+    @State private var routeAnalyze = false
 
-    /// Rasterises the share card once, on demand. Nothing on this screen runs it
-    /// on appear any more: a full synchronous `ImageRenderer` pass at scale 3 was
-    /// the one thing this destination did that no other pushed screen does, and
-    /// nothing here displays the bitmap until the reader asks to share it.
-    @MainActor private func renderCard() {
-        guard renderedCard == nil else { return }
-        let renderer = ImageRenderer(content: ShareCardExportView(name: app.user?.displayName ?? "Jordan Ellis"))
-        renderer.scale = 3
-        renderedCard = renderer.uiImage
+    private var presentation: AnalysisResultPresentation {
+        if let presentationOverride {
+            return presentationOverride
+        }
+        if let analysisOverride {
+            return AnalysisResultPresentation(result: analysisOverride)
+        }
+        if let latest = app.recentMedia.first?.analysis {
+            return AnalysisResultPresentation(result: latest)
+        }
+        return UITestHooks.active ? .canonicalDemo : .noResult
+    }
+    private var latestAnalysis: ShotIQAnalysisResultDTO? {
+        analysisOverride ?? app.recentMedia.first?.analysis
+    }
+
+    private var playerName: String { app.user?.displayName ?? "Jordan Ellis" }
+
+    private var isCanonicalShareDemo: Bool { presentation.id == "canonical-demo" }
+    private var canShareResult: Bool {
+        isCanonicalShareDemo || presentation.id != AnalysisResultPresentation.noResult.id
+    }
+    private var workouts: [TrainingWorkoutRecord] {
+        TrainingWorkoutStore.decode(completedWorkoutsPayload)
+            .sorted { $0.completedAt > $1.completedAt }
+    }
+    private var activeGoal: GoalRecord? {
+        CreatedGoalStore.decode(createdGoalsPayload)
+            .filter { $0.completedAt == nil }
+            .sorted { $0.progress > $1.progress }
+            .first
+    }
+    private var shareDayStreak: String {
+        if isCanonicalShareDemo { return "6" }
+        guard !workouts.isEmpty else { return "--" }
+        return "\(Self.localStreakDays(from: workouts))"
+    }
+    private var sharePoints: String {
+        if isCanonicalShareDemo { return "2,840" }
+        let points = workouts.reduce(0) { $0 + $1.pointsEarned }
+        return points == 0 ? "--" : Self.groupedNumber(points)
+    }
+    private var shareGoalTitle: String {
+        if isCanonicalShareDemo { return "ACTIVE GOAL" }
+        return activeGoal?.name.uppercased() ?? "NO ACTIVE GOAL"
+    }
+    private var shareGoalProgressText: String {
+        if isCanonicalShareDemo { return "72%" }
+        guard let activeGoal else { return "--" }
+        return "\(Int((activeGoal.progress * 100).rounded()))%"
+    }
+    private var shareGoalProgress: Double {
+        if isCanonicalShareDemo { return 0.72 }
+        return activeGoal?.progress ?? 0
+    }
+
+    private var shareStatLine: String {
+        let p = presentation
+        if isCanonicalShareDemo {
+            return "24 shots · 15 makes · 62.5% · +8.1% vs last session"
+        }
+        if let latestWorkout = workouts.first {
+            return "\(latestWorkout.shots) shots · \(latestWorkout.makes) makes · \(latestWorkout.accuracyText) · \(p.recordedLabel)"
+        }
+        return "\(p.mediaLabel) · \(p.recordedLabel) · \(p.provenanceSummary)"
+    }
+
+    private var shareText: String {
+        let p = presentation
+        if isCanonicalShareDemo {
+            return "My ShotIQ form score: 82 (GOOD) — 62.5% make rate, trending +8.1%."
+        }
+        return "\(p.formScoreShareText) \(p.coachingTarget)"
+    }
+
+    @MainActor private func shareResultImage() {
+        guard requireShareableResult() else { return }
+        toast = .progress("Preparing image", "Rendering your ShotIQ results card.", progress: 0.55)
+        let image = renderedCard ?? ShareResultsImageRenderer.render(name: playerName,
+                                                                     presentation: presentation,
+                                                                     statLine: shareStatLine)
+        guard let image else {
+            toast = .error("Share failed", "ShotIQ could not render this results card.")
+            return
+        }
+        renderedCard = image
+        toast = .success("Opening share sheet", "Your ShotIQ results card is ready.")
+        ShotIQSharePresenter.share([image, shareText])
+    }
+
+    @MainActor private func saveResultImageToPhotos() {
+        guard requireShareableResult() else { return }
+        toast = .progress("Saving image", "Rendering your ShotIQ results card.", progress: 0.35)
+        let image = renderedCard ?? ShareResultsImageRenderer.render(name: playerName,
+                                                                     presentation: presentation,
+                                                                     statLine: shareStatLine)
+        guard let image, let data = image.pngData() else {
+            toast = .error("Save failed", "ShotIQ could not render this results card.")
+            return
+        }
+        renderedCard = image
+
+        Task {
+            let current = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+            let status = current == .notDetermined
+                ? await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                : current
+
+            guard status == .authorized || status == .limited else {
+                await MainActor.run {
+                    toast = .error("Photos access needed", "Allow ShotIQ to add photos, then tap Save image again.")
+                }
+                return
+            }
+
+            do {
+                try await PHPhotoLibrary.shared().performChanges {
+                    let options = PHAssetResourceCreationOptions()
+                    options.originalFilename = "ShotIQ-results-card.png"
+                    let request = PHAssetCreationRequest.forAsset()
+                    request.addResource(with: .photo, data: data, options: options)
+                }
+                await MainActor.run {
+                    toast = .success("Saved to Photos", "Your ShotIQ results card is in your photo library.")
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Save failed", "ShotIQ could not save this image to Photos.")
+                }
+            }
+        }
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-share-results") {
-            ScrollView {
-                VStack(spacing: 0) {
+            ZStack(alignment: .top) {
+                ScrollView {
+                    VStack(spacing: 0) {
                     Text("SHARE RESULTS").shotiqDisplay(34).padding(.top, 24)
                     Text("Preview what others will see. Private data is excluded.")
                         .shotiqBody(14).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
@@ -2856,14 +5915,14 @@ struct ShareResultsView: View {     // 072
                             HStack {
                                 Wordmark(size: 24)
                                 Spacer()
-                                shareStat("film", "6", "DAY STREAK")
+                                shareStat("film", shareDayStreak, "DAY STREAK")
                                 VRule(height: 26)
-                                shareStat("circle.hexagongrid", "2,840", "POINTS")
+                                shareStat("circle.hexagongrid", sharePoints, "POINTS")
                             }
                             HRule()
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
+                                    Text(playerName.uppercased())
                                         .shotiqDisplay(30)
                                     Text("Right-handed • Advanced").shotiqBody(13)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -2872,9 +5931,10 @@ struct ShareResultsView: View {     // 072
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FORM SCORE").shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("82").font(.custom("Tungsten-Medium", size: 44))
+                                    Text(presentation.scoreText).font(.custom("Tungsten-Medium", size: 44))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 88)
+                                        .accessibilityIdentifier("share-results-score")
+                                    ScoreBar(pct: presentation.scorePct).frame(width: 88)
                                 }
                             }
                             HRule()
@@ -2883,20 +5943,22 @@ struct ShareResultsView: View {     // 072
                                     Text("PRIMARY COACHING TARGET")
                                         .shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Keep elbow stacked through release").shotiqBody(15, weight: .bold)
+                                    Text(presentation.coachingTarget).shotiqBody(15, weight: .bold)
                                         .lineLimit(2).minimumScaleFactor(0.8)
                                         .fixedSize(horizontal: false, vertical: true)
+                                        .accessibilityIdentifier("share-results-target")
                                 }
                                 Spacer(minLength: 8)
                                 VStack(alignment: .trailing, spacing: 5) {
-                                    Text("ACTIVE GOAL").shotiqBody(9, weight: .bold).kerning(0.4)
+                                    Text(shareGoalTitle).shotiqBody(9, weight: .bold).kerning(0.4)
                                         .padding(.horizontal, 7).padding(.vertical, 3)
                                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.confirmGreen))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
+                                        .lineLimit(1).minimumScaleFactor(0.62)
                                     HStack(spacing: 6) {
-                                        Text("72%").shotiqBody(12, weight: .bold)
+                                        Text(shareGoalProgressText).shotiqBody(12, weight: .bold)
                                             .foregroundStyle(ShotIQColor.confirmGreen)
-                                        ScoreBar(pct: 0.72, color: ShotIQColor.confirmGreen).frame(width: 54)
+                                        ScoreBar(pct: shareGoalProgress, color: ShotIQColor.confirmGreen).frame(width: 54)
                                     }
                                 }
                             }
@@ -2908,32 +5970,49 @@ struct ShareResultsView: View {     // 072
                                 // passed. Canonical prints 510x578 at x 41…551,
                                 // y 592…1170 — 210pt tall in this column, and it
                                 // carries no baked chrome, only the pose skeleton.
-                                PhotoThumb(height: 210, photo: "072-visual-001")
+                                MediaAnalysisSurface(analysis: latestAnalysis,
+                                                     fallbackPhoto: "072-visual-001",
+                                                     height: 210,
+                                                     cornerRadius: 6)
                                     .frame(maxWidth: .infinity)
+                                    .accessibilityIdentifier("share-results-real-media")
                                 VStack(alignment: .leading, spacing: 9) {
                                     Text("MECHANICS HIGHLIGHTS")
                                         .shotiqBody(9, weight: .semibold).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    highlight("figure.arms.open", "ELBOW STACK")
-                                    highlight("gauge", "52° RELEASE ANGLE")
-                                    highlight("hand.raised", "WRIST SNAP")
-                                    highlight("figure.stand", "FOLLOW-THROUGH")
+                                    if isCanonicalShareDemo {
+                                        highlight("figure.arms.open", "ELBOW STACK")
+                                        highlight("gauge", "52° RELEASE ANGLE")
+                                        highlight("hand.raised", "WRIST SNAP")
+                                        highlight("figure.stand", "FOLLOW-THROUGH")
+                                    } else {
+                                        highlight("figure.arms.open", "MEDIA \(presentation.mediaLabel.uppercased())")
+                                        highlight("gauge", "\(presentation.phaseText.uppercased()) PHASE")
+                                        highlight("hand.raised", "WRIST \(presentation.wristAngleText)")
+                                        highlight("figure.stand", "ELBOW \(presentation.elbowAngleText)")
+                                    }
                                 }
                                 .frame(width: 124, alignment: .leading)
                             }
                             PhaseStrip()
                             HRule()
                             HStack(spacing: 0) {
-                                shareBottomStat("24", "SHOTS", ShotIQColor.ink)
+                                shareBottomStat(isCanonicalShareDemo ? "24" : presentation.mediaLabel.uppercased(),
+                                                isCanonicalShareDemo ? "SHOTS" : "MEDIA",
+                                                ShotIQColor.ink)
                                 VRule(height: 34)
-                                shareBottomStat("15", "MAKES", ShotIQColor.ink)
+                                shareBottomStat(isCanonicalShareDemo ? "15" : presentation.phaseText.uppercased(),
+                                                isCanonicalShareDemo ? "MAKES" : "PHASE",
+                                                ShotIQColor.ink)
                                 VRule(height: 34)
-                                shareBottomStat("62.5%", "MAKE %", ShotIQColor.ink)
+                                shareBottomStat(isCanonicalShareDemo ? "62.5%" : presentation.sourceCoverageText,
+                                                isCanonicalShareDemo ? "MAKE %" : "SOURCES",
+                                                ShotIQColor.ink)
                                 VRule(height: 34)
                                 VStack(spacing: 2) {
-                                    Text("+8.1%").shotiqBody(13, weight: .bold)
+                                    Text(isCanonicalShareDemo ? "+8.1%" : presentation.scoreVerdict).shotiqBody(13, weight: .bold)
                                         .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("VS LAST SESSION").shotiqBody(6.5, weight: .medium)
+                                    Text(isCanonicalShareDemo ? "VS LAST SESSION" : "RESULT STATE").shotiqBody(6.5, weight: .medium)
                                         .foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
                                 }
@@ -2941,7 +6020,7 @@ struct ShareResultsView: View {     // 072
                             }
                             HRule()
                             HStack {
-                                Text("ANALYZED TODAY AT 8:24 AM")
+                                Text(isCanonicalShareDemo ? "ANALYZED TODAY AT 8:24 AM" : presentation.recordedLabel.uppercased())
                                 Spacer()
                                 Text("SHOTIQ.COM")
                             }
@@ -2953,20 +6032,59 @@ struct ShareResultsView: View {     // 072
                     .padding(.horizontal, 20).padding(.top, 18)
                     Text("SHARE PREVIEW").shotiqBody(11, weight: .bold).kerning(0.8)
                         .padding(.top, 20)
+                    if !canShareResult {
+                        Button {
+                            routeToAnalysis()
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "viewfinder")
+                                    .font(.system(size: 15, weight: .semibold))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Analyze a shot first")
+                                        .shotiqBody(14, weight: .bold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Upload or record media before exporting results.")
+                                        .shotiqBody(12)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(14)
+                            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                    }
                     HStack(spacing: 10) {
+                        Text(shareText)
+                            .frame(width: 1, height: 1)
+                            .clipped()
+                            .accessibilityIdentifier("share-results-text")
                         imageShareControl("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
                         imageShareControl("arrow.down.to.line", "Save image", ShotIQColor.ink)
-                        Button {
-                            UIPasteboard.general.string = shareText
-                            copied = true
-                            Task { try? await Task.sleep(for: .seconds(2)); copied = false }
-                        } label: {
-                            shareOption(copied ? "checkmark" : "square.on.square",
-                                        copied ? "Copied" : "Copy", ShotIQColor.ink)
-                        }
-                        ShareLink(item: shareText) { shareOption("ellipsis", "More", ShotIQColor.ink) }
+                        copyShareControl
+                        Button { shareResultText() } label: { shareOption("ellipsis", "More", ShotIQColor.ink) }
+                            .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
+                    if copied {
+                        HStack(spacing: 7) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Copied")
+                                .shotiqBody(12, weight: .bold)
+                        }
+                        .foregroundStyle(ShotIQColor.confirmGreen)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Copied")
+                        .accessibilityIdentifier("share-results-copy-feedback")
+                        .padding(.top, 10)
+                    }
                     HStack(spacing: 6) {
                         Image(systemName: "lock").font(.system(size: 11))
                         Text("Private media, session clips, and personal notes are not included.")
@@ -2976,29 +6094,31 @@ struct ShareResultsView: View {     // 072
                     .foregroundStyle(ShotIQColor.graphite)
                     .padding(.horizontal, 20)
                     .padding(.top, 14).padding(.bottom, 30)
+                    }
+                }
+                if copied {
+                    copyFeedbackBadge
                 }
             }
         }
+        .shotiqToast($toast)
+        .navigationDestination(isPresented: $routeAnalyze) {
+            AnalyzeHubView()
+        }
     }
-    /// "Share image" / "Save image". Both hand the reader the rendered card;
-    /// until it exists the control rasterises it and the ShareLink takes over,
-    /// which is exactly how PlayerCardView's download control behaves.
     @ViewBuilder
     private func imageShareControl(_ icon: String, _ label: String, _ tint: Color) -> some View {
-        if let renderedCard {
-            ShareLink(item: Image(uiImage: renderedCard),
-                      preview: SharePreview("ShotIQ results", image: Image(uiImage: renderedCard))) {
-                shareOption(icon, label, tint)
-            }
-            .buttonStyle(.plain)
-        } else {
-            Button { renderCard() } label: { shareOption(icon, label, tint) }
+        if label == "Save image" {
+            Button { saveResultImageToPhotos() } label: { shareOption(icon, label, tint) }
                 .buttonStyle(.plain)
+        } else {
+            Button { shareResultImage() } label: { shareOption(icon, label, tint) }
+            .buttonStyle(.plain)
         }
     }
     private func shareStat(_ icon: String, _ value: String, _ label: String) -> some View {
         HStack(spacing: 6) {
-            ShotIQConceptGlyph(concept: label, fallback: icon, size: 14)
+            ShotIQConceptGlyph(concept: label, fallback: icon, size: 22)
                 .foregroundStyle(ShotIQColor.ink)
             VStack(alignment: .leading, spacing: 0) {
                 Text(value).font(.custom("Tungsten-Medium", size: 16))
@@ -3012,7 +6132,7 @@ struct ShareResultsView: View {     // 072
             HStack(spacing: 6) {
                 // 072's mechanics highlights: one diagram per mechanic named,
                 // not a generic figure / info-circle / hand triple.
-                ShotIQConceptGlyph(concept: label, fallback: icon, size: 14)
+                ShotIQConceptGlyph(concept: label, fallback: icon, size: 22)
                     .foregroundStyle(ShotIQColor.ink)
                 Text(label).shotiqBody(9, weight: .semibold).kerning(0.3)
                     .foregroundStyle(ShotIQColor.ink)
@@ -3020,7 +6140,7 @@ struct ShareResultsView: View {     // 072
             }
             Text("GOOD").shotiqBody(10, weight: .bold)
                 .foregroundStyle(ShotIQColor.analysisBlue)
-                .padding(.leading, 18)
+                .padding(.leading, 26)
         }
     }
     private func shareBottomStat(_ value: String, _ label: String, _ color: Color) -> some View {
@@ -3034,11 +6154,101 @@ struct ShareResultsView: View {     // 072
     }
     private func shareOption(_ icon: String, _ label: String, _ tint: Color) -> some View {
         VStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 20)).foregroundStyle(tint)
+            Image(systemName: icon).font(.system(size: 36)).foregroundStyle(tint)
             Text(label).shotiqBody(11, weight: .medium).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity).frame(height: 76)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+    }
+
+    private static func groupedNumber(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private static func localStreakDays(from workouts: [TrainingWorkoutRecord]) -> Int {
+        let calendar = Calendar.current
+        let days = Set(workouts.map { calendar.startOfDay(for: $0.completedAt) })
+        var cursor = calendar.startOfDay(for: Date())
+        var streak = 0
+        while days.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return max(streak, workouts.isEmpty ? 0 : 1)
+    }
+
+    private var copyShareControl: some View {
+        Button(action: copyShareText) {
+            shareOption(copied ? "checkmark" : "square.on.square",
+                        copied ? "Copied" : "Copy", ShotIQColor.ink)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(copied ? "Copied" : "Copy")
+        .accessibilityIdentifier("share-results-copy-button")
+        .highPriorityGesture(TapGesture().onEnded { copyShareText() })
+    }
+
+    private var copyFeedbackBadge: some View {
+        Text("Copied")
+            .shotiqBody(12, weight: .bold)
+            .foregroundStyle(ShotIQColor.confirmGreen)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.confirmGreen.opacity(0.55)))
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Copied")
+            .accessibilityIdentifier("share-results-copy-badge")
+            .padding(.top, 64)
+    }
+
+    @MainActor
+    private func copyShareText() {
+        guard requireShareableResult() else { return }
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) {
+            copied = true
+        }
+        toast = .success("Copied", "Results summary copied to clipboard.")
+        let textToCopy = shareText
+        Task { @MainActor in
+            await Task.yield()
+            UIPasteboard.general.string = textToCopy
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            await MainActor.run { copied = false }
+        }
+    }
+
+    @MainActor
+    @discardableResult
+    private func requireShareableResult() -> Bool {
+        guard canShareResult else {
+            routeToAnalysis()
+            return false
+        }
+        return true
+    }
+
+    @MainActor
+    private func shareResultText() {
+        guard requireShareableResult() else { return }
+        toast = .success("Opening share sheet", "Your ShotIQ result text is ready.")
+        ShotIQSharePresenter.share([shareText])
+    }
+
+    @MainActor
+    private func routeToAnalysis() {
+        toast = .info("Analyze a shot first", "Record or upload media before sharing results.")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            routeAnalyze = true
+        }
     }
 }

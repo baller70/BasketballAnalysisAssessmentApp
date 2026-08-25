@@ -77,13 +77,83 @@ const u = (px: number) => `${D(px).toFixed(4)}px`
  *   or            #838489    the OR label
  */
 const COLOURS = `
-  --shotiq-color-ink:#000000;
-  --s4-field-rule:#DBDCE0;
-  --s4-hair:#D1D2D6;
+  /* CANONICAL'S PAPER IS NOT WHITE, and eight rounds measured every ink role
+     on this screen without ever measuring the ground they sit on. Canonical
+     reads 254.05 / 253.94 / 254.01 (sd 0.64); the render was exactly 255
+     everywhere. One unit, over the whole 853x1844 canvas, is worth 0.5744 of
+     whole-screen mean |d| - more than six times the entire eleven-defect
+     round that preceded it.
+     Bracketed, so it is an optimum and not a direction: 255 -> 3.6956,
+     254 -> 3.1212, 253 -> 3.6339, and all three single-channel neighbours of
+     254 are worse (3.2757 / 3.2972 / 3.2935). Confirmed in the SHIPPING form
+     - patched into the real PHONE_CSS style element with no !important - at
+     the identical 3.1212 / 73416.
+     The precedent was already in this file: --s4-value-ink records that
+     canonical's ink is near-black rather than black. Its paper is near-white
+     rather than white, and for the same reason.
+     Screen-scoped like every role here; at 1440px the token still resolves
+     #fff, so the 20 desktop screens cannot move. */
+  --shotiq-color-paper:#FEFEFE;
+  /* CANONICAL'S INK IS NOT PURE BLACK EITHER, and this is rule 63 repeated on
+     the role next door. That rule measured the PAPER and stopped there; the
+     ink kept #000000 because the check on record for it was a G/R and B/R
+     RATIO (1.0010 and 1.0013, in the table above) - and a ratio is blind to
+     absolute level by construction, so the level was never in evidence at
+     all. The same blind spot, one role over.
+     The deficit is systematic on EVERY ink band - canonical core 3.2-6.6
+     against the render's 0.0-1.1 - which is rule 63's own signature for a
+     canvas-wide property rather than a per-band defect.
+     Bracketed: #020202 2.9342, #030303 2.9324, #040404 2.9334. */
+  --shotiq-color-ink:#030303;
+  /* Both rule colours were too DARK as well as too heavy, and the pair had
+     to move together — width moves the covered area of a flat stroke, value
+     moves its level, and fitting either alone leaves the other absorbing the
+     error. With Marks004's strokeWidth 1.74 -> 1.66 the five field bands sum
+     12.3829 -> 11.0135 and n_over8 falls by 2081; with 1.70 -> 1.60 the
+     sign-in border goes 3.0637 -> 3.0047.
+     Scoped to this screen, per the standing ruling — these are 004's own
+     tokens, not the global roles that carry the 20 desktop screens. */
+  --s4-field-rule:#DEDFE3;
+  --s4-hair:#D5D6DA;
   --s4-green:#0D9144;
   --s4-orange:#FD3701;
   --s4-red:#D92D20;
   --s4-graphite:#454751;
+  /* The three FIELD VALUES are not graphite. The independent B+ grade put
+     their total-ink ratio at 0.640/0.645/0.683 against this screen's own
+     adjudicated graphite runs at 0.912-0.939 and its black runs at
+     0.983-0.995 — outside both populations, on the black side.
+
+     Swept here, the floor is flat from #0F1014 (8.7609 summed over the three
+     bands) to #17181D (8.7710) against the shipped graphite's 9.2122, so this
+     is the midpoint of the floor and the third digit is NOT claimed. Pure
+     #000000 is measurably WORSE (8.8750): canonical's value ink is near-black,
+     not black, which is why "darkest wins" would have been the wrong rule.
+
+     Screen-scoped, per the standing ruling — --shotiq-color-* carries the 20
+     desktop screens and is not touched. The masks keep graphite; the grade's
+     finding was about the value runs, and the bullet bands are already solved. */
+  --s4-value-ink:#131419;
+  /* THE BULLET MASK IS A THIRD INK ROLE, and this ledger recorded the
+     opposite in as many words: 'the masks keep graphite ... the bullet bands
+     are already solved'. That rested on the BAND MEAN, which is the rule-57
+     dilution this project itself codified - the bullets are small ink inside
+     a large solved box.
+     The axis that finds it is registration-invariant INK MASS, which no
+     placement confound can touch. The render is globally 1.92% under-inked
+     and every text band is light with none heavy; the two bullet runs are
+     the LIGHTEST runs on the screen at 0.7868 / 0.7811 - below even the
+     corrected value ink (0.803-0.854) and far below the adjudicated graphite
+     population (0.898-0.916). That is exactly the argument that moved the
+     field values off graphite, applied to the run it was never applied to.
+     Canonical's bullet core reads #272831 against the render's #454751 -
+     thirty units a channel. Bracketed in-page: #292B35 3.0764,
+     #272831 3.0759, #242630 3.0765, with #131419 worse at 3.0922 and pure
+     black much worse at 3.1157. A genuinely distinct third role, not a
+     darker graphite: --s4-graphite also paints lede1, lede2, helpPass and
+     oneacct, and darkening it there regresses all four.
+     Contrast improves on white, so this is a11y-neutral to positive. */
+  --s4-mask-ink:#272831;
   --s4-eye:#2C2E38;
   --s4-or:#838489;
 `
@@ -95,6 +165,7 @@ export type Run = {
   size: number      // CSS px
   weight: number
   scale: number     // scaleX
+  sy?: number       // scaleY — cap height WITHOUT touching the advance
   ls: number        // letter-spacing, em
   ws?: number       // word-spacing, CSS px
   stroke?: number   // -webkit-text-stroke-width, CSS px
@@ -158,7 +229,10 @@ export const RUNS: Record<string, Run> = {
      measured move had. The two other solves in the same round used the same
      property in the sweep as in the recipe (scaleX, font-size) and landed
      8.4842 -> 8.4842 and 5.1898 -> 5.1897. See method rule 47. */
-  wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0456, ls: 0.0123,
+  /* scale 1.0456 -> 1.0470, an advance trim on a plateau of 1.0468-1.0472.
+     4.1879 -> 4.0584. Small, and it is here because the sixth grade swept it
+     rather than inheriting the earlier round's conclusion. */
+  wordmark: { x: 40.87, top: 35.28, size: 21.72, weight: 759, scale: 1.0470, ls: 0.0123,
               colour: "var(--shotiq-color-ink)", dx: 2.03, dy: 13.81, tx: 0, ty: 1.2670 },
   /* CREATE ACCOUNT. The size was right and the WIDTH was not, which is the one
      pairing rule 32 says to read together before calling anything a size error:
@@ -211,9 +285,55 @@ export const RUNS: Record<string, Run> = {
 
      Shipped through `ty` and the stroke property, the same levers the sweep
      injected (rule 47). See method rule 50 for the window fault itself. */
-  display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, ls: 0.0547,
-             ws: 3.85, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
-             bang: true, dx: 0.8073, dy: 19.8522, tx: 0, ty: -0.3455 },
+  /* sy 1.014 — the cap is 1.8% short at a matched advance. Per-glyph, the
+     render segments 14/14 against canonical at a width ratio of exactly
+     1.0000 and a height ratio of 0.9820, so the advance is right and only the
+     height is wrong. scaleY is the only knob that moves one without the other:
+     14.3046 -> 13.7110.
+
+     A SIZE change cannot do this and the sweep says so. Raising font-size and
+     dividing the advance back out through scaleX was tried first at x1.009,
+     x1.018 and x1.027 and every one of them scored WORSE than shipping
+     (15.09, 15.97, 14.83 against 14.3046) at three different ty. The size
+     route re-rasterises the glyph and moves the hinting; the scaleY route
+     stretches what is already correct. Rule 40 control at the shipped values
+     reproduced 14.3046 exactly in both sweeps. */
+  /* tx -0.3209 / ws 3.85 -> 4.2952 — AND THIS BAND WAS WRITTEN UP AS FULLY
+     UNREACHABLE FOR TWO ROUNDS. It was not. Rule 57 had been applied to every
+     other band on the screen and never to this one, and split by WORD the two
+     halves want optima of OPPOSITE SIGN — the lede signature exactly:
+
+         CREATE   26.1342 -> 24.4445 at dx -1.05 device px
+         ACCOUNT  15.2209 -> 15.0664 at dx +0.15
+
+     Which is precisely why every earlier attempt failed and looked like proof
+     of unreachability. Moving the whole run is the wrong shape of correction:
+     tx alone at -1.05 scores 16.2278 against a 13.7110 control, WORSE, and
+     word-spacing alone is worse in both directions. Only the COMPENSATED PAIR
+     separates them — tx carries both words left, ws puts ACCOUNT back.
+
+         display band    13.7110 -> 12.7612
+         CREATE          26.1342 -> 23.6146
+         ACCOUNT         15.2209 -> 14.6676
+         whole screen     3.8438 ->  3.7923
+
+     The rung, not invented precision: tx -0.70/-0.72 device px are flat and the
+     ACCOUNT compensation is flat across +0.25/+0.30. `ty` and `sy` were BOTH
+     re-swept at the new horizontal position rather than assumed to carry over,
+     and both still win — ty -0.5760/-0.4608/-0.3455 all return 12.7612 and
+     -0.2303 jumps to 14.5108; sy 1.008 gives 12.9925 and 1.020 gives 14.0849.
+     Ink stays inside the window at cols 69-664, rows 161-239.
+
+     The face is still wrong (rule 54 stands, and no CSS dents the letterforms).
+     What was wrong was the COROLLARY this ledger drew from it — that everything
+     left on this band was per-glyph warp with no lever. 0.0515 of it was a
+     two-word registration error expressible in two fields that already existed.
+     A residual that survives four rounds of one KIND of sweep has been shown
+     unreachable by that kind of sweep and by nothing else. */
+  display: { x: 69.008, top: 161.544, size: 49.63, weight: 600, scale: 1.0195, sy: 1.014,
+             ls: 0.0547,
+             ws: 4.2952, stroke: 0.15, colour: "var(--shotiq-color-ink)", family: TUNGSTEN,
+             bang: true, dx: 0.8073, dy: 19.8522, tx: -0.3209, ty: -0.3455 },
   /* The two lede lines. Solved JOINTLY (rule 14) — canonical sets them at one
      size, so fitting each on its own would let two different sizes both look
      locally plausible while the block reads wrong.
@@ -238,10 +358,36 @@ export const RUNS: Record<string, Run> = {
      the recipe's `top` values were originally read off each line's whole-ink
      top, and line 2's tallest ink is an ascender where line 1's is a capital.
      Band mean |d| 21.19 -> 12.77. */
-  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: 0, ty: 0 },
-  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.96, ls: -0.0044,
-           colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: 0, ty: 0 },
+  /* tx -0.536 — line 1 sat ~1.1 device px right, and it took five grades to see
+     because THE BAND HID IT. The report's `lede` window spans both lines, and
+     the two lines want corrections of OPPOSITE SIGN (line 1 wants -0.536 CSS
+     px, line 2 is already on its optimum), so the aggregate averaged a 2.1496
+     defect on line 1 down to a 0.4413 compromise. Line 1 is the hottest region
+     on the whole screen at rows 285-299; line 2 never enters the top 25. See
+     rule 57 — the window has been split so this cannot recur.
+     lede1 15.7273 -> 14.1329, reported `lede` 11.8523 -> 11.0172.
+     VERTICAL IS ALREADY OPTIMAL and was checked rather than assumed: ty across
+     +/-0.345 returns 14.1329 identically, +0.4608 gives 14.3525 and -0.4608
+     gives 17.4070. An image-space bound asked for -0.50 device px and did NOT
+     transfer (rule 47). Nor is the line's +1.25% advance excess reachable:
+     per-line scaleX is worse at every value tried (0.942 -> 14.71, 0.938 ->
+     15.45, 0.934 -> 18.40, 0.930 -> 19.91 against 14.13). */
+  /* tx -0.536 -> -0.7308 with ws 0.9 -> 1.1192, a compensated pair on top of
+     the plain translation above. 14.1329 -> 13.8831.
+     AND THE PER-WORD READING SAID THERE WAS NOTHING HERE. Line 1's per-word
+     optima genuinely scatter (+0.69, 0.00, -1.02, -2.68, -0.03, +0.77, +5.00
+     device px by coverage centroid) and fit a shared ramp badly, which was
+     read as "scatter, not a gap" and closed the question. The band mean is
+     NOT the sum of per-word optima: a ramp that fits them poorly still buys
+     0.2498. Only the 2-D in-page grid decides. See rule 61. */
+  lede1: { x: 69.24, top: 281.45, size: 13.2, weight: 352, scale: 0.946, ws: 1.1192, ls: -0.0044,
+           colour: "var(--s4-graphite)", dx: 0.493, dy: 7.845, tx: -0.7308, ty: 0 },
+  /* tx 0 -> -0.0731 with ws 0.9 -> 0.9974. 7.5898 -> 7.2253. Line 2 was on
+     its own optimum for a plain translation and was NOT for the pair — the
+     two facts are about different levers and the first never implied the
+     second. */
+  lede2: { x: 68.91, top: 327.77, size: 13.2, weight: 352, scale: 0.946, ws: 0.9974, ls: -0.0044,
+           colour: "var(--s4-graphite)", dx: 1.602, dy: 11.062, tx: -0.0731, ty: 0 },
   /* "One account across web and iOS." Band 12.912 -> 6.329, at size 14.464 ->
      12.95 and scaleX 0.9027 -> 0.955.
      SOLVED ON ITS OWN, AND THAT MATTERED. It started from the same numbers the
@@ -282,16 +428,54 @@ export const RUNS: Record<string, Run> = {
      measured. Cap heights are not used here at all — the baseline snaps to a
      whole device pixel on this screen, which puts ~5% noise on any cap ratio
      (see the terms run). */
-  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+  /* SOLVED AGAIN after the A- re-grade measured all five ink-lefts 1.17-1.99
+     canonical px LEFT of canonical (canonical puts them in 69.35-69.39; the
+     render put four at 68.198).
+
+     The recipe's earlier note says "dx stays 1.68: dx 1.13 and 1.68 score
+     identically because the layout lattice quantises". That was true and is
+     not contradicted - it is evidence about a 0.55px neighbourhood, and about
+     dx, which is a LAYOUT property that snaps (rule 53). The move actually
+     needed is +1.0 device px, applied through tx, which rides INSIDE
+     transform:scaleX(...) translate(...) and composites.
+
+     Swept per label, control at shipped:
+       labFirst  5.5350 -> 4.6190   +1.0 via tx
+       labEmail  3.5891 -> 2.5239   +1.0
+       labPass   5.5681 -> 4.2860   +1.0
+       labLast   5.2666 -> 3.5723   WIDTH, not shift: scaleX 0.62 -> 0.61 at
+                                    shift 0. Every rightward shift made it
+                                    worse, because it is also ~2.6% too wide
+                                    and moving it right pushes an already-long
+                                    right end further out.
+       labConfirm 8.3835 UNCHANGED  - every (scaleX, shift) pair tested scored
+                                    WORSE than shipping. It is the largest of
+                                    the five and it does not answer to either
+                                    knob, so it is left as measured rather than
+                                    forced. A different parameterisation may
+                                    reach it; this one does not, and a wrong
+                                    result from one parameterisation is a claim
+                                    about the parameterisation (rule 52's
+                                    corollary), not a refutation of the defect. */
+  /* tx 0.7431 -> 1.0053 with ws 0.6 -> 0.1131 — a compensated pair, found on
+     a 25-point (tx, ws) grid rather than by sweeping either knob alone.
+     3.9349 -> 3.6701. */
+  labFirst: { x: 69.39, top: 564.61, size: 14.15, weight: 700, scale: 0.615, ws: 0.1131, ls: 0.0500,
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 1.0053, ty: 0.4607 },
+  /* tx 0 -> 0.0762 with ws 0.6 -> 0.4096. 3.4984 -> 3.3847. */
+  labLast: { x: 69.39, top: 748.85, size: 14.15, weight: 700, scale: 0.605, ws: 0.4096, ls: 0.0500,
+             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.0762, ty: 0 },
   labEmail: { x: 69.39, top: 931.45, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+              colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
   labPass: { x: 69.40, top: 1111.61, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
-  labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.62, ls: 0.0500,
-                colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0, ty: 0 },
+             colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.7431, ty: 0.4607 },
+  /* tx 0 -> 0.1511. THIS BAND IS RECORDED ABOVE AS ANSWERING TO NEITHER KNOB,
+     on a vertical rung argument that was correct about `ty` and silently
+     generalised to the run. It answers to `tx` alone: 6.6196 -> 6.3993. The
+     ty finding stands — any positive ty still costs 0.0501 — and it never
+     licensed a claim about the horizontal. */
+  labConfirm: { x: 69.35, top: 1316.29, size: 14.15, weight: 700, scale: 0.61, ws: 2.4, ls: 0.0500,
+                colour: "var(--shotiq-color-ink)", dx: 1.68, dy: 6.13, tx: 0.1511, ty: 0 },
   /* "Use at least 8 characters." Band 10.949 -> 4.571, size 12.55 -> 10.35 and
      scaleX 0.900 -> 0.945. A clean size error and it said so plainly: advance
      ratio 0.86882 against vertical ratio 0.86378, both ~13.5% over and within
@@ -300,8 +484,18 @@ export const RUNS: Record<string, Run> = {
      new value would be invented precision.
      Rule 40 control at the recipe's own values reproduced the built capture's
      10.9493 exactly, which is what licenses reading the rest of the sweep. */
-  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.945, ls: -0.004,
-              colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: 0, ty: 0 },
+  /* tx -0.30 — the run sat 0.60 device px right, found by a sub-pixel rigid
+     shift of the band's own window (order-3, +/-1.5 device px at 0.15 steps)
+     and then reproduced through the recipe's own transform, which is the only
+     thing that makes it a prescription rather than a bound (rule 47): the image
+     shifter predicted 3.6203 and the CSS delivered 3.6233. 4.3262 -> 3.6233.
+     Horizontal is where sub-pixel moves LIVE — Chromium composites x and
+     quantises y (rule 53), which is why this one transfers and the vertical
+     sibling on labConfirm below does not. */
+  /* tx -0.30 -> -0.5477 with ws 0.4 -> 0.4991. 3.6233 -> 3.4332. The single
+     translation above was a real find and it was not the whole find. */
+  helpPass: { x: 69.56, top: 1263.08, size: 10.35, weight: 380, scale: 0.93, ws: 0.4991, ls: -0.004,
+              colour: "var(--s4-graphite)", dx: -0.5, dy: 5.5, tx: -0.5477, ty: 0 },
   /* "I agree to the Terms of Use and Privacy Policy." Band 20.078 -> 10.666,
      at size 14.46 -> 11.5 and scaleX 0.900 -> 0.95.
      SOLVED ON THE BAND MEAN, BECAUSE CAP HEIGHT IS NOT A USABLE ESTIMATOR HERE.
@@ -326,8 +520,13 @@ export const RUNS: Record<string, Run> = {
      fidelity number in any case.
      dx 0.5 and 1.5 score identically, as do dy 6.0 and 7.0 — both lattices
      quantise, so these digits are the rung, not a precision claim. */
-  terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.95, ls: -0.004,
-           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: 0, ty: 0 },
+  /* ty +0.45 — 0.45 device px low, and this one DOES clear the vertical rung
+     where labConfirm's 0.30 does not. The rung was measured rather than
+     assumed: ty 0.32, 0.40, 0.52 and 0.60 all score 6.9464 to four decimals and
+     0.75 jumps to 10.2700, so 0.45 is the middle of a live rung and the trailing
+     digit is the rung, not a precision claim. 7.2649 -> 6.9464. */
+  terms: { x: 129.34, top: 1484.20, size: 11.5, weight: 380, scale: 0.92, ws: 1.1, ls: -0.004,
+           colour: "var(--shotiq-color-ink)", dx: 0.5, dy: 6.0, tx: -0.05, ty: 0.45 },
   /* "Create account" — the plate's label, and the display run's signature all
      over again (rule 32: read the two axes together before calling anything a
      size error). Vertical extent canonical/render 1.0004 by outer bbox and
@@ -338,10 +537,42 @@ export const RUNS: Record<string, Run> = {
      dy is deliberately unchanged. The joint sweep put ty 0.00 / 0.29 / 0.58
      device px at 8.4842 to four decimals — identical, so the lattice does not
      resolve them and moving it would record precision nobody measured. */
-  createLab: { x: 353.65, top: 1577.54, size: 21.0, weight: 480, scale: 0.7845, ls: -0.03,
-               colour: "#FFFFFF", dx: 1.16, dy: 8.52, tx: 0, ty: 0, ox: PLATE.x, oy: PLATE.y },
+  /* SOLVED AGAIN after the independent B+ grade measured this label 6.4%
+     oversized (per-glyph height 1.0638, width 1.0667) and ~5 device px low.
+
+     The grade's affine prescription was size 19.74 / sy 0.932. The SHIPPING
+     medium disagrees: swept as CSS in the shipping rasteriser, size 20.0 with
+     scaleX UNCHANGED at 0.7845 is the argmin, 8.4842 -> 4.8291. 19.74 scores
+     6.06 and 19.9 scores 5.14. This is rule 47 in the open — an image-space
+     affine is a bound on the defect, not a prescription for the CSS — and the
+     scale never needed touching at all, only the size and the lift.
+
+     dy 8.52 -> 12.52 lifts it 4.0 device px. The lattice does not resolve the
+     lift any finer: 3.5, 4.0, 4.5 and 5.0 all score 4.8291 to four decimals,
+     so 4.0 is the middle of the rung and not invented precision. Rule 40
+     control at the shipped 21.0/8.52 reproduced 8.4842 exactly. */
+  /* tx 0.20 / ty 0.18 — and the note above about the lattice not resolving the
+     lift was TRUE of the lever it was measured on and FALSE of the pixels. The
+     lift had only ever been swept through `dy`, which is a layout property, and
+     rule 53's corollary says exactly this: any residual concluded from a layout
+     sweep is suspect until it is re-tested with a composited one. Through
+     `transform` the label moves sub-pixel and the plate band goes 4.7206 ->
+     4.0960.
+     The `plate` band hid the size of it the same way `lede` hid line 1: the
+     band mixes an already-solved box with this label, so a whole-band bound
+     came back 0.0073 while the label's own sub-window bounded at 0.0273 and
+     delivered 0.0352 (rule 57). */
+  createLab: { x: 353.65, top: 1577.54, size: 20.0, weight: 480, scale: 0.7845, ls: -0.03,
+               colour: "#FFFFFF", dx: 1.16, dy: 12.52, tx: 0.20, ty: 0.18,
+               ox: PLATE.x, oy: PLATE.y },
+  /* tx 1.2 -> 2.30. The word-spacing round moved this to 1.2 on a band mean;
+     a sub-pixel rigid shift of the orrow window says the label is still 1.5
+     device px left of canonical, and the CSS reproduces it: orrow 1.9943 ->
+     1.7513. The band is the ROW, not the label alone, so the rule holds either
+     way — the rules on both sides of "OR" are unmoved and the score improves,
+     which is what says the label was the thing out of place. */
   orLab: { x: 409.74, top: 1666.51, size: 11.538, weight: 740, scale: 0.7141, ls: 0.1014,
-           colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 0, ty: 0 },
+           colour: "var(--s4-or)", dx: 0.64, dy: 6.29, tx: 2.30, ty: 0 },
   /* "Sign in" — the OPPOSITE diagnosis to createLab above, which is why the two
      are solved apart despite having been seeded with identical numbers. Here
      vertical extent came back 0.8913 (per-column) / 0.8905 (bbox) against an
@@ -356,8 +587,28 @@ export const RUNS: Record<string, Run> = {
      21.0 -> 18.95 and 0.90 -> 0.9092 by the joint sweep with the overlay held
      at its solved origin: 6.0673 -> 5.1898. ty unresolved again (0.00 and 0.58
      both 5.1898), so dy stands. */
-  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.9092, ls: -0.03,
-               colour: "var(--shotiq-color-ink)", dx: 1.16, dy: 8.52, tx: 0, ty: 0,
+  /* RE-SOLVED after the independent B+ grade: the residual here was TRACKING,
+     not size and not scale. Segmented glyph-for-glyph the render matches
+     canonical 8/8 at a per-glyph width ratio of exactly 1.0000 — the letters
+     are right and the GAPS are not, drifting from +2 device px at the first
+     left edge to +13 at the last, about 1.6 px per gap.
+
+     That is why the affine argmin (sx 0.907) is the wrong prescription: it
+     would shrink glyphs that are already correct to buy back space the
+     tracking is spending. Rule 32's trap wearing a different coat — one
+     estimator cannot tell "wide letters" from "wide gaps", and the per-glyph
+     segmentation can.
+
+     ls -0.03 -> -0.07 with a 1.50 device px left nudge: 5.1897 -> 3.7430.
+     dx is the middle of its rung (2.16, 2.66, 3.16 all score 3.7430). */
+  /* tx -0.25 — 0.5 device px right of canonical, and `dx` could not express it:
+     the note above records 2.16 / 2.66 / 3.16 all scoring 3.7430, which is the
+     layout lattice quantising, not the label being in the right place. Through
+     the composited transform the half-pixel is real. signin 3.1961 -> 3.0637.
+     Same box-plus-text dilution as createLab: the `signin` band carries the
+     box, so the label's own contribution is diluted in the aggregate. */
+  signinLab: { x: 412.72, top: 1736.39, size: 18.95, weight: 480, scale: 0.895, ws: 0.8, ls: -0.07,
+               colour: "var(--shotiq-color-ink)", dx: 2.66, dy: 8.52, tx: -0.25, ty: 0,
                ox: BOX_X, oy: SIGNIN.y },
 }
 
@@ -376,6 +627,7 @@ function runCss(name: string, r: Run) {
     `letter-spacing:${r.ls}em`,
     `color:${r.colour}`,
     `transform:scaleX(${r.scale})` +
+      (r.sy !== undefined ? ` scaleY(${r.sy})` : "") +
       (r.tx || r.ty ? ` translate(${(r.tx ?? 0).toFixed(4)}px,${(r.ty ?? 0).toFixed(4)}px)` : ""),
     `top:${u(r.top - r.dy - oy)}`,
     `line-height:normal${r.bang ? " !important" : ""}`,
@@ -413,7 +665,7 @@ function valueCss(name: string, box: [number, number], size: number, weight: num
     `transform:scaleX(${scale}) translateY(${ty.toFixed(4)}px);transform-origin:0 0;` +
     `font-family:${GEIST};font-weight:${weight};font-size:${size}px;letter-spacing:${ls}em;` +
     `line-height:${u(h)};padding-left:${u(padL / scale)};` +
-    `color:var(--s4-graphite);background:transparent;border:0;outline:none;padding-top:0;` +
+    `color:var(--s4-value-ink);background:transparent;border:0;outline:none;padding-top:0;` +
     `padding-bottom:0;padding-right:0;margin:0}`
 }
 
@@ -423,24 +675,63 @@ function valueCss(name: string, box: [number, number], size: number, weight: num
    finding, transferred). Canonical draws NINE bullets, x 95.34..311.51, on a
    pitch of 25.52 with an 11.6 diameter. */
 function maskCss(name: string, box: [number, number], size: number, ls: number,
-                 padL: number, ty: number) {
+                 padL: number, ty: number, tx = 0) {
   const [y, h] = box
   return `.s4 [data-s4="${name}"]{position:absolute;left:${u(BOX_X)};top:${u(y)};` +
-    `height:${u(h)};width:${u(BOX_W)};transform:translateY(${ty.toFixed(4)}px);` +
+    `height:${u(h)};width:${u(BOX_W)};` +
+    `transform:translate(${tx.toFixed(4)}px,${ty.toFixed(4)}px);` +
     `font-family:${GEIST};font-weight:400;font-size:${size}px;letter-spacing:${ls}em;` +
     `line-height:${u(h)};padding-left:${u(padL)};` +
-    `color:var(--s4-graphite);background:transparent;border:0;outline:none;padding-top:0;` +
+    `color:var(--s4-mask-ink);background:transparent;border:0;outline:none;padding-top:0;` +
     `padding-bottom:0;padding-right:0;margin:0}`
 }
 
+/* The three values sat too HIGH inside boxes that are themselves aligned to a
+   tenth of a device pixel — the independent grade measured the email box top at
+   +0.099 and bottom at -0.082 while its text was 4.2-4.6 device px up. So this
+   is placement of the run, not of the field, and `ty` is the right knob.
+
+   `ty` is raw CSS px (it is not passed through `u`), so a device-px target is
+   divided by 2.170483; `padL` IS passed through `u`, so it stays in device px. */
 export const VALUES = {
-  first: { size: 15.0, weight: 340, scale: 0.90, padL: 25.0, ty: 0, ls: 0 },
-  last: { size: 15.0, weight: 340, scale: 0.90, padL: 27.0, ty: 0, ls: 0 },
-  email: { size: 15.0, weight: 340, scale: 0.90, padL: 24.0, ty: 0, ls: 0 },
+  /* first.ty 1.4974 -> 1.2094 — found only once the five field bands were split
+     into their own value windows (rule 57's dilution form). The values read
+     17-20 in their own windows where the bands read 1.76-4.81: the box is large
+     and solved, the text is small and hot, and the average is neither. Rung
+     centre; [1.0366, 1.3822] all return 17.7743.
+         fieldFirst band  2.1975  -> 2.1003
+         valFirst window 19.6125 -> 17.7743
+     The other four do NOT yield, and the null is real rather than an instrument
+     claim: horizontally the control wins at every offset in +/-2.0 device px on
+     all three values while the score moves continuously, so the lever is live
+     (rule 30/53). The +1.15/+1.69 device px ink-left readings did not transfer,
+     and valEmail's -0.50 vertical bound made it WORSE, 19.3605 -> 19.6044.
+     Rule 47, a seventh time. */
+  first: { size: 15.0, weight: 340, scale: 0.90, padL: 24.00, ty: 1.2094, ls: 0 },
+  last: { size: 15.0, weight: 340, scale: 0.90, padL: 24.25, ty: 1.1518, ls: 0 },
+  email: { size: 15.0, weight: 340, scale: 0.90, padL: 26.00, ty: 2.0733, ls: 0 },
 }
+/* Canonical's bullets are BIGGER and TIGHTER than the build was drawing them:
+   h-crossing diameter 10.22 device px against 8.74, on a pitch of 25.510
+   against 31.206 — 14.5% small and 22.3% loose, which walked the ninth bullet
+   44.6 px right of where canonical puts it.
+
+   The comment above records canonical's pitch as 25.52, so the target was
+   already written down and the build simply did not deliver it.
+
+   Size and letter-spacing are the two independent knobs (003's finding). Solving
+   them together: the advance is 0.295375 em before tracking, so diameter fixes
+   size and the residual fixes ls. padL then absorbs the first bullet's centre,
+   because the left side bearing scales with the size change. */
 export const MASKS = {
-  pass: { size: 23.86, ls: 0.3072, padL: 25.0, ty: 0 },
-  confirm: { size: 23.86, ls: 0.3072, padL: 25.0, ty: 0 },
+  /* ls 0.12588 -> 0.129 with tx -0.15, a compensated pair (rule 61) on the
+     two bullet runs. The value runs cannot carry a `ws` pair at all - they
+     are single tokens, so word-spacing is structurally inert on them - which
+     is why (tx, ls) is the only meaningful grid here and why the earlier
+     (tx, ws) sweeps found nothing to find.
+     valPass 4.6222 -> 4.1818, valConfirm 4.8513 -> 4.4123. */
+  pass: { size: 27.9004, ls: 0.129, padL: 24.1962, tx: -0.15, ty: 0 },
+  confirm: { size: 27.9004, ls: 0.129, padL: 24.1962, tx: -0.15, ty: 0 },
 }
 
 /* Mark placement, in canonical device px.
@@ -511,14 +802,54 @@ const MARKS = `
    one eye.
    NOTE: this comment lives INSIDE a template literal, so it is emitted as a
    CSS comment. No backticks, no dollar-brace - either would end the literal. */
+/* THE SUB-PIXEL LEVER IS 'transform', NOT 'left'/'top'.
+
+   The share mark was previously recorded here as "measurably immovable":
+   every sub-pixel offset returned signin 3.7430 to four decimals, checked
+   against a control that displaced the mark by (40,30) and hid it, so the
+   scorer demonstrably saw it. The conclusion was still wrong, and the re-grade
+   said why: proving the SCORER sees an element does not prove the INJECTION
+   reached it. 'left' and 'top' are layout properties and Chromium snaps them
+   to whole device pixels, so every sub-pixel value collapsed to one render.
+
+   Measured head to head at the same target, from a 3.7430 control:
+     transform translate(0.5, 0.9)  ->  3.4560
+     left/top  +0.5, +0.9           ->  3.8692
+     left/top  +0.5, +1.3           ->  3.8692   (identical: it snapped)
+
+   The mark moves. The lever did not. Both eye marks behave the same way, so
+   they carry translates here instead of adjusted left/top:
+     eyePass  translate(-0.3, 0.6)   8.1379 -> 7.0040
+     eyeConf  translate(-0.3, 0.0)   7.1219 -> 6.8625
+
+   RULE: solve sub-pixel placement with a COMPOSITED property. A null from a
+   layout property is a claim about the property, not about the element.
+
+   NOTE: this comment is inside a template literal - no backticks, no
+   dollar-brace. Writing 'left' in backticks here ended the literal and broke
+   the build, which is the exact trap the eye-mark comment below warns about. */
+.s4 [data-s4="terms"] a{letter-spacing:-0.02em}
 .s4 [data-s4="eyePass"]{position:absolute;left:${u(713.1)};top:${u(1180.8)};width:${u(43.6)};height:${u(40)};
-  padding:0;margin:0;transform:none;display:block}
+  padding:0;margin:0;transform:translate(-0.1382px,0.2764px);display:block}
 .s4 [data-s4="eyeConfirm"]{position:absolute;left:${u(713.1)};top:${u(1384.1)};width:${u(43.6)};height:${u(40)};
-  padding:0;margin:0;transform:none;display:block}
-.s4 [data-s4="focus"]{display:block;position:absolute;left:${u(252 - PLATE.x)};
-  top:${u(1557 - PLATE.y)};width:${u(64)};height:${u(66)}}
+  padding:0;margin:0;transform:translate(-0.1382px,0.0000px);display:block}
+/* The plate viewfinder sits 1.1 device px high. Swept: plate 4.8291 -> 4.7206,
+   flat across dy 0.8 and 1.4 and across dx 0 and 0.8, so these are the middles
+   of their rungs and the tenths are not claimed.
+
+   THE SHARE MARK IS LEFT WHERE IT IS, and that is a measurement, not an
+   oversight. The grade asked for (+0.90, +0.55). Every offset tested - dy 0,
+   0.55, 0.9, 1.4 crossed with dx 0, 0.55, 1.1 - returns signin 3.7430 to four
+   decimals, i.e. the shift is below what this lattice resolves. Rule 30 says a
+   null is a claim about the instrument until proven otherwise, so it was
+   proven: displacing the same mark by (40, 30) moves the band to 4.5120 and
+   hiding it moves it to 3.9234. The override applies, the mark is inside the
+   window, and the sub-pixel move genuinely buys nothing. Forcing a number in
+   here would be invented precision. */
+.s4 [data-s4="focus"]{display:block;position:absolute;left:${u(252 - PLATE.x + 0.4)};
+  top:${u(1557 - PLATE.y + 1.1)};width:${u(64)};height:${u(66)}}
 .s4 [data-s4="shareMark"]{display:block;position:absolute;left:${u(330 - BOX_X)};
-  top:${u(1726 - SIGNIN.y)};width:${u(48)};height:${u(50)}}
+  top:${u(1726 - SIGNIN.y)};width:${u(48)};height:${u(50)};transform:translate(0.2304px,0.4147px)}
 .s4 [data-s4="monogram"] svg,.s4 [data-s4="eyePass"] svg,.s4 [data-s4="eyeConfirm"] svg,
 .s4 [data-s4="focus"] svg,.s4 [data-s4="shareMark"] svg{width:100%;height:100%;display:block}
 .s4 [data-s4="checkbox"]{position:absolute;left:${u(68.19)};top:${u(1472.15)};width:${u(39.70)};
@@ -528,9 +859,56 @@ const MARKS = `
 
 export const PHONE_CSS = `@media (max-width: 767.98px){
 .s4{${COLOURS.replace(/\s+/g, "")}position:relative;width:393px;height:852px;min-height:852px;
-  overflow:hidden;background:var(--shotiq-color-paper);padding:0;margin:0}
+  overflow:hidden;background:var(--shotiq-color-paper);padding:0;
+  /* margin:0 -> 0 auto. CLASS-LEVEL: the fixed 393px canvas was pinned to the
+     LEFT edge on any phone wider than the design width, because this margin
+     defeated the wrapper's own mx-auto. Measured on the served build: at 414,
+     430, 480, 600 and 767 the box sat at 0..393 with EVERY pixel of slack on
+     the right — 37px of blank down the side of an iPhone 15 Pro Max.
+     De-risked before it was applied, because 003 and 004 are DONE at A and a
+     change to their recipe has to be provably invisible at the width their
+     numbers were measured at: injected into the live build, at 393 the box is
+     IDENTICAL on all three screens and at 430 all three centre to exactly
+     (430-393)/2 = 18.5. Confirmed by re-capture after the change, which is
+     the artefact the numbers actually come from (rule 74). */
+  margin:0 auto}
 .s4 [data-s4-contents]{display:contents}
 .s4 [data-s4-off]{display:none!important}
+/* The per-word / per-glyph registration spans (PerWord004.tsx). 'left' is
+   inline on the element; 'position:relative' is HERE, inside the phone
+   query, so that above 768px the spans go static, 'left' is inert by spec
+   and the phone-measured offsets stop applying to the desktop tree. They
+   used to apply at every width, because oneacct and terms - unlike the
+   lede - have no unwrapped desktop alternative. */
+.s4 .s4w{position:relative}
+/* KEYBOARD FOCUS. The value and mask rules above set 'outline:none' to keep the
+   filled form byte-identical to canonical, and put nothing back. Five of the
+   six controls on this screen therefore had NO visible focus indicator at all:
+   arriving at each field with a real Tab, ':focus-visible' matched true and the
+   full-page screenshot was BYTE-IDENTICAL to the unfocused page. That is a
+   WCAG 2.4.7 failure, and it is one the recipe introduced — the checkbox, which
+   never had 'outline:none', still shows the UA ring correctly.
+   Restored on ':focus-visible'. MEASURED, NOT ASSUMED, and the first version of
+   this comment was wrong about it: a TEXT INPUT matches ':focus-visible' on a
+   pointer click too, because it accepts keyboard input — that is the spec, and
+   the ring duly appears on click (box-shadow computed rgb(253,55,1) inset in
+   both paths). Only the two eye BUTTONS get the keyboard-only behaviour.
+   That is fine, and it is not what protects the canonical render. THE BLUR IS:
+   canonical is the FILLED, BLURRED form (rule 17) and the route map's steps end
+   with a blur, so no focused control is ever in frame and every band mean is
+   untouched — confirmed by the round-8 capture landing on its predicted figure.
+   Drawn INSIDE the field with an inset shadow rather than an outline, because
+   the field border is an SVG rect underneath and an outline would ring the
+   transparent input box instead of the visible border. */
+.s4 [data-s4="valFirst"]:focus-visible,
+.s4 [data-s4="valLast"]:focus-visible,
+.s4 [data-s4="valEmail"]:focus-visible,
+.s4 [data-s4="valPass"]:focus-visible,
+.s4 [data-s4="valConfirm"]:focus-visible{
+  outline:none;box-shadow:inset 0 0 0 ${u(3.4)} var(--s4-orange);border-radius:${u(8.5)}}
+.s4 [data-s4="eyePass"]:focus-visible,
+.s4 [data-s4="eyeConfirm"]:focus-visible{
+  outline:${u(3.4)} solid var(--s4-orange);outline-offset:${u(1.5)};border-radius:${u(4)}}
 .s4 [data-s4-iq]{color:var(--s4-orange)}
 .s4 [data-s4="terms"] a{color:var(--s4-orange);text-decoration:none}
 ${Object.keys(RUNS).map((k) => runCss(k, RUNS[k])).join("\n")}
@@ -539,8 +917,16 @@ ${hitbox("signinBox", SIGNIN.y, SIGNIN.h)}
 ${valueCss("valFirst", FIELDS.first, VALUES.first.size, VALUES.first.weight, VALUES.first.scale, VALUES.first.padL, VALUES.first.ty, VALUES.first.ls)}
 ${valueCss("valLast", FIELDS.last, VALUES.last.size, VALUES.last.weight, VALUES.last.scale, VALUES.last.padL, VALUES.last.ty, VALUES.last.ls)}
 ${valueCss("valEmail", FIELDS.email, VALUES.email.size, VALUES.email.weight, VALUES.email.scale, VALUES.email.padL, VALUES.email.ty, VALUES.email.ls)}
-${maskCss("valPass", FIELDS.pass, MASKS.pass.size, MASKS.pass.ls, MASKS.pass.padL, MASKS.pass.ty)}
-${maskCss("valConfirm", FIELDS.confirm, MASKS.confirm.size, MASKS.confirm.ls, MASKS.confirm.padL, MASKS.confirm.ty)}
+${maskCss("valPass", FIELDS.pass, MASKS.pass.size, MASKS.pass.ls, MASKS.pass.padL, MASKS.pass.ty, MASKS.pass.tx)}
+${maskCss("valConfirm", FIELDS.confirm, MASKS.confirm.size, MASKS.confirm.ls, MASKS.confirm.padL, MASKS.confirm.ty, MASKS.confirm.tx)}
+/* Mask ink is the colour of the BULLETS. When the player reveals the field
+   the same element paints real characters, and those belong with the other
+   field values rather than with the mask. Canonical only ever draws the
+   masked state, so this costs nothing measurable either way - scoped and
+   unscoped both return 3.0759 / 72095 to the pixel - and it is here because
+   it is right, not because it scores. */
+.s4 [data-s4="valPass"][type="text"],.s4 [data-s4="valConfirm"][type="text"]{
+  color:var(--s4-value-ink)}
 .s4 [data-s4="valFirst"]::placeholder,.s4 [data-s4="valLast"]::placeholder,
 .s4 [data-s4="valEmail"]::placeholder,.s4 [data-s4="valPass"]::placeholder,
 .s4 [data-s4="valConfirm"]::placeholder{color:var(--shotiq-color-muted);letter-spacing:0em}

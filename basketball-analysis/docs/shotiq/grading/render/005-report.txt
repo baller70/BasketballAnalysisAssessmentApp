@@ -1,0 +1,55 @@
+whole screen   mean|d| 4.1139   max 255   n_over8 90508
+  estimator: mean |d| over all channels, top-anchored on the common 853x1844 region; n_over counts pixels with any channel differing by > 8.0
+
+band          mean|d|    max   n_over8
+--------------------------------------
+display       19.3019    255     19291
+safe1          8.7981    255      3580
+gear           8.5389    255       893
+shield         8.4999    254      1279
+help2          8.1496    255      4503
+didnt          7.8059    228      3544
+wordmark       7.7782    255      2712
+help1          6.8700    255      3803
+safe2          6.6762    229      3498
+helpIcon3      6.2137    255       970
+resendLab      6.1780    214      2459
+lede2          6.1525    255      3365
+helpIcon1      5.9123    254       855
+help3          5.3430    255      3336
+helpIcon2      5.1229    255       951
+lede1          4.9511    180      3350
+diffBtn        3.8069    255      9099
+box1           3.6245    244      1677
+box2           3.4711    254      1377
+box3           3.4268    249      1578
+back           3.2205    236       241
+box0           2.9026    255      1231
+resendLink     2.6151    254      3026
+plate          2.5930    255     10091
+resendVal      2.0437    244       939
+box4           1.7022    140      1799
+box5           1.4478     46       763
+chev1          1.2326     50        94
+chev2          1.2263     72        97
+chev3          1.1838     89       105
+rule1          0.5674      4         0
+hdrRule        0.4404     25         2
+rule3          0.4385      7         0
+rule2          0.3751      4         0
+rule4          0.3042      4         0
+
+diagnostic sub-windows — these OVERLAP the bands above and are not
+part of the table; a label inside a solved box is diluted by the box's
+area, so its own error is only visible here (rule 57).
+run          mean|d|    max   n_over8
+-------------------------------------
+diffLab      12.6948    254      2801
+digit1       10.4700    244       716
+plateLab      9.4690    255      4434
+digit0        9.4609    255       614
+digit2        8.7136    254       561
+diffMark      8.3575    255      1179
+digit3        8.2768    249       504
+plateMark     4.4775    194      1450
+caret         1.4682    140       225
