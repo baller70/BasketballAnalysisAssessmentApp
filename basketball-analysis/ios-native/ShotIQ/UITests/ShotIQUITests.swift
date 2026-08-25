@@ -849,12 +849,13 @@ final class ShotIQUITests: XCTestCase {
         uploadVideo.tap()
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen-ios-video-upload").firstMatch.waitForExistence(timeout: 8))
 
-        XCTAssertTrue(app.staticTexts["VIDEO SOURCE"].exists)
-        XCTAssertTrue(app.staticTexts["Video library"].exists)
-        XCTAssertTrue(app.staticTexts["Browse files"].exists)
+        XCTAssertFalse(app.staticTexts["SELECT MEDIA TYPE"].exists)
+        XCTAssertFalse(app.staticTexts["Images - Upload 3-7 photos"].exists)
+        XCTAssertTrue(app.staticTexts["Video Requirements"].exists)
+        XCTAssertTrue(app.staticTexts["Browse video"].exists)
         XCTAssertTrue(app.staticTexts["Record video"].exists)
         XCTAssertTrue(app.staticTexts["Upload queue"].exists)
-        XCTAssertTrue(app.staticTexts["View filming tips"].exists)
+        XCTAssertTrue(app.staticTexts["Filming tips"].exists)
         XCTAssertFalse(app.staticTexts["Choose video"].exists)
     }
 

@@ -271,22 +271,63 @@ struct ShotIQRecentMediaEntry: Identifiable, Equatable, Codable {
     var analysis: ShotIQAnalysisResultDTO
 }
 
+struct ShotIQShootingMediaEntry: Equatable, Codable {
+    var url: String
+    var kind: String
+    var title: String
+    var durationText: String
+}
+
+struct ShotIQParticipationSummary: Equatable {
+    var streak: String
+    var points: String
+    var analyses: Int
+    var workouts: Int
+
+    static let zero = ShotIQParticipationSummary(streak: "0", points: "0", analyses: 0, workouts: 0)
+    static let canonicalDemo = ShotIQParticipationSummary(streak: "6", points: "2,840", analyses: 12, workouts: 0)
+}
+
 final class AppState: ObservableObject {
     enum Phase { case splash, welcome, main }
     @Published var phase: Phase = .splash
     @Published var user: APIUser?
-    @Published var onboardingComplete = false
+    @Published var onboardingComplete = false {
+        didSet { persistOnboardingComplete() }
+    }
     @Published var tab: RootTab = .home
     @Published var recentMedia: [ShotIQRecentMediaEntry] = [] {
         didSet { persistRecentMedia() }
     }
+    @Published var latestShootingMedia: ShotIQShootingMediaEntry? = nil {
+        didSet { persistLatestShootingMedia() }
+    }
     private var sessionHydrationStarted = false
+    private static let onboardingCompleteKey = "shotiq.onboardingComplete.v1"
     private static let recentMediaKey = "shotiq.recentMedia.v1"
+    private static let latestShootingMediaKey = "shotiq.latestShootingMedia.v1"
+
+    var participationSummary: ShotIQParticipationSummary {
+        guard !UITestHooks.demoData else { return .canonicalDemo }
+        let workoutPayload = UserDefaults.standard.string(forKey: TrainingWorkoutStore.key) ?? ""
+        let workouts = TrainingWorkoutStore.decode(workoutPayload)
+        let analysisCount = recentMedia.count
+        let workoutPoints = workouts.reduce(0) { $0 + $1.pointsEarned }
+        let analysisPoints = analysisCount * 100
+        let totalPoints = workoutPoints + analysisPoints
+        let activeDays = Self.activeParticipationDays(recentMedia: recentMedia, workouts: workouts)
+        return ShotIQParticipationSummary(streak: "\(Self.currentStreak(from: activeDays))",
+                                          points: Self.groupedNumber(totalPoints),
+                                          analyses: analysisCount,
+                                          workouts: workouts.count)
+    }
 
     init() {
         applyUITestResets()
         if !UITestHooks.active {
+            onboardingComplete = Self.loadPersistedOnboardingComplete()
             recentMedia = Self.loadPersistedRecentMedia()
+            latestShootingMedia = Self.loadPersistedLatestShootingMedia()
         }
 
         if UITestHooks.stage == "verify-email" || UITestHooks.stage == "reset-password" {
@@ -326,6 +367,13 @@ final class AppState: ObservableObject {
         if recentMedia.count > 24 {
             recentMedia = Array(recentMedia.prefix(24))
         }
+    }
+
+    func rememberShootingMedia(url: URL, kind: String, title: String, durationText: String) {
+        latestShootingMedia = ShotIQShootingMediaEntry(url: url.absoluteString,
+                                                       kind: kind,
+                                                       title: title,
+                                                       durationText: durationText)
     }
 
     private static func mergeAnalysis(incoming: ShotIQAnalysisResultDTO,
@@ -442,7 +490,7 @@ final class AppState: ObservableObject {
 
     func signedIn(_ user: APIUser) {
         self.user = user
-        onboardingComplete = user.profileComplete ?? false
+        onboardingComplete = Self.loadPersistedOnboardingComplete()
         phase = .main
         sessionHydrationStarted = false
         hydrateSignedInSessionIfNeeded()
@@ -452,9 +500,26 @@ final class AppState: ObservableObject {
         Task { await APIClient.shared.signOut() }
         user = nil
         recentMedia = []
+        latestShootingMedia = nil
+        onboardingComplete = false
+        Self.clearPersistedOnboardingComplete()
         Self.clearPersistedRecentMedia()
+        Self.clearPersistedLatestShootingMedia()
         sessionHydrationStarted = false
         phase = .welcome
+    }
+
+    private static func loadPersistedOnboardingComplete() -> Bool {
+        UserDefaults.standard.bool(forKey: onboardingCompleteKey)
+    }
+
+    private func persistOnboardingComplete() {
+        guard !UITestHooks.active else { return }
+        UserDefaults.standard.set(onboardingComplete, forKey: Self.onboardingCompleteKey)
+    }
+
+    private static func clearPersistedOnboardingComplete() {
+        UserDefaults.standard.removeObject(forKey: onboardingCompleteKey)
     }
 
     private static func loadPersistedRecentMedia() -> [ShotIQRecentMediaEntry] {
@@ -462,7 +527,11 @@ final class AppState: ObservableObject {
               let entries = try? JSONDecoder().decode([ShotIQRecentMediaEntry].self, from: data) else {
             return []
         }
-        return Array(entries.prefix(24))
+        return Array(entries.prefix(24)).map { entry in
+            var repaired = entry
+            repaired.analysis = repairPersistedMediaURLs(entry.analysis)
+            return repaired
+        }
     }
 
     private func persistRecentMedia() {
@@ -478,6 +547,101 @@ final class AppState: ObservableObject {
 
     private static func clearPersistedRecentMedia() {
         UserDefaults.standard.removeObject(forKey: recentMediaKey)
+    }
+
+    private static func loadPersistedLatestShootingMedia() -> ShotIQShootingMediaEntry? {
+        guard let data = UserDefaults.standard.data(forKey: latestShootingMediaKey),
+              let entry = try? JSONDecoder().decode(ShotIQShootingMediaEntry.self, from: data) else {
+            return nil
+        }
+        return entry
+    }
+
+    private func persistLatestShootingMedia() {
+        guard !UITestHooks.active else { return }
+        guard let latestShootingMedia else {
+            Self.clearPersistedLatestShootingMedia()
+            return
+        }
+        if let data = try? JSONEncoder().encode(latestShootingMedia) {
+            UserDefaults.standard.set(data, forKey: Self.latestShootingMediaKey)
+        }
+    }
+
+    private static func clearPersistedLatestShootingMedia() {
+        UserDefaults.standard.removeObject(forKey: latestShootingMediaKey)
+    }
+
+    private static func repairPersistedMediaURLs(_ analysis: ShotIQAnalysisResultDTO) -> ShotIQAnalysisResultDTO {
+        var repaired = analysis
+        repaired.media.localVideoUrl = repairedLocalMediaURL(from: repaired.media.localVideoUrl)
+        repaired.media.localImageUrl = repairedLocalMediaURL(from: repaired.media.localImageUrl)
+        return repaired
+    }
+
+    private static func repairedLocalMediaURL(from raw: String?) -> String? {
+        guard let raw, raw.isEmpty == false else { return raw }
+        guard let url = URL(string: raw), url.isFileURL else { return raw }
+        if FileManager.default.fileExists(atPath: url.path) { return raw }
+        guard url.path.contains("/ShotIQMedia/"),
+              let dir = persistentMediaDirectory() else {
+            return raw
+        }
+        let repaired = dir.appendingPathComponent(url.lastPathComponent)
+        return FileManager.default.fileExists(atPath: repaired.path) ? repaired.absoluteString : raw
+    }
+
+    private static func persistentMediaDirectory() -> URL? {
+        guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                  in: .userDomainMask).first else {
+            return nil
+        }
+        return base.appendingPathComponent("ShotIQMedia", isDirectory: true)
+    }
+
+    private static func activeParticipationDays(recentMedia: [ShotIQRecentMediaEntry],
+                                                workouts: [TrainingWorkoutRecord]) -> Set<Date> {
+        var days = Set<Date>()
+        let calendar = Calendar.current
+        for entry in recentMedia {
+            if let date = isoDate(entry.analysis.recordedAt) {
+                days.insert(calendar.startOfDay(for: date))
+            }
+        }
+        for workout in workouts {
+            days.insert(calendar.startOfDay(for: workout.completedAt))
+        }
+        return days
+    }
+
+    private static func currentStreak(from days: Set<Date>) -> Int {
+        guard !days.isEmpty else { return 0 }
+        let calendar = Calendar.current
+        var cursor = calendar.startOfDay(for: Date())
+        if !days.contains(cursor),
+           let yesterday = calendar.date(byAdding: .day, value: -1, to: cursor),
+           days.contains(yesterday) {
+            cursor = yesterday
+        }
+        var streak = 0
+        while days.contains(cursor) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        return streak
+    }
+
+    private static func isoDate(_ value: String) -> Date? {
+        let precise = ISO8601DateFormatter()
+        precise.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return precise.date(from: value) ?? ISO8601DateFormatter().date(from: value)
+    }
+
+    private static func groupedNumber(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
     private func hydrateSignedInSessionIfNeeded() {
@@ -501,9 +665,6 @@ final class AppState: ObservableObject {
                     merged.lastName = loadedProfile.lastName ?? merged.lastName
                     merged.profileComplete = loadedProfile.profileComplete ?? merged.profileComplete
                     self.user = merged
-                    if let complete = loadedProfile.profileComplete {
-                        self.onboardingComplete = complete
-                    }
                 }
             }
 
@@ -614,8 +775,11 @@ struct MainTabView: View {
                     switch app.tab {
                     case .home: NavigationStack { HomeView() }
                     case .analyze: NavigationStack { AnalyzeHubView() }
-                    case .training: NavigationStack { TrainingHomeView() }
+                    case .training: NavigationStack { MyDrillsView() }
                     case .progress: NavigationStack { AnalyticsCardsView() }
+                    case .elite: NavigationStack { EliteShootersView() }
+                    case .media: NavigationStack { MyMediaView() }
+                    case .goals: NavigationStack { GoalsView() }
                     case .profile: NavigationStack { ProfileView() }
                     }
                 }

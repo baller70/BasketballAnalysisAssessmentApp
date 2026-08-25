@@ -3,6 +3,7 @@ import UIKit
 import UserNotifications
 import AVKit
 import Photos
+import PhotosUI
 
 // Remaining flows — goals 063-065, analytics 066-067, media 068-069,
 // profile 070, settings 071, share 072.
@@ -23,6 +24,21 @@ struct GoalRecord: Codable, Identifiable {
     var progress: Double {
         guard let t = targetValue, t > 0 else { return 0 }
         return min(1, max(0, Double(currentValue ?? 0) / Double(t)))
+    }
+}
+
+private enum ShotIQProfileAvatarStore {
+    static let key = "shotiq.profileAvatarDataURL.v1"
+
+    static func image(from dataURL: String) -> UIImage? {
+        guard dataURL.isEmpty == false else { return nil }
+        let payload = dataURL.split(separator: ",", maxSplits: 1).last.map(String.init) ?? dataURL
+        guard let data = Data(base64Encoded: payload) else { return nil }
+        return UIImage(data: data)
+    }
+
+    static func dataURL(from data: Data) -> String {
+        "data:image/jpeg;base64,\(data.base64EncodedString())"
     }
 }
 
@@ -2264,7 +2280,11 @@ struct AnalyticsCardsView: View {   // 066
                     }
                     HStack(spacing: 7) {
                         ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { phase in
-                            PhaseGlyph(phase: phase, active: phase == "RELEASE", size: 15)
+                            PhasePhotoThumbnail(phase: ShotPhase(label: phase),
+                                                active: phase == "RELEASE",
+                                                width: 34,
+                                                height: 24,
+                                                cornerRadius: 3)
                         }
                     }
                     HStack(alignment: .bottom) {
@@ -2711,7 +2731,11 @@ struct AnalyticsDetailedView: View { // 067
                                 HStack(alignment: .top, spacing: 6) {
                                     ForEach(Array(scorecard.enumerated()), id: \.element.name) { index, p in
                                         VStack(spacing: 4) {
-                                            PhaseGlyph(phase: p.name, active: p.name == "RELEASE", size: 24)
+                                            PhasePhotoThumbnail(phase: ShotPhase(label: p.name),
+                                                                active: p.name == "RELEASE",
+                                                                width: 42,
+                                                                height: 30,
+                                                                cornerRadius: 4)
                                             Text(p.name).shotiqBody(7, weight: .bold).kerning(0.2)
                                                 .foregroundStyle(p.name == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.55)
@@ -2968,6 +2992,7 @@ struct AnalyticsDetailedView: View { // 067
 
 struct MyMediaView: View {          // 068
     @EnvironmentObject var app: AppState
+    @AppStorage(ShotIQProfileAvatarStore.key) private var profileAvatarDataURL = ""
     @State private var segment = "All"
     @State private var gradeFilter = "All results"
     @State private var sortNewest = true
@@ -3141,7 +3166,12 @@ struct MyMediaView: View {          // 068
                                     mediaStat(stat.value, stat.label, idPrefix: "my-media-header-stat-\(index)")
                                 }
                                 VRule(height: 48)
-                                PhaseGlyph(active: true, size: 34).frame(maxWidth: .infinity)
+                                PhasePhotoThumbnail(phase: .release,
+                                                    active: true,
+                                                    width: 48,
+                                                    height: 36,
+                                                    cornerRadius: 5)
+                                    .frame(maxWidth: .infinity)
                             }
                             .padding(.vertical, 12)
                         }
@@ -3431,9 +3461,37 @@ struct MyMediaView: View {          // 068
     }
     private func mediaTile(_ t: MediaItem) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            MediaAnalysisSurface(analysis: t.analysis,
-                                 fallbackPhoto: t.photo ?? "068-visual-002",
-                                 height: 112)
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(.white)
+                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.rule))
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(t.score)
+                            .font(.custom("Tungsten-Medium", size: 31))
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .lineLimit(1)
+                        Text(t.grade)
+                            .shotiqBody(8, weight: .bold)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.65)
+                        ScoreBar(pct: (Double(t.score) ?? 0) / 100, color: ShotIQColor.shotiqOrange)
+                            .frame(width: 40)
+                        Text("AI")
+                            .shotiqBody(8, weight: .bold)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .padding(.horizontal, 6)
+                            .frame(height: 17)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.rule))
+                    }
+                    Spacer(minLength: 0)
+                    mediaThumbnailWindow(t)
+                        .padding(.trailing, 2)
+                }
+                .padding(8)
+            }
+            .frame(height: 112)
                 .overlay(alignment: .bottomLeading) {
                     Text(t.duration).font(.custom("Tungsten-Medium", size: 11))
                         .foregroundStyle(.white)
@@ -3446,7 +3504,8 @@ struct MyMediaView: View {          // 068
                         .font(.system(size: 15))
                         .foregroundStyle(t.grade == "REVIEW" ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
                         .background(Circle().fill(.white).padding(2))
-                        .padding(5)
+                        .padding(.trailing, 5)
+                        .padding(.bottom, 5)
                 }
             HStack(alignment: .top, spacing: 4) {
                 VStack(alignment: .leading, spacing: 1) {
@@ -3457,11 +3516,32 @@ struct MyMediaView: View {          // 068
                 }
                 Spacer(minLength: 2)
                 VStack(alignment: .trailing, spacing: 1) {
-                    Text(t.score).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(t.color)
-                    Text(t.grade).shotiqBody(6.5, weight: .bold).foregroundStyle(t.color)
+                    Text(t.score).font(.custom("Tungsten-Medium", size: 16)).foregroundStyle(ShotIQColor.shotiqOrange)
+                    Text(t.grade).shotiqBody(6.5, weight: .bold).foregroundStyle(ShotIQColor.shotiqOrange)
                         .lineLimit(1).minimumScaleFactor(0.6)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func mediaThumbnailWindow(_ item: MediaItem) -> some View {
+        if let image = ShotIQProfileAvatarStore.image(from: profileAvatarDataURL) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 54, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.shotiqOrange.opacity(0.65), lineWidth: 1))
+                .accessibilityIdentifier("my-media-profile-thumbnail")
+        } else {
+            MediaAnalysisSurface(analysis: item.analysis,
+                                 fallbackPhoto: item.photo ?? "068-visual-001",
+                                 width: 54,
+                                 height: 64,
+                                 cornerRadius: 7)
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.shotiqOrange.opacity(0.45), lineWidth: 1))
+                .accessibilityIdentifier("my-media-clean-thumbnail")
         }
     }
     private func mediaDetailDestination(for item: MediaItem) -> MediaDetailView {
@@ -4322,6 +4402,7 @@ private struct MediaDetailPhaseButtons: View {
 struct ProfileView: View {          // 070
     @EnvironmentObject var app: AppState
     @AppStorage(TrainingWorkoutStore.key) private var completedWorkoutsPayload = ""
+    @AppStorage(ShotIQProfileAvatarStore.key) private var profileAvatarDataURL = ""
     @AppStorage("profileHeightIn") private var heightIn = 75
     @AppStorage("profileWeightLbs") private var weightLbs = 185
     @AppStorage("profileWingspanIn") private var wingspanIn = 77
@@ -4338,6 +4419,7 @@ struct ProfileView: View {          // 070
     @State private var productionProfile: APIProfileDTO?
     @State private var productionBadges: BadgesResponseDTO?
     @State private var loadedProductionContext = false
+    @State private var profilePhotoPick: PhotosPickerItem?
 
     private struct ProfileSummary {
         var streak: String
@@ -4376,6 +4458,10 @@ struct ProfileView: View {          // 070
             return parts.prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
         }
         return String(displayName.prefix(2)).uppercased()
+    }
+
+    private var profileAvatarImage: UIImage? {
+        ShotIQProfileAvatarStore.image(from: profileAvatarDataURL)
     }
 
     private var subtitleText: String {
@@ -4458,6 +4544,31 @@ struct ProfileView: View {          // 070
         }
     }
 
+    private func loadProfilePhoto(_ item: PhotosPickerItem?) {
+        guard let item else { return }
+        toast = .progress("Saving profile photo", "Updating your ShotIQ media thumbnail.", progress: 0.4)
+        Task {
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data),
+                      let jpeg = image.jpegData(compressionQuality: 0.82) else {
+                    await MainActor.run {
+                        toast = .error("Photo unavailable", "Choose another image from Photos.")
+                    }
+                    return
+                }
+                await MainActor.run {
+                    profileAvatarDataURL = ShotIQProfileAvatarStore.dataURL(from: jpeg)
+                    toast = .success("Profile photo saved", "My Media thumbnails now use this image.")
+                }
+            } catch {
+                await MainActor.run {
+                    toast = .error("Photo unavailable", "Choose another image from Photos.")
+                }
+            }
+        }
+    }
+
     private func loadProductionContext() async {
         guard !loadedProductionContext, !UITestHooks.demoData else { return }
         loadedProductionContext = true
@@ -4478,20 +4589,29 @@ struct ProfileView: View {          // 070
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 16) {
                             ZStack(alignment: .bottomTrailing) {
-                                Circle().fill(ShotIQColor.rule).frame(width: 86, height: 86)
-                                    .overlay(Text(profileInitialsText)
-                                        .shotiqBody(26, weight: .bold)
-                                        .foregroundStyle(ShotIQColor.graphite))
-                                Button {
-                                    toast = .info("Opening edit profile")
-                                    showEditProfile = true
-                                } label: {
+                                Group {
+                                    if let profileAvatarImage {
+                                        Image(uiImage: profileAvatarImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        Circle().fill(ShotIQColor.rule)
+                                            .overlay(Text(profileInitialsText)
+                                                .shotiqBody(26, weight: .bold)
+                                                .foregroundStyle(ShotIQColor.graphite))
+                                    }
+                                }
+                                .frame(width: 86, height: 86)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(ShotIQColor.rule))
+                                PhotosPicker(selection: $profilePhotoPick, matching: .images) {
                                     Circle().fill(ShotIQColor.paper).frame(width: 28, height: 28)
                                         .overlay(Circle().stroke(ShotIQColor.rule))
                                         .overlay(Image(systemName: "pencil").font(.system(size: 12))
                                             .foregroundStyle(ShotIQColor.ink))
                                 }
-                                .accessibilityLabel("Edit profile")
+                                .accessibilityLabel("Upload profile photo")
+                                .onChange(of: profilePhotoPick) { loadProfilePhoto($0) }
                             }
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(displayName.uppercased()).shotiqDisplay(32)

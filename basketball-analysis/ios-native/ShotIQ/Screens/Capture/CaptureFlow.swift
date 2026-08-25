@@ -689,172 +689,253 @@ private func captureStat(_ value: String, _ label: String,
     .frame(maxWidth: .infinity)
 }
 
+private struct CaptureV5Recent: Identifiable {
+    let title: String
+    let date: String
+    let score: String
+    let photo: String
+    var id: String { title }
+}
+
 struct AnalyzeHubView: View {       // 021
     @EnvironmentObject var app: AppState
     @State private var toast: ShotIQToast?
-    // Fourth field is the canonical crop for that thumbnail. All four are
-    // bundled now (021-visual-001…004); it used to be only the 2nd and 4th.
-    private let recents: [(String, String, String, String?)] = [
-        // Cards 1 and 3 were `nil` — no asset had ever been cut for them — so
-        // two of the four thumbnails rendered as black placeholders against
-        // canonical 021's four photographs. Cut from the canonical PNG at the
-        // same card boundaries and the same 1x convention as 003/004.
-        ("0:06", "Today • 8:24 AM", "Free Throw", "021-visual-001"),
-        ("0:04", "Today • 8:17 AM", "Catch & Shoot", "021-visual-003"),
-        ("0:05", "Yesterday • 6:42 PM", "Pull-Up Jumper", "021-visual-002"),
-        ("0:05", "Yesterday • 6:35 PM", "Off the Dribble", "021-visual-004")]
+    private let v5Recents: [CaptureV5Recent] = [
+        CaptureV5Recent(title: "RELEASE REVIEW", date: "TODAY", score: "78", photo: "021-v5-recent-release"),
+        CaptureV5Recent(title: "ELBOW DRIFT", date: "YESTERDAY", score: "64", photo: "021-v5-recent-elbow"),
+        CaptureV5Recent(title: "WRIST SNAP", date: "YESTERDAY", score: "82", photo: "021-v5-recent-wrist")
+    ]
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analyze-hub") {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    CaptureHeader()
-
-                    Text("ANALYZE YOUR SHOT").shotiqDisplay(40)
-                        .padding(.horizontal, 20).padding(.top, 26)
-                    Text("Choose how you want to capture your shot.")
-                        .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
-                        .padding(.horizontal, 20).padding(.top, 4)
-
-                    HStack(alignment: .top, spacing: 10) {
-                        NavigationLink { LiveCameraSetupView() } label: {
-                            hubOption("dot.radiowaves.left.and.right", "Live camera", "Record a new shot in real time.")
+            GeometryReader { page in
+                let screenWidth = min(page.size.width, UIScreen.main.bounds.width)
+                let contentWidth = max(0, screenWidth - 44)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        CaptureHeader()
+                            .frame(width: screenWidth, alignment: .topLeading)
+                            .padding(.horizontal, -22)
+                        v5HeroCard(width: contentWidth)
+                        v5CaptureTypePanel(width: contentWidth)
+                        NavigationLink { CaptureGuideView() } label: {
+                            v5GuideCard(width: contentWidth)
                         }
+                        .buttonStyle(.plain)
                         .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening live camera", "Set up the phone before recording.")
+                            toast = .info("Opening capture guide", "Use the guide to frame the shooter.")
                         })
-                        NavigationLink { VideoUploadView() } label: {
-                            hubOption("film", "Upload video", "Analyze footage from your device.")
-                        }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening video upload", "Choose a real shot video.")
-                        })
-                        NavigationLink { PhotoUploadSourceView() } label: {
-                            hubOption("photo", "Upload image", "Analyze a single frame or photo.")
-                        }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening image upload", "Choose or capture a real shot photo.")
-                        })
+                        v5RecentCaptures(width: contentWidth)
                     }
-                    .padding(.horizontal, 20).padding(.top, 18)
-
-                    NavigationLink { CaptureGuideView() } label: {
-                        HStack(spacing: 12) {
-                            ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "doc.text"), size: 42).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
-                            Text("View capture guide").shotiqBody(16, weight: .medium)
-                                .foregroundStyle(ShotIQColor.ink)
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                        }
-                        .padding(16)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                    }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        toast = .info("Opening capture guide", "Use the guide to frame the shooter.")
-                    })
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20).padding(.top, 12)
-
-                    HStack {
-                        SectionLabel(text: "RECENT CAPTURES")
-                        Spacer()
-                        NavigationLink { UploadQueueView() } label: {
-                            HStack(spacing: 4) {
-                                Text("View all").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
-                                Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
-                            }
-                        }
-                        .simultaneousGesture(TapGesture().onEnded {
-                            toast = .info("Opening upload queue", "Queued media and retries are there.")
-                        })
-                    }
-                    .padding(.horizontal, 20).padding(.top, 22)
-
-                    // MEASURED OFF CANONICAL 021, NOT CHOSEN.
-                    //
-                    // The white-gap detector puts the four cards at 15.7..107.3,
-                    // 114.7..200.0, 207.8..293.0 and 299.9..378.7pt, so the card
-                    // is ~85pt wide with a ~7.5pt gap, and the photo runs
-                    // y 942..1223px = 129.8pt tall. At 104pt wide with 10pt gaps
-                    // the row summed to 20 + 4×104 + 3×10 = 466pt against a
-                    // 393pt screen — 73pt over, which is the fourth card sliced
-                    // in half down the right edge of the capture and the reason
-                    // the layout audit reads ink on that edge over 19% of the
-                    // height. At 85/7.5 the row ends at 382.5pt, inside the
-                    // screen, with the cards landing within ~2pt of canonical.
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 7.5) {
-                            if app.recentMedia.isEmpty {
-                                ForEach(recents, id: \.1) { dur, when, kind, photo in
-                                    NavigationLink {
-                                        if UITestHooks.demoData {
-                                            MediaDetailView(analysis: nil,
-                                                            title: kind,
-                                                            fallbackPhoto: photo ?? "069-visual-002",
-                                                            fallbackLinkedPhoto: photo ?? "069-visual-004",
-                                                            fallbackDuration: dur,
-                                                            fallbackCaptureDate: when.uppercased(),
-                                                            fallbackCaptureMeta: "Sample capture - \(kind) - ready for review",
-                                                            fallbackShotEvents: ("--", "--", "--", "--", "--"))
-                                        } else {
-                                            UploadQueueView()
-                                        }
-                                    } label: {
-                                        demoRecentCard(duration: dur, when: when, kind: kind, photo: photo)
-                                    }
-                                    .simultaneousGesture(TapGesture().onEnded {
-                                        if UITestHooks.demoData {
-                                            toast = .info("Opening \(kind)",
-                                                          "Sample media detail is ready.")
-                                        } else {
-                                            toast = .info("No saved media yet",
-                                                          "Add a photo or video to create real recent media.")
-                                        }
-                                    })
-                                    .buttonStyle(.plain)
-                                }
-                            } else {
-                                ForEach(Array(app.recentMedia.prefix(4))) { entry in
-                                    NavigationLink {
-                                        MediaDetailView(analysis: entry.analysis,
-                                                        analysisId: entry.analysis.id)
-                                    } label: {
-                                        realRecentCard(entry)
-                                    }
-                                    .simultaneousGesture(TapGesture().onEnded {
-                                        toast = .success("Opening \(entry.title)",
-                                                         "This is your saved \(entry.kind.lowercased()).")
-                                    })
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    .padding(.top, 10)
-
-                    HStack(alignment: .center, spacing: 14) {
-                        ShotIQApprovedRasterIcon(assetName: ShotIQApprovedIconAsset.assetName(forSystemFallback: "point.topleft.down.curvedto.point.bottomright.up"), size: 44)
-                            .font(.system(size: 24)).foregroundStyle(ShotIQColor.analysisBlue)
-                        Text("Film from the side at chest height, showing your full body from feet to fingertips with good lighting and a clear background.")
-                            .shotiqBody(13).foregroundStyle(ShotIQColor.ink)
-                    }
-                    .padding(14)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                    .padding(.horizontal, 20).padding(.top, 16)
-
-                    Text("YOUR SHOOTING SNAPSHOT")
-                        .shotiqBody(11, weight: .bold).kerning(0.8).foregroundStyle(ShotIQColor.ink)
-                        .padding(.horizontal, 20).padding(.top, 20)
-                    CaptureSessionStats().padding(.horizontal, 20).padding(.top, 8)
-
-                    CaptureCoachingRow().padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 24)
+                    .frame(width: contentWidth, alignment: .leading)
+                    .padding(.horizontal, 22)
+                    .padding(.bottom, 170)
                 }
+                .frame(width: screenWidth, alignment: .leading)
+                .background(Color(red: 0.972, green: 0.976, blue: 0.982))
             }
         }
         .navigationTitle("").toolbar(.hidden, for: .navigationBar)
         // Returning to the hub means the live flow ended — release the camera.
         .onAppear { CameraService.live.stop() }
         .shotiqToast($toast)
+    }
+
+    private func v5HeroCard(width: CGFloat) -> some View {
+        let height = min(206, max(182, width * 0.52))
+        let imageWidth = width * 0.55
+        return HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("ANALYZE\nYOUR SHOT")
+                    .shotiqDisplay(45)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineSpacing(0)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Live capture, video,\nor image. ShotIQ\nturns clean footage\ninto form feedback.")
+                    .shotiqBody(14)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(width: max(130, width - imageWidth), height: height, alignment: .leading)
+            .padding(.leading, 22)
+
+            CanonicalPhoto("021-v5-hero", width: imageWidth, height: height, cornerRadius: 0, alignment: .center)
+        }
+        .frame(width: width, height: height, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule, lineWidth: 1))
+    }
+
+    private func v5CaptureTypePanel(width: CGFloat) -> some View {
+        let innerWidth = max(0, width - 16)
+        return VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(text: "CHOOSE CAPTURE TYPE")
+                .padding(.top, 14)
+                .padding(.horizontal, 16)
+            Rectangle()
+                .fill(ShotIQColor.shotiqOrange)
+                .frame(width: width * 0.32, height: 3)
+                .padding(.top, 10)
+                .padding(.leading, 16)
+            HStack(spacing: 0) {
+                NavigationLink { LiveCameraSetupView() } label: {
+                    v5CaptureOption(title: "LIVE CAMERA",
+                                    body: "Record a new shot\nin real time.",
+                                    photo: "021-v5-live",
+                                    width: innerWidth / 3)
+                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    toast = .info("Opening live camera", "Set up the phone before recording.")
+                })
+
+                NavigationLink { VideoUploadView() } label: {
+                    v5CaptureOption(title: "UPLOAD VIDEO",
+                                    body: "Analyze footage\nfrom your device.",
+                                    photo: "021-v5-video",
+                                    width: innerWidth / 3)
+                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    toast = .info("Opening video upload", "Choose a real shot video.")
+                })
+
+                NavigationLink { PhotoUploadSourceView() } label: {
+                    v5CaptureOption(title: "UPLOAD IMAGE",
+                                    body: "Analyze a single\nframe or photo.",
+                                    photo: "021-v5-image",
+                                    width: innerWidth / 3)
+                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    toast = .info("Opening image upload", "Choose or capture a real shot photo.")
+                })
+            }
+            .frame(width: innerWidth, height: 186)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule, lineWidth: 1))
+            .padding(.horizontal, 8)
+            .padding(.bottom, 8)
+        }
+        .frame(width: width, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule, lineWidth: 1))
+    }
+
+    private func v5CaptureOption(title: String, body: String, photo: String, width: CGFloat) -> some View {
+        let thumb = min(86, max(68, width * 0.66))
+        return VStack(spacing: 10) {
+            CanonicalPhoto(photo, width: thumb, height: thumb, cornerRadius: thumb / 2)
+            Text(title)
+                .shotiqDisplay(22)
+                .foregroundStyle(ShotIQColor.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+            Text(body)
+                .shotiqBody(12)
+                .foregroundStyle(ShotIQColor.graphite)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+                .lineLimit(2)
+                .minimumScaleFactor(0.76)
+        }
+        .padding(.horizontal, 6)
+        .frame(width: width, height: 186, alignment: .center)
+        .contentShape(Rectangle())
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(width: 1), alignment: .trailing)
+    }
+
+    private func v5GuideCard(width: CGFloat) -> some View {
+        HStack(spacing: 20) {
+            CanonicalPhoto("021-v5-guide", width: 92, height: 92, cornerRadius: 46)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("VIEW CAPTURE GUIDE")
+                    .shotiqDisplay(26)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                Text("Best angle, distance, lighting,\nand framing.")
+                    .shotiqBody(13)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 18)
+        .frame(width: width, height: 112, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule, lineWidth: 1))
+        .contentShape(Rectangle())
+    }
+
+    private func v5RecentCaptures(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                SectionLabel(text: "UPLOAD HISTORY")
+                Spacer()
+                NavigationLink { MyMediaView() } label: {
+                    Text("VIEW ALL")
+                        .shotiqDisplay(18)
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .lineLimit(1)
+                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    toast = .info("Opening upload history", "Your saved media and analysis history are there.")
+                })
+            }
+            ForEach(v5Recents) { item in
+                NavigationLink {
+                    UploadQueueView()
+                } label: {
+                    v5RecentRow(item: item, width: width)
+                }
+                .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    toast = .info("Opening \(item.title.capitalized)")
+                })
+            }
+        }
+        .frame(width: width, alignment: .leading)
+    }
+
+    private func v5RecentRow(item: CaptureV5Recent, width: CGFloat) -> some View {
+        HStack(spacing: 18) {
+            CanonicalPhoto(item.photo, width: width * 0.37, height: 74, cornerRadius: 6)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(item.title)
+                    .shotiqDisplay(25)
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.64)
+                Text(item.date)
+                    .shotiqBody(11, weight: .semibold)
+                    .foregroundStyle(ShotIQColor.graphite)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("SCORE")
+                    .shotiqBody(10, weight: .bold)
+                    .kerning(0.6)
+                    .foregroundStyle(ShotIQColor.graphite)
+                Text(item.score)
+                    .shotiqNumeric(42)
+                    .foregroundStyle(ShotIQColor.shotiqOrange)
+            }
+            .frame(width: 42, alignment: .leading)
+        }
+        .padding(.trailing, 18)
+        .frame(width: width, height: 80, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule, lineWidth: 1))
+        .contentShape(Rectangle())
     }
 
     private func demoRecentCard(duration: String, when: String, kind: String, photo: String?) -> some View {
@@ -927,8 +1008,9 @@ struct AnalyzeHubView: View {       // 021
                 .lineLimit(2).minimumScaleFactor(0.8)
         }
         .padding(.vertical, 16).padding(.horizontal, 6)
-        .frame(maxWidth: .infinity, minHeight: 140, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .contentShape(Rectangle())
     }
 }
 
@@ -2626,11 +2708,6 @@ private struct PickedVideoThumbnailView: View {
                         .minimumScaleFactor(0.65)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "play.fill")
-                    .font(.system(size: compact ? 12 : 15, weight: .bold))
-                    .foregroundStyle(.black)
-                    .frame(width: compact ? 30 : 38, height: compact ? 30 : 38)
-                    .background(ShotIQColor.shotiqOrange, in: Circle())
             }
             .padding(12)
         }
@@ -2726,6 +2803,35 @@ struct VideoUploadView: View {      // 026
                 VStack(alignment: .leading, spacing: 0) {
                     CaptureHeader()
 
+                    HStack {
+                        Button {
+                            camera.stopRecording()
+                            CameraService.live.stop()
+                            timer?.invalidate()
+                            toast = .info("Exiting live video", "Returning to the previous screen.")
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { dismiss() }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 14, weight: .heavy))
+                                Text("EXIT LIVE")
+                                    .shotiqBody(12, weight: .heavy)
+                                    .kerning(0.8)
+                            }
+                            .foregroundStyle(ShotIQColor.ink)
+                            .padding(.horizontal, 12)
+                            .frame(height: 34)
+                            .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 7))
+                            .overlay(RoundedRectangle(cornerRadius: 7).stroke(ShotIQColor.rule, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Exit live video")
+                        .accessibilityIdentifier("live-video-exit")
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 16, weight: .semibold))
@@ -2738,45 +2844,6 @@ struct VideoUploadView: View {      // 026
                     Text("Choose to upload images or a video of your shooting form for comprehensive biomechanical analysis.")
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
-
-                    SectionLabel(text: "SELECT MEDIA TYPE")
-                        .padding(.horizontal, 20).padding(.top, 22)
-
-                    Menu {
-                        Button {
-                            route = .imageUpload
-                            toast = .info("Opening image upload", "Upload 3-7 photos or choose one real shot image.")
-                        } label: {
-                            Label("Images - Upload 3-7 photos", systemImage: "photo.stack")
-                        }
-                        Button {
-                            toast = .info("Video selected", "Use Browse video or the upload area to choose a shooting clip.")
-                        } label: {
-                            Label("Video - Upload a 10-second video", systemImage: "video")
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: "video")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(ShotIQColor.shotiqOrange)
-                                .frame(width: 42, height: 42)
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange.opacity(0.55)))
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Video").shotiqBody(17, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                Text("Upload a 10-second video").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(ShotIQColor.graphite)
-                        }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 8))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 20).padding(.top, 8)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Video Requirements", systemImage: "exclamationmark.triangle")
@@ -3037,6 +3104,10 @@ struct VideoUploadView: View {      // 026
         pick = nil
         if let clip {
             selectedVideo = clip
+            app.rememberShootingMedia(url: clip.url,
+                                      kind: "video",
+                                      title: "Latest Uploaded Video",
+                                      durationText: clip.durationText)
             toast = .success("Video ready", "Tap Analyze My Shooting Form when you're ready.")
         } else {
             videoError = "Couldn't load that video. Choose a local MP4 or MOV and try again."
@@ -3977,6 +4048,7 @@ struct LiveRecordingStats: Equatable {
 }
 
 struct LiveRecordingView: View {    // 032
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject private var camera = CameraService.live
     @State private var seconds = 0
     @State private var timer: Timer?
@@ -5175,6 +5247,8 @@ struct CaptureReviewView: View {    // 035
                         .padding(.horizontal, 20)
                     }
                     .padding(.top, 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .clipped()
 
                     HStack {
                         SectionLabel(text: selectedFilterLabel.uppercased())

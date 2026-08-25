@@ -151,8 +151,8 @@ struct AnalysisOverviewChrome: Equatable {
         AnalysisOverviewChrome(
             playerName: displayName(user: user, profile: profile),
             subtitle: profileSubtitle(profile),
-            streak: numberOrDash(badges?.stats?.currentStreak),
-            points: groupedNumberOrDash(badges?.stats?.totalPoints),
+            streak: numberOrZero(badges?.stats?.currentStreak),
+            points: groupedNumberOrZero(badges?.stats?.totalPoints),
             eliteMatch: AnalysisEliteMatchSummary(match: match))
     }
 
@@ -216,13 +216,13 @@ struct AnalysisOverviewChrome: Equatable {
         return String(prefix).replacingOccurrences(of: ".", with: " ")
     }
 
-    private static func numberOrDash(_ value: Int?) -> String {
-        guard let value else { return "--" }
+    private static func numberOrZero(_ value: Int?) -> String {
+        guard let value else { return "0" }
         return "\(value)"
     }
 
-    private static func groupedNumberOrDash(_ value: Int?) -> String {
-        guard let value else { return "--" }
+    private static func groupedNumberOrZero(_ value: Int?) -> String {
+        guard let value else { return "0" }
         return NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
     }
 }
@@ -587,12 +587,31 @@ struct AnalysisResultPresentation: Equatable {
                                       source: centerline.source)
         }
         let absolute = abs(value)
-        let slot = absolute <= 3 ? "CENTER" : (value > 0 ? "RIGHT" : "LEFT")
+        let slot: String
+        let verdict: String
+        let positive: Bool
+        if absolute <= 3 {
+            slot = "CENTER"
+            verdict = "GOOD"
+            positive = true
+        } else if value > 0, absolute <= 8 {
+            slot = "SHOOTING SIDE"
+            verdict = "OK"
+            positive = true
+        } else if value > 0 {
+            slot = "DRIFT RIGHT"
+            verdict = "CHECK"
+            positive = false
+        } else {
+            slot = "CROSSED LEFT"
+            verdict = "FIX"
+            positive = false
+        }
         return AnalysisMetricTile(icon: "basketball",
                                   label: "BALL SLOT",
                                   value: slot,
-                                  verdict: absolute <= 3 ? "GOOD" : "DRIFT",
-                                  isPositive: absolute <= 3,
+                                  verdict: verdict,
+                                  isPositive: positive,
                                   detailMetric: "Ball Slot",
                                   detailValue: min(max(1 - absolute / 20, 0), 1),
                                   source: centerline.source)
@@ -725,10 +744,13 @@ struct AnalysisResultPresentation: Equatable {
            abs(centerline) > 3 {
             let distance = abs(centerline)
             let direction = centerline > 0 ? "right of centerline" : "left of centerline"
+            let slotGuidance = centerline < 0
+                ? " For a right-handed shooter, crossing left of the body line is the first warning."
+                : " For a right-handed shooter, this should stay close to center or only slightly on the shooting side."
             add(priority: distance >= 8 ? 1 : 2,
                 title: "CENTERLINE DEVIATION",
                 impact: impact(distance: distance, high: 8),
-                description: "Ball path is \(degrees(distance)) \(direction); target is centered or slightly on the shooting-side lane.",
+                description: "Ball path is \(degrees(distance)) \(direction).\(slotGuidance)",
                 confidence: confidence(result.measurements.centerlineDeviationDeg),
                 cta: "Review centerline",
                 phase: "RELEASE",

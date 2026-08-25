@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "player-flaw-reference-release-height.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
